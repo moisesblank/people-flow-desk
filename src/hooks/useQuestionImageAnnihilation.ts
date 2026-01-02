@@ -15,7 +15,49 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, QueryClient } from '@tanstack/react-query';
+
+// ============================================
+// PROPAGAÇÃO GLOBAL - SINGLE SOURCE OF TRUTH
+// ============================================
+
+/**
+ * Invalida TODOS os caches relacionados a questões em todo o sistema.
+ * Garante que qualquer modificação seja propagada para:
+ * - Simulados
+ * - Modo Treino
+ * - Listagens de questões
+ * - Views de detalhes
+ * - Resultados e estatísticas
+ */
+export function invalidateAllQuestionCaches(queryClient: QueryClient, questionId?: string) {
+  // Caches primários de questões
+  queryClient.invalidateQueries({ queryKey: ['quiz-questions'] });
+  queryClient.invalidateQueries({ queryKey: ['questions'] });
+  queryClient.invalidateQueries({ queryKey: ['questions', 'SIMULADOS'] });
+  queryClient.invalidateQueries({ queryKey: ['questions', 'MODO_TREINO'] });
+  
+  // Questão específica (se fornecido ID)
+  if (questionId) {
+    queryClient.invalidateQueries({ queryKey: ['question', questionId] });
+  }
+  
+  // Caches de quizzes/simulados
+  queryClient.invalidateQueries({ queryKey: ['quizzes'] });
+  queryClient.invalidateQueries({ queryKey: ['quiz'] });
+  queryClient.invalidateQueries({ queryKey: ['simulados'] });
+  queryClient.invalidateQueries({ queryKey: ['modo-treino'] });
+  
+  // Caches de tentativas e estatísticas
+  queryClient.invalidateQueries({ queryKey: ['quiz-attempts'] });
+  queryClient.invalidateQueries({ queryKey: ['student-question-attempts'] });
+  queryClient.invalidateQueries({ queryKey: ['question-attempts'] });
+  
+  // Gamificação (XP pode mudar com correções)
+  queryClient.invalidateQueries({ queryKey: ['user-gamification'] });
+  
+  console.log('[QUESTION_PROPAGATION] Todos os caches invalidados', { questionId });
+}
 
 // ============================================
 // TIPOS
@@ -134,15 +176,11 @@ export function useQuestionImageAnnihilation() {
       result.updatedDatabase = true;
       console.log('[ANNIHILATE] Banco atualizado:', { newImageUrls: newImageUrls.length });
 
-      // 4. INVALIDAR todos os caches relacionados
-      queryClient.invalidateQueries({ queryKey: ['quiz-questions'] });
-      queryClient.invalidateQueries({ queryKey: ['question', questionId] });
-      queryClient.invalidateQueries({ queryKey: ['questions'] });
-      queryClient.invalidateQueries({ queryKey: ['simulados'] });
-      queryClient.invalidateQueries({ queryKey: ['modo-treino'] });
+      // 4. INVALIDAR TODOS os caches relacionados - PROPAGAÇÃO GLOBAL
+      invalidateAllQuestionCaches(queryClient, questionId);
       
       result.clearedCache = true;
-      console.log('[ANNIHILATE] Caches invalidados');
+      console.log('[ANNIHILATE] Caches invalidados - propagação global');
 
       result.success = true;
       return result;
@@ -227,12 +265,8 @@ export function useQuestionImageAnnihilation() {
       
       result.updatedDatabase = true;
 
-      // 5. INVALIDAR caches
-      queryClient.invalidateQueries({ queryKey: ['quiz-questions'] });
-      queryClient.invalidateQueries({ queryKey: ['question', questionId] });
-      queryClient.invalidateQueries({ queryKey: ['questions'] });
-      queryClient.invalidateQueries({ queryKey: ['simulados'] });
-      queryClient.invalidateQueries({ queryKey: ['modo-treino'] });
+      // 5. INVALIDAR TODOS os caches - PROPAGAÇÃO GLOBAL
+      invalidateAllQuestionCaches(queryClient, questionId);
       
       result.clearedCache = true;
       result.success = true;
