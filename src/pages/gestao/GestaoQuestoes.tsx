@@ -99,6 +99,8 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useCacheManager } from '@/hooks/useCacheManager';
+import { useQueryClient } from '@tanstack/react-query';
+import { invalidateAllQuestionCaches } from '@/hooks/useQuestionImageAnnihilation';
 
 // ============================================
 // TIPOS
@@ -183,6 +185,7 @@ const QuestionDialog = memo(function QuestionDialog({
   question 
 }: QuestionDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
   
   // Hook dinâmico com Realtime - sincronizado com TaxonomyManager
   const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
@@ -393,6 +396,9 @@ const QuestionDialog = memo(function QuestionDialog({
         toast.success('Questão criada com sucesso!');
       }
 
+      // PROPAGAÇÃO GLOBAL - Invalida todos os caches de questões
+      invalidateAllQuestionCaches(queryClient, question?.id);
+      
       onSuccess();
       onClose();
     } catch (err) {

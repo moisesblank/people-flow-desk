@@ -33,7 +33,7 @@ import {
   ImageOff,
   Image as ImageIcon,
 } from 'lucide-react';
-import { useQuestionImageAnnihilation } from '@/hooks/useQuestionImageAnnihilation';
+import { useQuestionImageAnnihilation, invalidateAllQuestionCaches } from '@/hooks/useQuestionImageAnnihilation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -56,6 +56,7 @@ import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
 import QuestionResolution from '@/components/shared/QuestionResolution';
 import QuestionTaxonomyEditor from '@/components/gestao/questoes/QuestionTaxonomyEditor';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -114,6 +115,7 @@ const DIFFICULTY_MAP: Record<string, { label: string; color: string }> = {
 function GestaoQuestaoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [question, setQuestion] = useState<Question | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -185,13 +187,15 @@ function GestaoQuestaoDetalhe() {
 
       if (error) throw error;
 
+      // PROPAGAÇÃO GLOBAL
+      invalidateAllQuestionCaches(queryClient, question.id);
       toast.success(question.is_active ? 'Questão desativada' : 'Questão ativada');
       loadQuestion();
     } catch (err) {
       console.error('Erro ao alterar status:', err);
       toast.error('Erro ao alterar status');
     }
-  }, [question, loadQuestion]);
+  }, [question, loadQuestion, queryClient]);
 
   // Duplicar
   const handleDuplicate = useCallback(async () => {
@@ -210,13 +214,15 @@ function GestaoQuestaoDetalhe() {
 
       if (error) throw error;
 
+      // PROPAGAÇÃO GLOBAL
+      invalidateAllQuestionCaches(queryClient);
       toast.success('Questão duplicada');
       navigate('/gestaofc/questoes');
     } catch (err) {
       console.error('Erro ao duplicar:', err);
       toast.error('Erro ao duplicar');
     }
-  }, [question, navigate]);
+  }, [question, navigate, queryClient]);
 
   // Excluir
   const handleDelete = useCallback(async () => {
@@ -230,13 +236,15 @@ function GestaoQuestaoDetalhe() {
 
       if (error) throw error;
 
+      // PROPAGAÇÃO GLOBAL
+      invalidateAllQuestionCaches(queryClient, question.id);
       toast.success('Questão excluída');
       navigate('/gestaofc/questoes');
     } catch (err) {
       console.error('Erro ao excluir:', err);
       toast.error('Erro ao excluir');
     }
-  }, [question, navigate]);
+  }, [question, navigate, queryClient]);
 
   // Remover todas as imagens (ANIQUILAÇÃO TOTAL)
   const handleRemoveAllImages = useCallback(async () => {
