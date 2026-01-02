@@ -504,14 +504,77 @@ function getSectionTitle(section: ParsedSection): string {
 }
 
 /**
- * Formata conteúdo com fórmulas químicas
+ * Extrai URLs de imagens do texto usando o padrão [IMAGEM: URL]
  */
-const formatContent = (content: string) => {
+function extractImagesFromResolution(text: string): { cleanedText: string; images: string[] } {
+  const imagePattern = /\[IMAGEM:\s*(https?:\/\/[^\]\s]+)\s*\]/gi;
+  const images: string[] = [];
+  let match;
+  
+  while ((match = imagePattern.exec(text)) !== null) {
+    if (match[1]) {
+      images.push(match[1]);
+    }
+  }
+  
+  // Remove as tags de imagem do texto
+  const cleanedText = text.replace(imagePattern, '').trim();
+  
+  return { cleanedText, images };
+}
+
+/**
+ * Formata conteúdo com fórmulas químicas (sem imagens)
+ */
+const formatTextContent = (content: string): string => {
   return formatChemicalFormulas(
     content
       .replace(/👉\s*/g, '\n• ')
       .replace(/Reunindo:/gi, '\n📋 Reunindo:')
       .trim()
+  );
+};
+
+/**
+ * Componente para renderizar imagens embutidas na resolução
+ */
+const ResolutionImage = memo(function ResolutionImage({ src, index }: { src: string; index: number }) {
+  return (
+    <div className="my-4 flex justify-center">
+      <img 
+        src={src} 
+        alt={`Imagem da resolução ${index + 1}`}
+        className="max-h-[600px] w-auto rounded-lg border border-border/50 shadow-md object-contain"
+        loading="lazy"
+        onError={(e) => {
+          const target = e.target as HTMLImageElement;
+          target.style.display = 'none';
+        }}
+      />
+    </div>
+  );
+});
+
+/**
+ * Formata conteúdo com fórmulas químicas E renderiza imagens
+ */
+const formatContent = (content: string) => {
+  const { cleanedText, images } = extractImagesFromResolution(content);
+  const formattedText = formatTextContent(cleanedText);
+  
+  // Se não há imagens, retorna só o texto formatado
+  if (images.length === 0) {
+    return formattedText;
+  }
+  
+  // Retorna texto + imagens
+  return (
+    <>
+      {formattedText}
+      {images.map((imgUrl, idx) => (
+        <ResolutionImage key={`res-img-${idx}`} src={imgUrl} index={idx} />
+      ))}
+    </>
   );
 };
 
