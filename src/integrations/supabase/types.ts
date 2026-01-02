@@ -9140,7 +9140,7 @@ export type Database = {
           is_active: boolean | null
           is_estilo_enem: boolean | null
           lesson_id: string | null
-          macro: string | null
+          macro: string
           micro: string | null
           nivel_cognitivo: string | null
           objeto_conhecimento: string | null
@@ -9198,7 +9198,7 @@ export type Database = {
           is_active?: boolean | null
           is_estilo_enem?: boolean | null
           lesson_id?: string | null
-          macro?: string | null
+          macro: string
           micro?: string | null
           nivel_cognitivo?: string | null
           objeto_conhecimento?: string | null
@@ -9256,7 +9256,7 @@ export type Database = {
           is_active?: boolean | null
           is_estilo_enem?: boolean | null
           lesson_id?: string | null
-          macro?: string | null
+          macro?: string
           micro?: string | null
           nivel_cognitivo?: string | null
           objeto_conhecimento?: string | null
