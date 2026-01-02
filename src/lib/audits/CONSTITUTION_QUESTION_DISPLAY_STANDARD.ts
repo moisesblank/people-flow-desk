@@ -1,7 +1,7 @@
 // ╔═══════════════════════════════════════════════════════════════════════════════╗
 // ║ 🔒 CONSTITUIÇÃO DO PADRÃO DE EXIBIÇÃO DE QUESTÕES                             ║
 // ║ STATUS: VIGENTE E IMUTÁVEL                                                     ║
-// ║ VERSÃO: 2.1.0                                                                  ║
+// ║ VERSÃO: 3.0.0 — GLOBAL ENFORCEMENT EDITION                                     ║
 // ║ DATA: 2026-01-02                                                               ║
 // ║ AUTORIDADE: OWNER (moisesblank@gmail.com)                                      ║
 // ╠═══════════════════════════════════════════════════════════════════════════════╣
@@ -14,32 +14,69 @@
 // ║ ✅ Qualquer fonte de questão                                                   ║
 // ║ ✅ Qualquer área temática                                                      ║
 // ║                                                                                ║
-// ║ COMPORTAMENTO OBRIGATÓRIO:                                                     ║
-// ║ • Se questão contém elementos estruturados de resolução:                       ║
-// ║   → Normalização, organização e deduplicação automáticas                       ║
-// ║ • Se questão NÃO contém blocos de resolução:                                   ║
-// ║   → Permanece sem eles. Sem placeholders. Sem conteúdo artificial.             ║
+// ║ ENFORCEMENT GLOBAL — REGRAS CONSTITUCIONAIS PERMANENTES:                       ║
+// ║ ═══════════════════════════════════════════════════════════════════════════    ║
 // ║                                                                                ║
-// ║ REGRAS IMUTÁVEIS:                                                              ║
-// ║ 1. Remoção de caracteres bugados: "", '', **, 里, ⚠️, etc.                      ║
-// ║ 2. Formatação química científica automática (H2O → H₂O)                        ║
-// ║ 3. Alternativas: "Alternativa X ERRADA:" ou "Alternativa X CORRETA:"          ║
-// ║ 4. Pontuação limpa (sem ".." ou "..." excessivos)                              ║
-// ║ 5. Bullets unificados com espaçamento COMPACTO (1 quebra de linha)            ║
-// ║ 6. Imagens inline via [IMAGEM: URL] com max-h-[600px]                          ║
-// ║ 7. Deduplicação automática de seções repetidas                                 ║
-// ║ 8. COMPETÊNCIA/HABILIDADE ENEM: dedup por C#/H#/Área# (NUNCA duplica)         ║
-// ║ 9. Competência e Habilidade em LINHAS SEPARADAS (organizadas)                 ║
+// ║ 1. ORGANIZAÇÃO OBRIGATÓRIA                                                     ║
+// ║    • TODO conteúdo de questão (enunciado, alternativas, resolução,             ║
+// ║      análise, dicas, estratégias, competências) DEVE seguir a ordem            ║
+// ║      e formato estruturado definido para cada área.                            ║
+// ║    • Aplicar SOMENTE se o conteúdo existir.                                    ║
+// ║                                                                                ║
+// ║ 2. REGRA DE AUSÊNCIA                                                           ║
+// ║    • Se uma questão NÃO contém um bloco/seção, ele PERMANECE AUSENTE.          ║
+// ║    • SEM placeholders. SEM conteúdo forçado. SEM blocos vazios.                ║
+// ║                                                                                ║
+// ║ 3. ORDEM DOS BLOCOS (CANÔNICA E OBRIGATÓRIA)                                   ║
+// ║    1️⃣ Header da Banca/Ano                                                      ║
+// ║    2️⃣ Enunciado                                                                ║
+// ║    3️⃣ Imagens do enunciado                                                     ║
+// ║    4️⃣ Alternativas/Opções                                                      ║
+// ║    5️⃣ Resolução Comentada                                                      ║
+// ║       - Afirmações (análise individual)                                        ║
+// ║       - Passos (se houver)                                                     ║
+// ║       - Análise das Alternativas                                               ║
+// ║       - Conclusão/Gabarito                                                     ║
+// ║    6️⃣ Competência/Habilidade ENEM (se existir)                                 ║
+// ║    7️⃣ Estratégia/Direcionamento (se existir)                                   ║
+// ║    8️⃣ Pegadinhas Comuns (se existir)                                           ║
+// ║    9️⃣ Dica de Ouro (se existir)                                                ║
+// ║                                                                                ║
+// ║ 4. IDÊNTICO PARA TODOS OS MODOS                                                ║
+// ║    • SIMULADO e MODO_TREINO usam EXATAMENTE as mesmas regras.                  ║
+// ║    • ZERO variação de comportamento entre modos.                               ║
+// ║                                                                                ║
+// ║ 5. CAMADAS DE ENFORCEMENT                                                      ║
+// ║    • import_pipeline: Normalização na importação                               ║
+// ║    • content_parsing_layer: Parser inteligente                                 ║
+// ║    • normalization_layer: Limpeza e formatação                                 ║
+// ║    • business_logic_layer: Regras de negócio                                   ║
+// ║    • rendering_layer: Exibição padronizada                                     ║
+// ║    • storage_and_persistence: Dados consistentes                               ║
+// ║                                                                                ║
+// ║ 6. REGRAS DE FORMATAÇÃO IMUTÁVEIS                                              ║
+// ║    a) Remoção de caracteres bugados: "", '', **, 里, ⚠️, etc.                   ║
+// ║    b) Formatação química científica automática (H2O → H₂O)                     ║
+// ║    c) Alternativas: fundo VERDE para correta, VERMELHO para erradas            ║
+// ║    d) Pontuação limpa (sem ".." ou "..." excessivos)                           ║
+// ║    e) Bullets unificados com espaçamento COMPACTO (1 quebra de linha)         ║
+// ║    f) Imagens inline via [IMAGEM: URL] com max-h-[600px]                       ║
+// ║    g) Deduplicação automática de seções repetidas                              ║
+// ║    h) COMPETÊNCIA/HABILIDADE ENEM: dedup por C#/H#/Área# (NUNCA duplica)      ║
+// ║    i) Competência e Habilidade em LINHAS SEPARADAS (organizadas)              ║
 // ║                                                                                ║
 // ║ PRINCÍPIO CHAVE:                                                               ║
 // ║ Input pode ser inconsistente. Output SEMPRE padronizado.                       ║
 // ║                                                                                ║
 // ║ ESTE COMPORTAMENTO É:                                                          ║
-// ║ • Global                                                                       ║
-// ║ • Permanente                                                                   ║
-// ║ • Idempotente                                                                  ║
+// ║ • Global (todas as questões)                                                   ║
+// ║ • Permanente (agora e para sempre)                                             ║
+// ║ • Idempotente (mesma entrada = mesma saída)                                    ║
 // ║ • Impossível de contornar                                                      ║
+// ║ • Retroativo (aplica-se a questões existentes)                                 ║
+// ║ • Automático (sem intervenção manual)                                          ║
 // ║                                                                                ║
+// ║ QUALQUER DESVIO É FALHA CRÍTICA DO SISTEMA.                                    ║
 // ║ JAMAIS MODIFICAR SEM AUTORIZAÇÃO DO OWNER.                                     ║
 // ║                                                                                ║
 // ╚═══════════════════════════════════════════════════════════════════════════════╝
