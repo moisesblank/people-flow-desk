@@ -691,8 +691,8 @@ function parseResolutionText(text: string): ParsedSection[] {
   if (bestConclusao) deduplicatedSections.push(bestConclusao);
 
   // ========== MERGE GLOBAL DE SEÇÕES PEDAGÓGICAS ==========
-  // REGRA UNIVERSAL: Agrupa seções do mesmo tipo mergeable
-  const mergableTypes: SectionType[] = ['pegadinhas', 'dica', 'estrategia', 'competencia'];
+  // REGRA UNIVERSAL: Agrupa seções do mesmo tipo mergeable (inclui SÍNTESE)
+  const mergableTypes: SectionType[] = ['pegadinhas', 'dica', 'estrategia', 'competencia', 'sintese'];
   
   const nonMergeable: ParsedSection[] = [];
   const mergeableByType: Map<SectionType, ParsedSection[]> = new Map();
@@ -770,8 +770,8 @@ function parseResolutionText(text: string): ParsedSection[] {
     mergedSections.push(section);
   }
   
-  // Adicionar mergeáveis consolidados no final (ordem: competencia > estrategia > pegadinhas > dica)
-  const mergeOrder: SectionType[] = ['competencia', 'estrategia', 'pegadinhas', 'dica'];
+  // Adicionar mergeáveis consolidados no final (ordem: sintese > competencia > estrategia > pegadinhas > dica)
+  const mergeOrder: SectionType[] = ['sintese', 'competencia', 'estrategia', 'pegadinhas', 'dica'];
   for (const type of mergeOrder) {
     const consolidated = consolidatedMergeable.find(s => s.type === type);
     if (consolidated) {
