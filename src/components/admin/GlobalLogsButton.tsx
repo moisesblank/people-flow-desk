@@ -152,9 +152,7 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
   // Hook para capturar logs do console (sempre ativo para o owner)
   const { logs: browserLogs, clearLogs: clearBrowserLogs } = useBrowserConsoleLogs(isOwner);
   
-  // Não exibir se não for owner
-  if (!isOwner) return null;
-  
+  // ✅ TODOS OS HOOKS DEVEM VIR ANTES DE QUALQUER RETURN CONDICIONAL
   // Query para buscar logs do sistema (últimos 50)
   const { data: systemLogs = [], isLoading } = useQuery({
     queryKey: ['global-logs-preview'],
@@ -207,6 +205,10 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
       default: return 'text-green-400';
     }
   };
+  
+  // ✅ RETORNO CONDICIONAL APÓS TODOS OS HOOKS
+  // Não exibir se não for owner
+  if (!isOwner) return null;
   
   return (
     <>
