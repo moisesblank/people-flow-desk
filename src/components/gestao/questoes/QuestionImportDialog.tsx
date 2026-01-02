@@ -1723,16 +1723,20 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     ? 'AI_AUTOFILL'
                     : 'AI_SUGGESTION_APPLIED';
               
+              // FIX P0: Usar insertedData (valor final após insert) em vez de payload (valor antes)
+              // Se o campo estiver vazio no insertedData, ainda assim registrar a tentativa de inferência
+              const finalValue = (insertedData as any)[field] ?? (payload as any)[field] ?? '';
+              
               return {
                 question_id: insertedData.id,
                 intervention_type: interventionType as any,
                 field_affected: field,
                 value_before: null,
-                value_after: String((payload as any)[field] || ''),
-                action_description: `Campo ${field} preenchido via ${method}`,
+                value_after: String(finalValue),
+                action_description: `Campo "${field}" ${finalValue ? `inferido como "${String(finalValue).slice(0, 50)}"` : 'marcado para inferência (vazio no Excel)'}`,
                 source_type: 'import' as const,
                 source_file: files[0]?.name || 'importação',
-                ai_confidence_score: 0.8,
+                ai_confidence_score: finalValue ? 0.85 : 0.5,
               };
             });
           
