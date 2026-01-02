@@ -8725,6 +8725,59 @@ export type Database = {
           },
         ]
       }
+      question_ai_intervention_logs: {
+        Row: {
+          action_description: string
+          ai_confidence_score: number | null
+          ai_model_used: string | null
+          created_at: string
+          field_affected: string
+          id: string
+          metadata: Json | null
+          question_id: string
+          source_file: string | null
+          source_type: string
+          value_after: string
+          value_before: string | null
+        }
+        Insert: {
+          action_description: string
+          ai_confidence_score?: number | null
+          ai_model_used?: string | null
+          created_at?: string
+          field_affected: string
+          id?: string
+          metadata?: Json | null
+          question_id: string
+          source_file?: string | null
+          source_type?: string
+          value_after: string
+          value_before?: string | null
+        }
+        Update: {
+          action_description?: string
+          ai_confidence_score?: number | null
+          ai_model_used?: string | null
+          created_at?: string
+          field_affected?: string
+          id?: string
+          metadata?: Json | null
+          question_id?: string
+          source_file?: string | null
+          source_type?: string
+          value_after?: string
+          value_before?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_ai_intervention_logs_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       question_attempts: {
         Row: {
           attempt_number: number | null
