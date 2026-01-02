@@ -242,7 +242,12 @@ const QuestionAILogViewer = memo(({ questionId, isOpen, onClose }: QuestionAILog
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+      <DialogContent 
+        showMaximize={true}
+        defaultSize={{ width: 700, height: 600 }}
+        minSize={{ width: 400, height: 300 }}
+        className="flex flex-col"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 border border-primary/30">

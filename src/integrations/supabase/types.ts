@@ -12093,6 +12093,7 @@ export type Database = {
       system_realtime_logs: {
         Row: {
           affected_url: string | null
+          affected_url_or_area: string | null
           category: string
           created_at: string
           device_info: string | null
@@ -12114,6 +12115,7 @@ export type Database = {
         }
         Insert: {
           affected_url?: string | null
+          affected_url_or_area?: string | null
           category?: string
           created_at?: string
           device_info?: string | null
@@ -12135,6 +12137,7 @@ export type Database = {
         }
         Update: {
           affected_url?: string | null
+          affected_url_or_area?: string | null
           category?: string
           created_at?: string
           device_info?: string | null
