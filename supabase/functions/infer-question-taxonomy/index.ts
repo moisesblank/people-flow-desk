@@ -43,6 +43,36 @@ const OFFICIAL_BOARDS = [
   'ENCCEJA', 'SAEB', 'AUTORAL'
 ];
 
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🛡️ PERMANENT YEAR SANITIZATION POLICY v1.0
+// Anos anteriores a 2016 devem ser REMOVIDOS
+// ═══════════════════════════════════════════════════════════════════════════════
+const MINIMUM_VALID_YEAR = 2016;
+
+function sanitizeYear(year: number | string | null | undefined): number | null {
+  if (year === null || year === undefined) return null;
+  
+  const numericYear = typeof year === 'string' ? parseInt(year, 10) : year;
+  
+  if (isNaN(numericYear)) return null;
+  
+  // Remove anos anteriores ao ano mínimo válido
+  if (numericYear < MINIMUM_VALID_YEAR) {
+    console.log(`[YEAR_SANITIZATION] Removed invalid year: ${numericYear} (< ${MINIMUM_VALID_YEAR})`);
+    return null;
+  }
+  
+  // Também rejeita anos futuros obviamente inválidos
+  const currentYear = new Date().getFullYear();
+  if (numericYear > currentYear + 2) {
+    console.log(`[YEAR_SANITIZATION] Removed invalid future year: ${numericYear}`);
+    return null;
+  }
+  
+  return numericYear;
+}
+
 function detectOfficialBoard(input: string): string | null {
   if (!input) return null;
   const normalized = input.toUpperCase().trim();
@@ -68,9 +98,11 @@ function removeInvalidBancaPrefixes(input: string): string {
 
 function normalizeBanca(input: string | null | undefined, year?: number | string | null): string {
   const currentYear = new Date().getFullYear();
+  // Aplica sanitização de ano primeiro
+  const sanitizedYear = sanitizeYear(year);
   
   if (!input || input.trim() === '') {
-    const finalYear = year ? (typeof year === 'string' ? parseInt(year, 10) : year) : currentYear;
+    const finalYear = sanitizedYear || currentYear;
     return `AUTORAL (${finalYear})`;
   }
 
@@ -82,14 +114,15 @@ function normalizeBanca(input: string | null | undefined, year?: number | string
     let extractedYear: number | null = null;
     const yearMatch = originalInput.match(/\b(19[9][0-9]|20[0-9]{2})\b/);
     if (yearMatch) {
-      extractedYear = parseInt(yearMatch[1], 10);
+      // Aplica sanitização ao ano extraído
+      extractedYear = sanitizeYear(parseInt(yearMatch[1], 10));
     }
     
-    if (!extractedYear && year) {
-      extractedYear = typeof year === 'string' ? parseInt(year, 10) : year;
+    if (!extractedYear && sanitizedYear) {
+      extractedYear = sanitizedYear;
     }
     
-    // Retorna no formato BANCA (ANO)
+    // Retorna no formato BANCA (ANO) - sem ano se foi sanitizado
     if (extractedYear) {
       return `${detectedBoard} (${extractedYear})`;
     }
@@ -101,8 +134,8 @@ function normalizeBanca(input: string | null | undefined, year?: number | string
   for (const prefix of INVALID_BANCA_PREFIXES) {
     if (upperInput.includes(prefix.toUpperCase())) {
       const yearMatch = originalInput.match(/\b(19[9][0-9]|20[0-9]{2})\b/);
-      const extractedYear = yearMatch ? parseInt(yearMatch[1], 10) : 
-        (year ? (typeof year === 'string' ? parseInt(year, 10) : year) : currentYear);
+      const rawYear = yearMatch ? parseInt(yearMatch[1], 10) : null;
+      const extractedYear = sanitizeYear(rawYear) || sanitizedYear || currentYear;
       return `AUTORAL (${extractedYear})`;
     }
   }
@@ -111,14 +144,14 @@ function normalizeBanca(input: string | null | undefined, year?: number | string
   let normalizedBoard = removeInvalidBancaPrefixes(originalInput).toUpperCase();
   
   if (!normalizedBoard || normalizedBoard.trim() === '') {
-    const finalYear = year ? (typeof year === 'string' ? parseInt(year, 10) : year) : currentYear;
+    const finalYear = sanitizedYear || currentYear;
     return `AUTORAL (${finalYear})`;
   }
   
   // Adiciona ano se disponível
   const yearMatch = originalInput.match(/\b(19[9][0-9]|20[0-9]{2})\b/);
-  let finalYear = yearMatch ? parseInt(yearMatch[1], 10) : 
-    (year ? (typeof year === 'string' ? parseInt(year, 10) : year) : null);
+  const rawYear = yearMatch ? parseInt(yearMatch[1], 10) : null;
+  let finalYear = sanitizeYear(rawYear) || sanitizedYear;
   
   if (finalYear && !normalizedBoard.includes(String(finalYear))) {
     return `${normalizedBoard.trim()} (${finalYear})`;
