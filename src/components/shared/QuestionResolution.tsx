@@ -220,6 +220,12 @@ function parseResolutionText(text: string): ParsedSection[] {
       type: 'alternativa_analise' as SectionType,
       isCorrect: false 
     },
+    // Formato simples "Alternativa A:" ou "Alternativa A -"
+    { 
+      regex: /(?:^|\n)\s*Alternativa\s*([A-E])\s*[:\-–→]\s*/gi, 
+      type: 'alternativa_analise' as SectionType,
+      isCorrect: false 
+    },
     // Afirmação romana com análise
     { 
       regex: /Afirmação\s*(\d+|[IVX]+)\s*[:–-]\s*["']?([^"'\n]+)["']?\s*/gi, 
@@ -391,14 +397,107 @@ function parseResolutionText(text: string): ParsedSection[] {
     });
   }
 
-  // ========== MERGE GLOBAL DE SEÇÕES DUPLICADAS ==========
+  // ========== DEDUPLICAÇÃO RIGOROSA DE ALTERNATIVAS ==========
+  // REGRA INTERNACIONAL: Cada alternativa (A-E) aparece EXATAMENTE UMA VEZ
+  
+  const deduplicatedSections: ParsedSection[] = [];
+  const seenAlternatives = new Map<string, ParsedSection>(); // letter -> best section
+  const seenAfirmacoes = new Map<string, ParsedSection>(); // number -> best section
+  
+  for (const section of sections) {
+    // Se é alternativa
+    if (section.type.includes('alternativa') && section.alternativaLetter) {
+      const letter = section.alternativaLetter;
+      const existing = seenAlternatives.get(letter);
+      
+      if (!existing) {
+        // Primeira ocorrência — guardar
+        seenAlternatives.set(letter, section);
+      } else {
+        // Já existe — fazer merge inteligente
+        // Prioridade: CORRETA > ERRADA > ANÁLISE
+        const existingPriority = existing.type === 'alternativa_correta' ? 3 : 
+                                  existing.type === 'alternativa_errada' ? 2 : 1;
+        const newPriority = section.type === 'alternativa_correta' ? 3 : 
+                            section.type === 'alternativa_errada' ? 2 : 1;
+        
+        // Se nova tem mais prioridade, substituir
+        if (newPriority > existingPriority) {
+          // Mesclar conteúdo único
+          const mergedContent = mergeUniqueContent(existing.content, section.content);
+          seenAlternatives.set(letter, {
+            ...section,
+            content: mergedContent,
+          });
+        } else {
+          // Manter existente mas adicionar conteúdo novo
+          const mergedContent = mergeUniqueContent(existing.content, section.content);
+          seenAlternatives.set(letter, {
+            ...existing,
+            content: mergedContent,
+          });
+        }
+      }
+    }
+    // Se é afirmação
+    else if (section.type.includes('afirmacao') && section.afirmacaoNumber) {
+      const num = section.afirmacaoNumber;
+      const existing = seenAfirmacoes.get(num);
+      
+      if (!existing) {
+        seenAfirmacoes.set(num, section);
+      } else {
+        // Merge similar
+        const existingPriority = existing.type === 'afirmacao_correta' ? 3 : 
+                                  existing.type === 'afirmacao_incorreta' ? 2 : 1;
+        const newPriority = section.type === 'afirmacao_correta' ? 3 : 
+                            section.type === 'afirmacao_incorreta' ? 2 : 1;
+        
+        if (newPriority > existingPriority) {
+          const mergedContent = mergeUniqueContent(existing.content, section.content);
+          seenAfirmacoes.set(num, { ...section, content: mergedContent });
+        } else {
+          const mergedContent = mergeUniqueContent(existing.content, section.content);
+          seenAfirmacoes.set(num, { ...existing, content: mergedContent });
+        }
+      }
+    }
+    // Outras seções — adicionar diretamente
+    else {
+      deduplicatedSections.push(section);
+    }
+  }
+  
+  // Adicionar alternativas deduplicadas (em ordem A-E)
+  const orderedLetters = ['A', 'B', 'C', 'D', 'E'];
+  for (const letter of orderedLetters) {
+    const alt = seenAlternatives.get(letter);
+    if (alt) {
+      deduplicatedSections.push(alt);
+    }
+  }
+  
+  // Adicionar afirmações deduplicadas (em ordem I, II, III, IV, V ou 1-5)
+  const afirmacaoKeys = Array.from(seenAfirmacoes.keys()).sort((a, b) => {
+    const numA = a.match(/\d+/) ? parseInt(a) : romanToNumber(a);
+    const numB = b.match(/\d+/) ? parseInt(b) : romanToNumber(b);
+    return numA - numB;
+  });
+  for (const key of afirmacaoKeys) {
+    const afir = seenAfirmacoes.get(key);
+    if (afir) {
+      deduplicatedSections.push(afir);
+    }
+  }
+
+  // ========== MERGE GLOBAL DE SEÇÕES PEDAGÓGICAS ==========
   // REGRA UNIVERSAL: Agrupa seções do mesmo tipo mergeable
   const mergableTypes: SectionType[] = ['pegadinhas', 'dica', 'estrategia', 'competencia'];
   
   const nonMergeable: ParsedSection[] = [];
   const mergeableByType: Map<SectionType, ParsedSection[]> = new Map();
   
-  for (const section of sections) {
+  for (const section of deduplicatedSections) {
     if (mergableTypes.includes(section.type)) {
       const existing = mergeableByType.get(section.type) || [];
       existing.push(section);
@@ -481,6 +580,46 @@ function parseResolutionText(text: string): ParsedSection[] {
   }
 
   return mergedSections;
+}
+
+/**
+ * Mescla conteúdos únicos de duas strings (evita duplicatas)
+ */
+function mergeUniqueContent(content1: string, content2: string): string {
+  if (!content1) return content2;
+  if (!content2) return content1;
+  
+  // Normalizar para comparação
+  const normalize = (s: string) => s.toLowerCase().replace(/[^\w\s]/g, '').trim();
+  const n1 = normalize(content1);
+  const n2 = normalize(content2);
+  
+  // Se são iguais ou um contém o outro, retornar o maior
+  if (n1 === n2) return content1.length > content2.length ? content1 : content2;
+  if (n1.includes(n2)) return content1;
+  if (n2.includes(n1)) return content2;
+  
+  // Combinar ambos (evitar repetição total)
+  return `${content1}\n\n${content2}`;
+}
+
+/**
+ * Converte número romano para inteiro
+ */
+function romanToNumber(roman: string): number {
+  const map: Record<string, number> = { I: 1, V: 5, X: 10, L: 50, C: 100 };
+  let result = 0;
+  const upper = roman.toUpperCase();
+  for (let i = 0; i < upper.length; i++) {
+    const current = map[upper[i]] || 0;
+    const next = map[upper[i + 1]] || 0;
+    if (current < next) {
+      result -= current;
+    } else {
+      result += current;
+    }
+  }
+  return result || 99; // Fallback alto para ordenação
 }
 
 /**
