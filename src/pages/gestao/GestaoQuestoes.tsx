@@ -1892,21 +1892,30 @@ function GestaoQuestoes() {
             <Upload className="h-4 w-4" />
             Importar
           </Button>
-          {isOwner && stats.modoTreino > 0 && (
+          {/* ═══════════════════════════════════════════════════════════════
+              🔴 BOTÕES DE EXCLUSÃO SOBERANOS (SEMPRE VISÍVEIS PARA OWNER)
+              CONSTITUIÇÃO v1.0: "Buttons must be visible by default.
+              Buttons must not depend on mode, filter, or state."
+              ═══════════════════════════════════════════════════════════════ */}
+          {isOwner && (
             <Button 
               variant="outline"
               onClick={() => setDeleteTreinoConfirm(true)}
-              className="gap-2 border-orange-500/50 text-orange-500 hover:bg-orange-500/10 hover:text-orange-400"
+              disabled={stats.modoTreino === 0}
+              className="gap-2 border-orange-500/50 text-orange-500 hover:bg-orange-500/10 hover:text-orange-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={stats.modoTreino === 0 ? 'Nenhuma questão no Modo Treino' : `Excluir ${stats.modoTreino} questões do Modo Treino`}
             >
               <Trash2 className="h-4 w-4" />
               Excluir Treino ({stats.modoTreino})
             </Button>
           )}
-          {isOwner && questions.length > 0 && (
+          {isOwner && (
             <Button 
               variant="outline"
               onClick={() => setDeleteAllConfirm(true)}
-              className="gap-2 border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-400"
+              disabled={questions.length === 0}
+              className="gap-2 border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={questions.length === 0 ? 'Nenhuma questão para excluir' : `Excluir TODAS as ${questions.length} questões`}
             >
               <Trash2 className="h-4 w-4" />
               Excluir Todas ({questions.length})
