@@ -1100,13 +1100,13 @@ const formatTextContent = (content: string): string => {
     .trim();
   
   // ========== FORMATAÇÃO DE BULLET POINTS ==========
-  // REGRA: Cada bullet point (•) deve ter uma quebra de linha antes para legibilidade
-  // Substitui "• " no meio do texto por "\n\n• " para criar espaçamento visual
+  // REGRA: Bullets com espaçamento MÍNIMO (compacto) para leitura fluida
+  // Apenas uma quebra de linha entre bullets para aproximar verticalmente
   cleaned = cleaned
-    // Primeiro normaliza bullets que já estão no início de linha (evita duplicar quebras)
-    .replace(/\n\s*•\s*/g, '\n\n• ')
-    // Depois adiciona quebra antes de bullets no meio do texto
-    .replace(/([^\n])\s*•\s*/g, '$1\n\n• ')
+    // Primeiro normaliza bullets que já estão no início de linha
+    .replace(/\n\s*•\s*/g, '\n• ')
+    // Depois adiciona quebra simples antes de bullets no meio do texto
+    .replace(/([^\n])\s*•\s*/g, '$1\n• ')
     // Remove quebras excessivas (mais de 2)
     .replace(/\n{3,}/g, '\n\n')
     .trim();
