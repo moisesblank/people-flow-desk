@@ -1493,8 +1493,19 @@ const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSe
   }
 
   // ANÁLISE DAS ALTERNATIVAS — Seção agrupada especial v4.0 PEDAGOGIA ESTRUTURADA
-  if (section.type === 'analise_header' && (section.content.includes('✅') || section.content.includes('❌'))) {
+  // NÃO RENDERIZAR se não houver alternativas reais (A-E com ✅ ou ❌)
+  if (section.type === 'analise_header') {
     const lines = section.content.split('\n\n').filter(l => l.trim());
+    
+    // Verificar se há alternativas reais (A, B, C, D, E com marcadores)
+    const hasRealAlternatives = lines.some(line => 
+      /^[✅❌]\s*(?:Alternativa\s+)?[A-E][\s:)\-–—]/i.test(line.trim())
+    );
+    
+    // Se não houver alternativas reais, NÃO renderizar este bloco
+    if (!hasRealAlternatives || lines.length === 0) {
+      return null;
+    }
     
     return (
       <div className="rounded-xl overflow-hidden border border-indigo-500/30 bg-indigo-500/5">
