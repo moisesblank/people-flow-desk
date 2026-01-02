@@ -95,6 +95,18 @@ function cleanResolutionText(text: string): string {
   
   let cleaned = text;
   
+  // ========== REMOÇÃO GLOBAL DE CARACTERES INDESEJADOS ==========
+  // REGRA PERMANENTE: remover **, 里, ⚠ de TODO o texto
+  cleaned = cleaned
+    .replace(/\*\*/g, '')           // Remove ** (markdown bold)
+    .replace(/里/g, '')             // Remove caractere chinês 里
+    .replace(/⚠️?/g, '')            // Remove ⚠ (com ou sem variation selector)
+    .replace(/\*/g, '')             // Remove * soltos
+    .replace(/吝/g, '')             // Remove outro caractere chinês
+    .replace(/離/g, '')             // Remove caractere chinês 離
+    .replace(/️/g, '')              // Remove variation selectors órfãos
+    .trim();
+  
   // PASSO 1: Remover lixo de HTML/interface
   const contentStartPatterns = [
     /QUESTÃO\s+SIMULADO/i,
@@ -138,8 +150,8 @@ function cleanResolutionText(text: string): string {
     .replace(/📁\s*CLASSIFICAÇÃO/gi, '')
     .replace(/🔹\s*Macroassunto:[^\n]*/gi, '')
     .replace(/🔹\s*Microassunto:[^\n]*/gi, '')
-    .replace(/離\s*TEMA:[^\n]*/gi, '')
-    .replace(/️\s*CLASSIFICAÇÃO:[^\n]*/gi, '')
+    .replace(/TEMA:[^\n]*/gi, '')
+    .replace(/CLASSIFICAÇÃO:[^\n]*/gi, '')
     .replace(/Macro\s*Assunto:[^\n]*/gi, '')
     .replace(/Micro\s*Assunto:[^\n]*/gi, '')
     .trim();
@@ -148,7 +160,6 @@ function cleanResolutionText(text: string): string {
   cleaned = cleaned
     .replace(/---+/g, '\n')
     .replace(/___+/g, '\n')
-    .replace(/\*\*\*+/g, '\n')
     .replace(/\n{4,}/g, '\n\n\n')
     .trim();
   
@@ -163,10 +174,18 @@ function cleanResolutionText(text: string): string {
  */
 function normalizeAlternativeContent(content: string): string {
   return content
+    // Limpeza global de caracteres indesejados
+    .replace(/\*\*/g, '')
+    .replace(/\*/g, '')
+    .replace(/里/g, '')
+    .replace(/吝/g, '')
+    .replace(/離/g, '')
+    .replace(/⚠️?/g, '')
+    .replace(/️/g, '')
     // Remove prefixos de marcador
-    .replace(/^Esta\s+alternativa\s+está\s+\*\*?(in)?correta\*?\*?\.?\s*/gi, '')
-    .replace(/^Esta\s+é\s+a\s+alternativa\s+\*\*?CORRETA\*?\*?!?\s*/gi, '')
-    .replace(/^\*\*(in)?correta\*\*\.?\s*/gi, '')
+    .replace(/^Esta\s+alternativa\s+está\s+(in)?correta\.?\s*/gi, '')
+    .replace(/^Esta\s+é\s+a\s+alternativa\s+CORRETA!?\s*/gi, '')
+    .replace(/^(in)?correta\.?\s*/gi, '')
     .replace(/^\.+\s*/g, '')
     .replace(/^[.…]+\s*/g, '')
     // Limpa emojis redundantes do início
@@ -189,34 +208,23 @@ function parseResolutionText(text: string): ParsedSection[] {
   const sections: ParsedSection[] = [];
   
   // ========== PADRÕES DE ALTERNATIVAS E AFIRMAÇÕES ==========
+  // Nota: o texto já está limpo de ** via cleanResolutionText
   const alternativaPatterns = [
     // Alternativas erradas com X
     { 
-      regex: /[❌✖️✗×]\s*\**Alternativa\s*([A-E])[:.]?\**:?\s*/gi, 
+      regex: /[❌✖️✗×]\s*Alternativa\s*([A-E])[:.]?\s*/gi, 
       type: 'alternativa_errada' as SectionType,
       isCorrect: false 
     },
     // Alternativas corretas com check
     { 
-      regex: /[✅✔️✓☑️]\s*\**Alternativa\s*([A-E])[:.]?\**:?\s*/gi, 
+      regex: /[✅✔️✓☑️]\s*Alternativa\s*([A-E])[:.]?\s*/gi, 
       type: 'alternativa_correta' as SectionType,
       isCorrect: true 
     },
     // Alternativas neutras
     { 
-      regex: /[🔵🔹▪️•◆►]\s*\**Alternativa\s*([A-E])[:.]?\**:?\s*/gi, 
-      type: 'alternativa_analise' as SectionType,
-      isCorrect: false 
-    },
-    // Formato **Alternativa X:**
-    { 
-      regex: /\*\*Alternativa\s*([A-E]):\*\*\s*/gi, 
-      type: 'alternativa_analise' as SectionType,
-      isCorrect: false 
-    },
-    // Formato **Alternativa X** (sem dois pontos)
-    { 
-      regex: /\*\*Alternativa\s*([A-E])\*\*:?\s*/gi, 
+      regex: /[🔵🔹▪️•◆►]\s*Alternativa\s*([A-E])[:.]?\s*/gi, 
       type: 'alternativa_analise' as SectionType,
       isCorrect: false 
     },
@@ -234,13 +242,13 @@ function parseResolutionText(text: string): ParsedSection[] {
     },
     // Afirmação correta
     { 
-      regex: /[✅✔️✓]\s*\**AFIRMAÇÃO\s*([IVX\d]+)\**:?\s*/gi, 
+      regex: /[✅✔️✓]\s*AFIRMAÇÃO\s*([IVX\d]+):?\s*/gi, 
       type: 'afirmacao_correta' as SectionType,
       isCorrect: true 
     },
     // Afirmação incorreta
     { 
-      regex: /[❌✖️✗×]\s*\**AFIRMAÇÃO\s*([IVX\d]+)\**:?\s*/gi, 
+      regex: /[❌✖️✗×]\s*AFIRMAÇÃO\s*([IVX\d]+):?\s*/gi, 
       type: 'afirmacao_incorreta' as SectionType,
       isCorrect: false 
     },
@@ -249,51 +257,46 @@ function parseResolutionText(text: string): ParsedSection[] {
   // ========== PADRÕES DE SEÇÕES ESPECIAIS ==========
   const sectionPatterns = [
     // ANÁLISE DAS ALTERNATIVAS (header)
-    { regex: /\*\*ANÁLISE\s*DAS\s*ALTERNATIVAS\*\*:?\s*/gi, type: 'analise_header' as SectionType },
     { regex: /ANÁLISE\s*DAS\s*ALTERNATIVAS:?\s*/gi, type: 'analise_header' as SectionType },
     
-    // PASSOS
-    { regex: /[📊⚗️⚙️🔬🧪吝里]\s*PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
+    // PASSOS (sem emojis chineses, já limpos)
+    { regex: /[📊⚗️⚙️🔬🧪]\s*PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
     { regex: /PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
-    { regex: /\*\*PASSO\s*(\d+)/gi, type: 'passo' as SectionType },
     
     // RESUMO
     { regex: /Agora reunindo tudo/gi, type: 'resumo' as SectionType },
     { regex: /Reunindo tudo/gi, type: 'resumo' as SectionType },
-    { regex: /\*\*RESUMO/gi, type: 'resumo' as SectionType },
+    { regex: /RESUMO/gi, type: 'resumo' as SectionType },
     { regex: /Sequência:\s*/gi, type: 'resumo' as SectionType },
     
     // CONCLUSÃO E GABARITO
-    { regex: /[🧬📊✅☑️]\s*CONCLUSÃO[:\s]*/gi, type: 'conclusao' as SectionType },
+    { regex: /[🧬📊☑️]\s*CONCLUSÃO[:\s]*/gi, type: 'conclusao' as SectionType },
+    { regex: /CONCLUSÃO[:\s]*/gi, type: 'conclusao' as SectionType },
     { regex: /A alternativa correta é/gi, type: 'conclusao' as SectionType },
     { regex: /CONCLUSÃO E GABARITO/gi, type: 'conclusao' as SectionType },
-    { regex: /\*\*CONCLUSÃO\*\*/gi, type: 'conclusao' as SectionType },
-    { regex: /[✓✔️✅]\s*Gabarito:?\s*/gi, type: 'conclusao' as SectionType },
-    { regex: /\*\*Gabarito:?\s*letra\s*([A-E])\*\*/gi, type: 'conclusao' as SectionType },
+    { regex: /[✓✔️]\s*Gabarito:?\s*/gi, type: 'conclusao' as SectionType },
     { regex: /Gabarito:?\s*letra\s*([A-E])/gi, type: 'conclusao' as SectionType },
     
     // COMPETÊNCIA E HABILIDADE ENEM
     { regex: /[🎯⚫◆]\s*COMPETÊNCIAS?\s*E\s*HABILIDADES?\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
     { regex: /COMPETÊNCIAS?\s*E\s*HABILIDADES?\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
     { regex: /[◆⚫🎯]\s*COMPETÊNCIA:/gi, type: 'competencia' as SectionType },
-    { regex: /\*\*COMPETÊNCIA/gi, type: 'competencia' as SectionType },
+    { regex: /COMPETÊNCIA/gi, type: 'competencia' as SectionType },
     
     // DIRECIONAMENTO / ESTRATÉGIA
     { regex: /[📌⊙◎🚀✦🧭]\s*DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
     { regex: /DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
     { regex: /[🚀✦🧭]\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
-    { regex: /\*\*DIRECIONAMENTO/gi, type: 'estrategia' as SectionType },
-    { regex: /\*\*ESTRATÉGIA/gi, type: 'estrategia' as SectionType },
+    { regex: /DIRECIONAMENTO/gi, type: 'estrategia' as SectionType },
+    { regex: /ESTRATÉGIA/gi, type: 'estrategia' as SectionType },
     
-    // PEGADINHAS COMUNS
-    { regex: /[⚠️⚠△🚨]\s*PEGADINHAS?\s*(COMUNS?)?[:\s]*/gi, type: 'pegadinhas' as SectionType },
+    // PEGADINHAS COMUNS (sem ⚠)
+    { regex: /[△🚨]\s*PEGADINHAS?\s*(COMUNS?)?[:\s]*/gi, type: 'pegadinhas' as SectionType },
     { regex: /PEGADINHAS?\s*(COMUNS?)?[:\s]*/gi, type: 'pegadinhas' as SectionType },
-    { regex: /\*\*PEGADINHAS/gi, type: 'pegadinhas' as SectionType },
     
     // DICA DE OURO
     { regex: /[💡🔆✨💎]\s*DICA\s*DE\s*OURO[:\s]*/gi, type: 'dica' as SectionType },
     { regex: /DICA\s*DE\s*OURO[:\s]*/gi, type: 'dica' as SectionType },
-    { regex: /\*\*DICA\s*DE\s*OURO/gi, type: 'dica' as SectionType },
   ];
 
   // ========== COLETA DE POSIÇÕES ==========
@@ -849,33 +852,33 @@ function getSectionStyles(type: SectionType, isCorrect?: boolean): {
 function getSectionTitle(section: ParsedSection): string {
   switch (section.type) {
     case 'alternativa_correta':
-      return `✅ ALTERNATIVA ${section.alternativaLetter} — CORRETA`;
+      return `ALTERNATIVA ${section.alternativaLetter} — CORRETA`;
     case 'alternativa_errada':
-      return `❌ ALTERNATIVA ${section.alternativaLetter} — ERRADA`;
+      return `ALTERNATIVA ${section.alternativaLetter} — ERRADA`;
     case 'alternativa_analise':
-      return `🔵 ALTERNATIVA ${section.alternativaLetter}`;
+      return `ALTERNATIVA ${section.alternativaLetter}`;
     case 'afirmacao_analise':
-      return `📋 AFIRMAÇÃO ${section.afirmacaoNumber}`;
+      return `AFIRMAÇÃO ${section.afirmacaoNumber}`;
     case 'afirmacao_correta':
-      return `✅ AFIRMAÇÃO ${section.afirmacaoNumber} — VERDADEIRA`;
+      return `AFIRMAÇÃO ${section.afirmacaoNumber} — VERDADEIRA`;
     case 'afirmacao_incorreta':
-      return `❌ AFIRMAÇÃO ${section.afirmacaoNumber} — FALSA`;
+      return `AFIRMAÇÃO ${section.afirmacaoNumber} — FALSA`;
     case 'analise_header':
-      return '📋 ANÁLISE DAS ALTERNATIVAS';
+      return 'ANÁLISE DAS ALTERNATIVAS';
     case 'passo':
-      return `📊 PASSO ${section.stepNumber}`;
+      return `PASSO ${section.stepNumber}`;
     case 'conclusao':
-      return '✅ CONCLUSÃO E GABARITO';
+      return 'CONCLUSÃO E GABARITO';
     case 'competencia':
-      return '🎯 COMPETÊNCIA E HABILIDADE - ENEM';
+      return 'COMPETÊNCIA E HABILIDADE - ENEM';
     case 'estrategia':
-      return '📌 DIRECIONAMENTO / ESTRATÉGIA';
+      return 'DIRECIONAMENTO / ESTRATÉGIA';
     case 'pegadinhas':
-      return '⚠️ PEGADINHAS COMUNS';
+      return 'PEGADINHAS COMUNS';
     case 'dica':
-      return '💡 DICA DE OURO';
+      return 'DICA DE OURO';
     case 'resumo':
-      return '📋 RESUMO FINAL';
+      return 'RESUMO FINAL';
     default:
       return '';
   }
@@ -905,12 +908,20 @@ function extractImagesFromResolution(text: string): { cleanedText: string; image
  * Formata conteúdo com fórmulas químicas (sem imagens)
  */
 const formatTextContent = (content: string): string => {
-  return formatChemicalFormulas(
-    content
-      .replace(/👉\s*/g, '\n• ')
-      .replace(/Reunindo:/gi, '\n📋 Reunindo:')
-      .trim()
-  );
+  // Limpeza global de caracteres indesejados antes de qualquer formatação
+  const cleaned = content
+    .replace(/\*\*/g, '')           // Remove ** (markdown bold)
+    .replace(/\*/g, '')             // Remove * soltos
+    .replace(/里/g, '')             // Remove caractere chinês 里
+    .replace(/吝/g, '')             // Remove caractere chinês 吝
+    .replace(/離/g, '')             // Remove caractere chinês 離
+    .replace(/⚠️?/g, '')            // Remove ⚠ (com ou sem variation selector)
+    .replace(/️/g, '')              // Remove variation selectors órfãos
+    .replace(/👉\s*/g, '\n• ')
+    .replace(/Reunindo:/gi, '\nReunindo:')
+    .trim();
+  
+  return formatChemicalFormulas(cleaned);
 };
 
 /**
@@ -969,7 +980,6 @@ const AlternativaItem = memo(forwardRef<HTMLDivElement, { section: ParsedSection
   const isAfirmacao = section.type.includes('afirmacao');
 
   const letter = section.alternativaLetter || section.afirmacaoNumber || '';
-  const icon = isCorrect ? '✅' : isAnalise ? '🔵' : '❌';
   const label = isAfirmacao ? 'Afirmação' : 'Alternativa';
   const status = isCorrect
     ? isAfirmacao
@@ -978,6 +988,9 @@ const AlternativaItem = memo(forwardRef<HTMLDivElement, { section: ParsedSection
     : isAfirmacao
       ? 'FALSA'
       : 'ERRADA';
+
+  // Ícone via Lucide (sem emojis)
+  const IconComponent = isCorrect ? CheckCircle : isAnalise ? CircleDot : XCircle;
 
   return (
     <div
@@ -997,7 +1010,10 @@ const AlternativaItem = memo(forwardRef<HTMLDivElement, { section: ParsedSection
           isCorrect ? 'text-green-600' : isAnalise ? 'text-blue-600' : 'text-red-600'
         )}
       >
-        <span className="font-bold">{icon} {label} {letter}</span>
+        <span className="font-bold inline-flex items-center gap-1">
+          <IconComponent className="h-4 w-4 inline" />
+          {label} {letter}
+        </span>
         {!isAnalise && <span className="font-bold"> — {status}</span>}
         <span className="text-foreground/80 ml-2">→ {formatContent(section.content)}</span>
       </div>
@@ -1023,7 +1039,7 @@ const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSe
           </div>
           <div className="flex-1 min-w-0">
             <h4 className="font-bold text-sm text-emerald-500 mb-2">
-              📝 ANÁLISE DA QUESTÃO
+              ANÁLISE DA QUESTÃO
             </h4>
             <p className="text-justify leading-relaxed text-sm text-foreground/90">
               {formatContent(section.content)}
@@ -1193,7 +1209,7 @@ const QuestionResolution = memo(function QuestionResolution({
         <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 border border-emerald-500/30">
           <Sparkles className="h-6 w-6 text-emerald-500" />
           <h4 className="text-xl font-bold text-emerald-500">
-            🔬 RESOLUÇÃO COMENTADA PELO PROF. MOISÉS MEDEIROS
+            RESOLUÇÃO COMENTADA PELO PROF. MOISÉS MEDEIROS
           </h4>
         </div>
       </div>
@@ -1219,7 +1235,7 @@ const QuestionResolution = memo(function QuestionResolution({
           <div className="px-4 py-3 bg-muted/30 border-b border-border/30 flex items-center gap-2">
             <Target className="h-4 w-4 text-primary" />
             <h4 className="font-bold text-sm text-primary uppercase tracking-wide">
-              📋 Análise das Alternativas
+              Análise das Alternativas
             </h4>
           </div>
 
@@ -1239,7 +1255,7 @@ const QuestionResolution = memo(function QuestionResolution({
           <div className="px-4 py-3 bg-cyan-500/20 border-b border-cyan-500/20 flex items-center gap-2">
             <MessageCircle className="h-4 w-4 text-cyan-500" />
             <h4 className="font-bold text-sm text-cyan-500 uppercase tracking-wide">
-              📋 RESUMO FINAL
+              RESUMO FINAL
             </h4>
           </div>
           {/* Conteúdos agrupados */}
@@ -1262,7 +1278,7 @@ const QuestionResolution = memo(function QuestionResolution({
           <div className="px-4 py-3 bg-emerald-500/20 border-b border-emerald-500/20 flex items-center gap-2">
             <CheckCircle className="h-4 w-4 text-emerald-500" />
             <h4 className="font-bold text-sm text-emerald-500 uppercase tracking-wide">
-              ✅ CONCLUSÃO E GABARITO
+              CONCLUSÃO E GABARITO
             </h4>
           </div>
           {/* Conteúdos agrupados */}
@@ -1295,7 +1311,7 @@ const QuestionResolution = memo(function QuestionResolution({
               <Target className="h-4 w-4" />
             </div>
             <h4 className="font-bold text-sm text-purple-500">
-              🎯 COMPETÊNCIA E HABILIDADE - ENEM
+              COMPETÊNCIA E HABILIDADE - ENEM
             </h4>
           </div>
           <div className="px-5 py-4 space-y-2 text-sm">
