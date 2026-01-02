@@ -1376,12 +1376,12 @@ const AlternativaItem = memo(forwardRef<HTMLDivElement, { section: ParsedSection
     <div
       ref={ref}
       className={cn(
-        'px-4 py-3 border-l-4',
+        'px-4 py-3 border-l-4 rounded-r-lg',
         isCorrect
-          ? 'border-l-green-500 bg-green-500/5'
+          ? 'border-l-green-600 bg-green-500/15'
           : isAnalise
-            ? 'border-l-blue-500 bg-blue-500/5'
-            : 'border-l-red-500 bg-red-500/5'
+            ? 'border-l-blue-500 bg-blue-500/10'
+            : 'border-l-red-600 bg-red-500/15'
       )}
     >
       <div
@@ -1429,10 +1429,10 @@ const AlternativeLineItem = memo(function AlternativeLineItem({ line }: { line: 
   
   return (
     <div className={cn(
-      'flex items-start gap-3 py-3 px-4 rounded-lg border-l-2',
+      'flex items-start gap-3 py-3 px-4 rounded-lg border-l-4',
       isCorrect 
-        ? 'bg-green-500/10 border-l-green-500' 
-        : 'bg-red-500/5 border-l-red-500'
+        ? 'bg-green-500/15 border-l-green-600' 
+        : 'bg-red-500/15 border-l-red-600'
     )}>
       <IconComponent className={cn(
         'h-5 w-5 flex-shrink-0 mt-0.5',
