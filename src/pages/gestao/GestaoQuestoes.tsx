@@ -52,6 +52,7 @@ import { Button } from '@/components/ui/button';
 import { TaxonomyManager } from '@/components/gestao/questoes/TaxonomyManager';
 import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
 import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, getBancaLabel } from '@/constants/bancas';
+import { formatBancaHeader } from '@/lib/bancaNormalizer';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -2478,17 +2479,10 @@ function GestaoQuestoes() {
                             {question.difficulty === 'dificil' && 'Difícil'}
                           </Badge>
                           
-                          {question.banca && (
-                            <Badge className="text-sm px-4 py-1.5 bg-muted text-foreground border border-border/50 font-medium flex items-center gap-1">
-                              🏛 {getBancaLabel(question.banca)}
-                            </Badge>
-                          )}
-                          
-                          {question.ano && (
-                            <Badge className="text-sm px-4 py-1.5 bg-muted text-foreground border border-border/50 font-medium flex items-center gap-1">
-                              📅 {question.ano}
-                            </Badge>
-                          )}
+                          {/* BANCA + ANO UNIFICADOS (NORMALIZAÇÃO PADRÃO) */}
+                          <Badge className="text-sm px-4 py-1.5 bg-muted text-foreground border border-border/50 font-medium flex items-center gap-1">
+                            🏛 {formatBancaHeader(question.banca, question.ano, question.question_text)}
+                          </Badge>
                         </div>
 
                         {/* Grupo Direito: Tipo + Macro */}

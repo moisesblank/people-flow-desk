@@ -11,11 +11,11 @@
 import { memo, useState } from 'react';
 import { ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getBancaLabel } from '@/constants/bancas';
 import { formatChemicalFormulas } from '@/lib/chemicalFormatter';
-
-// Fallback padrão quando não há banca
-const DEFAULT_BANCA_HEADER = 'QUESTÃO SIMULADO PROF. MOISÉS MEDEIROS';
+import { 
+  formatBancaHeader as formatBancaHeaderNormalized,
+  DEFAULT_BANCA_HEADER 
+} from '@/lib/bancaNormalizer';
 
 interface QuestionEnunciadoProps {
   /** Texto do enunciado (pode conter [IMAGEM: URL]) */
@@ -109,17 +109,18 @@ export const getAllQuestionImages = (
 
 /**
  * Formata o header da banca
- * Regras:
- * - Se tem banca + ano: "BANCA (ANO)"
- * - Se tem só banca: "BANCA"
- * - Se não tem nada: fallback padrão
+ * 
+ * PADRÃO PERMANENTE (QUESTION_HEADER_STANDARDIZATION_AS_NEW_NORMAL):
+ * 1. Se banca oficial existe → exibir APENAS a banca em UPPERCASE
+ * 2. Se não existe banca → usar "QUESTÃO SIMULADO PROF. MOISÉS MEDEIROS"
+ * 3. Nunca misturar labels genéricos com bancas oficiais
  */
-export const formatBancaHeader = (banca?: string | null, ano?: number | null): string => {
-  if (banca) {
-    const bancaLabel = getBancaLabel(banca);
-    return ano ? `${bancaLabel} (${ano})` : bancaLabel;
-  }
-  return DEFAULT_BANCA_HEADER;
+export const formatBancaHeader = (
+  banca?: string | null, 
+  ano?: number | null,
+  questionText?: string | null
+): string => {
+  return formatBancaHeaderNormalized(banca, ano, questionText);
 };
 
 /**
@@ -152,8 +153,8 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
   // Estado para navegação entre imagens
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Header da banca
-  const bancaHeader = formatBancaHeader(banca, ano);
+  // Header da banca — usa normalização automática incluindo texto da questão
+  const bancaHeader = formatBancaHeader(banca, ano, questionText);
 
   const textSizeClass = {
     sm: 'text-sm',

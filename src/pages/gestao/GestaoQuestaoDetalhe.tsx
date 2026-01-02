@@ -58,6 +58,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getBancaLabel } from '@/constants/bancas';
+import { formatBancaHeader } from '@/lib/bancaNormalizer';
 
 // ============================================
 // TIPOS
@@ -342,16 +343,10 @@ function GestaoQuestaoDetalhe() {
             {DIFFICULTY_MAP[question.difficulty]?.label}
           </Badge>
         )}
-        {question.banca && (
-          <Badge variant="outline">
-            🏛️ {getBancaLabel(question.banca)}
-          </Badge>
-        )}
-        {question.ano && (
-          <Badge variant="outline">
-            📅 {question.ano}
-          </Badge>
-        )}
+        {/* BANCA + ANO UNIFICADOS (NORMALIZAÇÃO PADRÃO) */}
+        <Badge variant="outline">
+          🏛️ {formatBancaHeader(question.banca, question.ano, question.question_text)}
+        </Badge>
         {question.origem && (
           <Badge variant="outline">
             📌 {question.origem}
