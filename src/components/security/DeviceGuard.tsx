@@ -56,6 +56,15 @@ export function DeviceGuard({ children }: DeviceGuardProps) {
     if (isGateActive && payload) {
       console.log('[DeviceGuard] 🛡️ FAIL-CLOSED: Gate ativo, redirecionando para /security/device-limit');
       navigate('/security/device-limit', { replace: true });
+
+      // 🧯 P0 anti-tela-preta: fallback HARD redirect caso o router esteja travado
+      const t = window.setTimeout(() => {
+        if (window.location.pathname !== '/security/device-limit') {
+          window.location.assign('/security/device-limit');
+        }
+      }, 600);
+
+      return () => window.clearTimeout(t);
     }
   }, [isGateActive, payload, location.pathname, navigate]);
 
@@ -65,10 +74,10 @@ export function DeviceGuard({ children }: DeviceGuardProps) {
       // 🔐 BLOCO 3: Apenas atualiza last_seen, não bloqueia
       // O bloqueio real já aconteceu no Auth.tsx
       console.log('[DeviceGuard] 🔐 Verificação de fallback...');
-      
+
       checkAndRegisterDevice().then((result) => {
         setHasChecked(true);
-        
+
         if (!result.success && result.error === 'DEVICE_LIMIT_EXCEEDED') {
           // Isso só deve acontecer se o login não passou pelo fluxo correto
           console.warn('[DeviceGuard] ⚠️ Limite excedido (edge case) - mostrando modal');
@@ -76,7 +85,7 @@ export function DeviceGuard({ children }: DeviceGuardProps) {
         }
       });
     }
-    
+
     // Reset quando usuário desloga
     if (!user) {
       setHasChecked(false);
@@ -102,8 +111,26 @@ export function DeviceGuard({ children }: DeviceGuardProps) {
   }, [deactivateDevice, clearLimitExceeded]);
 
   // 🛡️ BLOCO 3: Se gate está ativo, NÃO renderizar children (fail-closed)
+  // P0 anti-tela-preta: nunca retornar null (exibe tela de bloqueio enquanto redireciona)
   if (isGateActive && payload && location.pathname !== '/security/device-limit') {
-    return null; // Não renderizar nada enquanto redireciona
+    return (
+      <div className="min-h-screen w-full bg-background text-foreground flex items-center justify-center p-6">
+        <div className="max-w-md w-full space-y-3 text-center">
+          <div className="mx-auto h-10 w-10 rounded-full border-2 border-foreground/50 border-t-transparent animate-spin" />
+          <h1 className="text-base font-semibold">Validando dispositivo…</h1>
+          <p className="text-sm text-muted-foreground">
+            Sua sessão precisa confirmar o dispositivo antes de acessar esta área.
+          </p>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center h-9 px-4 rounded-md bg-primary text-primary-foreground text-sm font-medium"
+            onClick={() => window.location.assign('/security/device-limit')}
+          >
+            Ir para verificação
+          </button>
+        </div>
+      </div>
+    );
   }
 
   // Se não tem usuário, renderizar normalmente
