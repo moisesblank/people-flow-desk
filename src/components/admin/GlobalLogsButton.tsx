@@ -40,8 +40,8 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
   // Não exibir se não for owner ou se estiver na página de logs
   if (!isOwner) return null;
   
-  // Se estiver na página de logs, não mostrar o botão flutuante
-  const isOnLogsPage = location.pathname === '/gestaofc/logs';
+  // REMOVIDO: Condição que escondia o botão na página de logs
+  // O botão SEMPRE aparece para o Owner abrir o modal
   
   // Query para buscar logs recentes (últimos 10 para preview)
   const { data: recentLogs = [], isLoading } = useQuery({
@@ -83,9 +83,9 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
   
   return (
     <>
-      {/* Floating Button - Posicionado à esquerda do TRAMON */}
+      {/* Floating Button - SEMPRE visível para o Owner */}
       <AnimatePresence>
-        {!isOnLogsPage && (
+        {true && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
