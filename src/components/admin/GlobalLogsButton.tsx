@@ -173,10 +173,12 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
     refetchInterval: 10000,
   });
   
-  // Contar erros
+  // Contar erros e detectar emergências
   const systemErrorCount = systemLogs.filter(log => log.severity === 'error').length;
+  const criticalCount = systemLogs.filter(log => ['critical', 'emergency'].includes(log.severity)).length;
   const browserErrorCount = browserLogs.filter(log => log.type === 'error').length;
-  const totalErrors = systemErrorCount + browserErrorCount;
+  const totalErrors = systemErrorCount + browserErrorCount + criticalCount;
+  const hasEmergency = criticalCount > 0;
   
   const handleOpenLogs = useCallback(() => {
     navigate('/gestaofc/logs');
@@ -188,6 +190,8 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
   
   const getSystemSeverityColor = (severity: string) => {
     switch (severity) {
+      case 'emergency': return 'text-red-600 font-black animate-pulse';
+      case 'critical': return 'text-red-500 font-bold';
       case 'error': return 'text-red-400';
       case 'warn': return 'text-yellow-400';
       case 'info': return 'text-blue-400';
@@ -217,15 +221,35 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
         >
           <motion.button
             onClick={handleOpenModal}
-            className="relative h-14 w-14 rounded-2xl flex items-center justify-center group overflow-hidden border-2 border-red-400/60"
+            className={`relative h-14 w-14 rounded-2xl flex items-center justify-center group overflow-hidden border-2 ${
+              hasEmergency 
+                ? 'border-red-600 shadow-[0_0_30px_rgba(255,0,0,0.8),0_0_60px_rgba(255,0,0,0.5)]' 
+                : 'border-red-400/60'
+            }`}
             style={{ 
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-              boxShadow: '0 8px 32px rgba(239, 68, 68, 0.3), 0 0 20px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+              background: hasEmergency 
+                ? 'linear-gradient(135deg, #3d0000 0%, #1a0000 50%, #0a0000 100%)'
+                : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+              boxShadow: hasEmergency 
+                ? '0 8px 32px rgba(255, 0, 0, 0.6), 0 0 40px rgba(255, 0, 0, 0.4), inset 0 1px 0 rgba(255, 100, 100, 0.3)'
+                : '0 8px 32px rgba(239, 68, 68, 0.3), 0 0 20px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
             }}
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
+            animate={hasEmergency ? { scale: [1, 1.05, 1] } : {}}
+            transition={hasEmergency ? { repeat: Infinity, duration: 0.5 } : {}}
           >
-            {totalErrors > 0 && (
+            {/* ALARME CRÍTICO - Pulsação rápida vermelha intensa */}
+            {hasEmergency && (
+              <motion.div
+                className="absolute inset-0 rounded-2xl bg-red-600/50"
+                animate={{ opacity: [0.3, 0.8, 0.3] }}
+                transition={{ repeat: Infinity, duration: 0.4, ease: 'easeInOut' }}
+              />
+            )}
+            
+            {/* Erros normais - Pulsação suave */}
+            {totalErrors > 0 && !hasEmergency && (
               <motion.div
                 className="absolute inset-0 rounded-2xl bg-red-500/20"
                 animate={{ opacity: [0.2, 0.5, 0.2] }}
