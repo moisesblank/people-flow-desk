@@ -1,14 +1,26 @@
-// ============================================
-// 📚 QUESTION RESOLUTION — COMPONENTE UNIVERSAL
-// PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v3.0
-// 
-// ESTRUTURA VISUAL ORGANIZADA EM BLOCOS:
-// - Parser inteligente detecta seções e alternativas
-// - CADA alternativa em seu bloco visual individual
-// - Separação clara entre seções
-// - Deduplicação automática de seções repetidas
-// - Limpeza de formatação inconsistente
-// ============================================
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║ 📚 QUESTION RESOLUTION — COMPONENTE UNIVERSAL E OBRIGATÓRIO                   ║
+// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v3.1                                       ║
+// ╠═══════════════════════════════════════════════════════════════════════════════╣
+// ║                                                                                ║
+// ║ 🔒 LEI PERMANENTE — CONSTITUIÇÃO DO QUESTION DOMAIN                           ║
+// ║                                                                                ║
+// ║ Este componente é a ÚNICA fonte de verdade para renderização de resoluções.   ║
+// ║ TODAS as questões (SIMULADOS, MODO TREINO, atuais e futuras) DEVEM usar       ║
+// ║ este componente para garantir formatação consistente.                         ║
+// ║                                                                                ║
+// ║ REGRAS IMUTÁVEIS:                                                              ║
+// ║ 1. Remoção de caracteres bugados: "", '', **, 里, ⚠️, etc.                      ║
+// ║ 2. Formatação química científica automática (H2O → H₂O)                        ║
+// ║ 3. Alternativas: "Alternativa X ERRADA:" ou "Alternativa X CORRETA:"          ║
+// ║ 4. Deduplicação automática de seções repetidas                                 ║
+// ║ 5. Imagens inline via [IMAGEM: URL] com max-h-[600px]                          ║
+// ║ 6. Bullets unificados com espaçamento reduzido                                 ║
+// ║ 7. Pontuação limpa (sem ".." ou "..." excessivos)                              ║
+// ║                                                                                ║
+// ║ JAMAIS MODIFICAR ESTAS REGRAS SEM AUTORIZAÇÃO DO OWNER.                        ║
+// ║                                                                                ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
 
 import { memo, useMemo, forwardRef } from 'react';
 import { cn } from '@/lib/utils';

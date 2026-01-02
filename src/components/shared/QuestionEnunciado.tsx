@@ -1,12 +1,29 @@
-// ============================================
-// 📝 QUESTION ENUNCIADO — COMPONENTE UNIVERSAL
-// PADRÃO OBRIGATÓRIO PARA TODAS AS QUESTÕES
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║ 📝 QUESTION ENUNCIADO — COMPONENTE UNIVERSAL E OBRIGATÓRIO                    ║
+// ║ PADRÃO OBRIGATÓRIO PARA TODAS AS QUESTÕES                                      ║
+// ╠═══════════════════════════════════════════════════════════════════════════════╣
+// ║                                                                                ║
+// ║ 🔒 LEI PERMANENTE — CONSTITUIÇÃO DO QUESTION DOMAIN                           ║
+// ║                                                                                ║
+// ║ Este componente é a ÚNICA fonte de verdade para renderização de enunciados.   ║
+// ║ TODAS as questões (SIMULADOS, MODO TREINO, atuais e futuras) DEVEM usar       ║
+// ║ este componente para garantir formatação consistente.                         ║
+// ║                                                                                ║
+// ║ REGRAS IMUTÁVEIS:                                                              ║
+// ║ 1. Header da banca: centralizado, bold, UPPERCASE                             ║
+// ║ 2. Remoção de caracteres bugados: "", '', etc.                                ║
+// ║ 3. Formatação química científica automática (H2O → H₂O)                        ║
+// ║ 4. Imagens: max-h-[900px] com navegação para múltiplas                        ║
+// ║ 5. Texto justificado com espaçamento adequado                                 ║
+// ║                                                                                ║
+// ║ JAMAIS MODIFICAR ESTAS REGRAS SEM AUTORIZAÇÃO DO OWNER.                        ║
+// ║                                                                                ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
 // 
 // ESTRUTURA:
 // 1. BANCA HEADER (centralizado, bold, uppercase)
 // 2. TEXTO DO ENUNCIADO (justificado)
 // 3. IMAGENS (múltiplas suportadas)
-// ============================================
 
 import { memo, useState } from 'react';
 import { ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
