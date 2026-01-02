@@ -312,7 +312,30 @@ function parseResolutionText(text: string): ParsedSection[] {
     }
   }
 
-  return sections;
+  // ========== MERGE DE SEÇÕES CONSECUTIVAS DO MESMO TIPO ==========
+  // Agrupa seções como "pegadinhas" que aparecem múltiplas vezes seguidas
+  const mergedSections: ParsedSection[] = [];
+  const mergableTypes: SectionType[] = ['pegadinhas', 'dica', 'estrategia'];
+  
+  for (let i = 0; i < sections.length; i++) {
+    const current = sections[i];
+    const lastMerged = mergedSections[mergedSections.length - 1];
+    
+    // Se o tipo atual é mergeable e o último também é do mesmo tipo, junta o conteúdo
+    if (
+      lastMerged && 
+      mergableTypes.includes(current.type) && 
+      lastMerged.type === current.type
+    ) {
+      // Adiciona o conteúdo ao bloco existente com separador
+      lastMerged.content = `${lastMerged.content}\n\n• ${current.content}`;
+    } else {
+      // Adiciona como nova seção
+      mergedSections.push({ ...current });
+    }
+  }
+
+  return mergedSections;
 }
 
 /**
