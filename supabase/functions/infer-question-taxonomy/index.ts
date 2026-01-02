@@ -12,27 +12,32 @@ const corsHeaders = {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const AGENT_POLICY = `
-🤖 MODO AGENTE v4.0 — CLASSIFICAÇÃO INTELIGENTE COM NORMALIZAÇÃO SEMÂNTICA
+🤖 MODO AGENTE v5.0 — INFERÊNCIA CONDICIONAL + NORMALIZAÇÃO SEMÂNTICA
 
 ══════════════════════════════════════════════════════════════════════════════
-REGRA ABSOLUTA: CLASSIFICAR POR CONCEITO QUÍMICO, NÃO POR TEXTO LITERAL
+REGRA ABSOLUTA: RESPEITAR DADOS DO USUÁRIO — INFERIR APENAS SE NECESSÁRIO
 ══════════════════════════════════════════════════════════════════════════════
 
 PRINCÍPIO FUNDAMENTAL:
-1. ANALISE o conceito químico subjacente na questão
-2. IDENTIFIQUE equivalências semânticas (sinônimos, contextos aplicados)
-3. MAPEIE para o MICRO/TEMA/SUBTEMA canônico correto
-4. PREENCHA todos os campos obrigatoriamente
+1. Se os campos de taxonomia JÁ ESTÃO PREENCHIDOS → RESPEITAR (não alterar)
+2. Se os campos estão TODOS VAZIOS → INFERIR a partir do conteúdo
+3. Se há DISCORDÂNCIA EXTREMA (erro conceitual grave) → CORRIGIR e avisar
 
-CAMPOS QUE DEVEM SER PREENCHIDOS SE VAZIOS:
-- MACRO (obrigatório de qualquer forma)
-- MICRO (inferir do conteúdo - USAR DA LISTA CANÔNICA)
-- TEMA (inferir do conteúdo - USAR DA LISTA CANÔNICA)
-- SUBTEMA (inferir do conteúdo - USAR DA LISTA CANÔNICA)
-- DIFICULDADE (inferir: fácil, médio ou difícil)
-- BANCA (inferir se possível ou usar "Autoral")
-- ANO (inferir se possível ou usar ano atual)
-- EXPLICAÇÃO (gerar resolução comentada completa se ausente)
+QUANDO INFERIR (apenas um desses casos):
+✅ CASO 1: Todos os campos de taxonomia estão vazios (macro, micro, tema, subtema)
+✅ CASO 2: Há discordância EXTREMA entre o conteúdo e a classificação sugerida
+   - Exemplo: Questão fala de "ligações químicas" mas está classificada como "Estequiometria"
+
+QUANDO NÃO INFERIR:
+❌ Se o usuário já preencheu os campos e fazem sentido conceitual → RESPEITAR
+❌ Se a classificação é apenas "menos precisa" mas não errada → MANTER
+
+CAMPOS QUE PODEM SER INFERIDOS (quando aplicável):
+- MACRO, MICRO, TEMA, SUBTEMA (apenas se vazios OU erro extremo)
+- DIFICULDADE (inferir se vazio)
+- BANCA (inferir se vazio ou usar "Autoral")
+- ANO (inferir se vazio ou usar ano atual)
+- EXPLICAÇÃO (gerar resolução comentada se ausente)
 `;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -348,6 +353,67 @@ function detectSemanticEquivalence(questionText: string): {
   return { match: null, canonical: null };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNÇÃO: Verificar se há discordância extrema (erro conceitual grave)
+// ═══════════════════════════════════════════════════════════════════════════════
+function detectExtremeDiscordance(
+  questionText: string, 
+  suggestedMicro: string | undefined,
+  semanticMatch: { micro: string, tema: string, subtema: string } | null
+): { hasDiscordance: boolean, reason: string } {
+  // Se não tem sugestão ou não tem match semântico, não há discordância a verificar
+  if (!suggestedMicro || !semanticMatch) {
+    return { hasDiscordance: false, reason: '' };
+  }
+  
+  // Normalizar para comparação
+  const suggestedNormalized = suggestedMicro.toLowerCase().trim();
+  const semanticNormalized = semanticMatch.micro.toLowerCase().trim();
+  
+  // Se são iguais ou similares, não há discordância
+  if (suggestedNormalized === semanticNormalized || 
+      suggestedNormalized.includes(semanticNormalized) ||
+      semanticNormalized.includes(suggestedNormalized)) {
+    return { hasDiscordance: false, reason: '' };
+  }
+  
+  // Verificar discordância EXTREMA (MICROs completamente diferentes)
+  // Ex: Questão fala de "ligação covalente" mas está classificada como "Estequiometria"
+  const incompatiblePairs: Record<string, string[]> = {
+    'ligações químicas': ['estequiometria', 'gases', 'cálculos químicos'],
+    'estequiometria': ['atomística', 'ligações químicas', 'tabela periódica'],
+    'atomística': ['estequiometria', 'gases', 'funções inorgânicas'],
+    'funções inorgânicas': ['atomística', 'gases'],
+    'gases': ['ligações químicas', 'atomística', 'funções inorgânicas'],
+    'cálculos químicos': ['ligações químicas', 'atomística'],
+    'tabela periódica': ['estequiometria', 'gases'],
+  };
+  
+  for (const [semantic, incompatible] of Object.entries(incompatiblePairs)) {
+    if (semanticNormalized.includes(semantic)) {
+      for (const incompat of incompatible) {
+        if (suggestedNormalized.includes(incompat)) {
+          const reason = `DISCORDÂNCIA EXTREMA: Conteúdo é "${semanticMatch.micro}" mas está classificado como "${suggestedMicro}"`;
+          console.log(`⚠️ ${reason}`);
+          return { hasDiscordance: true, reason };
+        }
+      }
+    }
+  }
+  
+  return { hasDiscordance: false, reason: '' };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNÇÃO: Verificar se os campos de taxonomia estão todos vazios
+// ═══════════════════════════════════════════════════════════════════════════════
+function isTaxonomyEmpty(question: QuestionInput): boolean {
+  return !question.suggested_macro && 
+         !question.suggested_micro && 
+         !question.suggested_tema && 
+         !question.suggested_subtema;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -375,7 +441,7 @@ serve(async (req) => {
     const taxonomy = await fetchCanonicalTaxonomy();
 
     const currentYear = new Date().getFullYear();
-    console.log(`🤖 MODO AGENTE v4.0: Processando ${questions.length} questões com taxonomia dinâmica...`);
+    console.log(`🤖 MODO AGENTE v5.0: Processando ${questions.length} questões com inferência condicional...`);
 
     const BATCH_SIZE = 3;
     const results: AgentResult[] = [];
@@ -384,66 +450,109 @@ serve(async (req) => {
       const batch = questions.slice(i, i + BATCH_SIZE);
       
       // ═══════════════════════════════════════════════════════════════════════
-      // PASSO 2: Detectar equivalências semânticas antes de enviar à IA
+      // PASSO 2: Detectar equivalências semânticas e verificar condições de inferência
       // ═══════════════════════════════════════════════════════════════════════
-      const semanticHints = batch.map(q => {
+      const analysisResults = batch.map(q => {
         const detection = detectSemanticEquivalence(q.question_text || '');
-        return { id: q.id, ...detection };
+        const isEmpty = isTaxonomyEmpty(q);
+        const discordance = detectExtremeDiscordance(q.question_text || '', q.suggested_micro, detection.canonical);
+        
+        // DECIDIR: Inferir ou Respeitar
+        const shouldInfer = isEmpty || discordance.hasDiscordance;
+        
+        return { 
+          id: q.id, 
+          ...detection, 
+          isEmpty,
+          discordance,
+          shouldInfer,
+          action: isEmpty ? 'INFERIR_TUDO' : (discordance.hasDiscordance ? 'CORRIGIR_ERRO' : 'MANTER_ORIGINAL')
+        };
       });
+      
+      // Log das decisões
+      analysisResults.forEach(a => {
+        console.log(`📋 Questão ${a.id}: Ação=${a.action}, Match=${a.match || 'nenhum'}, Vazio=${a.isEmpty}, Discordância=${a.discordance.hasDiscordance}`);
+      });
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // SEPARAR: Questões que precisam de IA vs. que devem manter original
+      // ═══════════════════════════════════════════════════════════════════════
+      const questionsToInfer = batch.filter((q, idx) => analysisResults[idx].shouldInfer);
+      const questionsToKeep = batch.filter((q, idx) => !analysisResults[idx].shouldInfer);
+      
+      // Processar questões que devem MANTER ORIGINAL (sem chamar IA)
+      for (const q of questionsToKeep) {
+        const analysis = analysisResults.find(a => a.id === q.id);
+        console.log(`✅ Questão ${q.id}: MANTENDO classificação original do usuário`);
+        
+        results.push({
+          id: q.id,
+          macro: q.suggested_macro || 'Química Geral',
+          micro: q.suggested_micro || '',
+          tema: q.suggested_tema || '',
+          subtema: q.suggested_subtema || '',
+          difficulty: q.suggested_difficulty || 'médio',
+          banca: q.suggested_banca || 'Autoral',
+          ano: parseInt(String(q.suggested_ano)) || currentYear,
+          explanation: q.explanation || 'Resolução não disponível.',
+          confidence: 1.0, // Alta confiança pois respeitou o usuário
+          reasoning: 'Classificação do usuário mantida (campos preenchidos sem discordância extrema)',
+          fields_inferred: [],
+          corrections: [],
+          semantic_match: analysis?.match || undefined
+        });
+      }
+      
+      // Se não há questões para inferir, pular para próximo batch
+      if (questionsToInfer.length === 0) {
+        console.log(`⏭️ Batch ${i / BATCH_SIZE + 1}: Nenhuma questão precisa de inferência`);
+        continue;
+      }
+      
+      console.log(`🧠 Batch ${i / BATCH_SIZE + 1}: ${questionsToInfer.length} questões para inferir via IA`);
+
+      const semanticHints = questionsToInfer.map(q => analysisResults.find(a => a.id === q.id)!);
 
       const prompt = `${AGENT_POLICY}
 
 ${taxonomy.formatted}
 
 ═══════════════════════════════════════════════════════════════════════════════
-🧠 NORMALIZAÇÃO SEMÂNTICA — CLASSIFICAR POR CONCEITO
+🧠 MODO AGENTE v5.0 — INFERÊNCIA CONDICIONAL
 ═══════════════════════════════════════════════════════════════════════════════
 
-PRINCÍPIO: Classifique pelo CONCEITO QUÍMICO, não pelo texto literal.
+CONTEXTO: Estas questões foram selecionadas para inferência porque:
+- Campos de taxonomia estão VAZIOS, OU
+- Há DISCORDÂNCIA EXTREMA entre conteúdo e classificação
+
+SUA TAREFA:
+1. ANALISAR o conceito químico de cada questão
+2. CLASSIFICAR usando a taxonomia canônica
+3. GERAR resolução se não existir
 
 REGRAS DE EQUIVALÊNCIA SEMÂNTICA:
-- Qualquer menção a "constante de Avogadro", "número de partículas", "mol", 
-  "número de átomos/moléculas/íons/prótons/nêutrons/elétrons" 
-  → MICRO: Cálculos Químicos, TEMA: Cálculos, SUBTEMA: Quantidade de Matéria
-
-- Menções a "Lavoisier", "Proust", "conservação de massa"
-  → MICRO: Cálculos Químicos, TEMA: Leis Ponderais
-
-- Menções a "Dalton átomo", "Thomson", "Rutherford", "Bohr", "modelo atômico"
-  → MICRO: Atomística, TEMA: Modelos Atômicos
-
-- Menções a "orbital", "subnível", "configuração eletrônica", "Pauling"
-  → MICRO: Atomística, TEMA: Distribuição Eletrônica
-
-- Menções a "VSEPR", "geometria molecular", "tetraédrica", "linear"
-  → MICRO: Ligações Químicas, TEMA: Ligação Covalente, SUBTEMA: Geometria Molecular
+- "constante de Avogadro", "número de partículas", "mol" → Cálculos Químicos > Cálculos > Quantidade de Matéria
+- "Lavoisier", "Proust", "conservação de massa" → Cálculos Químicos > Leis Ponderais
+- "modelo atômico", "Dalton", "Thomson", "Rutherford", "Bohr" → Atomística > Modelos Atômicos
+- "VSEPR", "geometria molecular" → Ligações Químicas > Ligação Covalente > Geometria Molecular
 
 ${semanticHints.some(h => h.match) ? `
-⚠️ DETECÇÕES SEMÂNTICAS ENCONTRADAS:
-${semanticHints.filter(h => h.match).map(h => `- Questão ${h.id}: Match "${h.match}" → Sugestão: ${JSON.stringify(h.canonical)}`).join('\n')}
+⚠️ DETECÇÕES SEMÂNTICAS:
+${semanticHints.filter(h => h.match).map(h => `- Questão ${h.id}: "${h.match}" → ${JSON.stringify(h.canonical)}`).join('\n')}
 ` : ''}
 
 ═══════════════════════════════════════════════════════════════════════════════
-QUESTÕES PARA ANÁLISE — MODO AGENTE v4.0
+QUESTÕES PARA INFERÊNCIA — MODO AGENTE v5.0
 ═══════════════════════════════════════════════════════════════════════════════
 
-${batch.map((q, idx) => {
-  const camposVazios = [];
-  if (!q.suggested_macro) camposVazios.push('MACRO');
-  if (!q.suggested_micro) camposVazios.push('MICRO');
-  if (!q.suggested_tema) camposVazios.push('TEMA');
-  if (!q.suggested_subtema) camposVazios.push('SUBTEMA');
-  if (!q.suggested_difficulty) camposVazios.push('DIFICULDADE');
-  if (!q.suggested_banca) camposVazios.push('BANCA');
-  if (!q.suggested_ano) camposVazios.push('ANO');
-  if (!q.explanation) camposVazios.push('EXPLICAÇÃO');
-
-  const hint = semanticHints.find(h => h.id === q.id);
-
+${questionsToInfer.map((q, idx) => {
+  const analysis = semanticHints[idx];
+  
   return `
 ━━━ QUESTÃO ${idx + 1} (ID: ${q.id}) ━━━
-⚠️ CAMPOS VAZIOS: ${camposVazios.length > 0 ? camposVazios.join(', ') : 'Nenhum'}
-${hint?.match ? `🔍 MATCH SEMÂNTICO DETECTADO: ${hint.match} → Use: ${JSON.stringify(hint.canonical)}` : ''}
+📌 MOTIVO DA INFERÊNCIA: ${analysis.action === 'INFERIR_TUDO' ? 'Campos vazios' : `Discordância: ${analysis.discordance.reason}`}
+${analysis.match ? `🔍 MATCH SEMÂNTICO: ${analysis.match} → ${JSON.stringify(analysis.canonical)}` : ''}
 
 ENUNCIADO:
 ${q.question_text?.substring(0, 2000) || 'N/A'}
@@ -451,15 +560,6 @@ ${q.question_text?.substring(0, 2000) || 'N/A'}
 ${q.options ? `ALTERNATIVAS: ${JSON.stringify(q.options)}` : ''}
 ${q.correct_answer ? `GABARITO: ${q.correct_answer}` : ''}
 ${q.explanation ? `RESOLUÇÃO EXISTENTE: ${q.explanation.substring(0, 800)}` : '⚠️ SEM RESOLUÇÃO - GERAR COMPLETA'}
-
-DADOS DO EXCEL (podem estar vazios ou errados):
-- MACRO: ${q.suggested_macro || '❌ VAZIO - INFERIR'}
-- MICRO: ${q.suggested_micro || '❌ VAZIO - INFERIR'}
-- TEMA: ${q.suggested_tema || '❌ VAZIO - INFERIR'}
-- SUBTEMA: ${q.suggested_subtema || '❌ VAZIO - INFERIR'}
-- DIFICULDADE: ${q.suggested_difficulty || '❌ VAZIO - INFERIR'}
-- BANCA: ${q.suggested_banca || '❌ VAZIO - INFERIR (usar "Autoral" se não identificável)'}
-- ANO: ${q.suggested_ano || `❌ VAZIO - INFERIR (usar ${currentYear} se não identificável)`}
 `;
 }).join('\n')}
 
@@ -506,11 +606,11 @@ REGRAS CRÍTICAS:
               role: 'system', 
               content: `Você é um agente especialista em classificação de questões de Química.
               
-MODO AGENTE v4.0:
+MODO AGENTE v5.0:
 1. Você DEVE usar APENAS os valores da taxonomia canônica fornecida
-2. Você DEVE aplicar normalização semântica (classificar por conceito, não por texto)
-3. Você DEVE preencher TODOS os campos vazios
-4. Quando um MATCH SEMÂNTICO é detectado, você DEVE usar a classificação sugerida
+2. Você está analisando questões que PRECISAM de inferência (campos vazios ou erro grave)
+3. Quando um MATCH SEMÂNTICO é detectado, use a classificação sugerida
+4. Gere resolução comentada quando ausente
 
 Sempre responda com JSON válido.` 
             },
@@ -524,23 +624,22 @@ Sempre responda com JSON válido.`
         const errorText = await response.text();
         console.error(`❌ Erro na API: ${response.status}`, errorText);
         
-        // Fallback com semântica local
-        for (const q of batch) {
+        // Fallback com semântica local para questões que precisam inferência
+        for (const q of questionsToInfer) {
           const fieldsInferred = [];
           const hint = semanticHints.find(h => h.id === q.id);
           
-          const macro = q.suggested_macro || 'Química Geral';
-          if (!q.suggested_macro) fieldsInferred.push('MACRO');
+          const macro = hint?.canonical ? 'Química Geral' : (q.suggested_macro || 'Química Geral');
+          fieldsInferred.push('MACRO');
           
-          // Se tem match semântico, usar sugestão
-          const micro = hint?.canonical?.micro || q.suggested_micro || 'Cálculos Químicos';
-          if (!q.suggested_micro || hint?.canonical?.micro) fieldsInferred.push('MICRO');
+          const micro = hint?.canonical?.micro || 'Cálculos Químicos';
+          fieldsInferred.push('MICRO');
           
-          const tema = hint?.canonical?.tema || q.suggested_tema || 'Cálculos';
-          if (!q.suggested_tema || hint?.canonical?.tema) fieldsInferred.push('TEMA');
+          const tema = hint?.canonical?.tema || 'Cálculos';
+          fieldsInferred.push('TEMA');
           
-          const subtema = hint?.canonical?.subtema || q.suggested_subtema || 'Quantidade de Matéria';
-          if (!q.suggested_subtema || hint?.canonical?.subtema) fieldsInferred.push('SUBTEMA');
+          const subtema = hint?.canonical?.subtema || '';
+          if (subtema) fieldsInferred.push('SUBTEMA');
           
           const difficulty = q.suggested_difficulty || 'médio';
           if (!q.suggested_difficulty) fieldsInferred.push('DIFICULDADE');
@@ -588,7 +687,7 @@ Sempre responda com JSON válido.`
         console.log('Conteúdo recebido:', content.substring(0, 500));
       }
 
-      for (const q of batch) {
+      for (const q of questionsToInfer) {
         const result = parsedResults.find(r => r.id === q.id);
         const hint = semanticHints.find(h => h.id === q.id);
         
@@ -597,45 +696,35 @@ Sempre responda com JSON válido.`
           
           results.push({
             id: q.id,
-            macro: result.macro || q.suggested_macro || 'Química Geral',
-            micro: result.micro || hint?.canonical?.micro || q.suggested_micro || 'Cálculos Químicos',
-            tema: result.tema || hint?.canonical?.tema || q.suggested_tema || 'Cálculos',
-            subtema: result.subtema || hint?.canonical?.subtema || q.suggested_subtema || '',
-            difficulty: result.difficulty || q.suggested_difficulty || 'médio',
-            banca: result.banca || q.suggested_banca || 'Autoral',
-            ano: result.ano || parseInt(String(q.suggested_ano)) || currentYear,
+            macro: result.macro || 'Química Geral',
+            micro: result.micro || hint?.canonical?.micro || 'Cálculos Químicos',
+            tema: result.tema || hint?.canonical?.tema || 'Cálculos',
+            subtema: result.subtema || hint?.canonical?.subtema || '',
+            difficulty: result.difficulty || 'médio',
+            banca: result.banca || 'Autoral',
+            ano: result.ano || currentYear,
             explanation: result.explanation || q.explanation || 'Resolução comentada não disponível.',
             confidence: result.confidence || 0.7,
-            reasoning: result.reasoning || 'Classificação automática',
+            reasoning: result.reasoning || 'Classificação por inferência (campos vazios ou discordância)',
             fields_inferred: fieldsInferred,
             corrections: result.corrections || [],
             semantic_match: result.semantic_match || hint?.match || undefined
           });
         } else {
           // Fallback se a IA não retornou este ID
-          const fieldsInferred = [];
-          if (!q.suggested_macro) fieldsInferred.push('MACRO');
-          if (!q.suggested_micro) fieldsInferred.push('MICRO');
-          if (!q.suggested_tema) fieldsInferred.push('TEMA');
-          if (!q.suggested_subtema) fieldsInferred.push('SUBTEMA');
-          if (!q.suggested_difficulty) fieldsInferred.push('DIFICULDADE');
-          if (!q.suggested_banca) fieldsInferred.push('BANCA');
-          if (!q.suggested_ano) fieldsInferred.push('ANO');
-          if (!q.explanation) fieldsInferred.push('EXPLICAÇÃO');
-
           results.push({
             id: q.id,
-            macro: q.suggested_macro || 'Química Geral',
-            micro: hint?.canonical?.micro || q.suggested_micro || 'Cálculos Químicos',
-            tema: hint?.canonical?.tema || q.suggested_tema || 'Cálculos',
-            subtema: hint?.canonical?.subtema || q.suggested_subtema || '',
-            difficulty: q.suggested_difficulty || 'médio',
-            banca: q.suggested_banca || 'Autoral',
-            ano: parseInt(String(q.suggested_ano)) || currentYear,
+            macro: 'Química Geral',
+            micro: hint?.canonical?.micro || 'Cálculos Químicos',
+            tema: hint?.canonical?.tema || 'Cálculos',
+            subtema: hint?.canonical?.subtema || '',
+            difficulty: 'médio',
+            banca: 'Autoral',
+            ano: currentYear,
             explanation: q.explanation || 'Resolução comentada não disponível.',
             confidence: 0.5,
-            reasoning: hint?.match ? `Classificação por match semântico: ${hint.match}` : 'Classificação automática',
-            fields_inferred: fieldsInferred,
+            reasoning: hint?.match ? `Fallback com match semântico: ${hint.match}` : 'Fallback automático',
+            fields_inferred: ['MACRO', 'MICRO', 'TEMA'],
             corrections: [],
             semantic_match: hint?.match || undefined
           });
@@ -643,8 +732,13 @@ Sempre responda com JSON válido.`
       }
     }
 
-    console.log(`✅ Processamento concluído: ${results.length} questões classificadas`);
-    console.log(`🔍 Matches semânticos: ${results.filter(r => r.semantic_match).length}`);
+    // Log final com estatísticas
+    const inferredCount = results.filter(r => r.fields_inferred.length > 0).length;
+    const keptCount = results.filter(r => r.fields_inferred.length === 0).length;
+    
+    console.log(`✅ Processamento concluído: ${results.length} questões`);
+    console.log(`   📝 Inferidas: ${inferredCount} | Mantidas: ${keptCount}`);
+    console.log(`   🔍 Matches semânticos: ${results.filter(r => r.semantic_match).length}`);
 
     return new Response(
       JSON.stringify({ results, taxonomy_loaded: taxonomy.macros.length > 0 }),
