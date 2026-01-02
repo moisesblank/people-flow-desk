@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // ═══════════════════════════════════════════════════════════════════════════════
 // EDGE FUNCTION: log-question-ai-intervention
 // Registra logs de intervenção de IA em questões
-// POLÍTICA: Question AI Intervention Audit Policy v1.0
+// POLÍTICA: Global AI Question Intervention Visibility Policy v1.0
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const corsHeaders = {
@@ -12,10 +12,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Tipos de intervenção de IA válidos
+type AIInterventionType = 
+  | 'AI_AUTOFILL'
+  | 'AI_ADDITION'
+  | 'AI_CORRECTION'
+  | 'AI_SUGGESTION_APPLIED'
+  | 'AI_CLASSIFICATION_INFERENCE';
+
 interface InterventionLog {
   question_id: string;
   source_file?: string;
   source_type: 'import' | 'edit' | 'batch_inference' | 'manual_trigger';
+  intervention_type: AIInterventionType;
   field_affected: string;
   value_before: string | null;
   value_after: string;
@@ -59,8 +68,8 @@ serve(async (req) => {
 
     // Validar e preparar logs para inserção
     const validLogs = logs.filter(log => {
-      if (!log.question_id || !log.field_affected || !log.value_after) {
-        console.warn('⚠️ Log inválido ignorado:', log);
+      if (!log.question_id || !log.field_affected || !log.value_after || !log.intervention_type) {
+        console.warn('⚠️ Log inválido ignorado (campos obrigatórios faltando):', log);
         return false;
       }
       return true;
@@ -79,6 +88,7 @@ serve(async (req) => {
       question_id: log.question_id,
       source_file: log.source_file || null,
       source_type: log.source_type || 'import',
+      intervention_type: log.intervention_type,
       field_affected: log.field_affected,
       value_before: log.value_before,
       value_after: log.value_after,
@@ -104,7 +114,7 @@ serve(async (req) => {
 
     // Log detalhado para auditoria
     records.forEach((log, idx) => {
-      console.log(`   📋 [${idx + 1}] ${log.field_affected}: "${log.value_before || '(vazio)'}" → "${log.value_after}"`);
+      console.log(`   📋 [${idx + 1}] [${log.intervention_type}] ${log.field_affected}: "${log.value_before || '(null)'}" → "${log.value_after}"`);
     });
 
     return new Response(

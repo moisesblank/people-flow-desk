@@ -1,14 +1,52 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // HOOK: useQuestionAILogs
 // Gerencia logs de intervenção de IA em questões
-// POLÍTICA: Question AI Intervention Audit Policy v1.0
+// POLÍTICA: Global AI Question Intervention Visibility Policy v1.0
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TIPOS
+// TIPOS DE INTERVENÇÃO
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export type AIInterventionType = 
+  | 'AI_AUTOFILL'                // Campo vazio foi preenchido
+  | 'AI_ADDITION'                // Conteúdo novo foi criado (ex: explicação)
+  | 'AI_CORRECTION'              // Valor existente foi alterado
+  | 'AI_SUGGESTION_APPLIED'      // Sugestão confirmada e aplicada
+  | 'AI_CLASSIFICATION_INFERENCE'; // Associação de taxonomia inferida
+
+// Labels legíveis para tipos de intervenção
+export const INTERVENTION_TYPE_LABELS: Record<AIInterventionType, string> = {
+  AI_AUTOFILL: 'Preenchimento Automático',
+  AI_ADDITION: 'Adição de Conteúdo',
+  AI_CORRECTION: 'Correção',
+  AI_SUGGESTION_APPLIED: 'Sugestão Aplicada',
+  AI_CLASSIFICATION_INFERENCE: 'Inferência de Taxonomia',
+};
+
+// Cores para tipos de intervenção
+export const INTERVENTION_TYPE_COLORS: Record<AIInterventionType, { bg: string; text: string; border: string }> = {
+  AI_AUTOFILL: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/40' },
+  AI_ADDITION: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/40' },
+  AI_CORRECTION: { bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500/40' },
+  AI_SUGGESTION_APPLIED: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/40' },
+  AI_CLASSIFICATION_INFERENCE: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', border: 'border-cyan-500/40' },
+};
+
+// Ícones para tipos de intervenção (para uso com Lucide)
+export const INTERVENTION_TYPE_ICONS: Record<AIInterventionType, string> = {
+  AI_AUTOFILL: 'Wand2',
+  AI_ADDITION: 'Plus',
+  AI_CORRECTION: 'PenLine',
+  AI_SUGGESTION_APPLIED: 'CheckCircle2',
+  AI_CLASSIFICATION_INFERENCE: 'FolderTree',
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// INTERFACE DO LOG
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface QuestionAILog {
@@ -23,6 +61,7 @@ export interface QuestionAILog {
   action_description: string;
   ai_confidence_score: number | null;
   ai_model_used: string | null;
+  intervention_type: AIInterventionType;
   metadata: Record<string, unknown>;
 }
 
@@ -37,6 +76,10 @@ export const FIELD_LABELS: Record<string, string> = {
   ano: 'Ano',
   explanation: 'Resolução',
   tags: 'Tags',
+  question_text: 'Enunciado',
+  correct_answer: 'Resposta Correta',
+  options: 'Alternativas',
+  image_url: 'Imagem',
   other: 'Outro',
 };
 
@@ -49,7 +92,7 @@ export const SOURCE_TYPE_LABELS: Record<string, string> = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// HOOK PRINCIPAL
+// HOOK PRINCIPAL - BUSCAR LOGS DE UMA QUESTÃO
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function useQuestionAILogs(questionId: string | undefined) {
@@ -77,7 +120,63 @@ export function useQuestionAILogs(questionId: string | undefined) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// FUNÇÃO PARA FORMATAR LOG EM TEXTO
+// HOOK - VERIFICAR SE QUESTÕES TÊM LOGS (para listagem)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface QuestionAILogSummary {
+  question_id: string;
+  log_count: number;
+  last_intervention_at: string;
+  intervention_types: AIInterventionType[];
+}
+
+export function useQuestionsWithAILogs(questionIds: string[]) {
+  return useQuery({
+    queryKey: ['questions-ai-logs-summary', questionIds.sort().join(',')],
+    queryFn: async (): Promise<Map<string, QuestionAILogSummary>> => {
+      if (!questionIds.length) return new Map();
+
+      // Buscar contagem e tipos de intervenção por questão
+      const { data, error } = await supabase
+        .from('question_ai_intervention_logs')
+        .select('question_id, intervention_type, created_at')
+        .in('question_id', questionIds)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('[useQuestionsWithAILogs] Erro:', error);
+        throw error;
+      }
+
+      // Agrupar por questão
+      const summaryMap = new Map<string, QuestionAILogSummary>();
+
+      for (const row of data || []) {
+        const existing = summaryMap.get(row.question_id);
+        if (existing) {
+          existing.log_count++;
+          if (!existing.intervention_types.includes(row.intervention_type as AIInterventionType)) {
+            existing.intervention_types.push(row.intervention_type as AIInterventionType);
+          }
+        } else {
+          summaryMap.set(row.question_id, {
+            question_id: row.question_id,
+            log_count: 1,
+            last_intervention_at: row.created_at,
+            intervention_types: [row.intervention_type as AIInterventionType],
+          });
+        }
+      }
+
+      return summaryMap;
+    },
+    enabled: questionIds.length > 0,
+    staleTime: 60_000, // 1 minuto
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FUNÇÃO PARA FORMATAR LOG EM TEXTO DETALHADO
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function formatLogAsText(log: QuestionAILog): string {
@@ -88,29 +187,34 @@ export function formatLogAsText(log: QuestionAILog): string {
 
   const lines = [
     `════════════════════════════════════════════════════`,
-    `📅 DATA: ${dateStr}`,
-    `🕐 HORA: ${timeStr} (${timezone})`,
-    `🆔 QUESTÃO: ${log.question_id}`,
-    `📁 ORIGEM: ${log.source_file || 'Sistema'}`,
-    `📋 TIPO: ${SOURCE_TYPE_LABELS[log.source_type] || log.source_type}`,
+    `[${dateStr} | ${timeStr} - ${timezone}]`,
+    `QUESTION ID: ${log.question_id}`,
     ``,
-    `🎯 CAMPO AFETADO: ${FIELD_LABELS[log.field_affected] || log.field_affected}`,
+    `TYPE OF ACTION: ${log.intervention_type}`,
+    `   → ${INTERVENTION_TYPE_LABELS[log.intervention_type] || log.intervention_type}`,
     ``,
-    `❌ VALOR ANTERIOR:`,
-    `   ${log.value_before || '(vazio)'}`,
+    `FIELD AFFECTED: ${log.field_affected.toUpperCase()}`,
+    `   → ${FIELD_LABELS[log.field_affected] || log.field_affected}`,
     ``,
-    `✅ VALOR NOVO:`,
-    `   ${log.value_after}`,
+    `BEFORE:`,
+    log.value_before ? `   ${log.value_before}` : `   (null)`,
     ``,
-    `📝 DESCRIÇÃO:`,
+    `AFTER:`,
+    `   "${log.value_after}"`,
+    ``,
+    `REASON:`,
     `   ${log.action_description}`,
     ``,
-    `🤖 CONFIANÇA IA: ${log.ai_confidence_score !== null ? `${(log.ai_confidence_score * 100).toFixed(0)}%` : 'N/A'}`,
-    `⚙️ MODELO: ${log.ai_model_used || 'N/A'}`,
+    `AI CONFIDENCE:`,
+    `   ${log.ai_confidence_score !== null ? log.ai_confidence_score.toFixed(2) : 'N/A'}`,
+    ``,
+    log.ai_model_used ? `MODEL: ${log.ai_model_used}` : '',
+    log.source_file ? `SOURCE FILE: ${log.source_file}` : '',
+    `SOURCE TYPE: ${SOURCE_TYPE_LABELS[log.source_type] || log.source_type}`,
     `════════════════════════════════════════════════════`,
   ];
 
-  return lines.join('\n');
+  return lines.filter(Boolean).join('\n');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -120,26 +224,44 @@ export function formatLogAsText(log: QuestionAILog): string {
 export function exportLogsAsTxt(logs: QuestionAILog[], questionId: string): string {
   const header = [
     `╔══════════════════════════════════════════════════════════════════════════════╗`,
-    `║           RELATÓRIO DE INTERVENÇÕES DE IA - QUESTÃO                          ║`,
-    `║           Question AI Intervention Audit Policy v1.0                         ║`,
+    `║           AI INTERVENTION REPORT - QUESTION AUDIT LOG                        ║`,
+    `║           Global AI Question Intervention Visibility Policy v1.0             ║`,
     `╠══════════════════════════════════════════════════════════════════════════════╣`,
-    `║ ID da Questão: ${questionId.padEnd(55)}║`,
-    `║ Total de Intervenções: ${String(logs.length).padEnd(48)}║`,
-    `║ Gerado em: ${new Date().toISOString().padEnd(56)}║`,
+    `║ QUESTION ID: ${questionId.padEnd(55)}║`,
+    `║ TOTAL INTERVENTIONS: ${String(logs.length).padEnd(48)}║`,
+    `║ GENERATED AT: ${new Date().toISOString().padEnd(55)}║`,
     `╚══════════════════════════════════════════════════════════════════════════════╝`,
     ``,
     ``,
   ];
 
   if (logs.length === 0) {
-    return header.join('\n') + '\n⚠️ Nenhuma intervenção de IA registrada para esta questão.';
+    return header.join('\n') + '\n⚠️ No AI interventions recorded for this question.';
   }
 
+  // Resumo por tipo
+  const typeCounts = logs.reduce((acc, log) => {
+    acc[log.intervention_type] = (acc[log.intervention_type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const summary = [
+    `INTERVENTION SUMMARY:`,
+    `─────────────────────`,
+    ...Object.entries(typeCounts).map(([type, count]) => 
+      `  • ${INTERVENTION_TYPE_LABELS[type as AIInterventionType] || type}: ${count}`
+    ),
+    ``,
+    `DETAILED LOG ENTRIES:`,
+    `═════════════════════`,
+    ``,
+  ];
+
   const logsText = logs.map((log, index) => {
-    return `\n[INTERVENÇÃO #${index + 1}]\n${formatLogAsText(log)}`;
+    return `\n[INTERVENTION #${index + 1}]\n${formatLogAsText(log)}`;
   }).join('\n');
 
-  return header.join('\n') + logsText;
+  return header.join('\n') + summary.join('\n') + logsText;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -153,7 +275,7 @@ export function downloadLogsAsTxt(logs: QuestionAILog[], questionId: string): vo
   
   const link = document.createElement('a');
   link.href = url;
-  link.download = `ai-logs-questao-${questionId.slice(0, 8)}.txt`;
+  link.download = `ai-audit-log-${questionId.slice(0, 8)}-${new Date().toISOString().split('T')[0]}.txt`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
