@@ -8,6 +8,7 @@ import { memo, useState, useCallback, useEffect, useMemo, Component, ErrorInfo, 
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
+import { QuestionMetadataBadges, QuestionModeBadge } from '@/components/shared/QuestionMetadataBadges';
 import { 
   Brain, 
   Plus, 
@@ -2517,60 +2518,16 @@ function GestaoQuestoes() {
                       )}
                     >
                     {/* ══════════════════════════════════════════════════════════════
-                        BARRA DE BADGES - Visibilidade Organizacional Expandida
-                        Exibe: Status | Publicado | Dificuldade | Banca | Ano | Tipo | Área
+                        BARRA DE METADADOS COMPLETA — CONSTITUIÇÃO TRANSVERSAL v2.0
+                        Usa componente unificado: QuestionMetadataBadges
+                        Exibe: Dificuldade | Banca+Ano | Tipo | MACRO | MICRO | TEMA | SUBTEMA
                     ══════════════════════════════════════════════════════════════ */}
-                      <div className="flex flex-wrap items-center justify-center gap-2 mb-3 pb-3 border-b border-border/30">
-                        {/* Grupo Central: Dificuldade + Banca + Ano */}
-                        <div className="flex items-center gap-2">
-                          <Badge className={cn(
-                            "text-sm px-4 py-1.5 border-0 font-semibold text-white",
-                            question.difficulty === 'facil' && 'bg-green-500',
-                            question.difficulty === 'medio' && 'bg-yellow-500',
-                            question.difficulty === 'dificil' && 'bg-red-500',
-                          )}>
-                            {question.difficulty === 'facil' && 'Fácil'}
-                            {question.difficulty === 'medio' && 'Médio'}
-                            {question.difficulty === 'dificil' && 'Difícil'}
-                          </Badge>
-                          
-                          {/* BANCA + ANO UNIFICADOS (NORMALIZAÇÃO PADRÃO) */}
-                          <Badge className="text-sm px-4 py-1.5 bg-muted text-foreground border border-border/50 font-medium flex items-center gap-1">
-                            🏛 {formatBancaHeader(question.banca, question.ano, question.question_text)}
-                          </Badge>
-                        </div>
-
-                        {/* Grupo Direito: Tipo + Macro */}
-                        <div className="flex items-center gap-2">
-                          <Badge className="text-sm px-4 py-1.5 bg-primary/80 text-primary-foreground border-0 font-semibold flex items-center gap-1">
-                            ⭐ {question.question_type === 'multiple_choice' ? 'Múltipla Escolha' : 'Discursiva'}
-                          </Badge>
-                          <Badge className={cn("text-sm px-4 py-1.5 border-0 font-bold", config.badge)}>
-                            {config.icon} {config.label}
-                          </Badge>
-                        </div>
-                      </div>
-                      
-                      {/* SEGUNDA LINHA: MICRO → TEMA → SUBTEMA (Hierarquia Completa) */}
-                      {(question.micro || question.tema || question.subtema) && (
-                        <div className="flex flex-wrap items-center justify-center gap-2 mb-3 pb-3 border-b border-border/30">
-                          {question.micro && (
-                            <Badge className="text-sm px-3 py-1 bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 font-medium">
-                              📚 Micro: {question.micro.length > 25 ? question.micro.substring(0, 25) + '...' : question.micro}
-                            </Badge>
-                          )}
-                          {question.tema && (
-                            <Badge className="text-sm px-3 py-1 bg-violet-500/20 text-violet-300 border border-violet-500/40 font-medium">
-                              🎯 Tema: {question.tema.length > 25 ? question.tema.substring(0, 25) + '...' : question.tema}
-                            </Badge>
-                          )}
-                          {question.subtema && (
-                            <Badge className="text-sm px-3 py-1 bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40 font-medium">
-                              🔹 Subtema: {question.subtema.length > 25 ? question.subtema.substring(0, 25) + '...' : question.subtema}
-                            </Badge>
-                          )}
-                        </div>
-                      )}
+                      <QuestionMetadataBadges
+                        question={question}
+                        variant="full"
+                        formatBancaHeader={formatBancaHeader}
+                        className="mb-3 pb-3 border-b border-border/30"
+                      />
 
                       {/* Header Row */}
                       <div className="flex items-start justify-between gap-4">
@@ -2608,21 +2565,7 @@ function GestaoQuestoes() {
                           />
                           
                           {/* Badges de Associação: QUESTION_DOMAIN (SIMULADO ou TREINO) */}
-                          <div className="flex items-center justify-between text-sm">
-                            {question.tags?.includes('SIMULADOS') ? (
-                              <Badge className="px-4 py-1.5 bg-red-600 text-white border-0 font-bold">
-                                🎯 Simulados
-                              </Badge>
-                            ) : question.tags?.includes('MODO_TREINO') ? (
-                              <Badge className="px-4 py-1.5 bg-purple-600 text-white border-0 font-bold">
-                                💪 Treino
-                              </Badge>
-                            ) : (
-                              <Badge className="px-4 py-1.5 bg-muted text-muted-foreground border border-border/50 font-medium">
-                                📋 Sem grupo
-                              </Badge>
-                            )}
-                          </div>
+                          <QuestionModeBadge tags={question.tags} />
                         </div>
                         
                         {/* Right: Ações Rápidas - Sempre visíveis */}
