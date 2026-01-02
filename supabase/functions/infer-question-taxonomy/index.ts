@@ -533,7 +533,24 @@ serve(async (req) => {
       // Processar questões que devem MANTER ORIGINAL (sem chamar IA)
       for (const q of questionsToKeep) {
         const analysis = analysisResults.find(a => a.id === q.id);
-        console.log(`✅ Questão ${q.id}: MANTENDO classificação original do usuário`);
+        const fieldsInferred: string[] = [];
+        
+        // Inferir nivel_cognitivo APENAS se vier vazio (igual à dificuldade)
+        let nivelCognitivo = q.suggested_nivel_cognitivo;
+        if (!nivelCognitivo || nivelCognitivo.trim() === '') {
+          nivelCognitivo = 'APLICAR'; // Fallback padrão
+          fieldsInferred.push('NIVEL_COGNITIVO');
+          console.log(`🧠 Questão ${q.id}: nivel_cognitivo VAZIO → inferido como "APLICAR"`);
+        }
+        
+        // Inferir dificuldade APENAS se vier vazio
+        let difficulty = q.suggested_difficulty;
+        if (!difficulty || difficulty.trim() === '') {
+          difficulty = 'médio';
+          fieldsInferred.push('DIFICULDADE');
+        }
+        
+        console.log(`✅ Questão ${q.id}: MANTENDO classificação original do usuário ${fieldsInferred.length > 0 ? `(inferidos: ${fieldsInferred.join(', ')})` : ''}`);
         
         results.push({
           id: q.id,
@@ -541,14 +558,16 @@ serve(async (req) => {
           micro: q.suggested_micro || '',
           tema: q.suggested_tema || '',
           subtema: q.suggested_subtema || '',
-          difficulty: q.suggested_difficulty || 'médio',
+          difficulty,
           banca: q.suggested_banca || 'Autoral',
           ano: parseInt(String(q.suggested_ano)) || currentYear,
           explanation: q.explanation || 'Resolução não disponível.',
-          nivel_cognitivo: q.suggested_nivel_cognitivo || 'APLICAR',
+          nivel_cognitivo: nivelCognitivo,
           confidence: 1.0, // Alta confiança pois respeitou o usuário
-          reasoning: 'Classificação do usuário mantida (campos preenchidos sem discordância extrema)',
-          fields_inferred: [],
+          reasoning: fieldsInferred.length > 0 
+            ? `Classificação mantida com inferência de: ${fieldsInferred.join(', ')}`
+            : 'Classificação do usuário mantida (todos os campos preenchidos)',
+          fields_inferred: fieldsInferred,
           corrections: [],
           semantic_match: analysis?.match || undefined
         });
