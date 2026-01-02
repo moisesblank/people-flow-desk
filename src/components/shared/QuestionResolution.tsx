@@ -724,6 +724,10 @@ function parseResolutionText(text: string): ParsedSection[] {
         .replace(/DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA:?\s*/gi, '')
         .replace(/ESTRATÉGIA:?\s*/gi, '')
         .replace(/COMPETÊNCIAS?\s*E\s*HABILIDADES?\s*[-–]?\s*ENEM:?\s*/gi, '')
+        .replace(/E\s+HABILIDADE\s*[-–]?\s*ENEM\s*:?\s*/gi, '')  // Fragmento solto
+        .replace(/SÍNTESE:?\s*/gi, '')
+        .replace(/de\s+área\s+C:\s*/gi, 'Competência C7: ')      // Corrige fragmento "de área C:"
+        .replace(/de\s+área\s+(\d+):\s*/gi, 'Área $1: ')         // Corrige "de área 7:"
         .replace(/\*\*Gabarito:[^\*]+\*\*/gi, '')
         .replace(/---+/g, '')
         .replace(/\n{3,}/g, '\n\n')
