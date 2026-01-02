@@ -85,6 +85,7 @@ import { cn } from '@/lib/utils';
 import * as XLSX from 'xlsx';
 import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, findBancaByValue } from '@/constants/bancas';
 import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
+import { useLogQuestionAIIntervention } from '@/hooks/useLogQuestionAIIntervention';
 
 // ============================================
 // TIPOS
@@ -696,6 +697,9 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   const [selectedGroup, setSelectedGroup] = useState<QuestionGroup>('MODO_TREINO');
   
   const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
+  
+  // Hook para registrar intervenções de IA
+  const { logInterventions } = useLogQuestionAIIntervention();
 
   // Garantia P0: zero trabalho manual no "Finalizar Import"
   const hasAutoAuthorizedRef = useRef(false);
@@ -1686,11 +1690,51 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           campos_inferidos: camposInferidos,
         };
 
-        const { error } = await supabase
+        const { data: insertedData, error } = await supabase
           .from('quiz_questions')
-          .insert([payload as any]);
+          .insert([payload as any])
+          .select('id')
+          .single();
 
         if (error) throw error;
+        
+        // ═══════════════════════════════════════════════════════════════════
+        // REGISTRAR LOGS DE INTERVENÇÃO DE IA
+        // ═══════════════════════════════════════════════════════════════════
+        if (insertedData?.id && camposInferidos.length > 0) {
+          const aiLogs = camposInferidos
+            .filter(c => c.includes(':ai_') || c.includes(':fallback_'))
+            .map(campo => {
+              const [field, method] = campo.split(':');
+              const interventionType = method.includes('ai_inference') 
+                ? 'AI_CLASSIFICATION_INFERENCE' 
+                : method.includes('ai_generated')
+                  ? 'AI_ADDITION'
+                  : method.includes('fallback')
+                    ? 'AI_AUTOFILL'
+                    : 'AI_SUGGESTION_APPLIED';
+              
+              return {
+                question_id: insertedData.id,
+                intervention_type: interventionType as any,
+                field_affected: field,
+                value_before: null,
+                value_after: String((payload as any)[field] || ''),
+                action_description: `Campo ${field} preenchido via ${method}`,
+                source_type: 'import' as const,
+                source_file: files[0]?.name || 'importação',
+                ai_confidence_score: 0.8,
+              };
+            });
+          
+          if (aiLogs.length > 0) {
+            // Não aguardar para não bloquear a importação
+            logInterventions(aiLogs).catch(err => 
+              console.error('[IMPORT] Erro ao registrar logs de IA:', err)
+            );
+          }
+        }
+        
         imported++;
       } catch (err) {
         console.error('Erro ao importar questão:', err);
@@ -1739,7 +1783,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     });
     setFlowState('importacao_concluida');
     setUiStep('resultado');
-  }, [canProcess, parsedQuestions, selectedGroup, files]); // CRITICAL: selectedGroup e files devem estar nas deps
+  }, [canProcess, parsedQuestions, selectedGroup, files, logInterventions]); // CRITICAL: selectedGroup, files e logInterventions devem estar nas deps
 
   const reset = useCallback(() => {
     hasAutoAuthorizedRef.current = false;
