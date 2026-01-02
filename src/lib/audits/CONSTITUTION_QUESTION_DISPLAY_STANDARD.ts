@@ -1,10 +1,46 @@
-// ============================================
-// 🔒 CONSTITUIÇÃO DO PADRÃO DE EXIBIÇÃO DE QUESTÕES
-// STATUS: VIGENTE E IMUTÁVEL
-// VERSÃO: 1.0.0
-// DATA: 2026-01-01
-// AUTORIDADE: OWNER (moisesblank@gmail.com)
-// ============================================
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║ 🔒 CONSTITUIÇÃO DO PADRÃO DE EXIBIÇÃO DE QUESTÕES                             ║
+// ║ STATUS: VIGENTE E IMUTÁVEL                                                     ║
+// ║ VERSÃO: 2.0.0                                                                  ║
+// ║ DATA: 2026-01-02                                                               ║
+// ║ AUTORIDADE: OWNER (moisesblank@gmail.com)                                      ║
+// ╠═══════════════════════════════════════════════════════════════════════════════╣
+// ║                                                                                ║
+// ║ ESTA CONSTITUIÇÃO APLICA-SE A:                                                 ║
+// ║ ✅ TODAS as questões existentes                                                ║
+// ║ ✅ TODAS as questões futuras                                                   ║
+// ║ ✅ SIMULADOS                                                                   ║
+// ║ ✅ MODO_TREINO                                                                 ║
+// ║ ✅ Qualquer fonte de questão                                                   ║
+// ║ ✅ Qualquer área temática                                                      ║
+// ║                                                                                ║
+// ║ COMPORTAMENTO OBRIGATÓRIO:                                                     ║
+// ║ • Se questão contém elementos estruturados de resolução:                       ║
+// ║   → Normalização, organização e deduplicação automáticas                       ║
+// ║ • Se questão NÃO contém blocos de resolução:                                   ║
+// ║   → Permanece sem eles. Sem placeholders. Sem conteúdo artificial.             ║
+// ║                                                                                ║
+// ║ REGRAS IMUTÁVEIS:                                                              ║
+// ║ 1. Remoção de caracteres bugados: "", '', **, 里, ⚠️, etc.                      ║
+// ║ 2. Formatação química científica automática (H2O → H₂O)                        ║
+// ║ 3. Alternativas: "Alternativa X ERRADA:" ou "Alternativa X CORRETA:"          ║
+// ║ 4. Pontuação limpa (sem ".." ou "..." excessivos)                              ║
+// ║ 5. Bullets unificados com espaçamento reduzido                                 ║
+// ║ 6. Imagens inline via [IMAGEM: URL] com max-h-[600px]                          ║
+// ║ 7. Deduplicação automática de seções repetidas                                 ║
+// ║                                                                                ║
+// ║ PRINCÍPIO CHAVE:                                                               ║
+// ║ Input pode ser inconsistente. Output SEMPRE padronizado.                       ║
+// ║                                                                                ║
+// ║ ESTE COMPORTAMENTO É:                                                          ║
+// ║ • Global                                                                       ║
+// ║ • Permanente                                                                   ║
+// ║ • Idempotente                                                                  ║
+// ║ • Impossível de contornar                                                      ║
+// ║                                                                                ║
+// ║ JAMAIS MODIFICAR SEM AUTORIZAÇÃO DO OWNER.                                     ║
+// ║                                                                                ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
 
 /**
  * REGRA DE OURO:
