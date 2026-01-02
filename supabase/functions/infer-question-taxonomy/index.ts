@@ -38,6 +38,15 @@ CAMPOS QUE PODEM SER INFERIDOS (quando aplicável):
 - BANCA (inferir se vazio ou usar "Autoral")
 - ANO (inferir se vazio ou usar ano atual)
 - EXPLICAÇÃO (gerar resolução comentada se ausente)
+- NIVEL_COGNITIVO (Taxonomia de Bloom: LEMBRAR, ENTENDER, APLICAR, ANALISAR, AVALIAR, CRIAR)
+
+NÍVEIS COGNITIVOS (Taxonomia de Bloom Revisada):
+1. LEMBRAR - Reconhecer, listar, descrever, identificar, nomear, localizar, definir
+2. ENTENDER - Interpretar, exemplificar, classificar, resumir, comparar, explicar
+3. APLICAR - Executar, implementar, usar, calcular, resolver, demonstrar
+4. ANALISAR - Diferenciar, organizar, atribuir, distinguir, examinar, questionar
+5. AVALIAR - Verificar, criticar, julgar, argumentar, defender, justificar
+6. CRIAR - Gerar, planejar, produzir, inventar, elaborar, projetar
 `;
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -237,6 +246,7 @@ interface QuestionInput {
   suggested_difficulty?: string;
   suggested_banca?: string;
   suggested_ano?: number | string;
+  suggested_nivel_cognitivo?: string;
 }
 
 interface AgentResult {
@@ -249,6 +259,7 @@ interface AgentResult {
   banca: string;
   ano: number;
   explanation: string;
+  nivel_cognitivo: string;
   confidence: number;
   reasoning: string;
   fields_inferred: string[];
@@ -424,6 +435,7 @@ function hasMissingTaxonomyFields(question: QuestionInput): { needsInference: bo
   if (!question.suggested_banca) missingFields.push('banca');
   if (!question.suggested_ano) missingFields.push('ano');
   if (!question.explanation) missingFields.push('explanation');
+  if (!question.suggested_nivel_cognitivo) missingFields.push('nivel_cognitivo');
   
   return {
     needsInference: missingFields.length > 0,
@@ -533,6 +545,7 @@ serve(async (req) => {
           banca: q.suggested_banca || 'Autoral',
           ano: parseInt(String(q.suggested_ano)) || currentYear,
           explanation: q.explanation || 'Resolução não disponível.',
+          nivel_cognitivo: q.suggested_nivel_cognitivo || 'APLICAR',
           confidence: 1.0, // Alta confiança pois respeitou o usuário
           reasoning: 'Classificação do usuário mantida (campos preenchidos sem discordância extrema)',
           fields_inferred: [],
@@ -615,6 +628,7 @@ RESPONDA COM JSON VÁLIDO (array de objetos):
     "banca": "nome_da_banca_ou_Autoral",
     "ano": ${currentYear},
     "explanation": "resolução comentada completa",
+    "nivel_cognitivo": "LEMBRAR|ENTENDER|APLICAR|ANALISAR|AVALIAR|CRIAR",
     "confidence": 0.95,
     "reasoning": "breve explicação",
     "fields_inferred": ["lista dos campos preenchidos"],
@@ -628,7 +642,14 @@ REGRAS CRÍTICAS:
 2. USE APENAS valores da TAXONOMIA CANÔNICA (do banco de dados)
 3. Se houver MATCH SEMÂNTICO detectado, USE a sugestão canônica
 4. Se EXPLICAÇÃO estava vazia, GERE uma resolução comentada completa
-5. confidence deve refletir sua certeza (0.0 a 1.0)`;
+5. confidence deve refletir sua certeza (0.0 a 1.0)
+6. nivel_cognitivo deve ser inferido baseado no tipo de ação cognitiva exigida:
+   - LEMBRAR: Reconhecer fatos, definir termos, listar propriedades
+   - ENTENDER: Interpretar gráficos, comparar substâncias, explicar fenômenos
+   - APLICAR: Calcular, resolver problemas numéricos, usar fórmulas
+   - ANALISAR: Examinar dados, diferenciar conceitos, questionar hipóteses
+   - AVALIAR: Julgar procedimentos, criticar metodologias, argumentar
+   - CRIAR: Elaborar experimentos, propor soluções, projetar sínteses`;
 
       const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
@@ -690,6 +711,9 @@ Sempre responda com JSON válido.`
           const explanation = q.explanation || 'Resolução não disponível. Consulte o material de apoio.';
           if (!q.explanation) fieldsInferred.push('EXPLICAÇÃO');
 
+          const nivelCognitivo = q.suggested_nivel_cognitivo || 'APLICAR';
+          if (!q.suggested_nivel_cognitivo) fieldsInferred.push('NIVEL_COGNITIVO');
+
           results.push({
             id: q.id,
             macro,
@@ -700,6 +724,7 @@ Sempre responda com JSON válido.`
             banca,
             ano,
             explanation,
+            nivel_cognitivo: nivelCognitivo,
             confidence: hint?.match ? 0.7 : 0.3,
             reasoning: hint?.match ? `Fallback com match semântico: ${hint.match}` : 'Fallback automático (erro na IA)',
             fields_inferred: fieldsInferred,
@@ -741,6 +766,7 @@ Sempre responda com JSON válido.`
             banca: result.banca || 'Autoral',
             ano: result.ano || currentYear,
             explanation: result.explanation || q.explanation || 'Resolução comentada não disponível.',
+            nivel_cognitivo: result.nivel_cognitivo || q.suggested_nivel_cognitivo || 'APLICAR',
             confidence: result.confidence || 0.7,
             reasoning: result.reasoning || 'Classificação por inferência (campos vazios ou discordância)',
             fields_inferred: fieldsInferred,
@@ -759,9 +785,10 @@ Sempre responda com JSON válido.`
             banca: 'Autoral',
             ano: currentYear,
             explanation: q.explanation || 'Resolução comentada não disponível.',
+            nivel_cognitivo: q.suggested_nivel_cognitivo || 'APLICAR',
             confidence: 0.5,
             reasoning: hint?.match ? `Fallback com match semântico: ${hint.match}` : 'Fallback automático',
-            fields_inferred: ['MACRO', 'MICRO', 'TEMA'],
+            fields_inferred: ['MACRO', 'MICRO', 'TEMA', 'NIVEL_COGNITIVO'],
             corrections: [],
             semantic_match: hint?.match || undefined
           });

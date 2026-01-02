@@ -75,6 +75,7 @@ export const FIELD_LABELS: Record<string, string> = {
   banca: 'Banca',
   ano: 'Ano',
   explanation: 'Resolução',
+  nivel_cognitivo: 'Nível Cognitivo',
   tags: 'Tags',
   question_text: 'Enunciado',
   correct_answer: 'Resposta Correta',
@@ -179,11 +180,26 @@ export function useQuestionsWithAILogs(questionIds: string[]) {
 // HOOK - RESUMO GLOBAL DE LOGS (para botão global na toolbar)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+export interface FieldBreakdown {
+  field: string;
+  count: number;
+}
+
+export interface TypeBreakdown {
+  type: AIInterventionType;
+  count: number;
+  fields: FieldBreakdown[];
+}
+
 export interface GlobalAILogSummary {
   total_logs: number;
   questions_with_logs: number;
   intervention_types: AIInterventionType[];
+  type_breakdown: TypeBreakdown[];
+  field_breakdown: FieldBreakdown[];
   last_intervention_at: string | null;
+  first_intervention_at: string | null;
+  source_files: string[];
 }
 
 export function useGlobalAILogsSummary() {
@@ -192,9 +208,9 @@ export function useGlobalAILogsSummary() {
     queryFn: async (): Promise<GlobalAILogSummary> => {
       const { data, error } = await supabase
         .from('question_ai_intervention_logs')
-        .select('question_id, intervention_type, created_at')
+        .select('question_id, intervention_type, field_affected, source_file, created_at')
         .order('created_at', { ascending: false })
-        .limit(1000); // Limitar para performance
+        .limit(5000); // Aumentado para escala
 
       if (error) {
         console.error('[useGlobalAILogsSummary] Erro:', error);
@@ -203,24 +219,74 @@ export function useGlobalAILogsSummary() {
 
       const uniqueQuestions = new Set<string>();
       const uniqueTypes = new Set<AIInterventionType>();
+      const uniqueSourceFiles = new Set<string>();
       let lastIntervention: string | null = null;
+      let firstIntervention: string | null = null;
+
+      // Contagem por tipo
+      const typeCountMap = new Map<AIInterventionType, Map<string, number>>();
+      // Contagem por campo
+      const fieldCountMap = new Map<string, number>();
 
       for (const row of data || []) {
         uniqueQuestions.add(row.question_id);
         uniqueTypes.add(row.intervention_type as AIInterventionType);
+        
+        if (row.source_file) {
+          uniqueSourceFiles.add(row.source_file);
+        }
+        
         if (!lastIntervention) {
           lastIntervention = row.created_at;
         }
+        firstIntervention = row.created_at;
+
+        // Contagem por tipo + campo
+        const iType = row.intervention_type as AIInterventionType;
+        if (!typeCountMap.has(iType)) {
+          typeCountMap.set(iType, new Map());
+        }
+        const fieldMap = typeCountMap.get(iType)!;
+        fieldMap.set(row.field_affected, (fieldMap.get(row.field_affected) || 0) + 1);
+
+        // Contagem geral por campo
+        fieldCountMap.set(row.field_affected, (fieldCountMap.get(row.field_affected) || 0) + 1);
       }
+
+      // Montar type_breakdown
+      const type_breakdown: TypeBreakdown[] = [];
+      for (const [type, fieldMap] of typeCountMap.entries()) {
+        const fields: FieldBreakdown[] = [];
+        let totalForType = 0;
+        for (const [field, count] of fieldMap.entries()) {
+          fields.push({ field, count });
+          totalForType += count;
+        }
+        fields.sort((a, b) => b.count - a.count);
+        type_breakdown.push({ type, count: totalForType, fields });
+      }
+      type_breakdown.sort((a, b) => b.count - a.count);
+
+      // Montar field_breakdown
+      const field_breakdown: FieldBreakdown[] = [];
+      for (const [field, count] of fieldCountMap.entries()) {
+        field_breakdown.push({ field, count });
+      }
+      field_breakdown.sort((a, b) => b.count - a.count);
 
       return {
         total_logs: data?.length || 0,
         questions_with_logs: uniqueQuestions.size,
         intervention_types: Array.from(uniqueTypes),
+        type_breakdown,
+        field_breakdown,
         last_intervention_at: lastIntervention,
+        first_intervention_at: firstIntervention,
+        source_files: Array.from(uniqueSourceFiles),
       };
     },
-    staleTime: 60_000, // 1 minuto
+    staleTime: 30_000, // 30 segundos para ver mudanças mais rápido
+    refetchOnWindowFocus: true, // Atualizar ao voltar à janela
   });
 }
 
