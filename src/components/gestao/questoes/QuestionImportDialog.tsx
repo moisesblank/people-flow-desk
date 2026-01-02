@@ -1631,14 +1631,17 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         const macro = q.macro || 'Química Geral';
         if (!q.macro) camposInferidos.push('macro:fallback_final');
         
-        const micro = q.micro || 'Conceitos Gerais';
-        if (!q.micro) camposInferidos.push('micro:fallback_final');
+        // CORREÇÃO v10.0.1: Fallbacks vazios para permitir inferência pela IA
+        // Valores genéricos ("Conceitos Gerais", "Fundamentos", "Básico") NÃO existem na taxonomia canônica
+        // Deixar vazio permite que a Edge Function 'infer-question-taxonomy' preencha corretamente
+        const micro = q.micro || '';
+        if (!q.micro) camposInferidos.push('micro:empty_for_ai_inference');
         
-        const tema = q.tema || 'Fundamentos';
-        if (!q.tema) camposInferidos.push('tema:fallback_final');
+        const tema = q.tema || '';
+        if (!q.tema) camposInferidos.push('tema:empty_for_ai_inference');
         
-        const subtema = q.subtema || 'Básico';
-        if (!q.subtema) camposInferidos.push('subtema:fallback_final');
+        const subtema = q.subtema || '';
+        if (!q.subtema) camposInferidos.push('subtema:empty_for_ai_inference');
         
         const difficulty = q.difficulty || 'medio';
         if (!q.difficulty) camposInferidos.push('difficulty:fallback_final');
