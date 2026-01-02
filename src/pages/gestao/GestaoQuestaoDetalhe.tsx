@@ -52,9 +52,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
+import QuestionEnunciado, { getAllQuestionImages } from '@/components/shared/QuestionEnunciado';
 import QuestionResolution from '@/components/shared/QuestionResolution';
 import QuestionAILogButton from '@/components/gestao/questoes/QuestionAILogButton';
+import ChemicalImageExtractorButton from '@/components/gestao/questoes/ChemicalImageExtractorButton';
 import { useQuestionAILogs } from '@/hooks/useQuestionAILogs';
 import QuestionTaxonomyEditor from '@/components/gestao/questoes/QuestionTaxonomyEditor';
 import { supabase } from '@/integrations/supabase/client';
@@ -287,6 +288,11 @@ function GestaoQuestaoDetalhe() {
     question.image_url
   );
 
+  // Obter todas as URLs de imagens para extração química
+  const allImageUrls = question 
+    ? getAllQuestionImages(question.question_text, question.image_url, (question as any).image_urls)
+    : [];
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-6 flex items-center justify-center min-h-[60vh]">
@@ -430,26 +436,39 @@ function GestaoQuestaoDetalhe() {
               <BookOpen className="h-5 w-5 text-primary" />
               Enunciado
             </CardTitle>
-            {/* Botão de remoção de imagem - só aparece se tem imagem */}
+            {/* Botões de ação de imagem */}
             {hasImages && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setRemoveImageConfirm(true)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <ImageOff className="h-4 w-4 mr-2" />
-                      Remover Imagem
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Remove TODAS as imagens desta questão permanentemente</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <div className="flex items-center gap-2">
+                {/* Botão de Extração Química - Política v1.0 */}
+                <ChemicalImageExtractorButton
+                  imageUrls={allImageUrls}
+                  questionId={question?.id}
+                  onExtracted={(formattedOutput) => {
+                    toast.success('Dados químicos extraídos com sucesso');
+                    console.log('[CHEMICAL_EXTRACTION] Output:', formattedOutput);
+                  }}
+                />
+                
+                {/* Botão de remoção de imagem */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setRemoveImageConfirm(true)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <ImageOff className="h-4 w-4 mr-2" />
+                        Remover Imagem
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Remove TODAS as imagens desta questão permanentemente</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             )}
           </CardHeader>
           <CardContent>
