@@ -925,10 +925,30 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   const [aiInferenceEnabled, setAiInferenceEnabled] = useState(true);
   const [aiInferenceProgress, setAiInferenceProgress] = useState(0);
   
-  const callAITaxonomyInference = useCallback(async (questions: ParsedQuestion[]): Promise<Map<string, { macro: string; micro: string; tema: string; subtema: string; corrections: string[] }>> => {
-    const results = new Map<string, { macro: string; micro: string; tema: string; subtema: string; corrections: string[] }>();
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // MODO AGENTE v3.0 — COMPLETUDE OBRIGATÓRIA
+  // A IA preenche TODOS os campos vazios (MICRO, TEMA, SUBTEMA, difficulty, banca, ano, explanation)
+  // ═══════════════════════════════════════════════════════════════════════════════
+  
+  interface AIAgentResult {
+    macro: string;
+    micro: string;
+    tema: string;
+    subtema: string;
+    difficulty: string;
+    banca: string;
+    ano: number;
+    explanation: string;
+    confidence: number;
+    reasoning: string;
+    fields_inferred: string[];
+    corrections: string[];
+  }
+  
+  const callAITaxonomyInference = useCallback(async (questions: ParsedQuestion[]): Promise<Map<string, AIAgentResult>> => {
+    const results = new Map<string, AIAgentResult>();
     
-    // Preparar payload para a IA
+    // Preparar payload COMPLETO para a IA (MODO AGENTE)
     const questionsForAI = questions.map(q => ({
       id: q.id,
       question_text: q.question_text,
@@ -939,17 +959,20 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       suggested_micro: q.micro,
       suggested_tema: q.tema,
       suggested_subtema: q.subtema,
+      suggested_difficulty: q.difficulty,
+      suggested_banca: q.banca,
+      suggested_ano: q.ano,
     }));
     
     try {
-      console.log(`🧠 [AI] Chamando inferência de taxonomia para ${questionsForAI.length} questões...`);
+      console.log(`🤖 [AGENT MODE] Chamando inferência COMPLETA para ${questionsForAI.length} questões...`);
       
       const { data, error } = await supabase.functions.invoke('infer-question-taxonomy', {
         body: { questions: questionsForAI }
       });
       
       if (error) {
-        console.error('❌ [AI] Erro na inferência:', error);
+        console.error('❌ [AGENT] Erro na inferência:', error);
         throw error;
       }
       
@@ -960,14 +983,26 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             micro: result.micro,
             tema: result.tema,
             subtema: result.subtema,
+            difficulty: result.difficulty,
+            banca: result.banca,
+            ano: result.ano,
+            explanation: result.explanation,
+            confidence: result.confidence || 0.7,
+            reasoning: result.reasoning || '',
+            fields_inferred: result.fields_inferred || [],
             corrections: result.corrections || [],
           });
         }
-        console.log(`✅ [AI] Taxonomia inferida para ${results.size} questões. Correções: ${data.corrections_made || 0}`);
+        
+        const stats = data.stats || {};
+        console.log(`✅ [AGENT] Completude garantida para ${results.size} questões.`);
+        console.log(`   📊 Campos inferidos: ${stats.total_fields_inferred || 0}`);
+        console.log(`   🔧 Questões com inferência: ${stats.questions_with_inference || 0}`);
+        console.log(`   🎯 Confidence média: ${((stats.average_confidence || 0) * 100).toFixed(1)}%`);
       }
     } catch (err) {
-      console.error('❌ [AI] Falha na inferência inteligente:', err);
-      toast.error('Falha na inferência de IA - usando inferência local');
+      console.error('❌ [AGENT] Falha na inferência inteligente:', err);
+      toast.error('Falha na inferência de IA - aplicando fallbacks');
     }
     
     return results;
@@ -1241,7 +1276,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         const aiResults = await callAITaxonomyInference(questions);
         setAiInferenceProgress(80);
         
-        // Aplicar resultados da IA
+        // Aplicar resultados da IA (MODO AGENTE COMPLETO)
         finalQuestions = questions.map(q => {
           const aiResult = aiResults.get(q.id);
           if (!aiResult) return q;
@@ -1249,40 +1284,75 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           const updated = { ...q };
           const newInferidos = [...q.campos_inferidos];
           
-          // Aplicar MACRO se diferente ou vazio
-          if (aiResult.macro && (!q.macro || q.macro !== aiResult.macro)) {
-            if (q.macro && q.macro !== aiResult.macro) {
-              updated.warnings.push(`IA corrigiu MACRO: ${q.macro} → ${aiResult.macro}`);
-            }
+          // ═══════════════════════════════════════════════════════════════════
+          // APLICAR TODOS OS CAMPOS DO MODO AGENTE
+          // ═══════════════════════════════════════════════════════════════════
+          
+          // MACRO (apenas se vazio - IA não altera MACRO existente)
+          if (aiResult.macro && !q.macro) {
             updated.macro = aiResult.macro;
             newInferidos.push('macro:ai_inference');
           }
           
-          // Aplicar MICRO
+          // MICRO
           if (aiResult.micro && (!q.micro || q.micro !== aiResult.micro)) {
             if (q.micro && q.micro !== aiResult.micro) {
               updated.warnings.push(`IA corrigiu MICRO: ${q.micro} → ${aiResult.micro}`);
             }
             updated.micro = aiResult.micro;
-            newInferidos.push('micro:ai_inference');
+            if (!q.micro) newInferidos.push('micro:ai_inference');
           }
           
-          // Aplicar TEMA
+          // TEMA
           if (aiResult.tema && (!q.tema || q.tema !== aiResult.tema)) {
             if (q.tema && q.tema !== aiResult.tema) {
               updated.warnings.push(`IA corrigiu TEMA: ${q.tema} → ${aiResult.tema}`);
             }
             updated.tema = aiResult.tema;
-            newInferidos.push('tema:ai_inference');
+            if (!q.tema) newInferidos.push('tema:ai_inference');
           }
           
-          // Aplicar SUBTEMA
+          // SUBTEMA
           if (aiResult.subtema && (!q.subtema || q.subtema !== aiResult.subtema)) {
             if (q.subtema && q.subtema !== aiResult.subtema) {
               updated.warnings.push(`IA corrigiu SUBTEMA: ${q.subtema} → ${aiResult.subtema}`);
             }
             updated.subtema = aiResult.subtema;
-            newInferidos.push('subtema:ai_inference');
+            if (!q.subtema) newInferidos.push('subtema:ai_inference');
+          }
+          
+          // DIFICULDADE
+          if (aiResult.difficulty && !q.difficulty) {
+            updated.difficulty = aiResult.difficulty as 'facil' | 'medio' | 'dificil';
+            newInferidos.push('difficulty:ai_inference');
+          }
+          
+          // BANCA
+          if (aiResult.banca && !q.banca) {
+            updated.banca = aiResult.banca;
+            newInferidos.push('banca:ai_inference');
+          }
+          
+          // ANO
+          if (aiResult.ano && !q.ano) {
+            updated.ano = aiResult.ano;
+            newInferidos.push('ano:ai_inference');
+          }
+          
+          // EXPLICAÇÃO (gerar se ausente)
+          if (aiResult.explanation && !q.explanation) {
+            updated.explanation = aiResult.explanation;
+            newInferidos.push('explanation:ai_generated');
+          }
+          
+          // Adicionar campos inferidos pela IA ao tracking
+          if (aiResult.fields_inferred?.length > 0) {
+            for (const field of aiResult.fields_inferred) {
+              const key = `${field.toLowerCase()}:ai_inference`;
+              if (!newInferidos.includes(key)) {
+                // Campo já foi adicionado acima, apenas para logging
+              }
+            }
           }
           
           // Remover campos null que foram preenchidos
@@ -1290,21 +1360,30 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             !(c === 'macro' && updated.macro) &&
             !(c === 'micro' && updated.micro) &&
             !(c === 'tema' && updated.tema) &&
-            !(c === 'subtema' && updated.subtema)
+            !(c === 'subtema' && updated.subtema) &&
+            !(c === 'difficulty' && updated.difficulty) &&
+            !(c === 'banca' && updated.banca) &&
+            !(c === 'ano' && updated.ano) &&
+            !(c === 'explanation' && updated.explanation)
           );
           
           updated.campos_inferidos = newInferidos;
+          
+          // Adicionar confidence score como metadado
+          if (aiResult.confidence < 0.7) {
+            updated.warnings.push(`⚠️ Confidence baixo: ${(aiResult.confidence * 100).toFixed(0)}%`);
+          }
           
           return updated;
         });
         
         setAiInferenceProgress(100);
-        const correctionsCount = finalQuestions.filter(q => 
-          q.warnings.some(w => w.includes('IA corrigiu'))
+        const inferenceCount = finalQuestions.filter(q => 
+          q.campos_inferidos.some(c => c.includes('ai_inference') || c.includes('ai_generated'))
         ).length;
         
-        if (correctionsCount > 0) {
-          toast.success(`🧠 IA corrigiu taxonomia em ${correctionsCount} questões`);
+        if (inferenceCount > 0) {
+          toast.success(`🤖 MODO AGENTE: ${inferenceCount} questões completadas pela IA`);
         }
       }
 
@@ -1535,24 +1614,58 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     let imported = 0;
     let failed = 0;
 
+    const currentYear = new Date().getFullYear();
+    
     for (let i = 0; i < toImport.length; i++) {
       const q = toImport[i];
       
       try {
-        // RESULTADO FINAL OBRIGATÓRIO DO CONTRATO
+        // ═══════════════════════════════════════════════════════════════════
+        // POLÍTICA DE COMPLETUDE FINAL v1.0
+        // Nenhum campo obrigatório pode ficar null
+        // ═══════════════════════════════════════════════════════════════════
+        
+        const camposInferidos = [...(q.campos_inferidos || [])];
+        
+        // Aplicar fallbacks finais para garantir completude
+        const macro = q.macro || 'Química Geral';
+        if (!q.macro) camposInferidos.push('macro:fallback_final');
+        
+        const micro = q.micro || 'Conceitos Gerais';
+        if (!q.micro) camposInferidos.push('micro:fallback_final');
+        
+        const tema = q.tema || 'Fundamentos';
+        if (!q.tema) camposInferidos.push('tema:fallback_final');
+        
+        const subtema = q.subtema || 'Básico';
+        if (!q.subtema) camposInferidos.push('subtema:fallback_final');
+        
+        const difficulty = q.difficulty || 'medio';
+        if (!q.difficulty) camposInferidos.push('difficulty:fallback_final');
+        
+        const banca = q.banca || 'Autoral';
+        if (!q.banca) camposInferidos.push('banca:fallback_autoral');
+        
+        const ano = q.ano || currentYear;
+        if (!q.ano) camposInferidos.push('ano:fallback_current_year');
+        
+        const explanation = q.explanation || 'Resolução comentada não disponível. Consulte o material de apoio.';
+        if (!q.explanation) camposInferidos.push('explanation:fallback_default');
+        
+        // PAYLOAD COMPLETO (sem nulls em campos obrigatórios)
         const payload = {
           question_text: q.question_text,
           question_type: 'multiple_choice',
           options: q.options.filter(o => o.text.trim() || o.image_url).map(o => ({ id: o.id, text: o.text, ...(o.image_url && { image_url: o.image_url }) })),
           correct_answer: q.correct_answer,
-          explanation: q.explanation || null,
-          difficulty: q.difficulty || null,
-          banca: q.banca || null,
-          ano: q.ano || null,
-          macro: q.macro || null,
-          micro: q.micro || null,
-          tema: q.tema || null,
-          subtema: q.subtema || null,
+          explanation: explanation,           // OBRIGATÓRIO
+          difficulty: difficulty,             // OBRIGATÓRIO
+          banca: banca,                       // OBRIGATÓRIO
+          ano: ano,                           // OBRIGATÓRIO
+          macro: macro,                       // OBRIGATÓRIO (identidade)
+          micro: micro,                       // OBRIGATÓRIO
+          tema: tema,                         // OBRIGATÓRIO
+          subtema: subtema,                   // OBRIGATÓRIO
           tags: [...new Set([...(q.tags || []), selectedGroup])], // QUESTION_DOMAIN: Deduplicado
           points: selectedGroup === 'MODO_TREINO' ? 0 : 10, // MODO_TREINO: 0 pts, SIMULADOS: 10 pts
           // IMPORTAÇÃO DIRETA - Questões já entram ATIVAS e PUBLICADAS
@@ -1566,8 +1679,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           image_url: q.image_url || null,
           // MÚLTIPLAS imagens do enunciado (NOVO)
           image_urls: q.image_urls && q.image_urls.length > 0 ? q.image_urls : [],
-          // Rastreabilidade
-          campos_inferidos: q.campos_inferidos,
+          // Rastreabilidade (inclui fallbacks aplicados)
+          campos_inferidos: camposInferidos,
         };
 
         const { error } = await supabase
