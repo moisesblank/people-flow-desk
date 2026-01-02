@@ -67,11 +67,15 @@ serve(async (req) => {
     });
 
     // Validar e preparar logs para inserção
+    // FIX: value_after pode ser string vazia (campo vazio que foi inferido como vazio = sem dado no Excel)
+    // Apenas question_id, field_affected e intervention_type são obrigatórios
     const validLogs = logs.filter(log => {
-      if (!log.question_id || !log.field_affected || !log.value_after || !log.intervention_type) {
-        console.warn('⚠️ Log inválido ignorado (campos obrigatórios faltando):', log);
+      if (!log.question_id || !log.field_affected || !log.intervention_type) {
+        console.warn('⚠️ Log inválido ignorado (question_id/field_affected/intervention_type faltando):', log);
         return false;
       }
+      // value_after pode ser "" (string vazia) - indica que foi marcado para inferência
+      // O importante é que a ação foi registrada
       return true;
     });
 
