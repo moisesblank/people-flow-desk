@@ -1,6 +1,6 @@
 // ╔══════════════════════════════════════════════════════════════════════════════════╗
 // ║ 📚 QUESTION RESOLUTION — COMPONENTE UNIVERSAL E OBRIGATÓRIO                      ║
-// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v5.0 — PEDAGOGIA + QUÍMICA VISUAL            ║
+// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v5.1 — PEDAGOGIA + QUÍMICA + GRAMÁTICA       ║
 // ╠══════════════════════════════════════════════════════════════════════════════════╣
 // ║                                                                                   ║
 // ║ 🔒 LEI PERMANENTE — CONSTITUIÇÃO DO QUESTION DOMAIN                              ║
@@ -10,13 +10,16 @@
 // ║ este componente para garantir formatação consistente.                            ║
 // ║                                                                                   ║
 // ║ ═══════════════════════════════════════════════════════════════════════════════  ║
-// ║ POLÍTICA 1: ORGANIZAÇÃO E LINGUAGEM PEDAGÓGICA v2.0                              ║
+// ║ POLÍTICA 1: ORGANIZAÇÃO, LINGUAGEM E GRAMÁTICA v2.1                              ║
 // ║ ═══════════════════════════════════════════════════════════════════════════════  ║
 // ║ • Estrutura OBRIGATÓRIA: ANALYSIS → CONCLUSION → ENEM → STRATEGY → TRAPS → TIP  ║
 // ║ • Organização passo a passo: uma ideia por sentença, um conceito por parágrafo  ║
 // ║ • Linguagem pedagógica: "Nós", "A gente", "Pessoal" (como professor no quadro)  ║
-// ║ • Qualidade textual: maiúscula inicial, frases completas, sem fragmentação      ║
-// ║ • Pipeline: Gerar → Organizar → Revisar → Aplicar linguagem → Verificar         ║
+// ║ • LIMPEZA DE CONTEÚDO: Nunca iniciar área com caracteres especiais              ║
+// ║ • Remover símbolos decorativos: 里,  e equivalentes emoji-like                 ║
+// ║ • GRAMÁTICA PORTUGUESA: Assumir papel de Doutor em Língua Portuguesa            ║
+// ║ • Pontuação e gramática corretas — NUNCA alterar significado original           ║
+// ║ • Pipeline: Gerar → Limpar → Gramática → Organizar → Revisar → Verificar        ║
 // ║                                                                                   ║
 // ║ ═══════════════════════════════════════════════════════════════════════════════  ║
 // ║ POLÍTICA 2: PADRONIZAÇÃO VISUAL QUÍMICA v2.0                                     ║
@@ -126,9 +129,98 @@ interface QuestionResolutionProps {
  * Remove metadados, HTML, duplicatas, ruído visual
  * =====================================================
  */
+
 /**
  * =====================================================
- * POLÍTICA 1: REFINAMENTO PEDAGÓGICO E LINGUÍSTICO v2.0
+ * POLÍTICA 1.1: LIMPEZA DE CONTEÚDO v2.1
+ * =====================================================
+ * Remove símbolos proibidos e caracteres decorativos
+ * de TODA a entidade Question (enunciado, alternativas,
+ * resolução, dicas, metadados).
+ * 
+ * REGRAS:
+ * - Nunca iniciar área com caracteres especiais
+ * - Apenas números permitidos no início de alternativas
+ * - Remover símbolos: 里,  e equivalentes decorativos/emoji
+ * - Não afetar significado semântico
+ * =====================================================
+ */
+const FORBIDDEN_SYMBOLS_REGEX = /[里吝離魘魚鬼鸟鶉鶴鸿麗麒麓麝麵麴麾黃黎黏黔黛點黯鼓鼠鼻齊齋齒龍龜🔴🟢🔵🟡🟠🟣⚪⬛⬜🔲🔳▪️▫️◾◽◼◻⭐🌟💫✨🎯🎪🎭🎨🎬🎤🎧🎼🎹🎸🎺🎻🎲🃏🀄🎴]/g;
+
+function removeLeadingSpecialChars(text: string): string {
+  if (!text) return '';
+  // Remove caracteres especiais do início de cada linha
+  // Permite apenas letras, números e espaços no início
+  return text
+    .replace(/^[^\w\sÀ-ÿ]+/gm, '')  // Remove especiais do início de linhas
+    .replace(/^\s+/gm, (match) => match.length > 0 ? '' : match)  // Trim início
+    .trim();
+}
+
+function cleanForbiddenSymbols(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(FORBIDDEN_SYMBOLS_REGEX, '')
+    .replace(/\*\*/g, '')           // Remove ** (markdown bold)
+    .replace(/\*/g, '')             // Remove * soltos
+    .replace(/⚠️?/g, '')            // Remove ⚠ (com ou sem variation selector)
+    .replace(/️/g, '')              // Remove variation selectors órfãos
+    .replace(/[""]/g, '"')          // Normaliza aspas curvas → retas
+    .replace(/['']/g, "'")          // Normaliza apóstrofos curvos
+    .replace(/[«»„"]/g, '"')        // Normaliza aspas francesas/alemãs
+    .trim();
+}
+
+/**
+ * =====================================================
+ * POLÍTICA 1.2: GRAMÁTICA PORTUGUESA v2.1
+ * =====================================================
+ * Assume papel de Doutor em Língua Portuguesa.
+ * Corrige gramática e pontuação automaticamente.
+ * NUNCA altera significado ou simplifica tecnicamente.
+ * =====================================================
+ */
+function applyPortugueseGrammar(text: string): string {
+  if (!text) return '';
+  
+  let corrected = text;
+  
+  // ========== PONTUAÇÃO BÁSICA ==========
+  // Espaço após pontuação
+  corrected = corrected
+    .replace(/([.!?,:;])([A-ZÀ-Ÿa-zà-ÿ])/g, '$1 $2')
+    // Remover espaço antes de pontuação
+    .replace(/\s+([.!?,:;])/g, '$1');
+  
+  // ========== CORREÇÕES COMUNS EM PORTUGUÊS ==========
+  corrected = corrected
+    // "a" antes de palavras femininas com artigo
+    .replace(/\bà\s+a\b/gi, 'à')
+    // "há" vs "a" (tempo)
+    .replace(/\ba\s+(\d+)\s+(anos?|dias?|meses?|horas?|minutos?)\s+atrás\b/gi, 'há $1 $2')
+    // Crase antes de "a qual"
+    .replace(/\ba\s+qual\b/gi, 'à qual')
+    // Vírgula antes de "mas", "porém", "contudo"
+    .replace(/([a-záàâãéêíóôõúç])\s+(mas|porém|contudo|todavia|entretanto)\s+/gi, '$1, $2 ');
+  
+  // ========== CAPITALIZAÇÃO ==========
+  // Primeira letra de sentença em maiúscula
+  corrected = corrected.replace(/(^|[.!?]\s+)([a-záàâãéèêíïóôõöúüç])/g, 
+    (_, sep, letter) => sep + letter.toUpperCase()
+  );
+  
+  // ========== NORMALIZAÇÃO DE ESPAÇOS ==========
+  corrected = corrected
+    .replace(/\s{2,}/g, ' ')           // Múltiplos espaços → um
+    .replace(/\n{3,}/g, '\n\n')        // Múltiplas quebras → duas
+    .trim();
+  
+  return corrected;
+}
+
+/**
+ * =====================================================
+ * POLÍTICA 1.3: REFINAMENTO PEDAGÓGICO v2.1
  * =====================================================
  * Aplica organização, revisão e linguagem pedagógica ao texto
  * SEM alterar a estrutura original das seções.
@@ -146,11 +238,11 @@ function applyPedagogicalRefinement(text: string): string {
   
   let refined = text;
   
-  // ========== CORREÇÃO DE CAPITALIZAÇÃO ==========
-  // Garantir maiúscula no início de cada sentença
-  refined = refined.replace(/(^|[.!?]\s+)([a-záàâãéèêíïóôõöúüç])/g, 
-    (_, sep, letter) => sep + letter.toUpperCase()
-  );
+  // ========== LIMPEZA DE SÍMBOLOS PROIBIDOS ==========
+  refined = cleanForbiddenSymbols(refined);
+  
+  // ========== GRAMÁTICA PORTUGUESA ==========
+  refined = applyPortugueseGrammar(refined);
   
   // ========== ORGANIZAÇÃO DE IDEIAS ==========
   // Separar sentenças muito longas (mais de 200 caracteres sem pontuação)
@@ -170,11 +262,8 @@ function applyPedagogicalRefinement(text: string): string {
     .replace(/^\s*(E|Ou|Mas|Porém|Contudo|Todavia)\s*$/gm, '')
     .replace(/\n\s*(E|Ou|Mas|Porém|Contudo|Todavia)\s*\n/g, '\n');
   
-  // ========== NORMALIZAÇÃO DE ESPAÇOS ==========
-  refined = refined
-    .replace(/\s{2,}/g, ' ')           // Múltiplos espaços → um
-    .replace(/\n{3,}/g, '\n\n')        // Múltiplas quebras → duas
-    .trim();
+  // ========== REMOÇÃO DE CARACTERES ESPECIAIS DO INÍCIO ==========
+  refined = removeLeadingSpecialChars(refined);
   
   return refined;
 }
@@ -363,21 +452,13 @@ function cleanResolutionText(text: string): string {
   
   let cleaned = text;
   
-  // ========== REMOÇÃO GLOBAL DE CARACTERES INDESEJADOS ==========
-  // REGRA PERMANENTE: remover **, 里, ⚠, "", '' de TODO o texto
-  cleaned = cleaned
-    .replace(/\*\*/g, '')           // Remove ** (markdown bold)
-    .replace(/里/g, '')             // Remove caractere chinês 里
-    .replace(/⚠️?/g, '')            // Remove ⚠ (com ou sem variation selector)
-    .replace(/\*/g, '')             // Remove * soltos
-    .replace(/吝/g, '')             // Remove outro caractere chinês
-    .replace(/離/g, '')             // Remove caractere chinês 離
-    .replace(/️/g, '')              // Remove variation selectors órfãos
-    .replace(/[""]/g, '')           // Remove aspas curvas (curly quotes)
-    .replace(/['']/g, '')           // Remove apóstrofos curvos
-    .replace(/[«»]/g, '')           // Remove aspas francesas
-    .replace(/[„"]/g, '')           // Remove aspas alemãs
-    .trim();
+  // ========== POLÍTICA v2.1: LIMPEZA COMPLETA DE CONTEÚDO ==========
+  // Remove símbolos proibidos e caracteres decorativos
+  cleaned = cleanForbiddenSymbols(cleaned);
+  
+  // ========== REMOÇÃO DE CARACTERES ESPECIAIS DO INÍCIO ==========
+  // Nunca permitir que áreas comecem com caracteres especiais
+  cleaned = removeLeadingSpecialChars(cleaned);
   
   // ========== PRÉ-PROCESSAMENTO: SEPARAR AFIRMAÇÕES CORRIDAS ==========
   // REGRA INTERNACIONAL: cada afirmação em seu próprio bloco, nunca corrido
@@ -455,22 +536,15 @@ function cleanResolutionText(text: string): string {
  * =====================================================
  * NORMALIZA TEXTO DE ALTERNATIVA/AFIRMAÇÃO
  * Remove marcadores redundantes, deixa só o conteúdo
+ * Aplica limpeza v2.1 de símbolos e gramática
  * =====================================================
  */
 function normalizeAlternativeContent(content: string): string {
-  let normalized = content
-    // Limpeza global de caracteres indesejados
-    .replace(/\*\*/g, '')
-    .replace(/\*/g, '')
-    .replace(/里/g, '')
-    .replace(/吝/g, '')
-    .replace(/離/g, '')
-    .replace(/⚠️?/g, '')
-    .replace(/️/g, '')
-    .replace(/[""]/g, '')           // Remove aspas curvas
-    .replace(/['']/g, '')           // Remove apóstrofos curvos
-    .replace(/[«»„"]/g, '')         // Remove aspas francesas/alemãs
-    // Remove prefixos de marcador
+  // POLÍTICA v2.1: Limpeza completa de símbolos proibidos
+  let normalized = cleanForbiddenSymbols(content);
+  
+  // Remove prefixos de marcador
+  normalized = normalized
     .replace(/^Esta\s+alternativa\s+está\s+(in)?correta\.?\s*/gi, '')
     .replace(/^Esta\s+é\s+a\s+alternativa\s+CORRETA!?\s*/gi, '')
     .replace(/^(in)?correta\.?\s*/gi, '')
@@ -479,6 +553,9 @@ function normalizeAlternativeContent(content: string): string {
     // Limpa emojis redundantes do início
     .replace(/^[🔵🔹▪️•❌✅✓✗✔️✖️]\s*/g, '')
     .trim();
+  
+  // Remover caracteres especiais do início
+  normalized = removeLeadingSpecialChars(normalized);
   
   // FORMATAÇÃO DE BULLET POINTS: Cada • em sua própria linha (espaçamento reduzido)
   normalized = normalized
