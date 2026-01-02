@@ -405,8 +405,33 @@ function detectExtremeDiscordance(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// FUNÇÃO: Verificar se os campos de taxonomia estão todos vazios
+// FUNÇÃO: Verificar se QUALQUER campo de taxonomia CRÍTICO está vazio
+// REGRA v5.1: Se MICRO, TEMA ou SUBTEMA estão vazios → INFERIR (mesmo que MACRO exista)
 // ═══════════════════════════════════════════════════════════════════════════════
+function hasMissingTaxonomyFields(question: QuestionInput): { needsInference: boolean, missingFields: string[] } {
+  const missingFields: string[] = [];
+  
+  // MACRO é obrigatório - se vazio, inferir tudo
+  if (!question.suggested_macro) missingFields.push('macro');
+  
+  // MICRO, TEMA, SUBTEMA são críticos - se vazios, inferir
+  if (!question.suggested_micro) missingFields.push('micro');
+  if (!question.suggested_tema) missingFields.push('tema');
+  if (!question.suggested_subtema) missingFields.push('subtema');
+  
+  // Campos secundários
+  if (!question.suggested_difficulty) missingFields.push('difficulty');
+  if (!question.suggested_banca) missingFields.push('banca');
+  if (!question.suggested_ano) missingFields.push('ano');
+  if (!question.explanation) missingFields.push('explanation');
+  
+  return {
+    needsInference: missingFields.length > 0,
+    missingFields
+  };
+}
+
+// Mantida para compatibilidade - mas não mais usada para decidir inferência
 function isTaxonomyEmpty(question: QuestionInput): boolean {
   return !question.suggested_macro && 
          !question.suggested_micro && 
@@ -450,29 +475,41 @@ serve(async (req) => {
       const batch = questions.slice(i, i + BATCH_SIZE);
       
       // ═══════════════════════════════════════════════════════════════════════
-      // PASSO 2: Detectar equivalências semânticas e verificar condições de inferência
+      // PASSO 2: Detectar campos faltantes e verificar condições de inferência
+      // REGRA v5.1: Inferir se QUALQUER campo crítico estiver vazio
       // ═══════════════════════════════════════════════════════════════════════
       const analysisResults = batch.map(q => {
         const detection = detectSemanticEquivalence(q.question_text || '');
-        const isEmpty = isTaxonomyEmpty(q);
+        const { needsInference, missingFields } = hasMissingTaxonomyFields(q);
         const discordance = detectExtremeDiscordance(q.question_text || '', q.suggested_micro, detection.canonical);
         
-        // DECIDIR: Inferir ou Respeitar
-        const shouldInfer = isEmpty || discordance.hasDiscordance;
+        // DECIDIR: Inferir se tem campos vazios OU discordância extrema
+        const shouldInfer = needsInference || discordance.hasDiscordance;
+        
+        // Determinar ação
+        let action = 'MANTER_ORIGINAL';
+        if (needsInference && missingFields.length >= 4) {
+          action = 'INFERIR_TUDO';
+        } else if (needsInference) {
+          action = `INFERIR_PARCIAL:${missingFields.join(',')}`;
+        } else if (discordance.hasDiscordance) {
+          action = 'CORRIGIR_ERRO';
+        }
         
         return { 
           id: q.id, 
           ...detection, 
-          isEmpty,
+          needsInference,
+          missingFields,
           discordance,
           shouldInfer,
-          action: isEmpty ? 'INFERIR_TUDO' : (discordance.hasDiscordance ? 'CORRIGIR_ERRO' : 'MANTER_ORIGINAL')
+          action
         };
       });
       
       // Log das decisões
       analysisResults.forEach(a => {
-        console.log(`📋 Questão ${a.id}: Ação=${a.action}, Match=${a.match || 'nenhum'}, Vazio=${a.isEmpty}, Discordância=${a.discordance.hasDiscordance}`);
+        console.log(`📋 Questão ${a.id}: Ação=${a.action}, Match=${a.match || 'nenhum'}, Campos faltantes=[${a.missingFields.join(', ')}], Discordância=${a.discordance.hasDiscordance}`);
       });
 
       // ═══════════════════════════════════════════════════════════════════════
