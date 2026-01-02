@@ -1,12 +1,13 @@
 // ============================================
 // 📚 QUESTION RESOLUTION — COMPONENTE UNIVERSAL
-// PADRÃO OBRIGATÓRIO PARA TODAS AS RESOLUÇÕES
+// PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v3.0
 // 
 // ESTRUTURA VISUAL ORGANIZADA EM BLOCOS:
 // - Parser inteligente detecta seções e alternativas
 // - CADA alternativa em seu bloco visual individual
 // - Separação clara entre seções
-// - Design profissional de 2300
+// - Deduplicação automática de seções repetidas
+// - Limpeza de formatação inconsistente
 // ============================================
 
 import { memo, useMemo } from 'react';
@@ -29,6 +30,7 @@ import {
   XCircle,
   CircleDot,
   MessageCircle,
+  ListChecks,
 } from 'lucide-react';
 
 // Fallback padrão
@@ -41,21 +43,23 @@ const DIFFICULTY_LABELS: Record<string, { label: string; color: string }> = {
   'dificil': { label: 'DIFÍCIL', color: 'text-red-500' },
 };
 
-// Tipos de seção detectáveis
+// Tipos de seção detectáveis — ORDEM LÓGICA INTERNACIONAL
 type SectionType = 
   | 'intro' 
   | 'passo' 
-  | 'conclusao' 
-  | 'competencia' 
-  | 'estrategia' 
-  | 'pegadinhas' 
-  | 'dica'
+  | 'analise_header'
+  | 'afirmacao_analise'
   | 'afirmacao_correta'
   | 'afirmacao_incorreta'
   | 'alternativa_analise'
   | 'alternativa_correta'
   | 'alternativa_errada'
-  | 'resumo';
+  | 'resumo'
+  | 'conclusao' 
+  | 'competencia' 
+  | 'estrategia' 
+  | 'pegadinhas' 
+  | 'dica';
 
 interface ParsedSection {
   type: SectionType;
@@ -81,18 +85,22 @@ interface QuestionResolutionProps {
 }
 
 /**
- * Limpa metadados/HTML indesejados do início do texto
+ * =====================================================
+ * LIMPEZA AVANÇADA DE TEXTO — PADRÃO INTERNACIONAL
+ * Remove metadados, HTML, duplicatas, ruído visual
+ * =====================================================
  */
 function cleanResolutionText(text: string): string {
   if (!text) return '';
   
   let cleaned = text;
   
-  // PASSO 1: Remover TODO o lixo de HTML/interface copiado antes do conteúdo real
+  // PASSO 1: Remover lixo de HTML/interface
   const contentStartPatterns = [
     /QUESTÃO\s+SIMULADO/i,
     /🔬\s*RESOLUÇÃO/i,
     /✨\s*QUESTÃO/i,
+    /PASSO\s*1/i,
     /O\s+gráfico/i,
     /Observando/i,
     /Analis/i,
@@ -100,6 +108,7 @@ function cleanResolutionText(text: string): string {
     /Meus\s+queridos/i,
     /Queridos/i,
     /Vamos\s+analisar/i,
+    /E\s+a[ií],?\s+galera/i,
   ];
   
   for (const pattern of contentStartPatterns) {
@@ -110,7 +119,7 @@ function cleanResolutionText(text: string): string {
     }
   }
   
-  // PASSO 2: Limpar metadados específicos
+  // PASSO 2: Limpar metadados HTML
   cleaned = cleaned
     .replace(/\*\]:[^"]*"[^>]*>/g, '')
     .replace(/\*\]:pointer-events[^"]*"[^>]*>/g, '')
@@ -121,7 +130,7 @@ function cleanResolutionText(text: string): string {
     .replace(/\*\]:[^\s]+/g, '')
     .trim();
   
-  // PASSO 3: Remover duplicatas de header
+  // PASSO 3: Remover duplicatas de header no corpo do texto
   cleaned = cleaned
     .replace(/QUESTÃO SIMULADO PROF\. MOISÉS MEDEIROS/gi, '')
     .replace(/✨\s*QUESTÃO:\s*NÍVEL\s*(FÁCIL|MÉDIO|DIFÍCIL)/gi, '')
@@ -129,13 +138,47 @@ function cleanResolutionText(text: string): string {
     .replace(/📁\s*CLASSIFICAÇÃO/gi, '')
     .replace(/🔹\s*Macroassunto:[^\n]*/gi, '')
     .replace(/🔹\s*Microassunto:[^\n]*/gi, '')
+    .replace(/離\s*TEMA:[^\n]*/gi, '')
+    .replace(/️\s*CLASSIFICAÇÃO:[^\n]*/gi, '')
+    .replace(/Macro\s*Assunto:[^\n]*/gi, '')
+    .replace(/Micro\s*Assunto:[^\n]*/gi, '')
+    .trim();
+  
+  // PASSO 4: Normalizar separadores visuais
+  cleaned = cleaned
+    .replace(/---+/g, '\n')
+    .replace(/___+/g, '\n')
+    .replace(/\*\*\*+/g, '\n')
+    .replace(/\n{4,}/g, '\n\n\n')
     .trim();
   
   return cleaned;
 }
 
 /**
- * Parser inteligente AVANÇADO que detecta seções E alternativas
+ * =====================================================
+ * NORMALIZA TEXTO DE ALTERNATIVA/AFIRMAÇÃO
+ * Remove marcadores redundantes, deixa só o conteúdo
+ * =====================================================
+ */
+function normalizeAlternativeContent(content: string): string {
+  return content
+    // Remove prefixos de marcador
+    .replace(/^Esta\s+alternativa\s+está\s+\*\*?(in)?correta\*?\*?\.?\s*/gi, '')
+    .replace(/^Esta\s+é\s+a\s+alternativa\s+\*\*?CORRETA\*?\*?!?\s*/gi, '')
+    .replace(/^\*\*(in)?correta\*\*\.?\s*/gi, '')
+    .replace(/^\.+\s*/g, '')
+    .replace(/^[.…]+\s*/g, '')
+    // Limpa emojis redundantes do início
+    .replace(/^[🔵🔹▪️•❌✅✓✗✔️✖️]\s*/g, '')
+    .trim();
+}
+
+/**
+ * =====================================================
+ * PARSER INTELIGENTE v3.0 — PADRÃO INTERNACIONAL
+ * Detecta, organiza, deduplica e formata seções
+ * =====================================================
  */
 function parseResolutionText(text: string): ParsedSection[] {
   if (!text) return [];
@@ -145,124 +188,109 @@ function parseResolutionText(text: string): ParsedSection[] {
 
   const sections: ParsedSection[] = [];
   
-  // ========== DETECTAR ALTERNATIVAS INDIVIDUAIS ==========
-  // PADRÃO INTERNACIONAL DE ORGANIZAÇÃO - Detecta TODOS os formatos possíveis
+  // ========== PADRÕES DE ALTERNATIVAS E AFIRMAÇÕES ==========
   const alternativaPatterns = [
-    // Alternativas erradas com X ou marcador de incorreto
+    // Alternativas erradas com X
     { 
-      regex: /[❌✖️✗×]\s*\**Alternativa\s*([A-E])\**:?\s*/gi, 
+      regex: /[❌✖️✗×]\s*\**Alternativa\s*([A-E])[:.]?\**:?\s*/gi, 
       type: 'alternativa_errada' as SectionType,
       isCorrect: false 
     },
     // Alternativas corretas com check
     { 
-      regex: /[✅✔️✓☑️]\s*\**Alternativa\s*([A-E])\**:?\s*/gi, 
+      regex: /[✅✔️✓☑️]\s*\**Alternativa\s*([A-E])[:.]?\**:?\s*/gi, 
       type: 'alternativa_correta' as SectionType,
       isCorrect: true 
     },
-    // Alternativas neutras (para análise)
+    // Alternativas neutras
     { 
-      regex: /[🔵🔹▪️•◆►]\s*\**Alternativa\s*([A-E])\**:?\s*/gi, 
+      regex: /[🔵🔹▪️•◆►]\s*\**Alternativa\s*([A-E])[:.]?\**:?\s*/gi, 
       type: 'alternativa_analise' as SectionType,
       isCorrect: false 
     },
-    // Padrão **Alternativa X:** ou **Alternativa X** (markdown bold)
+    // Formato **Alternativa X:**
     { 
       regex: /\*\*Alternativa\s*([A-E]):\*\*\s*/gi, 
       type: 'alternativa_analise' as SectionType,
       isCorrect: false 
     },
+    // Formato **Alternativa X** (sem dois pontos)
     { 
       regex: /\*\*Alternativa\s*([A-E])\*\*:?\s*/gi, 
       type: 'alternativa_analise' as SectionType,
       isCorrect: false 
     },
-    // Padrão com "incorreta" ou "correta" no texto
+    // Afirmação romana com análise
     { 
-      regex: /\*\*Alternativa\s*([A-E]):\*\*[^*]*\*\*incorreta\*\*/gi, 
-      type: 'alternativa_errada' as SectionType,
+      regex: /Afirmação\s*(\d+|[IVX]+)\s*[:–-]\s*["']?([^"'\n]+)["']?\s*/gi, 
+      type: 'afirmacao_analise' as SectionType,
       isCorrect: false 
     },
+    // Afirmação correta
     { 
-      regex: /\*\*Alternativa\s*([A-E]):\*\*[^*]*\*\*CORRETA\*\*/gi, 
-      type: 'alternativa_correta' as SectionType,
-      isCorrect: true 
-    },
-    // Afirmações romanas corretas
-    { 
-      regex: /[✅✔️✓]\s*\**AFIRMAÇÃO\s*([IVX]+)\**:?\s*/gi, 
+      regex: /[✅✔️✓]\s*\**AFIRMAÇÃO\s*([IVX\d]+)\**:?\s*/gi, 
       type: 'afirmacao_correta' as SectionType,
       isCorrect: true 
     },
-    // Afirmações romanas incorretas
+    // Afirmação incorreta
     { 
-      regex: /[❌✖️✗×]\s*\**AFIRMAÇÃO\s*([IVX]+)\**:?\s*/gi, 
+      regex: /[❌✖️✗×]\s*\**AFIRMAÇÃO\s*([IVX\d]+)\**:?\s*/gi, 
       type: 'afirmacao_incorreta' as SectionType,
       isCorrect: false 
     },
-    // Afirmativas corretas (formato agrupado)
-    { 
-      regex: /[✓✔️✅]\s*Afirmativas?\s*corretas?:?\s*/gi, 
-      type: 'conclusao' as SectionType,
-      isCorrect: true 
-    },
   ];
 
-  // Padrões de seções especiais (ORDEM IMPORTA - mais específico primeiro)
+  // ========== PADRÕES DE SEÇÕES ESPECIAIS ==========
   const sectionPatterns = [
-    // ANÁLISE DAS ALTERNATIVAS (header de seção)
-    { regex: /\*\*ANÁLISE\s*DAS\s*ALTERNATIVAS\*\*:?\s*/gi, type: 'resumo' as SectionType },
-    { regex: /ANÁLISE\s*DAS\s*ALTERNATIVAS:?\s*/gi, type: 'resumo' as SectionType },
+    // ANÁLISE DAS ALTERNATIVAS (header)
+    { regex: /\*\*ANÁLISE\s*DAS\s*ALTERNATIVAS\*\*:?\s*/gi, type: 'analise_header' as SectionType },
+    { regex: /ANÁLISE\s*DAS\s*ALTERNATIVAS:?\s*/gi, type: 'analise_header' as SectionType },
     
-    // Gabarito
+    // PASSOS
+    { regex: /[📊⚗️⚙️🔬🧪吝里]\s*PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
+    { regex: /PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
+    { regex: /\*\*PASSO\s*(\d+)/gi, type: 'passo' as SectionType },
+    
+    // RESUMO
+    { regex: /Agora reunindo tudo/gi, type: 'resumo' as SectionType },
+    { regex: /Reunindo tudo/gi, type: 'resumo' as SectionType },
+    { regex: /\*\*RESUMO/gi, type: 'resumo' as SectionType },
+    { regex: /Sequência:\s*/gi, type: 'resumo' as SectionType },
+    
+    // CONCLUSÃO E GABARITO
+    { regex: /[🧬📊✅☑️]\s*CONCLUSÃO[:\s]*/gi, type: 'conclusao' as SectionType },
+    { regex: /A alternativa correta é/gi, type: 'conclusao' as SectionType },
+    { regex: /CONCLUSÃO E GABARITO/gi, type: 'conclusao' as SectionType },
+    { regex: /\*\*CONCLUSÃO\*\*/gi, type: 'conclusao' as SectionType },
     { regex: /[✓✔️✅]\s*Gabarito:?\s*/gi, type: 'conclusao' as SectionType },
     { regex: /\*\*Gabarito:?\s*letra\s*([A-E])\*\*/gi, type: 'conclusao' as SectionType },
     { regex: /Gabarito:?\s*letra\s*([A-E])/gi, type: 'conclusao' as SectionType },
     
-    // Conclusão e Gabarito
-    { regex: /[🧬📊✅☑️]\s*CONCLUSÃO[:\s]*/gi, type: 'conclusao' as SectionType },
-    { regex: /A alternativa correta é/gi, type: 'conclusao' as SectionType },
-    { regex: /Apenas\s+Alternativa/gi, type: 'conclusao' as SectionType },
-    { regex: /CONCLUSÃO E GABARITO/gi, type: 'conclusao' as SectionType },
-    { regex: /\*\*CONCLUSÃO\*\*/gi, type: 'conclusao' as SectionType },
-    
-    // Competência e Habilidade ENEM (múltiplos formatos)
+    // COMPETÊNCIA E HABILIDADE ENEM
     { regex: /[🎯⚫◆]\s*COMPETÊNCIAS?\s*E\s*HABILIDADES?\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
     { regex: /COMPETÊNCIAS?\s*E\s*HABILIDADES?\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
     { regex: /[◆⚫🎯]\s*COMPETÊNCIA:/gi, type: 'competencia' as SectionType },
     { regex: /\*\*COMPETÊNCIA/gi, type: 'competencia' as SectionType },
     
-    // Direcionamento / Estratégia (múltiplos formatos)
+    // DIRECIONAMENTO / ESTRATÉGIA
     { regex: /[📌⊙◎🚀✦🧭]\s*DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
     { regex: /DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
     { regex: /[🚀✦🧭]\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
     { regex: /\*\*DIRECIONAMENTO/gi, type: 'estrategia' as SectionType },
     { regex: /\*\*ESTRATÉGIA/gi, type: 'estrategia' as SectionType },
     
-    // Pegadinhas Comuns (múltiplos formatos)
+    // PEGADINHAS COMUNS
     { regex: /[⚠️⚠△🚨]\s*PEGADINHAS?\s*(COMUNS?)?[:\s]*/gi, type: 'pegadinhas' as SectionType },
     { regex: /PEGADINHAS?\s*(COMUNS?)?[:\s]*/gi, type: 'pegadinhas' as SectionType },
-    { regex: /[⚠️⚠△]\s*Confundir/gi, type: 'pegadinhas' as SectionType },
     { regex: /\*\*PEGADINHAS/gi, type: 'pegadinhas' as SectionType },
     
-    // Dica de Ouro (múltiplos formatos)
+    // DICA DE OURO
     { regex: /[💡🔆✨💎]\s*DICA\s*DE\s*OURO[:\s]*/gi, type: 'dica' as SectionType },
     { regex: /DICA\s*DE\s*OURO[:\s]*/gi, type: 'dica' as SectionType },
-    { regex: /[💡]\s*Dica:/gi, type: 'dica' as SectionType },
     { regex: /\*\*DICA\s*DE\s*OURO/gi, type: 'dica' as SectionType },
-    
-    // Passos de resolução
-    { regex: /[📊⚗️⚙️🔬🧪]\s*PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
-    { regex: /PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
-    { regex: /\*\*PASSO\s*(\d+)/gi, type: 'passo' as SectionType },
-    
-    // Resumo / Reunindo
-    { regex: /Agora reunindo tudo/gi, type: 'resumo' as SectionType },
-    { regex: /Reunindo tudo/gi, type: 'resumo' as SectionType },
-    { regex: /\*\*RESUMO/gi, type: 'resumo' as SectionType },
   ];
 
-  // Coletar todas as posições
+  // ========== COLETA DE POSIÇÕES ==========
   interface SectionStart {
     index: number;
     type: SectionType;
@@ -313,21 +341,21 @@ function parseResolutionText(text: string): ParsedSection[] {
     return [{ type: 'intro', content: cleanedText.trim() }];
   }
 
-  // Intro (texto antes da primeira seção) - LIMPAR referências a alternativas
+  // INTRO (texto antes da primeira seção)
   const firstSection = allStarts[0];
   if (firstSection.index > 0) {
     let introText = cleanedText.substring(0, firstSection.index).trim();
     
-    // Remover qualquer menção a alternativas que possa ter vazado para a intro
+    // Limpar referências a alternativas que vazaram para intro
     introText = introText
       .replace(/🔬\s*RESOLUÇÃO COMENTADA PELO PROF\. MOISÉS MEDEIROS[:\s]*/gi, '')
       .replace(/RESOLUÇÃO COMENTADA PELO PROF\. MOISÉS MEDEIROS[:\s]*/gi, '')
-      .replace(/[❌✅✔️✓✗✖️🔵🔹▪️•]\s*Alternativa\s*[A-E][^\n]*/gi, '') // Remove linhas de alternativa
-      .replace(/Alternativa\s*[A-E]\s*[-–→:][^\n]*/gi, '') // Remove padrões alternativos
-      .replace(/\n{3,}/g, '\n\n') // Limpa linhas vazias extras
+      .replace(/[❌✅✔️✓✗✖️🔵🔹▪️•]\s*Alternativa\s*[A-E][^\n]*/gi, '')
+      .replace(/Alternativa\s*[A-E]\s*[-–→:][^\n]*/gi, '')
+      .replace(/\n{3,}/g, '\n\n')
       .trim();
     
-    if (introText) {
+    if (introText.length > 20) {
       sections.push({ type: 'intro', content: introText });
     }
   }
@@ -341,31 +369,32 @@ function parseResolutionText(text: string): ParsedSection[] {
     const endIndex = next ? next.index : cleanedText.length;
     let content = cleanedText.substring(startIndex, endIndex).trim();
 
-    // Limpar emojis redundantes do início do conteúdo
+    // Normalizar conteúdo de alternativas
+    if (current.type.includes('alternativa') || current.type.includes('afirmacao')) {
+      content = normalizeAlternativeContent(content);
+    }
+
+    // Limpar emojis redundantes do início
     content = content.replace(/^[🔵🔹▪️•❌✅✓✗✔️✖️]\s*/g, '').trim();
 
-    if (content) {
-      sections.push({
-        type: current.type,
-        content,
-        stepNumber: current.stepNumber,
-        afirmacaoNumber: current.afirmacaoNumber,
-        alternativaLetter: current.alternativaLetter,
-        isCorrect: current.isCorrect,
-        title: current.match.trim(),
-      });
-    }
+    // Ignorar seções vazias ou muito curtas
+    if (content.length < 5 && current.type !== 'analise_header') continue;
+
+    sections.push({
+      type: current.type,
+      content,
+      stepNumber: current.stepNumber,
+      afirmacaoNumber: current.afirmacaoNumber,
+      alternativaLetter: current.alternativaLetter,
+      isCorrect: current.isCorrect,
+      title: current.match.trim(),
+    });
   }
 
-  // ========== MERGE GLOBAL DE SEÇÕES DO MESMO TIPO ==========
-  // REGRA UNIVERSAL: Agrupa TODAS as seções do mesmo tipo mergeable
-  // NÃO importa se são consecutivas ou não - SEMPRE agrupa em uma única seção
-  // Tipos afetados: pegadinhas, dica, estrategia, competencia
-  // Esta é uma REGRA ABSOLUTA e PERMANENTE conforme Constitution v10.0
-  
+  // ========== MERGE GLOBAL DE SEÇÕES DUPLICADAS ==========
+  // REGRA UNIVERSAL: Agrupa seções do mesmo tipo mergeable
   const mergableTypes: SectionType[] = ['pegadinhas', 'dica', 'estrategia', 'competencia'];
   
-  // Passo 1: Separar seções mergeáveis das não-mergeáveis
   const nonMergeable: ParsedSection[] = [];
   const mergeableByType: Map<SectionType, ParsedSection[]> = new Map();
   
@@ -379,37 +408,32 @@ function parseResolutionText(text: string): ParsedSection[] {
     }
   }
   
-  // Passo 2: Criar seções consolidadas para cada tipo mergeable
+  // Criar seções consolidadas
   const consolidatedMergeable: ParsedSection[] = [];
   
   for (const [type, sectionsOfType] of mergeableByType.entries()) {
     if (sectionsOfType.length === 0) continue;
     
-    // Extrair todos os conteúdos únicos (deduplicação)
     const allContents: string[] = [];
     
     for (const section of sectionsOfType) {
-      // Limpar o conteúdo de marcadores repetidos
       let content = section.content
-        .replace(/^[•\-\s]+/gm, '')  // Remove bullets do início
-        .replace(/PEGADINHAS?\s*(COMUNS?)?:?\s*/gi, '')  // Remove headers internos
+        .replace(/^[•\-\s]+/gm, '')
+        .replace(/PEGADINHAS?\s*(COMUNS?)?:?\s*/gi, '')
         .replace(/DICA\s*DE\s*OURO:?\s*/gi, '')
         .replace(/DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA:?\s*/gi, '')
         .replace(/ESTRATÉGIA:?\s*/gi, '')
-        .replace(/COMPETÊNCIAS?\s*E\s*HABILIDADES?\s*[-–]?\s*ENEM:?\s*/gi, '')  // Remove headers ENEM
-        .replace(/\*\*Gabarito:[^\*]+\*\*/gi, '')  // Remove gabarito duplicado
-        .replace(/---+/g, '')  // Remove separadores
-        .replace(/\n{3,}/g, '\n\n')  // Normaliza quebras de linha
+        .replace(/COMPETÊNCIAS?\s*E\s*HABILIDADES?\s*[-–]?\s*ENEM:?\s*/gi, '')
+        .replace(/\*\*Gabarito:[^\*]+\*\*/gi, '')
+        .replace(/---+/g, '')
+        .replace(/\n{3,}/g, '\n\n')
         .trim();
       
       if (content) {
-        // Dividir em itens individuais se tiver múltiplos bullets
         const items = content.split(/\n+/).filter(item => item.trim());
         
         for (const item of items) {
           const normalizedItem = item.replace(/^[•\-\s]+/, '').trim();
-          
-          // Verificar duplicação semântica (ignorando pontuação e espaços)
           const normalized = normalizedItem.toLowerCase().replace(/[^\w\s]/g, '').trim();
           
           const isDuplicate = allContents.some(existing => {
@@ -427,7 +451,6 @@ function parseResolutionText(text: string): ParsedSection[] {
     }
     
     if (allContents.length > 0) {
-      // Formatar como lista com bullets
       const consolidatedContent = allContents.length === 1
         ? allContents[0]
         : allContents.map(item => `• ${item}`).join('\n\n');
@@ -440,8 +463,7 @@ function parseResolutionText(text: string): ParsedSection[] {
     }
   }
   
-  // Passo 3: Reconstruir array final mantendo ordem lógica
-  // Ordem: intro > passos > alternativas > conclusão > competência > [estratégia, pegadinhas, dica]
+  // Reconstruir array final — ORDEM LÓGICA INTERNACIONAL
   const mergedSections: ParsedSection[] = [];
   
   // Adicionar não-mergeáveis na ordem original
@@ -488,8 +510,11 @@ function getSectionIcon(type: SectionType, stepNumber?: number) {
     case 'afirmacao_incorreta':
     case 'alternativa_errada':
       return XCircle;
+    case 'afirmacao_analise':
     case 'alternativa_analise':
       return CircleDot;
+    case 'analise_header':
+      return ListChecks;
     case 'resumo':
       return MessageCircle;
     default:
@@ -524,6 +549,7 @@ function getSectionStyles(type: SectionType, isCorrect?: boolean): {
         titleColor: 'text-red-500',
         accentColor: 'bg-red-500/20',
       };
+    case 'afirmacao_analise':
     case 'alternativa_analise':
       return {
         border: 'border-l-4 border-l-blue-500 border-t border-r border-b border-blue-500/30',
@@ -531,6 +557,14 @@ function getSectionStyles(type: SectionType, isCorrect?: boolean): {
         iconColor: 'text-blue-500',
         titleColor: 'text-blue-500',
         accentColor: 'bg-blue-500/20',
+      };
+    case 'analise_header':
+      return {
+        border: 'border-l-4 border-l-indigo-500 border-t border-r border-b border-indigo-500/30',
+        bg: 'bg-indigo-500/5',
+        iconColor: 'text-indigo-500',
+        titleColor: 'text-indigo-500',
+        accentColor: 'bg-indigo-500/20',
       };
     case 'afirmacao_correta':
       return {
@@ -626,10 +660,14 @@ function getSectionTitle(section: ParsedSection): string {
       return `❌ ALTERNATIVA ${section.alternativaLetter} — ERRADA`;
     case 'alternativa_analise':
       return `🔵 ALTERNATIVA ${section.alternativaLetter}`;
+    case 'afirmacao_analise':
+      return `📋 AFIRMAÇÃO ${section.afirmacaoNumber}`;
     case 'afirmacao_correta':
-      return `✅ AFIRMAÇÃO ${section.afirmacaoNumber} — CORRETA`;
+      return `✅ AFIRMAÇÃO ${section.afirmacaoNumber} — VERDADEIRA`;
     case 'afirmacao_incorreta':
-      return `❌ AFIRMAÇÃO ${section.afirmacaoNumber} — ERRADA`;
+      return `❌ AFIRMAÇÃO ${section.afirmacaoNumber} — FALSA`;
+    case 'analise_header':
+      return '📋 ANÁLISE DAS ALTERNATIVAS';
     case 'passo':
       return `📊 PASSO ${section.stepNumber}`;
     case 'conclusao':
@@ -725,24 +763,34 @@ const formatContent = (content: string) => {
 };
 
 /**
- * Item de alternativa — TUDO NA MESMA LINHA
+ * Item de alternativa/afirmação — ORGANIZAÇÃO INTERNACIONAL
+ * Exibe letra + status + conteúdo de forma clara
  */
 const AlternativaItem = memo(function AlternativaItem({ section }: { section: ParsedSection }) {
   const isCorrect = section.type === 'alternativa_correta' || section.type === 'afirmacao_correta';
+  const isAnalise = section.type === 'alternativa_analise' || section.type === 'afirmacao_analise';
+  const isAfirmacao = section.type.includes('afirmacao');
   
   const letter = section.alternativaLetter || section.afirmacaoNumber || '';
-  const icon = isCorrect ? '✅' : '❌';
+  const icon = isCorrect ? '✅' : isAnalise ? '🔵' : '❌';
+  const label = isAfirmacao ? 'Afirmação' : 'Alternativa';
+  const status = isCorrect ? (isAfirmacao ? 'VERDADEIRA' : 'CORRETA') : (isAfirmacao ? 'FALSA' : 'ERRADA');
   
   return (
-    <div className="px-4 py-2.5">
-      <p className={cn(
+    <div className={cn(
+      "px-4 py-3 border-l-4",
+      isCorrect ? "border-l-green-500 bg-green-500/5" : 
+      isAnalise ? "border-l-blue-500 bg-blue-500/5" : 
+      "border-l-red-500 bg-red-500/5"
+    )}>
+      <div className={cn(
         "text-sm leading-relaxed",
-        isCorrect ? "text-green-500" : "text-red-500"
+        isCorrect ? "text-green-600" : isAnalise ? "text-blue-600" : "text-red-600"
       )}>
-        <span className="font-semibold">{icon} Alternativa {letter}</span>
-        {isCorrect && <span className="font-semibold"> — CORRETA</span>}
-        <span className="text-foreground/80"> → {formatContent(section.content)}</span>
-      </p>
+        <span className="font-bold">{icon} {label} {letter}</span>
+        {!isAnalise && <span className="font-bold"> — {status}</span>}
+        <span className="text-foreground/80 ml-2">→ {formatContent(section.content)}</span>
+      </div>
     </div>
   );
 });
@@ -834,27 +882,33 @@ const QuestionResolution = memo(function QuestionResolution({
   const hasEnemInText = parsedSections.some(s => s.type === 'competencia');
   const showEnemBlock = (competenciaEnem || habilidadeEnem) && !hasEnemInText;
 
-  // Agrupar seções por categoria para melhor visualização
+  // ========== AGRUPAMENTO DE SEÇÕES — PADRÃO INTERNACIONAL ==========
+  
+  // BLOCO 1: Alternativas e Afirmações (inclui análise)
   const alternativasSections = parsedSections.filter(s => 
     s.type === 'alternativa_correta' || 
     s.type === 'alternativa_errada' || 
     s.type === 'alternativa_analise' ||
     s.type === 'afirmacao_correta' ||
-    s.type === 'afirmacao_incorreta'
+    s.type === 'afirmacao_incorreta' ||
+    s.type === 'afirmacao_analise'
   );
+  
+  // BLOCO 2: Resumo e Conclusão
   const conclusaoSections = parsedSections.filter(s => s.type === 'conclusao');
   const resumoSections = parsedSections.filter(s => s.type === 'resumo');
   
-  // Seções especiais pedagógicas (SEMPRE exibir no final, na ordem correta)
+  // BLOCO 3: Seções pedagógicas (ordem fixa no final)
   const competenciaSections = parsedSections.filter(s => s.type === 'competencia');
   const estrategiaSections = parsedSections.filter(s => s.type === 'estrategia');
   const pegadinhasSections = parsedSections.filter(s => s.type === 'pegadinhas');
   const dicaSections = parsedSections.filter(s => s.type === 'dica');
   
-  // Outras seções (passos, etc.)
+  // BLOCO 4: Passos e outras seções (mantém ordem original)
   const otherSections = parsedSections.filter(s => 
     !alternativasSections.includes(s) && 
     s.type !== 'intro' &&
+    s.type !== 'analise_header' &&
     s.type !== 'conclusao' &&
     s.type !== 'resumo' &&
     s.type !== 'competencia' &&
@@ -862,6 +916,8 @@ const QuestionResolution = memo(function QuestionResolution({
     s.type !== 'pegadinhas' &&
     s.type !== 'dica'
   );
+  
+  // Intro separada
   const introSection = parsedSections.find(s => s.type === 'intro');
 
   return (
