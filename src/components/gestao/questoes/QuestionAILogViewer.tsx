@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE: QuestionAILogViewer
 // Modal para visualizar logs de intervenção de IA em questões
-// POLÍTICA: Question AI Intervention Audit Policy v1.0
+// POLÍTICA: Global AI Question Intervention Visibility Policy v1.0
 // READ-ONLY - Logs são IMUTÁVEIS
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -29,12 +29,20 @@ import {
   AlertCircle,
   Loader2,
   Shield,
+  Wand2,
+  Plus,
+  PenLine,
+  CheckCircle2,
+  FolderTree,
 } from 'lucide-react';
 import {
   useQuestionAILogs,
   QuestionAILog,
   FIELD_LABELS,
   SOURCE_TYPE_LABELS,
+  INTERVENTION_TYPE_LABELS,
+  INTERVENTION_TYPE_COLORS,
+  AIInterventionType,
   downloadLogsAsTxt,
 } from '@/hooks/useQuestionAILogs';
 import { format } from 'date-fns';
@@ -50,6 +58,22 @@ interface QuestionAILogViewerProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ÍCONE POR TIPO DE INTERVENÇÃO
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const InterventionTypeIcon = ({ type }: { type: AIInterventionType }) => {
+  const iconClass = "h-4 w-4";
+  switch (type) {
+    case 'AI_AUTOFILL': return <Wand2 className={iconClass} />;
+    case 'AI_ADDITION': return <Plus className={iconClass} />;
+    case 'AI_CORRECTION': return <PenLine className={iconClass} />;
+    case 'AI_SUGGESTION_APPLIED': return <CheckCircle2 className={iconClass} />;
+    case 'AI_CLASSIFICATION_INFERENCE': return <FolderTree className={iconClass} />;
+    default: return <Bot className={iconClass} />;
+  }
+};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE DE LOG INDIVIDUAL
@@ -68,6 +92,9 @@ const LogEntry = memo(({ log, index }: { log: QuestionAILog; index: number }) =>
     return 'text-red-500';
   };
 
+  const typeColors = INTERVENTION_TYPE_COLORS[log.intervention_type] || INTERVENTION_TYPE_COLORS.AI_AUTOFILL;
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   return (
     <motion.div
       initial={{ opacity: 0, x: -20 }}
@@ -76,7 +103,10 @@ const LogEntry = memo(({ log, index }: { log: QuestionAILog; index: number }) =>
       className="relative"
     >
       {/* Timeline dot */}
-      <div className="absolute left-0 top-4 w-3 h-3 rounded-full bg-primary border-2 border-background z-10" />
+      <div className={cn(
+        "absolute left-0 top-4 w-3 h-3 rounded-full border-2 border-background z-10",
+        typeColors.bg.replace('/20', '')
+      )} />
       
       {/* Timeline line */}
       {index > 0 && (
@@ -84,81 +114,109 @@ const LogEntry = memo(({ log, index }: { log: QuestionAILog; index: number }) =>
       )}
 
       <div className="ml-6 p-4 rounded-lg bg-muted/30 border border-border/50 hover:border-primary/30 transition-colors">
-        {/* Header */}
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          <Badge variant="outline" className="font-mono text-xs">
-            #{index + 1}
-          </Badge>
-          <Badge className="bg-primary/20 text-primary border-primary/30">
-            {FIELD_LABELS[log.field_affected] || log.field_affected}
-          </Badge>
-          <Badge variant="secondary" className="text-xs">
-            {SOURCE_TYPE_LABELS[log.source_type] || log.source_type}
-          </Badge>
-          
-          {confidencePercent !== null && (
-            <Badge 
-              variant="outline" 
-              className={cn(
-                "text-xs font-mono",
-                getConfidenceColor(confidencePercent)
-              )}
-            >
-              <Sparkles className="h-3 w-3 mr-1" />
-              {confidencePercent}% confiança
-            </Badge>
-          )}
+        {/* Timestamp Header - Formato solicitado */}
+        <div className="font-mono text-xs text-muted-foreground mb-3 bg-background/50 px-2 py-1 rounded">
+          [{format(date, "yyyy-MM-dd", { locale: ptBR })} | {format(date, "HH:mm:ss")} - {timezone}]
         </div>
 
-        {/* Timestamp */}
-        <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
-          <span className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            {format(date, "dd/MM/yyyy", { locale: ptBR })}
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            {format(date, "HH:mm:ss")}
-          </span>
-          {log.source_file && (
-            <span className="flex items-center gap-1">
-              <FileText className="h-3 w-3" />
-              {log.source_file}
-            </span>
-          )}
+        {/* Question ID */}
+        <div className="text-xs text-muted-foreground mb-2">
+          <span className="font-medium">QUESTION ID:</span>{' '}
+          <span className="font-mono">{log.question_id.slice(0, 8)}...</span>
         </div>
 
-        {/* Value changes */}
-        <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center mb-3">
-          <div className="p-2 rounded bg-destructive/10 border border-destructive/20">
-            <p className="text-xs text-muted-foreground mb-1">Antes:</p>
-            <p className="text-sm font-mono text-destructive-foreground break-words">
-              {log.value_before || <span className="italic text-muted-foreground">(vazio)</span>}
-            </p>
-          </div>
-          
-          <ArrowRight className="h-4 w-4 text-primary" />
-          
-          <div className="p-2 rounded bg-emerald-500/10 border border-emerald-500/20">
-            <p className="text-xs text-muted-foreground mb-1">Depois:</p>
-            <p className="text-sm font-mono text-emerald-600 dark:text-emerald-400 break-words">
-              {log.value_after}
-            </p>
-          </div>
-        </div>
-
-        {/* Description */}
-        <p className="text-sm text-foreground/80">
-          {log.action_description}
-        </p>
-
-        {/* Model info */}
-        {log.ai_model_used && (
-          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-            <Bot className="h-3 w-3" />
-            Modelo: {log.ai_model_used}
+        {/* TYPE OF ACTION - Destacado */}
+        <div className="mb-3">
+          <Badge 
+            className={cn(
+              "gap-1.5 font-semibold",
+              typeColors.bg, typeColors.text, typeColors.border
+            )}
+          >
+            <InterventionTypeIcon type={log.intervention_type} />
+            {log.intervention_type}
+          </Badge>
+          <p className="text-xs text-muted-foreground mt-1 ml-1">
+            → {INTERVENTION_TYPE_LABELS[log.intervention_type] || log.intervention_type}
           </p>
-        )}
+        </div>
+
+        {/* FIELD AFFECTED */}
+        <div className="mb-3">
+          <Badge variant="outline" className="font-mono text-xs">
+            FIELD: {log.field_affected.toUpperCase()}
+          </Badge>
+          <span className="text-xs text-muted-foreground ml-2">
+            ({FIELD_LABELS[log.field_affected] || log.field_affected})
+          </span>
+        </div>
+
+        {/* BEFORE / AFTER - Formato visual claro */}
+        <div className="grid grid-cols-1 gap-2 mb-3">
+          <div className="p-3 rounded bg-destructive/10 border border-destructive/20">
+            <p className="text-xs font-semibold text-muted-foreground mb-1">BEFORE:</p>
+            <pre className="text-sm font-mono text-destructive-foreground whitespace-pre-wrap break-words max-h-32 overflow-auto">
+              {log.value_before || <span className="italic text-muted-foreground">(null)</span>}
+            </pre>
+          </div>
+          
+          <div className="flex items-center justify-center">
+            <ArrowRight className="h-4 w-4 text-primary rotate-90" />
+          </div>
+          
+          <div className="p-3 rounded bg-emerald-500/10 border border-emerald-500/20">
+            <p className="text-xs font-semibold text-muted-foreground mb-1">AFTER:</p>
+            <pre className="text-sm font-mono text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap break-words max-h-32 overflow-auto">
+              "{log.value_after}"
+            </pre>
+          </div>
+        </div>
+
+        {/* REASON */}
+        <div className="mb-3 p-2 rounded bg-background/50">
+          <p className="text-xs font-semibold text-muted-foreground mb-1">REASON:</p>
+          <p className="text-sm text-foreground/90">
+            {log.action_description}
+          </p>
+        </div>
+
+        {/* AI CONFIDENCE */}
+        <div className="flex items-center gap-4 flex-wrap">
+          {confidencePercent !== null && (
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-muted-foreground">AI CONFIDENCE:</span>
+              <Badge 
+                variant="outline" 
+                className={cn(
+                  "text-xs font-mono",
+                  getConfidenceColor(confidencePercent)
+                )}
+              >
+                <Sparkles className="h-3 w-3 mr-1" />
+                {(log.ai_confidence_score ?? 0).toFixed(2)}
+              </Badge>
+            </div>
+          )}
+
+          {log.ai_model_used && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Bot className="h-3 w-3" />
+              MODEL: {log.ai_model_used}
+            </div>
+          )}
+
+          {log.source_file && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <FileText className="h-3 w-3" />
+              SOURCE FILE: {log.source_file}
+            </div>
+          )}
+        </div>
+
+        {/* Source Type */}
+        <div className="mt-2 text-xs text-muted-foreground">
+          SOURCE TYPE: {SOURCE_TYPE_LABELS[log.source_type] || log.source_type}
+        </div>
       </div>
     </motion.div>
   );
@@ -177,19 +235,25 @@ const QuestionAILogViewer = memo(({ questionId, isOpen, onClose }: QuestionAILog
     downloadLogsAsTxt(logs, questionId);
   };
 
+  // Resumo por tipo de intervenção
+  const typeSummary = logs.reduce((acc, log) => {
+    acc[log.intervention_type] = (acc[log.intervention_type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 border border-primary/30">
               <Bot className="h-5 w-5 text-primary" />
             </div>
-            Log de Intervenções de IA
+            AI Intervention Log
           </DialogTitle>
           <DialogDescription className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-amber-500" />
-            Registro permanente e imutável • Policy v1.0
+            Permanent & Immutable Audit Record • Policy v1.0
           </DialogDescription>
         </DialogHeader>
 
@@ -197,12 +261,12 @@ const QuestionAILogViewer = memo(({ questionId, isOpen, onClose }: QuestionAILog
 
         {/* Stats header */}
         <div className="flex items-center justify-between py-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="outline" className="font-mono text-xs">
               ID: {questionId.slice(0, 8)}...
             </Badge>
             <Badge variant="secondary">
-              {logs.length} intervenção{logs.length !== 1 ? 'ões' : ''}
+              {logs.length} intervention{logs.length !== 1 ? 's' : ''}
             </Badge>
           </div>
           
@@ -213,9 +277,28 @@ const QuestionAILogViewer = memo(({ questionId, isOpen, onClose }: QuestionAILog
             disabled={logs.length === 0}
           >
             <Download className="h-4 w-4 mr-2" />
-            Exportar TXT
+            Export TXT
           </Button>
         </div>
+
+        {/* Resumo por tipo */}
+        {logs.length > 0 && (
+          <div className="flex flex-wrap gap-2 pb-2">
+            {Object.entries(typeSummary).map(([type, count]) => {
+              const colors = INTERVENTION_TYPE_COLORS[type as AIInterventionType] || INTERVENTION_TYPE_COLORS.AI_AUTOFILL;
+              return (
+                <Badge 
+                  key={type} 
+                  variant="outline" 
+                  className={cn("text-xs gap-1", colors.bg, colors.text)}
+                >
+                  <InterventionTypeIcon type={type as AIInterventionType} />
+                  {INTERVENTION_TYPE_LABELS[type as AIInterventionType] || type}: {count}
+                </Badge>
+              );
+            })}
+          </div>
+        )}
 
         <Separator />
 
@@ -231,7 +314,7 @@ const QuestionAILogViewer = memo(({ questionId, isOpen, onClose }: QuestionAILog
                 className="flex flex-col items-center justify-center py-12"
               >
                 <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-                <p className="text-muted-foreground">Carregando logs...</p>
+                <p className="text-muted-foreground">Loading logs...</p>
               </motion.div>
             ) : error ? (
               <motion.div
@@ -242,7 +325,7 @@ const QuestionAILogViewer = memo(({ questionId, isOpen, onClose }: QuestionAILog
                 className="flex flex-col items-center justify-center py-12"
               >
                 <AlertCircle className="h-12 w-12 text-destructive mb-4" />
-                <p className="text-destructive font-medium">Erro ao carregar logs</p>
+                <p className="text-destructive font-medium">Error loading logs</p>
                 <p className="text-muted-foreground text-sm">{String(error)}</p>
               </motion.div>
             ) : logs.length === 0 ? (
@@ -255,11 +338,11 @@ const QuestionAILogViewer = memo(({ questionId, isOpen, onClose }: QuestionAILog
               >
                 <Bot className="h-12 w-12 text-muted-foreground/50 mb-4" />
                 <p className="text-muted-foreground font-medium">
-                  Nenhuma intervenção de IA registrada
+                  No AI interventions recorded
                 </p>
                 <p className="text-muted-foreground/70 text-sm text-center max-w-md mt-2">
-                  Quando a IA inferir ou corrigir campos desta questão, 
-                  os registros aparecerão aqui.
+                  When AI infers or corrects fields on this question, 
+                  all records will appear here with full traceability.
                 </p>
               </motion.div>
             ) : (

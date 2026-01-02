@@ -8733,6 +8733,7 @@ export type Database = {
           created_at: string
           field_affected: string
           id: string
+          intervention_type: Database["public"]["Enums"]["ai_intervention_type"]
           metadata: Json | null
           question_id: string
           source_file: string | null
@@ -8747,6 +8748,7 @@ export type Database = {
           created_at?: string
           field_affected: string
           id?: string
+          intervention_type: Database["public"]["Enums"]["ai_intervention_type"]
           metadata?: Json | null
           question_id: string
           source_file?: string | null
@@ -8761,6 +8763,7 @@ export type Database = {
           created_at?: string
           field_affected?: string
           id?: string
+          intervention_type?: Database["public"]["Enums"]["ai_intervention_type"]
           metadata?: Json | null
           question_id?: string
           source_file?: string | null
@@ -18779,6 +18782,12 @@ export type Database = {
     }
     Enums: {
       ai_content_type: "summary" | "flashcards" | "quiz" | "mindmap"
+      ai_intervention_type:
+        | "AI_AUTOFILL"
+        | "AI_ADDITION"
+        | "AI_CORRECTION"
+        | "AI_SUGGESTION_APPLIED"
+        | "AI_CLASSIFICATION_INFERENCE"
       annotation_type:
         | "highlight"
         | "drawing"
@@ -19137,6 +19146,13 @@ export const Constants = {
   public: {
     Enums: {
       ai_content_type: ["summary", "flashcards", "quiz", "mindmap"],
+      ai_intervention_type: [
+        "AI_AUTOFILL",
+        "AI_ADDITION",
+        "AI_CORRECTION",
+        "AI_SUGGESTION_APPLIED",
+        "AI_CLASSIFICATION_INFERENCE",
+      ],
       annotation_type: [
         "highlight",
         "drawing",

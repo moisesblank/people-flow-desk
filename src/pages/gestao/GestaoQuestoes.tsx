@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
 import { QuestionMetadataBadges, QuestionModeBadge } from '@/components/shared/QuestionMetadataBadges';
+import QuestionAILogButton from '@/components/gestao/questoes/QuestionAILogButton';
+import { useQuestionsWithAILogs } from '@/hooks/useQuestionAILogs';
 import { 
   Brain, 
   Plus, 
