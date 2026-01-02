@@ -256,10 +256,11 @@ function cleanResolutionText(text: string): string {
     .replace(/Micro\s*Assunto:[^\n]*/gi, '')
     .trim();
   
-  // PASSO 4: Normalizar separadores visuais
+  // PASSO 4: Normalizar separadores visuais e pontuação
   cleaned = cleaned
     .replace(/---+/g, '\n')
     .replace(/___+/g, '\n')
+    .replace(/\.{2,}/g, '.')              // Remove pontos duplos (..) → (.)
     .replace(/\n{4,}/g, '\n\n\n')
     .trim();
   
@@ -1004,17 +1005,17 @@ function getSectionStyles(type: SectionType, isCorrect?: boolean): {
 function getSectionTitle(section: ParsedSection): string {
   switch (section.type) {
     case 'alternativa_correta':
-      return `ALTERNATIVA ${section.alternativaLetter} — CORRETA`;
+      return `Alternativa ${section.alternativaLetter} CORRETA:`;
     case 'alternativa_errada':
-      return `ALTERNATIVA ${section.alternativaLetter} — ERRADA`;
+      return `Alternativa ${section.alternativaLetter} ERRADA:`;
     case 'alternativa_analise':
-      return `ALTERNATIVA ${section.alternativaLetter}`;
+      return `Alternativa ${section.alternativaLetter}:`;
     case 'afirmacao_analise':
-      return `AFIRMAÇÃO ${section.afirmacaoNumber}`;
+      return `Afirmação ${section.afirmacaoNumber}:`;
     case 'afirmacao_correta':
-      return `AFIRMAÇÃO ${section.afirmacaoNumber} — VERDADEIRA`;
+      return `Afirmação ${section.afirmacaoNumber} VERDADEIRA:`;
     case 'afirmacao_incorreta':
-      return `AFIRMAÇÃO ${section.afirmacaoNumber} — FALSA`;
+      return `Afirmação ${section.afirmacaoNumber} FALSA:`;
     case 'analise_header':
       return 'ANÁLISE DAS ALTERNATIVAS';
     case 'passo':
