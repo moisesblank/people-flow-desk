@@ -337,12 +337,12 @@ export function useFlashcardStats() {
     async () => {
       const today = new Date().toISOString().split('T')[0];
 
-      // ⚡ DOGMA V.5K: Limite para evitar sobrecarga
+      // ⚡ ESCALA 45K: Limite aumentado para suportar alta escala
       const { data: allCards } = await supabase
         .from('study_flashcards')
         .select('state, reps, lapses, last_review')
         .eq('user_id', user!.id)
-        .limit(1000);
+        .limit(45000);
 
       const { data: dueCards } = await supabase
         .from('study_flashcards')
