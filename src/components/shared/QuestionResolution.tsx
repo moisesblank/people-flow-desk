@@ -180,19 +180,41 @@ function parseResolutionText(text: string): ParsedSection[] {
     },
   ];
 
-  // Padrões de seções especiais
+  // Padrões de seções especiais (ORDEM IMPORTA - mais específico primeiro)
   const sectionPatterns = [
-    { regex: /[🧬📊✅]\s*CONCLUSÃO[:\s]*/gi, type: 'conclusao' as SectionType },
+    // Conclusão e Gabarito
+    { regex: /[🧬📊✅☑️]\s*CONCLUSÃO[:\s]*/gi, type: 'conclusao' as SectionType },
     { regex: /A alternativa correta é/gi, type: 'conclusao' as SectionType },
-    { regex: /🎯\s*COMPETÊNCIA E HABILIDADE\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
-    { regex: /📌\s*DIRECIONAMENTO\s*[\/]?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
-    { regex: /⚠️\s*PEGADINHAS?(\s*COMUNS?)?[:\s]*/gi, type: 'pegadinhas' as SectionType },
-    { regex: /💡\s*DICA DE OURO[:\s]*/gi, type: 'dica' as SectionType },
+    { regex: /Apenas\s+Alternativa/gi, type: 'conclusao' as SectionType },
+    { regex: /CONCLUSÃO E GABARITO/gi, type: 'conclusao' as SectionType },
+    
+    // Competência e Habilidade ENEM (múltiplos formatos)
+    { regex: /[🎯⚫]\s*COMPETÊNCIA\s*E\s*HABILIDADE\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
+    { regex: /COMPETÊNCIA\s*E\s*HABILIDADE\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
+    { regex: /[◆⚫🎯]\s*COMPETÊNCIA:/gi, type: 'competencia' as SectionType },
+    
+    // Direcionamento / Estratégia (múltiplos formatos)
+    { regex: /[📌⊙◎]\s*DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
+    { regex: /DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
+    { regex: /[🚀✦]\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
+    
+    // Pegadinhas Comuns (múltiplos formatos)
+    { regex: /[⚠️⚠△]\s*PEGADINHAS?\s*(COMUNS?)?[:\s]*/gi, type: 'pegadinhas' as SectionType },
+    { regex: /PEGADINHAS?\s*(COMUNS?)?[:\s]*/gi, type: 'pegadinhas' as SectionType },
+    { regex: /[⚠️⚠△]\s*Confundir/gi, type: 'pegadinhas' as SectionType },
+    
+    // Dica de Ouro (múltiplos formatos)
+    { regex: /[💡🔆✨]\s*DICA\s*DE\s*OURO[:\s]*/gi, type: 'dica' as SectionType },
+    { regex: /DICA\s*DE\s*OURO[:\s]*/gi, type: 'dica' as SectionType },
+    { regex: /[💡]\s*Dica:/gi, type: 'dica' as SectionType },
+    
+    // Passos
     { regex: /[📊⚗️⚙️🔬]\s*PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
     { regex: /PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
+    
+    // Resumo
     { regex: /Agora reunindo tudo/gi, type: 'resumo' as SectionType },
     { regex: /Reunindo tudo/gi, type: 'resumo' as SectionType },
-    { regex: /Apenas\s+Alternativa/gi, type: 'conclusao' as SectionType },
   ];
 
   // Coletar todas as posições
@@ -613,11 +635,23 @@ const QuestionResolution = memo(function QuestionResolution({
   );
   const conclusaoSections = parsedSections.filter(s => s.type === 'conclusao');
   const resumoSections = parsedSections.filter(s => s.type === 'resumo');
+  
+  // Seções especiais pedagógicas (SEMPRE exibir no final, na ordem correta)
+  const competenciaSections = parsedSections.filter(s => s.type === 'competencia');
+  const estrategiaSections = parsedSections.filter(s => s.type === 'estrategia');
+  const pegadinhasSections = parsedSections.filter(s => s.type === 'pegadinhas');
+  const dicaSections = parsedSections.filter(s => s.type === 'dica');
+  
+  // Outras seções (passos, etc.)
   const otherSections = parsedSections.filter(s => 
     !alternativasSections.includes(s) && 
     s.type !== 'intro' &&
     s.type !== 'conclusao' &&
-    s.type !== 'resumo'
+    s.type !== 'resumo' &&
+    s.type !== 'competencia' &&
+    s.type !== 'estrategia' &&
+    s.type !== 'pegadinhas' &&
+    s.type !== 'dica'
   );
   const introSection = parsedSections.find(s => s.type === 'intro');
 
@@ -769,8 +803,17 @@ const QuestionResolution = memo(function QuestionResolution({
         </div>
       )}
 
-      {/* ========== COMPETÊNCIA ENEM (se não no texto) ========== */}
-      {showEnemBlock && (
+      {/* ========== COMPETÊNCIA E HABILIDADE - ENEM ========== */}
+      {competenciaSections.length > 0 && (
+        <div className="space-y-3">
+          {competenciaSections.map((section, index) => (
+            <SectionBlock key={`competencia-${index}`} section={section} />
+          ))}
+        </div>
+      )}
+
+      {/* ========== COMPETÊNCIA ENEM (se não no texto, usar props) ========== */}
+      {showEnemBlock && competenciaSections.length === 0 && (
         <div className="rounded-xl overflow-hidden border-l-4 border-l-purple-500 border-t border-r border-b border-purple-500/30 bg-purple-500/5">
           <div className="px-4 py-3 flex items-center gap-3 bg-purple-500/20">
             <div className="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg bg-background/60 text-purple-500">
@@ -783,17 +826,44 @@ const QuestionResolution = memo(function QuestionResolution({
           <div className="px-5 py-4 space-y-2 text-sm">
             {competenciaEnem && (
               <p>
-                <span className="font-medium text-purple-400">📘 Competência:</span>{' '}
+                <span className="font-medium text-purple-400">◆ Competência:</span>{' '}
                 <span className="text-muted-foreground">{competenciaEnem}</span>
               </p>
             )}
             {habilidadeEnem && (
               <p>
-                <span className="font-medium text-purple-400">📘 Habilidade:</span>{' '}
+                <span className="font-medium text-purple-400">◆ Habilidade:</span>{' '}
                 <span className="text-muted-foreground">{habilidadeEnem}</span>
               </p>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ========== DIRECIONAMENTO / ESTRATÉGIA ========== */}
+      {estrategiaSections.length > 0 && (
+        <div className="space-y-3">
+          {estrategiaSections.map((section, index) => (
+            <SectionBlock key={`estrategia-${index}`} section={section} />
+          ))}
+        </div>
+      )}
+
+      {/* ========== PEGADINHAS COMUNS ========== */}
+      {pegadinhasSections.length > 0 && (
+        <div className="space-y-3">
+          {pegadinhasSections.map((section, index) => (
+            <SectionBlock key={`pegadinhas-${index}`} section={section} />
+          ))}
+        </div>
+      )}
+
+      {/* ========== DICA DE OURO ========== */}
+      {dicaSections.length > 0 && (
+        <div className="space-y-3">
+          {dicaSections.map((section, index) => (
+            <SectionBlock key={`dica-${index}`} section={section} />
+          ))}
         </div>
       )}
     </div>
