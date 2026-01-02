@@ -402,12 +402,14 @@ export default function AlunoQuestoes() {
   const { data: questions = [], isLoading: questionsLoading } = useQuery({
     queryKey: ['student-questions', 'MODO_TREINO'],
     queryFn: async () => {
+      // ESCALA 45K: Limite explícito para superar default Supabase (1000)
       const { data, error } = await supabase
         .from('quiz_questions')
         .select('*')
         .contains('tags', ['MODO_TREINO']) // QUESTION_DOMAIN: Apenas treino
         .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(45000);
       
       if (error) throw error;
       
