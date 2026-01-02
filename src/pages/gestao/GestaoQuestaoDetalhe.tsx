@@ -30,7 +30,10 @@ import {
   Check,
   AlertCircle,
   Video,
+  ImageOff,
+  Image as ImageIcon,
 } from 'lucide-react';
+import { useQuestionImageAnnihilation } from '@/hooks/useQuestionImageAnnihilation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -116,6 +119,11 @@ function GestaoQuestaoDetalhe() {
   const [isLoading, setIsLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isRemovingImage, setIsRemovingImage] = useState(false);
+  const [removeImageConfirm, setRemoveImageConfirm] = useState(false);
+
+  // Hook de aniquilação de imagens
+  const { annihilateAllImages } = useQuestionImageAnnihilation();
 
   // Carregar questão
   const loadQuestion = useCallback(async () => {
@@ -230,7 +238,36 @@ function GestaoQuestaoDetalhe() {
     }
   }, [question, navigate]);
 
-  // Loading
+  // Remover todas as imagens (ANIQUILAÇÃO TOTAL)
+  const handleRemoveAllImages = useCallback(async () => {
+    if (!question?.id) return;
+
+    setIsRemovingImage(true);
+    try {
+      const result = await annihilateAllImages(question.id);
+
+      if (result.success) {
+        toast.success('Imagens removidas permanentemente');
+        setRemoveImageConfirm(false);
+        // Recarregar questão para refletir mudança
+        loadQuestion();
+      } else {
+        toast.error(result.error || 'Erro ao remover imagens');
+      }
+    } catch (err) {
+      console.error('Erro ao remover imagens:', err);
+      toast.error('Erro ao remover imagens');
+    } finally {
+      setIsRemovingImage(false);
+    }
+  }, [question?.id, annihilateAllImages, loadQuestion]);
+
+  // Verificar se questão tem imagens
+  const hasImages = question && (
+    ((question as any).image_urls && Array.isArray((question as any).image_urls) && (question as any).image_urls.length > 0) ||
+    question.image_url
+  );
+
   if (isLoading) {
     return (
       <div className="container mx-auto p-6 flex items-center justify-center min-h-[60vh]">
@@ -361,11 +398,32 @@ function GestaoQuestaoDetalhe() {
         transition={{ delay: 0.2 }}
       >
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle className="flex items-center gap-2">
               <BookOpen className="h-5 w-5 text-primary" />
               Enunciado
             </CardTitle>
+            {/* Botão de remoção de imagem - só aparece se tem imagem */}
+            {hasImages && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setRemoveImageConfirm(true)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <ImageOff className="h-4 w-4 mr-2" />
+                      Remover Imagem
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Remove TODAS as imagens desta questão permanentemente</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </CardHeader>
           <CardContent>
             {/* Enunciado com Imagem - Componente Universal */}
@@ -600,6 +658,53 @@ function GestaoQuestaoDetalhe() {
             <Button variant="destructive" onClick={handleDelete}>
               <Trash2 className="h-4 w-4 mr-2" />
               Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmação de Remoção de Imagem */}
+      <Dialog open={removeImageConfirm} onOpenChange={setRemoveImageConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <ImageOff className="h-5 w-5" />
+              Remover Imagens da Questão
+            </DialogTitle>
+            <DialogDescription>
+              <strong className="text-destructive">ATENÇÃO:</strong> Esta ação irá:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Deletar TODAS as imagens do storage</li>
+                <li>Remover referências do banco de dados</li>
+                <li>Propagar imediatamente para simulados e modo treino</li>
+                <li>Esta ação é <strong>IRREVERSÍVEL</strong></li>
+              </ul>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setRemoveImageConfirm(false)}
+              disabled={isRemovingImage}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleRemoveAllImages}
+              disabled={isRemovingImage}
+            >
+              {isRemovingImage ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Removendo...
+                </>
+              ) : (
+                <>
+                  <ImageOff className="h-4 w-4 mr-2" />
+                  Confirmar Remoção
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
