@@ -77,15 +77,17 @@ export const ESCALA_45K_LIMITS = {
   auditedFiles: [
     {
       file: 'src/pages/gestao/GestaoQuestoes.tsx',
-      status: 'OK',
-      limit: null,
-      notes: 'Sem .limit() - carrega todas as questões'
+      status: 'CORRIGIDO',
+      previousLimit: 'default (1000)',
+      newLimit: 45000,
+      notes: 'Adicionado .limit(45000) para superar default Supabase'
     },
     {
       file: 'src/pages/aluno/AlunoQuestoes.tsx',
-      status: 'OK',
-      limit: null,
-      notes: 'Sem .limit() - carrega todas as questões MODO_TREINO'
+      status: 'CORRIGIDO',
+      previousLimit: 'default (1000)',
+      newLimit: 45000,
+      notes: 'Adicionado .limit(45000) para MODO_TREINO'
     },
     {
       file: 'src/pages/aluno/AlunoSimulados.tsx',
