@@ -30,7 +30,7 @@ export interface Quiz {
 
 export interface QuizQuestion {
   id: string;
-  quiz_id: string;
+  quiz_id?: string;
   question_text: string;
   question_type: 'multiple_choice' | 'true_false' | 'essay';
   options: Array<{ id: string; text: string; image_url?: string }>;
@@ -40,6 +40,7 @@ export interface QuizQuestion {
   difficulty: 'facil' | 'medio' | 'dificil';
   topic: string | null;
   position: number;
+  macro?: string; // MACRO é obrigatório no banco, mas opcional no input (fallback aplicado)
 }
 
 export interface QuizAttempt {
@@ -381,20 +382,27 @@ export function useAddQuestion() {
   return useOptimisticMutation<any[], Omit<QuizQuestion, 'id'>, any>({
     queryKey: ['quiz-questions'],
     mutationFn: async (question) => {
+      const insertData: Record<string, any> = {
+        question_text: question.question_text,
+        question_type: question.question_type,
+        options: question.options,
+        correct_answer: question.correct_answer,
+        explanation: question.explanation,
+        points: question.points,
+        difficulty: question.difficulty,
+        topic: question.topic,
+        position: question.position,
+        macro: question.macro || 'Química Geral', // MACRO é obrigatório (NOT NULL)
+      };
+      
+      // Adicionar quiz_id apenas se existir (campo opcional)
+      if (question.quiz_id) {
+        insertData.quiz_id = question.quiz_id;
+      }
+      
       const { data, error } = await supabase
         .from('quiz_questions')
-        .insert({
-          quiz_id: question.quiz_id,
-          question_text: question.question_text,
-          question_type: question.question_type,
-          options: question.options,
-          correct_answer: question.correct_answer,
-          explanation: question.explanation,
-          points: question.points,
-          difficulty: question.difficulty,
-          topic: question.topic,
-          position: question.position,
-        })
+        .insert(insertData as any)
         .select()
         .single();
 
