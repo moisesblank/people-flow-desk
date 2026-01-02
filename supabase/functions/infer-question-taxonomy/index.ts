@@ -7,7 +7,128 @@ const corsHeaders = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MODO AGENTE v4.0.0 — TAXONOMIA DINÂMICA + NORMALIZAÇÃO SEMÂNTICA
+// POLÍTICA PERMANENTE DE NORMALIZAÇÃO DE BANCAS v1.0
+// ═══════════════════════════════════════════════════════════════════════════════
+// REGRA SUPREMA: Quando existe uma banca oficial, apenas o nome oficial e o ano
+// podem ser exibidos ou armazenados. Nenhum prefixo adicional é permitido.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const INVALID_BANCA_PREFIXES = [
+  'QUESTÃO SIMULADO PROF. MOISÉS MEDEIROS',
+  'QUESTAO SIMULADO PROF. MOISES MEDEIROS',
+  'QUESTÃO SIMULADO PROF MOISÉS MEDEIROS',
+  'QUESTAO SIMULADO PROF MOISES MEDEIROS',
+  'QUESTÃO PROF. MOISÉS MEDEIROS',
+  'QUESTAO PROF. MOISES MEDEIROS',
+  'PROF. MOISÉS MEDEIROS',
+  'PROF MOISÉS MEDEIROS',
+  'PROF. MOISES MEDEIROS',
+  'PROF MOISES MEDEIROS',
+  'MOISÉS MEDEIROS',
+  'MOISES MEDEIROS',
+  'SIMULADO PROF.',
+  'SIMULADO PROF',
+  'QUESTÃO AUTORAL',
+  'AUTORAL PROF',
+];
+
+const OFFICIAL_BOARDS = [
+  'ENEM', 'FUVEST', 'UNICAMP', 'UNESP', 'UERJ', 'UECE', 'UFMG', 'UFRJ', 'USP',
+  'UFRGS', 'UFSC', 'UFPR', 'UFPE', 'UFBA', 'UFC', 'UNIFESP', 'UFRN', 'UFPB',
+  'UFF', 'UFES', 'UFG', 'UFMS', 'UFMT', 'UFAL', 'UFAM', 'UFPA', 'UFPI',
+  'UFMA', 'UEM', 'UEL', 'UEPG', 'UDESC', 'UEPA', 'UEMA', 'UERN', 'UEPB',
+  'UPE', 'UEG', 'VUNESP', 'FGV', 'CESGRANRIO', 'FCC', 'CONSULPLAN',
+  'CESPE', 'CEBRASPE', 'FUNDATEC', 'IBFC', 'QUADRIX', 'ESA', 'EFOMM',
+  'AFA', 'ESPCEX', 'EPCAR', 'EEAR', 'ITA', 'IME', 'EN', 'OBQ', 'OQSP',
+  'ENCCEJA', 'SAEB', 'AUTORAL'
+];
+
+function detectOfficialBoard(input: string): string | null {
+  if (!input) return null;
+  const normalized = input.toUpperCase().trim();
+  for (const board of OFFICIAL_BOARDS) {
+    if (normalized.includes(board)) {
+      return board;
+    }
+  }
+  return null;
+}
+
+function removeInvalidBancaPrefixes(input: string): string {
+  if (!input) return input;
+  let result = input;
+  for (const prefix of INVALID_BANCA_PREFIXES) {
+    const regex = new RegExp(prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    result = result.replace(regex, '').trim();
+  }
+  result = result.replace(/\(\s*\)/g, '').trim();
+  result = result.replace(/^\s*[-\/]\s*/g, '').trim();
+  return result;
+}
+
+function normalizeBanca(input: string | null | undefined, year?: number | string | null): string {
+  const currentYear = new Date().getFullYear();
+  
+  if (!input || input.trim() === '') {
+    const finalYear = year ? (typeof year === 'string' ? parseInt(year, 10) : year) : currentYear;
+    return `AUTORAL (${finalYear})`;
+  }
+
+  const originalInput = input.trim();
+  const detectedBoard = detectOfficialBoard(originalInput);
+  
+  if (detectedBoard) {
+    // Há banca oficial - remover prefixos inválidos
+    let extractedYear: number | null = null;
+    const yearMatch = originalInput.match(/\b(19[9][0-9]|20[0-9]{2})\b/);
+    if (yearMatch) {
+      extractedYear = parseInt(yearMatch[1], 10);
+    }
+    
+    if (!extractedYear && year) {
+      extractedYear = typeof year === 'string' ? parseInt(year, 10) : year;
+    }
+    
+    // Retorna no formato BANCA (ANO)
+    if (extractedYear) {
+      return `${detectedBoard} (${extractedYear})`;
+    }
+    return detectedBoard;
+  }
+  
+  // Não há banca oficial - verifica se é apenas o prefixo do professor
+  const upperInput = originalInput.toUpperCase();
+  for (const prefix of INVALID_BANCA_PREFIXES) {
+    if (upperInput.includes(prefix.toUpperCase())) {
+      const yearMatch = originalInput.match(/\b(19[9][0-9]|20[0-9]{2})\b/);
+      const extractedYear = yearMatch ? parseInt(yearMatch[1], 10) : 
+        (year ? (typeof year === 'string' ? parseInt(year, 10) : year) : currentYear);
+      return `AUTORAL (${extractedYear})`;
+    }
+  }
+  
+  // Outros casos - normaliza para maiúsculas
+  let normalizedBoard = removeInvalidBancaPrefixes(originalInput).toUpperCase();
+  
+  if (!normalizedBoard || normalizedBoard.trim() === '') {
+    const finalYear = year ? (typeof year === 'string' ? parseInt(year, 10) : year) : currentYear;
+    return `AUTORAL (${finalYear})`;
+  }
+  
+  // Adiciona ano se disponível
+  const yearMatch = originalInput.match(/\b(19[9][0-9]|20[0-9]{2})\b/);
+  let finalYear = yearMatch ? parseInt(yearMatch[1], 10) : 
+    (year ? (typeof year === 'string' ? parseInt(year, 10) : year) : null);
+  
+  if (finalYear && !normalizedBoard.includes(String(finalYear))) {
+    return `${normalizedBoard.trim()} (${finalYear})`;
+  }
+  
+  return normalizedBoard.trim();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MODO AGENTE v5.0.0 — TAXONOMIA DINÂMICA + NORMALIZAÇÃO SEMÂNTICA
 // BUSCA A TAXONOMIA CANÔNICA DO BANCO E DECIDE A MELHOR CLASSIFICAÇÃO
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -552,6 +673,14 @@ serve(async (req) => {
         
         console.log(`✅ Questão ${q.id}: MANTENDO classificação original do usuário ${fieldsInferred.length > 0 ? `(inferidos: ${fieldsInferred.join(', ')})` : ''}`);
         
+        // NORMALIZAR BANCA conforme Política v1.0
+        const ano = parseInt(String(q.suggested_ano)) || currentYear;
+        const bancaNormalizada = normalizeBanca(q.suggested_banca, ano);
+        if (q.suggested_banca !== bancaNormalizada) {
+          fieldsInferred.push('BANCA_NORMALIZADA');
+          console.log(`🏛️ Questão ${q.id}: banca normalizada de "${q.suggested_banca}" para "${bancaNormalizada}"`);
+        }
+        
         results.push({
           id: q.id,
           macro: q.suggested_macro || 'Química Geral',
@@ -559,8 +688,8 @@ serve(async (req) => {
           tema: q.suggested_tema || '',
           subtema: q.suggested_subtema || '',
           difficulty,
-          banca: q.suggested_banca || 'Autoral',
-          ano: parseInt(String(q.suggested_ano)) || currentYear,
+          banca: bancaNormalizada,
+          ano,
           explanation: q.explanation || 'Resolução não disponível.',
           nivel_cognitivo: nivelCognitivo,
           confidence: 1.0, // Alta confiança pois respeitou o usuário
@@ -721,11 +850,15 @@ Sempre responda com JSON válido.`
           const difficulty = q.suggested_difficulty || 'médio';
           if (!q.suggested_difficulty) fieldsInferred.push('DIFICULDADE');
           
-          const banca = q.suggested_banca || 'Autoral';
-          if (!q.suggested_banca) fieldsInferred.push('BANCA');
-          
+          // NORMALIZAR BANCA conforme Política v1.0
           const ano = parseInt(String(q.suggested_ano)) || currentYear;
           if (!q.suggested_ano) fieldsInferred.push('ANO');
+          
+          const bancaNormalizada = normalizeBanca(q.suggested_banca, ano);
+          if (!q.suggested_banca) fieldsInferred.push('BANCA');
+          if (q.suggested_banca && q.suggested_banca !== bancaNormalizada) {
+            fieldsInferred.push('BANCA_NORMALIZADA');
+          }
           
           const explanation = q.explanation || 'Resolução não disponível. Consulte o material de apoio.';
           if (!q.explanation) fieldsInferred.push('EXPLICAÇÃO');
@@ -740,7 +873,7 @@ Sempre responda com JSON válido.`
             tema,
             subtema,
             difficulty,
-            banca,
+            banca: bancaNormalizada,
             ano,
             explanation,
             nivel_cognitivo: nivelCognitivo,
@@ -782,7 +915,7 @@ Sempre responda com JSON válido.`
             tema: result.tema || hint?.canonical?.tema || 'Cálculos',
             subtema: result.subtema || hint?.canonical?.subtema || '',
             difficulty: result.difficulty || 'médio',
-            banca: result.banca || 'Autoral',
+            banca: normalizeBanca(result.banca, result.ano || currentYear),
             ano: result.ano || currentYear,
             explanation: result.explanation || q.explanation || 'Resolução comentada não disponível.',
             nivel_cognitivo: result.nivel_cognitivo || q.suggested_nivel_cognitivo || 'APLICAR',
@@ -801,7 +934,7 @@ Sempre responda com JSON válido.`
             tema: hint?.canonical?.tema || 'Cálculos',
             subtema: hint?.canonical?.subtema || '',
             difficulty: 'médio',
-            banca: 'Autoral',
+            banca: normalizeBanca('Autoral', currentYear),
             ano: currentYear,
             explanation: q.explanation || 'Resolução comentada não disponível.',
             nivel_cognitivo: q.suggested_nivel_cognitivo || 'APLICAR',
