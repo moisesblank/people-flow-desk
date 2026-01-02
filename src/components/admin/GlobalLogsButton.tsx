@@ -158,82 +158,123 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
         )}
       </AnimatePresence>
       
-      {/* Modal de Preview dos Logs */}
+      {/* Modal FULLSCREEN de Logs */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border-red-500/20 text-white overflow-hidden flex flex-col">
-          <DialogHeader className="border-b border-white/10 pb-4">
+        <DialogContent 
+          className="fixed inset-0 w-screen h-screen max-w-none max-h-none m-0 p-0 rounded-none bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border-0 text-white flex flex-col"
+          aria-describedby="logs-description"
+        >
+          {/* Header fixo */}
+          <DialogHeader className="flex-shrink-0 border-b border-red-500/20 p-6">
             <DialogTitle className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-red-500/20 flex items-center justify-center">
-                <ScrollText className="h-5 w-5 text-red-400" />
+              <div className="h-12 w-12 rounded-xl bg-red-500/20 flex items-center justify-center">
+                <ScrollText className="h-6 w-6 text-red-400" />
               </div>
               <div>
-                <h2 className="text-xl font-bold">Sistema de Logs</h2>
-                <p className="text-sm text-white/50">Últimos 10 registros em tempo real</p>
+                <h2 className="text-2xl font-bold">🔴 Sistema de Logs - FULLSCREEN</h2>
+                <p id="logs-description" className="text-sm text-white/50">Todos os registros em tempo real • Atualização a cada 10s</p>
               </div>
-              <div className="ml-auto flex items-center gap-2">
-                <motion.div
-                  className="h-2 w-2 bg-green-400 rounded-full"
-                  animate={{ opacity: [1, 0.5, 1] }}
-                  transition={{ repeat: Infinity, duration: 1 }}
-                />
-                <span className="text-xs text-green-400">LIVE</span>
+              <div className="ml-auto flex items-center gap-4">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/30">
+                  <motion.div
+                    className="h-2.5 w-2.5 bg-green-400 rounded-full"
+                    animate={{ opacity: [1, 0.5, 1], scale: [1, 1.1, 1] }}
+                    transition={{ repeat: Infinity, duration: 1 }}
+                  />
+                  <span className="text-sm text-green-400 font-semibold">LIVE</span>
+                </div>
+                <span className="text-white/40 text-sm">{recentLogs.length} logs</span>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
               </div>
             </DialogTitle>
           </DialogHeader>
           
-          <div className="flex-1 overflow-y-auto py-4 space-y-3 min-h-0">
+          {/* Lista de Logs - Scrollable */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {isLoading ? (
-              <div className="flex items-center justify-center py-8">
+              <div className="flex items-center justify-center py-20">
                 <motion.div
-                  className="h-8 w-8 border-2 border-red-500/30 border-t-red-500 rounded-full"
+                  className="h-12 w-12 border-3 border-red-500/30 border-t-red-500 rounded-full"
                   animate={{ rotate: 360 }}
                   transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
                 />
               </div>
             ) : recentLogs.length === 0 ? (
-              <div className="text-center py-8 text-white/50">
-                <ScrollText className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                <p>Nenhum log registrado</p>
+              <div className="text-center py-20 text-white/50">
+                <ScrollText className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                <p className="text-lg">Nenhum log registrado</p>
               </div>
             ) : (
-              recentLogs.map((log) => (
+              recentLogs.map((log, index) => (
                 <motion.div
                   key={log.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className={`p-4 rounded-xl border ${getSeverityColor(log.severity)} bg-white/5`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className={`p-6 rounded-2xl border-2 ${getSeverityColor(log.severity)} bg-black/30 backdrop-blur`}
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline" className={getSeverityColor(log.severity)}>
-                          {log.severity?.toUpperCase() || 'LOG'}
-                        </Badge>
-                        <span className="text-xs text-white/40">
-                          {format(new Date(log.timestamp), "HH:mm:ss - dd/MM/yyyy", { locale: ptBR })}
-                        </span>
-                      </div>
-                      <p className="text-sm text-white/80 font-mono truncate">
+                  {/* Header do Log */}
+                  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-white/10">
+                    <span className={`px-3 py-1.5 rounded-lg text-sm font-bold uppercase ${getSeverityColor(log.severity)}`}>
+                      {log.severity || 'LOG'}
+                    </span>
+                    <span className="text-white/60 text-sm font-mono">
+                      🕐 {format(new Date(log.timestamp), "HH:mm:ss")} • 📅 {format(new Date(log.timestamp), "dd/MM/yyyy", { locale: ptBR })}
+                    </span>
+                    <span className="ml-auto text-xs text-white/30 font-mono">ID: {log.id.slice(0, 8)}...</span>
+                  </div>
+                  
+                  {/* Mensagem Completa */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-xs text-white/40 uppercase tracking-wider mb-1 block">Mensagem de Erro</label>
+                      <pre className="text-sm text-white/90 font-mono bg-black/40 p-4 rounded-xl overflow-x-auto whitespace-pre-wrap break-words border border-white/5">
                         {log.error_message || 'Sem mensagem'}
-                      </p>
+                      </pre>
                     </div>
+                    
+                    {/* Stack Trace se existir */}
+                    {log.stack_trace && (
+                      <div>
+                        <label className="text-xs text-white/40 uppercase tracking-wider mb-1 block">Stack Trace</label>
+                        <pre className="text-xs text-red-300/80 font-mono bg-red-950/30 p-4 rounded-xl overflow-x-auto whitespace-pre-wrap break-words border border-red-500/10 max-h-60 overflow-y-auto">
+                          {log.stack_trace}
+                        </pre>
+                      </div>
+                    )}
+                    
+                    {/* Metadata se existir */}
+                    {log.metadata && Object.keys(log.metadata).length > 0 && (
+                      <div>
+                        <label className="text-xs text-white/40 uppercase tracking-wider mb-1 block">Metadata</label>
+                        <pre className="text-xs text-blue-300/80 font-mono bg-blue-950/30 p-4 rounded-xl overflow-x-auto whitespace-pre-wrap break-words border border-blue-500/10">
+                          {JSON.stringify(log.metadata, null, 2)}
+                        </pre>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               ))
             )}
           </div>
           
-          <div className="border-t border-white/10 pt-4 flex justify-between items-center">
-            <p className="text-xs text-white/40">
-              Logs são limpos automaticamente a cada 48h
+          {/* Footer fixo */}
+          <div className="flex-shrink-0 border-t border-red-500/20 p-6 bg-black/50 flex justify-between items-center">
+            <p className="text-sm text-white/40">
+              ⚠️ Logs são aniquilados automaticamente a cada 48h
             </p>
             <motion.button
               onClick={handleOpenLogs}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-medium text-sm transition-all"
+              className="px-8 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-semibold text-base transition-all shadow-lg shadow-red-500/20"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              Ver Todos os Logs →
+              🔍 Ver Página Completa de Logs →
             </motion.button>
           </div>
         </DialogContent>
