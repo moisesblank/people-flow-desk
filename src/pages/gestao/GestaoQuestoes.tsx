@@ -1495,6 +1495,10 @@ function GestaoQuestoes() {
     return filteredQuestions.slice(startIndex, endIndex);
   }, [filteredQuestions, currentPage, ITEMS_PER_PAGE]);
 
+  // AI LOGS: Buscar resumos de logs para as questões paginadas (visibilidade global)
+  const paginatedQuestionIds = useMemo(() => paginatedQuestions.map(q => q.id), [paginatedQuestions]);
+  const { data: aiLogsSummaryMap, isLoading: isLoadingAILogs } = useQuestionsWithAILogs(paginatedQuestionIds);
+
   // Reset página ao mudar filtros
   useEffect(() => {
     setCurrentPage(1);
@@ -2572,6 +2576,13 @@ function GestaoQuestoes() {
                         
                         {/* Right: Ações Rápidas - Sempre visíveis */}
                         <div className="flex items-center gap-1 shrink-0">
+                          {/* AI LOG BUTTON - Visibilidade Global de Intervenções de IA */}
+                          <QuestionAILogButton
+                            questionId={question.id}
+                            summary={aiLogsSummaryMap?.get(question.id)}
+                            isLoading={isLoadingAILogs}
+                            variant="icon"
+                          />
                           <Button
                             variant="ghost"
                             size="icon"
