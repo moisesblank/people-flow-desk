@@ -108,16 +108,35 @@ export function useQuestionTaxonomy() {
 }
 
 // Hook para obter arrays formatados para Select components
+// HÍBRIDO: MICRO filtrado por MACRO, TEMA/SUBTEMA = busca livre global
 export function useTaxonomyForSelects() {
   const { data, isLoading, error } = useQuestionTaxonomy();
   
   const macros = data?.tree.macros.map(m => ({ value: m.value, label: m.icon ? `${m.icon} ${m.label}` : m.label })) || [];
   
+  // MICRO: Filtrado pelo MACRO selecionado (comportamento normal)
   const getMicrosForSelect = (macroValue: string) => {
     if (!data || !macroValue) return [];
     return data.tree.getMicros(macroValue).map(m => ({ value: m.value, label: m.icon ? `${m.icon} ${m.label}` : m.label }));
   };
   
+  // TEMA: Busca livre - retorna TODOS os temas de todos os micros
+  const getAllTemasForSelect = () => {
+    if (!data) return [];
+    return data.items
+      .filter(i => i.level === 'tema')
+      .map(t => ({ value: t.value, label: t.icon ? `${t.icon} ${t.label}` : t.label }));
+  };
+  
+  // SUBTEMA: Busca livre - retorna TODOS os subtemas de todos os temas
+  const getAllSubtemasForSelect = () => {
+    if (!data) return [];
+    return data.items
+      .filter(i => i.level === 'subtema')
+      .map(s => ({ value: s.value, label: s.icon ? `${s.icon} ${s.label}` : s.label }));
+  };
+  
+  // Manter funções antigas para compatibilidade (caso algum componente use)
   const getTemasForSelect = (microValue: string) => {
     if (!data || !microValue) return [];
     return data.tree.getTemas(microValue).map(m => ({ value: m.value, label: m.icon ? `${m.icon} ${m.label}` : m.label }));
@@ -135,7 +154,11 @@ export function useTaxonomyForSelects() {
     getMicrosForSelect,
     getTemasForSelect,
     getSubtemasForSelect,
+    // Novas funções para busca livre
+    getAllTemasForSelect,
+    getAllSubtemasForSelect,
     tree: data?.tree,
+    allItems: data?.items || [],
   };
 }
 
