@@ -197,12 +197,21 @@ export function formatChemicalFormulas(text: string): string {
   // Motivo: strings em React escapam HTML, então usamos um token e renderizamos
   // como <sub> no componente (QuestionEnunciado/QuestionResolution).
   // Ex.: CO2(g) -> CO₂⟦state:g⟧ -> CO₂(g) com tamanho igual ao "₂".
-  result = result
-    .replace(/\(\s*s\s*\)/gi, '⟦state:s⟧')
-    .replace(/\(\s*l\s*\)/gi, '⟦state:l⟧')
-    .replace(/\(\s*g\s*\)/gi, '⟦state:g⟧')
-    .replace(/\(\s*v\s*\)/gi, '⟦state:v⟧')
-    .replace(/\(\s*aq\s*\)/gi, '⟦state:aq⟧');
+  //
+  // ⚠️ LEI IMUTÁVEL v2.4: Estados físicos SÓ são formatados quando:
+  //    - Precedidos por elemento químico (letra maiúscula + opcional minúscula)
+  //    - Precedidos por subscrito numérico (₀-₉) ou dígito (0-9)
+  //    - Precedidos por parêntese fechado de fórmula complexa )
+  //    - Precedidos por colchete fechado de íon complexo ]
+  //    - NUNCA aplicar após texto comum como "A(s)", "distribuição(ões)"
+  //
+  // Regex: lookbehind para garantir contexto químico válido
+  // Contexto válido: [A-Z][a-z]?|[₀-₉]|\d|\)|\]|⁺|⁻
+  const CHEMICAL_CONTEXT_BEFORE_STATE = /(?<=[A-Z][a-z]?|[₀₁₂₃₄₅₆₇₈₉]|\d|\)|\]|⁺|⁻)\(\s*(s|l|g|v|aq)\s*\)/gi;
+  
+  result = result.replace(CHEMICAL_CONTEXT_BEFORE_STATE, (_, state) => {
+    return `⟦state:${state.toLowerCase()}⟧`;
+  });
 
   // ═══════════════════════════════════════════════════════════════════
   // 5. PADRONIZAR E RESTAURAR SETAS DE REAÇÃO — LEI v2.3
