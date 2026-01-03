@@ -210,7 +210,7 @@ export function useGlobalAILogsSummary() {
         .from('question_ai_intervention_logs')
         .select('question_id, intervention_type, field_affected, source_file, created_at')
         .order('created_at', { ascending: false })
-        .limit(5000); // Aumentado para escala
+        .limit(100); // FASE 1 - Quick Win: 100 logs iniciais (era 5000)
 
       if (error) {
         console.error('[useGlobalAILogsSummary] Erro:', error);
@@ -285,8 +285,9 @@ export function useGlobalAILogsSummary() {
         source_files: Array.from(uniqueSourceFiles),
       };
     },
-    staleTime: 30_000, // 30 segundos para ver mudanças mais rápido
-    refetchOnWindowFocus: true, // Atualizar ao voltar à janela
+    // FASE 1 - Quick Win: staleTime aumentado para 5 minutos
+    staleTime: 5 * 60 * 1000, // 5 minutos (era 30 segundos)
+    refetchOnWindowFocus: false, // Desabilitado para performance (era true)
   });
 }
 
@@ -318,12 +319,14 @@ export function useGlobalAILogsGroupedByQuestion() {
   return useQuery({
     queryKey: ['global-ai-logs-by-question'],
     queryFn: async (): Promise<GroupedAILogs> => {
-      // PASSO 1: Buscar todos os logs com detalhes completos
+      // PASSO 1: Buscar logs mais recentes (FASE 1 - Quick Win)
+      // PRESERVAÇÃO: Dados completos disponíveis via expansão individual
+      // Limite inicial otimizado para performance (100), não afeta governança
       const { data: logsData, error: logsError } = await supabase
         .from('question_ai_intervention_logs')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(5000);
+        .limit(100);
 
       if (logsError) {
         console.error('[useGlobalAILogsGroupedByQuestion] Erro ao buscar logs:', logsError);
@@ -396,8 +399,10 @@ export function useGlobalAILogsGroupedByQuestion() {
         total_questions: questions.length,
       };
     },
-    staleTime: 10_000, // 10 segundos para atualizações mais frequentes
-    refetchOnWindowFocus: true,
+    // FASE 1 - Quick Win: staleTime aumentado para 5 minutos
+    // Reduz queries de 6/min para 0.2/min por usuário
+    staleTime: 5 * 60 * 1000, // 5 minutos (era 10 segundos)
+    refetchOnWindowFocus: false, // Desabilitado para performance (era true)
   });
 }
 
