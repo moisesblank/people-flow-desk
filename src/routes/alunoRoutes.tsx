@@ -11,6 +11,7 @@ import { ProtectedPage } from "./routeHelpers";
 const AlunosRouteSwitcher = lazy(() => import("@/pages/AlunosRouteSwitcher"));
 const AlunoDashboard = lazy(() => import("@/pages/aluno/AlunoDashboard"));
 const AlunoLivroWeb = lazy(() => import("@/pages/aluno/AlunoLivroWeb"));
+const AlunoCursos = lazy(() => import("@/pages/aluno/AlunoCursos"));
 const AlunoVideoaulas = lazy(() => import("@/pages/aluno/AlunoVideoaulas"));
 const AlunoQuestoes = lazy(() => import("@/pages/aluno/AlunoQuestoes"));
 const AlunoSimulados = lazy(() => import("@/pages/aluno/AlunoSimulados"));
@@ -45,6 +46,8 @@ export const alunoRoutes = (
     <Route path="/alunos/dashboard" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
     {/* Canonical - Livros Web */}
     <Route path="/alunos/livro-web" element={<ProtectedPage><AlunoLivroWeb /></ProtectedPage>} />
+    {/* Canonical - Cursos (Mirror Read-Only) */}
+    <Route path="/alunos/cursos" element={<ProtectedPage><AlunoCursos /></ProtectedPage>} />
     <Route path="/alunos/cronograma" element={<ProtectedPage><AlunoCronograma /></ProtectedPage>} />
     <Route path="/alunos/videoaulas" element={<ProtectedPage><AlunoVideoaulas /></ProtectedPage>} />
     <Route path="/alunos/materiais" element={<ProtectedPage><AlunoMateriais /></ProtectedPage>} />
