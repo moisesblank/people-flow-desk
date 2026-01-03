@@ -4,12 +4,13 @@
 // O vínculo real acontece ANTES da sessão no Auth.tsx
 // ============================================
 
-import { useEffect, useState, ReactNode, useCallback } from 'react';
+import { useEffect, useState, ReactNode, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useDeviceLimitServer } from '@/hooks/useDeviceLimitServer';
 import { useDeviceGateStore } from '@/state/deviceGateStore';
 import { DeviceLimitModal } from './DeviceLimitModal';
+import { logger } from '@/lib/logger';
 
 interface DeviceGuardProps {
   children: ReactNode;
@@ -44,15 +45,26 @@ export function DeviceGuard({ children }: DeviceGuardProps) {
   
   const [hasChecked, setHasChecked] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // 🛡️ Log once per session para evitar ruído em telemetria
+  const hasLoggedStateLeakRef = useRef(false);
 
   // 🛡️ CRITÉRIO EXPLÍCITO: Guard contra state leak pré-login
   // Se isGateActive=true mas loginIntent=false, é um state leak - ignorar e resetar
   useEffect(() => {
     if (isGateActive && !loginIntent) {
-      console.warn('[DeviceGuard] ⚠️ State leak detected: isGateActive=true but loginIntent=false - resetting');
+      // 🛡️ Log apenas uma vez por sessão (polish arquitetural)
+      if (!hasLoggedStateLeakRef.current) {
+        logger.warn('[DeviceGuard] State leak detected: isGateActive=true but loginIntent=false - resetting', {
+          isGateActive,
+          loginIntent,
+          pathname: location.pathname
+        });
+        hasLoggedStateLeakRef.current = true;
+      }
       useDeviceGateStore.getState().clearPayload();
     }
-  }, [isGateActive, loginIntent]);
+  }, [isGateActive, loginIntent, location.pathname]);
 
   // 🛡️ BLOCO 3: FAIL-CLOSED - Se gate está ativo E loginIntent=true, redirecionar
   useEffect(() => {
