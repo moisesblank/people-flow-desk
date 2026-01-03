@@ -5,7 +5,7 @@
 // READ-ONLY - Logs são IMUTÁVEIS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useState, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dialog,
@@ -284,7 +284,7 @@ LogEntry.displayName = 'LogEntry';
 // POLÍTICA v2.0: Buscar enunciado real da questão
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const QuestionAILogViewer = memo(({ questionId, isOpen, onClose }: QuestionAILogViewerProps) => {
+const QuestionAILogViewer = memo(forwardRef<HTMLDivElement, QuestionAILogViewerProps>(({ questionId, isOpen, onClose }, ref) => {
   const { data: logs = [], isLoading, error } = useQuestionAILogs(questionId);
   const [enunciadoSnippet, setEnunciadoSnippet] = useState<string>('');
 
@@ -464,7 +464,7 @@ const QuestionAILogViewer = memo(({ questionId, isOpen, onClose }: QuestionAILog
       </DialogContent>
     </Dialog>
   );
-});
+}));
 
 QuestionAILogViewer.displayName = 'QuestionAILogViewer';
 
