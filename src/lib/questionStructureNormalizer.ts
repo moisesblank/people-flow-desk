@@ -366,18 +366,40 @@ export function normalizeCompetenciaHabilidade(text: string): string {
 
 /**
  * Organiza DIRECIONAMENTO / ESTRATÉGIA
- * REGRA: Remover numeração visual, emojis, símbolos
- * Transformar listas em texto corrido contínuo
+ * LEI v3.5: Cada numeração (1⃣, 2⃣, 1., 2. etc.) DEVE estar em sua própria linha
+ * REGRA: Quebrar linha ANTES de cada item numerado
  * NÃO adicionar orientações novas
  */
 export function normalizeDirecionamento(text: string): string {
   if (!text) return '';
   
-  // 1. Remover emojis e símbolos
-  let cleaned = removeEmojisAndSymbols(text);
+  // 1. Limpar emojis decorativos (exceto números em círculo que são estruturais)
+  let cleaned = text
+    .replace(/[★☆✓✗✔✘●○◆◇▶►▷▸◀◁◂◃⚡⚙️🔧🔨🛠️]/g, '')
+    .trim();
   
-  // 2. Remover numeração e transformar em texto corrido
-  cleaned = listToContinuousText(cleaned);
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LEI v3.5: QUEBRA DE LINHA ANTES DE CADA NUMERAÇÃO
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Padrões de numeração que devem iniciar nova linha:
+  // - Números com emoji: 1⃣ 2⃣ 3⃣ etc.
+  // - Números com ponto: 1. 2. 3. ou 1) 2) 3)
+  // - Bullets: • - –
+  
+  // Números em círculo/emoji (1⃣, 2⃣, 3⃣, etc.)
+  cleaned = cleaned.replace(/(\S)\s*([\d]⃣)/g, '$1\n$2');
+  
+  // Números com ponto ou parêntese no meio do texto
+  cleaned = cleaned.replace(/(\S)\s+(\d+[\.\)])\s+/g, '$1\n$2 ');
+  
+  // Bullets no meio do texto
+  cleaned = cleaned.replace(/(\S)\s+([•\-–])\s+/g, '$1\n$2 ');
+  
+  // Limpar espaços múltiplos e linhas vazias excessivas
+  cleaned = cleaned
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
   
   return cleaned;
 }
