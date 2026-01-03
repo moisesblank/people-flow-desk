@@ -59,29 +59,29 @@ export const QUESTION_ENTITY_STANDARD = {
       position: 'BELOW_TEXT',
       alignment: 'CENTER',
       lazy: true,
-      // POLÍTICA v1.0: Imagens são CONTEÚDO INSTRUCIONAL, não decorativas
-      minHeight: 'min-h-[400px]',
-      maxHeight: 'max-h-[1200px]',
-      compactMinHeight: 'max-h-64', // Modo compacto mais legível
+      // POLÍTICA v1.1: Imagens 25% menores para melhor layout
+      minHeight: 'min-h-[300px]',
+      maxHeight: 'max-h-[900px]',
+      compactMinHeight: 'max-h-48', // Modo compacto mais legível
     }
   },
 
-  // PADRÕES DE TAMANHO PEDAGÓGICO v1.0
+  // PADRÕES DE TAMANHO PEDAGÓGICO v1.1 (25% menores)
   imageSizeStandards: {
     enunciado: {
-      minHeight: 'min-h-[400px]',
-      maxHeight: 'max-h-[1200px]',
-      compactHeight: 'max-h-64',
+      minHeight: 'min-h-[300px]',
+      maxHeight: 'max-h-[900px]',
+      compactHeight: 'max-h-48',
       principle: 'Imagens instrucionais devem ser legíveis sem zoom'
     },
     alternatives: {
-      minHeight: 'min-h-[300px]',
-      maxHeight: 'max-h-[800px]',
+      minHeight: 'min-h-[225px]',
+      maxHeight: 'max-h-[600px]',
       principle: 'Tabelas, fórmulas e diagramas devem ser claramente visíveis'
     },
     resolution: {
-      minHeight: 'min-h-[400px]',
-      maxHeight: 'max-h-[1000px]',
+      minHeight: 'min-h-[300px]',
+      maxHeight: 'max-h-[750px]',
       principle: 'Suporte visual para explicação passo a passo'
     }
   },

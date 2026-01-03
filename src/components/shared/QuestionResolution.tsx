@@ -1549,7 +1549,7 @@ const ResolutionImage = memo(function ResolutionImage({ src, index }: { src: str
       <img 
         src={src} 
         alt={`Imagem da resolução ${index + 1}`}
-        className="min-h-[400px] max-h-[1000px] w-auto rounded-lg border border-border/50 shadow-md object-contain"
+        className="min-h-[300px] max-h-[750px] w-auto rounded-lg border border-border/50 shadow-md object-contain"
         loading="lazy"
         onError={(e) => {
           const target = e.target as HTMLImageElement;
