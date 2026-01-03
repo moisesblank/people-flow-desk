@@ -27,6 +27,7 @@ export interface Area {
   position: number;
   is_active: boolean;
   parent_id?: string;
+  thumbnail_url?: string; // Imagem do módulo (752x940 px) - OBRIGATÓRIA
   created_at: string;
   updated_at: string;
 }

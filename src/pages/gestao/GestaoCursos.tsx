@@ -407,7 +407,7 @@ export default function GestaoCursos() {
       </motion.div>
       
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -433,10 +433,21 @@ export default function GestaoCursos() {
         <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Eye className="h-8 w-8 text-green-500" />
+              <Check className="h-8 w-8 text-green-500" />
               <div>
-                <p className="text-2xl font-bold">{courses?.filter(c => c.is_published).length || 0}</p>
-                <p className="text-xs text-muted-foreground">Publicados</p>
+                <p className="text-2xl font-bold">{modules?.filter(m => m.thumbnail_url).length || 0}</p>
+                <p className="text-xs text-muted-foreground">Conformes</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-red-500/10 to-red-600/5 border-red-500/20">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-8 w-8 text-red-500" />
+              <div>
+                <p className="text-2xl font-bold">{modules?.filter(m => !m.thumbnail_url).length || 0}</p>
+                <p className="text-xs text-muted-foreground">Sem Imagem</p>
               </div>
             </div>
           </CardContent>
@@ -859,16 +870,23 @@ export default function GestaoCursos() {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="module-thumbnail">
-                Imagem do Módulo
-                <span className="text-muted-foreground text-xs ml-2">(752 × 940 px)</span>
+              <Label htmlFor="module-thumbnail" className="flex items-center gap-2">
+                Imagem do Módulo *
+                <Badge variant="outline" className="text-xs font-normal">752 × 940 px</Badge>
               </Label>
               <Input
                 id="module-thumbnail"
                 value={moduleForm.thumbnail_url}
                 onChange={(e) => setModuleForm(prev => ({ ...prev, thumbnail_url: e.target.value }))}
                 placeholder="/images/modules/meu-modulo.jpg"
+                className={cn(!moduleForm.thumbnail_url && "border-destructive")}
               />
+              {!moduleForm.thumbnail_url && (
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" />
+                  Imagem obrigatória (752×940 px) - Módulo não pode ser criado sem imagem
+                </p>
+              )}
               {moduleForm.thumbnail_url && (
                 <div className="relative w-[150px] h-[188px] rounded-lg overflow-hidden border bg-muted">
                   <img 
@@ -877,6 +895,10 @@ export default function GestaoCursos() {
                     className="w-full h-full object-cover"
                     onError={(e) => e.currentTarget.style.display = 'none'}
                   />
+                  <Badge className="absolute bottom-1 right-1 text-[10px] bg-green-600">
+                    <Check className="h-3 w-3 mr-1" />
+                    752×940
+                  </Badge>
                 </div>
               )}
             </div>
@@ -909,13 +931,21 @@ export default function GestaoCursos() {
             <Button 
               onClick={() => {
                 if (!selectedCourse) return;
+                if (!moduleForm.thumbnail_url) {
+                  toast({ 
+                    title: '⚠️ Imagem obrigatória', 
+                    description: 'Módulo deve ter imagem (752×940 px) para ser criado.',
+                    variant: 'destructive'
+                  });
+                  return;
+                }
                 if (editingModule) {
                   updateModule.mutate({ id: editingModule.id, ...moduleForm });
                 } else {
                   createModule.mutate({ ...moduleForm, course_id: selectedCourse.id });
                 }
               }}
-              disabled={!moduleForm.title || createModule.isPending || updateModule.isPending}
+              disabled={!moduleForm.title || !moduleForm.thumbnail_url || createModule.isPending || updateModule.isPending}
             >
               <Save className="h-4 w-4 mr-2" />
               {editingModule ? 'Salvar' : 'Criar Módulo'}
@@ -1006,26 +1036,39 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
             </Button>
           </CollapsibleTrigger>
           
-          {/* Thumbnail do módulo (752x940 → preview 60x75) */}
-          {module.thumbnail_url && (
-            <div className="w-[60px] h-[75px] rounded-md overflow-hidden border bg-muted shrink-0">
+          {/* Thumbnail do módulo (752x940 → preview 60x75) - OBRIGATÓRIA */}
+          {module.thumbnail_url ? (
+            <div className="relative w-[60px] h-[75px] rounded-md overflow-hidden border border-green-500/50 bg-muted shrink-0">
               <img 
                 src={module.thumbnail_url} 
                 alt={module.title} 
                 className="w-full h-full object-cover"
                 onError={(e) => e.currentTarget.style.display = 'none'}
               />
+              <div className="absolute bottom-0 right-0 bg-green-600 p-0.5 rounded-tl">
+                <Check className="h-2.5 w-2.5 text-white" />
+              </div>
+            </div>
+          ) : (
+            <div className="relative w-[60px] h-[75px] rounded-md overflow-hidden border-2 border-dashed border-destructive/50 bg-destructive/10 shrink-0 flex items-center justify-center">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
           )}
           
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="outline" className="text-xs shrink-0">
                 #{module.position + 1}
               </Badge>
               <h4 className="font-medium truncate">{module.title}</h4>
               {!module.is_published && (
                 <Badge variant="secondary" className="text-xs">Inativo</Badge>
+              )}
+              {!module.thumbnail_url && (
+                <Badge variant="destructive" className="text-xs">
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  Sem imagem
+                </Badge>
               )}
             </div>
             {module.description && (
