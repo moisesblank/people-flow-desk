@@ -1097,7 +1097,8 @@ function parseResolutionText(text: string): ParsedSection[] {
   // ========== MERGE GLOBAL DE SEÇÕES PEDAGÓGICAS ==========
   // REGRA UNIVERSAL: Agrupa seções do mesmo tipo mergeable (inclui SÍNTESE)
   // LEI PERMANENTE: Competência/Habilidade ENEM NUNCA duplica e SEMPRE organizado
-  const mergableTypes: SectionType[] = ['pegadinhas', 'dica', 'estrategia', 'competencia', 'sintese'];
+  // NOTA: 'sintese' NÃO está aqui pois agora faz parte do bloco unificado "ANÁLISE DA QUESTÃO"
+  const mergableTypes: SectionType[] = ['pegadinhas', 'dica', 'estrategia', 'competencia'];
   
   const nonMergeable: ParsedSection[] = [];
   const mergeableByType: Map<SectionType, ParsedSection[]> = new Map();
@@ -1221,8 +1222,9 @@ $1')
     mergedSections.push(section);
   }
   
-  // Adicionar mergeáveis consolidados no final (ordem: sintese > competencia > estrategia > pegadinhas > dica)
-  const mergeOrder: SectionType[] = ['sintese', 'competencia', 'estrategia', 'pegadinhas', 'dica'];
+  // Adicionar mergeáveis consolidados no final (ordem: competencia > estrategia > pegadinhas > dica)
+  // NOTA: 'sintese' removida pois agora faz parte do bloco "ANÁLISE DA QUESTÃO"
+  const mergeOrder: SectionType[] = ['competencia', 'estrategia', 'pegadinhas', 'dica'];
   for (const type of mergeOrder) {
     const consolidated = consolidatedMergeable.find(s => s.type === type);
     if (consolidated) {
@@ -1943,41 +1945,64 @@ const QuestionResolution = memo(function QuestionResolution({
         </div>
       </div>
 
-      {/* ========== INTRO (ANÁLISE) ========== */}
-      {introSection && (
-        <SectionBlock section={introSection} />
-      )}
-
-      {/* ========== PASSOS — BLOCO UNIFICADO AZUL ========== */}
+      {/* ========== ANÁLISE DA QUESTÃO — BLOCO ÚNICO UNIFICADO (intro + passos + síntese) ========== */}
+      {/* REGRA PERMANENTE: Intro + Passos + Síntese formam um único campo visual */}
       {(() => {
-        // Separar passos de outras seções
+        // Separar passos e síntese de outras seções
         const passosSections = otherSections.filter(s => s.type === 'passo');
-        const nonPassosSections = otherSections.filter(s => s.type !== 'passo');
+        const sinteseSections = parsedSections.filter(s => s.type === 'sintese');
+        const nonPassosSections = otherSections.filter(s => s.type !== 'passo' && s.type !== 'sintese');
         
         // Ordenar passos por número
         const sortedPassos = [...passosSections].sort((a, b) => (a.stepNumber || 0) - (b.stepNumber || 0));
         
+        // Verificar se há conteúdo para o bloco unificado
+        const hasAnaliseContent = introSection || sortedPassos.length > 0 || sinteseSections.length > 0;
+        
         return (
           <>
-            {/* PASSOS em área azul unificada */}
-            {sortedPassos.length > 0 && (
-              <div className="rounded-xl border border-blue-500/30 overflow-hidden bg-blue-500/5 border-l-4 border-l-blue-500">
-                {/* Header único */}
-                <div className="px-4 py-3 bg-blue-500/20 border-b border-blue-500/20 flex items-center gap-2">
-                  <Cog className="h-4 w-4 text-blue-500" />
-                  <h4 className="font-bold text-sm text-blue-500 uppercase tracking-wide">
-                    PASSOS DA RESOLUÇÃO
+            {/* BLOCO ÚNICO: ANÁLISE DA QUESTÃO (intro + passos + síntese) */}
+            {hasAnaliseContent && (
+              <div className="rounded-xl border border-emerald-500/30 overflow-hidden bg-emerald-500/5 border-l-4 border-l-emerald-500">
+                {/* Header do bloco unificado */}
+                <div className="px-4 py-3 bg-emerald-500/20 border-b border-emerald-500/20 flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-emerald-500" />
+                  <h4 className="font-bold text-sm text-emerald-500 uppercase tracking-wide">
+                    ANÁLISE DA QUESTÃO
                   </h4>
                 </div>
-                {/* Passos como tópicos dentro do bloco */}
-                <div className="divide-y divide-blue-500/20">
+                
+                {/* Conteúdo unificado */}
+                <div className="divide-y divide-emerald-500/20">
+                  {/* INTRO — Análise inicial */}
+                  {introSection && (
+                    <div className="px-4 py-3">
+                      <p className="text-justify leading-relaxed text-sm text-foreground/90">
+                        {formatContent(introSection.content)}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* PASSOS — Cada passo em sua própria seção com enter entre eles */}
                   {sortedPassos.map((section, index) => (
                     <div key={`passo-${index}`} className="px-4 py-3">
                       <div className="text-sm text-justify">
                         <span className="font-bold text-blue-500">
-                          PASSO {section.stepNumber}
+                          PASSO {section.stepNumber}:
                         </span>
-                        <span className="text-foreground/90 ml-2 text-justify">
+                        <span className="text-foreground/90 ml-2">
+                          {formatContent(section.content)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* SÍNTESE — Parágrafo de síntese após os passos */}
+                  {sinteseSections.map((section, index) => (
+                    <div key={`sintese-${index}`} className="px-4 py-3">
+                      <div className="text-sm text-justify">
+                        <span className="font-bold text-teal-500">SÍNTESE:</span>
+                        <span className="text-foreground/90 ml-2">
                           {formatContent(section.content)}
                         </span>
                       </div>
@@ -1987,7 +2012,7 @@ const QuestionResolution = memo(function QuestionResolution({
               </div>
             )}
             
-            {/* Outras seções (não-passos) */}
+            {/* Outras seções (não-passos, não-síntese) */}
             {nonPassosSections.length > 0 && (
               <div className="space-y-3">
                 {nonPassosSections.map((section, index) => (
