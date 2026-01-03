@@ -219,9 +219,10 @@ const gestaoMenuGroups: MenuGroup[] = [
       { title: "Site/Programador", url: "/gestaofc/site-programador", icon: Code, area: "site-programador" },
       // 🔑 IMPORTANTE: 'area' precisa bater com nav_sidebar_layout_v1 (editable_content)
       { title: "Flashcards", url: "/gestaofc/flashcards", icon: Brain, area: "flashcards" },
+      { title: "Cursos", url: "/gestaofc/cursos", icon: GraduationCap, area: "cursos", badge: "LMS" },
       { title: "Mapas Mentais", url: "/gestaofc/mapas-mentais", icon: Network, area: "mapas-mentais" },
       { title: "Livros Web", url: "/gestaofc/livros-web", icon: BookOpen, area: "livros-web" },
-      { title: "Questões", url: "/gestaofc/questoes", icon: Brain, area: "cursos" },
+      { title: "Questões", url: "/gestaofc/questoes", icon: Brain, area: "questoes" },
       { title: "Lives", url: "/gestaofc/lives", icon: PlayCircle, area: "lives" },
       { title: "Laboratório", url: "/gestaofc/laboratorio", icon: Zap, area: "laboratorio" },
       { title: "Videoaulas", url: "/gestaofc/videoaulas", icon: PlayCircle, area: "videoaulas" },
