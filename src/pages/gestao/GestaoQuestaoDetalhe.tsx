@@ -58,6 +58,7 @@ import QuestionAILogButton from '@/components/gestao/questoes/QuestionAILogButto
 import ChemicalImageExtractorButton from '@/components/gestao/questoes/ChemicalImageExtractorButton';
 import { useQuestionAILogs } from '@/hooks/useQuestionAILogs';
 import QuestionTaxonomyEditor from '@/components/gestao/questoes/QuestionTaxonomyEditor';
+import QuestionStyleEditor from '@/components/gestao/questoes/QuestionStyleEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -544,7 +545,7 @@ function GestaoQuestaoDetalhe() {
         </Card>
       </motion.div>
 
-      {/* Resolução */}
+      {/* Resolução + Editor de Estilo */}
       {question.explanation !== null && question.explanation !== undefined && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -552,7 +553,21 @@ function GestaoQuestaoDetalhe() {
           transition={{ delay: 0.4 }}
         >
           <Card className="border-emerald-500/30">
-            <CardContent className="pt-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="flex items-center gap-2 text-emerald-500">
+                <Sparkles className="h-5 w-5" />
+                Resolução Comentada
+              </CardTitle>
+              {/* EDITOR DE ESTILO — Correção Manual do Tipo de Questão */}
+              <QuestionStyleEditor
+                questionId={question.id}
+                currentType={question.question_type}
+                currentOptions={question.options}
+                currentCorrectAnswer={question.correct_answer}
+                onUpdate={loadQuestion}
+              />
+            </CardHeader>
+            <CardContent>
               {String(question.explanation).trim().length > 0 ? (
                 <QuestionResolution
                   resolutionText={String(question.explanation)}
