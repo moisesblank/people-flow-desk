@@ -175,7 +175,7 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
   textSize = 'base',
   className,
   showImageLabel = true,
-  maxImageHeight = 'max-h-[900px]',
+  maxImageHeight = 'max-h-[1200px]',
   compact = false,
   hideHeader = false,
 }: QuestionEnunciadoProps) {
@@ -261,7 +261,7 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
               alt={`Imagem ${currentImageIndex + 1} da questão`}
               className={cn(
                 "rounded-lg border border-border/50 object-contain",
-                compact ? "max-h-32 w-full" : maxImageHeight,
+                compact ? "max-h-64 w-full" : `min-h-[400px] ${maxImageHeight}`,
                 !compact && "mx-auto max-w-full"
               )}
               loading="lazy"
