@@ -1,18 +1,19 @@
 // ============================================
-// 📚 GESTÃO DE CURSOS E MÓDULOS
+// 📚 GESTÃO DE CURSOS E MÓDULOS — DESIGN 2300
 // Sistema completo de CRUD para LMS
 // Hierarquia: Curso → Módulo → Aula
+// CSS-ONLY ANIMATIONS (LEI I PERFORMANCE v2.0)
 // ============================================
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Plus, Search, Edit2, Trash2, GraduationCap, BookOpen, 
   Layers, ChevronRight, ChevronDown, Eye, EyeOff, 
   Save, X, FolderOpen, PlayCircle, Clock, Users,
-  MoreHorizontal, Copy, ArrowUpDown, Grip, Check, AlertTriangle
+  MoreHorizontal, Copy, ArrowUpDown, Grip, Check, AlertTriangle,
+  Sparkles, Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,12 +24,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { CyberBackground } from '@/components/ui/cyber-background';
+import { FuturisticPageHeader } from '@/components/ui/futuristic-page-header';
 
 // ============================================
 // TIPOS (baseados no schema real do banco)
@@ -134,6 +136,76 @@ function useLessons(moduleId?: string) {
     },
     enabled: !!moduleId
   });
+}
+
+// ============================================
+// STAT ORB COMPONENT — IRON MAN HUD STYLE
+// ============================================
+interface StatOrbProps {
+  icon: React.ReactNode;
+  value: number;
+  label: string;
+  color: 'blue' | 'purple' | 'green' | 'red' | 'amber';
+  delay?: number;
+}
+
+function StatOrb({ icon, value, label, color, delay = 0 }: StatOrbProps) {
+  const colorMap = {
+    blue: 'from-blue-500/20 to-blue-600/10 border-blue-500/30 shadow-blue-500/20',
+    purple: 'from-purple-500/20 to-purple-600/10 border-purple-500/30 shadow-purple-500/20',
+    green: 'from-green-500/20 to-green-600/10 border-green-500/30 shadow-green-500/20',
+    red: 'from-red-500/20 to-red-600/10 border-red-500/30 shadow-red-500/20',
+    amber: 'from-amber-500/20 to-amber-600/10 border-amber-500/30 shadow-amber-500/20',
+  };
+  
+  const iconColorMap = {
+    blue: 'text-blue-400',
+    purple: 'text-purple-400',
+    green: 'text-green-400',
+    red: 'text-red-400',
+    amber: 'text-amber-400',
+  };
+
+  return (
+    <div 
+      className={cn(
+        "relative group cursor-default",
+        "bg-gradient-to-br border rounded-2xl p-4",
+        "backdrop-blur-sm",
+        "transition-all duration-300 hover:scale-[1.02]",
+        "shadow-lg hover:shadow-xl",
+        "animate-fade-in",
+        colorMap[color]
+      )}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      {/* Glow ring effect */}
+      <div className={cn(
+        "absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100",
+        "transition-opacity duration-500",
+        "bg-gradient-to-br",
+        colorMap[color]
+      )} />
+      
+      <div className="relative flex items-center gap-3">
+        <div className={cn(
+          "p-2 rounded-xl bg-background/50",
+          iconColorMap[color]
+        )}>
+          {icon}
+        </div>
+        <div>
+          <p className="text-2xl font-bold tracking-tight">{value}</p>
+          <p className="text-xs text-muted-foreground">{label}</p>
+        </div>
+      </div>
+      
+      {/* Scanline effect */}
+      <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none opacity-30">
+        <div className="absolute inset-0 scanline-effect" />
+      </div>
+    </div>
+  );
 }
 
 // ============================================
@@ -380,625 +452,645 @@ export default function GestaoCursos() {
   ) || [];
   
   // ============================================
-  // RENDER
+  // RENDER — DESIGN 2300 CINEMATIC
   // ============================================
   return (
-    <div className="container mx-auto py-6 px-4 space-y-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-      >
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <GraduationCap className="h-8 w-8 text-primary" />
-            Gestão de Cursos
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Crie e gerencie cursos e módulos do LMS
-          </p>
+    <div className="relative min-h-screen">
+      {/* Cyber Background */}
+      <CyberBackground variant="grid" className="opacity-30" />
+      
+      <div className="relative container mx-auto py-6 px-4 space-y-6">
+        {/* Header Futurístico */}
+        <FuturisticPageHeader
+          title="Gestão de Cursos"
+          subtitle="Sistema completo de gerenciamento do LMS"
+          icon={GraduationCap}
+          accentColor="primary"
+          action={
+            <Button 
+              onClick={() => { setEditingCourse(null); resetCourseForm(); setCourseDialog(true); }} 
+              className="gap-2 bg-primary/90 hover:bg-primary shadow-lg shadow-primary/25"
+            >
+              <Plus className="h-4 w-4" />
+              Novo Curso
+            </Button>
+          }
+        />
+        
+        {/* Stats — Iron Man HUD Orbs */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <StatOrb
+            icon={<BookOpen className="h-6 w-6" />}
+            value={courses?.length || 0}
+            label="Cursos"
+            color="blue"
+            delay={0}
+          />
+          <StatOrb
+            icon={<Layers className="h-6 w-6" />}
+            value={modules?.length || 0}
+            label="Módulos"
+            color="purple"
+            delay={50}
+          />
+          <StatOrb
+            icon={<Check className="h-6 w-6" />}
+            value={modules?.filter(m => m.thumbnail_url).length || 0}
+            label="Conformes"
+            color="green"
+            delay={100}
+          />
+          <StatOrb
+            icon={<AlertTriangle className="h-6 w-6" />}
+            value={modules?.filter(m => !m.thumbnail_url).length || 0}
+            label="Sem Imagem"
+            color="red"
+            delay={150}
+          />
+          <StatOrb
+            icon={<EyeOff className="h-6 w-6" />}
+            value={courses?.filter(c => !c.is_published).length || 0}
+            label="Rascunhos"
+            color="amber"
+            delay={200}
+          />
         </div>
         
-        <Button onClick={() => { setEditingCourse(null); resetCourseForm(); setCourseDialog(true); }} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Novo Curso
-        </Button>
-      </motion.div>
-      
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <BookOpen className="h-8 w-8 text-blue-500" />
-              <div>
-                <p className="text-2xl font-bold">{courses?.length || 0}</p>
-                <p className="text-xs text-muted-foreground">Cursos</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Layers className="h-8 w-8 text-purple-500" />
-              <div>
-                <p className="text-2xl font-bold">{modules?.length || 0}</p>
-                <p className="text-xs text-muted-foreground">Módulos</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Check className="h-8 w-8 text-green-500" />
-              <div>
-                <p className="text-2xl font-bold">{modules?.filter(m => m.thumbnail_url).length || 0}</p>
-                <p className="text-xs text-muted-foreground">Conformes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-red-500/10 to-red-600/5 border-red-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-8 w-8 text-red-500" />
-              <div>
-                <p className="text-2xl font-bold">{modules?.filter(m => !m.thumbnail_url).length || 0}</p>
-                <p className="text-xs text-muted-foreground">Sem Imagem</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <EyeOff className="h-8 w-8 text-amber-500" />
-              <div>
-                <p className="text-2xl font-bold">{courses?.filter(c => !c.is_published).length || 0}</p>
-                <p className="text-xs text-muted-foreground">Rascunhos</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Main Content - Split View */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Course List */}
-        <Card className="h-[600px] flex flex-col">
-          <CardHeader className="border-b">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Cursos</CardTitle>
-              <Badge variant="secondary">{filteredCourses.length}</Badge>
-            </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar cursos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </CardHeader>
-          <CardContent className="flex-1 p-0">
-            <ScrollArea className="h-full">
-              {loadingCourses ? (
-                <div className="p-4 space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-20 bg-muted/50 animate-pulse rounded-lg" />
-                  ))}
-                </div>
-              ) : filteredCourses.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                  <BookOpen className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                  <h3 className="font-medium">Nenhum curso encontrado</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Crie seu primeiro curso para começar
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={() => { setEditingCourse(null); resetCourseForm(); setCourseDialog(true); }}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Criar Curso
-                  </Button>
-                </div>
-              ) : (
-                <div className="p-2 space-y-2">
-                  {filteredCourses.map((course) => (
-                    <motion.div
-                      key={course.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className={cn(
-                        "p-4 rounded-lg border cursor-pointer transition-all",
-                        selectedCourse?.id === course.id 
-                          ? "bg-primary/10 border-primary/50" 
-                          : "hover:bg-muted/50 border-transparent"
-                      )}
-                      onClick={() => setSelectedCourse(course)}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium truncate">{course.title}</h4>
-                            {course.is_published ? (
-                              <Badge variant="default" className="bg-green-500/20 text-green-500 text-xs">
-                                <Eye className="h-3 w-3 mr-1" />
-                                Publicado
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="text-xs">
-                                <EyeOff className="h-3 w-3 mr-1" />
-                                Rascunho
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                            {course.description || 'Sem descrição'}
-                          </p>
-                          <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                            {course.category && (
-                              <span className="flex items-center gap-1">
-                                <FolderOpen className="h-3 w-3" />
-                                {course.category}
-                              </span>
-                            )}
-                            {course.estimated_hours && (
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {course.estimated_hours}h
-                              </span>
-                            )}
-                            <span className="flex items-center gap-1">
-                              <GraduationCap className="h-3 w-3" />
-                              {course.total_xp} XP
-                            </span>
-                          </div>
-                        </div>
-                        
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEditCourse(course); }}>
-                              <Edit2 className="h-4 w-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={(e) => { 
-                                e.stopPropagation(); 
-                                updateCourse.mutate({ id: course.id, is_published: !course.is_published });
-                              }}
-                            >
-                              {course.is_published ? (
-                                <><EyeOff className="h-4 w-4 mr-2" />Despublicar</>
-                              ) : (
-                                <><Eye className="h-4 w-4 mr-2" />Publicar</>
-                              )}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              className="text-destructive"
-                              onClick={(e) => { 
-                                e.stopPropagation(); 
-                                setDeleteDialog({ type: 'course', id: course.id, name: course.title });
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-        
-        {/* Right: Modules Panel */}
-        <Card className="h-[600px] flex flex-col">
-          <CardHeader className="border-b">
-            {selectedCourse ? (
-              <>
+        {/* Main Content — Split View com Cards Neon */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left: Course List — Glassmorphism Card */}
+          <div className="relative group">
+            {/* Neon border glow */}
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/50 via-purple-500/50 to-blue-500/50 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
+            
+            <Card className="relative h-[600px] flex flex-col bg-card/80 backdrop-blur-sm border-border/50 rounded-2xl overflow-hidden">
+              <CardHeader className="border-b border-border/50 bg-gradient-to-r from-blue-500/5 to-purple-500/5">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Layers className="h-5 w-5 text-purple-500" />
-                      Módulos
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      {selectedCourse.title}
-                    </CardDescription>
-                  </div>
-                  <Button size="sm" onClick={openNewModule} className="gap-2">
-                    <Plus className="h-4 w-4" />
-                    Módulo
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <CardTitle className="text-lg text-muted-foreground">
-                Selecione um curso
-              </CardTitle>
-            )}
-          </CardHeader>
-          <CardContent className="flex-1 p-0">
-            <ScrollArea className="h-full">
-              {!selectedCourse ? (
-                <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                  <Layers className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                  <h3 className="font-medium">Nenhum curso selecionado</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Clique em um curso para ver seus módulos
-                  </p>
-                </div>
-              ) : loadingModules ? (
-                <div className="p-4 space-y-3">
-                  {[...Array(4)].map((_, i) => (
-                    <div key={i} className="h-16 bg-muted/50 animate-pulse rounded-lg" />
-                  ))}
-                </div>
-              ) : modules?.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                  <FolderOpen className="h-12 w-12 text-muted-foreground/50 mb-4" />
-                  <h3 className="font-medium">Nenhum módulo</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Adicione módulos para organizar as aulas
-                  </p>
-                  <Button variant="outline" className="mt-4" onClick={openNewModule}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Criar Módulo
-                  </Button>
-                </div>
-              ) : (
-                <div className="p-2 space-y-2">
-                  <AnimatePresence>
-                    {modules?.map((module, index) => (
-                      <ModuleItem 
-                        key={module.id}
-                        module={module}
-                        index={index}
-                        isExpanded={expandedModules.has(module.id)}
-                        onToggle={() => toggleModuleExpand(module.id)}
-                        onEdit={() => openEditModule(module)}
-                        onDelete={() => setDeleteDialog({ type: 'module', id: module.id, name: module.title })}
-                        onToggleActive={() => updateModule.mutate({ id: module.id, is_published: !module.is_published })}
-                      />
-                    ))}
-                  </AnimatePresence>
-                </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Course Dialog */}
-      <Dialog open={courseDialog} onOpenChange={setCourseDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-primary" />
-              {editingCourse ? 'Editar Curso' : 'Novo Curso'}
-            </DialogTitle>
-            <DialogDescription>
-              {editingCourse ? 'Atualize as informações do curso' : 'Preencha as informações para criar um novo curso'}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Título *</Label>
-                <Input
-                  id="title"
-                  value={courseForm.title}
-                  onChange={(e) => setCourseForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Ex: Química Geral - ENEM"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="slug">Slug (URL)</Label>
-                <Input
-                  id="slug"
-                  value={courseForm.slug}
-                  onChange={(e) => setCourseForm(prev => ({ ...prev, slug: e.target.value }))}
-                  placeholder="quimica-geral-enem"
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="description">Descrição</Label>
-              <Textarea
-                id="description"
-                value={courseForm.description}
-                onChange={(e) => setCourseForm(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Descreva o curso..."
-                rows={3}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="category">Categoria</Label>
-                <Select 
-                  value={courseForm.category} 
-                  onValueChange={(v) => setCourseForm(prev => ({ ...prev, category: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="quimica-geral">Química Geral</SelectItem>
-                    <SelectItem value="quimica-organica">Química Orgânica</SelectItem>
-                    <SelectItem value="fisico-quimica">Físico-Química</SelectItem>
-                    <SelectItem value="enem">ENEM</SelectItem>
-                    <SelectItem value="vestibular">Vestibular</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="difficulty">Dificuldade</Label>
-                <Select 
-                  value={courseForm.difficulty_level} 
-                  onValueChange={(v) => setCourseForm(prev => ({ ...prev, difficulty_level: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="iniciante">Iniciante</SelectItem>
-                    <SelectItem value="intermediario">Intermediário</SelectItem>
-                    <SelectItem value="avancado">Avançado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="hours">Carga Horária</Label>
-                <Input
-                  id="hours"
-                  type="number"
-                  value={courseForm.estimated_hours}
-                  onChange={(e) => setCourseForm(prev => ({ ...prev, estimated_hours: parseInt(e.target.value) || 0 }))}
-                  placeholder="10"
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="xp">XP Total</Label>
-              <Input
-                id="xp"
-                type="number"
-                value={courseForm.total_xp}
-                onChange={(e) => setCourseForm(prev => ({ ...prev, total_xp: parseInt(e.target.value) || 0 }))}
-                placeholder="100"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="thumbnail">URL da Thumbnail</Label>
-              <Input
-                id="thumbnail"
-                value={courseForm.thumbnail_url}
-                onChange={(e) => setCourseForm(prev => ({ ...prev, thumbnail_url: e.target.value }))}
-                placeholder="https://..."
-              />
-            </div>
-            
-            <div className="flex flex-wrap gap-6 pt-2">
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="published"
-                  checked={courseForm.is_published}
-                  onCheckedChange={(v) => setCourseForm(prev => ({ ...prev, is_published: v }))}
-                />
-                <Label htmlFor="published" className="cursor-pointer">Publicado</Label>
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCourseDialog(false)}>
-              Cancelar
-            </Button>
-            <Button 
-              onClick={() => {
-                if (editingCourse) {
-                  updateCourse.mutate({ id: editingCourse.id, ...courseForm });
-                } else {
-                  createCourse.mutate(courseForm);
-                }
-              }}
-              disabled={!courseForm.title || createCourse.isPending || updateCourse.isPending}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {editingCourse ? 'Salvar' : 'Criar Curso'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Module Dialog */}
-      <Dialog open={moduleDialog} onOpenChange={setModuleDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Layers className="h-5 w-5 text-purple-500" />
-              {editingModule ? 'Editar Módulo' : 'Novo Módulo'}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedCourse?.title}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="module-title">Título *</Label>
-              <Input
-                id="module-title"
-                value={moduleForm.title}
-                onChange={(e) => setModuleForm(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Ex: Módulo 1 - Introdução"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="module-description">Descrição</Label>
-              <Textarea
-                id="module-description"
-                value={moduleForm.description}
-                onChange={(e) => setModuleForm(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Descreva o módulo..."
-                rows={3}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="module-thumbnail" className="flex items-center gap-2">
-                Imagem do Módulo *
-                <Badge variant="outline" className="text-xs font-normal">752 × 940 px</Badge>
-              </Label>
-              <Input
-                id="module-thumbnail"
-                value={moduleForm.thumbnail_url}
-                onChange={(e) => setModuleForm(prev => ({ ...prev, thumbnail_url: e.target.value }))}
-                placeholder="/images/modules/meu-modulo.jpg"
-                className={cn(!moduleForm.thumbnail_url && "border-destructive")}
-              />
-              {!moduleForm.thumbnail_url && (
-                <p className="text-xs text-destructive flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  Imagem obrigatória (752×940 px) - Módulo não pode ser criado sem imagem
-                </p>
-              )}
-              {moduleForm.thumbnail_url && (
-                <div className="relative w-[150px] h-[188px] rounded-lg overflow-hidden border bg-muted">
-                  <img 
-                    src={moduleForm.thumbnail_url} 
-                    alt="Preview" 
-                    className="w-full h-full object-cover"
-                    onError={(e) => e.currentTarget.style.display = 'none'}
-                  />
-                  <Badge className="absolute bottom-1 right-1 text-[10px] bg-green-600">
-                    <Check className="h-3 w-3 mr-1" />
-                    752×940
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-blue-400" />
+                    Cursos
+                  </CardTitle>
+                  <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 border-blue-500/30">
+                    {filteredCourses.length}
                   </Badge>
                 </div>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="module-position">Posição</Label>
-                <Input
-                  id="module-position"
-                  type="number"
-                  value={moduleForm.position}
-                  onChange={(e) => setModuleForm(prev => ({ ...prev, position: parseInt(e.target.value) || 0 }))}
-                />
-              </div>
-              <div className="flex items-center gap-2 pt-7">
-                <Switch
-                  id="module-active"
-                  checked={moduleForm.is_published}
-                  onCheckedChange={(v) => setModuleForm(prev => ({ ...prev, is_published: v }))}
-                />
-                <Label htmlFor="module-active" className="cursor-pointer">Ativo</Label>
-              </div>
-            </div>
+                <div className="relative mt-3">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar cursos..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 bg-background/50 border-border/50 focus:border-primary/50"
+                  />
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 p-0">
+                <ScrollArea className="h-full">
+                  {loadingCourses ? (
+                    <div className="p-4 space-y-3">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="h-20 bg-muted/30 animate-pulse rounded-xl" />
+                      ))}
+                    </div>
+                  ) : filteredCourses.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                      <div className="p-4 rounded-full bg-blue-500/10 mb-4">
+                        <BookOpen className="h-12 w-12 text-blue-400" />
+                      </div>
+                      <h3 className="font-medium">Nenhum curso encontrado</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Crie seu primeiro curso para começar
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-4 border-blue-500/30 hover:bg-blue-500/10"
+                        onClick={() => { setEditingCourse(null); resetCourseForm(); setCourseDialog(true); }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Criar Curso
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="p-3 space-y-2">
+                      {filteredCourses.map((course, idx) => (
+                        <div
+                          key={course.id}
+                          className={cn(
+                            "p-4 rounded-xl border cursor-pointer transition-all duration-300",
+                            "animate-fade-in hover:scale-[1.01]",
+                            selectedCourse?.id === course.id 
+                              ? "bg-primary/10 border-primary/50 shadow-lg shadow-primary/10" 
+                              : "bg-card/50 hover:bg-muted/50 border-border/30 hover:border-border/60"
+                          )}
+                          style={{ animationDelay: `${idx * 30}ms` }}
+                          onClick={() => setSelectedCourse(course)}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-medium truncate">{course.title}</h4>
+                                {course.is_published ? (
+                                  <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
+                                    <Eye className="h-3 w-3 mr-1" />
+                                    Publicado
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="secondary" className="text-xs bg-muted/50">
+                                    <EyeOff className="h-3 w-3 mr-1" />
+                                    Rascunho
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                {course.description || 'Sem descrição'}
+                              </p>
+                              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                                {course.category && (
+                                  <span className="flex items-center gap-1">
+                                    <FolderOpen className="h-3 w-3" />
+                                    {course.category}
+                                  </span>
+                                )}
+                                {course.estimated_hours && (
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {course.estimated_hours}h
+                                  </span>
+                                )}
+                                <span className="flex items-center gap-1 text-amber-400">
+                                  <Zap className="h-3 w-3" />
+                                  {course.total_xp} XP
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-sm border-border/50">
+                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); openEditCourse(course); }}>
+                                  <Edit2 className="h-4 w-4 mr-2" />
+                                  Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    updateCourse.mutate({ id: course.id, is_published: !course.is_published });
+                                  }}
+                                >
+                                  {course.is_published ? (
+                                    <><EyeOff className="h-4 w-4 mr-2" />Despublicar</>
+                                  ) : (
+                                    <><Eye className="h-4 w-4 mr-2" />Publicar</>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="text-destructive"
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    setDeleteDialog({ type: 'course', id: course.id, name: course.title });
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
           </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setModuleDialog(false)}>
-              Cancelar
-            </Button>
-            <Button 
-              onClick={() => {
-                if (!selectedCourse) return;
-                if (!moduleForm.thumbnail_url) {
-                  toast({ 
-                    title: '⚠️ Imagem obrigatória', 
-                    description: 'Módulo deve ter imagem (752×940 px) para ser criado.',
-                    variant: 'destructive'
-                  });
-                  return;
-                }
-                if (editingModule) {
-                  updateModule.mutate({ id: editingModule.id, ...moduleForm });
-                } else {
-                  createModule.mutate({ ...moduleForm, course_id: selectedCourse.id });
-                }
-              }}
-              disabled={!moduleForm.title || !moduleForm.thumbnail_url || createModule.isPending || updateModule.isPending}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {editingModule ? 'Salvar' : 'Criar Módulo'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deleteDialog} onOpenChange={() => setDeleteDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="h-5 w-5" />
-              Confirmar Exclusão
-            </DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja excluir{' '}
-              <span className="font-medium">{deleteDialog?.name}</span>?
-              {deleteDialog?.type === 'course' && (
-                <span className="block mt-2 text-destructive">
-                  ⚠️ Isso irá excluir todos os módulos e aulas associados!
-                </span>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialog(null)}>
-              Cancelar
-            </Button>
-            <Button 
-              variant="destructive"
-              onClick={() => {
-                if (deleteDialog?.type === 'course') {
-                  deleteCourse.mutate(deleteDialog.id);
-                } else if (deleteDialog?.type === 'module') {
-                  deleteModule.mutate(deleteDialog.id);
-                }
-              }}
-              disabled={deleteCourse.isPending || deleteModule.isPending}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {/* Right: Modules Panel — Glassmorphism Card */}
+          <div className="relative group">
+            {/* Neon border glow */}
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/50 via-pink-500/50 to-purple-500/50 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
+            
+            <Card className="relative h-[600px] flex flex-col bg-card/80 backdrop-blur-sm border-border/50 rounded-2xl overflow-hidden">
+              <CardHeader className="border-b border-border/50 bg-gradient-to-r from-purple-500/5 to-pink-500/5">
+                {selectedCourse ? (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Layers className="h-5 w-5 text-purple-400" />
+                          Módulos
+                        </CardTitle>
+                        <CardDescription className="mt-1 text-muted-foreground">
+                          {selectedCourse.title}
+                        </CardDescription>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        onClick={openNewModule} 
+                        className="gap-2 bg-purple-500/90 hover:bg-purple-500 shadow-lg shadow-purple-500/25"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Módulo
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <CardTitle className="text-lg text-muted-foreground flex items-center gap-2">
+                    <Layers className="h-5 w-5 opacity-50" />
+                    Selecione um curso
+                  </CardTitle>
+                )}
+              </CardHeader>
+              <CardContent className="flex-1 p-0">
+                <ScrollArea className="h-full">
+                  {!selectedCourse ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                      <div className="p-4 rounded-full bg-purple-500/10 mb-4">
+                        <Layers className="h-12 w-12 text-purple-400" />
+                      </div>
+                      <h3 className="font-medium">Nenhum curso selecionado</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Clique em um curso para ver seus módulos
+                      </p>
+                    </div>
+                  ) : loadingModules ? (
+                    <div className="p-4 space-y-3">
+                      {[...Array(4)].map((_, i) => (
+                        <div key={i} className="h-20 bg-muted/30 animate-pulse rounded-xl" />
+                      ))}
+                    </div>
+                  ) : modules?.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                      <div className="p-4 rounded-full bg-purple-500/10 mb-4">
+                        <FolderOpen className="h-12 w-12 text-purple-400" />
+                      </div>
+                      <h3 className="font-medium">Nenhum módulo</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Adicione módulos para organizar as aulas
+                      </p>
+                      <Button 
+                        variant="outline" 
+                        className="mt-4 border-purple-500/30 hover:bg-purple-500/10" 
+                        onClick={openNewModule}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Criar Módulo
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="p-3 space-y-2">
+                      {modules?.map((module, index) => (
+                        <ModuleItem 
+                          key={module.id}
+                          module={module}
+                          index={index}
+                          isExpanded={expandedModules.has(module.id)}
+                          onToggle={() => toggleModuleExpand(module.id)}
+                          onEdit={() => openEditModule(module)}
+                          onDelete={() => setDeleteDialog({ type: 'module', id: module.id, name: module.title })}
+                          onToggleActive={() => updateModule.mutate({ id: module.id, is_published: !module.is_published })}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+        
+        {/* Course Dialog */}
+        <Dialog open={courseDialog} onOpenChange={setCourseDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-sm border-border/50">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <GraduationCap className="h-5 w-5 text-primary" />
+                {editingCourse ? 'Editar Curso' : 'Novo Curso'}
+              </DialogTitle>
+              <DialogDescription>
+                {editingCourse ? 'Atualize as informações do curso' : 'Preencha as informações para criar um novo curso'}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Título *</Label>
+                  <Input
+                    id="title"
+                    value={courseForm.title}
+                    onChange={(e) => setCourseForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Ex: Química Geral - ENEM"
+                    className="bg-background/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="slug">Slug (URL)</Label>
+                  <Input
+                    id="slug"
+                    value={courseForm.slug}
+                    onChange={(e) => setCourseForm(prev => ({ ...prev, slug: e.target.value }))}
+                    placeholder="quimica-geral-enem"
+                    className="bg-background/50"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description">Descrição</Label>
+                <Textarea
+                  id="description"
+                  value={courseForm.description}
+                  onChange={(e) => setCourseForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Descreva o curso..."
+                  rows={3}
+                  className="bg-background/50"
+                />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Categoria</Label>
+                  <Select 
+                    value={courseForm.category} 
+                    onValueChange={(v) => setCourseForm(prev => ({ ...prev, category: v }))}
+                  >
+                    <SelectTrigger className="bg-background/50">
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="quimica-geral">Química Geral</SelectItem>
+                      <SelectItem value="quimica-organica">Química Orgânica</SelectItem>
+                      <SelectItem value="fisico-quimica">Físico-Química</SelectItem>
+                      <SelectItem value="enem">ENEM</SelectItem>
+                      <SelectItem value="vestibular">Vestibular</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="difficulty">Dificuldade</Label>
+                  <Select 
+                    value={courseForm.difficulty_level} 
+                    onValueChange={(v) => setCourseForm(prev => ({ ...prev, difficulty_level: v }))}
+                  >
+                    <SelectTrigger className="bg-background/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="iniciante">Iniciante</SelectItem>
+                      <SelectItem value="intermediario">Intermediário</SelectItem>
+                      <SelectItem value="avancado">Avançado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="hours">Carga Horária</Label>
+                  <Input
+                    id="hours"
+                    type="number"
+                    value={courseForm.estimated_hours}
+                    onChange={(e) => setCourseForm(prev => ({ ...prev, estimated_hours: parseInt(e.target.value) || 0 }))}
+                    placeholder="10"
+                    className="bg-background/50"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="xp">XP Total</Label>
+                <Input
+                  id="xp"
+                  type="number"
+                  value={courseForm.total_xp}
+                  onChange={(e) => setCourseForm(prev => ({ ...prev, total_xp: parseInt(e.target.value) || 0 }))}
+                  placeholder="100"
+                  className="bg-background/50"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="thumbnail">URL da Thumbnail</Label>
+                <Input
+                  id="thumbnail"
+                  value={courseForm.thumbnail_url}
+                  onChange={(e) => setCourseForm(prev => ({ ...prev, thumbnail_url: e.target.value }))}
+                  placeholder="https://..."
+                  className="bg-background/50"
+                />
+              </div>
+              
+              <div className="flex flex-wrap gap-6 pt-2">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="published"
+                    checked={courseForm.is_published}
+                    onCheckedChange={(v) => setCourseForm(prev => ({ ...prev, is_published: v }))}
+                  />
+                  <Label htmlFor="published" className="cursor-pointer">Publicado</Label>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCourseDialog(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (editingCourse) {
+                    updateCourse.mutate({ id: editingCourse.id, ...courseForm });
+                  } else {
+                    createCourse.mutate(courseForm);
+                  }
+                }}
+                disabled={!courseForm.title || createCourse.isPending || updateCourse.isPending}
+                className="bg-primary shadow-lg shadow-primary/25"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {editingCourse ? 'Salvar' : 'Criar Curso'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Module Dialog */}
+        <Dialog open={moduleDialog} onOpenChange={setModuleDialog}>
+          <DialogContent className="bg-card/95 backdrop-blur-sm border-border/50">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Layers className="h-5 w-5 text-purple-500" />
+                {editingModule ? 'Editar Módulo' : 'Novo Módulo'}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedCourse?.title}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="module-title">Título *</Label>
+                <Input
+                  id="module-title"
+                  value={moduleForm.title}
+                  onChange={(e) => setModuleForm(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Ex: Módulo 1 - Introdução"
+                  className="bg-background/50"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="module-description">Descrição</Label>
+                <Textarea
+                  id="module-description"
+                  value={moduleForm.description}
+                  onChange={(e) => setModuleForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Descreva o módulo..."
+                  rows={3}
+                  className="bg-background/50"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="module-thumbnail" className="flex items-center gap-2">
+                  Imagem do Módulo *
+                  <Badge variant="outline" className="text-xs font-normal border-purple-500/30 text-purple-400">752 × 940 px</Badge>
+                </Label>
+                <Input
+                  id="module-thumbnail"
+                  value={moduleForm.thumbnail_url}
+                  onChange={(e) => setModuleForm(prev => ({ ...prev, thumbnail_url: e.target.value }))}
+                  placeholder="/images/modules/meu-modulo.jpg"
+                  className={cn("bg-background/50", !moduleForm.thumbnail_url && "border-destructive")}
+                />
+                {!moduleForm.thumbnail_url && (
+                  <p className="text-xs text-destructive flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    Imagem obrigatória (752×940 px) - Módulo não pode ser criado sem imagem
+                  </p>
+                )}
+                {moduleForm.thumbnail_url && (
+                  <div className="relative w-[150px] h-[188px] rounded-lg overflow-hidden border border-green-500/30 bg-muted">
+                    <img 
+                      src={moduleForm.thumbnail_url} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => e.currentTarget.style.display = 'none'}
+                    />
+                    <Badge className="absolute bottom-1 right-1 text-[10px] bg-green-600">
+                      <Check className="h-3 w-3 mr-1" />
+                      752×940
+                    </Badge>
+                  </div>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="module-position">Posição</Label>
+                  <Input
+                    id="module-position"
+                    type="number"
+                    value={moduleForm.position}
+                    onChange={(e) => setModuleForm(prev => ({ ...prev, position: parseInt(e.target.value) || 0 }))}
+                    className="bg-background/50"
+                  />
+                </div>
+                <div className="flex items-center gap-2 pt-7">
+                  <Switch
+                    id="module-active"
+                    checked={moduleForm.is_published}
+                    onCheckedChange={(v) => setModuleForm(prev => ({ ...prev, is_published: v }))}
+                  />
+                  <Label htmlFor="module-active" className="cursor-pointer">Ativo</Label>
+                </div>
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setModuleDialog(false)}>
+                Cancelar
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (!selectedCourse) return;
+                  if (!moduleForm.thumbnail_url) {
+                    toast({ 
+                      title: '⚠️ Imagem obrigatória', 
+                      description: 'Módulo deve ter imagem (752×940 px) para ser criado.',
+                      variant: 'destructive'
+                    });
+                    return;
+                  }
+                  if (editingModule) {
+                    updateModule.mutate({ id: editingModule.id, ...moduleForm });
+                  } else {
+                    createModule.mutate({ ...moduleForm, course_id: selectedCourse.id });
+                  }
+                }}
+                disabled={!moduleForm.title || !moduleForm.thumbnail_url || createModule.isPending || updateModule.isPending}
+                className="bg-purple-500 hover:bg-purple-600 shadow-lg shadow-purple-500/25"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {editingModule ? 'Salvar' : 'Criar Módulo'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={!!deleteDialog} onOpenChange={() => setDeleteDialog(null)}>
+          <DialogContent className="bg-card/95 backdrop-blur-sm border-border/50">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+                Confirmar Exclusão
+              </DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja excluir{' '}
+                <span className="font-medium text-foreground">{deleteDialog?.name}</span>?
+                {deleteDialog?.type === 'course' && (
+                  <span className="block mt-2 text-destructive">
+                    ⚠️ Isso irá excluir todos os módulos e aulas associados!
+                  </span>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialog(null)}>
+                Cancelar
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={() => {
+                  if (deleteDialog?.type === 'course') {
+                    deleteCourse.mutate(deleteDialog.id);
+                  } else if (deleteDialog?.type === 'module') {
+                    deleteModule.mutate(deleteDialog.id);
+                  }
+                }}
+                disabled={deleteCourse.isPending || deleteModule.isPending}
+                className="shadow-lg shadow-destructive/25"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }
 
 // ============================================
-// COMPONENTE DE MÓDULO
+// COMPONENTE DE MÓDULO — CSS-ONLY ANIMATIONS
 // ============================================
 interface ModuleItemProps {
   module: Module;
@@ -1014,31 +1106,30 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
   const { data: lessons } = useLessons(isExpanded ? module.id : undefined);
   
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ delay: index * 0.05 }}
+    <div
       className={cn(
-        "rounded-lg border transition-all",
-        module.is_published ? "bg-card" : "bg-muted/50 opacity-60"
+        "rounded-xl border transition-all duration-300",
+        "animate-fade-in hover:scale-[1.01]",
+        module.is_published 
+          ? "bg-card/50 border-border/30 hover:border-purple-500/30" 
+          : "bg-muted/30 opacity-60 border-border/20"
       )}
+      style={{ animationDelay: `${index * 50}ms` }}
     >
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
         <div className="flex items-center gap-3 p-3">
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 hover:bg-purple-500/10">
+              <ChevronRight className={cn(
+                "h-4 w-4 transition-transform duration-200",
+                isExpanded && "rotate-90"
+              )} />
             </Button>
           </CollapsibleTrigger>
           
           {/* Thumbnail do módulo (752x940 → preview 60x75) - OBRIGATÓRIA */}
           {module.thumbnail_url ? (
-            <div className="relative w-[60px] h-[75px] rounded-md overflow-hidden border border-green-500/50 bg-muted shrink-0">
+            <div className="relative w-[60px] h-[75px] rounded-lg overflow-hidden border border-green-500/30 bg-muted shrink-0 shadow-lg">
               <img 
                 src={module.thumbnail_url} 
                 alt={module.title} 
@@ -1050,19 +1141,19 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
               </div>
             </div>
           ) : (
-            <div className="relative w-[60px] h-[75px] rounded-md overflow-hidden border-2 border-dashed border-destructive/50 bg-destructive/10 shrink-0 flex items-center justify-center">
+            <div className="relative w-[60px] h-[75px] rounded-lg overflow-hidden border-2 border-dashed border-destructive/50 bg-destructive/10 shrink-0 flex items-center justify-center">
               <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
           )}
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="text-xs shrink-0">
+              <Badge variant="outline" className="text-xs shrink-0 border-purple-500/30 text-purple-400">
                 #{module.position + 1}
               </Badge>
               <h4 className="font-medium truncate">{module.title}</h4>
               {!module.is_published && (
-                <Badge variant="secondary" className="text-xs">Inativo</Badge>
+                <Badge variant="secondary" className="text-xs bg-muted/50">Inativo</Badge>
               )}
               {!module.thumbnail_url && (
                 <Badge variant="destructive" className="text-xs">
@@ -1080,11 +1171,11 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-purple-500/10">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-card/95 backdrop-blur-sm border-border/50">
               <DropdownMenuItem onClick={onEdit}>
                 <Edit2 className="h-4 w-4 mr-2" />
                 Editar
@@ -1107,19 +1198,22 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
         
         <CollapsibleContent>
           <div className="px-3 pb-3 pt-0">
-            <div className="pl-11 border-l-2 border-dashed border-muted-foreground/20 space-y-1">
+            <div className="pl-11 border-l-2 border-dashed border-purple-500/20 space-y-1">
               {lessons && lessons.length > 0 ? (
-                lessons.map((lesson) => (
+                lessons.map((lesson, idx) => (
                   <div 
                     key={lesson.id}
                     className={cn(
-                      "flex items-center gap-2 p-2 rounded-md text-sm",
-                      lesson.is_published ? "bg-muted/50" : "bg-muted/30 opacity-50"
+                      "flex items-center gap-2 p-2 rounded-lg text-sm transition-all animate-fade-in",
+                      lesson.is_published 
+                        ? "bg-muted/30 hover:bg-muted/50" 
+                        : "bg-muted/20 opacity-50"
                     )}
+                    style={{ animationDelay: `${idx * 30}ms` }}
                   >
-                    <PlayCircle className="h-4 w-4 text-muted-foreground" />
+                    <PlayCircle className="h-4 w-4 text-purple-400" />
                     <span className="truncate">{lesson.title}</span>
-                    <Badge variant="outline" className="text-xs ml-auto">
+                    <Badge variant="outline" className="text-xs ml-auto border-border/30">
                       #{lesson.position + 1}
                     </Badge>
                   </div>
@@ -1133,6 +1227,6 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
           </div>
         </CollapsibleContent>
       </Collapsible>
-    </motion.div>
+    </div>
   );
 }
