@@ -3184,15 +3184,15 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                           "flex-1 p-3 rounded-lg border-2 transition-all text-left",
                           selectedGroup === 'MODO_TREINO'
                             ? "border-purple-500 bg-purple-500/10 ring-2 ring-purple-500/30"
-                            : "border-muted hover:border-purple-500/50 hover:bg-purple-500/5"
+                          : "border-muted hover:border-purple-500/50 hover:bg-purple-500/5"
                         )}
                       >
                         <div className="flex items-center gap-2">
-                          <Badge className="bg-purple-600 text-white">TREINO</Badge>
+                          <Badge className="bg-purple-600 text-white">MODO_TREINO</Badge>
                           {selectedGroup === 'MODO_TREINO' && <CheckCircle className="h-4 w-4 text-purple-500 ml-auto" />}
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Questões para modo treino/prática
+                          Questões para modo treino/prática (0 XP)
                         </p>
                       </button>
                     </div>
@@ -3218,7 +3218,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                         — Grupo: <Badge variant="outline" className={cn(
                           "ml-1",
                           selectedGroup === 'SIMULADOS' ? "text-red-500 border-red-500/30" : "text-purple-500 border-purple-500/30"
-                        )}>{selectedGroup === 'SIMULADOS' ? 'Simulados' : 'Treino'}</Badge>
+                        )}>{selectedGroup === 'SIMULADOS' ? 'SIMULADOS' : 'MODO_TREINO'}</Badge>
                       </span>
                     </Label>
                     <ShieldCheck

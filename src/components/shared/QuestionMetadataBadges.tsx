@@ -196,7 +196,7 @@ export function QuestionMetadataBadges({
             </Badge>
           ) : isTreino ? (
             <Badge className="px-4 py-1.5 bg-purple-600 text-white border-0 font-bold">
-              💪 Treino
+              💪 MODO_TREINO
             </Badge>
           ) : (
             <Badge className="px-4 py-1.5 bg-muted text-muted-foreground border border-border/50 font-medium">
@@ -224,7 +224,7 @@ export function QuestionModeBadge({ tags }: { tags?: string[] | null }) {
         </Badge>
       ) : isTreino ? (
         <Badge className="px-4 py-1.5 bg-purple-600 text-white border-0 font-bold">
-          💪 Treino
+          💪 MODO_TREINO
         </Badge>
       ) : (
         <Badge className="px-4 py-1.5 bg-muted text-muted-foreground border border-border/50 font-medium">

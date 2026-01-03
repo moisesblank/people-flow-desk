@@ -53,7 +53,7 @@ export const HUB_AREAS: HubArea[] = [
   { key: "forum", label: "Fórum", icon: MessageSquare, hue: 280, description: "Comunidade de alunos" },
   { key: "tutoria", label: "Tutoria IA", icon: Bot, hue: 160, description: "Tutor inteligente 24h", badge: "IA", badgeType: "ai" },
   { key: "videoaulas", label: "Videoaulas", icon: Video, hue: 0, description: "Biblioteca de vídeos" },
-  { key: "questoes", label: "Questões", icon: Target, hue: 40, description: "Modo Treino (0 XP)", badge: "TREINO", badgeType: "treino" },
+  { key: "questoes", label: "Questões", icon: Target, hue: 40, description: "Modo Treino (0 XP)", badge: "MODO_TREINO", badgeType: "treino" },
   { key: "flashcards", label: "Flashcards", icon: Brain, hue: 330, description: "Revisão espaçada" },
   { key: "simulados", label: "Simulados", icon: FileText, hue: 250, description: "Provas oficiais (+10 XP)", badge: "+10 XP", badgeType: "xp" },
   { key: "mapas-mentais", label: "Mapas", icon: Network, hue: 190, description: "Mapas mentais visuais" },
