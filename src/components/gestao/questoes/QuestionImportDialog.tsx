@@ -700,10 +700,11 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   type QuestionStyle = 'multiple_choice' | 'discursive' | 'outros' | '';
   const [selectedStyle, setSelectedStyle] = useState<QuestionStyle>('');
   
-  // MACRO/MICRO/TEMA/DIFICULDADE OBRIGATÓRIOS: Pré-seleção antes de processar
+  // MACRO/MICRO/TEMA/SUBTEMA/DIFICULDADE OBRIGATÓRIOS: Pré-seleção antes de processar
   const [selectedMacro, setSelectedMacro] = useState<string>('');
   const [selectedMicro, setSelectedMicro] = useState<string>('');
   const [selectedTema, setSelectedTema] = useState<string>('');
+  const [selectedSubtema, setSelectedSubtema] = useState<string>('');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('');
   
   const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
@@ -720,16 +721,29 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     return getTemasForSelect(selectedMicro);
   }, [selectedMicro, getTemasForSelect]);
   
-  // Reset micro e tema quando macro muda
+  // Subtemas filtrados pelo tema selecionado
+  const filteredSubtemas = useMemo(() => {
+    if (!selectedTema || selectedTema === '__AUTO_AI__') return [];
+    return getSubtemasForSelect(selectedTema);
+  }, [selectedTema, getSubtemasForSelect]);
+  
+  // Reset micro, tema e subtema quando macro muda
   useEffect(() => {
     setSelectedMicro('');
     setSelectedTema('');
+    setSelectedSubtema('');
   }, [selectedMacro]);
   
-  // Reset tema quando micro muda
+  // Reset tema e subtema quando micro muda
   useEffect(() => {
     setSelectedTema('');
+    setSelectedSubtema('');
   }, [selectedMicro]);
+  
+  // Reset subtema quando tema muda
+  useEffect(() => {
+    setSelectedSubtema('');
+  }, [selectedTema]);
   
   // Hook para registrar intervenções de IA
   const { logInterventions } = useLogQuestionAIIntervention();
@@ -2169,6 +2183,56 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                           )}
                         </div>
                         
+                        {/* SUBTEMA */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium flex items-center gap-2">
+                            🔖 Subtema
+                            {selectedSubtema && <CheckCircle className="h-4 w-4 text-green-500" />}
+                          </Label>
+                          <Select
+                            value={selectedSubtema}
+                            onValueChange={setSelectedSubtema}
+                            disabled={!selectedTema || selectedTema === '__AUTO_AI__' || selectedMicro === '__AUTO_AI__' || taxonomyLoading}
+                          >
+                            <SelectTrigger className={cn(
+                              "h-11",
+                              selectedTema && selectedTema !== '__AUTO_AI__' && selectedMicro !== '__AUTO_AI__' && !selectedSubtema && "border-amber-500/50"
+                            )}>
+                              <SelectValue placeholder={
+                                !selectedTema 
+                                  ? "Primeiro selecione o Tema" 
+                                  : (selectedTema === '__AUTO_AI__' || selectedMicro === '__AUTO_AI__')
+                                    ? "IA determinará automaticamente" 
+                                    : "Selecione o Subtema..."
+                              } />
+                            </SelectTrigger>
+                            <SelectContent className="z-[9999]">
+                              {/* OPÇÃO AUTOMÁTICO (IA) - Respeita Excel e só corrige se confiança ≥80% */}
+                              <SelectItem value="__AUTO_AI__" className="border-b border-primary/20 mb-1">
+                                <span className="flex items-center gap-2">
+                                  <Sparkles className="h-4 w-4 text-primary" />
+                                  <span className="font-medium text-primary">Automático (IA)</span>
+                                </span>
+                              </SelectItem>
+                              {filteredSubtemas.map(s => (
+                                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {selectedSubtema === '__AUTO_AI__' && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Brain className="h-3 w-3" />
+                              IA preenche campos vazios. Corrige SUBTEMA somente se confiança ≥80%.
+                            </p>
+                          )}
+                          {(selectedMicro === '__AUTO_AI__' || selectedTema === '__AUTO_AI__') && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Sparkles className="h-3 w-3 text-primary" />
+                              Subtema será determinado automaticamente pela IA
+                            </p>
+                          )}
+                        </div>
+                        
                         {/* DIFICULDADE */}
                         <div className="space-y-2">
                           <Label className="text-sm font-medium flex items-center gap-2">
@@ -2208,7 +2272,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                       </div>
                       
                       {/* Preview da seleção */}
-                      {(selectedMacro || selectedMicro || selectedTema || selectedDifficulty) && (
+                      {(selectedMacro || selectedMicro || selectedTema || selectedSubtema || selectedDifficulty) && (
                         <div className="mt-4 p-3 rounded-lg bg-muted/30 border">
                           <p className="text-xs text-muted-foreground mb-1">Classificação aplicada:</p>
                           <div className="flex flex-wrap gap-2">
@@ -2239,6 +2303,15 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                                 )}
                               </Badge>
                             )}
+                            {selectedSubtema && (
+                              <Badge variant="secondary" className={cn("gap-1", selectedSubtema === '__AUTO_AI__' && "bg-primary/20 text-primary border-primary/30")}>
+                                {selectedSubtema === '__AUTO_AI__' ? (
+                                  <><Sparkles className="h-3 w-3" /> Subtema: Automático (IA)</>
+                                ) : (
+                                  <>🔖 {selectedSubtema}</>
+                                )}
+                              </Badge>
+                            )}
                             {selectedDifficulty && (
                               <Badge variant="secondary" className={cn("gap-1", selectedDifficulty === '__AUTO_AI__' && "bg-primary/20 text-primary border-primary/30")}>
                                 {selectedDifficulty === '__AUTO_AI__' ? (
@@ -2255,16 +2328,19 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   </Card>
                 </div>
 
-                {/* ÁREA DE UPLOAD (só habilitada após selecionar estilo + macro + micro + tema + dificuldade) */}
+                {/* ÁREA DE UPLOAD (só habilitada após selecionar estilo + macro + micro + tema + subtema + dificuldade) */}
                 {(() => {
-                  // Se Micro = Auto, Tema é automaticamente Auto também
+                  // Se Micro = Auto, Tema e Subtema são automaticamente Auto também
+                  // Se Tema = Auto, Subtema é automaticamente Auto também
                   const temaResolved = selectedMicro === '__AUTO_AI__' ? '__AUTO_AI__' : selectedTema;
-                  const canUpload = selectedStyle && selectedMacro && selectedMicro && temaResolved && selectedDifficulty;
+                  const subtemaResolved = (selectedMicro === '__AUTO_AI__' || selectedTema === '__AUTO_AI__') ? '__AUTO_AI__' : selectedSubtema;
+                  const canUpload = selectedStyle && selectedMacro && selectedMicro && temaResolved && subtemaResolved && selectedDifficulty;
                   const missingItems = [];
                   if (!selectedStyle) missingItems.push('estilo');
                   if (!selectedMacro) missingItems.push('macro');
                   if (!selectedMicro) missingItems.push('micro');
                   if (!temaResolved) missingItems.push('tema');
+                  if (!subtemaResolved) missingItems.push('subtema');
                   if (!selectedDifficulty) missingItems.push('dificuldade');
                   
                   return (
