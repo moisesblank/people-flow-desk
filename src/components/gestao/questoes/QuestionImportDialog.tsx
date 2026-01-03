@@ -1975,7 +1975,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="h-full flex flex-col items-center justify-center p-8"
+                className="min-h-full flex flex-col items-center justify-start p-8 pt-4"
               >
                 {/* SELEÇÃO OBRIGATÓRIA: ESTILO + MACRO + MICRO */}
                 <div className="w-full max-w-2xl mb-6 space-y-4">
