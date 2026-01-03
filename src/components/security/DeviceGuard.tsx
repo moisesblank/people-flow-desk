@@ -30,7 +30,7 @@ export function DeviceGuard({ children }: DeviceGuardProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
-  const { isGateActive, payload } = useDeviceGateStore();
+  const { isGateActive, payload, loginIntent } = useDeviceGateStore();
   const { 
     isChecking, 
     deviceLimitExceeded, 
@@ -45,16 +45,25 @@ export function DeviceGuard({ children }: DeviceGuardProps) {
   const [hasChecked, setHasChecked] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 🛡️ BLOCO 3: FAIL-CLOSED - Se gate está ativo, redirecionar IMEDIATAMENTE
+  // 🛡️ CRITÉRIO EXPLÍCITO: Guard contra state leak pré-login
+  // Se isGateActive=true mas loginIntent=false, é um state leak - ignorar e resetar
+  useEffect(() => {
+    if (isGateActive && !loginIntent) {
+      console.warn('[DeviceGuard] ⚠️ State leak detected: isGateActive=true but loginIntent=false - resetting');
+      useDeviceGateStore.getState().clearPayload();
+    }
+  }, [isGateActive, loginIntent]);
+
+  // 🛡️ BLOCO 3: FAIL-CLOSED - Se gate está ativo E loginIntent=true, redirecionar
   useEffect(() => {
     // Não redirecionar se já estamos na página do gate
     if (location.pathname === '/security/device-limit') {
       return;
     }
 
-    // Se o gate está ativo (vindo do Auth.tsx), forçar redirecionamento
-    if (isGateActive && payload) {
-      console.log('[DeviceGuard] 🛡️ FAIL-CLOSED: Gate ativo, redirecionando para /security/device-limit');
+    // 🛡️ CRITÉRIO EXPLÍCITO: Só redirecionar se loginIntent === true
+    if (isGateActive && payload && loginIntent) {
+      console.log('[DeviceGuard] 🛡️ FAIL-CLOSED: Gate ativo + loginIntent=true, redirecionando para /security/device-limit');
       navigate('/security/device-limit', { replace: true });
 
       // 🧯 P0 anti-tela-preta: fallback HARD redirect caso o router esteja travado
@@ -66,7 +75,7 @@ export function DeviceGuard({ children }: DeviceGuardProps) {
 
       return () => window.clearTimeout(t);
     }
-  }, [isGateActive, payload, location.pathname, navigate]);
+  }, [isGateActive, payload, loginIntent, location.pathname, navigate]);
 
   // Verificar dispositivo quando usuário loga (FALLBACK apenas)
   useEffect(() => {
@@ -110,9 +119,9 @@ export function DeviceGuard({ children }: DeviceGuardProps) {
     return success;
   }, [deactivateDevice, clearLimitExceeded]);
 
-  // 🛡️ BLOCO 3: Se gate está ativo, NÃO renderizar children (fail-closed)
+  // 🛡️ BLOCO 3: Se gate está ativo E loginIntent=true, NÃO renderizar children (fail-closed)
   // P0 anti-tela-preta: nunca retornar null (exibe tela de bloqueio enquanto redireciona)
-  if (isGateActive && payload && location.pathname !== '/security/device-limit') {
+  if (isGateActive && payload && loginIntent && location.pathname !== '/security/device-limit') {
     return (
       <div className="min-h-screen w-full bg-background text-foreground flex items-center justify-center p-6">
         <div className="max-w-md w-full space-y-3 text-center">

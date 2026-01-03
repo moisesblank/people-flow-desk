@@ -45,6 +45,9 @@ import { registerDeviceBeforeSession, getDeviceErrorMessage } from "@/lib/device
 import { useDeviceGateStore, DeviceGatePayload, DeviceInfo, CurrentDeviceInfo } from "@/state/deviceGateStore";
 import { collectFingerprintRawData, generateDeviceName } from "@/lib/deviceFingerprintRaw";
 
+// 🛡️ CRITÉRIO EXPLÍCITO: Getter para setLoginIntent (evita re-render desnecessário)
+const getDeviceGateActions = () => useDeviceGateStore.getState();
+
 // Lazy load componentes pesados (apenas owner usa)
 const EditableText = lazy(() => import("@/components/editor/EditableText").then(m => ({ default: m.EditableText })));
 const EditableImage = lazy(() => import("@/components/editor/EditableImage").then(m => ({ default: m.EditableImage })));
@@ -424,6 +427,15 @@ export default function Auth() {
   useEffect(() => {
     console.log('[AUTH] 1. Componente montado (/auth)');
     
+    // 🛡️ CLEANUP: Resetar loginIntent ao desmontar a tela de Auth
+    return () => {
+      console.log('[AUTH] Componente desmontado - resetando loginIntent');
+      getDeviceGateActions().setLoginIntent(false);
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log('[AUTH] 2. Verificando parâmetros de URL...');
     const urlParams = new URLSearchParams(window.location.search);
     
     // 🎯 P0 FIX: Detectar reset_token (novo fluxo customizado)
@@ -1074,10 +1086,15 @@ export default function Auth() {
     console.log('[AUTH] === INICIANDO FLUXO DE LOGIN/SIGNUP ===');
     console.log('[AUTH] Timestamp:', new Date().toISOString());
 
+    // 🛡️ CRITÉRIO EXPLÍCITO: Ativar loginIntent ao clicar "Entrar"
+    // Nenhuma UI de device limit pode ser renderizada enquanto loginIntent !== true
+    getDeviceGateActions().setLoginIntent(true);
+
     setErrors({});
 
     if (!isLogin && !acceptTerms) {
       toast.error("Você precisa aceitar os termos de uso");
+      getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em early return
       return;
     }
 
@@ -1122,6 +1139,7 @@ export default function Auth() {
         setErrors(fieldErrors);
         resetTurnstile();
         setIsLoading(false);
+        getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de validação
         return;
       }
 
@@ -1168,6 +1186,7 @@ export default function Auth() {
               setPendingEmail(formData.email.toLowerCase().trim());
               setPendingPassword(formData.password); // 🎯 FIX: Guardar senha para login automático
               setIsLoading(false);
+              getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset - sessão bloqueada (outro dispositivo)
               return;
             }
           }
@@ -1203,6 +1222,7 @@ export default function Auth() {
           });
           resetTurnstile();
           setIsLoading(false);
+          getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em bloqueio
           return;
         }
 
@@ -1212,6 +1232,7 @@ export default function Auth() {
           });
           resetTurnstile();
           setIsLoading(false);
+          getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em challenge
           return;
         }
 
@@ -1232,6 +1253,7 @@ export default function Auth() {
           }
           resetTurnstile();
           setIsLoading(false);
+          getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de login
           return;
         }
 
@@ -1245,6 +1267,7 @@ export default function Auth() {
             description: "Sua sessão não foi criada. Tente novamente."
           });
           setIsLoading(false);
+          getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro
           return;
         }
 
@@ -1271,6 +1294,7 @@ export default function Auth() {
           });
           resetTurnstile();
           setIsLoading(false);
+          getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em banimento
           return;
         }
 
@@ -1386,6 +1410,7 @@ export default function Auth() {
               await supabase.auth.signOut();
               resetTurnstile();
               setIsLoading(false);
+              getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de dispositivo
               return;
             }
             
@@ -1506,6 +1531,7 @@ export default function Auth() {
                 await supabase.auth.signOut();
                 resetTurnstile();
                 setIsLoading(false);
+                getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de sessão
                 return;
               }
               
@@ -1518,6 +1544,7 @@ export default function Auth() {
                 await supabase.auth.signOut();
                 resetTurnstile();
                 setIsLoading(false);
+                getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de token
                 return;
               }
 
@@ -1572,6 +1599,7 @@ export default function Auth() {
               await supabase.auth.signOut();
               resetTurnstile();
               setIsLoading(false);
+              getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro catch
               return;
             }
             
