@@ -2499,44 +2499,13 @@ function GestaoQuestoes() {
                 <div className="space-y-3">
                 {paginatedQuestions.map((question, index) => {
                   const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
-                  const area = classifyMacroArea(question.macro);
-                  const areaConfig = {
-                    organica: { 
-                      bg: 'from-purple-500/5 to-pink-500/5', 
-                      border: 'border-l-purple-500',
-                      badge: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
-                      icon: '🧪',
-                      label: 'Química Orgânica'
-                    },
-                    fisico_quimica: { 
-                      bg: 'from-cyan-500/5 to-blue-500/5', 
-                      border: 'border-l-cyan-500',
-                      badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40',
-                      icon: '⚡',
-                      label: 'Físico-Química'
-                    },
-                    geral: { 
-                      bg: 'from-amber-500/5 to-orange-500/5', 
-                      border: 'border-l-amber-500',
-                      badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
-                      icon: '⚗️',
-                      label: 'Química Geral'
-                    },
-                  };
-                  const config = areaConfig[area];
-                  
                   return (
                     <motion.div
                       key={question.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.02 }}
-                      className={cn(
-                        "group relative rounded-lg border-l-4 bg-gradient-to-r p-4 transition-all hover:shadow-lg",
-                        config.border,
-                        config.bg,
-                        "border border-border/50 hover:border-border"
-                      )}
+                      className="group relative rounded-lg border-l-4 border-l-primary/50 bg-card p-4 transition-all hover:shadow-lg border border-border/50 hover:border-border"
                     >
                     {/* ══════════════════════════════════════════════════════════════
                         BARRA DE METADADOS COMPLETA — CONSTITUIÇÃO TRANSVERSAL v2.0
