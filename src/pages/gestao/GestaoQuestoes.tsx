@@ -1709,8 +1709,8 @@ function GestaoQuestoes() {
         const deleteIds = toDelete.map(q => q.id);
         deletedRequestedIds.push(...deleteIds);
 
-        // Batch de 100 IDs por vez para evitar Bad Request (URL muito longa)
-        const DELETE_BATCH_SIZE = 100;
+        // Batch de 500 IDs por vez para evitar Bad Request (URL muito longa)
+        const DELETE_BATCH_SIZE = 500;
         let allDeletedRows: any[] = [];
 
         for (let i = 0; i < deleteIds.length; i += DELETE_BATCH_SIZE) {
