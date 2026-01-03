@@ -1,16 +1,18 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE: GlobalAILogButton
 // Botão global para visualizar todos os logs de IA - REDESENHADO
-// POLÍTICA: Real-Time Question-Level AI Log Policy v1.0
+// POLÍTICA: Question AI Log Mandatory Human-Readable Audit v2.0
 // ═══════════════════════════════════════════════════════════════════════════════
 // FUNCIONALIDADES:
-// - Lista de questões afetadas em tempo real
-// - Visualização detalhada por questão com BEFORE/AFTER
+// - Lista de questões afetadas em tempo real COM ENUNCIADO SNIPPET
+// - Visualização detalhada por questão com BEFORE/AFTER OBRIGATÓRIOS
+// - Logs expandidos por default (POLÍTICA v2.0)
+// - Enunciado no topo de cada log entry (POLÍTICA v2.0)
 // - Atualizações via Realtime do Supabase
 // - Exportação TXT por questão e global
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { memo, useState, forwardRef } from 'react';
+import { memo, useState, forwardRef, useEffect } from 'react';
 import { Button, type ButtonProps } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -42,6 +44,8 @@ import {
   FileText,
   Sparkles,
   Shield,
+  AlertTriangle,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
@@ -57,6 +61,12 @@ import {
   downloadQuestionLogsDetailedTxt,
   downloadGlobalLogsGroupedTxt,
 } from '@/hooks/useQuestionAILogs';
+import { 
+  normalizeBeforeValue, 
+  normalizeAfterValue,
+  mapInterventionToActionType,
+  getActionTypeDescription,
+} from '@/lib/audits/AUDIT_AI_LOG_POLICY_v2';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -89,15 +99,30 @@ const InterventionTypeIcon = ({ type }: { type: AIInterventionType }) => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE DE LOG INDIVIDUAL (DETALHADO)
+// POLÍTICA v2.0: Logs expandidos, BEFORE/AFTER nunca vazios, campos obrigatórios
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const DetailedLogEntry = memo(({ log, index }: { log: QuestionAILog; index: number }) => {
+interface DetailedLogEntryProps {
+  log: QuestionAILog;
+  index: number;
+  enunciadoSnippet?: string; // POLÍTICA v2.0: Enunciado no topo
+}
+
+const DetailedLogEntry = memo(({ log, index, enunciadoSnippet }: DetailedLogEntryProps) => {
   const date = new Date(log.created_at);
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const typeColors = INTERVENTION_TYPE_COLORS[log.intervention_type] || INTERVENTION_TYPE_COLORS.AI_AUTOFILL;
   const confidencePercent = log.ai_confidence_score !== null 
     ? Math.round(log.ai_confidence_score * 100) 
     : null;
+
+  // POLÍTICA v2.0: BEFORE/AFTER NUNCA VAZIOS
+  const normalizedBefore = normalizeBeforeValue(log.value_before);
+  const normalizedAfter = normalizeAfterValue(log.value_after);
+  
+  // POLÍTICA v2.0: Mapear tipo de intervenção para categoria humana
+  const actionType = mapInterventionToActionType(log.intervention_type);
+  const actionDescription = getActionTypeDescription(actionType);
 
   const getConfidenceColor = (score: number | null) => {
     if (score === null) return 'text-muted-foreground';
@@ -113,12 +138,30 @@ const DetailedLogEntry = memo(({ log, index }: { log: QuestionAILog; index: numb
       transition={{ delay: index * 0.03 }}
       className="p-4 rounded-lg bg-muted/30 border border-border/50 hover:border-primary/30 transition-colors"
     >
+      {/* POLÍTICA v2.0: Enunciado snippet no TOPO */}
+      {enunciadoSnippet && (
+        <div className="mb-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+          <div className="flex items-start gap-2">
+            <BookOpen className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-primary mb-1">QUESTÃO (Enunciado):</p>
+              <p className="text-sm text-foreground/90 line-clamp-3">
+                {enunciadoSnippet}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header com timestamp */}
-      <div className="font-mono text-xs text-muted-foreground mb-3 bg-background/50 px-2 py-1 rounded">
-        [{format(date, "yyyy-MM-dd")} | {format(date, "HH:mm:ss")} - {timezone}]
+      <div className="font-mono text-xs text-muted-foreground mb-3 bg-background/50 px-2 py-1 rounded flex items-center justify-between">
+        <span>[{format(date, "yyyy-MM-dd")} | {format(date, "HH:mm:ss")} - {timezone}]</span>
+        <Badge variant="outline" className="text-xs font-mono ml-2">
+          {actionType}
+        </Badge>
       </div>
 
-      {/* Tipo de ação */}
+      {/* Tipo de ação com descrição humana */}
       <div className="mb-3">
         <Badge 
           className={cn(
@@ -130,7 +173,7 @@ const DetailedLogEntry = memo(({ log, index }: { log: QuestionAILog; index: numb
           {log.intervention_type}
         </Badge>
         <p className="text-xs text-muted-foreground mt-1 ml-1">
-          → {INTERVENTION_TYPE_LABELS[log.intervention_type] || log.intervention_type}
+          → {actionDescription}
         </p>
       </div>
 
@@ -144,12 +187,19 @@ const DetailedLogEntry = memo(({ log, index }: { log: QuestionAILog; index: numb
         </span>
       </div>
 
-      {/* BEFORE / AFTER */}
+      {/* BEFORE / AFTER - POLÍTICA v2.0: NUNCA VAZIOS */}
       <div className="grid grid-cols-1 gap-2 mb-3">
         <div className="p-3 rounded bg-destructive/10 border border-destructive/20">
-          <p className="text-xs font-semibold text-muted-foreground mb-1">BEFORE:</p>
-          <pre className="text-sm font-mono text-destructive-foreground whitespace-pre-wrap break-words max-h-24 overflow-auto">
-            {log.value_before || <span className="italic text-muted-foreground">(null)</span>}
+          <p className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+            <span className="font-mono">BEFORE:</span>
+            {log.value_before === null && (
+              <Badge variant="outline" className="text-[10px] h-4 px-1 text-muted-foreground">
+                fallback
+              </Badge>
+            )}
+          </p>
+          <pre className="text-sm font-mono text-destructive-foreground whitespace-pre-wrap break-words max-h-32 overflow-auto">
+            {normalizedBefore}
           </pre>
         </div>
         
@@ -158,18 +208,30 @@ const DetailedLogEntry = memo(({ log, index }: { log: QuestionAILog; index: numb
         </div>
         
         <div className="p-3 rounded bg-emerald-500/10 border border-emerald-500/20">
-          <p className="text-xs font-semibold text-muted-foreground mb-1">AFTER:</p>
-          <pre className="text-sm font-mono text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap break-words max-h-24 overflow-auto">
-            "{log.value_after}"
+          <p className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+            <span className="font-mono">AFTER:</span>
+            {!log.value_after && (
+              <Badge variant="outline" className="text-[10px] h-4 px-1 text-muted-foreground">
+                fallback
+              </Badge>
+            )}
+          </p>
+          <pre className="text-sm font-mono text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap break-words max-h-32 overflow-auto">
+            {normalizedAfter}
           </pre>
         </div>
       </div>
 
-      {/* Motivo */}
-      <div className="mb-3 p-2 rounded bg-background/50">
-        <p className="text-xs font-semibold text-muted-foreground mb-1">REASON:</p>
+      {/* Motivo/Razão - POLÍTICA v2.0: Campo REASON obrigatório */}
+      <div className="mb-3 p-2 rounded bg-background/50 border border-border/30">
+        <p className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+          <span className="font-mono">REASON:</span>
+          {!log.action_description && (
+            <AlertTriangle className="h-3 w-3 text-amber-500" />
+          )}
+        </p>
         <p className="text-sm text-foreground/90">
-          {log.action_description}
+          {log.action_description || 'Motivo não especificado (log legado)'}
         </p>
       </div>
 
@@ -177,7 +239,7 @@ const DetailedLogEntry = memo(({ log, index }: { log: QuestionAILog; index: numb
       <div className="flex items-center gap-4 flex-wrap text-xs">
         {confidencePercent !== null && (
           <div className="flex items-center gap-1">
-            <span className="text-muted-foreground">CONFIDENCE:</span>
+            <span className="text-muted-foreground font-mono">CONFIDENCE:</span>
             <Badge 
               variant="outline" 
               className={cn("text-xs font-mono", getConfidenceColor(confidencePercent))}
@@ -211,6 +273,7 @@ DetailedLogEntry.displayName = 'DetailedLogEntry';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE DE QUESTÃO EXPANDÍVEL
+// POLÍTICA v2.0: Logs expandidos por default, enunciado no topo
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const QuestionLogCard = memo(({ 
@@ -233,60 +296,75 @@ const QuestionLogCard = memo(({
       <div className="border border-border/50 rounded-lg overflow-hidden bg-card/50">
         {/* Header da questão - sempre visível */}
         <CollapsibleTrigger asChild>
-          <div className="p-4 cursor-pointer hover:bg-muted/30 transition-colors flex items-center gap-3">
-            <ChevronRight className={cn(
-              "h-5 w-5 text-muted-foreground transition-transform",
-              isExpanded && "rotate-90"
-            )} />
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <Badge variant="outline" className="font-mono text-xs shrink-0">
-                  {question.question_id.slice(0, 8)}...
-                </Badge>
-                <Badge variant="secondary" className="shrink-0">
-                  {question.total_interventions} intervenção{question.total_interventions !== 1 ? 's' : ''}
-                </Badge>
-              </div>
+          <div className="p-4 cursor-pointer hover:bg-muted/30 transition-colors">
+            <div className="flex items-start gap-3">
+              <ChevronRight className={cn(
+                "h-5 w-5 text-muted-foreground transition-transform shrink-0 mt-0.5",
+                isExpanded && "rotate-90"
+              )} />
               
-              {/* Tipos de intervenção */}
-              <div className="flex flex-wrap gap-1 mt-2">
-                {question.intervention_types.slice(0, 3).map((type) => {
-                  const colors = INTERVENTION_TYPE_COLORS[type] || INTERVENTION_TYPE_COLORS.AI_AUTOFILL;
-                  return (
-                    <Badge 
-                      key={type}
-                      variant="outline" 
-                      className={cn("text-xs gap-1", colors.bg, colors.text)}
-                    >
-                      <InterventionTypeIcon type={type} />
-                      {INTERVENTION_TYPE_LABELS[type]?.split(' ')[0] || type}
-                    </Badge>
-                  );
-                })}
-                {question.intervention_types.length > 3 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{question.intervention_types.length - 3}
+              <div className="flex-1 min-w-0">
+                {/* POLÍTICA v2.0: Enunciado snippet no topo do card */}
+                <div className="mb-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <div className="flex items-start gap-2">
+                    <BookOpen className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-primary mb-1">QUESTÃO:</p>
+                      <p className="text-sm text-foreground/90 line-clamp-3">
+                        {question.question_text_preview || '[Enunciado não disponível]'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <Badge variant="outline" className="font-mono text-xs shrink-0">
+                    ID: {question.question_id.slice(0, 8)}...
                   </Badge>
-                )}
+                  <Badge variant="secondary" className="shrink-0">
+                    {question.total_interventions} intervenção{question.total_interventions !== 1 ? 's' : ''}
+                  </Badge>
+                </div>
+                
+                {/* Tipos de intervenção */}
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {question.intervention_types.slice(0, 3).map((type) => {
+                    const colors = INTERVENTION_TYPE_COLORS[type] || INTERVENTION_TYPE_COLORS.AI_AUTOFILL;
+                    return (
+                      <Badge 
+                        key={type}
+                        variant="outline" 
+                        className={cn("text-xs gap-1", colors.bg, colors.text)}
+                      >
+                        <InterventionTypeIcon type={type} />
+                        {INTERVENTION_TYPE_LABELS[type]?.split(' ')[0] || type}
+                      </Badge>
+                    );
+                  })}
+                  {question.intervention_types.length > 3 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{question.intervention_types.length - 3}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Timestamp da última intervenção */}
+                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  Última: {new Date(question.last_intervention_at).toLocaleString('pt-BR')}
+                </p>
               </div>
 
-              {/* Timestamp da última intervenção */}
-              <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Última: {new Date(question.last_intervention_at).toLocaleString('pt-BR')}
-              </p>
+              {/* Botão de exportar */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0 h-8 w-8"
+                onClick={handleExportQuestion}
+              >
+                <Download className="h-4 w-4" />
+              </Button>
             </div>
-
-            {/* Botão de exportar */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="shrink-0 h-8 w-8"
-              onClick={handleExportQuestion}
-            >
-              <Download className="h-4 w-4" />
-            </Button>
           </div>
         </CollapsibleTrigger>
 
@@ -295,7 +373,12 @@ const QuestionLogCard = memo(({
           <Separator />
           <div className="p-4 space-y-3 bg-muted/10 max-h-[500px] overflow-auto">
             {question.logs.map((log, index) => (
-              <DetailedLogEntry key={log.id} log={log} index={index} />
+              <DetailedLogEntry 
+                key={log.id} 
+                log={log} 
+                index={index}
+                enunciadoSnippet={question.question_text_preview}
+              />
             ))}
           </div>
         </CollapsibleContent>
@@ -308,11 +391,13 @@ QuestionLogCard.displayName = 'QuestionLogCard';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL
+// POLÍTICA v2.0: Logs expandidos por default
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const GlobalAILogButton = memo(() => {
   const [showDialog, setShowDialog] = useState(false);
   const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
+  const [initialExpansionDone, setInitialExpansionDone] = useState(false);
   
   const { data, isLoading, isError, refetch } = useGlobalAILogsGroupedByQuestion();
   const queryClient = useQueryClient();
@@ -321,6 +406,14 @@ const GlobalAILogButton = memo(() => {
   useAILogsRealtime();
 
   const hasLogs = data && data.total_logs > 0;
+
+  // POLÍTICA v2.0: Expandir todas as questões por default quando os dados chegarem
+  useEffect(() => {
+    if (data && data.questions.length > 0 && !initialExpansionDone) {
+      setExpandedQuestions(new Set(data.questions.map(q => q.question_id)));
+      setInitialExpansionDone(true);
+    }
+  }, [data, initialExpansionDone]);
 
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ['global-ai-logs-by-question'] });
@@ -423,7 +516,7 @@ const GlobalAILogButton = memo(() => {
             </DialogTitle>
             <DialogDescription className="flex items-center gap-2">
               <Shield className="h-4 w-4 text-amber-500" />
-              Real-Time Question-Level AI Log Policy v1.0 • Logs imutáveis por questão
+              Question AI Log Mandatory Human-Readable Audit v2.0 • Logs imutáveis com enunciado
             </DialogDescription>
           </DialogHeader>
 

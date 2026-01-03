@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE: QuestionAILogViewer
 // Modal para visualizar logs de intervenção de IA em questões
-// POLÍTICA: Global AI Question Intervention Visibility Policy v1.0
+// POLÍTICA: Question AI Log Mandatory Human-Readable Audit v2.0
 // READ-ONLY - Logs são IMUTÁVEIS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dialog,
@@ -34,6 +34,8 @@ import {
   PenLine,
   CheckCircle2,
   FolderTree,
+  BookOpen,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   useQuestionAILogs,
@@ -45,6 +47,14 @@ import {
   AIInterventionType,
   downloadLogsAsTxt,
 } from '@/hooks/useQuestionAILogs';
+import {
+  normalizeBeforeValue,
+  normalizeAfterValue,
+  mapInterventionToActionType,
+  getActionTypeDescription,
+  extractEnunciadoSnippet,
+} from '@/lib/audits/AUDIT_AI_LOG_POLICY_v2';
+import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -76,13 +86,28 @@ const InterventionTypeIcon = ({ type }: { type: AIInterventionType }) => {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE DE LOG INDIVIDUAL
+// POLÍTICA v2.0: BEFORE/AFTER nunca vazios, campos obrigatórios
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const LogEntry = memo(({ log, index }: { log: QuestionAILog; index: number }) => {
+interface LogEntryProps {
+  log: QuestionAILog;
+  index: number;
+  enunciadoSnippet?: string;
+}
+
+const LogEntry = memo(({ log, index, enunciadoSnippet }: LogEntryProps) => {
   const date = new Date(log.created_at);
   const confidencePercent = log.ai_confidence_score !== null 
     ? Math.round(log.ai_confidence_score * 100) 
     : null;
+
+  // POLÍTICA v2.0: BEFORE/AFTER NUNCA VAZIOS
+  const normalizedBefore = normalizeBeforeValue(log.value_before);
+  const normalizedAfter = normalizeAfterValue(log.value_after);
+  
+  // POLÍTICA v2.0: Mapear tipo de intervenção para categoria humana
+  const actionType = mapInterventionToActionType(log.intervention_type);
+  const actionDescription = getActionTypeDescription(actionType);
 
   const getConfidenceColor = (score: number | null) => {
     if (score === null) return 'text-muted-foreground';
@@ -113,15 +138,27 @@ const LogEntry = memo(({ log, index }: { log: QuestionAILog; index: number }) =>
       )}
 
       <div className="ml-6 p-4 rounded-lg bg-muted/30 border border-border/50 hover:border-primary/30 transition-colors">
-        {/* Timestamp Header - Formato solicitado */}
-        <div className="font-mono text-xs text-muted-foreground mb-3 bg-background/50 px-2 py-1 rounded">
-          [{format(date, "yyyy-MM-dd")} | {format(date, "HH:mm:ss")} - {timezone}]
-        </div>
+        {/* POLÍTICA v2.0: Enunciado snippet no TOPO */}
+        {enunciadoSnippet && (
+          <div className="mb-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+            <div className="flex items-start gap-2">
+              <BookOpen className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-primary mb-1">QUESTÃO (Enunciado):</p>
+                <p className="text-sm text-foreground/90 line-clamp-2">
+                  {enunciadoSnippet}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
-        {/* Question ID */}
-        <div className="text-xs text-muted-foreground mb-2">
-          <span className="font-medium">QUESTION ID:</span>{' '}
-          <span className="font-mono">{log.question_id.slice(0, 8)}...</span>
+        {/* Timestamp Header - Formato solicitado */}
+        <div className="font-mono text-xs text-muted-foreground mb-3 bg-background/50 px-2 py-1 rounded flex items-center justify-between">
+          <span>[{format(date, "yyyy-MM-dd")} | {format(date, "HH:mm:ss")} - {timezone}]</span>
+          <Badge variant="outline" className="text-xs font-mono ml-2">
+            {actionType}
+          </Badge>
         </div>
 
         {/* TYPE OF ACTION - Destacado */}
@@ -136,7 +173,7 @@ const LogEntry = memo(({ log, index }: { log: QuestionAILog; index: number }) =>
             {log.intervention_type}
           </Badge>
           <p className="text-xs text-muted-foreground mt-1 ml-1">
-            → {INTERVENTION_TYPE_LABELS[log.intervention_type] || log.intervention_type}
+            → {actionDescription}
           </p>
         </div>
 
@@ -150,12 +187,19 @@ const LogEntry = memo(({ log, index }: { log: QuestionAILog; index: number }) =>
           </span>
         </div>
 
-        {/* BEFORE / AFTER - Formato visual claro */}
+        {/* BEFORE / AFTER - POLÍTICA v2.0: NUNCA VAZIOS */}
         <div className="grid grid-cols-1 gap-2 mb-3">
           <div className="p-3 rounded bg-destructive/10 border border-destructive/20">
-            <p className="text-xs font-semibold text-muted-foreground mb-1">BEFORE:</p>
+            <p className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+              <span className="font-mono">BEFORE:</span>
+              {log.value_before === null && (
+                <Badge variant="outline" className="text-[10px] h-4 px-1 text-muted-foreground">
+                  fallback
+                </Badge>
+              )}
+            </p>
             <pre className="text-sm font-mono text-destructive-foreground whitespace-pre-wrap break-words max-h-32 overflow-auto">
-              {log.value_before || <span className="italic text-muted-foreground">(null)</span>}
+              {normalizedBefore}
             </pre>
           </div>
           
@@ -164,18 +208,30 @@ const LogEntry = memo(({ log, index }: { log: QuestionAILog; index: number }) =>
           </div>
           
           <div className="p-3 rounded bg-emerald-500/10 border border-emerald-500/20">
-            <p className="text-xs font-semibold text-muted-foreground mb-1">AFTER:</p>
+            <p className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+              <span className="font-mono">AFTER:</span>
+              {!log.value_after && (
+                <Badge variant="outline" className="text-[10px] h-4 px-1 text-muted-foreground">
+                  fallback
+                </Badge>
+              )}
+            </p>
             <pre className="text-sm font-mono text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap break-words max-h-32 overflow-auto">
-              "{log.value_after}"
+              {normalizedAfter}
             </pre>
           </div>
         </div>
 
-        {/* REASON */}
-        <div className="mb-3 p-2 rounded bg-background/50">
-          <p className="text-xs font-semibold text-muted-foreground mb-1">REASON:</p>
+        {/* REASON - POLÍTICA v2.0: Campo obrigatório */}
+        <div className="mb-3 p-2 rounded bg-background/50 border border-border/30">
+          <p className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+            <span className="font-mono">REASON:</span>
+            {!log.action_description && (
+              <AlertTriangle className="h-3 w-3 text-amber-500" />
+            )}
+          </p>
           <p className="text-sm text-foreground/90">
-            {log.action_description}
+            {log.action_description || 'Motivo não especificado (log legado)'}
           </p>
         </div>
 
@@ -183,7 +239,7 @@ const LogEntry = memo(({ log, index }: { log: QuestionAILog; index: number }) =>
         <div className="flex items-center gap-4 flex-wrap">
           {confidencePercent !== null && (
             <div className="flex items-center gap-1">
-              <span className="text-xs text-muted-foreground">AI CONFIDENCE:</span>
+              <span className="text-xs text-muted-foreground font-mono">CONFIDENCE:</span>
               <Badge 
                 variant="outline" 
                 className={cn(
@@ -225,10 +281,31 @@ LogEntry.displayName = 'LogEntry';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL
+// POLÍTICA v2.0: Buscar enunciado real da questão
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const QuestionAILogViewer = memo(({ questionId, isOpen, onClose }: QuestionAILogViewerProps) => {
   const { data: logs = [], isLoading, error } = useQuestionAILogs(questionId);
+  const [enunciadoSnippet, setEnunciadoSnippet] = useState<string>('');
+
+  // POLÍTICA v2.0: Buscar enunciado real da questão
+  useEffect(() => {
+    if (!questionId || !isOpen) return;
+    
+    const fetchEnunciado = async () => {
+      const { data } = await supabase
+        .from('quiz_questions')
+        .select('question_text')
+        .eq('id', questionId)
+        .single();
+      
+      if (data?.question_text) {
+        setEnunciadoSnippet(extractEnunciadoSnippet(data.question_text, 300));
+      }
+    };
+    
+    fetchEnunciado();
+  }, [questionId, isOpen]);
 
   const handleDownload = () => {
     downloadLogsAsTxt(logs, questionId);
@@ -257,11 +334,26 @@ const QuestionAILogViewer = memo(({ questionId, isOpen, onClose }: QuestionAILog
           </DialogTitle>
           <DialogDescription className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-amber-500" />
-            Permanent & Immutable Audit Record • Policy v1.0
+            Question AI Log Mandatory Human-Readable Audit v2.0
           </DialogDescription>
         </DialogHeader>
 
         <Separator />
+
+        {/* POLÍTICA v2.0: Enunciado snippet no topo */}
+        {enunciadoSnippet && (
+          <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+            <div className="flex items-start gap-2">
+              <BookOpen className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-primary mb-1">QUESTÃO (Enunciado):</p>
+                <p className="text-sm text-foreground/90 line-clamp-3">
+                  {enunciadoSnippet}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stats header */}
         <div className="flex items-center justify-between py-2">
@@ -358,7 +450,12 @@ const QuestionAILogViewer = memo(({ questionId, isOpen, onClose }: QuestionAILog
                 className="space-y-4 py-2"
               >
                 {logs.map((log, index) => (
-                  <LogEntry key={log.id} log={log} index={index} />
+                  <LogEntry 
+                    key={log.id} 
+                    log={log} 
+                    index={index}
+                    enunciadoSnippet={enunciadoSnippet}
+                  />
                 ))}
               </motion.div>
             )}
