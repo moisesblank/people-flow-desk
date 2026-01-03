@@ -356,6 +356,77 @@ Deno.serve(async (req) => {
 
       console.warn(`[register-device-server] ⚠️ LIMITE EXCEDIDO: ${currentCount}/3 dispositivos`);
       
+      // ============================================
+      // 🛡️ BEYOND_THE_3_DEVICES: Verificar se é substituição do mesmo tipo
+      // REGRA: Se usuário já tem 1 de cada tipo (Desktop, Mobile, Tablet)
+      // e tenta adicionar um 4º do MESMO TIPO de um existente
+      // ============================================
+      const deviceTypes = (devices || []).map((d: any) => d.device_type);
+      const currentDeviceType = deviceType || 'desktop';
+      
+      // Contar quantos tipos únicos o usuário tem
+      const uniqueTypes = new Set(deviceTypes);
+      const hasAllThreeTypes = uniqueTypes.has('desktop') && uniqueTypes.has('mobile') && uniqueTypes.has('tablet');
+      
+      // Verificar se o novo dispositivo é do mesmo tipo de um existente
+      const existingSameTypeDevice = (devices || []).find((d: any) => d.device_type === currentDeviceType);
+      
+      // BEYOND_THE_3_DEVICES: Usuário tem exatamente 3 tipos diferentes E
+      // o novo dispositivo é do mesmo tipo de um existente
+      if (hasAllThreeTypes && existingSameTypeDevice) {
+        console.log(`[register-device-server] 🔄 BEYOND_THE_3_DEVICES: ${currentDeviceType} → substituição permitida`);
+        
+        // Registrar evento de segurança
+        try {
+          await supabase.from('security_events').insert({
+            user_id: userId,
+            event_type: 'SAME_TYPE_REPLACEMENT_OFFERED',
+            severity: 'info',
+            description: `Oferecida substituição de ${currentDeviceType} por dispositivo do mesmo tipo`,
+            metadata: {
+              current_device_type: currentDeviceType,
+              existing_device_id: existingSameTypeDevice.id,
+              existing_device_name: existingSameTypeDevice.device_name,
+              new_device_hash_prefix: deviceHashFinal.slice(0, 16),
+            },
+            ip_address: null,
+          });
+        } catch (securityEventError) {
+          console.warn('[register-device-server] ⚠️ Falha ao registrar evento:', securityEventError);
+        }
+        
+        // 🛡️ PAYLOAD ESPECÍFICO para SameTypeReplacementGate
+        const sameTypePayload = {
+          code: 'SAME_TYPE_REPLACEMENT_REQUIRED',
+          message: `Substituição de ${currentDeviceType} disponível`,
+          current_device_type: currentDeviceType,
+          current_device: {
+            device_type: currentDeviceType,
+            os_name: os || 'Sistema',
+            browser_name: browser || 'Navegador',
+            label: deviceName || `${browser || 'Navegador'} • ${os || 'Sistema'}`,
+          },
+          existing_same_type_device: {
+            device_id: existingSameTypeDevice.id,
+            label: existingSameTypeDevice.device_name || `${existingSameTypeDevice.browser || 'Navegador'} • ${existingSameTypeDevice.os || 'Sistema'}`,
+            device_type: existingSameTypeDevice.device_type,
+            os_name: existingSameTypeDevice.os || 'Sistema',
+            browser_name: existingSameTypeDevice.browser || 'Navegador',
+            last_seen_at: existingSameTypeDevice.last_seen_at,
+          },
+          new_device_hash: deviceHashFinal,
+        };
+        
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'SAME_TYPE_REPLACEMENT_REQUIRED',
+            ...sameTypePayload,
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
       // 🔐 BLOCO 4: GERAR EVENTO DE SEGURANÇA (OBRIGATÓRIO)
       try {
         await supabase.from('security_events').insert({
