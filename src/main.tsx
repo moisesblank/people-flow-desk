@@ -95,7 +95,7 @@ if (rootElement) {
     } catch {
       // nunca bloquear bootstrap
     }
-  }, 7000);
+  }, 12000); // Aumentado para 12s para evitar falsos positivos
 }
 
 // ============================================

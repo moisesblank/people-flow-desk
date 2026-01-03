@@ -253,7 +253,7 @@
       };
       window.P0Recovery = P0Recovery;
 
-      // Check for black screen after timeout
+      // Check for black screen after timeout (aumentado para 12s para evitar falsos positivos)
       setTimeout(function() {
         try {
           var root = document.getElementById('root');
@@ -327,7 +327,7 @@
         } catch (e) {
           // Nunca bloquear bootstrap
         }
-      }, 7000);
+      }, 12000);
 
       // ============================================
       // 🏛️ LEI V Art. 4° - LIMPEZA OBRIGATÓRIA DE SW
