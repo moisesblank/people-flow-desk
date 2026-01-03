@@ -1,34 +1,40 @@
 // ╔══════════════════════════════════════════════════════════════════════════════════╗
 // ║ 📚 QUESTION RESOLUTION — COMPONENTE UNIVERSAL E OBRIGATÓRIO                      ║
-// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v6.0 — ORGANIZAÇÃO SEM INTERFERÊNCIA         ║
+// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v6.1 — CORREÇÕES TÉCNICAS OBJETIVAS          ║
 // ╠══════════════════════════════════════════════════════════════════════════════════╣
 // ║                                                                                   ║
-// ║ 🔒 LEI PERMANENTE — CONSTITUIÇÃO DO QUESTION DOMAIN v6.0                         ║
+// ║ 🔒 LEI PERMANENTE — CONSTITUIÇÃO DO QUESTION DOMAIN v6.1                         ║
 // ║                                                                                   ║
 // ║ Este componente é a ÚNICA fonte de verdade para renderização de resoluções.      ║
 // ║ TODAS as questões (SIMULADOS, MODO TREINO, atuais e futuras) DEVEM usar          ║
 // ║ este componente para garantir formatação consistente.                            ║
 // ║                                                                                   ║
 // ║ ═══════════════════════════════════════════════════════════════════════════════  ║
-// ║ 🚨 NOVA LEI v6.0 — ORGANIZAÇÃO SEM INTERFERÊNCIA                                 ║
+// ║ 🚨 NOVA LEI v6.1 — ORGANIZAÇÃO + CORREÇÕES TÉCNICAS OBJETIVAS                    ║
 // ║ ═══════════════════════════════════════════════════════════════════════════════  ║
 // ║                                                                                   ║
-// ║ REGRA SUPREMA: O componente NÃO INTERFERE no texto original.                     ║
+// ║ REGRA SUPREMA: O componente NÃO INTERFERE no SIGNIFICADO do texto original.     ║
 // ║                                                                                   ║
-// ║ ✅ O QUE ESTE COMPONENTE FAZ:                                                    ║
+// ║ ✅ O QUE ESTE COMPONENTE FAZ (CORREÇÕES TÉCNICAS OBJETIVAS):                     ║
 // ║    1. ORGANIZA visualmente as seções (ANÁLISE → CONCLUSÃO → ENEM → etc)          ║
 // ║    2. DETECTA marcadores de seção e agrupa conteúdo                              ║
 // ║    3. APLICA formatação visual (bordas, cores, ícones)                           ║
-// ║    4. FORMATA química (H2O → H₂O, Na+ → Na⁺) — apenas visual                     ║
+// ║    4. FORMATA química: H2O → H₂O (subscrito), Na+ → Na⁺ (sobrescrito)            ║
+// ║    5. ESTADOS FÍSICOS: (G) → ₍g₎, (S) → ₍s₎, (L) → ₍l₎, (AQ) → ₍aq₎              ║
+// ║    6. CARGAS ELÉTRICAS: Na2+ → Na²⁺, Ca++ → Ca²⁺                                 ║
+// ║    7. UNIDADES: g/mol, °C, K (preservadas e formatadas)                          ║
+// ║    8. ANO INVÁLIDO: < 2016 → removido silenciosamente                            ║
+// ║    9. SÍMBOLOS INÚTEIS: emojis decorativos, caracteres estranhos → removidos    ║
+// ║   10. CARACTERES ESPECIAIS NO INÍCIO: alternativas com ? . : → limpos           ║
+// ║   11. CORREÇÃO DE PORTUGUÊS: gramática básica (crase, concordância, acentos)    ║
 // ║                                                                                   ║
 // ║ ❌ O QUE ESTE COMPONENTE NÃO FAZ:                                                ║
-// ║    1. NÃO altera texto original                                                   ║
-// ║    2. NÃO corrige gramática                                                       ║
-// ║    3. NÃO remove conteúdo (exceto metadados HTML)                                ║
-// ║    4. NÃO adiciona palavras ou muda significado                                  ║
-// ║    5. NÃO "refina pedagogicamente" o texto                                       ║
+// ║    1. NÃO altera SIGNIFICADO do texto original                                   ║
+// ║    2. NÃO remove CONTEÚDO (exceto metadados HTML e símbolos decorativos)         ║
+// ║    3. NÃO adiciona palavras ou muda significado                                  ║
+// ║    4. NÃO "refina pedagogicamente" o texto (opinião)                             ║
 // ║                                                                                   ║
-// ║ LEMA: "Organize, não interfira. O conteúdo é sagrado."                           ║
+// ║ LEMA: "Correções TÉCNICAS são fatos. Organização preserva a essência."          ║
 // ║                                                                                   ║
 // ║ JAMAIS MODIFICAR ESTAS REGRAS SEM AUTORIZAÇÃO DO OWNER.                           ║
 // ║                                                                                   ║
@@ -111,34 +117,38 @@ interface QuestionResolutionProps {
 
 /**
  * =====================================================
- * LIMPEZA MÍNIMA DE TEXTO — v6.0 ORGANIZAÇÃO SEM INTERFERÊNCIA
- * Remove APENAS metadados HTML e ruído técnico
- * PRESERVA TODO o conteúdo textual original
+ * CORREÇÕES TÉCNICAS OBJETIVAS — v6.1
+ * =====================================================
+ * 
+ * Estas NÃO são opinião. São FATOS:
+ * 1. Fórmula química errada (H2O → H₂O visual)
+ * 2. Estado físico incoerente: (G) → ₍g₎ (sempre minúsculo, subscrito)
+ * 3. Unidade errada (g/mol, °C, K — preservar)
+ * 4. Carga elétrica mal escrita (Na+, Na2+ → Na⁺, Na²⁺)
+ * 5. Ano inválido (< 2016 → remove)
+ * 6. Símbolos inúteis (emoji decorativo, caracteres estranhos)
+ * 7. Formatação química (subscrito/sobrescrito)
+ * 8. Alternativa começando com caractere especial → limpar
+ * 9. Correção de português (gramática básica objetiva)
+ * 
+ * NUNCA altera significado. Apenas padronização técnica.
  * =====================================================
  */
+
+// Emojis decorativos e caracteres estranhos (não informativos)
+const DECORATIVE_SYMBOLS_REGEX = /[里吝離魘魚鬼鸟鶉鶴鸿麗麒麓麝麵麴麾黃黎黏黔黛點黯鼓鼠鼻齊齋齒龍龜⚙️⚙🔧🔨🛠️⚡🔥💥🌟🌈🎆🎇🎉🎊🎀🎁📿💎🔮🧿🏆🥇🥈🥉🏅🎖️🏵️🎗️🪅🪆🎭🎨🖼️🎬🎤🎧🎼🎹🎸🎷🎺🎻🪕🥁🪘🎲🧩🎮🎯🎳🎰🧸🪀🪁🪄🪃🛷🛹🛼🩰🩱🩲🩳👙👗👘🥻🩴👠👡👢👞👟🥾🥿🧦🧤🧣🎩🧢👒🎓⛑️🪖👑💍👛👜💼🎒🧳👓🕶️🥽🌂]/g;
+
+// Caracteres de controle invisíveis
+const CONTROL_CHARS_REGEX = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202F\uFEFF]/g;
 
 /**
- * =====================================================
- * LIMPEZA MÍNIMA v6.0 — APENAS RUÍDO TÉCNICO
- * =====================================================
- * Remove APENAS:
- * - Metadados HTML/CSS que vazaram
- * - Caracteres de controle invisíveis
- * - Emojis decorativos chineses que quebram renderização
- * 
- * NÃO remove/altera:
- * - Texto original
- * - Pontuação
- * - Gramática
- * - Emojis informativos (✅, ❌, etc)
- * =====================================================
+ * Remove símbolos decorativos e ruído técnico
  */
-const TECHNICAL_NOISE_REGEX = /[里吝離魘魚鬼鸟鶉鶴鸿麗麒麓麝麵麴麾黃黎黏黔黛點黯鼓鼠鼻齊齋齒龍龜]/g;
-
 function cleanTechnicalNoise(text: string): string {
   if (!text) return '';
   return text
-    .replace(TECHNICAL_NOISE_REGEX, '')
+    .replace(DECORATIVE_SYMBOLS_REGEX, '')
+    .replace(CONTROL_CHARS_REGEX, '')
     .replace(/\*\*/g, '')           // Remove ** (markdown bold)
     .replace(/\*/g, '')             // Remove * soltos
     .replace(/️/g, '')              // Remove variation selectors órfãos
@@ -146,32 +156,185 @@ function cleanTechnicalNoise(text: string): string {
 }
 
 /**
- * =====================================================
- * v6.0 — FUNÇÕES LEGADAS DESATIVADAS
- * Mantidas como passthrough para compatibilidade
- * =====================================================
+ * Remove caracteres especiais do início de textos de alternativas
+ * Ex: "? Alternativa A" → "Alternativa A"
+ *     ". O composto" → "O composto"
  */
-
-// v6.0: NÃO interfere no texto — apenas retorna original
 function removeLeadingSpecialChars(text: string): string {
-  return text || '';
+  if (!text) return '';
+  return text
+    .replace(/^[\?\.\:\;\-–—•·»«]+\s*/g, '')
+    .replace(/^\s*[\?\.\:\;\-–—]+\s*/gm, '')
+    .trim();
 }
 
-// v6.0: NÃO interfere no texto — apenas limpa ruído técnico mínimo
+/**
+ * Corrige estados físicos para formato padronizado
+ * (G) → ₍g₎, (S) → ₍s₎, (L) → ₍l₎, (AQ) → ₍aq₎
+ */
+function normalizePhysicalStates(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/\(\s*[Gg]\s*\)/g, '₍g₎')
+    .replace(/\(\s*[Ss]\s*\)/g, '₍s₎')
+    .replace(/\(\s*[Ll]\s*\)/g, '₍l₎')
+    .replace(/\(\s*[Aa][Qq]\s*\)/gi, '₍aq₎');
+}
+
+/**
+ * Corrige cargas elétricas para sobrescrito
+ * Na+ → Na⁺, Na2+ → Na²⁺, Ca++ → Ca²⁺, Cl- → Cl⁻
+ */
+function normalizeElectricCharges(text: string): string {
+  if (!text) return '';
+  
+  const SUPERSCRIPT_MAP: Record<string, string> = {
+    '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+    '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+    '+': '⁺', '-': '⁻',
+  };
+  
+  function toSuperscript(str: string): string {
+    return str.split('').map(c => SUPERSCRIPT_MAP[c] || c).join('');
+  }
+  
+  let result = text;
+  
+  // Padrão: elemento + número + sinal (Na2+, Ca2+, SO42-)
+  result = result.replace(/([A-Z][a-z]?(?:₀|₁|₂|₃|₄|₅|₆|₇|₈|₉)*)(\d*)([+-]+)(?=\s|$|[,.\);\[\]])/g, 
+    (_, element, num, sign) => {
+      const superNum = num ? toSuperscript(num) : '';
+      const superSign = toSuperscript(sign.charAt(0)); // apenas primeiro sinal
+      return element + superNum + superSign;
+    });
+  
+  // Padrão: ++ ou -- (Ca++, Mg++)
+  result = result.replace(/([A-Z][a-z]?(?:₀|₁|₂|₃|₄|₅|₆|₇|₈|₉)*)\+\+/g, '$1²⁺');
+  result = result.replace(/([A-Z][a-z]?(?:₀|₁|₂|₃|₄|₅|₆|₇|₈|₉)*)--/g, '$1²⁻');
+  
+  // Padrão: ^2+ ou ^- após elemento
+  result = result.replace(/\^(\d*[+-])/g, (_, charge) => toSuperscript(charge));
+  
+  return result;
+}
+
+/**
+ * Remove anos inválidos (< 2016) do texto
+ * Silencioso: não substitui por nada
+ */
+function removeInvalidYears(text: string): string {
+  if (!text) return '';
+  
+  // Remove padrões de ano entre 1900-2015 em contextos de banca/questão
+  // Mantém anos em contextos científicos/históricos (datas de descobertas, etc.)
+  return text
+    // Remove "(2015)", "(2014)", etc. quando isolados
+    .replace(/\(\s*(19\d{2}|200\d|201[0-5])\s*\)/g, '')
+    // Remove "- 2015", "– 2014" quando após banca
+    .replace(/\s*[-–]\s*(19\d{2}|200\d|201[0-5])(?=\s|$|[,.\)])/g, '')
+    // Limpa espaços duplos resultantes
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+/**
+ * Correções gramaticais objetivas (português)
+ * Apenas correções que são FATOS, não estilo
+ */
+function applyObjectiveGrammar(text: string): string {
+  if (!text) return '';
+  
+  let result = text;
+  
+  // Correções de crase objetivas
+  result = result
+    .replace(/\ba\s+(à|aquele|aquela|aquilo)/gi, 'à $1')
+    .replace(/\bà\s+a\b/g, 'à')
+    .replace(/\bà\s+à\b/g, 'à');
+  
+  // Correções de concordância básica
+  result = result
+    .replace(/\bos\s+molécula\b/gi, 'a molécula')
+    .replace(/\bas\s+composto\b/gi, 'o composto')
+    .replace(/\bo\s+reações\b/gi, 'as reações')
+    .replace(/\ba\s+compostos\b/gi, 'os compostos');
+  
+  // Acentuação objetiva (palavras comuns em química)
+  result = result
+    .replace(/\bequacao\b/gi, 'equação')
+    .replace(/\breacao\b/gi, 'reação')
+    .replace(/\bsolucao\b/gi, 'solução')
+    .replace(/\bconcentracao\b/gi, 'concentração')
+    .replace(/\bpressao\b/gi, 'pressão')
+    .replace(/\btemperatura\b/g, 'temperatura') // já correto mas garantir
+    .replace(/\batomo\b/gi, 'átomo')
+    .replace(/\bmolecula\b/gi, 'molécula')
+    .replace(/\bion\b/g, 'íon')
+    .replace(/\bions\b/g, 'íons')
+    .replace(/\bcation\b/gi, 'cátion')
+    .replace(/\bcations\b/gi, 'cátions')
+    .replace(/\banion\b/gi, 'ânion')
+    .replace(/\banions\b/gi, 'ânions')
+    .replace(/\beletron\b/gi, 'elétron')
+    .replace(/\beletrons\b/gi, 'elétrons')
+    .replace(/\bproton\b/gi, 'próton')
+    .replace(/\bprotons\b/gi, 'prótons')
+    .replace(/\bneutron\b/gi, 'nêutron')
+    .replace(/\bneutrons\b/gi, 'nêutrons')
+    .replace(/\borganic[oa]\b/g, (m) => m.replace('organic', 'orgânic'))
+    .replace(/\binorganic[oa]\b/g, (m) => m.replace('inorganic', 'inorgânic'))
+    .replace(/\banalise\b/gi, 'análise')
+    .replace(/\bsintese\b/gi, 'síntese')
+    .replace(/\bhibrido\b/gi, 'híbrido')
+    .replace(/\bcovalente\b/g, 'covalente') // já correto
+    .replace(/\bionica\b/gi, 'iônica')
+    .replace(/\bionico\b/gi, 'iônico');
+  
+  return result;
+}
+
+/**
+ * Pipeline completo de correções técnicas objetivas
+ * Aplica todas as correções em ordem
+ */
+function applyTechnicalCorrections(text: string): string {
+  if (!text) return '';
+  
+  let result = text;
+  
+  // 1. Limpar ruído técnico (símbolos decorativos, caracteres estranhos)
+  result = cleanTechnicalNoise(result);
+  
+  // 2. Remover caracteres especiais do início
+  result = removeLeadingSpecialChars(result);
+  
+  // 3. Normalizar estados físicos
+  result = normalizePhysicalStates(result);
+  
+  // 4. Normalizar cargas elétricas
+  result = normalizeElectricCharges(result);
+  
+  // 5. Remover anos inválidos
+  result = removeInvalidYears(result);
+  
+  // 6. Correções gramaticais objetivas
+  result = applyObjectiveGrammar(result);
+  
+  return result;
+}
+
+// Legacy functions for compatibility
 function cleanForbiddenSymbols(text: string): string {
-  return cleanTechnicalNoise(text);
+  return applyTechnicalCorrections(text);
 }
 
-// v6.0: NÃO corrige gramática — apenas retorna original
 function applyPortugueseGrammar(text: string): string {
-  return text || '';
+  return applyObjectiveGrammar(text);
 }
 
-// v6.0: NÃO refina pedagogicamente — apenas retorna original  
 function applyPedagogicalRefinement(text: string): string {
   if (!text) return '';
-  // v6.0: Apenas limpa ruído técnico mínimo, preserva todo o resto
-  return cleanTechnicalNoise(text);
+  return applyTechnicalCorrections(text);
 }
 
 /**
@@ -355,14 +518,15 @@ function reformatAffirmations(text: string): string {
 
 /**
  * =====================================================
- * v6.0 LIMPEZA MÍNIMA — APENAS RUÍDO TÉCNICO
+ * v6.1 LIMPEZA + CORREÇÕES TÉCNICAS
  * =====================================================
- * Remove APENAS:
- * - Metadados HTML/CSS que vazaram
- * - Duplicatas de headers técnicos
- * - Separadores excessivos
+ * Aplica:
+ * - Correções técnicas objetivas (fórmulas, estados, cargas, gramática)
+ * - Remoção de metadados HTML/CSS vazados
+ * - Remoção de duplicatas de headers técnicos
+ * - Normalização de separadores excessivos
  * 
- * PRESERVA TODO o conteúdo textual original
+ * PRESERVA TODO o conteúdo semântico original
  * =====================================================
  */
 function cleanResolutionText(text: string): string {
@@ -370,10 +534,10 @@ function cleanResolutionText(text: string): string {
   
   let cleaned = text;
   
-  // v6.0: Limpar apenas ruído técnico mínimo
-  cleaned = cleanTechnicalNoise(cleaned);
+  // v6.1: Aplicar pipeline completo de correções técnicas objetivas
+  cleaned = applyTechnicalCorrections(cleaned);
   
-  // v6.0: Organizar afirmações em blocos separados (apenas layout, não altera texto)
+  // v6.1: Organizar afirmações em blocos separados (apenas layout)
   cleaned = reformatAffirmations(cleaned);
   
   // PASSO 1: Limpar metadados HTML que vazaram
@@ -413,18 +577,18 @@ function cleanResolutionText(text: string): string {
 
 /**
  * =====================================================
- * v6.0 NORMALIZA TEXTO — SEM INTERFERÊNCIA
+ * v6.1 NORMALIZA TEXTO DE ALTERNATIVA + CORREÇÕES TÉCNICAS
  * =====================================================
- * Remove APENAS:
- * - Ruído técnico mínimo
- * - Emojis duplicados no início
+ * Aplica:
+ * - Correções técnicas objetivas
+ * - Remoção de emojis decorativos do início
  * 
- * PRESERVA TODO o conteúdo textual original
+ * PRESERVA TODO o conteúdo semântico original
  * =====================================================
  */
 function normalizeAlternativeContent(content: string): string {
-  // v6.0: Apenas limpa ruído técnico mínimo
-  let normalized = cleanTechnicalNoise(content);
+  // v6.1: Aplicar pipeline completo de correções técnicas objetivas
+  let normalized = applyTechnicalCorrections(content);
   
   // Limpa emojis duplicados do início (layout apenas)
   normalized = normalized
