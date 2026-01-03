@@ -315,53 +315,28 @@ export function normalizeCompetenciaHabilidade(text: string): string {
   // ═══════════════════════════════════════════════════════════════════════════
   // LEI v3.4: SEPARAÇÃO OBRIGATÓRIA ENTRE COMPETÊNCIA E HABILIDADE
   // ═══════════════════════════════════════════════════════════════════════════
-  // Padrão: "Área Cₓ: texto...  Habilidade Hₓ: texto..." → cada um em sua linha
+  // REGRA PRINCIPAL: Inserir quebra de linha ANTES de "Habilidade"
+  // Padrão: "...contextos.  Habilidade H₂₄..." → "...contextos.\nHabilidade H₂₄..."
   
-  // Capturar Competência/Área (incluindo subscrito)
-  const competenciaMatch = cleaned.match(
-    /(?:Competência\s+de\s+área\s*|Área\s*|Competência\s*|C\s*)([C₁₂₃₄₅₆₇₈₉₀\d]+)[\s:]*([^]*?)(?=\s*(?:Habilidade|H\s*[₁₂₃₄₅₆₇₈₉₀\d])|$)/i
-  );
-  
-  // Capturar Habilidade (incluindo subscrito)
-  const habilidadeMatch = cleaned.match(
-    /(?:Habilidade\s*|H\s*)([H₁₂₃₄₅₆₇₈₉₀\d]+)[\s:]*(.+)/i
-  );
-  
-  const parts: string[] = [];
-  
-  // Processar Competência
-  if (competenciaMatch) {
-    const compId = competenciaMatch[1]?.trim() || '';
-    const compText = competenciaMatch[2]?.trim() || '';
-    if (compId || compText) {
-      const fullComp = compText ? `${compId}: ${compText}` : compId;
-      parts.push(`Área ${fullComp}`);
-    }
-  }
-  
-  // Processar Habilidade
-  if (habilidadeMatch) {
-    const habId = habilidadeMatch[1]?.trim() || '';
-    const habText = habilidadeMatch[2]?.trim() || '';
-    if (habId || habText) {
-      const fullHab = habText ? `${habId}: ${habText}` : habId;
-      parts.push(`Habilidade ${fullHab}`);
-    }
-  }
-  
-  // Se encontrou pelo menos um, retornar com quebra de linha obrigatória
-  if (parts.length > 0) {
-    return parts.join('\n');
-  }
-  
-  // Fallback: forçar separação se "Habilidade" estiver na mesma linha
+  // Primeiro: forçar quebra de linha antes de "Habilidade" (qualquer contexto)
   cleaned = cleaned.replace(
-    /([.:])\s*(Habilidade\s+H)/gi,
+    /(\S)\s+(Habilidade\s+H)/gi,
     '$1\n$2'
   );
   
-  // Se não detectou padrões específicos, apenas limpar
-  return listToContinuousText(cleaned);
+  // Também capturar padrão com ponto final antes
+  cleaned = cleaned.replace(
+    /(\.\s+)(Habilidade\s+H)/gi,
+    '.\n$2'
+  );
+  
+  // Limpar espaços excessivos mas manter quebras de linha
+  cleaned = cleaned
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  
+  return cleaned;
 }
 
 /**
