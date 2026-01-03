@@ -12,7 +12,7 @@
  */
 
 export const QUESTION_ENTITY_CONSTITUTION = {
-  version: '1.0.0',
+  version: '2.0.0',
   status: 'VIGENTE_E_IMUTAVEL',
   promulgationDate: '2026-01-02',
   authority: 'OWNER',
@@ -202,6 +202,65 @@ export const QUESTION_ENTITY_CONSTITUTION = {
         'Never blocked by modals or overlays',
       ],
     },
+
+    // 11. ESTRUTURA DO ENUNCIADO — LEI v1.0 (TEXTO CORRIDO)
+    enunciadoStructure: {
+      policy: 'Permanent Enunciado Structure Policy',
+      version: '1.0.0',
+      rules: [
+        'Enunciado DEVE ser texto corrido, sem enumeração solta',
+        'PROIBIDO manter "Item I, II e III" misturados ou colados no texto',
+        'Afirmações numeradas (I, II, III, IV…) DEVEM ser convertidas para texto corrido e coeso',
+        'Manter o significado original, mas sem enumeração explícita no corpo do texto',
+        'Converter estruturas como "Analise as afirmativas I, II e III..." para frases coesas',
+      ],
+      forbiddenPatterns: [
+        'Analise as afirmativas I, II e III',
+        'Considere as proposições I e II',
+        'Verifique os itens I, II, III e IV',
+        'Afirmativas soltas: I - ..., II - ..., III - ...',
+      ],
+      correctExample: 'Com base no gráfico apresentado, analisa-se o comportamento da substância X em diferentes intervalos de temperatura e tempo, considerando suas fases físicas e os processos de mudança de estado.',
+    },
+
+    // 12. AFIRMATIVAS (I, II, III, IV) — LEI v1.0
+    affirmativesStructure: {
+      policy: 'Permanent Affirmatives Structure Policy',
+      version: '1.0.0',
+      rules: [
+        'Afirmativas NÃO podem permanecer como lista solta dentro do enunciado',
+        'DEVEM ser reorganizadas internamente',
+        'Associadas corretamente à lógica da questão',
+        'Convertidas em estrutura compatível com o modelo da entidade QUESTÃO',
+        'Podem ser: proposições internas, validações lógicas ou critérios de correção',
+      ],
+    },
+
+    // 13. ALTERNATIVAS (A, B, C, D, E) — LEI v1.0 (FORMATAÇÃO OBRIGATÓRIA)
+    alternativesStructure: {
+      policy: 'Permanent Alternatives Structure Policy',
+      version: '1.0.0',
+      rules: [
+        'PROIBIDO apresentar alternativas explicadas em sequência contínua no mesmo parágrafo',
+        'Cada alternativa DEVE estar obrigatoriamente em sua própria linha',
+        'Formato: linha isolada, clara e independente',
+        'A), B), C), D), E) — cada uma em sua linha',
+        'NÃO pode haver texto corrido explicando A, B, C, D e E juntos',
+        'NÃO pode haver alternativas "coladas" umas nas outras',
+      ],
+      mandatoryFormat: [
+        'A) texto da alternativa',
+        'B) texto da alternativa',
+        'C) texto da alternativa',
+        'D) texto da alternativa',
+        'E) texto da alternativa',
+      ],
+      forbiddenPatterns: [
+        'A) ... B) ... C) ... em um único parágrafo',
+        'Alternativas coladas sem quebra de linha',
+        'Texto corrido com todas alternativas juntas',
+      ],
+    },
   },
 
   /**
@@ -263,6 +322,10 @@ export type ConstitutionalCompliance = {
   pedagogicalLanguage: boolean;
   aiInterventionsLogged: boolean;
   aiLogButtonVisible: boolean;
+  // v2.0.0 - Novas regras de estrutura
+  enunciadoTextoCorrido: boolean;
+  affirmativesReorganized: boolean;
+  alternativesFormatted: boolean;
 };
 
 /**

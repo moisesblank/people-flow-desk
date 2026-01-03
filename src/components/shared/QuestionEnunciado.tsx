@@ -33,6 +33,7 @@ import {
   formatBancaHeader as formatBancaHeaderNormalized,
   DEFAULT_BANCA_HEADER 
 } from '@/lib/bancaNormalizer';
+import { normalizeEnunciado } from '@/lib/questionStructureNormalizer';
 
 interface QuestionEnunciadoProps {
   /** Texto do enunciado (pode conter [IMAGEM: URL]) */
@@ -82,11 +83,19 @@ export const extractAllImagesFromText = (text: string): string[] => {
  */
 export const cleanQuestionText = (text: string): string => {
   if (!text) return '';
-  return text
+  
+  // 1. Limpeza básica
+  let cleaned = text
     .replace(/\[IMAGEM:\s*https?:\/\/[^\]]+\]/gi, '')
     .replace(/[""]/g, '')  // Remove aspas curvas (bugs)
     .replace(/['']/g, '')  // Remove apóstrofos curvos
     .trim();
+  
+  // 2. Aplicar normalização de estrutura (texto corrido, sem enumeração solta)
+  // LEI PERMANENTE v2.0 — Constituição da Entidade Questão
+  cleaned = normalizeEnunciado(cleaned);
+  
+  return cleaned;
 };
 
 /**
