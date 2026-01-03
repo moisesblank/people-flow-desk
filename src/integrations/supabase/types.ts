@@ -598,6 +598,7 @@ export type Database = {
           parent_id: string | null
           position: number
           slug: string | null
+          thumbnail_url: string | null
           updated_at: string
         }
         Insert: {
@@ -612,6 +613,7 @@ export type Database = {
           parent_id?: string | null
           position?: number
           slug?: string | null
+          thumbnail_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -626,6 +628,7 @@ export type Database = {
           parent_id?: string | null
           position?: number
           slug?: string | null
+          thumbnail_url?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -7031,6 +7034,7 @@ export type Database = {
           is_published: boolean | null
           position: number | null
           status: string | null
+          thumbnail_url: string | null
           title: string
           updated_at: string | null
           xp_reward: number | null
@@ -7043,6 +7047,7 @@ export type Database = {
           is_published?: boolean | null
           position?: number | null
           status?: string | null
+          thumbnail_url?: string | null
           title: string
           updated_at?: string | null
           xp_reward?: number | null
@@ -7055,6 +7060,7 @@ export type Database = {
           is_published?: boolean | null
           position?: number | null
           status?: string | null
+          thumbnail_url?: string | null
           title?: string
           updated_at?: string | null
           xp_reward?: number | null
