@@ -173,11 +173,39 @@ export function formatChemicalFormulas(text: string): string {
   // Coeficiente após seta: "→ 2CO2" - garantir espaço
   result = result.replace(/(→|⇌|←)\s*(\d+)\s*([A-Z])/g, '$1 $2$3');
 
+  // ═══════════════════════════════════════════════════════════════════
+  // 7. NORMALIZAÇÃO DO DELTA (Δ) — TERMOQUÍMICA E FÍSICO-QUÍMICA
+  // ═══════════════════════════════════════════════════════════════════
+  // Corrige casos onde o Δ foi removido ou nunca existiu
+  // Padrões: "H = -393 kJ" → "ΔH = -393 kJ"
+  //          "S = +50 J" → "ΔS = +50 J"
+  //          "G = -100 kJ" → "ΔG = -100 kJ"
+  // Apenas em contextos termodinâmicos (seguido de = e valor numérico)
+  
+  // Padrão: H/S/G isolado seguido de = e número (com possível sinal)
+  // NÃO captura: pH, CH4, OH-, NH3, etc.
+  result = result.replace(
+    /(?<![A-Za-zα-ωΑ-Ω₀-₉])([HSG])\s*=\s*([-+]?\s*\d+[.,]?\d*)\s*(kJ|kcal|J|cal)/gi,
+    (match, letter, value, unit) => {
+      // Garantir que é uma grandeza termodinâmica, não parte de fórmula
+      return `Δ${letter.toUpperCase()} = ${value.replace(/\s/g, '')} ${unit}`;
+    }
+  );
+  
+  // Padrão: ΔH já existe mas com espaçamento inconsistente
+  result = result.replace(/Δ\s+([HSG])\s*=/gi, 'Δ$1 =');
+  
+  // Padrão: DeltaH ou deltaH → ΔH
+  result = result.replace(/\b[Dd]elta\s*([HSG])\b/g, 'Δ$1');
+  
+  // Padrão: variação de entalpia sem símbolo
+  result = result.replace(/\bvaria[çc][ãa]o\s+de\s+entalpia\b/gi, 'ΔH (variação de entalpia)');
+
   return result;
 }
 
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║ REGRAS CIENTÍFICAS IMUTÁVEIS v2.1:                                           ║
+// ║ REGRAS CIENTÍFICAS IMUTÁVEIS v2.2:                                           ║
 // ║ 1. Índices numéricos SEMPRE subscript (H₂O, CO₂, Na₂SO₄)                     ║
 // ║ 2. Cargas iônicas SEMPRE superscript (Na⁺, Ca²⁺, Cl⁻, SO₄²⁻)                 ║
 // ║ 3. Estados físicos formatados: ₍s₎, ₍l₎, ₍g₎, ₍aq₎                           ║
@@ -186,4 +214,5 @@ export function formatChemicalFormulas(text: string): string {
 // ║ 6. Símbolos de elementos NUNCA alterados                                     ║
 // ║ 7. LIMPEZA: Símbolos decorativos/emoji removidos automaticamente             ║
 // ║ 8. Aplicar apenas na camada de renderização                                  ║
+// ║ 9. DELTA (Δ) OBRIGATÓRIO: ΔH, ΔS, ΔG em contextos termodinâmicos             ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
