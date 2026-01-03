@@ -811,124 +811,219 @@ function LessonFormModal({ open, onClose, lesson, modules, areas, onSubmit, isLo
             />
           </div>
 
-          {/* Provider e URL */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Provider</Label>
-              <Select
-                value={formData.video_provider}
-                onValueChange={(value: VideoProvider) => 
-                  setFormData(prev => ({ ...prev, video_provider: value }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="panda">
-                    <div className="flex items-center gap-2">
-                      <Tv className="w-4 h-4 text-primary" />
-                      Panda Video
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="youtube">
-                    <div className="flex items-center gap-2">
-                      <Youtube className="w-4 h-4 text-red-500" />
-                      YouTube
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="vimeo">
-                    <div className="flex items-center gap-2">
-                      <Play className="w-4 h-4 text-blue-500" />
-                      Vimeo
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="upload">
-                    <div className="flex items-center gap-2">
-                      <Upload className="w-4 h-4" />
-                      Upload
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="md:col-span-2 space-y-2">
-              <Label htmlFor="video_url">URL do Vídeo</Label>
-              <Input
-                id="video_url"
-                value={formData.video_url}
-                onChange={(e) => handleVideoUrlChange(e.target.value)}
-                placeholder="Cole a URL do vídeo aqui..."
-              />
-            </div>
+          {/* Provider Selection */}
+          <div className="space-y-2">
+            <Label>Provider *</Label>
+            <Select
+              value={formData.video_provider}
+              onValueChange={(value: VideoProvider) => 
+                setFormData(prev => ({ ...prev, video_provider: value }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="panda">
+                  <div className="flex items-center gap-2">
+                    <Tv className="w-4 h-4 text-primary" />
+                    Panda Video
+                  </div>
+                </SelectItem>
+                <SelectItem value="youtube">
+                  <div className="flex items-center gap-2">
+                    <Youtube className="w-4 h-4 text-red-500" />
+                    YouTube
+                  </div>
+                </SelectItem>
+                <SelectItem value="vimeo">
+                  <div className="flex items-center gap-2">
+                    <Play className="w-4 h-4 text-blue-500" />
+                    Vimeo
+                  </div>
+                </SelectItem>
+                <SelectItem value="upload">
+                  <div className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Upload
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* IDs específicos por Provider */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Panda Video ID */}
-            <div className="space-y-2">
-              <Label htmlFor="panda_video_id" className={formData.video_provider !== 'panda' ? 'text-muted-foreground' : ''}>
-                ID do Panda Video
-              </Label>
-              <Input
-                id="panda_video_id"
-                value={formData.panda_video_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, panda_video_id: e.target.value }))}
-                placeholder="Ex: a7ce1bfd-0af1-4b03-b33b-7ed7226c5fb0"
-                disabled={formData.video_provider !== 'panda'}
-                className={formData.video_provider !== 'panda' ? 'opacity-50' : ''}
-              />
-              <p className="text-xs text-muted-foreground">
-                Formato UUID do Panda Video
-              </p>
-            </div>
-
-            {/* YouTube Video ID */}
-            <div className="space-y-2">
-              <Label htmlFor="youtube_video_id" className={formData.video_provider !== 'youtube' ? 'text-muted-foreground' : ''}>
-                ID do YouTube
-              </Label>
-              <Input
-                id="youtube_video_id"
-                value={formData.youtube_video_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, youtube_video_id: e.target.value }))}
-                placeholder="Ex: 9Zr70n-KH6Y"
-                disabled={formData.video_provider !== 'youtube'}
-                className={formData.video_provider !== 'youtube' ? 'opacity-50' : ''}
-              />
-              <p className="text-xs text-muted-foreground">
-                Código de 11 caracteres do vídeo
-              </p>
-            </div>
-          </div>
-
-          {/* Thumbnail */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="thumbnail_url">Thumbnail URL</Label>
-              <Input
-                id="thumbnail_url"
-                value={formData.thumbnail_url}
-                onChange={(e) => setFormData(prev => ({ ...prev, thumbnail_url: e.target.value }))}
-                placeholder="URL da imagem de capa"
-              />
-            </div>
-            {formData.video_provider === 'vimeo' && (
+          {/* ============================================ */}
+          {/* PANDA VIDEO - Configuração Completa */}
+          {/* ============================================ */}
+          {formData.video_provider === 'panda' && (
+            <div className="space-y-4 p-4 rounded-lg border border-primary/20 bg-primary/5">
+              <div className="flex items-center gap-2 text-primary font-medium">
+                <Tv className="w-5 h-5" />
+                Configuração Panda Video
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="panda_video_id">ID do Panda Video *</Label>
+                  <Input
+                    id="panda_video_id"
+                    value={formData.panda_video_id}
+                    onChange={(e) => setFormData(prev => ({ ...prev, panda_video_id: e.target.value }))}
+                    placeholder="Ex: a7ce1bfd-0af1-4b03-b33b-7ed7226c5fb0"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Formato UUID do Panda Video
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="video_url_panda">URL do Vídeo (opcional)</Label>
+                  <Input
+                    id="video_url_panda"
+                    value={formData.video_url}
+                    onChange={(e) => handleVideoUrlChange(e.target.value)}
+                    placeholder="Cole a URL do Panda Video aqui..."
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    URL completa do player Panda
+                  </p>
+                </div>
+              </div>
               <div className="space-y-2">
-                <Label htmlFor="vimeo_video_id">ID do Vimeo</Label>
+                <Label htmlFor="thumbnail_url_panda">Thumbnail URL</Label>
                 <Input
-                  id="vimeo_video_id"
-                  value={formData.video_url?.replace('https://vimeo.com/', '') || ''}
-                  onChange={(e) => setFormData(prev => ({ ...prev, video_url: `https://vimeo.com/${e.target.value}` }))}
-                  placeholder="Ex: 123456789"
+                  id="thumbnail_url_panda"
+                  value={formData.thumbnail_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, thumbnail_url: e.target.value }))}
+                  placeholder="URL da imagem de capa"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* ============================================ */}
+          {/* YOUTUBE - Configuração Completa */}
+          {/* ============================================ */}
+          {formData.video_provider === 'youtube' && (
+            <div className="space-y-4 p-4 rounded-lg border border-red-500/20 bg-red-500/5">
+              <div className="flex items-center gap-2 text-red-500 font-medium">
+                <Youtube className="w-5 h-5" />
+                Configuração YouTube
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="youtube_video_id">ID do YouTube *</Label>
+                  <Input
+                    id="youtube_video_id"
+                    value={formData.youtube_video_id}
+                    onChange={(e) => setFormData(prev => ({ ...prev, youtube_video_id: e.target.value }))}
+                    placeholder="Ex: 9Zr70n-KH6Y"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Código de 11 caracteres do vídeo
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="video_url_youtube">URL do Vídeo (opcional)</Label>
+                  <Input
+                    id="video_url_youtube"
+                    value={formData.video_url}
+                    onChange={(e) => handleVideoUrlChange(e.target.value)}
+                    placeholder="Ex: https://www.youtube.com/watch?v=9Zr70n-KH6Y"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Cole a URL do YouTube e o ID será extraído automaticamente
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="thumbnail_url_youtube">Thumbnail URL</Label>
+                <Input
+                  id="thumbnail_url_youtube"
+                  value={formData.thumbnail_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, thumbnail_url: e.target.value }))}
+                  placeholder="URL da imagem de capa (opcional - gerada automaticamente do YouTube)"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Código numérico do vídeo
+                  Se não informada, será usada a thumbnail do YouTube
                 </p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* ============================================ */}
+          {/* VIMEO - Configuração Completa */}
+          {/* ============================================ */}
+          {formData.video_provider === 'vimeo' && (
+            <div className="space-y-4 p-4 rounded-lg border border-blue-500/20 bg-blue-500/5">
+              <div className="flex items-center gap-2 text-blue-500 font-medium">
+                <Play className="w-5 h-5" />
+                Configuração Vimeo
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="vimeo_video_id">ID do Vimeo *</Label>
+                  <Input
+                    id="vimeo_video_id"
+                    value={formData.video_url?.replace('https://vimeo.com/', '') || ''}
+                    onChange={(e) => setFormData(prev => ({ ...prev, video_url: `https://vimeo.com/${e.target.value}` }))}
+                    placeholder="Ex: 123456789"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Código numérico do vídeo
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="video_url_vimeo">URL do Vídeo (opcional)</Label>
+                  <Input
+                    id="video_url_vimeo"
+                    value={formData.video_url}
+                    onChange={(e) => handleVideoUrlChange(e.target.value)}
+                    placeholder="Ex: https://vimeo.com/123456789"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="thumbnail_url_vimeo">Thumbnail URL</Label>
+                <Input
+                  id="thumbnail_url_vimeo"
+                  value={formData.thumbnail_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, thumbnail_url: e.target.value }))}
+                  placeholder="URL da imagem de capa"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* ============================================ */}
+          {/* UPLOAD - Configuração Completa */}
+          {/* ============================================ */}
+          {formData.video_provider === 'upload' && (
+            <div className="space-y-4 p-4 rounded-lg border border-muted bg-muted/5">
+              <div className="flex items-center gap-2 text-muted-foreground font-medium">
+                <Upload className="w-5 h-5" />
+                Configuração Upload Manual
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="video_url_upload">URL do Vídeo *</Label>
+                  <Input
+                    id="video_url_upload"
+                    value={formData.video_url}
+                    onChange={(e) => handleVideoUrlChange(e.target.value)}
+                    placeholder="URL direta do arquivo de vídeo"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="thumbnail_url_upload">Thumbnail URL</Label>
+                  <Input
+                    id="thumbnail_url_upload"
+                    value={formData.thumbnail_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, thumbnail_url: e.target.value }))}
+                    placeholder="URL da imagem de capa"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Módulo e Área */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
