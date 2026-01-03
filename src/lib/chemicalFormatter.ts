@@ -156,18 +156,17 @@ export function formatChemicalFormulas(text: string): string {
   });
 
   // ═══════════════════════════════════════════════════════════════════
-  // 4. PADRONIZAR ESTADOS FÍSICOS — HTML COM CSS UNIFORME
+  // 4. PADRONIZAR ESTADOS FÍSICOS — UNICODE PURO (parênteses subscritos)
   // ═══════════════════════════════════════════════════════════════════
   // Estados: (s) sólido, (l) líquido, (g) gasoso, (v) vapor, (aq) aquoso
-  // Usando <sub> com font-size reduzido para uniformidade total
-  // Resultado: todos os estados ficam do mesmo tamanho pequeno
-  const stateStyle = 'font-size:0.7em;vertical-align:sub;';
+  // Usando parênteses subscritos ₍ ₎ com letras normais minúsculas
+  // Visualmente fica compacto e uniforme: CO₂₍g₎
   result = result
-    .replace(/\(\s*s\s*\)/gi, `<span style="${stateStyle}">(s)</span>`)
-    .replace(/\(\s*l\s*\)/gi, `<span style="${stateStyle}">(l)</span>`)
-    .replace(/\(\s*g\s*\)/gi, `<span style="${stateStyle}">(g)</span>`)
-    .replace(/\(\s*v\s*\)/gi, `<span style="${stateStyle}">(v)</span>`)
-    .replace(/\(\s*aq\s*\)/gi, `<span style="${stateStyle}">(aq)</span>`);
+    .replace(/\(\s*s\s*\)/gi, '₍s₎')
+    .replace(/\(\s*l\s*\)/gi, '₍l₎')
+    .replace(/\(\s*g\s*\)/gi, '₍g₎')
+    .replace(/\(\s*v\s*\)/gi, '₍v₎')
+    .replace(/\(\s*aq\s*\)/gi, '₍aq₎');
 
   // ═══════════════════════════════════════════════════════════════════
   // 5. PADRONIZAR SETAS DE REAÇÃO
