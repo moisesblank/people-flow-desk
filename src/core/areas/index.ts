@@ -135,6 +135,7 @@ export const SYSTEM_AREAS = [
   "aluno-perfil",
   "aluno-livro-web",
   "aluno-planejamento",
+  "aluno-cursos",
 ] as const;
 
 // ============================================
@@ -309,6 +310,7 @@ export const URL_TO_AREA: Record<string, SystemArea> = {
   "/alunos/perfil": "aluno-perfil",
   "/alunos/livro-web": "aluno-livro-web",
   "/alunos/planejamento": "aluno-planejamento",
+  "/alunos/cursos": "aluno-cursos",
   
   // Comunidade
   "/comunidade": "comunidade",
@@ -346,6 +348,7 @@ export const ROLE_AREA_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "aluno-materiais", "aluno-resumos", "aluno-mapas-mentais",
     "aluno-questoes", "aluno-simulados", "aluno-redacao",
     "aluno-desempenho", "aluno-ranking", "aluno-conquistas",
+    "aluno-cursos",
   ],
   
   // 👔 CONTABILIDADE - Finanças
@@ -361,6 +364,7 @@ export const ROLE_AREA_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "relatorios",
     // Áreas de aluno (para suporte)
     "aluno-dashboard", "aluno-cronograma", "aluno-desempenho",
+    "aluno-cursos",
   ],
   
   // 👔 MONITORIA - Acompanhamento
@@ -370,7 +374,7 @@ export const ROLE_AREA_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     // Áreas de aluno
     "aluno-dashboard", "aluno-cronograma", "aluno-videoaulas",
     "aluno-questoes", "aluno-simulados", "aluno-desempenho",
-    "aluno-duvidas", "aluno-forum",
+    "aluno-duvidas", "aluno-forum", "aluno-cursos",
   ],
   
   // 👔 MARKETING - Campanhas
@@ -396,6 +400,7 @@ export const ROLE_AREA_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "aluno-calculadora", "aluno-tabela-periodica", "aluno-flashcards",
     "aluno-metas", "aluno-agenda", "aluno-certificados",
     "aluno-perfil", "aluno-livro-web", "aluno-planejamento",
+    "aluno-cursos",
   ],
   
   // 👨‍🎓 ALUNO GRATUITO - Limitado
@@ -416,6 +421,7 @@ export const ROLE_AREA_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "aluno-calculadora", "aluno-tabela-periodica", "aluno-flashcards",
     "aluno-metas", "aluno-agenda", "aluno-certificados",
     "aluno-perfil", "aluno-livro-web", "aluno-planejamento",
+    "aluno-cursos",
   ],
   
   // 👨‍🎓 BETA EXPIRA - Similar ao beta
@@ -430,6 +436,7 @@ export const ROLE_AREA_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "aluno-calculadora", "aluno-tabela-periodica", "aluno-flashcards",
     "aluno-metas", "aluno-agenda", "aluno-certificados",
     "aluno-perfil", "aluno-livro-web", "aluno-planejamento",
+    "aluno-cursos",
   ],
 };
 
