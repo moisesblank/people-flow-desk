@@ -920,14 +920,14 @@ function LessonFormModal({ open, onClose, lesson, modules, areas, onSubmit, isLo
             <div className="space-y-2">
               <Label>Área (opcional)</Label>
               <Select
-                value={formData.area_id || ''}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, area_id: value || null }))}
+                value={formData.area_id || '__none__'}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, area_id: value === '__none__' ? null : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a área" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value="__none__">Nenhuma</SelectItem>
                   {areas.map(area => (
                     <SelectItem key={area.id} value={area.id}>{area.name}</SelectItem>
                   ))}
