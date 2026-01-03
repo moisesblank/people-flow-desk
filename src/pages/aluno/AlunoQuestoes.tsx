@@ -1,10 +1,11 @@
 // ============================================
-// CENTRAL DO ALUNO - BANCO DE QUESTÕES
-// Química ENEM - Prof. Moisés Medeiros
-// Versão com dados reais do banco
+// 📚 BANCO DE QUESTÕES - ÁREA DO ALUNO
+// Arquitetura: 16 Blocos Semânticos
+// Espelho real-time de /gestaofc/questoes
+// Scoring: SERVER_SIDE_ONLY
 // ============================================
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,17 +18,17 @@ import {
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Progress } from "@/components/ui/progress";
 import { 
   Search, Brain, Target, 
   CheckCircle2, XCircle, ChevronRight, Zap,
   Clock, Trophy, BookOpen, Loader2,
   ArrowLeft, ArrowRight, RotateCcw,
-  Lightbulb, AlertCircle, Star
+  Lightbulb, AlertCircle, Star, Play,
+  TrendingUp, BarChart3, Filter
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -36,17 +37,17 @@ import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, getBancaLabel } from "@
 import { formatBancaHeader } from "@/lib/bancaNormalizer";
 import QuestionEnunciado, { cleanQuestionText } from "@/components/shared/QuestionEnunciado";
 import QuestionResolution from "@/components/shared/QuestionResolution";
-import { predictSuccessRate, getSuccessRateColor } from "@/lib/questionSuccessPredictor";
 import { useTaxonomyForSelects } from "@/hooks/useQuestionTaxonomy";
-import { QuestionMetadataBadges, QuestionBadgesCompact } from "@/components/shared/QuestionMetadataBadges";
+import { QuestionBadgesCompact } from "@/components/shared/QuestionMetadataBadges";
 
 // ============================================
-// TIPOS
+// BLOCK_03: DATA CONTRACT - TIPOS
 // ============================================
 
 interface QuestionOption {
   id: string;
   text: string;
+  image_url?: string;
 }
 
 interface Question {
@@ -62,23 +63,40 @@ interface Question {
   points: number;
   is_active: boolean;
   created_at: string;
-  // Estrutura hierárquica
+  // Estrutura hierárquica (BLOCK_06: ACADEMIC_FILTERS)
   macro?: string | null;
   micro?: string | null;
   tema?: string | null;
   subtema?: string | null;
   // QUESTION_DOMAIN: Agrupamento
   tags?: string[] | null;
+  // Imagens
+  image_url?: string | null;
+  image_urls?: any[] | null;
 }
 
 interface QuestionAttempt {
+  id?: string;
+  user_id: string;
   question_id: string;
   is_correct: boolean;
   selected_answer: string;
+  xp_earned?: number;
+  created_at?: string;
+}
+
+// BLOCK_11: Métricas e Analytics
+interface UserMetrics {
+  total_attempted: number;
+  total_correct: number;
+  total_incorrect: number;
+  accuracy_percentage: number;
+  performance_by_macro: Record<string, { correct: number; total: number }>;
+  performance_by_difficulty: Record<string, { correct: number; total: number }>;
 }
 
 // ============================================
-// CONSTANTES
+// CONSTANTES - DESIGN TOKENS
 // ============================================
 
 const DIFFICULTY_COLORS = {
@@ -93,12 +111,11 @@ const DIFFICULTY_LABELS = {
   dificil: "Difícil",
 };
 
-// BANCAS importado de @/constants/bancas (fonte única de verdade)
-
-// ESTRUTURA HIERÁRQUICA AGORA É DINÂMICA VIA useQuestionTaxonomy
+// BLOCK_09: Limites do RÁPIDO TREINO
+const RAPIDO_TREINO_LIMIT = 30;
 
 // ============================================
-// COMPONENTE: Modal de Resolução de Questão
+// BLOCK_08: QUESTION STYLE - MODAL DE RESOLUÇÃO
 // ============================================
 
 interface QuestionModalProps {
@@ -112,14 +129,12 @@ interface QuestionModalProps {
 
 function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmitting }: QuestionModalProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [discursiveAnswer, setDiscursiveAnswer] = useState<string>(''); // NOVO: Resposta discursiva
+  const [discursiveAnswer, setDiscursiveAnswer] = useState<string>('');
   const [showExplanation, setShowExplanation] = useState(false);
   const [hasAnswered, setHasAnswered] = useState(false);
 
-  // Verificar se é questão discursiva
   const isDiscursive = question?.question_type === 'discursive';
 
-  // Reset state when question changes
   useEffect(() => {
     if (question && userAttempt) {
       setSelectedOption(userAttempt.selected_answer);
@@ -137,7 +152,6 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
   const handleSubmitAnswer = () => {
     if (!question) return;
     
-    // Para discursiva, usar o texto digitado
     if (isDiscursive) {
       if (!discursiveAnswer.trim()) return;
       onAnswer(question.id, discursiveAnswer);
@@ -150,11 +164,7 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
     setShowExplanation(true);
   };
 
-  const isCorrect = hasAnswered && (
-    isDiscursive 
-      ? true // Discursiva será avaliada posteriormente pelo professor
-      : selectedOption === question?.correct_answer
-  );
+  const isCorrect = hasAnswered && !isDiscursive && selectedOption === question?.correct_answer;
 
   if (!question) return null;
 
@@ -175,7 +185,6 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                   <Badge className={DIFFICULTY_COLORS[question.difficulty]}>
                     {DIFFICULTY_LABELS[question.difficulty]}
                   </Badge>
-                  {/* BANCA + ANO UNIFICADOS (NORMALIZAÇÃO PADRÃO) */}
                   <Badge variant="outline">
                     🏛️ {formatBancaHeader(question.banca, question.ano, question.question_text)}
                   </Badge>
@@ -191,22 +200,21 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
 
         <ScrollArea className="flex-1 px-1">
           <div className="space-y-6 py-4">
-            {/* Enunciado com Imagem - Componente Universal */}
+            {/* Enunciado */}
             <div className="bg-muted/50 rounded-xl p-4 border">
               <QuestionEnunciado
                 questionText={question.question_text}
-                imageUrl={(question as any).image_url}
-                imageUrls={(question as any).image_urls}
-                banca={(question as any).banca}
-                ano={(question as any).ano}
+                imageUrl={question.image_url}
+                imageUrls={question.image_urls}
+                banca={question.banca}
+                ano={question.ano}
                 textSize="sm"
                 showImageLabel
               />
             </div>
 
-            {/* Alternativas ou Campo de Texto (Discursiva) */}
+            {/* BLOCK_08: Alternativas ou Campo de Texto (Discursiva) */}
             {isDiscursive ? (
-              // QUESTÃO DISCURSIVA: Campo de texto livre
               <div className="space-y-3">
                 <Label className="text-sm font-semibold flex items-center gap-2">
                   ✍️ Sua Resposta:
@@ -225,11 +233,10 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                   )}
                 />
                 <p className="text-xs text-muted-foreground">
-                  💡 Escreva sua resposta de forma completa e objetiva. Sua resposta será avaliada posteriormente.
+                  💡 Escreva sua resposta de forma completa. Será avaliada posteriormente.
                 </p>
               </div>
             ) : (
-              // QUESTÃO MÚLTIPLA ESCOLHA: Alternativas
               <div className="space-y-3">
                 <Label className="text-sm font-semibold">Alternativas:</Label>
                 <RadioGroup
@@ -254,10 +261,8 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                     }
 
                     return (
-                      <motion.div
+                      <div
                         key={option.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
                         className={cn(
                           "flex flex-col gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all",
                           optionClass,
@@ -286,15 +291,15 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                             <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
                           )}
                         </div>
-                        {(option as any).image_url && (
+                        {option.image_url && (
                           <img 
-                            src={(option as any).image_url} 
+                            src={option.image_url} 
                             alt={`Imagem alternativa ${option.id.toUpperCase()}`}
                             className="max-h-[300px] w-auto object-contain rounded-lg ml-11"
                             onError={(e) => { e.currentTarget.style.display = 'none'; }}
                           />
                         )}
-                      </motion.div>
+                      </div>
                     );
                   })}
                 </RadioGroup>
@@ -302,108 +307,67 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
             )}
 
             {/* Resultado */}
-            <AnimatePresence>
-              {hasAnswered && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className={cn(
-                    "p-4 rounded-xl border-2",
-                    isDiscursive
-                      ? "bg-amber-500/10 border-amber-500" // Discursiva: aguardando correção
-                      : isCorrect 
-                        ? "bg-green-500/10 border-green-500" 
-                        : "bg-red-500/10 border-red-500"
+            {hasAnswered && (
+              <div
+                className={cn(
+                  "p-4 rounded-xl border-2",
+                  isDiscursive
+                    ? "bg-amber-500/10 border-amber-500"
+                    : isCorrect 
+                      ? "bg-green-500/10 border-green-500" 
+                      : "bg-red-500/10 border-red-500"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  {isDiscursive ? (
+                    <>
+                      <Clock className="h-6 w-6 text-amber-500" />
+                      <div>
+                        <p className="font-bold text-amber-600">Resposta Enviada!</p>
+                        <p className="text-sm text-muted-foreground">
+                          ✍️ Sua resposta será avaliada pelo professor
+                        </p>
+                      </div>
+                    </>
+                  ) : isCorrect ? (
+                    <>
+                      <CheckCircle2 className="h-6 w-6 text-green-500" />
+                      <div>
+                        <p className="font-bold text-green-600">Parabéns! Você acertou!</p>
+                        <p className="text-sm text-muted-foreground">
+                          🎯 Modo Treino - sem pontos
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-6 w-6 text-red-500" />
+                      <div>
+                        <p className="font-bold text-red-600">Resposta incorreta</p>
+                        <p className="text-sm text-muted-foreground">
+                          A resposta correta era: {question.correct_answer.toUpperCase()}
+                        </p>
+                      </div>
+                    </>
                   )}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      {isDiscursive ? (
-                        // DISCURSIVA: Resposta enviada para correção
-                        <>
-                          <Clock className="h-6 w-6 text-amber-500" />
-                          <div>
-                            <p className="font-bold text-amber-600">Resposta Enviada!</p>
-                            <p className="text-sm text-muted-foreground">
-                              ✍️ Sua resposta será avaliada pelo professor
-                            </p>
-                          </div>
-                        </>
-                      ) : isCorrect ? (
-                        <>
-                          <CheckCircle2 className="h-6 w-6 text-green-500" />
-                          <div>
-                            <p className="font-bold text-green-600">Parabéns! Você acertou!</p>
-                            {/* MODO_TREINO: Sem pontos */}
-                            {question.tags?.includes('MODO_TREINO') ? (
-                              <p className="text-sm text-muted-foreground">
-                                🎯 Modo Treino - sem pontos
-                              </p>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">
-                                +{question.points} pontos de XP
-                              </p>
-                            )}
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="h-6 w-6 text-red-500" />
-                          <div>
-                            <p className="font-bold text-red-600">Resposta incorreta</p>
-                            <p className="text-sm text-muted-foreground">
-                              A resposta correta era: {question.correct_answer.toUpperCase()}
-                            </p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    
-                    {/* Taxa de Acerto Prevista - Só aparece após responder */}
-                    {(() => {
-                      const prediction = predictSuccessRate({
-                        difficulty: question.difficulty,
-                        questionText: question.question_text,
-                        options: question.options,
-                        tema: question.tema,
-                        macro: question.macro,
-                      });
-                      return (
-                        <div className="text-right">
-                          <p className="text-xs text-muted-foreground">Taxa de acerto esperada</p>
-                          <p className={cn("text-lg font-bold", getSuccessRateColor(prediction.rate))}>
-                            {prediction.rate}%
-                          </p>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                </div>
+              </div>
+            )}
 
             {/* Explicação */}
-            <AnimatePresence>
-              {showExplanation && question.explanation && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4"
-                >
-                  <QuestionResolution
-                    resolutionText={question.explanation}
-                    banca={question.banca}
-                    ano={question.ano}
-                    difficulty={question.difficulty}
-                    tema={question.tema}
-                    macro={question.macro}
-                    micro={question.micro}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {showExplanation && question.explanation && (
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+                <QuestionResolution
+                  resolutionText={question.explanation}
+                  banca={question.banca}
+                  ano={question.ano}
+                  difficulty={question.difficulty}
+                  tema={question.tema}
+                  macro={question.macro}
+                  micro={question.micro}
+                />
+              </div>
+            )}
           </div>
         </ScrollArea>
 
@@ -431,40 +395,261 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
 }
 
 // ============================================
-// COMPONENTE PRINCIPAL
+// BLOCK_09: RÁPIDO TREINO SESSION MODAL
+// ============================================
+
+interface RapidoTreinoModalProps {
+  open: boolean;
+  onClose: () => void;
+  questions: Question[];
+  onComplete: (results: { correct: number; total: number }) => void;
+}
+
+function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTreinoModalProps) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, { answer: string; isCorrect: boolean }>>({});
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [showResult, setShowResult] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const currentQuestion = questions[currentIndex];
+  const progress = ((currentIndex + (showResult ? 1 : 0)) / questions.length) * 100;
+  const isComplete = currentIndex >= questions.length;
+
+  // Reset on open
+  useEffect(() => {
+    if (open) {
+      setCurrentIndex(0);
+      setAnswers({});
+      setSelectedOption(null);
+      setShowResult(false);
+    }
+  }, [open]);
+
+  const handleSubmitAnswer = async () => {
+    if (!currentQuestion || !selectedOption || !user?.id) return;
+
+    setIsSubmitting(true);
+    const isCorrect = selectedOption === currentQuestion.correct_answer;
+
+    // BLOCK_10: Scoring SERVER_SIDE - Registrar tentativa
+    try {
+      await supabase.from('question_attempts').insert({
+        user_id: user.id,
+        question_id: currentQuestion.id,
+        selected_answer: selectedOption,
+        is_correct: isCorrect,
+        xp_earned: 0, // MODO_TREINO: 0 XP
+      });
+    } catch (err) {
+      console.error('Erro ao registrar tentativa:', err);
+    }
+
+    setAnswers(prev => ({
+      ...prev,
+      [currentQuestion.id]: { answer: selectedOption, isCorrect }
+    }));
+    setShowResult(true);
+    setIsSubmitting(false);
+  };
+
+  const handleNext = () => {
+    if (currentIndex + 1 >= questions.length) {
+      // Sessão completa - BLOCK_11: Atualizar métricas
+      const correct = Object.values(answers).filter(a => a.isCorrect).length + 
+        (selectedOption === currentQuestion?.correct_answer ? 1 : 0);
+      queryClient.invalidateQueries({ queryKey: ['student-question-attempts'] });
+      onComplete({ correct, total: questions.length });
+      return;
+    }
+    setCurrentIndex(prev => prev + 1);
+    setSelectedOption(null);
+    setShowResult(false);
+  };
+
+  if (!currentQuestion || isComplete) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden flex flex-col">
+        <DialogHeader className="pb-3 border-b">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500">
+                <Zap className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-bold">
+                  Rápido Treino
+                </DialogTitle>
+                <DialogDescription>
+                  Questão {currentIndex + 1} de {questions.length}
+                </DialogDescription>
+              </div>
+            </div>
+            <Badge variant="outline" className="text-lg px-4 py-2">
+              {Math.round(progress)}%
+            </Badge>
+          </div>
+          <Progress value={progress} className="h-2 mt-3" />
+        </DialogHeader>
+
+        <ScrollArea className="flex-1 px-1">
+          <div className="space-y-6 py-4">
+            {/* Metadata badges */}
+            <QuestionBadgesCompact question={currentQuestion} />
+
+            {/* Enunciado */}
+            <div className="bg-muted/50 rounded-xl p-4 border">
+              <QuestionEnunciado
+                questionText={currentQuestion.question_text}
+                imageUrl={currentQuestion.image_url}
+                imageUrls={currentQuestion.image_urls}
+                banca={currentQuestion.banca}
+                ano={currentQuestion.ano}
+                textSize="sm"
+              />
+            </div>
+
+            {/* Alternativas */}
+            <RadioGroup
+              value={selectedOption || ""}
+              onValueChange={setSelectedOption}
+              disabled={showResult}
+              className="space-y-2"
+            >
+              {(currentQuestion.options || []).map((option) => {
+                const isSelected = selectedOption === option.id;
+                const isCorrectOption = option.id === currentQuestion.correct_answer;
+                
+                let optionClass = "border-muted-foreground/30 hover:border-primary/50";
+                if (showResult) {
+                  if (isCorrectOption) {
+                    optionClass = "border-green-500 bg-green-500/10";
+                  } else if (isSelected && !isCorrectOption) {
+                    optionClass = "border-red-500 bg-red-500/10";
+                  }
+                } else if (isSelected) {
+                  optionClass = "border-primary bg-primary/10";
+                }
+
+                return (
+                  <div
+                    key={option.id}
+                    className={cn(
+                      "flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all",
+                      optionClass,
+                      showResult && "cursor-not-allowed"
+                    )}
+                    onClick={() => !showResult && setSelectedOption(option.id)}
+                  >
+                    <RadioGroupItem value={option.id} id={`rapid-${option.id}`} />
+                    <Label
+                      htmlFor={`rapid-${option.id}`}
+                      className={cn(
+                        "w-8 h-8 flex items-center justify-center rounded-full border-2 font-bold text-sm",
+                        isSelected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"
+                      )}
+                    >
+                      {option.id.toUpperCase()}
+                    </Label>
+                    <p className="flex-1 text-sm">{option.text}</p>
+                    {showResult && isCorrectOption && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                    {showResult && isSelected && !isCorrectOption && <XCircle className="h-5 w-5 text-red-500" />}
+                  </div>
+                );
+              })}
+            </RadioGroup>
+
+            {/* Resultado */}
+            {showResult && (
+              <div className={cn(
+                "p-4 rounded-xl border-2",
+                selectedOption === currentQuestion.correct_answer
+                  ? "bg-green-500/10 border-green-500"
+                  : "bg-red-500/10 border-red-500"
+              )}>
+                <div className="flex items-center gap-3">
+                  {selectedOption === currentQuestion.correct_answer ? (
+                    <>
+                      <CheckCircle2 className="h-6 w-6 text-green-500" />
+                      <p className="font-bold text-green-600">Correto!</p>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="h-6 w-6 text-red-500" />
+                      <p className="font-bold text-red-600">
+                        Incorreto. Resposta: {currentQuestion.correct_answer.toUpperCase()}
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+
+        <DialogFooter className="pt-4 border-t">
+          {!showResult ? (
+            <Button 
+              onClick={handleSubmitAnswer}
+              disabled={!selectedOption || isSubmitting}
+              className="w-full"
+            >
+              {isSubmitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              Confirmar
+            </Button>
+          ) : (
+            <Button onClick={handleNext} className="w-full">
+              {currentIndex + 1 >= questions.length ? 'Finalizar' : 'Próxima'}
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================
+// COMPONENTE PRINCIPAL - 16 BLOCOS SEMÂNTICOS
 // ============================================
 
 export default function AlunoQuestoes() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
-  // Hook dinâmico de taxonomia - sincronizado com TaxonomyManager
+  // BLOCK_06: Taxonomy compartilhada
   const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
   
   // State
   const [busca, setBusca] = useState("");
   const [dificuldade, setDificuldade] = useState("todas");
   const [banca, setBanca] = useState("todas");
-  const [activeTab, setActiveTab] = useState("todas");
+  const [activeTab, setActiveTab] = useState("todas"); // BLOCK_05: PROGRESS_STATUS
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [questionModalOpen, setQuestionModalOpen] = useState(false);
   
-  // Filtros hierárquicos
+  // BLOCK_06: Filtros hierárquicos (cascata)
   const [filterMacro, setFilterMacro] = useState("todas");
   const [filterMicro, setFilterMicro] = useState("todas");
   const [filterTema, setFilterTema] = useState("todas");
   const [filterSubtema, setFilterSubtema] = useState("todas");
   
-  // Filtros adicionais (ORDEM CANÔNICA: Macro → Micro → Ano → Banca → Dificuldade → Ordenação)
+  // BLOCK_07: Filtros operacionais
   const [anoFilter, setAnoFilter] = useState("todas");
   const [sortOrder, setSortOrder] = useState("newest");
+
+  // BLOCK_09: Rápido Treino state
+  const [rapidoTreinoOpen, setRapidoTreinoOpen] = useState(false);
+  const [rapidoTreinoQuestions, setRapidoTreinoQuestions] = useState<Question[]>([]);
   
-  // QUESTION_DOMAIN: Buscar apenas questões MODO_TREINO
+  // BLOCK_04: REAL-TIME MIRRORING - Mesma query de /gestaofc/questoes
   const { data: questions = [], isLoading: questionsLoading } = useQuery({
     queryKey: ['student-questions', 'MODO_TREINO'],
     queryFn: async () => {
-      // ESCALA 45K (EVIDÊNCIA): o endpoint pode limitar cada request em 1000.
-      // Solução: paginar em lotes via range() e acumular até 45k.
       const BATCH_SIZE = 1000;
       const MAX = 45000;
       let from = 0;
@@ -476,7 +661,7 @@ export default function AlunoQuestoes() {
         const { data, error } = await supabase
           .from('quiz_questions')
           .select('*')
-          .contains('tags', ['MODO_TREINO']) // QUESTION_DOMAIN: Apenas treino
+          .contains('tags', ['MODO_TREINO'])
           .eq('is_active', true)
           .order('created_at', { ascending: false })
           .range(from, to);
@@ -490,22 +675,7 @@ export default function AlunoQuestoes() {
         from += BATCH_SIZE;
       }
 
-      // EVIDÊNCIA: COUNT real do banco para MODO_TREINO (não traz linhas)
-      const { count: dbCount, error: countError } = await supabase
-        .from('quiz_questions')
-        .select('id', { count: 'exact', head: true })
-        .contains('tags', ['MODO_TREINO'])
-        .eq('is_active', true);
-
-      if (countError) throw countError;
-
-      const data = all;
-
-      if (typeof dbCount === 'number' && dbCount !== data.length) {
-        console.warn(`[ESCALA_45K][ALUNO] Divergência: carregado=${data.length} vs banco=${dbCount}`);
-      }
-
-      return (data || []).map(q => ({
+      return all.map(q => ({
         ...q,
         options: Array.isArray(q.options) ? (q.options as unknown as QuestionOption[]) : [],
         difficulty: (q.difficulty || 'medio') as "facil" | "medio" | "dificil",
@@ -513,7 +683,7 @@ export default function AlunoQuestoes() {
     },
   });
 
-  // Buscar tentativas do usuário
+  // BLOCK_11: Buscar tentativas do usuário (métricas)
   const { data: attempts = [] } = useQuery({
     queryKey: ['student-question-attempts', user?.id],
     queryFn: async () => {
@@ -530,7 +700,7 @@ export default function AlunoQuestoes() {
     enabled: !!user?.id,
   });
 
-  // Mutation para responder questão - MODO_TREINO: 0 pontos, não afeta ranking
+  // BLOCK_10: Mutation para responder (SERVER_SIDE scoring)
   const answerMutation = useMutation({
     mutationFn: async ({ questionId, selectedAnswer }: { questionId: string; selectedAnswer: string }) => {
       if (!user?.id) throw new Error("Usuário não autenticado");
@@ -540,10 +710,7 @@ export default function AlunoQuestoes() {
 
       const isCorrect = selectedAnswer === question.correct_answer;
       
-      // QUESTION_DOMAIN: MODO_TREINO sempre 0 XP (não afeta ranking)
-      const isModoTreino = question.tags?.includes('MODO_TREINO');
-      const xpAwarded = isModoTreino ? 0 : (isCorrect ? question.points : 0);
-
+      // BLOCK_10: MODO_TREINO sempre 0 XP (SERVER_SIDE_ONLY)
       const { error } = await supabase
         .from('question_attempts')
         .insert({
@@ -551,40 +718,38 @@ export default function AlunoQuestoes() {
           question_id: questionId,
           selected_answer: selectedAnswer,
           is_correct: isCorrect,
-          xp_earned: xpAwarded,
+          xp_earned: 0,
         });
 
       if (error) throw error;
-      return { isCorrect, points: xpAwarded, isModoTreino };
+      return { isCorrect };
     },
     onSuccess: (result) => {
+      // BLOCK_11: Atualizar métricas imediatamente
       queryClient.invalidateQueries({ queryKey: ['student-question-attempts'] });
       
       if (result.isCorrect) {
-        // MODO_TREINO: Mensagem sem pontos
-        if (result.isModoTreino) {
-          toast.success("Você acertou! 🎯 (Modo Treino - sem pontos)");
-        } else {
-          toast.success(`Você acertou! +${result.points} XP`);
-        }
+        toast.success("Você acertou! 🎯 (Modo Treino)");
       } else {
         toast.error("Resposta incorreta. Continue estudando!");
       }
     },
-    onError: (err) => {
-      console.error('Erro ao responder:', err);
+    onError: () => {
       toast.error('Erro ao registrar resposta');
     },
   });
 
-  // Estatísticas calculadas
+  // BLOCK_04: HEADER_CONTEXT - Estatísticas
   const stats = useMemo(() => {
     const total = questions.length;
-    const resolvidas = attempts.length;
+    const questionsAttempted = new Set(attempts.map(a => a.question_id));
+    const resolvidas = questionsAttempted.size;
     const acertos = attempts.filter(a => a.is_correct).length;
-    const taxaAcerto = resolvidas > 0 ? Math.round((acertos / resolvidas) * 100) : 0;
+    const erros = attempts.filter(a => !a.is_correct).length;
+    const taxaAcerto = resolvidas > 0 ? Math.round((acertos / attempts.length) * 100) : 0;
+    const pendentes = total - resolvidas;
     
-    return { total, resolvidas, acertos, taxaAcerto };
+    return { total, resolvidas, acertos, erros, taxaAcerto, pendentes };
   }, [questions, attempts]);
 
   // Map de tentativas por questão
@@ -594,44 +759,28 @@ export default function AlunoQuestoes() {
     return map;
   }, [attempts]);
 
-  // Anos únicos para filtro (ORDEM CANÔNICA)
+  // Anos únicos para filtro
   const uniqueAnos = useMemo(() => {
     const anos = questions.map(q => q.ano).filter(Boolean) as number[];
     return [...new Set(anos)].sort((a, b) => b - a);
   }, [questions]);
 
-  // Questões filtradas
+  // BLOCK_07: FILTER ENGINE - Questões filtradas
   const filteredQuestions = useMemo(() => {
     let filtered = [...questions];
 
-    // Filtro por aba
+    // BLOCK_05: PROGRESS_STATUS
     if (activeTab === 'resolvidas') {
       filtered = filtered.filter(q => attemptsByQuestion.has(q.id));
     } else if (activeTab === 'pendentes') {
       filtered = filtered.filter(q => !attemptsByQuestion.has(q.id));
     } else if (activeTab === 'acertos') {
-      filtered = filtered.filter(q => {
-        const attempt = attemptsByQuestion.get(q.id);
-        return attempt?.is_correct === true;
-      });
+      filtered = filtered.filter(q => attemptsByQuestion.get(q.id)?.is_correct === true);
     } else if (activeTab === 'erros') {
-      filtered = filtered.filter(q => {
-        const attempt = attemptsByQuestion.get(q.id);
-        return attempt?.is_correct === false;
-      });
+      filtered = filtered.filter(q => attemptsByQuestion.get(q.id)?.is_correct === false);
     }
 
-    // Filtro por dificuldade
-    if (dificuldade !== 'todas') {
-      filtered = filtered.filter(q => q.difficulty === dificuldade);
-    }
-
-    // Filtro por banca
-    if (banca !== 'todas') {
-      filtered = filtered.filter(q => q.banca === banca);
-    }
-
-    // Filtros hierárquicos
+    // BLOCK_06: ACADEMIC_FILTERS (cascata)
     if (filterMacro !== 'todas') {
       filtered = filtered.filter(q => q.macro === filterMacro);
     }
@@ -645,12 +794,18 @@ export default function AlunoQuestoes() {
       filtered = filtered.filter(q => q.subtema === filterSubtema);
     }
 
-    // Filtro por ano (ORDEM CANÔNICA: após Micro, antes de Banca)
+    // BLOCK_07: OPERATIONAL_FILTERS
     if (anoFilter !== 'todas') {
       filtered = filtered.filter(q => q.ano === parseInt(anoFilter));
     }
+    if (banca !== 'todas') {
+      filtered = filtered.filter(q => q.banca === banca);
+    }
+    if (dificuldade !== 'todas') {
+      filtered = filtered.filter(q => q.difficulty === dificuldade);
+    }
 
-    // Filtro por busca
+    // Busca por palavras-chave
     if (busca.trim()) {
       const term = busca.toLowerCase();
       filtered = filtered.filter(q => 
@@ -659,7 +814,7 @@ export default function AlunoQuestoes() {
       );
     }
 
-    // Ordenação (ORDEM CANÔNICA: último filtro)
+    // BLOCK_07: DISPLAY_CONTROLS - Ordenação
     switch (sortOrder) {
       case 'newest':
         filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -670,21 +825,42 @@ export default function AlunoQuestoes() {
       case 'ano_desc':
         filtered.sort((a, b) => (b.ano || 0) - (a.ano || 0));
         break;
-      case 'ano_asc':
-        filtered.sort((a, b) => (a.ano || 0) - (b.ano || 0));
-        break;
       case 'difficulty_asc':
         const diffOrder = { facil: 1, medio: 2, dificil: 3 };
-        filtered.sort((a, b) => (diffOrder[a.difficulty as keyof typeof diffOrder] || 2) - (diffOrder[b.difficulty as keyof typeof diffOrder] || 2));
-        break;
-      case 'difficulty_desc':
-        const diffOrderDesc = { facil: 1, medio: 2, dificil: 3 };
-        filtered.sort((a, b) => (diffOrderDesc[b.difficulty as keyof typeof diffOrderDesc] || 2) - (diffOrderDesc[a.difficulty as keyof typeof diffOrderDesc] || 2));
+        filtered.sort((a, b) => (diffOrder[a.difficulty] || 2) - (diffOrder[b.difficulty] || 2));
         break;
     }
 
     return filtered;
-  }, [questions, activeTab, dificuldade, banca, busca, attemptsByQuestion, filterMacro, filterMicro, filterTema, filterSubtema, anoFilter, sortOrder]);
+  }, [questions, activeTab, filterMacro, filterMicro, filterTema, filterSubtema, anoFilter, banca, dificuldade, busca, sortOrder, attemptsByQuestion]);
+
+  // BLOCK_09: Iniciar RÁPIDO TREINO
+  const handleStartRapidoTreino = useCallback(() => {
+    // Usar dataset filtrado, limitar a 30
+    const eligibleQuestions = filteredQuestions
+      .filter(q => !attemptsByQuestion.has(q.id)) // Preferir pendentes
+      .slice(0, RAPIDO_TREINO_LIMIT);
+
+    if (eligibleQuestions.length === 0) {
+      // Se todas resolvidas, usar qualquer uma
+      const anyQuestions = filteredQuestions.slice(0, RAPIDO_TREINO_LIMIT);
+      if (anyQuestions.length === 0) {
+        toast.error('Nenhuma questão disponível para treino');
+        return;
+      }
+      setRapidoTreinoQuestions(anyQuestions);
+    } else {
+      setRapidoTreinoQuestions(eligibleQuestions);
+    }
+    setRapidoTreinoOpen(true);
+  }, [filteredQuestions, attemptsByQuestion]);
+
+  // BLOCK_11: Callback de completar Rápido Treino
+  const handleRapidoTreinoComplete = useCallback((results: { correct: number; total: number }) => {
+    setRapidoTreinoOpen(false);
+    const percentage = Math.round((results.correct / results.total) * 100);
+    toast.success(`Treino concluído! ${results.correct}/${results.total} (${percentage}%)`);
+  }, []);
 
   // Handlers
   const handleOpenQuestion = (question: Question) => {
@@ -696,9 +872,14 @@ export default function AlunoQuestoes() {
     answerMutation.mutate({ questionId, selectedAnswer });
   };
 
+  // BLOCK_09: Zero State detection
+  const isZeroState = stats.resolvidas === 0 && questions.length > 0;
+
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
-      {/* Header com Stats */}
+      {/* ══════════════════════════════════════════════════════════════
+          BLOCK_04: HEADER_CONTEXT - Orientar o usuário
+      ══════════════════════════════════════════════════════════════ */}
       <div className="grid md:grid-cols-4 gap-4">
         <Card className="md:col-span-2 bg-gradient-to-r from-primary/10 to-purple-500/10 border-primary/20">
           <CardContent className="p-6">
@@ -708,7 +889,9 @@ export default function AlunoQuestoes() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold">Banco de Questões</h1>
-                <p className="text-muted-foreground">+{stats.total} questões comentadas</p>
+                <p className="text-muted-foreground">
+                  {stats.total} questões • Modo Treino (0 XP)
+                </p>
               </div>
             </div>
           </CardContent>
@@ -729,7 +912,7 @@ export default function AlunoQuestoes() {
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-2 rounded-lg bg-amber-500/20">
-              <Target className="w-5 h-5 text-amber-500" />
+              <TrendingUp className="w-5 h-5 text-amber-500" />
             </div>
             <div>
               <p className="text-2xl font-bold">{stats.taxaAcerto}%</p>
@@ -739,36 +922,45 @@ export default function AlunoQuestoes() {
         </Card>
       </div>
 
-      {/* Tabs */}
+      {/* ══════════════════════════════════════════════════════════════
+          BLOCK_05: PROGRESS_STATUS - Estados de progresso
+      ══════════════════════════════════════════════════════════════ */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
           <TabsTrigger value="todas" className="gap-2">
             <BookOpen className="h-4 w-4" />
             <span className="hidden sm:inline">Todas</span>
+            <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">{stats.total}</Badge>
           </TabsTrigger>
           <TabsTrigger value="pendentes" className="gap-2">
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Pendentes</span>
+            <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">{stats.pendentes}</Badge>
           </TabsTrigger>
           <TabsTrigger value="resolvidas" className="gap-2">
             <CheckCircle2 className="h-4 w-4" />
             <span className="hidden sm:inline">Resolvidas</span>
+            <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">{stats.resolvidas}</Badge>
           </TabsTrigger>
           <TabsTrigger value="acertos" className="gap-2 text-green-600">
             <Star className="h-4 w-4" />
-            <span className="hidden sm:inline">Acertos</span>
+            <span className="hidden sm:inline">Corretas</span>
+            <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">{stats.acertos}</Badge>
           </TabsTrigger>
           <TabsTrigger value="erros" className="gap-2 text-red-600">
             <AlertCircle className="h-4 w-4" />
-            <span className="hidden sm:inline">Erros</span>
+            <span className="hidden sm:inline">Erradas</span>
+            <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">{stats.erros}</Badge>
           </TabsTrigger>
         </TabsList>
       </Tabs>
 
-      {/* Filtros Hierárquicos */}
+      {/* ══════════════════════════════════════════════════════════════
+          BLOCK_06 + BLOCK_07: FILTERS (Acadêmicos + Operacionais)
+      ══════════════════════════════════════════════════════════════ */}
       <Card className="border-primary/20">
         <CardContent className="p-4 space-y-4">
-          {/* Linha 1: Filtros MACRO → MICRO → TEMA → SUBTEMA */}
+          {/* BLOCK_06: ACADEMIC_FILTERS - Hierarquia */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs uppercase tracking-wide text-muted-foreground">MACRO</Label>
@@ -858,7 +1050,7 @@ export default function AlunoQuestoes() {
             </div>
           </div>
 
-          {/* Linha 2: ORDEM CANÔNICA - Ano → Banca → Dificuldade → Ordenação */}
+          {/* BLOCK_07: OPERATIONAL_FILTERS + PRIMARY_ACTION */}
           <div className="flex flex-col md:flex-row gap-4 pt-2 border-t border-border/50">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -870,7 +1062,6 @@ export default function AlunoQuestoes() {
               />
             </div>
             
-            {/* 1. Ano */}
             <Select value={anoFilter} onValueChange={setAnoFilter}>
               <SelectTrigger className="w-full md:w-[140px]">
                 <SelectValue placeholder="Ano" />
@@ -883,7 +1074,6 @@ export default function AlunoQuestoes() {
               </SelectContent>
             </Select>
 
-            {/* 2. Banca */}
             <Select value={banca} onValueChange={setBanca}>
               <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Banca" />
@@ -903,7 +1093,6 @@ export default function AlunoQuestoes() {
               </SelectContent>
             </Select>
 
-            {/* 3. Dificuldade */}
             <Select value={dificuldade} onValueChange={setDificuldade}>
               <SelectTrigger className="w-full md:w-[160px]">
                 <SelectValue placeholder="Dificuldade" />
@@ -916,7 +1105,6 @@ export default function AlunoQuestoes() {
               </SelectContent>
             </Select>
 
-            {/* 4. Ordenação */}
             <Select value={sortOrder} onValueChange={setSortOrder}>
               <SelectTrigger className="w-full md:w-[160px]">
                 <SelectValue placeholder="Ordenar" />
@@ -925,21 +1113,55 @@ export default function AlunoQuestoes() {
                 <SelectItem value="newest">📅 Mais recentes</SelectItem>
                 <SelectItem value="oldest">📅 Mais antigas</SelectItem>
                 <SelectItem value="ano_desc">🗓️ Ano ↓</SelectItem>
-                <SelectItem value="ano_asc">🗓️ Ano ↑</SelectItem>
                 <SelectItem value="difficulty_asc">📊 Fácil → Difícil</SelectItem>
-                <SelectItem value="difficulty_desc">📊 Difícil → Fácil</SelectItem>
               </SelectContent>
             </Select>
 
-            <Button variant="default" className="gap-2">
+            {/* BLOCK_08: PRIMARY_ACTION - RÁPIDO TREINO */}
+            <Button 
+              onClick={handleStartRapidoTreino}
+              className="gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold"
+            >
               <Zap className="w-4 h-4" />
-              Treino Rápido
+              Rápido Treino
+              <Badge variant="secondary" className="ml-1 bg-black/20 text-white">
+                {Math.min(filteredQuestions.length, RAPIDO_TREINO_LIMIT)}
+              </Badge>
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Lista de Questões */}
+      {/* ══════════════════════════════════════════════════════════════
+          BLOCK_09: ZERO STATE - Guiar para Rápido Treino
+      ══════════════════════════════════════════════════════════════ */}
+      {isZeroState && (
+        <Card className="border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-yellow-500/10">
+          <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-500">
+              <Zap className="w-10 h-10 text-white" />
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <h3 className="text-xl font-bold mb-2">Comece seu treino agora!</h3>
+              <p className="text-muted-foreground">
+                Você ainda não resolveu nenhuma questão. Use o <strong>Rápido Treino</strong> para praticar {Math.min(filteredQuestions.length, RAPIDO_TREINO_LIMIT)} questões de uma vez!
+              </p>
+            </div>
+            <Button 
+              onClick={handleStartRapidoTreino}
+              size="lg"
+              className="gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold"
+            >
+              <Play className="w-5 h-5" />
+              Iniciar Treino
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════
+          BLOCK_07: RESULT_AREA - Lista de Questões
+      ══════════════════════════════════════════════════════════════ */}
       {questionsLoading ? (
         <div className="flex items-center justify-center p-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -950,90 +1172,82 @@ export default function AlunoQuestoes() {
             <Brain className="h-16 w-16 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-semibold">Nenhuma questão encontrada</h3>
             <p className="text-sm text-muted-foreground">
-              Tente ajustar os filtros ou aguarde novas questões
+              Ajuste os filtros para ver mais questões
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
-          {filteredQuestions.map((questao, index) => {
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Mostrando <strong>{filteredQuestions.length}</strong> questões
+            </p>
+          </div>
+
+          {filteredQuestions.slice(0, 100).map((questao) => {
             const attempt = attemptsByQuestion.get(questao.id);
             const hasAttempt = !!attempt;
             const isCorrect = attempt?.is_correct;
 
             return (
-              <motion.div
+              <Card 
                 key={questao.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.03 }}
-              >
-                <Card className={cn(
+                className={cn(
                   "transition-all hover:shadow-md cursor-pointer",
                   hasAttempt && isCorrect && "border-l-4 border-l-green-500",
                   hasAttempt && !isCorrect && "border-l-4 border-l-red-500"
                 )}
                 onClick={() => handleOpenQuestion(questao)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex flex-col gap-3">
-                      {/* ══════════════════════════════════════════════════════════════
-                          BARRA DE METADADOS COMPLETA — CONSTITUIÇÃO TRANSVERSAL v2.0
-                          Exibe: Dificuldade | Banca+Ano | Tipo | MACRO | MICRO | TEMA
-                      ══════════════════════════════════════════════════════════════ */}
-                      <QuestionBadgesCompact 
-                        question={questao}
-                        className="pb-2 border-b border-border/30"
-                      />
-                      
-                      {/* Conteúdo: Enunciado + Status + Ação */}
-                      <div className="flex items-start gap-4">
-                        <div className="flex-1">
-                          <div className="flex flex-wrap items-center gap-2 mb-2">
-                            {/* Pontuação */}
-                            <Badge variant="outline" className="gap-1">
-                              <Trophy className="h-3 w-3" />
-                              {questao.points} pts
+              >
+                <CardContent className="p-4">
+                  <div className="flex flex-col gap-3">
+                    <QuestionBadgesCompact 
+                      question={questao}
+                      className="pb-2 border-b border-border/30"
+                    />
+                    
+                    <div className="flex items-start gap-4">
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <Badge variant="outline" className="gap-1">
+                            <Trophy className="h-3 w-3" />
+                            {questao.points} pts
+                          </Badge>
+                          {hasAttempt && (
+                            <Badge variant={isCorrect ? "default" : "destructive"}>
+                              {isCorrect ? (
+                                <><CheckCircle2 className="w-3 h-3 mr-1" /> Acertou</>
+                              ) : (
+                                <><XCircle className="w-3 h-3 mr-1" /> Errou</>
+                              )}
                             </Badge>
-                            {/* Status de tentativa */}
-                            {hasAttempt && (
-                              <Badge variant={isCorrect ? "default" : "destructive"}>
-                                {isCorrect ? (
-                                  <><CheckCircle2 className="w-3 h-3 mr-1" /> Acertou</>
-                                ) : (
-                                  <><XCircle className="w-3 h-3 mr-1" /> Errou</>
-                                )}
-                              </Badge>
-                            )}
-                            {/* Badge de Modo (Treino/Simulado) */}
-                            {questao.tags?.includes('MODO_TREINO') && (
-                              <Badge className="px-2 py-0.5 bg-purple-600 text-white border-0 text-xs font-medium">
-                                💪 Treino
-                              </Badge>
-                            )}
-                            {questao.tags?.includes('SIMULADOS') && (
-                              <Badge className="px-2 py-0.5 bg-red-600 text-white border-0 text-xs font-medium">
-                                🎯 Simulado
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm line-clamp-2">{cleanQuestionText(questao.question_text)}</p>
+                          )}
+                          <Badge className="px-2 py-0.5 bg-purple-600 text-white border-0 text-xs font-medium">
+                            💪 Treino
+                          </Badge>
                         </div>
-                        <Button variant={hasAttempt ? "outline" : "default"} size="sm">
-                          {hasAttempt ? "Revisar" : "Resolver"}
-                          <ChevronRight className="w-4 h-4 ml-2" />
-                        </Button>
+                        <p className="text-sm line-clamp-2">{cleanQuestionText(questao.question_text)}</p>
                       </div>
+                      <Button variant={hasAttempt ? "outline" : "default"} size="sm">
+                        {hasAttempt ? "Revisar" : "Resolver"}
+                        <ChevronRight className="w-4 h-4 ml-2" />
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+                  </div>
+                </CardContent>
+              </Card>
             );
           })}
+
+          {filteredQuestions.length > 100 && (
+            <p className="text-center text-sm text-muted-foreground py-4">
+              Mostrando 100 de {filteredQuestions.length} questões. Use os filtros para refinar.
+            </p>
+          )}
         </div>
       )}
 
-      {/* Modal de Resolução */}
+      {/* Modal de Resolução Individual */}
       <QuestionModal
         open={questionModalOpen}
         onClose={() => setQuestionModalOpen(false)}
@@ -1041,6 +1255,14 @@ export default function AlunoQuestoes() {
         userAttempt={selectedQuestion ? attemptsByQuestion.get(selectedQuestion.id) || null : null}
         onAnswer={handleAnswerQuestion}
         isSubmitting={answerMutation.isPending}
+      />
+
+      {/* BLOCK_09: Modal RÁPIDO TREINO */}
+      <RapidoTreinoModal
+        open={rapidoTreinoOpen}
+        onClose={() => setRapidoTreinoOpen(false)}
+        questions={rapidoTreinoQuestions}
+        onComplete={handleRapidoTreinoComplete}
       />
     </div>
   );
