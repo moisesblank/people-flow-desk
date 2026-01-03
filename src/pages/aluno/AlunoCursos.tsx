@@ -1,10 +1,10 @@
 // ============================================
-// 📚 CURSOS DO ALUNO - Espelho Read-Only
+// 📚 CURSOS DO ALUNO - Year 2300 Cinematic Experience
 // CONSTITUTIONAL: Student Courses Canonical Mirror v1.0
+// 🚀 PERFORMANCE: CSS-only animations, GPU-accelerated
 // ============================================
 
-import { memo, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { memo, useState, useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -16,7 +16,10 @@ import {
   Video,
   GraduationCap,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  Layers,
+  Zap,
+  Target
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +27,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { CyberBackground } from '@/components/ui/cyber-background';
+import { FuturisticPageHeader } from '@/components/ui/futuristic-page-header';
 
 // ============================================
 // TYPES - Reusing canonical LMS types
@@ -76,7 +81,7 @@ function usePublishedCourses() {
       if (error) throw error;
       return data as Course[];
     },
-    staleTime: 5 * 60 * 1000 // 5 min
+    staleTime: 5 * 60 * 1000
   });
 }
 
@@ -119,151 +124,230 @@ function usePublishedLessons(moduleId: string | null) {
 }
 
 // ============================================
-// COMPONENTS
+// 🎬 CINEMATIC COURSE CARD - Year 2300
 // ============================================
 
 const CourseCard = memo(function CourseCard({ 
   course, 
   onSelect, 
-  isSelected 
+  isSelected,
+  index 
 }: { 
   course: Course; 
   onSelect: () => void;
   isSelected: boolean;
+  index: number;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+    <div
+      className="group animate-fade-in"
+      style={{ animationDelay: `${index * 100}ms` }}
     >
       <Card 
+        variant="2300-neon"
         className={cn(
-          "cursor-pointer overflow-hidden transition-all duration-300",
-          "border-2 hover:border-primary/50",
+          "cursor-pointer overflow-hidden transition-all duration-500",
+          "hover:scale-[1.02] hover:-translate-y-2",
+          "border-2 hover:border-primary/60",
+          "shadow-[0_0_30px_hsl(var(--primary)/0.1)]",
+          "hover:shadow-[0_0_60px_hsl(var(--primary)/0.25),0_20px_40px_hsl(var(--background)/0.5)]",
           isSelected && "border-primary ring-2 ring-primary/30"
         )}
         onClick={onSelect}
       >
-        <div className="relative aspect-video bg-gradient-to-br from-primary/20 to-primary/5">
+        {/* 🎬 Thumbnail Area with Holographic Overlay */}
+        <div className="relative aspect-video overflow-hidden">
+          {/* Background Gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-holo-purple/20 to-holo-cyan/30" />
+          
+          {/* Holographic Grid */}
+          <div 
+            className="absolute inset-0 opacity-20"
+            style={{
+              backgroundImage: `
+                linear-gradient(hsl(var(--holo-cyan)) 1px, transparent 1px),
+                linear-gradient(90deg, hsl(var(--holo-cyan)) 1px, transparent 1px)
+              `,
+              backgroundSize: '20px 20px',
+            }}
+          />
+          
           {course.thumbnail_url ? (
             <img 
               src={course.thumbnail_url} 
               alt={course.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              loading="lazy"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
-              <GraduationCap className="w-16 h-16 text-primary/40" />
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full animate-pulse" />
+                <GraduationCap className="relative w-20 h-20 text-primary/60" />
+              </div>
             </div>
           )}
-          <div className="absolute top-3 right-3">
-            <Badge className="bg-primary/90">
-              <Sparkles className="w-3 h-3 mr-1" />
+          
+          {/* Scanline Effect */}
+          <div className="absolute inset-0 pointer-events-none opacity-30 scanline-effect" />
+          
+          {/* Top Badge */}
+          <div className="absolute top-3 right-3 z-10">
+            <Badge className="bg-primary/90 backdrop-blur-sm border border-primary-foreground/20 shadow-lg">
+              <Sparkles className="w-3 h-3 mr-1 animate-pulse" />
               Curso
             </Badge>
           </div>
+          
+          {/* Bottom Gradient Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-card via-card/80 to-transparent" />
         </div>
-        <CardContent className="p-4">
-          <h3 className="font-bold text-lg line-clamp-2 text-foreground">
+        
+        <CardContent className="p-5 relative">
+          {/* Energy Line Top */}
+          <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+          
+          <h3 className="font-bold text-lg line-clamp-2 text-foreground group-hover:text-primary transition-colors">
             {course.title}
           </h3>
+          
           {course.description && (
             <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
               {course.description}
             </p>
           )}
-          <div className="flex items-center justify-between mt-4">
-            <span className="text-xs text-muted-foreground">
-              Clique para ver módulos
+          
+          <div className="flex items-center justify-between mt-4 pt-3 border-t border-border/30">
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-primary" />
+              Ver módulos
             </span>
-            <ChevronRight className="w-4 h-4 text-primary" />
+            <div className="flex items-center gap-1 text-primary">
+              <span className="text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                Acessar
+              </span>
+              <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+            </div>
           </div>
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 });
+
+// ============================================
+// 🎴 HOLOGRAPHIC MODULE CARD - Year 2300
+// ============================================
 
 const ModuleCard = memo(function ModuleCard({ 
   module, 
   onSelect,
   isSelected,
-  lessonCount 
+  lessonCount,
+  index 
 }: { 
   module: Module; 
   onSelect: () => void;
   isSelected: boolean;
   lessonCount?: number;
+  index: number;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      whileHover={{ scale: 1.01 }}
+    <div
+      className="animate-fade-in"
+      style={{ animationDelay: `${index * 80}ms` }}
     >
       <Card 
+        variant="2300-glass"
         className={cn(
-          "cursor-pointer overflow-hidden transition-all duration-300",
+          "group cursor-pointer overflow-hidden transition-all duration-300",
+          "hover:scale-[1.01] hover:-translate-x-1",
           "border hover:border-primary/50",
-          isSelected && "border-primary bg-primary/5"
+          "hover:shadow-[0_0_30px_hsl(var(--primary)/0.15)]",
+          isSelected && "border-primary bg-primary/10 shadow-[0_0_40px_hsl(var(--primary)/0.2)]"
         )}
         onClick={onSelect}
       >
         <div className="flex">
           {/* Module Image - 752x940 aspect ratio maintained */}
           <div 
-            className="w-24 h-32 flex-shrink-0 bg-gradient-to-br from-secondary/30 to-secondary/10 overflow-hidden"
+            className="w-28 h-36 flex-shrink-0 relative overflow-hidden"
             style={{ aspectRatio: '752/940' }}
           >
+            {/* Holographic Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-holo-cyan/20 via-holo-purple/10 to-primary/20" />
+            
             {module.thumbnail_url ? (
               <img 
                 src={module.thumbnail_url} 
                 alt={module.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <BookOpen className="w-8 h-8 text-muted-foreground/40" />
+              <div className="w-full h-full flex items-center justify-center bg-secondary/50">
+                <BookOpen className="w-10 h-10 text-muted-foreground/40" />
               </div>
             )}
+            
+            {/* Module Number Badge */}
+            <div className="absolute top-2 left-2">
+              <div className="w-7 h-7 rounded-lg bg-primary/90 backdrop-blur-sm flex items-center justify-center border border-primary-foreground/20 shadow-lg">
+                <span className="text-xs font-bold text-primary-foreground">{module.position}</span>
+              </div>
+            </div>
           </div>
           
           {/* Module Info */}
           <div className="flex-1 p-4 flex flex-col justify-center">
-            <div className="flex items-start justify-between">
-              <div>
-                <Badge variant="outline" className="mb-2 text-xs">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <Badge variant="outline" className="mb-2 text-[10px] border-primary/30 text-primary">
+                  <Target className="w-2.5 h-2.5 mr-1" />
                   Módulo {module.position}
                 </Badge>
-                <h4 className="font-semibold text-foreground line-clamp-2">
+                <h4 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
                   {module.title}
                 </h4>
               </div>
-              {isSelected ? (
-                <ChevronDown className="w-5 h-5 text-primary flex-shrink-0" />
-              ) : (
-                <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-              )}
+              <div className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300",
+                isSelected 
+                  ? "bg-primary text-primary-foreground rotate-90" 
+                  : "bg-secondary/50 text-muted-foreground group-hover:bg-primary/20 group-hover:text-primary"
+              )}>
+                {isSelected ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </div>
             </div>
+            
             {module.description && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+              <p className="text-xs text-muted-foreground mt-1.5 line-clamp-1">
                 {module.description}
               </p>
             )}
+            
             {lessonCount !== undefined && (
-              <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                <Video className="w-3 h-3" />
-                <span>{lessonCount} aula{lessonCount !== 1 ? 's' : ''}</span>
+              <div className="flex items-center gap-2 mt-3">
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/30 px-2 py-1 rounded-md">
+                  <Video className="w-3 h-3 text-primary" />
+                  <span>{lessonCount} aula{lessonCount !== 1 ? 's' : ''}</span>
+                </div>
               </div>
             )}
           </div>
         </div>
       </Card>
-    </motion.div>
+    </div>
   );
 });
+
+// ============================================
+// ⚡ NEON LESSON ITEM - Year 2300
+// ============================================
 
 const LessonItem = memo(function LessonItem({ 
   lesson, 
@@ -283,56 +367,78 @@ const LessonItem = memo(function LessonItem({
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
+    <div
+      className="animate-fade-in"
+      style={{ animationDelay: `${index * 50}ms` }}
     >
       <div 
         className={cn(
-          "group flex items-center gap-4 p-4 rounded-lg",
-          "bg-card/50 hover:bg-card border border-border/50 hover:border-primary/30",
-          "transition-all duration-200 cursor-pointer"
+          "group flex items-center gap-4 p-4 rounded-xl",
+          "bg-card/60 backdrop-blur-sm",
+          "border border-border/40 hover:border-primary/40",
+          "hover:bg-primary/5",
+          "shadow-sm hover:shadow-[0_0_20px_hsl(var(--primary)/0.1)]",
+          "transition-all duration-300 cursor-pointer"
         )}
         onClick={onPlay}
       >
-        {/* Play Button */}
-        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-          <Play className="w-4 h-4 text-primary fill-primary" />
+        {/* Play Button - Neon Glow */}
+        <div className={cn(
+          "relative w-12 h-12 rounded-xl flex items-center justify-center",
+          "bg-gradient-to-br from-primary/20 to-primary/10",
+          "border border-primary/30",
+          "group-hover:from-primary/30 group-hover:to-primary/20",
+          "group-hover:shadow-[0_0_20px_hsl(var(--primary)/0.3)]",
+          "transition-all duration-300"
+        )}>
+          <div className="absolute inset-0 rounded-xl bg-primary/20 blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Play className="relative w-5 h-5 text-primary fill-primary/50 group-hover:fill-primary transition-all" />
         </div>
         
         {/* Lesson Info */}
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-foreground group-hover:text-primary transition-colors truncate">
-            {lesson.title}
-          </p>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono text-primary/60 bg-primary/10 px-1.5 py-0.5 rounded">
+              #{String(index + 1).padStart(2, '0')}
+            </span>
+            <p className="font-medium text-foreground group-hover:text-primary transition-colors truncate">
+              {lesson.title}
+            </p>
+          </div>
           {lesson.description && (
-            <p className="text-xs text-muted-foreground mt-0.5 truncate">
+            <p className="text-xs text-muted-foreground mt-1 truncate">
               {lesson.description}
             </p>
           )}
         </div>
         
-        {/* Duration */}
-        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Clock className="w-3 h-3" />
-          <span>{formatDuration(lesson.duration_minutes)}</span>
+        {/* Duration Badge */}
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-secondary/30 px-3 py-1.5 rounded-lg">
+          <Clock className="w-3.5 h-3.5 text-primary" />
+          <span className="font-mono">{formatDuration(lesson.duration_minutes)}</span>
         </div>
+        
+        {/* Hover Arrow */}
+        <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
       </div>
-    </motion.div>
+    </div>
   );
 });
+
+// ============================================
+// 💀 SKELETON LOADER - Year 2300
+// ============================================
 
 const LoadingSkeleton = memo(function LoadingSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {[1, 2, 3].map(i => (
-        <Card key={i} className="overflow-hidden">
-          <Skeleton className="aspect-video w-full" />
-          <CardContent className="p-4 space-y-3">
-            <Skeleton className="h-6 w-3/4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-2/3" />
+        <Card key={i} variant="2300-glass" className="overflow-hidden">
+          <Skeleton className="aspect-video w-full bg-secondary/30" />
+          <CardContent className="p-5 space-y-3">
+            <Skeleton className="h-6 w-3/4 bg-secondary/30" />
+            <Skeleton className="h-4 w-full bg-secondary/20" />
+            <Skeleton className="h-4 w-2/3 bg-secondary/20" />
           </CardContent>
         </Card>
       ))}
@@ -341,7 +447,7 @@ const LoadingSkeleton = memo(function LoadingSkeleton() {
 });
 
 // ============================================
-// MAIN COMPONENT
+// 🏛️ MAIN COMPONENT - Year 2300 Experience
 // ============================================
 
 const AlunoCursos = memo(function AlunoCursos() {
@@ -370,260 +476,214 @@ const AlunoCursos = memo(function AlunoCursos() {
   }, [selectedCourse, selectedModule]);
 
   const handlePlayLesson = useCallback((lesson: Lesson) => {
-    // Navigate to video player or open modal
-    // TODO: Integrate with existing video player
     console.log('Play lesson:', lesson);
   }, []);
 
+  // Stats for header
+  const stats = useMemo(() => {
+    if (selectedCourse) {
+      return [
+        { label: 'Módulos', value: modules?.length || 0, icon: Layers },
+        { label: 'Aulas', value: lessons?.length || 0, icon: Video },
+      ];
+    }
+    return [
+      { label: 'Cursos', value: courses?.length || 0, icon: GraduationCap },
+    ];
+  }, [courses, modules, lessons, selectedCourse]);
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
-        {/* Header */}
-        <header className="mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-4"
+    <div className="relative min-h-screen">
+      {/* 🌌 Cinematic Background */}
+      <CyberBackground variant="grid" intensity="medium" />
+      
+      <div className="relative z-10 p-4 md:p-6 lg:p-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          
+          {/* 🎬 Futuristic Header */}
+          <FuturisticPageHeader
+            title={selectedCourse ? selectedCourse.title : 'Meus Cursos'}
+            subtitle={
+              selectedModule 
+                ? selectedModule.title
+                : selectedCourse 
+                  ? `${modules?.length || 0} módulos disponíveis`
+                  : 'Sua biblioteca de cursos premium'
+            }
+            icon={GraduationCap}
+            accentColor="primary"
+            showBackButton={!!(selectedCourse || selectedModule)}
+            backPath="#"
+            stats={stats}
           >
+            {/* Custom back button */}
             {(selectedCourse || selectedModule) && (
               <Button
-                variant="ghost"
-                size="icon"
+                variant="outline"
+                size="sm"
                 onClick={handleBack}
-                className="shrink-0"
+                className="border-primary/30 hover:bg-primary/10 hover:border-primary/50"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Voltar
               </Button>
             )}
-            
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary/30 blur-xl rounded-full" />
-                <div className="relative p-3 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/30">
-                  <GraduationCap className="w-8 h-8 text-primary" />
-                </div>
-              </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent flex items-center gap-2">
-                  {selectedCourse ? selectedCourse.title : 'Meus Cursos'}
-                  <Sparkles className="w-5 h-5 text-primary animate-pulse" />
-                </h1>
-                <p className="text-muted-foreground text-sm">
-                  {selectedModule 
-                    ? selectedModule.title
-                    : selectedCourse 
-                      ? `${modules?.length || 0} módulos disponíveis`
-                      : 'Sua biblioteca de cursos'
-                  }
-                </p>
-              </div>
-            </div>
-          </motion.div>
+          </FuturisticPageHeader>
 
-          {/* Breadcrumb */}
+          {/* 🧭 Breadcrumb */}
           {selectedCourse && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex items-center gap-2 mt-4 text-sm text-muted-foreground"
-            >
-              <span 
-                className="hover:text-primary cursor-pointer transition-colors"
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-card/50 backdrop-blur-sm px-4 py-2 rounded-lg border border-border/30 animate-fade-in">
+              <button 
+                className="hover:text-primary cursor-pointer transition-colors flex items-center gap-1"
                 onClick={() => { setSelectedCourse(null); setSelectedModule(null); }}
               >
+                <GraduationCap className="w-3.5 h-3.5" />
                 Cursos
-              </span>
-              <ChevronRight className="w-4 h-4" />
-              <span 
+              </button>
+              <ChevronRight className="w-4 h-4 text-primary/50" />
+              <button 
                 className={cn(
                   selectedModule ? "hover:text-primary cursor-pointer transition-colors" : "text-foreground font-medium"
                 )}
                 onClick={() => selectedModule && setSelectedModule(null)}
               >
                 {selectedCourse.title}
-              </span>
+              </button>
               {selectedModule && (
                 <>
-                  <ChevronRight className="w-4 h-4" />
-                  <span className="text-foreground font-medium">
+                  <ChevronRight className="w-4 h-4 text-primary/50" />
+                  <span className="text-foreground font-medium flex items-center gap-1">
+                    <Zap className="w-3.5 h-3.5 text-primary" />
                     {selectedModule.title}
                   </span>
                 </>
               )}
-            </motion.div>
-          )}
-        </header>
-
-        {/* Content */}
-        <AnimatePresence mode="wait">
-          {/* Course List */}
-          {!selectedCourse && (
-            <motion.div
-              key="courses"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              {loadingCourses ? (
-                <LoadingSkeleton />
-              ) : courses && courses.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {courses.map(course => (
-                    <CourseCard
-                      key={course.id}
-                      course={course}
-                      onSelect={() => handleSelectCourse(course)}
-                      isSelected={false}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <Card className="p-12 text-center">
-                  <GraduationCap className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground">Nenhum curso disponível</h3>
-                  <p className="text-muted-foreground mt-2">
-                    Os cursos aparecerão aqui quando forem publicados.
-                  </p>
-                </Card>
-              )}
-            </motion.div>
+            </div>
           )}
 
-          {/* Module List */}
-          {selectedCourse && !selectedModule && (
-            <motion.div
-              key="modules"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              {loadingModules ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map(i => (
-                    <Card key={i} className="p-4">
-                      <div className="flex gap-4">
-                        <Skeleton className="w-24 h-32" />
-                        <div className="flex-1 space-y-3">
-                          <Skeleton className="h-4 w-24" />
-                          <Skeleton className="h-6 w-3/4" />
-                          <Skeleton className="h-4 w-1/2" />
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : modules && modules.length > 0 ? (
-                <div className="space-y-4">
-                  {modules.map(module => (
-                    <ModuleCard
-                      key={module.id}
-                      module={module}
-                      onSelect={() => handleSelectModule(module)}
-                      isSelected={selectedModule?.id === module.id}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <Card className="p-12 text-center">
-                  <BookOpen className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground">Nenhum módulo disponível</h3>
-                  <p className="text-muted-foreground mt-2">
-                    Os módulos deste curso ainda não foram publicados.
-                  </p>
-                </Card>
-              )}
-            </motion.div>
-          )}
-
-          {/* Lesson List */}
-          {selectedModule && (
-            <motion.div
-              key="lessons"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              {/* Module Header with Image */}
-              <Card className="mb-6 overflow-hidden">
-                <div className="flex flex-col md:flex-row">
-                  {selectedModule.thumbnail_url && (
-                    <div 
-                      className="w-full md:w-48 h-60 flex-shrink-0 bg-gradient-to-br from-secondary/30 to-secondary/10"
-                      style={{ aspectRatio: '752/940' }}
-                    >
-                      <img 
-                        src={selectedModule.thumbnail_url} 
-                        alt={selectedModule.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="p-6 flex-1">
-                    <Badge className="mb-3">Módulo {selectedModule.position}</Badge>
-                    <h2 className="text-xl font-bold text-foreground mb-2">
-                      {selectedModule.title}
-                    </h2>
-                    {selectedModule.description && (
-                      <p className="text-muted-foreground">
-                        {selectedModule.description}
-                      </p>
-                    )}
-                    <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Video className="w-4 h-4" />
-                        <span>{lessons?.length || 0} aulas</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Lessons */}
-              {loadingLessons ? (
-                <div className="space-y-3">
-                  {[1, 2, 3, 4].map(i => (
-                    <Card key={i} className="p-4">
-                      <div className="flex items-center gap-4">
-                        <Skeleton className="w-10 h-10 rounded-full" />
-                        <div className="flex-1 space-y-2">
-                          <Skeleton className="h-5 w-3/4" />
-                          <Skeleton className="h-4 w-1/2" />
-                        </div>
-                        <Skeleton className="h-4 w-16" />
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : lessons && lessons.length > 0 ? (
-                <ScrollArea className="h-[calc(100vh-400px)]">
-                  <div className="space-y-3 pr-4">
-                    {lessons.map((lesson, index) => (
-                      <LessonItem
-                        key={lesson.id}
-                        lesson={lesson}
+          {/* 📚 Content Area */}
+          <div className="min-h-[400px]">
+            
+            {/* Course Grid */}
+            {!selectedCourse && (
+              <>
+                {loadingCourses ? (
+                  <LoadingSkeleton />
+                ) : courses && courses.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {courses.map((course, index) => (
+                      <CourseCard
+                        key={course.id}
+                        course={course}
+                        onSelect={() => handleSelectCourse(course)}
+                        isSelected={false}
                         index={index}
-                        onPlay={() => handlePlayLesson(lesson)}
                       />
                     ))}
                   </div>
-                </ScrollArea>
-              ) : (
-                <Card className="p-12 text-center">
-                  <Video className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
-                  <h3 className="text-lg font-semibold text-foreground">Nenhuma aula disponível</h3>
-                  <p className="text-muted-foreground mt-2">
-                    As aulas deste módulo ainda não foram publicadas.
-                  </p>
-                </Card>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+                ) : (
+                  <Card variant="2300-glass" className="p-12 text-center">
+                    <div className="relative inline-block mb-4">
+                      <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
+                      <GraduationCap className="relative w-20 h-20 mx-auto text-muted-foreground/40" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground">Nenhum curso disponível</h3>
+                    <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+                      Os cursos aparecerão aqui quando forem publicados pela equipe.
+                    </p>
+                  </Card>
+                )}
+              </>
+            )}
+
+            {/* Module List */}
+            {selectedCourse && !selectedModule && (
+              <div className="space-y-4">
+                {loadingModules ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map(i => (
+                      <Card key={i} variant="2300-glass" className="h-36">
+                        <div className="flex h-full">
+                          <Skeleton className="w-28 h-full bg-secondary/30" />
+                          <div className="flex-1 p-4 space-y-3">
+                            <Skeleton className="h-5 w-20 bg-secondary/30" />
+                            <Skeleton className="h-6 w-3/4 bg-secondary/30" />
+                            <Skeleton className="h-4 w-1/2 bg-secondary/20" />
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : modules && modules.length > 0 ? (
+                  <div className="space-y-4">
+                    {modules.map((module, index) => (
+                      <ModuleCard
+                        key={module.id}
+                        module={module}
+                        onSelect={() => handleSelectModule(module)}
+                        isSelected={selectedModule?.id === module.id}
+                        lessonCount={0}
+                        index={index}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <Card variant="2300-glass" className="p-12 text-center">
+                    <BookOpen className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground">Nenhum módulo disponível</h3>
+                    <p className="text-muted-foreground mt-2">
+                      Este curso ainda não possui módulos publicados.
+                    </p>
+                  </Card>
+                )}
+              </div>
+            )}
+
+            {/* Lesson List */}
+            {selectedModule && (
+              <div className="space-y-3">
+                {loadingLessons ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="flex items-center gap-4 p-4 rounded-xl bg-card/60 border border-border/40">
+                        <Skeleton className="w-12 h-12 rounded-xl bg-secondary/30" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-5 w-3/4 bg-secondary/30" />
+                          <Skeleton className="h-4 w-1/2 bg-secondary/20" />
+                        </div>
+                        <Skeleton className="w-20 h-8 rounded-lg bg-secondary/20" />
+                      </div>
+                    ))}
+                  </div>
+                ) : lessons && lessons.length > 0 ? (
+                  <ScrollArea className="h-[calc(100vh-400px)] pr-4">
+                    <div className="space-y-3">
+                      {lessons.map((lesson, index) => (
+                        <LessonItem
+                          key={lesson.id}
+                          lesson={lesson}
+                          index={index}
+                          onPlay={() => handlePlayLesson(lesson)}
+                        />
+                      ))}
+                    </div>
+                  </ScrollArea>
+                ) : (
+                  <Card variant="2300-glass" className="p-12 text-center">
+                    <Video className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground">Nenhuma aula disponível</h3>
+                    <p className="text-muted-foreground mt-2">
+                      Este módulo ainda não possui aulas publicadas.
+                    </p>
+                  </Card>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 });
-
-AlunoCursos.displayName = 'AlunoCursos';
 
 export default AlunoCursos;

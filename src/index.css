@@ -2604,3 +2604,71 @@
   transform: translateZ(0);
   will-change: scroll-position;
 }
+
+/* ============================================
+   🎬 SCANLINE EFFECT - Year 2300 Cinematic
+   GPU-accelerated for maximum performance
+   ============================================ */
+.scanline-effect {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 50%,
+    hsl(var(--holo-cyan) / 0.03) 50%,
+    hsl(var(--holo-cyan) / 0.03) 100%
+  );
+  background-size: 100% 4px;
+  animation: scanline-move 8s linear infinite;
+  pointer-events: none;
+}
+
+.scanline-effect::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    hsl(var(--primary) / 0.05) 50%,
+    transparent 100%
+  );
+  animation: scanline-sweep 4s ease-in-out infinite;
+}
+
+@keyframes scanline-move {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100px; }
+}
+
+@keyframes scanline-sweep {
+  0%, 100% { transform: translateY(-100%); opacity: 0; }
+  50% { transform: translateY(100%); opacity: 1; }
+}
+
+/* ============================================
+   🚀 COURSE CARDS 2300 - Premium Enhancements
+   ============================================ */
+.course-card-glow {
+  position: relative;
+}
+
+.course-card-glow::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.4) 0%,
+    hsl(var(--holo-cyan) / 0.2) 50%,
+    hsl(var(--primary) / 0.4) 100%
+  );
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  filter: blur(8px);
+  transition: opacity 0.5s ease;
+}
+
+.course-card-glow:hover::before {
+  opacity: 1;
+}
