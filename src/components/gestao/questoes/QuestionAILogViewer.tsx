@@ -53,6 +53,7 @@ import {
   mapInterventionToActionType,
   getActionTypeDescription,
   extractEnunciadoSnippet,
+  isValidAILog,
 } from '@/lib/audits/AUDIT_AI_LOG_POLICY_v2';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -96,14 +97,21 @@ interface LogEntryProps {
 }
 
 const LogEntry = memo(({ log, index, enunciadoSnippet }: LogEntryProps) => {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // POLÍTICA v2.1: Logs sem valor real no AFTER são INVÁLIDOS e não renderizam
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (!isValidAILog(log.value_after)) {
+    return null; // Log inválido - não exibir
+  }
+
   const date = new Date(log.created_at);
   const confidencePercent = log.ai_confidence_score !== null 
     ? Math.round(log.ai_confidence_score * 100) 
     : null;
 
-  // POLÍTICA v2.0: BEFORE/AFTER NUNCA VAZIOS
+  // POLÍTICA v2.0: BEFORE/AFTER
   const normalizedBefore = normalizeBeforeValue(log.value_before);
-  const normalizedAfter = normalizeAfterValue(log.value_after);
+  const normalizedAfter = normalizeAfterValue(log.value_after) || log.value_after;
   
   // POLÍTICA v2.0: Mapear tipo de intervenção para categoria humana
   const actionType = mapInterventionToActionType(log.intervention_type);
