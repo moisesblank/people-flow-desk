@@ -700,7 +700,22 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   type QuestionStyle = 'multiple_choice' | 'discursive' | 'outros' | '';
   const [selectedStyle, setSelectedStyle] = useState<QuestionStyle>('');
   
+  // MACRO/MICRO OBRIGATÓRIOS: Pré-seleção antes de processar
+  const [selectedMacro, setSelectedMacro] = useState<string>('');
+  const [selectedMicro, setSelectedMicro] = useState<string>('');
+  
   const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
+  
+  // Micros filtrados pelo macro selecionado
+  const filteredMicros = useMemo(() => {
+    if (!selectedMacro) return [];
+    return getMicrosForSelect(selectedMacro);
+  }, [selectedMacro, getMicrosForSelect]);
+  
+  // Reset micro quando macro muda
+  useEffect(() => {
+    setSelectedMicro('');
+  }, [selectedMacro]);
   
   // Hook para registrar intervenções de IA
   const { logInterventions } = useLogQuestionAIIntervention();
@@ -1661,15 +1676,17 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         
         const camposInferidos = [...(q.campos_inferidos || [])];
         
-        // Aplicar fallbacks finais para garantir completude
-        const macro = q.macro || 'Química Geral';
-        if (!q.macro) camposInferidos.push('macro:fallback_final');
+        // ═══════════════════════════════════════════════════════════════════
+        // PRÉ-SELEÇÃO OBRIGATÓRIA: MACRO e MICRO selecionados no diálogo
+        // Esses valores têm PRIORIDADE ABSOLUTA sobre quaisquer outros
+        // ═══════════════════════════════════════════════════════════════════
+        const macro = selectedMacro || q.macro || 'Química Geral';
+        if (!q.macro && !selectedMacro) camposInferidos.push('macro:fallback_final');
+        if (selectedMacro && selectedMacro !== q.macro) camposInferidos.push('macro:pre_selected');
         
-        // CORREÇÃO v10.0.1: Fallbacks vazios para permitir inferência pela IA
-        // Valores genéricos ("Conceitos Gerais", "Fundamentos", "Básico") NÃO existem na taxonomia canônica
-        // Deixar vazio permite que a Edge Function 'infer-question-taxonomy' preencha corretamente
-        const micro = q.micro || '';
-        if (!q.micro) camposInferidos.push('micro:empty_for_ai_inference');
+        const micro = selectedMicro || q.micro || '';
+        if (!q.micro && !selectedMicro) camposInferidos.push('micro:empty_for_ai_inference');
+        if (selectedMicro && selectedMicro !== q.micro) camposInferidos.push('micro:pre_selected');
         
         const tema = q.tema || '';
         if (!q.tema) camposInferidos.push('tema:empty_for_ai_inference');
@@ -1918,8 +1935,9 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 exit={{ opacity: 0, x: -20 }}
                 className="h-full flex flex-col items-center justify-center p-8"
               >
-                {/* SELEÇÃO OBRIGATÓRIA DE ESTILO */}
-                <div className="w-full max-w-2xl mb-6">
+                {/* SELEÇÃO OBRIGATÓRIA: ESTILO + MACRO + MICRO */}
+                <div className="w-full max-w-2xl mb-6 space-y-4">
+                  {/* Card de Estilo */}
                   <Card className={cn(
                     "border-2 transition-all",
                     selectedStyle ? "border-green-500/50 bg-green-500/5" : "border-amber-500/50 bg-amber-500/5"
@@ -1927,14 +1945,11 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center gap-2 text-lg">
                         <Target className="h-5 w-5 text-primary" />
-                        Selecione o Estilo das Questões
+                        Estilo das Questões
                         <Badge variant={selectedStyle ? "default" : "destructive"} className="ml-auto">
                           {selectedStyle ? '✓ Obrigatório' : '⚠ Obrigatório'}
                         </Badge>
                       </CardTitle>
-                      <CardDescription>
-                        Escolha o tipo de questão que você está importando
-                      </CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -1980,89 +1995,190 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                       </div>
                     </CardContent>
                   </Card>
+                  
+                  {/* Card de Taxonomia OBRIGATÓRIA */}
+                  <Card className={cn(
+                    "border-2 transition-all",
+                    (selectedMacro && selectedMicro) ? "border-green-500/50 bg-green-500/5" : "border-amber-500/50 bg-amber-500/5"
+                  )}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Brain className="h-5 w-5 text-primary" />
+                        Classificação Taxonômica
+                        <Badge variant={(selectedMacro && selectedMicro) ? "default" : "destructive"} className="ml-auto">
+                          {(selectedMacro && selectedMicro) ? '✓ Obrigatório' : '⚠ Obrigatório'}
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription>
+                        Todas as questões importadas receberão esta classificação
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* MACRO */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium flex items-center gap-2">
+                            🎯 Macro Assunto
+                            {selectedMacro && <CheckCircle className="h-4 w-4 text-green-500" />}
+                          </Label>
+                          <Select
+                            value={selectedMacro}
+                            onValueChange={setSelectedMacro}
+                            disabled={taxonomyLoading}
+                          >
+                            <SelectTrigger className={cn(
+                              "h-11",
+                              !selectedMacro && "border-amber-500/50"
+                            )}>
+                              <SelectValue placeholder="Selecione o Macro..." />
+                            </SelectTrigger>
+                            <SelectContent className="z-[9999]">
+                              {macros.map(m => (
+                                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        {/* MICRO */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium flex items-center gap-2">
+                            📚 Micro Assunto
+                            {selectedMicro && <CheckCircle className="h-4 w-4 text-green-500" />}
+                          </Label>
+                          <Select
+                            value={selectedMicro}
+                            onValueChange={setSelectedMicro}
+                            disabled={!selectedMacro || taxonomyLoading}
+                          >
+                            <SelectTrigger className={cn(
+                              "h-11",
+                              selectedMacro && !selectedMicro && "border-amber-500/50"
+                            )}>
+                              <SelectValue placeholder={selectedMacro ? "Selecione o Micro..." : "Primeiro selecione o Macro"} />
+                            </SelectTrigger>
+                            <SelectContent className="z-[9999]">
+                              {filteredMicros.map(m => (
+                                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      
+                      {/* Preview da seleção */}
+                      {(selectedMacro || selectedMicro) && (
+                        <div className="mt-4 p-3 rounded-lg bg-muted/30 border">
+                          <p className="text-xs text-muted-foreground mb-1">Classificação aplicada:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedMacro && (
+                              <Badge variant="secondary" className="gap-1">
+                                🎯 {selectedMacro}
+                              </Badge>
+                            )}
+                            {selectedMicro && (
+                              <Badge variant="secondary" className="gap-1">
+                                📚 {selectedMicro}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
 
-                {/* ÁREA DE UPLOAD (só habilitada após selecionar estilo) */}
-                <div
-                  onDrop={selectedStyle ? handleDrop : (e) => e.preventDefault()}
-                  onDragOver={(e) => e.preventDefault()}
-                  className={cn(
-                    "w-full max-w-2xl p-12 border-2 border-dashed rounded-xl transition-all",
-                    selectedStyle 
-                      ? "border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 cursor-pointer"
-                      : "border-muted-foreground/20 bg-muted/10 cursor-not-allowed opacity-60"
-                  )}
-                  onClick={() => selectedStyle && document.getElementById('file-import-input')?.click()}
-                >
-                  <input
-                    id="file-import-input"
-                    type="file"
-                    accept=".xlsx,.xls,.csv,.txt"
-                    multiple
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    disabled={!selectedStyle}
-                  />
+                {/* ÁREA DE UPLOAD (só habilitada após selecionar estilo + macro + micro) */}
+                {(() => {
+                  const canUpload = selectedStyle && selectedMacro && selectedMicro;
+                  const missingItems = [];
+                  if (!selectedStyle) missingItems.push('estilo');
+                  if (!selectedMacro) missingItems.push('macro');
+                  if (!selectedMicro) missingItems.push('micro');
                   
-                  <div className="flex flex-col items-center gap-4 text-center">
-                    {isProcessing ? (
-                      <>
-                        <Loader2 className="h-16 w-16 text-primary animate-spin" />
-                        <div className="space-y-2 w-full max-w-md">
-                          <p className="text-sm font-medium">
-                            Processando {currentFileIndex + 1} de {files.length} arquivos...
-                          </p>
-                          <Progress value={(currentFileIndex / files.length) * 100} className="h-2" />
+                  return (
+                    <div
+                      onDrop={canUpload ? handleDrop : (e) => e.preventDefault()}
+                      onDragOver={(e) => e.preventDefault()}
+                      className={cn(
+                        "w-full max-w-2xl p-12 border-2 border-dashed rounded-xl transition-all",
+                        canUpload 
+                          ? "border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 cursor-pointer"
+                          : "border-muted-foreground/20 bg-muted/10 cursor-not-allowed opacity-60"
+                      )}
+                      onClick={() => canUpload && document.getElementById('file-import-input')?.click()}
+                    >
+                      <input
+                        id="file-import-input"
+                        type="file"
+                        accept=".xlsx,.xls,.csv,.txt"
+                        multiple
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        disabled={!canUpload}
+                      />
+                      
+                      <div className="flex flex-col items-center gap-4 text-center">
+                        {isProcessing ? (
+                          <>
+                            <Loader2 className="h-16 w-16 text-primary animate-spin" />
+                            <div className="space-y-2 w-full max-w-md">
+                              <p className="text-sm font-medium">
+                                Processando {currentFileIndex + 1} de {files.length} arquivos...
+                              </p>
+                              <Progress value={(currentFileIndex / files.length) * 100} className="h-2" />
+                            </div>
+                          </>
+                        ) : (
+                          <div className={cn(
+                            "p-4 rounded-2xl",
+                            canUpload 
+                              ? "bg-gradient-to-br from-primary/20 to-purple-500/20" 
+                              : "bg-muted/30"
+                          )}>
+                            <FileSpreadsheet className={cn(
+                              "h-12 w-12",
+                              canUpload ? "text-primary" : "text-muted-foreground"
+                            )} />
+                          </div>
+                        )}
+                        
+                        {!isProcessing && (
+                          <div>
+                            <h3 className={cn(
+                              "text-lg font-semibold",
+                              !canUpload && "text-muted-foreground"
+                            )}>
+                              {canUpload 
+                                ? 'Arraste os arquivos aqui' 
+                                : `Primeiro selecione: ${missingItems.join(', ')} ↑`}
+                            </h3>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              {canUpload 
+                                ? <>ou clique para selecionar <strong>(até 20 arquivos)</strong></>
+                                : 'O upload será liberado após as seleções obrigatórias'}
+                            </p>
+                          </div>
+                        )}
+                        
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          <Badge variant="outline" className="gap-1">
+                            <FileSpreadsheet className="h-3 w-3" />
+                            Excel (.xlsx)
+                          </Badge>
+                          <Badge variant="outline" className="gap-1">
+                            <FileText className="h-3 w-3" />
+                            CSV
+                          </Badge>
+                          <Badge className="bg-green-500/20 text-green-500 border-green-500/30 gap-1">
+                            <Zap className="h-3 w-3" />
+                            Múltiplos arquivos
+                          </Badge>
                         </div>
-                      </>
-                    ) : (
-                      <div className={cn(
-                        "p-4 rounded-2xl",
-                        selectedStyle 
-                          ? "bg-gradient-to-br from-primary/20 to-purple-500/20" 
-                          : "bg-muted/30"
-                      )}>
-                        <FileSpreadsheet className={cn(
-                          "h-12 w-12",
-                          selectedStyle ? "text-primary" : "text-muted-foreground"
-                        )} />
                       </div>
-                    )}
-                    
-                    {!isProcessing && (
-                      <div>
-                        <h3 className={cn(
-                          "text-lg font-semibold",
-                          !selectedStyle && "text-muted-foreground"
-                        )}>
-                          {selectedStyle 
-                            ? 'Arraste os arquivos aqui' 
-                            : 'Primeiro selecione o estilo acima ↑'}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {selectedStyle 
-                            ? <>ou clique para selecionar <strong>(até 20 arquivos)</strong></>
-                            : 'O upload será liberado após a seleção'}
-                        </p>
-                      </div>
-                    )}
-                    
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      <Badge variant="outline" className="gap-1">
-                        <FileSpreadsheet className="h-3 w-3" />
-                        Excel (.xlsx)
-                      </Badge>
-                      <Badge variant="outline" className="gap-1">
-                        <FileText className="h-3 w-3" />
-                        CSV
-                      </Badge>
-                      <Badge className="bg-green-500/20 text-green-500 border-green-500/30 gap-1">
-                        <Zap className="h-3 w-3" />
-                        Múltiplos arquivos
-                      </Badge>
                     </div>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 {/* Lista de arquivos selecionados (se houver) */}
                 {fileResults.length > 0 && (
