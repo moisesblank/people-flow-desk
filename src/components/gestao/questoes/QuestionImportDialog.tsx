@@ -696,6 +696,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   type QuestionGroup = 'SIMULADOS' | 'MODO_TREINO';
   const [selectedGroup, setSelectedGroup] = useState<QuestionGroup>('MODO_TREINO');
   
+  // ESTILO DA QUESTÃO: Seleção obrigatória antes de processar
+  type QuestionStyle = 'multiple_choice' | 'discursive' | 'outros' | '';
+  const [selectedStyle, setSelectedStyle] = useState<QuestionStyle>('');
+  
   const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
   
   // Hook para registrar intervenções de IA
@@ -1662,7 +1666,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         // PAYLOAD COMPLETO (sem nulls em campos obrigatórios)
         const payload = {
           question_text: q.question_text,
-          question_type: 'multiple_choice',
+          question_type: selectedStyle || 'multiple_choice',
           options: q.options.filter(o => o.text.trim() || o.image_url).map(o => ({ id: o.id, text: o.text, ...(o.image_url && { image_url: o.image_url }) })),
           correct_answer: q.correct_answer,
           explanation: explanation,           // OBRIGATÓRIO
@@ -1838,6 +1842,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       subtema: '',
     });
     setSelectedGroup('MODO_TREINO'); // Reset grupo
+    setSelectedStyle(''); // Reset estilo obrigatório
   }, []);
 
   const handleClose = useCallback(() => {
@@ -1887,11 +1892,81 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 exit={{ opacity: 0, x: -20 }}
                 className="h-full flex flex-col items-center justify-center p-8"
               >
+                {/* SELEÇÃO OBRIGATÓRIA DE ESTILO */}
+                <div className="w-full max-w-2xl mb-6">
+                  <Card className={cn(
+                    "border-2 transition-all",
+                    selectedStyle ? "border-green-500/50 bg-green-500/5" : "border-amber-500/50 bg-amber-500/5"
+                  )}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Target className="h-5 w-5 text-primary" />
+                        Selecione o Estilo das Questões
+                        <Badge variant={selectedStyle ? "default" : "destructive"} className="ml-auto">
+                          {selectedStyle ? '✓ Obrigatório' : '⚠ Obrigatório'}
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription>
+                        Escolha o tipo de questão que você está importando
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div
+                          onClick={() => setSelectedStyle('multiple_choice')}
+                          className={cn(
+                            "p-4 rounded-lg border-2 cursor-pointer transition-all text-center hover:border-primary/50",
+                            selectedStyle === 'multiple_choice' 
+                              ? "border-primary bg-primary/10" 
+                              : "border-muted-foreground/20"
+                          )}
+                        >
+                          <div className="text-2xl mb-2">✅</div>
+                          <h4 className="font-semibold text-sm">Múltipla Escolha</h4>
+                          <p className="text-xs text-muted-foreground mt-1">A, B, C, D ou A, B, C, D, E</p>
+                        </div>
+                        <div
+                          onClick={() => setSelectedStyle('discursive')}
+                          className={cn(
+                            "p-4 rounded-lg border-2 cursor-pointer transition-all text-center hover:border-primary/50",
+                            selectedStyle === 'discursive' 
+                              ? "border-primary bg-primary/10" 
+                              : "border-muted-foreground/20"
+                          )}
+                        >
+                          <div className="text-2xl mb-2">✍️</div>
+                          <h4 className="font-semibold text-sm">Discursiva</h4>
+                          <p className="text-xs text-muted-foreground mt-1">Sem alternativas, resposta livre</p>
+                        </div>
+                        <div
+                          onClick={() => setSelectedStyle('outros')}
+                          className={cn(
+                            "p-4 rounded-lg border-2 cursor-pointer transition-all text-center hover:border-primary/50",
+                            selectedStyle === 'outros' 
+                              ? "border-primary bg-primary/10" 
+                              : "border-muted-foreground/20"
+                          )}
+                        >
+                          <div className="text-2xl mb-2">🔢</div>
+                          <h4 className="font-semibold text-sm">Outros Tipos</h4>
+                          <p className="text-xs text-muted-foreground mt-1">V/F, Soma de Itens, etc.</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* ÁREA DE UPLOAD (só habilitada após selecionar estilo) */}
                 <div
-                  onDrop={handleDrop}
+                  onDrop={selectedStyle ? handleDrop : (e) => e.preventDefault()}
                   onDragOver={(e) => e.preventDefault()}
-                  className="w-full max-w-2xl p-12 border-2 border-dashed border-primary/30 rounded-xl bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all cursor-pointer"
-                  onClick={() => document.getElementById('file-import-input')?.click()}
+                  className={cn(
+                    "w-full max-w-2xl p-12 border-2 border-dashed rounded-xl transition-all",
+                    selectedStyle 
+                      ? "border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50 cursor-pointer"
+                      : "border-muted-foreground/20 bg-muted/10 cursor-not-allowed opacity-60"
+                  )}
+                  onClick={() => selectedStyle && document.getElementById('file-import-input')?.click()}
                 >
                   <input
                     id="file-import-input"
@@ -1900,6 +1975,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     multiple
                     onChange={handleFileSelect}
                     className="hidden"
+                    disabled={!selectedStyle}
                   />
                   
                   <div className="flex flex-col items-center gap-4 text-center">
@@ -1914,18 +1990,33 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                         </div>
                       </>
                     ) : (
-                      <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/20 to-purple-500/20">
-                        <FileSpreadsheet className="h-12 w-12 text-primary" />
+                      <div className={cn(
+                        "p-4 rounded-2xl",
+                        selectedStyle 
+                          ? "bg-gradient-to-br from-primary/20 to-purple-500/20" 
+                          : "bg-muted/30"
+                      )}>
+                        <FileSpreadsheet className={cn(
+                          "h-12 w-12",
+                          selectedStyle ? "text-primary" : "text-muted-foreground"
+                        )} />
                       </div>
                     )}
                     
                     {!isProcessing && (
                       <div>
-                        <h3 className="text-lg font-semibold">
-                          Arraste os arquivos aqui
+                        <h3 className={cn(
+                          "text-lg font-semibold",
+                          !selectedStyle && "text-muted-foreground"
+                        )}>
+                          {selectedStyle 
+                            ? 'Arraste os arquivos aqui' 
+                            : 'Primeiro selecione o estilo acima ↑'}
                         </h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          ou clique para selecionar <strong>(até 20 arquivos)</strong>
+                          {selectedStyle 
+                            ? <>ou clique para selecionar <strong>(até 20 arquivos)</strong></>
+                            : 'O upload será liberado após a seleção'}
                         </p>
                       </div>
                     )}

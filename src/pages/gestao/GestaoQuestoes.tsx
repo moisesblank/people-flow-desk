@@ -941,7 +941,7 @@ function GestaoQuestoes() {
   const [microFilter, setMicroFilter] = useState<string>('all');
   const [temaFilter, setTemaFilter] = useState<string>('all');
   const [subtemaFilter, setSubtemaFilter] = useState<string>('all');
-  const [questionTypeFilter, setQuestionTypeFilter] = useState<'all' | 'multiple_choice' | 'discursive'>('all');
+  const [questionTypeFilter, setQuestionTypeFilter] = useState<'all' | 'multiple_choice' | 'discursive' | 'outros'>('all');
   const [estiloEnemFilter, setEstiloEnemFilter] = useState(false);
   
   // Dialog states
@@ -1415,9 +1415,17 @@ function GestaoQuestoes() {
       filtered = filtered.filter(q => q.subtema?.includes(subtemaFilter.replace('...', '')));
     }
 
-    // Filtro por Estilo da Questão (múltipla escolha ou discursiva)
+    // Filtro por Estilo da Questão (múltipla escolha, discursiva ou outros)
     if (questionTypeFilter !== 'all') {
-      filtered = filtered.filter(q => q.question_type === questionTypeFilter);
+      if (questionTypeFilter === 'outros') {
+        // Outros: V/F, soma de itens, etc (não é múltipla escolha nem discursiva)
+        filtered = filtered.filter(q => 
+          q.question_type !== 'multiple_choice' && 
+          q.question_type !== 'discursive'
+        );
+      } else {
+        filtered = filtered.filter(q => q.question_type === questionTypeFilter);
+      }
     }
 
     // ==========================================
@@ -2524,14 +2532,15 @@ function GestaoQuestoes() {
               </Select>
 
               {/* 7. Estilo da Questão */}
-              <Select value={questionTypeFilter} onValueChange={(v) => setQuestionTypeFilter(v as 'all' | 'multiple_choice' | 'discursive')}>
+              <Select value={questionTypeFilter} onValueChange={(v) => setQuestionTypeFilter(v as 'all' | 'multiple_choice' | 'discursive' | 'outros')}>
                 <SelectTrigger>
                   <SelectValue placeholder="Estilo" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">📋 Estilo: Todos</SelectItem>
-                  <SelectItem value="multiple_choice">✅ Múltipla Escolha</SelectItem>
-                  <SelectItem value="discursive">📝 Discursiva</SelectItem>
+                  <SelectItem value="multiple_choice">✅ Múltipla Escolha (A,B,C,D,E)</SelectItem>
+                  <SelectItem value="discursive">✍️ Discursiva</SelectItem>
+                  <SelectItem value="outros">🔢 Outros (V/F, Soma)</SelectItem>
                 </SelectContent>
               </Select>
 

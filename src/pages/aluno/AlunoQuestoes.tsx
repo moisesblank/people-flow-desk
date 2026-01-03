@@ -8,6 +8,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -51,6 +52,7 @@ interface QuestionOption {
 interface Question {
   id: string;
   question_text: string;
+  question_type?: 'multiple_choice' | 'discursive' | 'outros';
   options: QuestionOption[];
   correct_answer: string;
   explanation?: string | null;
@@ -110,30 +112,49 @@ interface QuestionModalProps {
 
 function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmitting }: QuestionModalProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [discursiveAnswer, setDiscursiveAnswer] = useState<string>(''); // NOVO: Resposta discursiva
   const [showExplanation, setShowExplanation] = useState(false);
   const [hasAnswered, setHasAnswered] = useState(false);
+
+  // Verificar se é questão discursiva
+  const isDiscursive = question?.question_type === 'discursive';
 
   // Reset state when question changes
   useEffect(() => {
     if (question && userAttempt) {
       setSelectedOption(userAttempt.selected_answer);
+      setDiscursiveAnswer(userAttempt.selected_answer || '');
       setHasAnswered(true);
       setShowExplanation(true);
     } else {
       setSelectedOption(null);
+      setDiscursiveAnswer('');
       setHasAnswered(false);
       setShowExplanation(false);
     }
   }, [question?.id, userAttempt]);
 
   const handleSubmitAnswer = () => {
-    if (!question || !selectedOption) return;
-    onAnswer(question.id, selectedOption);
+    if (!question) return;
+    
+    // Para discursiva, usar o texto digitado
+    if (isDiscursive) {
+      if (!discursiveAnswer.trim()) return;
+      onAnswer(question.id, discursiveAnswer);
+    } else {
+      if (!selectedOption) return;
+      onAnswer(question.id, selectedOption);
+    }
+    
     setHasAnswered(true);
     setShowExplanation(true);
   };
 
-  const isCorrect = hasAnswered && selectedOption === question?.correct_answer;
+  const isCorrect = hasAnswered && (
+    isDiscursive 
+      ? true // Discursiva será avaliada posteriormente pelo professor
+      : selectedOption === question?.correct_answer
+  );
 
   if (!question) return null;
 
@@ -183,76 +204,102 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
               />
             </div>
 
-            {/* Alternativas */}
-            <div className="space-y-3">
-              <Label className="text-sm font-semibold">Alternativas:</Label>
-              <RadioGroup
-                value={selectedOption || ""}
-                onValueChange={setSelectedOption}
-                disabled={hasAnswered}
-                className="space-y-2"
-              >
-                {(question.options || []).map((option) => {
-                  const isSelected = selectedOption === option.id;
-                  const isCorrectOption = option.id === question.correct_answer;
-                  
-                  let optionClass = "border-muted-foreground/30 hover:border-primary/50";
-                  if (hasAnswered) {
-                    if (isCorrectOption) {
-                      optionClass = "border-green-500 bg-green-500/10";
-                    } else if (isSelected && !isCorrectOption) {
-                      optionClass = "border-red-500 bg-red-500/10";
+            {/* Alternativas ou Campo de Texto (Discursiva) */}
+            {isDiscursive ? (
+              // QUESTÃO DISCURSIVA: Campo de texto livre
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold flex items-center gap-2">
+                  ✍️ Sua Resposta:
+                  <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30">
+                    Discursiva
+                  </Badge>
+                </Label>
+                <Textarea
+                  placeholder="Digite sua resposta aqui..."
+                  value={discursiveAnswer}
+                  onChange={(e) => setDiscursiveAnswer(e.target.value)}
+                  disabled={hasAnswered}
+                  className={cn(
+                    "min-h-[200px] text-sm transition-all",
+                    hasAnswered && "bg-muted/50 cursor-not-allowed"
+                  )}
+                />
+                <p className="text-xs text-muted-foreground">
+                  💡 Escreva sua resposta de forma completa e objetiva. Sua resposta será avaliada posteriormente.
+                </p>
+              </div>
+            ) : (
+              // QUESTÃO MÚLTIPLA ESCOLHA: Alternativas
+              <div className="space-y-3">
+                <Label className="text-sm font-semibold">Alternativas:</Label>
+                <RadioGroup
+                  value={selectedOption || ""}
+                  onValueChange={setSelectedOption}
+                  disabled={hasAnswered}
+                  className="space-y-2"
+                >
+                  {(question.options || []).map((option) => {
+                    const isSelected = selectedOption === option.id;
+                    const isCorrectOption = option.id === question.correct_answer;
+                    
+                    let optionClass = "border-muted-foreground/30 hover:border-primary/50";
+                    if (hasAnswered) {
+                      if (isCorrectOption) {
+                        optionClass = "border-green-500 bg-green-500/10";
+                      } else if (isSelected && !isCorrectOption) {
+                        optionClass = "border-red-500 bg-red-500/10";
+                      }
+                    } else if (isSelected) {
+                      optionClass = "border-primary bg-primary/10";
                     }
-                  } else if (isSelected) {
-                    optionClass = "border-primary bg-primary/10";
-                  }
 
-                  return (
-                    <motion.div
-                      key={option.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className={cn(
-                        "flex flex-col gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all",
-                        optionClass,
-                        hasAnswered && "cursor-not-allowed"
-                      )}
-                      onClick={() => !hasAnswered && setSelectedOption(option.id)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <RadioGroupItem value={option.id} id={option.id} className="mt-1" />
-                        <Label
-                          htmlFor={option.id}
-                          className={cn(
-                            "w-8 h-8 flex items-center justify-center rounded-full border-2 font-bold text-sm cursor-pointer",
-                            isSelected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30",
-                            hasAnswered && isCorrectOption && "border-green-500 bg-green-500 text-white",
-                            hasAnswered && isSelected && !isCorrectOption && "border-red-500 bg-red-500 text-white"
+                    return (
+                      <motion.div
+                        key={option.id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className={cn(
+                          "flex flex-col gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all",
+                          optionClass,
+                          hasAnswered && "cursor-not-allowed"
+                        )}
+                        onClick={() => !hasAnswered && setSelectedOption(option.id)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <RadioGroupItem value={option.id} id={option.id} className="mt-1" />
+                          <Label
+                            htmlFor={option.id}
+                            className={cn(
+                              "w-8 h-8 flex items-center justify-center rounded-full border-2 font-bold text-sm cursor-pointer",
+                              isSelected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30",
+                              hasAnswered && isCorrectOption && "border-green-500 bg-green-500 text-white",
+                              hasAnswered && isSelected && !isCorrectOption && "border-red-500 bg-red-500 text-white"
+                            )}
+                          >
+                            {option.id.toUpperCase()}
+                          </Label>
+                          <p className="flex-1 text-sm">{option.text}</p>
+                          {hasAnswered && isCorrectOption && (
+                            <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
                           )}
-                        >
-                          {option.id.toUpperCase()}
-                        </Label>
-                        <p className="flex-1 text-sm">{option.text}</p>
-                        {hasAnswered && isCorrectOption && (
-                          <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                          {hasAnswered && isSelected && !isCorrectOption && (
+                            <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                          )}
+                        </div>
+                        {(option as any).image_url && (
+                          <img 
+                            src={(option as any).image_url} 
+                            alt={`Imagem alternativa ${option.id.toUpperCase()}`}
+                            className="max-h-[300px] w-auto object-contain rounded-lg ml-11"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
                         )}
-                        {hasAnswered && isSelected && !isCorrectOption && (
-                          <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                        )}
-                      </div>
-                      {(option as any).image_url && (
-                        <img 
-                          src={(option as any).image_url} 
-                          alt={`Imagem alternativa ${option.id.toUpperCase()}`}
-                          className="max-h-[300px] w-auto object-contain rounded-lg ml-11"
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                        />
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </RadioGroup>
-            </div>
+                      </motion.div>
+                    );
+                  })}
+                </RadioGroup>
+              </div>
+            )}
 
             {/* Resultado */}
             <AnimatePresence>
@@ -263,14 +310,27 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                   exit={{ opacity: 0, y: -20 }}
                   className={cn(
                     "p-4 rounded-xl border-2",
-                    isCorrect 
-                      ? "bg-green-500/10 border-green-500" 
-                      : "bg-red-500/10 border-red-500"
+                    isDiscursive
+                      ? "bg-amber-500/10 border-amber-500" // Discursiva: aguardando correção
+                      : isCorrect 
+                        ? "bg-green-500/10 border-green-500" 
+                        : "bg-red-500/10 border-red-500"
                   )}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      {isCorrect ? (
+                      {isDiscursive ? (
+                        // DISCURSIVA: Resposta enviada para correção
+                        <>
+                          <Clock className="h-6 w-6 text-amber-500" />
+                          <div>
+                            <p className="font-bold text-amber-600">Resposta Enviada!</p>
+                            <p className="text-sm text-muted-foreground">
+                              ✍️ Sua resposta será avaliada pelo professor
+                            </p>
+                          </div>
+                        </>
+                      ) : isCorrect ? (
                         <>
                           <CheckCircle2 className="h-6 w-6 text-green-500" />
                           <div>
@@ -354,14 +414,14 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
           {!hasAnswered && (
             <Button 
               onClick={handleSubmitAnswer}
-              disabled={!selectedOption || isSubmitting}
+              disabled={isDiscursive ? !discursiveAnswer.trim() || isSubmitting : !selectedOption || isSubmitting}
             >
               {isSubmitting ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <CheckCircle2 className="h-4 w-4 mr-2" />
               )}
-              Confirmar Resposta
+              {isDiscursive ? 'Enviar Resposta' : 'Confirmar Resposta'}
             </Button>
           )}
         </DialogFooter>
