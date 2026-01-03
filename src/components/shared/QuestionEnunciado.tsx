@@ -29,6 +29,7 @@ import { memo, useState } from 'react';
 import { ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatChemicalFormulas } from '@/lib/chemicalFormatter';
+import { renderChemicalText } from '@/lib/renderChemicalText';
 import { 
   formatBancaHeader as formatBancaHeaderNormalized,
   DEFAULT_BANCA_HEADER 
@@ -241,7 +242,7 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
         textSizeClass,
         compact && "line-clamp-3",
       )}>
-        {formatChemicalFormulas(cleanText)}
+        {renderChemicalText(formatChemicalFormulas(cleanText))}
       </p>
       
       {/* 3. IMAGENS DO ENUNCIADO (suporta múltiplas) */}

@@ -156,17 +156,17 @@ export function formatChemicalFormulas(text: string): string {
   });
 
   // ═══════════════════════════════════════════════════════════════════
-  // 4. PADRONIZAR ESTADOS FÍSICOS — UNICODE PURO (parênteses subscritos)
+  // 4. PADRONIZAR ESTADOS FÍSICOS — TOKEN SEGURO (renderizado em React)
   // ═══════════════════════════════════════════════════════════════════
-  // Estados: (s) sólido, (l) líquido, (g) gasoso, (v) vapor, (aq) aquoso
-  // Usando parênteses subscritos ₍ ₎ com letras normais minúsculas
-  // Visualmente fica compacto e uniforme: CO₂₍g₎
+  // Motivo: strings em React escapam HTML, então usamos um token e renderizamos
+  // como <sub> no componente (QuestionEnunciado/QuestionResolution).
+  // Ex.: CO2(g) -> CO₂⟦state:g⟧ -> CO₂(g) com tamanho igual ao "₂".
   result = result
-    .replace(/\(\s*s\s*\)/gi, '₍s₎')
-    .replace(/\(\s*l\s*\)/gi, '₍l₎')
-    .replace(/\(\s*g\s*\)/gi, '₍g₎')
-    .replace(/\(\s*v\s*\)/gi, '₍v₎')
-    .replace(/\(\s*aq\s*\)/gi, '₍aq₎');
+    .replace(/\(\s*s\s*\)/gi, '⟦state:s⟧')
+    .replace(/\(\s*l\s*\)/gi, '⟦state:l⟧')
+    .replace(/\(\s*g\s*\)/gi, '⟦state:g⟧')
+    .replace(/\(\s*v\s*\)/gi, '⟦state:v⟧')
+    .replace(/\(\s*aq\s*\)/gi, '⟦state:aq⟧');
 
   // ═══════════════════════════════════════════════════════════════════
   // 5. PADRONIZAR SETAS DE REAÇÃO
