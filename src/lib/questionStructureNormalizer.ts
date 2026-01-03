@@ -1,16 +1,74 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
  * ║                                                                              ║
- * ║   NORMALIZADOR DE ESTRUTURA DE QUESTÃO v1.0                                  ║
+ * ║   NORMALIZADOR DE ESTRUTURA DE QUESTÃO v2.0                                  ║
  * ║   Question Structure Normalizer                                              ║
  * ║                                                                              ║
  * ║   LEI PERMANENTE: Aplica as regras constitucionais de estrutura:             ║
  * ║   - ENUNCIADO: texto corrido, sem enumeração solta                           ║
  * ║   - AFIRMATIVAS: reorganizadas internamente                                  ║
  * ║   - ALTERNATIVAS: cada uma em sua própria linha                              ║
+ * ║   - BLOCOS AUXILIARES: organização estrutural sem alteração de conteúdo      ║
  * ║                                                                              ║
  * ╚══════════════════════════════════════════════════════════════════════════════╝
  */
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SÍMBOLOS E PADRÕES PARA LIMPEZA
+// ═══════════════════════════════════════════════════════════════════════════
+
+const EMOJI_REGEX = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}]/gu;
+const NUMBERED_LIST_REGEX = /^\s*(\d+[\.\)\-–]|\•|\-\s|\–\s|\*\s)/gm;
+
+/**
+ * Remove emojis e símbolos decorativos do texto
+ */
+function removeEmojisAndSymbols(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(EMOJI_REGEX, '')
+    .replace(/[★☆✓✗✔✘●○◆◇▶►▷▸◀◁◂◃⚡⚙️🔧🔨🛠️]/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+/**
+ * Remove numeração visual de listas
+ */
+function removeListNumbering(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(NUMBERED_LIST_REGEX, '')
+    .replace(/^\s*[\-–—•·»«]+\s*/gm, '')
+    .replace(/\n{2,}/g, '\n')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+/**
+ * Transforma lista em texto corrido contínuo
+ */
+function listToContinuousText(text: string): string {
+  if (!text) return '';
+  
+  // Remover numeração e bullets
+  let cleaned = removeListNumbering(text);
+  
+  // Juntar linhas em texto corrido
+  cleaned = cleaned
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .join(' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  
+  return cleaned;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 1️⃣ NORMALIZAÇÃO DE ALTERNATIVAS
+// ═══════════════════════════════════════════════════════════════════════════
 
 /**
  * Normaliza alternativas para formato obrigatório (cada uma em sua linha)
@@ -68,6 +126,10 @@ export function splitConcatenatedAlternatives(text: string): string[] {
   return [text];
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 2️⃣ NORMALIZAÇÃO DE ENUNCIADO
+// ═══════════════════════════════════════════════════════════════════════════
+
 /**
  * Normaliza enunciado para texto corrido
  * REGRA: Converter enumerações soltas (I, II, III) em texto coeso
@@ -99,14 +161,12 @@ export function normalizeEnunciado(text: string): string {
     // Encontrar todas as afirmativas
     const lines = normalized.split('\n');
     const processedLines: string[] = [];
-    let isInAffirmativeBlock = false;
     
     for (const line of lines) {
       const trimmed = line.trim();
       
       // Verificar se é uma afirmativa numerada
       if (/^[IVX]+\s*[\.\)\-–—]/.test(trimmed)) {
-        isInAffirmativeBlock = true;
         // Remover o prefixo romano e adicionar como texto corrido
         const content = trimmed.replace(/^[IVX]+\s*[\.\)\-–—]\s*/, '').trim();
         if (content) {
@@ -121,7 +181,6 @@ export function normalizeEnunciado(text: string): string {
         if (trimmed) {
           processedLines.push(trimmed);
         }
-        isInAffirmativeBlock = false;
       }
     }
     
@@ -137,6 +196,172 @@ export function normalizeEnunciado(text: string): string {
   
   return normalized;
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 3️⃣ ORGANIZAÇÃO DE BLOCOS AUXILIARES — LEI PERMANENTE v2.0
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Organiza COMPETÊNCIA E HABILIDADE em campos separados
+ * REGRA: Separar em campos distintos, cada um em sua própria linha
+ * NÃO adicionar explicações, comentários ou exemplos
+ */
+export function normalizeCompetenciaHabilidade(text: string): string {
+  if (!text) return '';
+  
+  let cleaned = removeEmojisAndSymbols(text);
+  
+  // Detectar padrões de competência e habilidade misturados
+  const competenciaMatch = cleaned.match(/(?:Competência|C)\s*(?:de\s*área)?:?\s*(\d+|[^\.]+?)(?=\s*(?:Habilidade|H)|$)/i);
+  const habilidadeMatch = cleaned.match(/(?:Habilidade|H):?\s*(\d+|[^\.]+)/i);
+  
+  // Se encontrou ambos, formatar corretamente
+  if (competenciaMatch || habilidadeMatch) {
+    const parts: string[] = [];
+    
+    if (competenciaMatch) {
+      const compValue = competenciaMatch[1]?.trim();
+      if (compValue) {
+        parts.push(`Competência de área: ${compValue}`);
+      }
+    }
+    
+    if (habilidadeMatch) {
+      const habValue = habilidadeMatch[1]?.trim();
+      if (habValue) {
+        parts.push(`Habilidade: ${habValue}`);
+      }
+    }
+    
+    if (parts.length > 0) {
+      return parts.join('\n');
+    }
+  }
+  
+  // Se não detectou padrões específicos, apenas limpar
+  return listToContinuousText(cleaned);
+}
+
+/**
+ * Organiza DIRECIONAMENTO / ESTRATÉGIA
+ * REGRA: Remover numeração visual, emojis, símbolos
+ * Transformar listas em texto corrido contínuo
+ * NÃO adicionar orientações novas
+ */
+export function normalizeDirecionamento(text: string): string {
+  if (!text) return '';
+  
+  // 1. Remover emojis e símbolos
+  let cleaned = removeEmojisAndSymbols(text);
+  
+  // 2. Remover numeração e transformar em texto corrido
+  cleaned = listToContinuousText(cleaned);
+  
+  return cleaned;
+}
+
+/**
+ * Organiza PEGADINHAS COMUNS
+ * REGRA: Manter texto original, ajustar para texto corrido
+ * Remover redundâncias visuais, NÃO acrescentar novas pegadinhas
+ */
+export function normalizePegadinhas(text: string): string {
+  if (!text) return '';
+  
+  // 1. Remover emojis e símbolos
+  let cleaned = removeEmojisAndSymbols(text);
+  
+  // 2. Remover numeração e transformar em texto corrido
+  cleaned = listToContinuousText(cleaned);
+  
+  return cleaned;
+}
+
+/**
+ * Organiza DICA DE OURO
+ * REGRA: Manter exatamente o conteúdo existente
+ * Garantir que esteja em um único parágrafo
+ * Sem listas, emojis ou quebras desnecessárias
+ */
+export function normalizeDicaDeOuro(text: string): string {
+  if (!text) return '';
+  
+  // 1. Remover emojis e símbolos
+  let cleaned = removeEmojisAndSymbols(text);
+  
+  // 2. Garantir parágrafo único (remover quebras de linha)
+  cleaned = cleaned
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0)
+    .join(' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+  
+  return cleaned;
+}
+
+/**
+ * Aplica organização estrutural em todos os blocos auxiliares
+ * REGRA ABSOLUTA: Organizar NÃO é reescrever, explicar ou interpretar
+ * Somente estruturar, separar, padronizar e limpar visualmente
+ */
+export function normalizeAuxiliaryBlocks(blocks: {
+  competencia_habilidade?: string | null;
+  direcionamento?: string | null;
+  pegadinhas?: string | null;
+  dica_de_ouro?: string | null;
+}): {
+  competencia_habilidade: string;
+  direcionamento: string;
+  pegadinhas: string;
+  dica_de_ouro: string;
+  wasModified: boolean;
+  modifications: string[];
+} {
+  const modifications: string[] = [];
+  let wasModified = false;
+  
+  // Normalizar cada bloco
+  const normalizedCompetencia = normalizeCompetenciaHabilidade(blocks.competencia_habilidade || '');
+  const normalizedDirecionamento = normalizeDirecionamento(blocks.direcionamento || '');
+  const normalizedPegadinhas = normalizePegadinhas(blocks.pegadinhas || '');
+  const normalizedDica = normalizeDicaDeOuro(blocks.dica_de_ouro || '');
+  
+  // Verificar modificações
+  if (normalizedCompetencia !== (blocks.competencia_habilidade || '')) {
+    wasModified = true;
+    modifications.push('Competência e Habilidade organizadas');
+  }
+  
+  if (normalizedDirecionamento !== (blocks.direcionamento || '')) {
+    wasModified = true;
+    modifications.push('Direcionamento organizado');
+  }
+  
+  if (normalizedPegadinhas !== (blocks.pegadinhas || '')) {
+    wasModified = true;
+    modifications.push('Pegadinhas organizadas');
+  }
+  
+  if (normalizedDica !== (blocks.dica_de_ouro || '')) {
+    wasModified = true;
+    modifications.push('Dica de Ouro organizada');
+  }
+  
+  return {
+    competencia_habilidade: normalizedCompetencia,
+    direcionamento: normalizedDirecionamento,
+    pegadinhas: normalizedPegadinhas,
+    dica_de_ouro: normalizedDica,
+    wasModified,
+    modifications,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 4️⃣ FORMATAÇÃO E VERIFICAÇÃO
+// ═══════════════════════════════════════════════════════════════════════════
 
 /**
  * Formata alternativas para exibição (cada uma em sua linha)
@@ -231,6 +456,10 @@ export function checkEnunciadoCompliance(text: string): {
   };
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// 5️⃣ NORMALIZAÇÃO COMPLETA
+// ═══════════════════════════════════════════════════════════════════════════
+
 /**
  * Normalização completa de estrutura de questão
  * Aplica todas as regras constitucionais
@@ -238,9 +467,17 @@ export function checkEnunciadoCompliance(text: string): {
 export function normalizeQuestionStructure(question: {
   question_text?: string | null;
   options?: string[] | { [key: string]: string } | null;
+  competencia_habilidade?: string | null;
+  direcionamento?: string | null;
+  pegadinhas?: string | null;
+  dica_de_ouro?: string | null;
 }): {
   question_text: string;
   options: string[];
+  competencia_habilidade: string;
+  direcionamento: string;
+  pegadinhas: string;
+  dica_de_ouro: string;
   wasModified: boolean;
   modifications: string[];
 } {
@@ -268,20 +505,47 @@ export function normalizeQuestionStructure(question: {
     modifications.push('Alternativas normalizadas para formato padrão');
   }
   
+  // 3. Normalizar blocos auxiliares
+  const auxiliaryResult = normalizeAuxiliaryBlocks({
+    competencia_habilidade: question.competencia_habilidade,
+    direcionamento: question.direcionamento,
+    pegadinhas: question.pegadinhas,
+    dica_de_ouro: question.dica_de_ouro,
+  });
+  
+  if (auxiliaryResult.wasModified) {
+    wasModified = true;
+    modifications.push(...auxiliaryResult.modifications);
+  }
+  
   return {
     question_text: normalizedText,
     options: normalizedOptions,
+    competencia_habilidade: auxiliaryResult.competencia_habilidade,
+    direcionamento: auxiliaryResult.direcionamento,
+    pegadinhas: auxiliaryResult.pegadinhas,
+    dica_de_ouro: auxiliaryResult.dica_de_ouro,
     wasModified,
     modifications,
   };
 }
 
 export default {
+  // Enunciado e Alternativas
   normalizeAlternatives,
   splitConcatenatedAlternatives,
   normalizeEnunciado,
   formatAlternativesForDisplay,
   checkAlternativesCompliance,
   checkEnunciadoCompliance,
+  
+  // Blocos Auxiliares
+  normalizeCompetenciaHabilidade,
+  normalizeDirecionamento,
+  normalizePegadinhas,
+  normalizeDicaDeOuro,
+  normalizeAuxiliaryBlocks,
+  
+  // Estrutura Completa
   normalizeQuestionStructure,
 };
