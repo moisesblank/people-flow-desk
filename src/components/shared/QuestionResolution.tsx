@@ -1945,8 +1945,9 @@ const QuestionResolution = memo(function QuestionResolution({
         </div>
       </div>
 
-      {/* ========== ANÁLISE DA QUESTÃO — BLOCO ÚNICO UNIFICADO (intro + passos + síntese) ========== */}
-      {/* REGRA PERMANENTE: Intro + Passos + Síntese formam um único campo visual */}
+      {/* ========== BLOCO ÚNICO UNIFICADO — ANÁLISE DA QUESTÃO ========== */}
+      {/* REGRA PERMANENTE (MODELO IDEAL): Intro + Passos + Alternativas + Conclusão + Gabarito */}
+      {/* TUDO EM UM MESMO CAMPO VERDE — Organizado mas unificado visualmente */}
       {(() => {
         // Separar passos e síntese de outras seções
         const passosSections = otherSections.filter(s => s.type === 'passo');
@@ -1957,12 +1958,13 @@ const QuestionResolution = memo(function QuestionResolution({
         const sortedPassos = [...passosSections].sort((a, b) => (a.stepNumber || 0) - (b.stepNumber || 0));
         
         // Verificar se há conteúdo para o bloco unificado
-        const hasAnaliseContent = introSection || sortedPassos.length > 0 || sinteseSections.length > 0;
+        const hasAnyContent = introSection || sortedPassos.length > 0 || sinteseSections.length > 0 ||
+          alternativasSections.length > 0 || conclusaoSections.length > 0 || resumoSections.length > 0;
         
         return (
           <>
-            {/* BLOCO ÚNICO: ANÁLISE DA QUESTÃO (intro + passos + síntese) */}
-            {hasAnaliseContent && (
+            {/* BLOCO ÚNICO UNIFICADO — ANÁLISE DA QUESTÃO (intro + passos + alternativas + conclusão + gabarito) */}
+            {hasAnyContent && (
               <div className="rounded-xl border border-emerald-500/30 overflow-hidden bg-emerald-500/5 border-l-4 border-l-emerald-500">
                 {/* Header do bloco unificado */}
                 <div className="px-4 py-3 bg-emerald-500/20 border-b border-emerald-500/20 flex items-center gap-2">
@@ -1972,25 +1974,25 @@ const QuestionResolution = memo(function QuestionResolution({
                   </h4>
                 </div>
                 
-                {/* Conteúdo unificado */}
-                <div className="divide-y divide-emerald-500/20">
-                  {/* INTRO — Análise inicial */}
+                {/* Conteúdo unificado — fluxo contínuo com divisores sutis */}
+                <div className="divide-y divide-emerald-500/10">
+                  {/* INTRO — Análise contextual inicial */}
                   {introSection && (
                     <div className="px-4 py-3">
-                      <p className="text-justify leading-relaxed text-sm text-foreground/90">
+                      <p className="text-justify leading-relaxed text-sm text-foreground/90 whitespace-pre-wrap">
                         {formatContent(introSection.content)}
                       </p>
                     </div>
                   )}
                   
-                  {/* PASSOS — Cada passo em sua própria seção com enter entre eles */}
+                  {/* PASSOS — Cada passo em seu próprio parágrafo */}
                   {sortedPassos.map((section, index) => (
                     <div key={`passo-${index}`} className="px-4 py-3">
                       <div className="text-sm text-justify">
                         <span className="font-bold text-blue-500">
                           PASSO {section.stepNumber}:
                         </span>
-                        <span className="text-foreground/90 ml-2">
+                        <span className="text-foreground/90 ml-2 whitespace-pre-wrap">
                           {formatContent(section.content)}
                         </span>
                       </div>
@@ -2002,17 +2004,86 @@ const QuestionResolution = memo(function QuestionResolution({
                     <div key={`sintese-${index}`} className="px-4 py-3">
                       <div className="text-sm text-justify">
                         <span className="font-bold text-teal-500">SÍNTESE:</span>
-                        <span className="text-foreground/90 ml-2">
+                        <span className="text-foreground/90 ml-2 whitespace-pre-wrap">
                           {formatContent(section.content)}
                         </span>
                       </div>
                     </div>
                   ))}
+                  
+                  {/* ANÁLISE DAS ALTERNATIVAS — Cada alternativa em parágrafo próprio (enter entre elas) */}
+                  {alternativasSections.length > 0 && (
+                    <div className="px-4 py-3">
+                      <div className="text-sm font-bold text-indigo-500 mb-3">Análise das alternativas:</div>
+                      <div className="space-y-3">
+                        {alternativasSections.map((section, index) => {
+                          const isCorrect = section.type === 'alternativa_correta' || section.type === 'afirmacao_correta';
+                          const isAfirmacao = section.type.includes('afirmacao');
+                          const letter = section.alternativaLetter || section.afirmacaoNumber || '';
+                          const label = isAfirmacao ? 'Afirmação' : 'Alternativa';
+                          const status = isCorrect
+                            ? isAfirmacao ? 'VERDADEIRA' : 'CORRETA'
+                            : isAfirmacao ? 'FALSA' : 'INCORRETA';
+                          const statusIcon = isCorrect ? '✅' : '❌';
+                          
+                          return (
+                            <div 
+                              key={`alt-unified-${index}`} 
+                              className={cn(
+                                'px-3 py-2 rounded-lg border-l-4',
+                                isCorrect 
+                                  ? 'bg-green-500/10 border-l-green-500' 
+                                  : 'bg-red-500/5 border-l-red-500'
+                              )}
+                            >
+                              <div className="text-sm text-justify">
+                                <span className={cn(
+                                  'font-bold',
+                                  isCorrect ? 'text-green-600' : 'text-red-600'
+                                )}>
+                                  {statusIcon} {label} {letter}) {status}:
+                                </span>
+                                <span className="text-foreground/80 ml-2 whitespace-pre-wrap">
+                                  {formatContent(section.content)}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* RESUMO FINAL — Se existir, fica dentro do bloco unificado */}
+                  {resumoSections.length > 0 && (
+                    <div className="px-4 py-3">
+                      <div className="text-sm font-bold text-cyan-500 mb-2">Resumo:</div>
+                      {resumoSections.map((section, index) => (
+                        <p key={`resumo-unified-${index}`} className="text-justify leading-relaxed text-sm text-foreground/90 whitespace-pre-wrap">
+                          {formatContent(section.content)}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* CONCLUSÃO E GABARITO — Fechamento do bloco unificado */}
+                  {conclusaoSections.length > 0 && (
+                    <div className="px-4 py-3 bg-emerald-500/10">
+                      <div className="text-sm">
+                        <span className="font-bold text-emerald-600">Conclusão:</span>
+                        {conclusaoSections.map((section, index) => (
+                          <p key={`conclusao-unified-${index}`} className="text-foreground/90 mt-1 text-justify whitespace-pre-wrap">
+                            {formatContent(section.content)}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
             
-            {/* Outras seções (não-passos, não-síntese) */}
+            {/* Outras seções (não-passos, não-síntese, não-alternativas) */}
             {nonPassosSections.length > 0 && (
               <div className="space-y-3">
                 {nonPassosSections.map((section, index) => (
@@ -2023,72 +2094,6 @@ const QuestionResolution = memo(function QuestionResolution({
           </>
         );
       })()}
-
-      {/* ========== ALTERNATIVAS / AFIRMAÇÕES — BLOCO ÚNICO ========== */}
-      {alternativasSections.length > 0 && (
-        <div className="rounded-xl border border-border/50 overflow-hidden bg-muted/10">
-          {/* Header do bloco de alternativas */}
-          <div className="px-4 py-3 bg-muted/30 border-b border-border/30 flex items-center gap-2">
-            <Target className="h-4 w-4 text-primary" />
-            <h4 className="font-bold text-sm text-primary uppercase tracking-wide">
-              Análise das Alternativas
-            </h4>
-          </div>
-
-          {/* Alternativas como tópicos dentro do bloco */}
-          <div className="divide-y divide-border/30">
-            {alternativasSections.map((section, index) => (
-              <AlternativaItem key={`alt-${section.type}-${index}`} section={section} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ========== RESUMO FINAL — BLOCO ÚNICO ========== */}
-      {resumoSections.length > 0 && (
-        <div className="rounded-xl border border-cyan-500/30 overflow-hidden bg-cyan-500/5 border-l-4 border-l-cyan-500">
-          {/* Header */}
-          <div className="px-4 py-3 bg-cyan-500/20 border-b border-cyan-500/20 flex items-center gap-2">
-            <MessageCircle className="h-4 w-4 text-cyan-500" />
-            <h4 className="font-bold text-sm text-cyan-500 uppercase tracking-wide">
-              RESUMO FINAL
-            </h4>
-          </div>
-          {/* Conteúdos agrupados */}
-          <div className="divide-y divide-cyan-500/20">
-            {resumoSections.map((section, index) => (
-              <div key={`resumo-${index}`} className="px-4 py-3">
-                <p className="text-justify leading-relaxed text-sm text-foreground/90">
-                  {formatContent(section.content)}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ========== CONCLUSÃO E GABARITO — BLOCO ÚNICO ========== */}
-      {conclusaoSections.length > 0 && (
-        <div className="rounded-xl border border-emerald-500/30 overflow-hidden bg-emerald-500/10 border-l-4 border-l-emerald-500">
-          {/* Header */}
-          <div className="px-4 py-3 bg-emerald-500/20 border-b border-emerald-500/20 flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-emerald-500" />
-            <h4 className="font-bold text-sm text-emerald-500 uppercase tracking-wide">
-              CONCLUSÃO E GABARITO
-            </h4>
-          </div>
-          {/* Conteúdos agrupados */}
-          <div className="divide-y divide-emerald-500/20">
-            {conclusaoSections.map((section, index) => (
-              <div key={`conclusao-${index}`} className="px-4 py-3">
-                <p className="text-justify leading-relaxed text-sm text-foreground/90">
-                  {formatContent(section.content)}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ========== COMPETÊNCIA E HABILIDADE - ENEM ========== */}
       {competenciaSections.length > 0 && (
