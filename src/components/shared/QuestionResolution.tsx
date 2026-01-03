@@ -92,6 +92,7 @@
 import { memo, useMemo, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 import { formatChemicalFormulas } from '@/lib/chemicalFormatter';
+import { renderChemicalText } from '@/lib/renderChemicalText';
 import { getBancaLabel } from '@/constants/bancas';
 import { 
   Sparkles, 
@@ -1730,7 +1731,7 @@ const MathEquationBlock = memo(function MathEquationBlock({ content }: { content
   return (
     <div className="my-3 py-2 px-4 bg-amber-500/10 border-l-4 border-l-amber-500 rounded-r-lg">
       <p className="text-base font-semibold text-amber-700 dark:text-amber-400 font-mono">
-        {formatChemicalFormulas(content)}
+        {renderChemicalText(formatChemicalFormulas(content))}
       </p>
     </div>
   );
@@ -1755,13 +1756,13 @@ const RenderFormattedContent = memo(function RenderFormattedContent({ text }: { 
     // Texto antes do bloco
     if (match.index > lastIndex) {
       const beforeText = text.slice(lastIndex, match.index);
-      if (beforeText.trim()) {
-        parts.push(
-          <span key={`text-${keyCounter++}`} className="whitespace-pre-wrap">
-            {beforeText}
-          </span>
-        );
-      }
+        if (beforeText.trim()) {
+          parts.push(
+            <span key={`text-${keyCounter++}`} className="whitespace-pre-wrap">
+              {renderChemicalText(beforeText)}
+            </span>
+          );
+        }
     }
     
     // Bloco especial
@@ -1780,18 +1781,18 @@ const RenderFormattedContent = memo(function RenderFormattedContent({ text }: { 
   // Texto restante
   if (lastIndex < text.length) {
     const remainingText = text.slice(lastIndex);
-    if (remainingText.trim()) {
-      parts.push(
-        <span key={`text-${keyCounter++}`} className="whitespace-pre-wrap">
-          {remainingText}
-        </span>
-      );
-    }
+      if (remainingText.trim()) {
+        parts.push(
+          <span key={`text-${keyCounter++}`} className="whitespace-pre-wrap">
+            {renderChemicalText(remainingText)}
+          </span>
+        );
+      }
   }
   
   // Se não há blocos especiais, retorna texto simples
   if (parts.length === 0) {
-    return <span className="whitespace-pre-wrap">{text}</span>;
+    return <span className="whitespace-pre-wrap">{renderChemicalText(text)}</span>;
   }
   
   return <>{parts}</>;
@@ -1807,9 +1808,9 @@ const formatContent = (content: string) => {
   // Verificar se há blocos especiais
   const hasSpecialBlocks = /【(REAÇÃO|EQUAÇÃO)】/.test(formattedText);
   
-  // Se não há imagens nem blocos especiais, retorna texto simples
+  // Se não há imagens nem blocos especiais, retorna texto renderizado
   if (images.length === 0 && !hasSpecialBlocks) {
-    return formattedText;
+    return <RenderFormattedContent text={formattedText} />;
   }
   
   // Retorna com renderização de blocos especiais + imagens
@@ -1818,7 +1819,7 @@ const formatContent = (content: string) => {
       {hasSpecialBlocks ? (
         <RenderFormattedContent text={formattedText} />
       ) : (
-        formattedText
+        <RenderFormattedContent text={formattedText} />
       )}
       {images.map((imgUrl, idx) => (
         <ResolutionImage key={`res-img-${idx}`} src={imgUrl} index={idx} />
