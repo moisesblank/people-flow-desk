@@ -218,7 +218,6 @@ const GlobalAILogButton = memo(() => {
           defaultSize={{ width: 700, height: 600 }}
           minSize={{ width: 400, height: 300 }}
           className="flex flex-col"
-          style={{ zIndex: SOVEREIGN_Z_INDEX }}
         >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
