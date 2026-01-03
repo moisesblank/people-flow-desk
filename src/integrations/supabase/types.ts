@@ -17119,11 +17119,12 @@ export type Database = {
       can_view_financial: { Args: { _user_id: string }; Returns: boolean }
       can_view_personal: { Args: { _user_id: string }; Returns: boolean }
       check_active_session_exists: {
-        Args: { _email: string }
+        Args: { _email: string; _session_token?: string }
         Returns: {
           device_name: string
           device_type: string
           has_active_session: boolean
+          is_same_device: boolean
           last_activity_at: string
         }[]
       }
