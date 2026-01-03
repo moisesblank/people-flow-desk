@@ -66,6 +66,7 @@ import {
   normalizeAfterValue,
   mapInterventionToActionType,
   getActionTypeDescription,
+  isValidAILog,
 } from '@/lib/audits/AUDIT_AI_LOG_POLICY_v2';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -109,6 +110,13 @@ interface DetailedLogEntryProps {
 }
 
 const DetailedLogEntry = memo(({ log, index, enunciadoSnippet }: DetailedLogEntryProps) => {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // POLÍTICA v2.1: Logs sem valor real no AFTER são INVÁLIDOS e não renderizam
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (!isValidAILog(log.value_after)) {
+    return null; // Log inválido - não exibir
+  }
+
   const date = new Date(log.created_at);
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const typeColors = INTERVENTION_TYPE_COLORS[log.intervention_type] || INTERVENTION_TYPE_COLORS.AI_AUTOFILL;
@@ -116,9 +124,9 @@ const DetailedLogEntry = memo(({ log, index, enunciadoSnippet }: DetailedLogEntr
     ? Math.round(log.ai_confidence_score * 100) 
     : null;
 
-  // POLÍTICA v2.0: BEFORE/AFTER NUNCA VAZIOS
+  // POLÍTICA v2.1: BEFORE pode ser "(vazio)", AFTER deve ter valor REAL
   const normalizedBefore = normalizeBeforeValue(log.value_before);
-  const normalizedAfter = normalizeAfterValue(log.value_after);
+  const normalizedAfter = normalizeAfterValue(log.value_after) || log.value_after;
   
   // POLÍTICA v2.0: Mapear tipo de intervenção para categoria humana
   const actionType = mapInterventionToActionType(log.intervention_type);

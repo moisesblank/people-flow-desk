@@ -67,18 +67,24 @@ export const AI_LOG_POLICY_V2 = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // REGRAS DE BEFORE/AFTER
+  // REGRAS DE BEFORE/AFTER — v2.1 (CORREÇÃO CONSTITUCIONAL)
   // ═══════════════════════════════════════════════════════════════════════════
   before_after_rules: {
-    before_empty_fallback: 'Nenhum valor anterior existia',
-    after_empty_fallback: 'Nenhum valor foi escrito; apenas análise',
+    before_empty_fallback: '(vazio)',
+    after_empty_fallback: null, // PROIBIDO: se AFTER está vazio, o log NÃO DEVE EXISTIR
     rules: [
-      'BEFORE may never be shown as empty.',
-      'If no previous value existed, BEFORE MUST display fallback text.',
-      'AFTER may never be shown as empty.',
-      'If no value was written, AFTER MUST display fallback text.',
-      'Empty or blank BEFORE/AFTER blocks are forbidden.',
+      'BEFORE may show "(vazio)" if no previous value existed.',
+      'AFTER must ALWAYS contain a REAL value.',
+      'Logs with empty AFTER are INVALID and must be DELETED.',
+      'If no value was written, the log MUST NOT BE CREATED.',
+      'Fallback text in AFTER is FORBIDDEN — only real values allowed.',
+      'Logs are evidence of ACTION, not of INTENT.',
     ],
+    enforcement: {
+      creation: 'Logs with empty value_after MUST NOT be inserted.',
+      display: 'Logs with empty value_after MUST NOT be rendered.',
+      cleanup: 'Existing logs with empty value_after MUST be deleted.',
+    },
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -153,14 +159,27 @@ export function normalizeBeforeValue(value: string | null | undefined): string {
 }
 
 /**
- * Normaliza o valor AFTER para exibição
- * NUNCA retorna vazio ou null
+ * Verifica se um log é VÁLIDO (tem valor real no AFTER)
+ * Logs sem valor real são INVÁLIDOS e não devem ser exibidos
  */
-export function normalizeAfterValue(value: string | null | undefined): string {
-  if (value === null || value === undefined || value.trim() === '') {
-    return AI_LOG_POLICY_V2.before_after_rules.after_empty_fallback;
+export function isValidAILog(valueAfter: string | null | undefined): boolean {
+  if (valueAfter === null || valueAfter === undefined) return false;
+  const trimmed = valueAfter.trim();
+  if (trimmed === '') return false;
+  // Fallbacks antigos são inválidos
+  if (trimmed === 'Nenhum valor foi escrito; apenas análise') return false;
+  return true;
+}
+
+/**
+ * Normaliza o valor AFTER para exibição
+ * Retorna o valor real ou null se inválido (para filtrar)
+ */
+export function normalizeAfterValue(value: string | null | undefined): string | null {
+  if (!isValidAILog(value)) {
+    return null; // INVÁLIDO - log não deve ser exibido
   }
-  return value;
+  return value!.trim();
 }
 
 /**
