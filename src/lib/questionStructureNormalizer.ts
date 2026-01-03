@@ -268,6 +268,20 @@ export function normalizeEnunciado(text: string): string {
     /(\S)\s+(Conclui-se\s+(?:corretamente\s+)?que)/gi,
     // Padrão genérico: kJ/mol ou similar seguido de comando
     /([Jj]\/mol|kJ|kcal)\s+(Utilizando|Assinale|Com\s+base|A\s+partir)/gi,
+    // ═══════════════════════════════════════════════════════════════════════════
+    // LEI v3.3: Após item (romano/numérico) terminado em ponto, quebra antes de conclusão
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Padrões após ponto final de item: "Das afirmações...", "São corretas...", "Está(ão) correta(s)..."
+    /(\.\s*)(Das\s+afirmações?\s+(?:acima|anteriores?))/gi,
+    /(\.\s*)(São\s+corretas?,?\s*apenas)/gi,
+    /(\.\s*)(Está(?:ão)?\s+correta\(?s?\)?)/gi,
+    /(\.\s*)(A(?:s)?\s+alternativa(?:s)?\s+correta(?:s)?)/gi,
+    /(\.\s*)(Qual(?:is)?\s+(?:das?\s+)?alternativas?)/gi,
+    /(\.\s*)(Sobre\s+(?:as?\s+)?(?:afirmações?|proposições?))/gi,
+    /(\.\s*)(Em\s+relação\s+(?:às?\s+)?afirmações?)/gi,
+    /(\.\s*)(Analise\s+as?\s+(?:afirmações?|proposições?))/gi,
+    /(\.\s*)(Julgue\s+(?:os?\s+)?itens?)/gi,
+    /(\.\s*)(Considerando\s+(?:as?\s+)?(?:afirmações?|informações?))/gi,
   ];
   
   for (const pattern of commandPatterns) {
