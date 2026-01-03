@@ -18,6 +18,8 @@ const PrimeiroAcesso = lazy(() => import("@/pages/PrimeiroAcesso"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 // 🛡️ BLOCO 1: Device Limit Gate
 const DeviceLimitGate = lazy(() => import("@/pages/security/DeviceLimitGate"));
+// 🛡️ BEYOND_THE_3_DEVICES: Same Type Replacement Gate
+const SameTypeReplacementGate = lazy(() => import("@/pages/security/SameTypeReplacementGate"));
 
 export const publicRoutes = (
   <>
@@ -35,6 +37,8 @@ export const publicRoutes = (
     <Route path="/primeiro-acesso" element={<PrimeiroAcesso />} />
     {/* 🛡️ BLOCO 1: Device Limit Gate - Tela de limite de dispositivos */}
     <Route path="/security/device-limit" element={<DeviceLimitGate />} />
+    {/* 🛡️ BEYOND_THE_3_DEVICES: Substituição de dispositivo do mesmo tipo */}
+    <Route path="/security/same-type-replacement" element={<SameTypeReplacementGate />} />
     <Route path="*" element={<NotFound />} />
   </>
 );

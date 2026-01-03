@@ -7,6 +7,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { collectFingerprintRawData, generateDeviceName } from '@/lib/deviceFingerprintRaw';
 import type { DeviceGatePayload } from '@/state/deviceGateStore';
+import type { SameTypeReplacementPayload } from '@/state/sameTypeReplacementStore';
 
 export interface DeviceNotice {
   level: 'INFO' | 'WARNING' | 'HARD_WARNING' | null;
@@ -44,6 +45,8 @@ export interface DeviceRegistrationResult {
   };
   // Payload completo para o Gate
   gatePayload?: DeviceGatePayload;
+  // 🛡️ BEYOND_THE_3_DEVICES: Payload para substituição do mesmo tipo
+  sameTypePayload?: SameTypeReplacementPayload;
 }
 
 /**
@@ -87,6 +90,26 @@ export async function registerDeviceBeforeSession(): Promise<DeviceRegistrationR
 
     // Tratar resposta
     if (!data.success) {
+      // 🛡️ BEYOND_THE_3_DEVICES: Substituição do mesmo tipo
+      if (data.error === 'SAME_TYPE_REPLACEMENT_REQUIRED' || data.code === 'SAME_TYPE_REPLACEMENT_REQUIRED') {
+        console.log('[BLOCO 3] 🔄 BEYOND_THE_3_DEVICES: Substituição do mesmo tipo oferecida');
+        
+        const sameTypePayload: SameTypeReplacementPayload = {
+          code: 'SAME_TYPE_REPLACEMENT_REQUIRED',
+          message: data.message || 'Substituição de dispositivo disponível',
+          current_device_type: data.current_device_type,
+          current_device: data.current_device,
+          existing_same_type_device: data.existing_same_type_device,
+          new_device_hash: data.new_device_hash,
+        };
+        
+        return {
+          success: false,
+          error: 'SAME_TYPE_REPLACEMENT_REQUIRED',
+          sameTypePayload,
+        };
+      }
+      
       if (data.error === 'DEVICE_LIMIT_EXCEEDED' || data.code === 'DEVICE_LIMIT_EXCEEDED') {
         console.warn('[BLOCO 3] ⚠️ LIMITE DE DISPOSITIVOS EXCEDIDO:', data.current_devices || data.currentCount);
         
@@ -168,6 +191,11 @@ export function getDeviceErrorMessage(error: string): { title: string; descripti
       return {
         title: 'Limite de Dispositivos',
         description: 'Você atingiu o limite de 3 dispositivos. Remova um dispositivo para continuar.',
+      };
+    case 'SAME_TYPE_REPLACEMENT_REQUIRED':
+      return {
+        title: 'Novo Dispositivo Detectado',
+        description: 'Detectamos um novo dispositivo do mesmo tipo. Você pode substituí-lo.',
       };
     case 'DEVICE_SPOOF_DETECTED':
       return {
