@@ -175,8 +175,85 @@
         }
       }, 5000);
 
-      // 🛡️ P0 ANTI-TELA-PRETA: Se o React não montar, mostramos UI de recuperação.
-      // Motivo: evita ficar com fundo preto sem explicação em casos de erro silencioso.
+      // ╔══════════════════════════════════════════════════════════════════════════════╗
+      // ║   🛡️ P0 ANTI-TELA-PRETA v2.0 — RECOVERY SYSTEM                             ║
+      // ║   GARANTIAS:                                                                ║
+      // ║   1. Buttons execute REAL recovery logic                                    ║
+      // ║   2. User can ALWAYS escape                                                 ║
+      // ║   3. Multiple recovery paths                                                ║
+      // ╚══════════════════════════════════════════════════════════════════════════════╝
+      
+      // Recovery functions (standalone, no dependencies)
+      var P0Recovery = {
+        softReload: function() {
+          console.log('[P0-RECOVERY] Soft reload...');
+          try { window.dispatchEvent(new Event('mm-clear-cache')); } catch(e) {}
+          window.location.reload();
+        },
+        hardReload: function() {
+          console.log('[P0-RECOVERY] Hard reload...');
+          try { window.dispatchEvent(new Event('mm-clear-cache')); } catch(e) {}
+          // Unregister service workers
+          if('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(r) {
+              r.forEach(function(s) { s.unregister(); });
+            }).catch(function() {});
+          }
+          // Clear caches
+          if('caches' in window) {
+            caches.keys().then(function(k) {
+              k.forEach(function(c) { caches.delete(c); });
+            }).catch(function() {});
+          }
+          // Force reload with cache buster
+          window.location.href = window.location.origin + window.location.pathname + '?_t=' + Date.now();
+        },
+        nuclearReset: function() {
+          console.log('[P0-RECOVERY] Nuclear reset...');
+          try { window.dispatchEvent(new Event('mm-clear-cache')); } catch(e) {}
+          // Service workers
+          if('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(r) {
+              r.forEach(function(s) { s.unregister(); });
+            }).catch(function() {});
+          }
+          // Caches
+          if('caches' in window) {
+            caches.keys().then(function(k) {
+              k.forEach(function(c) { caches.delete(c); });
+            }).catch(function() {});
+          }
+          // LocalStorage
+          try { localStorage.clear(); } catch(e) {}
+          // SessionStorage
+          try { sessionStorage.clear(); } catch(e) {}
+          // IndexedDB
+          try {
+            if('indexedDB' in window && indexedDB.databases) {
+              indexedDB.databases().then(function(dbs) {
+                dbs.forEach(function(db) {
+                  if(db.name) indexedDB.deleteDatabase(db.name);
+                });
+              }).catch(function() {});
+            }
+          } catch(e) {}
+          // Cookies
+          try {
+            document.cookie.split(';').forEach(function(c) {
+              var name = c.split('=')[0].trim();
+              document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+            });
+          } catch(e) {}
+          // Navigate fresh
+          window.location.href = window.location.origin + '/?_reset=' + Date.now();
+        },
+        goHome: function() {
+          window.location.href = window.location.origin + '/';
+        }
+      };
+      window.P0Recovery = P0Recovery;
+
+      // Check for black screen after timeout
       setTimeout(function() {
         try {
           var root = document.getElementById('root');
@@ -184,82 +261,66 @@
           var already = document.getElementById('p0-recovery');
 
           if (!hasContent && !already) {
-            console.warn('[P0] Root vazio após timeout — exibindo recuperação');
+            console.warn('[P0] Root vazio após timeout — exibindo recuperação v2.0');
             var overlay = document.createElement('div');
             overlay.id = 'p0-recovery';
             overlay.setAttribute('role', 'alert');
             overlay.setAttribute('aria-live', 'assertive');
-            overlay.style.position = 'fixed';
-            overlay.style.inset = '0';
-            overlay.style.zIndex = '2147483647';
-            overlay.style.background = '#0d0d0d';
-            overlay.style.color = '#f5f5f5';
-            overlay.style.display = 'flex';
-            overlay.style.alignItems = 'center';
-            overlay.style.justifyContent = 'center';
-            overlay.style.padding = '24px';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#0d0d0d;color:#f5f5f5;display:flex;align-items:center;justify-content:center;padding:24px;font-family:system-ui,-apple-system,sans-serif';
 
             var card = document.createElement('div');
-            card.style.maxWidth = '520px';
-            card.style.width = '100%';
-            card.style.border = '1px solid rgba(255,255,255,0.12)';
-            card.style.borderRadius = '16px';
-            card.style.background = 'rgba(18,18,18,0.9)';
-            card.style.boxShadow = '0 25px 50px -12px rgba(0,0,0,0.35)';
-            card.style.padding = '18px';
+            card.style.cssText = 'max-width:520px;width:100%;border:1px solid rgba(255,255,255,0.12);border-radius:16px;background:rgba(18,18,18,0.95);box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);padding:24px';
 
-            var title = document.createElement('div');
-            title.style.fontSize = '16px';
-            title.style.fontWeight = '700';
-            title.textContent = 'Sistema em recuperação (P0)';
+            var header = document.createElement('div');
+            header.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:16px';
+            header.innerHTML = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span style="font-size:18px;font-weight:700">Recuperação do Sistema</span>';
 
             var desc = document.createElement('div');
-            desc.style.marginTop = '8px';
-            desc.style.fontSize = '13px';
-            desc.style.opacity = '0.85';
-            desc.textContent = 'A página demorou para iniciar. Você pode recarregar agora ou limpar cache e recarregar.';
+            desc.style.cssText = 'font-size:14px;opacity:0.85;margin-bottom:20px;line-height:1.5';
+            desc.textContent = 'A página não carregou corretamente. Escolha uma opção abaixo para continuar.';
 
-            var row = document.createElement('div');
-            row.style.display = 'flex';
-            row.style.gap = '10px';
-            row.style.flexWrap = 'wrap';
-            row.style.marginTop = '14px';
+            var buttons = document.createElement('div');
+            buttons.style.cssText = 'display:flex;flex-direction:column;gap:10px';
 
+            // Button 1: Reload
             var btn1 = document.createElement('button');
             btn1.type = 'button';
-            btn1.textContent = 'Recarregar';
-            btn1.style.padding = '10px 12px';
-            btn1.style.borderRadius = '12px';
-            btn1.style.border = '1px solid rgba(255,255,255,0.16)';
-            btn1.style.background = '#dc2626';
-            btn1.style.color = '#fff';
-            btn1.style.fontWeight = '700';
-            btn1.onclick = function() { window.location.reload(); };
+            btn1.style.cssText = 'padding:14px 20px;border-radius:12px;border:none;background:#dc2626;color:#fff;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px';
+            btn1.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg> Recarregar Página';
+            btn1.onclick = function() { P0Recovery.softReload(); };
 
+            // Button 2: Clear cache
             var btn2 = document.createElement('button');
             btn2.type = 'button';
-            btn2.textContent = 'Limpar cache + recarregar';
-            btn2.style.padding = '10px 12px';
-            btn2.style.borderRadius = '12px';
-            btn2.style.border = '1px solid rgba(255,255,255,0.16)';
-            btn2.style.background = 'transparent';
-            btn2.style.color = '#f5f5f5';
-            btn2.style.fontWeight = '700';
-            btn2.onclick = function() {
-              try { window.dispatchEvent(new Event('mm-clear-cache')); } catch (e) {}
-              try {
-                if ('caches' in window) {
-                  caches.keys().then(function(k){ k.forEach(function(c){ caches.delete(c); }); });
-                }
-              } catch (e) {}
-              window.location.reload();
+            btn2.style.cssText = 'padding:14px 20px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:#f5f5f5;font-weight:600;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px';
+            btn2.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg> Limpar Cache + Recarregar';
+            btn2.onclick = function() { P0Recovery.hardReload(); };
+
+            // Button 3: Go home
+            var btn3 = document.createElement('button');
+            btn3.type = 'button';
+            btn3.style.cssText = 'padding:14px 20px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);background:transparent;color:#f5f5f5;font-weight:600;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px';
+            btn3.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Ir para Início';
+            btn3.onclick = function() { P0Recovery.goHome(); };
+
+            // Button 4: Nuclear
+            var btn4 = document.createElement('button');
+            btn4.type = 'button';
+            btn4.style.cssText = 'padding:14px 20px;border-radius:12px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.1);color:#fca5a5;font-weight:600;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px';
+            btn4.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Reinício Forçado (Limpa Tudo)';
+            btn4.onclick = function() {
+              if(confirm('Isso irá limpar TODOS os dados locais (login, preferências, cache). Deseja continuar?')) {
+                P0Recovery.nuclearReset();
+              }
             };
 
-            row.appendChild(btn1);
-            row.appendChild(btn2);
-            card.appendChild(title);
+            buttons.appendChild(btn1);
+            buttons.appendChild(btn2);
+            buttons.appendChild(btn3);
+            buttons.appendChild(btn4);
+            card.appendChild(header);
             card.appendChild(desc);
-            card.appendChild(row);
+            card.appendChild(buttons);
             overlay.appendChild(card);
             document.body.appendChild(overlay);
           }

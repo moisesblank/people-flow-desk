@@ -64,91 +64,33 @@ const rootElement = document.getElementById("root");
 if (rootElement) {
   createRoot(rootElement).render(<App />);
 
-  // 🛡️ P0 ANTI-TELA-PRETA (runtime): se o React não montar conteúdo, exibir recuperação.
-  // Complementa o fallback do index.html para casos em que o HTML esteja cacheado.
+  // ╔══════════════════════════════════════════════════════════════════════════════╗
+  // ║   🛡️ P0 ANTI-TELA-PRETA v2.0 — RUNTIME RECOVERY                            ║
+  // ║   Uses the same recovery system as index.html for consistency               ║
+  // ╚══════════════════════════════════════════════════════════════════════════════╝
   window.setTimeout(() => {
     try {
       const hasContent = rootElement.children.length > 0;
       const already = document.getElementById('p0-recovery');
       if (!hasContent && !already) {
-        console.warn('[P0] Root vazio após timeout (runtime) — exibindo recuperação');
-        const overlay = document.createElement('div');
-        overlay.id = 'p0-recovery';
-        overlay.setAttribute('role', 'alert');
-        overlay.setAttribute('aria-live', 'assertive');
-        overlay.style.position = 'fixed';
-        overlay.style.inset = '0';
-        overlay.style.zIndex = '2147483647';
-        overlay.style.background = '#0d0d0d';
-        overlay.style.color = '#f5f5f5';
-        overlay.style.display = 'flex';
-        overlay.style.alignItems = 'center';
-        overlay.style.justifyContent = 'center';
-        overlay.style.padding = '24px';
-
-        const card = document.createElement('div');
-        card.style.maxWidth = '520px';
-        card.style.width = '100%';
-        card.style.border = '1px solid rgba(255,255,255,0.12)';
-        card.style.borderRadius = '16px';
-        card.style.background = 'rgba(18,18,18,0.9)';
-        card.style.boxShadow = '0 25px 50px -12px rgba(0,0,0,0.35)';
-        card.style.padding = '18px';
-
-        const title = document.createElement('div');
-        title.style.fontSize = '16px';
-        title.style.fontWeight = '700';
-        title.textContent = 'Sistema em recuperação (P0)';
-
-        const desc = document.createElement('div');
-        desc.style.marginTop = '8px';
-        desc.style.fontSize = '13px';
-        desc.style.opacity = '0.85';
-        desc.textContent = 'A página demorou para iniciar. Recarregue ou limpe o cache e recarregue.';
-
-        const row = document.createElement('div');
-        row.style.display = 'flex';
-        row.style.gap = '10px';
-        row.style.flexWrap = 'wrap';
-        row.style.marginTop = '14px';
-
-        const btn1 = document.createElement('button');
-        btn1.type = 'button';
-        btn1.textContent = 'Recarregar';
-        btn1.style.padding = '10px 12px';
-        btn1.style.borderRadius = '12px';
-        btn1.style.border = '1px solid rgba(255,255,255,0.16)';
-        btn1.style.background = '#dc2626';
-        btn1.style.color = '#fff';
-        btn1.style.fontWeight = '700';
-        btn1.onclick = () => window.location.reload();
-
-        const btn2 = document.createElement('button');
-        btn2.type = 'button';
-        btn2.textContent = 'Limpar cache + recarregar';
-        btn2.style.padding = '10px 12px';
-        btn2.style.borderRadius = '12px';
-        btn2.style.border = '1px solid rgba(255,255,255,0.16)';
-        btn2.style.background = 'transparent';
-        btn2.style.color = '#f5f5f5';
-        btn2.style.fontWeight = '700';
-        btn2.onclick = () => {
-          try { window.dispatchEvent(new Event('mm-clear-cache')); } catch {}
-          try {
-            if ('caches' in window) {
-              caches.keys().then((k) => k.forEach((c) => caches.delete(c)));
-            }
-          } catch {}
-          window.location.reload();
-        };
-
-        row.appendChild(btn1);
-        row.appendChild(btn2);
-        card.appendChild(title);
-        card.appendChild(desc);
-        card.appendChild(row);
-        overlay.appendChild(card);
-        document.body.appendChild(overlay);
+        console.warn('[P0] Root vazio após timeout (runtime) — usando sistema de recuperação');
+        // Import and use the recovery system
+        import('@/lib/recovery/p0RecoverySystem').then(({ injectSafeShellUI }) => {
+          injectSafeShellUI('A página demorou para iniciar.');
+        }).catch(() => {
+          // Fallback: Use window.P0Recovery if import fails
+          if ((window as any).P0Recovery) {
+            // Recovery is already available from index.html
+            console.log('[P0] Using index.html P0Recovery');
+          } else {
+            // Last resort: simple reload button
+            const overlay = document.createElement('div');
+            overlay.id = 'p0-recovery';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#0d0d0d;color:#f5f5f5;display:flex;align-items:center;justify-content:center;padding:24px';
+            overlay.innerHTML = '<div style="text-align:center"><h2 style="font-size:18px;margin-bottom:16px">Sistema em recuperação</h2><button onclick="window.location.reload()" style="padding:12px 24px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">Recarregar</button></div>';
+            document.body.appendChild(overlay);
+          }
+        });
       }
     } catch {
       // nunca bloquear bootstrap
