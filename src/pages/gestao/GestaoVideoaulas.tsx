@@ -864,28 +864,48 @@ function LessonFormModal({ open, onClose, lesson, modules, areas, onSubmit, isLo
             </div>
           </div>
 
-          {/* IDs específicos */}
+          {/* IDs específicos por Provider */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {formData.video_provider === 'panda' && (
               <div className="space-y-2">
-                <Label htmlFor="panda_video_id">Panda Video ID</Label>
+                <Label htmlFor="panda_video_id">ID do Panda Video</Label>
                 <Input
                   id="panda_video_id"
                   value={formData.panda_video_id}
                   onChange={(e) => setFormData(prev => ({ ...prev, panda_video_id: e.target.value }))}
-                  placeholder="ID do vídeo no Panda"
+                  placeholder="Ex: a7ce1bfd-0af1-4b03-b33b-7ed7226c5fb0"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Formato UUID do Panda Video
+                </p>
               </div>
             )}
             {formData.video_provider === 'youtube' && (
               <div className="space-y-2">
-                <Label htmlFor="youtube_video_id">YouTube Video ID</Label>
+                <Label htmlFor="youtube_video_id">ID do YouTube</Label>
                 <Input
                   id="youtube_video_id"
                   value={formData.youtube_video_id}
                   onChange={(e) => setFormData(prev => ({ ...prev, youtube_video_id: e.target.value }))}
-                  placeholder="Ex: dQw4w9WgXcQ"
+                  placeholder="Ex: 9Zr70n-KH6Y"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Código de 11 caracteres do vídeo
+                </p>
+              </div>
+            )}
+            {formData.video_provider === 'vimeo' && (
+              <div className="space-y-2">
+                <Label htmlFor="vimeo_video_id">ID do Vimeo</Label>
+                <Input
+                  id="vimeo_video_id"
+                  value={formData.video_url?.replace('https://vimeo.com/', '') || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, video_url: `https://vimeo.com/${e.target.value}` }))}
+                  placeholder="Ex: 123456789"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Código numérico do vídeo
+                </p>
               </div>
             )}
             <div className="space-y-2">
