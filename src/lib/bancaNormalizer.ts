@@ -8,7 +8,7 @@
 import { BANCAS, findBancaByValue } from "@/constants/bancas";
 
 // Fallback padrão quando não há banca oficial
-export const DEFAULT_BANCA_HEADER = "QUESTÃO SIMULADO PROF. MOISÉS MEDEIROS";
+export const DEFAULT_BANCA_HEADER = "SIMULADO PROF. MOISÉS MEDEIROS";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PREFIXOS INVÁLIDOS — DEVEM SER REMOVIDOS QUANDO HÁ BANCA OFICIAL
