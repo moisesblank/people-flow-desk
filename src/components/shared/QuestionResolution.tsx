@@ -1,19 +1,66 @@
 // ╔══════════════════════════════════════════════════════════════════════════════════╗
 // ║ 📚 QUESTION RESOLUTION — COMPONENTE UNIVERSAL E OBRIGATÓRIO                      ║
-// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v6.1 — CORREÇÕES TÉCNICAS OBJETIVAS          ║
+// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v6.2 — CORREÇÕES TÉCNICAS + CONFIDENCE GATE  ║
 // ╠══════════════════════════════════════════════════════════════════════════════════╣
 // ║                                                                                   ║
-// ║ 🔒 LEI PERMANENTE — CONSTITUIÇÃO DO QUESTION DOMAIN v6.1                         ║
+// ║ 🔒 LEI PERMANENTE — CONSTITUIÇÃO DO QUESTION DOMAIN v6.2                         ║
 // ║                                                                                   ║
 // ║ Este componente é a ÚNICA fonte de verdade para renderização de resoluções.      ║
 // ║ TODAS as questões (SIMULADOS, MODO TREINO, atuais e futuras) DEVEM usar          ║
 // ║ este componente para garantir formatação consistente.                            ║
 // ║                                                                                   ║
 // ║ ═══════════════════════════════════════════════════════════════════════════════  ║
-// ║ 🚨 NOVA LEI v6.1 — ORGANIZAÇÃO + CORREÇÕES TÉCNICAS OBJETIVAS                    ║
+// ║ 🚨 NOVA LEI v6.2 — ORGANIZAÇÃO + CORREÇÕES TÉCNICAS + CONFIDENCE-GATED IMAGE     ║
 // ║ ═══════════════════════════════════════════════════════════════════════════════  ║
 // ║                                                                                   ║
 // ║ REGRA SUPREMA: O componente NÃO INTERFERE no SIGNIFICADO do texto original.     ║
+// ║                                                                                   ║
+// ║ ═══════════════════════════════════════════════════════════════════════════════  ║
+// ║ 🔒 CONFIDENCE-GATED IMAGE EXTRACTION POLICY v1.0                                 ║
+// ║ ═══════════════════════════════════════════════════════════════════════════════  ║
+// ║                                                                                   ║
+// ║ THRESHOLD: 80% (IMUTÁVEL)                                                        ║
+// ║                                                                                   ║
+// ║ COMPORTAMENTO QUANDO confidence < 80%:                                           ║
+// ║   • NÃO modifica a entidade Question                                             ║
+// ║   • NÃO reescreve dados de imagem como texto                                     ║
+// ║   • APENAS loga a detecção sem intervenção                                       ║
+// ║                                                                                   ║
+// ║ COMPORTAMENTO QUANDO confidence >= 80%:                                          ║
+// ║   • Extrai dados químicos das imagens                                            ║
+// ║   • Reescreve dados extraídos em texto químico padronizado                       ║
+// ║   • Insere dados nos campos apropriados da Question                              ║
+// ║   • Loga a intervenção com comparação before/after                               ║
+// ║                                                                                   ║
+// ║ DADOS EXTRAÍVEIS COM CONFIANÇA >= 80%:                                           ║
+// ║   • Massa molar (g/mol)                                                          ║
+// ║   • Ponto de fusão/ebulição                                                      ║
+// ║   • Número atômico (Z)                                                           ║
+// ║   • Grupos químicos                                                              ║
+// ║   • Reações químicas                                                             ║
+// ║   • Condições de reação                                                          ║
+// ║   • Alternativas apresentadas como imagens                                       ║
+// ║                                                                                   ║
+// ║ REGRAS DE INSERÇÃO NA ENTIDADE:                                                  ║
+// ║   • NÃO altera o enunciado original                                              ║
+// ║   • Insere dados extraídos como texto estruturado vinculado ao enunciado         ║
+// ║   • Na seção de Análise, apenas descreve a presença dos dados                    ║
+// ║   • NUNCA explica, interpreta ou resolve a questão                               ║
+// ║   • NUNCA gera respostas comentadas sem solicitação explícita                    ║
+// ║                                                                                   ║
+// ║ AUDITORIA E LOGGING:                                                             ║
+// ║   • Log do score de confiança                                                    ║
+// ║   • Log dos elementos extraídos                                                  ║
+// ║   • Log do estado before/after                                                   ║
+// ║   • Logs associados à entidade Question                                          ║
+// ║   • Logs expostos no AI Log Global e per-question                                ║
+// ║                                                                                   ║
+// ║ IMUTABILIDADE:                                                                   ║
+// ║   • Este comportamento de gate de confiança é PERMANENTE                         ║
+// ║   • Nenhuma feature futura pode contornar o threshold                            ║
+// ║   • Violação é considerada brecha constitucional                                 ║
+// ║                                                                                   ║
+// ║ ═══════════════════════════════════════════════════════════════════════════════  ║
 // ║                                                                                   ║
 // ║ ✅ O QUE ESTE COMPONENTE FAZ (CORREÇÕES TÉCNICAS OBJETIVAS):                     ║
 // ║    1. ORGANIZA visualmente as seções (ANÁLISE → CONCLUSÃO → ENEM → etc)          ║
@@ -27,14 +74,16 @@
 // ║    9. SÍMBOLOS INÚTEIS: emojis decorativos, caracteres estranhos → removidos    ║
 // ║   10. CARACTERES ESPECIAIS NO INÍCIO: alternativas com ? . : → limpos           ║
 // ║   11. CORREÇÃO DE PORTUGUÊS: gramática básica (crase, concordância, acentos)    ║
+// ║   12. EXTRAÇÃO DE IMAGEM: dados químicos de imagens (se confidence >= 80%)      ║
 // ║                                                                                   ║
 // ║ ❌ O QUE ESTE COMPONENTE NÃO FAZ:                                                ║
 // ║    1. NÃO altera SIGNIFICADO do texto original                                   ║
 // ║    2. NÃO remove CONTEÚDO (exceto metadados HTML e símbolos decorativos)         ║
 // ║    3. NÃO adiciona palavras ou muda significado                                  ║
 // ║    4. NÃO "refina pedagogicamente" o texto (opinião)                             ║
+// ║    5. NÃO extrai de imagens se confidence < 80%                                  ║
 // ║                                                                                   ║
-// ║ LEMA: "Correções TÉCNICAS são fatos. Organização preserva a essência."          ║
+// ║ LEMA: "Correções TÉCNICAS são fatos. Extração só com confiança alta."           ║
 // ║                                                                                   ║
 // ║ JAMAIS MODIFICAR ESTAS REGRAS SEM AUTORIZAÇÃO DO OWNER.                           ║
 // ║                                                                                   ║
@@ -117,7 +166,7 @@ interface QuestionResolutionProps {
 
 /**
  * =====================================================
- * CORREÇÕES TÉCNICAS OBJETIVAS — v6.1
+ * CORREÇÕES TÉCNICAS OBJETIVAS — v6.2
  * =====================================================
  * 
  * Estas NÃO são opinião. São FATOS:
@@ -130,8 +179,10 @@ interface QuestionResolutionProps {
  * 7. Formatação química (subscrito/sobrescrito)
  * 8. Alternativa começando com caractere especial → limpar
  * 9. Correção de português (gramática básica objetiva)
+ * 10. EXTRAÇÃO DE IMAGEM: dados químicos (apenas se confidence >= 80%)
  * 
  * NUNCA altera significado. Apenas padronização técnica.
+ * EXTRAÇÃO DE IMAGEM: Só aplica se AI confidence >= 80% (CONFIDENCE-GATE)
  * =====================================================
  */
 
