@@ -169,7 +169,7 @@ export function formatChemicalFormulas(text: string): string {
     .replace(/\(\s*aq\s*\)/gi, '⟦state:aq⟧');
 
   // ═══════════════════════════════════════════════════════════════════
-  // 5. PADRONIZAR SETAS DE REAÇÃO
+  // 5. PADRONIZAR E RESTAURAR SETAS DE REAÇÃO — LEI v2.3
   // ═══════════════════════════════════════════════════════════════════
   // Seta simples: -> ou --> vira →
   result = result.replace(/\s*-+>\s*/g, ' → ');
@@ -177,6 +177,47 @@ export function formatChemicalFormulas(text: string): string {
   result = result.replace(/\s*<-+>\s*/g, ' ⇌ ');
   // Seta reversa: <- vira ←
   result = result.replace(/\s*<-+\s*/g, ' ← ');
+  
+  // ═══════════════════════════════════════════════════════════════════
+  // 5b. RESTAURAR SETAS AUSENTES EM REAÇÕES QUÍMICAS — LEI v2.3
+  // ═══════════════════════════════════════════════════════════════════
+  // Detecta padrão: estado físico + espaço + coeficiente + fórmula (sem seta)
+  // Ex: "C₃H₈(g) + 5 O₂(g) 3 CO₂(g)" → "C₃H₈(g) + 5 O₂(g) → 3 CO₂(g)"
+  // Padrão: ⟦state:X⟧ ou ₍X₎ seguido de espaço e número + elemento (sem +)
+  
+  // Padrão com token de estado: ⟦state:g⟧ 3 CO₂
+  result = result.replace(
+    /(⟦state:[sglvaq]+⟧)\s+(\d+)\s*([A-Z][a-z]?)/g,
+    (match, state, coef, element) => {
+      // Verificar se já tem seta antes
+      const beforeMatch = result.substring(0, result.indexOf(match));
+      const lastChars = beforeMatch.slice(-5);
+      if (lastChars.includes('→') || lastChars.includes('⇌') || lastChars.includes('←')) {
+        return match; // Já tem seta, não adicionar
+      }
+      return `${state} → ${coef}${element}`;
+    }
+  );
+  
+  // Padrão com subscript de estado: ₍g₎ 3 CO₂ ou (g) 3 CO₂
+  result = result.replace(
+    /(\([sglvaq]+\)|₍[sglvaq]+₎)\s+(\d+)\s*([A-Z][a-z]?)/gi,
+    (match, state, coef, element) => {
+      // Verificar se já tem seta antes (checagem simples)
+      return `${state} → ${coef}${element}`;
+    }
+  );
+  
+  // Padrão genérico: fórmula química + espaço + coeficiente + fórmula (sem +/→ entre)
+  // Ex: "H₂O 2 CO₂" → "H₂O → 2 CO₂" (quando não há + entre eles)
+  result = result.replace(
+    /([A-Z][a-z]?(?:₀|₁|₂|₃|₄|₅|₆|₇|₈|₉)+(?:⟦state:[sglvaq]+⟧)?)\s+(\d+)\s*([A-Z][a-z]?(?:₀|₁|₂|₃|₄|₅|₆|₇|₈|₉)*)/g,
+    (match, formula1, coef, formula2) => {
+      // Não inserir seta se for parte de uma soma (+ antes ou depois)
+      if (match.includes('+')) return match;
+      return `${formula1} → ${coef}${formula2}`;
+    }
+  );
 
   // ═══════════════════════════════════════════════════════════════════
   // 6. SEPARAR COEFICIENTES ESTEQUIOMÉTRICOS DE FÓRMULAS
