@@ -156,10 +156,11 @@ export function formatChemicalFormulas(text: string): string {
   });
 
   // ═══════════════════════════════════════════════════════════════════
-  // 4. PADRONIZAR ESTADOS FÍSICOS — VISUAL CONSISTENTE
+  // 4. PADRONIZAR ESTADOS FÍSICOS — SUBSCRITO COMPACTO 
   // ═══════════════════════════════════════════════════════════════════
   // Estados: (s) sólido, (l) líquido, (g) gasoso, (aq) aquoso
-  // Manter legíveis mas com estilo visual consistente (parênteses pequenos)
+  // Usar parênteses subscrito + letras minúsculas normais
+  // Os parênteses ₍ ₎ são subscritos, as letras ficam normais mas pequenas visualmente
   result = result
     .replace(/\(\s*s\s*\)/gi, '₍s₎')
     .replace(/\(\s*l\s*\)/gi, '₍l₎')
