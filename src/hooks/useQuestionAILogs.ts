@@ -292,12 +292,15 @@ export function useGlobalAILogsSummary() {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HOOK - LOGS AGRUPADOS POR QUESTÃO (para visualização em tempo real)
-// POLÍTICA: Real-Time Question-Level AI Log Policy v1.0
+// POLÍTICA: Question AI Log Mandatory Human-Readable Audit v2.0
 // ═══════════════════════════════════════════════════════════════════════════════
+
+import { extractEnunciadoSnippet } from '@/lib/audits/AUDIT_AI_LOG_POLICY_v2';
 
 export interface QuestionWithLogs {
   question_id: string;
-  question_text_preview: string;
+  question_text_preview: string; // Snippet do enunciado (≤300 chars) - OBRIGATÓRIO
+  question_enunciado_full?: string; // Enunciado completo (opcional)
   logs: QuestionAILog[];
   total_interventions: number;
   first_intervention_at: string;
@@ -315,22 +318,41 @@ export function useGlobalAILogsGroupedByQuestion() {
   return useQuery({
     queryKey: ['global-ai-logs-by-question'],
     queryFn: async (): Promise<GroupedAILogs> => {
-      // Buscar todos os logs com detalhes completos
-      const { data, error } = await supabase
+      // PASSO 1: Buscar todos os logs com detalhes completos
+      const { data: logsData, error: logsError } = await supabase
         .from('question_ai_intervention_logs')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(5000);
 
-      if (error) {
-        console.error('[useGlobalAILogsGroupedByQuestion] Erro:', error);
-        throw error;
+      if (logsError) {
+        console.error('[useGlobalAILogsGroupedByQuestion] Erro ao buscar logs:', logsError);
+        throw logsError;
+      }
+
+      // Extrair IDs únicos de questões
+      const questionIds = [...new Set((logsData || []).map(log => log.question_id))];
+
+      // PASSO 2: Buscar enunciados reais das questões (POLÍTICA v2.0)
+      let questionEnunciados: Map<string, string> = new Map();
+      
+      if (questionIds.length > 0) {
+        const { data: questionsData, error: questionsError } = await supabase
+          .from('quiz_questions')
+          .select('id, question_text')
+          .in('id', questionIds);
+
+        if (!questionsError && questionsData) {
+          for (const q of questionsData) {
+            questionEnunciados.set(q.id, q.question_text || '');
+          }
+        }
       }
 
       // Agrupar por question_id
       const groupedMap = new Map<string, QuestionAILog[]>();
       
-      for (const row of (data as QuestionAILog[]) || []) {
+      for (const row of (logsData as QuestionAILog[]) || []) {
         const existing = groupedMap.get(row.question_id) || [];
         existing.push(row);
         groupedMap.set(row.question_id, existing);
@@ -347,16 +369,14 @@ export function useGlobalAILogsGroupedByQuestion() {
         const typesSet = new Set<AIInterventionType>();
         logs.forEach(log => typesSet.add(log.intervention_type));
         
-        // Criar preview do texto da questão (baseado no primeiro log com value_after em question_text)
-        let textPreview = `Questão ${question_id.slice(0, 8)}...`;
-        const questionTextLog = logs.find(l => l.field_affected === 'question_text' && l.value_after);
-        if (questionTextLog) {
-          textPreview = questionTextLog.value_after.slice(0, 100) + (questionTextLog.value_after.length > 100 ? '...' : '');
-        }
+        // POLÍTICA v2.0: Usar enunciado REAL da questão (não do log)
+        const enunciadoFull = questionEnunciados.get(question_id) || '';
+        const textPreview = extractEnunciadoSnippet(enunciadoFull, 300);
 
         questions.push({
           question_id,
           question_text_preview: textPreview,
+          question_enunciado_full: enunciadoFull,
           logs,
           total_interventions: logs.length,
           first_intervention_at: logs[logs.length - 1].created_at,
@@ -372,7 +392,7 @@ export function useGlobalAILogsGroupedByQuestion() {
 
       return {
         questions,
-        total_logs: data?.length || 0,
+        total_logs: logsData?.length || 0,
         total_questions: questions.length,
       };
     },
