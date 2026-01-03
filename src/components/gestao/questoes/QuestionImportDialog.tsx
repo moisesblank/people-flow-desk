@@ -700,10 +700,11 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   type QuestionStyle = 'multiple_choice' | 'discursive' | 'outros' | '';
   const [selectedStyle, setSelectedStyle] = useState<QuestionStyle>('');
   
-  // MACRO/MICRO/TEMA OBRIGATÓRIOS: Pré-seleção antes de processar
+  // MACRO/MICRO/TEMA/DIFICULDADE OBRIGATÓRIOS: Pré-seleção antes de processar
   const [selectedMacro, setSelectedMacro] = useState<string>('');
   const [selectedMicro, setSelectedMicro] = useState<string>('');
   const [selectedTema, setSelectedTema] = useState<string>('');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('');
   
   const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
   
@@ -2167,10 +2168,47 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                             </p>
                           )}
                         </div>
+                        
+                        {/* DIFICULDADE */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium flex items-center gap-2">
+                            📊 Nível de Dificuldade
+                            {selectedDifficulty && <CheckCircle className="h-4 w-4 text-green-500" />}
+                          </Label>
+                          <Select
+                            value={selectedDifficulty}
+                            onValueChange={setSelectedDifficulty}
+                          >
+                            <SelectTrigger className={cn(
+                              "h-11",
+                              !selectedDifficulty && "border-amber-500/50"
+                            )}>
+                              <SelectValue placeholder="Selecione a Dificuldade..." />
+                            </SelectTrigger>
+                            <SelectContent className="z-[9999]">
+                              {/* OPÇÃO AUTOMÁTICO (IA) - Respeita Excel e só corrige se confiança ≥80% */}
+                              <SelectItem value="__AUTO_AI__" className="border-b border-primary/20 mb-1">
+                                <span className="flex items-center gap-2">
+                                  <Sparkles className="h-4 w-4 text-primary" />
+                                  <span className="font-medium text-primary">Automático (IA)</span>
+                                </span>
+                              </SelectItem>
+                              <SelectItem value="facil">🟢 Fácil</SelectItem>
+                              <SelectItem value="medio">🟡 Médio</SelectItem>
+                              <SelectItem value="dificil">🔴 Difícil</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {selectedDifficulty === '__AUTO_AI__' && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Brain className="h-3 w-3" />
+                              IA infere dificuldade com base na complexidade. Corrige somente se confiança ≥80%.
+                            </p>
+                          )}
+                        </div>
                       </div>
                       
                       {/* Preview da seleção */}
-                      {(selectedMacro || selectedMicro || selectedTema) && (
+                      {(selectedMacro || selectedMicro || selectedTema || selectedDifficulty) && (
                         <div className="mt-4 p-3 rounded-lg bg-muted/30 border">
                           <p className="text-xs text-muted-foreground mb-1">Classificação aplicada:</p>
                           <div className="flex flex-wrap gap-2">
@@ -2201,6 +2239,15 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                                 )}
                               </Badge>
                             )}
+                            {selectedDifficulty && (
+                              <Badge variant="secondary" className={cn("gap-1", selectedDifficulty === '__AUTO_AI__' && "bg-primary/20 text-primary border-primary/30")}>
+                                {selectedDifficulty === '__AUTO_AI__' ? (
+                                  <><Sparkles className="h-3 w-3" /> Dificuldade: Automático (IA)</>
+                                ) : (
+                                  <>📊 {selectedDifficulty === 'facil' ? '🟢 Fácil' : selectedDifficulty === 'medio' ? '🟡 Médio' : '🔴 Difícil'}</>
+                                )}
+                              </Badge>
+                            )}
                           </div>
                         </div>
                       )}
@@ -2208,16 +2255,17 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   </Card>
                 </div>
 
-                {/* ÁREA DE UPLOAD (só habilitada após selecionar estilo + macro + micro + tema) */}
+                {/* ÁREA DE UPLOAD (só habilitada após selecionar estilo + macro + micro + tema + dificuldade) */}
                 {(() => {
                   // Se Micro = Auto, Tema é automaticamente Auto também
                   const temaResolved = selectedMicro === '__AUTO_AI__' ? '__AUTO_AI__' : selectedTema;
-                  const canUpload = selectedStyle && selectedMacro && selectedMicro && temaResolved;
+                  const canUpload = selectedStyle && selectedMacro && selectedMicro && temaResolved && selectedDifficulty;
                   const missingItems = [];
                   if (!selectedStyle) missingItems.push('estilo');
                   if (!selectedMacro) missingItems.push('macro');
                   if (!selectedMicro) missingItems.push('micro');
                   if (!temaResolved) missingItems.push('tema');
+                  if (!selectedDifficulty) missingItems.push('dificuldade');
                   
                   return (
                     <div

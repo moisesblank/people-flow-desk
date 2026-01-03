@@ -472,6 +472,23 @@ export const QUESTION_DOMAIN_CONSTITUTION = {
           required: true,
           dependsOn: 'macro_area',
         },
+        difficulty: {
+          values: ['__AUTO_AI__', 'facil', 'medio', 'dificil'],
+          specialValue: {
+            '__AUTO_AI__': {
+              label: 'Automático (IA)',
+              behavior: 'AI_INFERENCE_WITH_CONFIDENCE_THRESHOLD',
+              confidenceThreshold: 0.80,
+              description: 'IA infere dificuldade com base na complexidade. Corrige somente se confiança ≥80%',
+            },
+          },
+          required: true,
+          labels: {
+            'facil': '🟢 Fácil',
+            'medio': '🟡 Médio',
+            'dificil': '🔴 Difícil',
+          },
+        },
       },
     },
     
@@ -485,7 +502,7 @@ export const QUESTION_DOMAIN_CONSTITUTION = {
           respectExcelData: true,
           fillEmptyFields: true,
           correctOnlyIfConfidenceAbove: 0.80,
-          fieldsToCorrect: ['micro', 'tema', 'subtema'],
+          fieldsToCorrect: ['micro', 'tema', 'subtema', 'difficulty'],
         },
       },
     },
@@ -567,9 +584,10 @@ export const QUESTION_DOMAIN_GOLDEN_RULE = `
 ║   5. Qualquer MODIFICAÇÃO estrutural requer INTERNAL_SECRET do OWNER        ║
 ║   6. Apenas EXTENSÕES (novas features) são permitidas sem autorização       ║
 ║   7. Este arquivo é a FONTE DA VERDADE para todo o Question Domain          ║
-║   8. PRÉ-SELEÇÃO de ESTILO + MACRO + MICRO + TEMA é OBRIGATÓRIA             ║
+║   8. PRÉ-SELEÇÃO de ESTILO + MACRO + MICRO + TEMA + DIFICULDADE é OBRIGATÓRIA║
 ║   9. Modo "Automático (IA)" respeita Excel e só corrige se confiança ≥80%   ║
 ║  10. Se MICRO = Auto, TEMA é automaticamente definido pela IA               ║
+║  11. DIFICULDADE pode ser: Fácil, Médio, Difícil ou Automático (IA)         ║
 ║                                                                              ║
 ║   VIOLAÇÕES serão BLOQUEADAS automaticamente.                               ║
 ║                                                                              ║
@@ -592,22 +610,26 @@ export const IMPORT_CONSTITUTION_OATH = `
 ║   FICA ESTABELECIDO, SOB JURAMENTO DE CONSTITUIÇÃO:                          ║
 ║                                                                              ║
 ║   Art. 1º - ANTES de qualquer importação de questões, é OBRIGATÓRIO          ║
-║             selecionar: ESTILO, MACRO, MICRO e TEMA.                         ║
+║             selecionar: ESTILO, MACRO, MICRO, TEMA e DIFICULDADE.            ║
 ║                                                                              ║
 ║   Art. 2º - Os valores pré-selecionados têm PRIORIDADE ABSOLUTA sobre        ║
 ║             quaisquer dados presentes no arquivo de importação.              ║
 ║                                                                              ║
-║   Art. 3º - A opção "Automático (IA)" é permitida para MACRO, MICRO e TEMA:  ║
+║   Art. 3º - A opção "Automático (IA)" é permitida para MACRO, MICRO, TEMA    ║
+║             e DIFICULDADE:                                                   ║
 ║             a) Respeita dados já existentes no arquivo;                      ║
 ║             b) Preenche campos vazios automaticamente;                       ║
-║             c) Só corrige MICRO/TEMA/SUBTEMA se confiança ≥ 80%.             ║
+║             c) Só corrige se confiança ≥ 80%.                                ║
 ║                                                                              ║
 ║   Art. 4º - Se MICRO = "Automático (IA)", o TEMA também é inferido pela IA.  ║
 ║                                                                              ║
-║   Art. 5º - Esta lei é PERMANENTE e se aplica a TODOS os pontos de           ║
+║   Art. 5º - DIFICULDADE pode ser: Fácil, Médio, Difícil ou Automático (IA).  ║
+║             Se Automático, IA analisa complexidade textual e estrutural.     ║
+║                                                                              ║
+║   Art. 6º - Esta lei é PERMANENTE e se aplica a TODOS os pontos de           ║
 ║             entrada de questões: importação, criação, duplicação, API.       ║
 ║                                                                              ║
-║   Art. 6º - Modificação desta lei requer:                                    ║
+║   Art. 7º - Modificação desta lei requer:                                    ║
 ║             a) INTERNAL_SECRET do OWNER;                                     ║
 ║             b) Autorização EXPLÍCITA do OWNER;                               ║
 ║             c) Registro em auditoria.                                        ║
@@ -621,12 +643,13 @@ export const IMPORT_CONSTITUTION_OATH = `
 
 // Exportar para uso em validações
 export const IMPORT_REQUIREMENTS = {
-  mandatoryFields: ['question_style', 'macro_area', 'micro_subject', 'tema'],
+  mandatoryFields: ['question_style', 'macro_area', 'micro_subject', 'tema', 'difficulty'],
   autoAIValue: '__AUTO_AI__',
   confidenceThreshold: 0.80,
-  isValid: (style: string, macro: string, micro: string, tema: string): boolean => {
+  difficultyValues: ['facil', 'medio', 'dificil', '__AUTO_AI__'],
+  isValid: (style: string, macro: string, micro: string, tema: string, difficulty: string): boolean => {
     // Se micro é AUTO, tema é automaticamente válido (será inferido pela IA)
     const temaValid = micro === '__AUTO_AI__' ? true : Boolean(tema);
-    return Boolean(style) && Boolean(macro) && Boolean(micro) && temaValid;
+    return Boolean(style) && Boolean(macro) && Boolean(micro) && temaValid && Boolean(difficulty);
   },
 };
