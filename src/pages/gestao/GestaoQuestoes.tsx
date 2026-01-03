@@ -961,6 +961,11 @@ function GestaoQuestoes() {
   const [isDeletingTreino, setIsDeletingTreino] = useState(false);
   const [treinoConfirmText, setTreinoConfirmText] = useState('');
   
+  // SEM GRUPO deletion states
+  const [deleteSemGrupoConfirm, setDeleteSemGrupoConfirm] = useState(false);
+  const [isDeletingSemGrupo, setIsDeletingSemGrupo] = useState(false);
+  const [semGrupoConfirmText, setSemGrupoConfirmText] = useState('');
+  
   // PAGINATION: 100 itens por página (frontend)
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 100;
@@ -1253,6 +1258,11 @@ function GestaoQuestoes() {
     const modoTreino = questions.filter(q => q.tags?.includes('MODO_TREINO'));
     // NÃO ASSOCIADA: questões que NÃO têm MACRO e MICRO juntos
     const naoAssociada = questions.filter(q => !q.macro || !q.micro);
+    // SEM GRUPO: questões que NÃO têm SIMULADOS nem MODO_TREINO nas tags
+    const semGrupo = questions.filter(q => {
+      const tags = q.tags || [];
+      return !tags.includes('SIMULADOS') && !tags.includes('MODO_TREINO');
+    });
     // ESTILO ENEM: questões com características ENEM
     const estiloEnem = questions.filter(q => {
       const qAny = q as any;
@@ -1273,6 +1283,7 @@ function GestaoQuestoes() {
       modoTreino: modoTreino.length,
       naoAssociada: naoAssociada.length,
       estiloEnem: estiloEnem.length,
+      semGrupo: semGrupo.length,
       byDifficulty: {
         facil: questions.filter(q => q.difficulty === 'facil').length,
         medio: questions.filter(q => q.difficulty === 'medio').length,
@@ -1827,6 +1838,109 @@ function GestaoQuestoes() {
     }
   };
 
+  // Resetar campos quando fechar modal de Sem Grupo
+  const handleCloseSemGrupoModal = (open: boolean) => {
+    setDeleteSemGrupoConfirm(open);
+    if (!open) {
+      setSemGrupoConfirmText('');
+    }
+  };
+
+  // Handler para excluir questões SEM GRUPO (não têm SIMULADOS nem MODO_TREINO)
+  const handleDeleteSemGrupoQuestions = async () => {
+    setIsDeletingSemGrupo(true);
+    
+    try {
+      console.log('[EXCLUIR_SEM_GRUPO] Iniciando busca de questões sem grupo no banco...');
+      
+      // Buscar TODAS as questões do banco e filtrar sem grupo
+      const { data: allQuestions, error: fetchError } = await supabase
+        .from('quiz_questions')
+        .select('id, tags');
+        
+      if (fetchError) {
+        console.error('[EXCLUIR_SEM_GRUPO] Erro ao buscar:', fetchError);
+        throw fetchError;
+      }
+
+      // Filtrar questões SEM GRUPO (não têm SIMULADOS nem MODO_TREINO)
+      const semGrupoQuestions = (allQuestions || []).filter(q => {
+        const tags = (q.tags as string[]) || [];
+        return !tags.includes('SIMULADOS') && !tags.includes('MODO_TREINO');
+      });
+
+      if (semGrupoQuestions.length === 0) {
+        toast.info('Nenhuma questão sem grupo encontrada');
+        setDeleteSemGrupoConfirm(false);
+        setIsDeletingSemGrupo(false);
+        return;
+      }
+
+      console.log(`[EXCLUIR_SEM_GRUPO] Encontradas ${semGrupoQuestions.length} questões sem grupo no banco`);
+
+      const deleteIds = semGrupoQuestions.map(q => q.id);
+
+      // Batch de 500 IDs por vez para evitar Bad Request (URL muito longa)
+      const DELETE_BATCH_SIZE = 500;
+      let totalDeletedCount = 0;
+
+      for (let i = 0; i < deleteIds.length; i += DELETE_BATCH_SIZE) {
+        const batchIds = deleteIds.slice(i, i + DELETE_BATCH_SIZE);
+        console.log(`[EXCLUIR_SEM_GRUPO] Deletando batch ${Math.floor(i / DELETE_BATCH_SIZE) + 1}/${Math.ceil(deleteIds.length / DELETE_BATCH_SIZE)} (${batchIds.length} IDs)`);
+
+        const { data: deletedRows, error } = await supabase
+          .from('quiz_questions')
+          .delete()
+          .in('id', batchIds)
+          .select('id');
+
+        if (error) {
+          console.error('[EXCLUIR_SEM_GRUPO] Erro ao deletar batch:', error);
+          throw error;
+        }
+
+        totalDeletedCount += (deletedRows || []).length;
+      }
+
+      if (totalDeletedCount === 0 && deleteIds.length > 0) {
+        throw new Error('Nenhuma questão foi excluída (provável bloqueio de permissão).');
+      }
+
+      console.log(`[EXCLUIR_SEM_GRUPO] ${totalDeletedCount} questões deletadas com sucesso`);
+
+      // Validação pós-ação
+      const { data: stillExists, error: valError } = await supabase
+        .from('quiz_questions')
+        .select('id')
+        .in('id', deleteIds.slice(0, 100)); // Sample check
+
+      if (valError) throw valError;
+      
+      // Se alguma ainda existe do sample, alertar
+      if (stillExists && stillExists.length > 0) {
+        console.warn(`[EXCLUIR_SEM_GRUPO] Algumas questões ainda existem: ${stillExists.length}`);
+      }
+
+      // Limpar cache e recarregar
+      clearQueryCache();
+      await loadQuestions();
+      
+      toast.success(`🗑️ Questões sem grupo excluídas!`, {
+        description: `${totalDeletedCount} questões removidas`,
+        duration: 5000,
+      });
+      
+      // Reset do modal
+      setDeleteSemGrupoConfirm(false);
+      setSemGrupoConfirmText('');
+    } catch (err) {
+      console.error('Erro ao excluir questões sem grupo:', err);
+      toast.error('Erro: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsDeletingSemGrupo(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
       {/* Header */}
@@ -1910,6 +2024,18 @@ function GestaoQuestoes() {
               CONSTITUIÇÃO v1.0: "Buttons must be visible by default.
               Buttons must not depend on mode, filter, or state."
               ═══════════════════════════════════════════════════════════════ */}
+          {isOwner && (
+            <Button 
+              variant="outline"
+              onClick={() => setDeleteSemGrupoConfirm(true)}
+              disabled={stats.semGrupo === 0}
+              className="gap-2 border-gray-500/50 text-gray-400 hover:bg-gray-500/10 hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              title={stats.semGrupo === 0 ? 'Nenhuma questão sem grupo' : `Excluir ${stats.semGrupo} questões sem grupo`}
+            >
+              <Trash2 className="h-4 w-4" />
+              Excluir Sem Grupo ({stats.semGrupo})
+            </Button>
+          )}
           {isOwner && (
             <Button 
               variant="outline"
@@ -2910,6 +3036,82 @@ function GestaoQuestoes() {
                 <>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Excluir Modo Treino
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmação de EXCLUSÃO SEM GRUPO */}
+      <Dialog open={deleteSemGrupoConfirm} onOpenChange={handleCloseSemGrupoModal}>
+        <DialogContent className="border-gray-500/50 max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-gray-400 text-xl">
+              <Trash2 className="h-6 w-6" />
+              🗑️ Excluir Sem Grupo
+            </DialogTitle>
+            <DialogDescription className="space-y-4 pt-4">
+              <div className="bg-gray-500/20 border border-gray-500/50 p-4 rounded-lg">
+                <p className="text-gray-400 font-bold text-lg mb-2">
+                  ⚠️ Esta ação remove questões SEM grupo definido
+                </p>
+                <p className="text-foreground">
+                  Você está prestes a excluir <strong className="text-gray-400">{stats.semGrupo} questões</strong> que não possuem SIMULADOS nem MODO_TREINO.
+                </p>
+              </div>
+              
+              <ul className="text-sm space-y-2 bg-muted/50 p-4 rounded-lg border">
+                <li className="flex items-center gap-2">
+                  <span className="text-gray-500">✗</span>
+                  Questões SEM tags SIMULADOS e MODO_TREINO serão removidas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-500">✓</span>
+                  Questões de SIMULADOS permanecerão intactas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-500">✓</span>
+                  Questões de MODO_TREINO permanecerão intactas
+                </li>
+              </ul>
+
+              {/* Confirmação por digitação */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Digite <code className="bg-gray-500/20 px-2 py-1 rounded text-gray-400">EXCLUIR SEM GRUPO</code> para continuar:
+                </label>
+                <Input 
+                  value={semGrupoConfirmText}
+                  onChange={(e) => setSemGrupoConfirmText(e.target.value)}
+                  placeholder="EXCLUIR SEM GRUPO"
+                  className="border-gray-500/50 focus-visible:ring-gray-500"
+                />
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => handleCloseSemGrupoModal(false)} 
+              disabled={isDeletingSemGrupo}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleDeleteSemGrupoQuestions}
+              disabled={isDeletingSemGrupo || semGrupoConfirmText !== 'EXCLUIR SEM GRUPO'}
+              className="bg-gray-600 hover:bg-gray-700 text-white"
+            >
+              {isDeletingSemGrupo ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir Sem Grupo
                 </>
               )}
             </Button>
