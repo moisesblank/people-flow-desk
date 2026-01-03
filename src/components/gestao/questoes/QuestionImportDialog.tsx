@@ -1294,7 +1294,12 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           
           // ═══════════════════════════════════════════════════════════════════
           // APLICAR TODOS OS CAMPOS DO MODO AGENTE
+          // THRESHOLD DE CONFIANÇA: 80% para correções de MICRO/TEMA/SUBTEMA
           // ═══════════════════════════════════════════════════════════════════
+          
+          const CONFIDENCE_THRESHOLD = 0.80;
+          const confidence = aiResult.confidence || 0;
+          const highConfidence = confidence >= CONFIDENCE_THRESHOLD;
           
           // MACRO (apenas se vazio - IA não altera MACRO existente)
           if (aiResult.macro && !q.macro) {
@@ -1302,31 +1307,52 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             newInferidos.push('macro:ai_inference');
           }
           
-          // MICRO
-          if (aiResult.micro && (!q.micro || q.micro !== aiResult.micro)) {
-            if (q.micro && q.micro !== aiResult.micro) {
+          // MICRO - correção apenas com confiança ≥ 80%
+          if (aiResult.micro) {
+            if (!q.micro) {
+              // Campo vazio: sempre preenche
+              updated.micro = aiResult.micro;
+              newInferidos.push('micro:ai_inference');
+            } else if (q.micro !== aiResult.micro && highConfidence) {
+              // Campo existente + confiança alta: corrige
               updated.warnings.push(`IA corrigiu MICRO: ${q.micro} → ${aiResult.micro}`);
+              updated.micro = aiResult.micro;
+            } else if (q.micro !== aiResult.micro && !highConfidence) {
+              // Campo existente + confiança baixa: avisa mas NÃO corrige
+              updated.warnings.push(`⚠️ IA sugeriu MICRO: ${aiResult.micro} (mas confidence baixo: ${(confidence * 100).toFixed(0)}% < 80%)`);
             }
-            updated.micro = aiResult.micro;
-            if (!q.micro) newInferidos.push('micro:ai_inference');
           }
           
-          // TEMA
-          if (aiResult.tema && (!q.tema || q.tema !== aiResult.tema)) {
-            if (q.tema && q.tema !== aiResult.tema) {
+          // TEMA - correção apenas com confiança ≥ 80%
+          if (aiResult.tema) {
+            if (!q.tema) {
+              // Campo vazio: sempre preenche
+              updated.tema = aiResult.tema;
+              newInferidos.push('tema:ai_inference');
+            } else if (q.tema !== aiResult.tema && highConfidence) {
+              // Campo existente + confiança alta: corrige
               updated.warnings.push(`IA corrigiu TEMA: ${q.tema} → ${aiResult.tema}`);
+              updated.tema = aiResult.tema;
+            } else if (q.tema !== aiResult.tema && !highConfidence) {
+              // Campo existente + confiança baixa: avisa mas NÃO corrige
+              updated.warnings.push(`⚠️ IA sugeriu TEMA: ${aiResult.tema} (mas confidence baixo: ${(confidence * 100).toFixed(0)}% < 80%)`);
             }
-            updated.tema = aiResult.tema;
-            if (!q.tema) newInferidos.push('tema:ai_inference');
           }
           
-          // SUBTEMA
-          if (aiResult.subtema && (!q.subtema || q.subtema !== aiResult.subtema)) {
-            if (q.subtema && q.subtema !== aiResult.subtema) {
+          // SUBTEMA - correção apenas com confiança ≥ 80%
+          if (aiResult.subtema) {
+            if (!q.subtema) {
+              // Campo vazio: sempre preenche
+              updated.subtema = aiResult.subtema;
+              newInferidos.push('subtema:ai_inference');
+            } else if (q.subtema !== aiResult.subtema && highConfidence) {
+              // Campo existente + confiança alta: corrige
               updated.warnings.push(`IA corrigiu SUBTEMA: ${q.subtema} → ${aiResult.subtema}`);
+              updated.subtema = aiResult.subtema;
+            } else if (q.subtema !== aiResult.subtema && !highConfidence) {
+              // Campo existente + confiança baixa: avisa mas NÃO corrige
+              updated.warnings.push(`⚠️ IA sugeriu SUBTEMA: ${aiResult.subtema} (mas confidence baixo: ${(confidence * 100).toFixed(0)}% < 80%)`);
             }
-            updated.subtema = aiResult.subtema;
-            if (!q.subtema) newInferidos.push('subtema:ai_inference');
           }
           
           // DIFICULDADE
