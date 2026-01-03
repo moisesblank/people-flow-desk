@@ -25,8 +25,8 @@
 // 2. TEXTO DO ENUNCIADO (justificado)
 // 3. IMAGENS (múltiplas suportadas)
 
-import { memo, useState } from 'react';
-import { ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { memo } from 'react';
+import { ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatChemicalFormulas } from '@/lib/chemicalFormatter';
 import { renderChemicalText } from '@/lib/renderChemicalText';
@@ -195,8 +195,6 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
   // Obtém TODAS as URLs de imagens
   const allImages = getAllQuestionImages(questionText, imageUrl, imageUrls);
   
-  // Estado para navegação entre imagens
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Header da banca — usa normalização automática incluindo texto da questão
   const bancaHeader = formatBancaHeader(banca, ano, questionText);
@@ -212,15 +210,6 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
     base: 'text-2xl',
     lg: 'text-3xl',
   }[textSize];
-
-  // Navegação entre imagens
-  const handlePrevImage = () => {
-    setCurrentImageIndex(prev => (prev > 0 ? prev - 1 : allImages.length - 1));
-  };
-  
-  const handleNextImage = () => {
-    setCurrentImageIndex(prev => (prev < allImages.length - 1 ? prev + 1 : 0));
-  };
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -257,71 +246,31 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <ImageIcon className="h-3 w-3" />
                 {allImages.length > 1 
-                  ? `Imagem ${currentImageIndex + 1} de ${allImages.length}` 
+                  ? `${allImages.length} Imagens do Enunciado` 
                   : 'Imagem do Enunciado'}
               </p>
             </div>
           )}
           
-          {/* Container da imagem com navegação */}
-          <div className="relative">
-            {/* Imagem atual */}
-            <img 
-              src={allImages[currentImageIndex]} 
-              alt={`Imagem ${currentImageIndex + 1} da questão`}
-              className={cn(
-                "rounded-lg border border-border/50 object-contain",
-                compact ? "max-h-48 w-full" : `min-h-[300px] ${maxImageHeight}`,
-                !compact && "mx-auto max-w-full"
-              )}
-              loading="lazy"
-              onError={(e) => {
-                const container = (e.target as HTMLImageElement).parentElement?.parentElement;
-                if (container && allImages.length === 1) {
-                  container.style.display = 'none';
-                }
-              }}
-            />
-            
-            {/* Controles de navegação (só aparece se tiver mais de 1 imagem) */}
-            {allImages.length > 1 && !compact && (
-              <>
-                <button
-                  onClick={handlePrevImage}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background border border-border shadow-lg transition-colors"
-                  aria-label="Imagem anterior"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={handleNextImage}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background border border-border shadow-lg transition-colors"
-                  aria-label="Próxima imagem"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </>
-            )}
+          {/* Container das imagens - EXIBIÇÃO VERTICAL SEQUENCIAL */}
+          <div className="flex flex-col gap-4">
+            {allImages.map((imgUrl, idx) => (
+              <img 
+                key={idx}
+                src={imgUrl} 
+                alt={`Imagem ${idx + 1} da questão`}
+                className={cn(
+                  "rounded-lg border border-border/50 object-contain",
+                  compact ? "max-h-48 w-full" : `min-h-[300px] ${maxImageHeight}`,
+                  !compact && "mx-auto max-w-full"
+                )}
+                loading="lazy"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            ))}
           </div>
-          
-          {/* Indicadores de página (dots) */}
-          {allImages.length > 1 && !compact && (
-            <div className="flex items-center justify-center gap-2 mt-3">
-              {allImages.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentImageIndex(idx)}
-                  className={cn(
-                    "w-2 h-2 rounded-full transition-colors",
-                    idx === currentImageIndex 
-                      ? "bg-primary" 
-                      : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                  )}
-                  aria-label={`Ir para imagem ${idx + 1}`}
-                />
-              ))}
-            </div>
-          )}
         </div>
       )}
     </div>
