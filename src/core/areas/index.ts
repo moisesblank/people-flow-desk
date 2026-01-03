@@ -52,6 +52,7 @@ export const SYSTEM_AREAS = [
   
   // ===== CURSOS & CONTEÚDO =====
   "cursos",
+  "questoes",
   "simulados",
   "livros-web",
   "lives",
