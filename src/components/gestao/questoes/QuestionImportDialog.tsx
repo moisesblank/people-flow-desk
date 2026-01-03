@@ -1466,42 +1466,44 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       }
 
       // FASE 3: VALIDAÇÃO FINAL
+      // ═══════════════════════════════════════════════════════════════════
+      // CRITÉRIO MÍNIMO ÚNICO: ENUNCIADO NÃO PODE ESTAR VAZIO
+      // Todos os outros campos são opcionais (warnings informativos)
+      // ═══════════════════════════════════════════════════════════════════
       const validatedQuestions = finalQuestions.map(q => {
         const updated = { ...q };
         updated.errors = [];
         
+        // ÚNICO CRITÉRIO OBRIGATÓRIO: Enunciado
         if (!updated.question_text.trim()) {
           updated.errors.push('Enunciado vazio');
         }
         
+        // ═══════════════════════════════════════════════════════════════════
+        // TODOS OS OUTROS CAMPOS SÃO OPCIONAIS - APENAS WARNINGS
+        // ═══════════════════════════════════════════════════════════════════
+        
         const filledOptions = updated.options.filter(o => o.text.trim());
         if (filledOptions.length < 2) {
-          updated.errors.push('Menos de 2 alternativas preenchidas');
+          updated.warnings.push('Menos de 2 alternativas preenchidas');
         }
 
         const correctOption = updated.options.find(o => o.id === updated.correct_answer);
         if (!correctOption?.text.trim()) {
-          updated.errors.push('Alternativa correta não tem texto');
+          updated.warnings.push('Alternativa correta não tem texto');
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        // POLÍTICA TRANSVERSAL v2.0: APENAS MACRO É OBRIGATÓRIO
-        // MICRO, TEMA, SUBTEMA são camadas transversais opcionais
-        // ═══════════════════════════════════════════════════════════════════
         if (!updated.macro?.trim()) {
-          updated.errors.push('MACRO é obrigatório - cada questão deve ter exatamente 1 MACRO');
+          updated.warnings.push('MACRO não informado (opcional)');
         }
-        
-        // MICRO, TEMA, SUBTEMA são OPCIONAIS (camadas transversais)
-        // Apenas warnings informativos, NÃO erros
         if (!updated.micro?.trim()) {
-          updated.warnings.push('MICRO não informado (opcional - camada transversal)');
+          updated.warnings.push('MICRO não informado (opcional)');
         }
         if (!updated.tema?.trim()) {
-          updated.warnings.push('TEMA não informado (opcional - camada transversal)');
+          updated.warnings.push('TEMA não informado (opcional)');
         }
         if (!updated.subtema?.trim()) {
-          updated.warnings.push('SUBTEMA não informado (opcional - camada transversal)');
+          updated.warnings.push('SUBTEMA não informado (opcional)');
         }
 
         // Warnings informativos
