@@ -104,6 +104,7 @@ const CHEMICAL_FORMULA_REGEX = /([A-Z][a-z]?)(\d+)/g;
  * 
  * - Números após elementos → subscript
  * - Cargas iônicas → superscript
+ * - Configuração eletrônica → superscript (1s², 2p⁶)
  * - Estados físicos → formatação consistente
  * - Coeficientes → separação clara
  * - Setas de reação → padronização
@@ -120,10 +121,36 @@ export function formatChemicalFormulas(text: string): string {
   let result = cleanChemicalSymbols(text);
 
   // ═══════════════════════════════════════════════════════════════════
+  // 0.5. CONFIGURAÇÃO ELETRÔNICA → SUPERSCRIPT (EXPOENTES)
+  // ═══════════════════════════════════════════════════════════════════
+  // REGRA IMUTÁVEL: Números após s, p, d, f em configuração eletrônica são EXPOENTES
+  // Padrões: 1s2, 2s2, 2p6, 3s2, 3p6, 3d10, 4f14, etc.
+  // Resultado: 1s², 2s², 2p⁶, 3s², 3p⁶, 3d¹⁰, 4f¹⁴
+  // Também suporta: [Xe] 4f14 5d10 6s2
+  
+  // Padrão: número + orbital (s/p/d/f) + número (elétrons)
+  result = result.replace(/(\d)([spdf])(\d+)/gi, (_, n1, orbital, electrons) => {
+    return n1 + orbital.toLowerCase() + toSuperscript(electrons);
+  });
+  
+  // Padrão alternativo: orbital sozinho com número (ex: s2, p6, d10)
+  // Contexto: após colchetes [Xe] ou espaço
+  result = result.replace(/(\s|\]|^)([spdf])(\d+)(?=\s|$|[spdf\d])/gi, (_, before, orbital, electrons) => {
+    return before + orbital.toLowerCase() + toSuperscript(electrons);
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
   // 1. CONVERTER ÍNDICES (números após elementos) PARA SUBSCRIPT
   // ═══════════════════════════════════════════════════════════════════
+  // IMPORTANTE: Não aplicar em orbitais (s, p, d, f) que já foram tratados
   CHEMICAL_FORMULA_REGEX.lastIndex = 0;
-  result = result.replace(CHEMICAL_FORMULA_REGEX, (_, element, number) => {
+  result = result.replace(CHEMICAL_FORMULA_REGEX, (match, element, number) => {
+    // Pular se for orbital (s, p, d, f) - já tratado acima
+    const orbital = element.toLowerCase();
+    if ((orbital === 's' || orbital === 'p' || orbital === 'd' || orbital === 'f') && /^\d+$/.test(number)) {
+      // Verificar se o contexto indica configuração eletrônica (número antes)
+      return match; // Manter original, já foi tratado ou não é fórmula química
+    }
     return element + toSubscript(number);
   });
 
@@ -146,13 +173,22 @@ export function formatChemicalFormulas(text: string): string {
   });
 
   // Padrão alternativo sem ^: Na+ Ca2+ Cl- SO42-
-  result = result.replace(/([A-Z][a-z]?(?:₀|₁|₂|₃|₄|₅|₆|₇|₈|₉)*)(\d*[+-])(?=\s|$|[,.\)])/g, (_, base, charge) => {
-    return base + toSuperscript(charge);
+  // CORREÇÃO v2.3: O número da carga vem ANTES do sinal (2+, não +2)
+  // Mg2+ → Mg²⁺ (número sobrescrito + sinal sobrescrito)
+  result = result.replace(/([A-Z][a-z]?(?:₀|₁|₂|₃|₄|₅|₆|₇|₈|₉)*)(\d*)([+-])(?=\s|$|[,.\)])/g, (_, base, num, sign) => {
+    if (!num && !sign) return base;
+    return base + toSuperscript(num + sign);
   });
 
   // Cargas em parênteses: (aq)2- ou SO4(2-)
   result = result.replace(/\((\d*[+-])\)/g, (_, charge) => {
     return toSuperscript(charge);
+  });
+  
+  // Padrão: carga com sinal antes do número: +2, -1 → ²⁺, ⁻¹
+  // Ex: Xe+2 → Xe²⁺ (formato sinal+número precisa inverter para número+sinal)
+  result = result.replace(/([A-Z][a-z]?(?:₀|₁|₂|₃|₄|₅|₆|₇|₈|₉)*)([+-])(\d+)(?=\s|$|[,.\)])/g, (_, base, sign, num) => {
+    return base + toSuperscript(num + sign);
   });
 
   // ═══════════════════════════════════════════════════════════════════
@@ -261,14 +297,16 @@ export function formatChemicalFormulas(text: string): string {
 }
 
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║ REGRAS CIENTÍFICAS IMUTÁVEIS v2.2:                                           ║
+// ║ REGRAS CIENTÍFICAS IMUTÁVEIS v2.3:                                           ║
 // ║ 1. Índices numéricos SEMPRE subscript (H₂O, CO₂, Na₂SO₄)                     ║
-// ║ 2. Cargas iônicas SEMPRE superscript (Na⁺, Ca²⁺, Cl⁻, SO₄²⁻)                 ║
-// ║ 3. Estados físicos formatados: ₍s₎, ₍l₎, ₍g₎, ₍aq₎                           ║
-// ║ 4. Setas padronizadas: → (direta), ⇌ (equilíbrio), ← (reversa)               ║
-// ║ 5. Coeficientes claramente separados das fórmulas                            ║
-// ║ 6. Símbolos de elementos NUNCA alterados                                     ║
-// ║ 7. LIMPEZA: Símbolos decorativos/emoji removidos automaticamente             ║
-// ║ 8. Aplicar apenas na camada de renderização                                  ║
-// ║ 9. DELTA (Δ) OBRIGATÓRIO: ΔH, ΔS, ΔG em contextos termodinâmicos             ║
+// ║ 2. Cargas iônicas SEMPRE superscript (Na⁺, Ca²⁺, Cl⁻, SO₄²⁻, Mg²⁺, Xe²⁺)     ║
+// ║ 3. CONFIGURAÇÃO ELETRÔNICA SEMPRE superscript (1s², 2s², 2p⁶, 3d¹⁰, 4f¹⁴)    ║
+// ║ 4. Estados físicos formatados: ₍s₎, ₍l₎, ₍g₎, ₍aq₎                           ║
+// ║ 5. Setas padronizadas: → (direta), ⇌ (equilíbrio), ← (reversa)               ║
+// ║ 6. Coeficientes claramente separados das fórmulas                            ║
+// ║ 7. Símbolos de elementos NUNCA alterados                                     ║
+// ║ 8. LIMPEZA: Símbolos decorativos/emoji removidos automaticamente             ║
+// ║ 9. Aplicar apenas na camada de renderização                                  ║
+// ║ 10. DELTA (Δ) OBRIGATÓRIO: ΔH, ΔS, ΔG em contextos termodinâmicos            ║
+// ║ 11. Hibridização SEMPRE superscript: sp², sp³, sp³d², sp³d³                  ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
