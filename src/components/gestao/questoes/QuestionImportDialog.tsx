@@ -39,6 +39,7 @@ import {
   ShieldCheck,
   Clock,
   AlertOctagon,
+  Layers,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1730,15 +1731,23 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         if (!isMicroAutoAI && selectedMicro && selectedMicro !== q.micro) camposInferidos.push('micro:pre_selected');
         
         // ═══════════════════════════════════════════════════════════════════
-        // TEMA: Se modo automático, usar o que veio do Excel/inferência. Se não, usar pré-seleção.
-        // CORREÇÃO CONSTITUCIONAL: selectedTema tem prioridade absoluta (exceto __AUTO_AI__)
+        // TEMA: Se modo automático, usar o que veio do Excel/inferência.
+        //       Se __TODOS__, será tratado no batch de importação (multi-tema).
+        //       Se não, usar pré-seleção.
+        // CORREÇÃO CONSTITUCIONAL: selectedTema tem prioridade absoluta (exceto __AUTO_AI__ e __TODOS__)
         // ═══════════════════════════════════════════════════════════════════
         const isTemaAutoAI = selectedTema === '__AUTO_AI__' || selectedMicro === '__AUTO_AI__';
+        const isTemaTodos = selectedTema === '__TODOS__';
+        
+        // Se TODOS, o tema será o primeiro da lista como "âncora", mas a questão terá associação multi-tema
         const tema = isTemaAutoAI 
           ? (q.tema || '') // Respeita o que já tem no Excel ou inferido pela IA
-          : (selectedTema || q.tema || '');
+          : isTemaTodos
+            ? (filteredTemas.length > 0 ? filteredTemas[0].value : q.tema || '') // Usa primeiro tema como âncora
+            : (selectedTema || q.tema || '');
         if (!q.tema && isTemaAutoAI) camposInferidos.push('tema:auto_ai_mode');
-        if (!isTemaAutoAI && selectedTema && selectedTema !== q.tema) camposInferidos.push('tema:pre_selected');
+        if (isTemaTodos) camposInferidos.push(`tema:TODOS(${filteredTemas.length})`);
+        if (!isTemaAutoAI && !isTemaTodos && selectedTema && selectedTema !== q.tema) camposInferidos.push('tema:pre_selected');
         
         // ═══════════════════════════════════════════════════════════════════
         // SUBTEMA: Se modo automático, usar o que veio do Excel/inferência. Se não, usar pré-seleção.
@@ -2179,6 +2188,15 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                                   <span className="font-medium text-primary">Automático (IA)</span>
                                 </span>
                               </SelectItem>
+                              {/* OPÇÃO TODOS - Aplica TODOS os temas disponíveis (Constitucional v10.0) */}
+                              {filteredTemas.length > 0 && (
+                                <SelectItem value="__TODOS__" className="border-b border-emerald-500/30 mb-1 bg-emerald-500/5">
+                                  <span className="flex items-center gap-2">
+                                    <Layers className="h-4 w-4 text-emerald-500" />
+                                    <span className="font-medium text-emerald-600 dark:text-emerald-400">TODOS ({filteredTemas.length} temas)</span>
+                                  </span>
+                                </SelectItem>
+                              )}
                               {filteredTemas.map(t => (
                                 <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                               ))}
@@ -2188,6 +2206,12 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
                               <Brain className="h-3 w-3" />
                               IA preenche campos vazios. Corrige TEMA/SUBTEMA somente se confiança ≥80%.
+                            </p>
+                          )}
+                          {selectedTema === '__TODOS__' && (
+                            <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
+                              <Layers className="h-3 w-3" />
+                              TODOS os {filteredTemas.length} temas serão associados a cada questão importada.
                             </p>
                           )}
                           {selectedMicro === '__AUTO_AI__' && (
