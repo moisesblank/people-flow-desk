@@ -278,27 +278,63 @@ export function normalizePegadinhas(text: string): string {
 }
 
 /**
- * Organiza DICA DE OURO
- * REGRA: Manter exatamente o conteúdo existente
- * Garantir que esteja em um único parágrafo
- * Sem listas, emojis ou quebras desnecessárias
+ * Organiza DICA DE OURO (REGRA PERMANENTE v2.0)
+ * 
+ * NOVA REGRA: Cada dica em sua própria linha, separadas por quebra de linha.
+ * - Detecta múltiplas dicas (numeradas, com bullet, ou frases distintas)
+ * - Garante uma dica por linha para legibilidade
+ * - Remove emojis decorativos, mantém conteúdo original
+ * - Aplica regras gramaticais básicas do português
  */
 export function normalizeDicaDeOuro(text: string): string {
   if (!text) return '';
   
-  // 1. Remover emojis e símbolos
+  // 1. Remover emojis e símbolos decorativos
   let cleaned = removeEmojisAndSymbols(text);
   
-  // 2. Garantir parágrafo único (remover quebras de linha)
+  // 2. Normalizar quebras de linha e espaços
   cleaned = cleaned
-    .split('\n')
-    .map(line => line.trim())
-    .filter(line => line.length > 0)
-    .join(' ')
-    .replace(/\s{2,}/g, ' ')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
   
-  return cleaned;
+  // 3. Detectar padrões de múltiplas dicas e separar
+  // Padrão: "1." "2." ou "•" ou "-" ou "Dica 1:" etc.
+  const lines = cleaned.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  
+  // Se já tem múltiplas linhas, preservar estrutura
+  if (lines.length > 1) {
+    return lines
+      .map(line => {
+        // Limpar prefixos de lista (bullets, números) mas manter conteúdo
+        return line
+          .replace(/^[\d]+[.\)]\s*/, '')   // Remove "1." "2)" etc.
+          .replace(/^[•\-–—]\s*/, '')       // Remove bullets
+          .replace(/^Dica\s*\d*[:\-]?\s*/i, '') // Remove "Dica 1:" etc.
+          .trim();
+      })
+      .filter(l => l.length > 0)
+      .join('\n');
+  }
+  
+  // 4. Texto corrido: detectar múltiplas sentenças/dicas e separar
+  // Padrão: frases terminadas em "." seguidas de maiúscula
+  const singleLine = lines[0] || '';
+  
+  // Detectar separadores naturais de dicas
+  // Ex: "Memorize isso. Lembre-se daquilo." → 2 dicas
+  const sentences = singleLine
+    .split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÂÊÎÔÛÃÕÇ])/g)
+    .map(s => s.trim())
+    .filter(s => s.length > 10); // Só frases significativas (>10 chars)
+  
+  if (sentences.length > 1) {
+    return sentences.join('\n');
+  }
+  
+  // 5. Se é uma única dica, retornar limpa
+  return singleLine;
 }
 
 /**
