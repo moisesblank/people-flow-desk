@@ -15,13 +15,23 @@
 // ╚══════════════════════════════════════════════════════════════════════════════╝
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SÍMBOLOS PROIBIDOS EM NOTAÇÃO QUÍMICA (Policy v2.1)
+// SÍMBOLOS PROIBIDOS EM NOTAÇÃO QUÍMICA (Policy v2.2)
 // ═══════════════════════════════════════════════════════════════════════════════
-const FORBIDDEN_CHEMICAL_SYMBOLS = /[里⚠️⚠\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu;
+// IMPORTANTE: NÃO remover setas (→ ⇌ ← ⇒) ou símbolos científicos (Δ ° ± × ÷)
+// Apenas emojis decorativos e símbolos sem significado químico
+const FORBIDDEN_CHEMICAL_SYMBOLS = /[里吝溺✨]|[\u{1F300}-\u{1F5FF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FAFF}]/gu;
+
+// SÍMBOLOS CIENTÍFICOS PRESERVADOS (NUNCA REMOVER):
+// → ⇌ ← ⇒ (setas de reação)
+// Δ (delta termodinâmico)
+// ° (graus)
+// ± × ÷ (operadores matemáticos)
+// ₀₁₂₃₄₅₆₇₈₉ (subscripts)
+// ⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻ (superscripts)
 
 /**
  * Remove símbolos decorativos e emoji-like da notação química
- * Policy v2.1: Limpeza visual sem alterar significado químico
+ * Policy v2.2: Limpeza visual SEM remover setas ou símbolos científicos
  */
 function cleanChemicalSymbols(text: string): string {
   return text.replace(FORBIDDEN_CHEMICAL_SYMBOLS, '').replace(/\s{2,}/g, ' ').trim();
