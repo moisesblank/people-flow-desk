@@ -481,7 +481,7 @@ function GestaoQuestaoDetalhe() {
               ano={question.ano}
               textSize="base"
               showImageLabel
-              maxImageHeight="max-h-[900px]"
+              maxImageHeight="max-h-[1200px]"
             />
           </CardContent>
         </Card>
@@ -534,7 +534,7 @@ function GestaoQuestaoDetalhe() {
                   <img 
                     src={(opt as any).image_url} 
                     alt={`Imagem alternativa ${opt.id.toUpperCase()}`}
-                    className="max-h-[400px] w-auto object-contain rounded-lg ml-9"
+                    className="min-h-[300px] max-h-[800px] w-auto object-contain rounded-lg ml-9"
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />
                 )}

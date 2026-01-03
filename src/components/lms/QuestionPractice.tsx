@@ -334,7 +334,7 @@ function PracticeSession({
                             <img 
                               src={option.image_url} 
                               alt={`Imagem alternativa ${option.id.toUpperCase()}`}
-                              className="max-h-[300px] w-auto object-contain rounded-lg ml-11"
+                              className="min-h-[300px] max-h-[800px] w-auto object-contain rounded-lg ml-11"
                               onError={(e) => { e.currentTarget.style.display = 'none'; }}
                             />
                           )}

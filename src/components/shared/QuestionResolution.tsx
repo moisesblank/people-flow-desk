@@ -39,7 +39,7 @@
 // ║ 4. Deduplicação automática rigorosa — mesma alternativa/afirmação nunca 2x       ║
 // ║ 5. Formatação química científica automática (H2O → H₂O, Na+ → Na⁺)               ║
 // ║ 6. COMPETÊNCIA/HABILIDADE ENEM: dedup por C#/H#/Área#, linhas separadas          ║
-// ║ 7. Imagens inline via [IMAGEM: URL] com max-h-[600px]                            ║
+// ║ 7. Imagens inline via [IMAGEM: URL] com min-h-[400px] max-h-[1000px]            ║
 // ║ 8. Bullets compactos (1 quebra de linha)                                         ║
 // ║                                                                                   ║
 // ║ LEMA: "Se eu fosse aluno, conseguiria estudar isso rápido e sem me perder?"      ║
@@ -1466,7 +1466,7 @@ const ResolutionImage = memo(function ResolutionImage({ src, index }: { src: str
       <img 
         src={src} 
         alt={`Imagem da resolução ${index + 1}`}
-        className="max-h-[600px] w-auto rounded-lg border border-border/50 shadow-md object-contain"
+        className="min-h-[400px] max-h-[1000px] w-auto rounded-lg border border-border/50 shadow-md object-contain"
         loading="lazy"
         onError={(e) => {
           const target = e.target as HTMLImageElement;
