@@ -45,6 +45,10 @@ interface DeviceGateState {
   error: string | null;
   retryCount: number;
   
+  // 🛡️ CRITÉRIO EXPLÍCITO: loginIntent flag
+  // Nenhuma UI de device limit pode ser renderizada enquanto loginIntent !== true
+  loginIntent: boolean;
+  
   // Actions
   setPayload: (payload: DeviceGatePayload) => void;
   clearPayload: () => void;
@@ -53,6 +57,9 @@ interface DeviceGateState {
   setError: (error: string | null) => void;
   incrementRetry: () => void;
   reset: () => void;
+  
+  // 🛡️ loginIntent lifecycle
+  setLoginIntent: (intent: boolean) => void;
 }
 
 const MAX_RETRIES = 3;
@@ -65,14 +72,25 @@ export const useDeviceGateStore = create<DeviceGateState>((set, get) => ({
   selectedDeviceId: null,
   error: null,
   retryCount: 0,
+  loginIntent: false, // 🛡️ Inicia false - só true ao clicar "Entrar"
   
   // Actions
-  setPayload: (payload) => set({ 
-    payload, 
-    isGateActive: true,
-    error: null,
-    retryCount: 0,
-  }),
+  setPayload: (payload) => {
+    const { loginIntent } = get();
+    
+    // 🛡️ REGRA INVIOLÁVEL: Só ativar gate se loginIntent === true
+    if (!loginIntent) {
+      console.warn('[SECURITY] ⚠️ Device gate triggered without loginIntent - BLOCKED (state leak prevention)');
+      return; // Ignora silenciosamente
+    }
+    
+    set({ 
+      payload, 
+      isGateActive: true,
+      error: null,
+      retryCount: 0,
+    });
+  },
   
   clearPayload: () => set({ 
     payload: null, 
@@ -109,5 +127,9 @@ export const useDeviceGateStore = create<DeviceGateState>((set, get) => ({
     selectedDeviceId: null,
     error: null,
     retryCount: 0,
+    loginIntent: false, // 🛡️ Reset completo inclui loginIntent
   }),
+  
+  // 🛡️ loginIntent lifecycle control
+  setLoginIntent: (intent) => set({ loginIntent: intent }),
 }));
