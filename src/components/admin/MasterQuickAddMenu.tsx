@@ -481,7 +481,7 @@ export function MasterQuickAddMenu() {
                 duration: 2000
               });
             }}
-            className="fixed top-20 right-4 z-[9999] flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary to-purple-600 text-primary-foreground rounded-full shadow-xl hover:shadow-2xl transition-all group"
+            className="fixed bottom-[10.5rem] right-6 z-[9999] flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary to-purple-600 text-primary-foreground rounded-full shadow-xl hover:shadow-2xl transition-all group"
             style={{ boxShadow: '0 0 30px hsl(280 80% 50% / 0.4)' }}
           >
             <Plus className="w-5 h-5" />
