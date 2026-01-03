@@ -1,5 +1,5 @@
 // 🔔 TRAMON v8 - Widget de Alertas do Sistema
-import { useState, useEffect } from "react";
+import { useState, useEffect, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
