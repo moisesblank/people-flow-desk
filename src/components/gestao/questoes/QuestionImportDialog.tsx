@@ -2924,6 +2924,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                         reset();
                         toast.info('Pronto para nova importação');
                       }}
+                      className="bg-red-600 hover:bg-red-700 text-white border-red-600 hover:border-red-700"
                     >
                       <RefreshCw className="h-4 w-4 mr-2" />
                       Nova Importação
