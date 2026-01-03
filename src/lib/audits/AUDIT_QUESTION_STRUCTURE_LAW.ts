@@ -1,7 +1,7 @@
 /**
  * ╔══════════════════════════════════════════════════════════════════════════════╗
  * ║                                                                              ║
- * ║   📜 LEI PERMANENTE — ESTRUTURA DA ENTIDADE QUESTÃO v1.0                     ║
+ * ║   📜 LEI PERMANENTE — ESTRUTURA DA ENTIDADE QUESTÃO v2.0                     ║
  * ║                                                                              ║
  * ║   Status: VIGENTE E IMUTÁVEL                                                 ║
  * ║   Data: 2026-01-03                                                           ║
@@ -14,14 +14,16 @@
  */
 
 export const QUESTION_STRUCTURE_LAW = {
-  version: '1.0.0',
+  version: '2.0.0',
   status: 'IMMUTABLE',
   effectiveDate: '2026-01-03',
   authority: 'OWNER',
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 1️⃣ ENUNCIADO — TEXTO CORRIDO (OBRIGATÓRIO)
+  // PARTE I — ESTRUTURA PRINCIPAL
   // ═══════════════════════════════════════════════════════════════════════════
+
+  // 1️⃣ ENUNCIADO — TEXTO CORRIDO (OBRIGATÓRIO)
   enunciado: {
     rule: 'O enunciado DEVE ser sempre texto corrido, sem enumeração solta',
     forbidden: [
@@ -41,9 +43,7 @@ export const QUESTION_STRUCTURE_LAW = {
     implementation: 'src/lib/questionStructureNormalizer.ts → normalizeEnunciado()',
   },
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 2️⃣ AFIRMATIVAS (I, II, III, IV…)
-  // ═══════════════════════════════════════════════════════════════════════════
   affirmatives: {
     rule: 'Afirmativas NÃO podem permanecer como lista solta dentro do enunciado',
     required: [
@@ -55,9 +55,7 @@ export const QUESTION_STRUCTURE_LAW = {
     implementation: 'src/lib/questionStructureNormalizer.ts → normalizeEnunciado()',
   },
 
-  // ═══════════════════════════════════════════════════════════════════════════
   // 3️⃣ ALTERNATIVAS (A, B, C, D, E) — FORMATAÇÃO OBRIGATÓRIA
-  // ═══════════════════════════════════════════════════════════════════════════
   alternatives: {
     rule: 'Cada alternativa DEVE estar obrigatoriamente em sua própria linha',
     forbidden: [
@@ -78,8 +76,70 @@ E) texto da alternativa`,
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // APLICAÇÃO
+  // PARTE II — ORGANIZAÇÃO DOS BLOCOS AUXILIARES
   // ═══════════════════════════════════════════════════════════════════════════
+
+  // REGRA SUPREMA
+  organizationPrinciple: {
+    rule: 'Organizar NÃO é reescrever, explicar ou interpretar',
+    allowed: ['Estruturar', 'Separar', 'Padronizar', 'Limpar visualmente'],
+    forbidden: ['Alterar conteúdo', 'Alterar significado', 'Alterar profundidade', 'Adicionar informações'],
+    exception: 'Se o campo vier VAZIO, a IA pode preencher conforme adaptado à área',
+  },
+
+  // 1️⃣ COMPETÊNCIA E HABILIDADE — ORGANIZAÇÃO
+  competenciaHabilidade: {
+    rule: 'Competência e Habilidade não podem ficar misturadas em texto corrido',
+    required: [
+      'Separar em campos distintos',
+      'Cada uma em sua própria linha',
+      'NÃO adicionar explicações, comentários ou exemplos',
+      'Apenas separar, identificar e normalizar',
+    ],
+    mandatoryFormat: `Competência de área: texto original da competência.
+Habilidade: texto original da habilidade.`,
+    implementation: 'src/lib/questionStructureNormalizer.ts → normalizeCompetenciaHabilidade()',
+  },
+
+  // 2️⃣ DIRECIONAMENTO / ESTRATÉGIA — ORGANIZAÇÃO
+  direcionamento: {
+    rule: 'O conteúdo existente NÃO deve ser reescrito nem expandido',
+    required: [
+      'Remover numeração visual',
+      'Remover emojis ou símbolos',
+      'Transformar listas ou passos em texto corrido contínuo',
+      'Manter exatamente as mesmas ideias',
+    ],
+    forbidden: ['Criar orientações novas'],
+    implementation: 'src/lib/questionStructureNormalizer.ts → normalizeDirecionamento()',
+  },
+
+  // 3️⃣ PEGADINHAS COMUNS — ORGANIZAÇÃO
+  pegadinhas: {
+    rule: 'Manter o texto original',
+    required: [
+      'Ajustar para texto corrido',
+      'Remover redundâncias visuais',
+      'Garantir clareza estrutural',
+    ],
+    forbidden: ['Acrescentar novas pegadinhas', 'Adicionar comentários'],
+    implementation: 'src/lib/questionStructureNormalizer.ts → normalizePegadinhas()',
+  },
+
+  // 4️⃣ DICA DE OURO — ORGANIZAÇÃO
+  dicaDeOuro: {
+    rule: 'Manter exatamente o conteúdo existente',
+    required: [
+      'Garantir que esteja em um único parágrafo',
+      'Sem listas, emojis ou quebras desnecessárias',
+    ],
+    implementation: 'src/lib/questionStructureNormalizer.ts → normalizeDicaDeOuro()',
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PARTE III — APLICAÇÃO E ENFORCEMENT
+  // ═══════════════════════════════════════════════════════════════════════════
+
   application: {
     scope: [
       'TODAS as questões existentes',
@@ -89,22 +149,26 @@ E) texto da alternativa`,
       'Geração por IA',
     ],
     enforcement: [
-      'Automático na renderização (QuestionEnunciado.tsx)',
+      'Automático na renderização (QuestionEnunciado.tsx, QuestionResolution.tsx)',
       'Automático na importação (QuestionImportDialog.tsx)',
       'Automático na edição (GestaoQuestaoDetalhe.tsx)',
     ],
     files: [
       'src/lib/questionStructureNormalizer.ts',
       'src/lib/audits/CONSTITUTION_QUESTION_ENTITY_v1.ts',
+      'src/lib/audits/AUDIT_QUESTION_STRUCTURE_LAW.ts',
       'src/components/shared/QuestionEnunciado.tsx',
+      'src/components/shared/QuestionResolution.tsx',
     ],
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // DECLARAÇÃO FINAL
   // ═══════════════════════════════════════════════════════════════════════════
+
   finalDeclaration: {
-    text: 'Esta lei é permanente e aplica-se a TODAS as questões do sistema, sem exceção. A reorganização deve manter fidelidade conceitual absoluta, padronização total de estrutura e máxima legibilidade.',
+    text: 'Esta lei é permanente e aplica-se a TODAS as questões do sistema, sem exceção. A organização deve manter fidelidade conceitual absoluta, padronização total de estrutura e máxima legibilidade. Organizar não é reescrever, explicar ou interpretar — somente estruturar, separar, padronizar e limpar visualmente.',
+    commandPhrase: 'Aplique exclusivamente organização estrutural nos blocos da questão, sem alterar conteúdo, significado ou profundidade, apenas separando, padronizando e normalizando os textos.',
     binding: true,
   },
 } as const;
