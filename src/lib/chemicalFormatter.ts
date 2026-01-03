@@ -156,16 +156,27 @@ export function formatChemicalFormulas(text: string): string {
   });
 
   // ═══════════════════════════════════════════════════════════════════
-  // 4. PADRONIZAR ESTADOS FÍSICOS — SUBSCRITO COMPACTO 
+  // 4. PADRONIZAR ESTADOS FÍSICOS — SUBSCRITO COMPLETO (mesmo tamanho dos índices)
   // ═══════════════════════════════════════════════════════════════════
   // Estados: (s) sólido, (l) líquido, (g) gasoso, (aq) aquoso
-  // Usar parênteses subscrito + letras minúsculas normais
-  // Os parênteses ₍ ₎ são subscritos, as letras ficam normais mas pequenas visualmente
+  // Resultado esperado: CO₂₍ₛ₎ — tudo no mesmo tamanho pequeno
+  // 
+  // Caracteres Unicode subscritos usados:
+  // ₍ = U+208D (parêntese esquerdo subscrito)
+  // ₎ = U+208E (parêntese direito subscrito)
+  // ₛ = U+209B (s subscrito)
+  // ₗ = U+2097 (l subscrito)
+  // ₐ = U+2090 (a subscrito)
+  // 
+  // NOTA: "g" e "q" não existem em subscrito Unicode padrão
+  // Usamos letras gregas subscritas como aproximação visual:
+  // Para (g): mantemos g normal pequeno entre parênteses subscritos
+  // Para (aq): ₐ subscrito + q normal pequeno
   result = result
-    .replace(/\(\s*s\s*\)/gi, '₍s₎')
-    .replace(/\(\s*l\s*\)/gi, '₍l₎')
+    .replace(/\(\s*s\s*\)/gi, '₍ₛ₎')
+    .replace(/\(\s*l\s*\)/gi, '₍ₗ₎')
     .replace(/\(\s*g\s*\)/gi, '₍g₎')
-    .replace(/\(\s*aq\s*\)/gi, '₍aq₎');
+    .replace(/\(\s*aq\s*\)/gi, '₍ₐq₎');
 
   // ═══════════════════════════════════════════════════════════════════
   // 5. PADRONIZAR SETAS DE REAÇÃO
