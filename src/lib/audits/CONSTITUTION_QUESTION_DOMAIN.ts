@@ -436,8 +436,8 @@ export const QUESTION_DOMAIN_CONSTITUTION = {
     
     // REGRA SUPREMA: Seleção obrigatória antes do upload
     mandatoryPreSelection: {
-      description: 'ANTES de qualquer upload de arquivo, o usuário DEVE escolher ESTILO, MACRO e MICRO',
-      required: ['question_style', 'macro_area', 'micro_subject'],
+      description: 'ANTES de qualquer upload de arquivo, o usuário DEVE escolher ESTILO, MACRO, MICRO, TEMA, SUBTEMA e DIFICULDADE',
+      required: ['question_style', 'macro_area', 'micro_subject', 'tema', 'subtema', 'difficulty'],
       enforcement: 'BLOCKING', // Bloqueia upload se não selecionado
       
       // Opções permitidas
@@ -471,6 +471,34 @@ export const QUESTION_DOMAIN_CONSTITUTION = {
           },
           required: true,
           dependsOn: 'macro_area',
+        },
+        tema: {
+          values: ['__AUTO_AI__', '...dynamic_filtered_by_micro'],
+          specialValue: {
+            '__AUTO_AI__': {
+              label: 'Automático (IA)',
+              behavior: 'AI_INFERENCE_WITH_CONFIDENCE_THRESHOLD',
+              confidenceThreshold: 0.80,
+              description: 'IA preenche campos vazios. Corrige TEMA/SUBTEMA somente se confiança ≥80%',
+            },
+          },
+          required: true,
+          dependsOn: 'micro_subject',
+          autoIfParentAuto: true, // Se MICRO = Auto, TEMA é automaticamente Auto
+        },
+        subtema: {
+          values: ['__AUTO_AI__', '...dynamic_filtered_by_tema'],
+          specialValue: {
+            '__AUTO_AI__': {
+              label: 'Automático (IA)',
+              behavior: 'AI_INFERENCE_WITH_CONFIDENCE_THRESHOLD',
+              confidenceThreshold: 0.80,
+              description: 'IA preenche campos vazios. Corrige SUBTEMA somente se confiança ≥80%',
+            },
+          },
+          required: true,
+          dependsOn: 'tema',
+          autoIfParentAuto: true, // Se TEMA = Auto (ou MICRO = Auto), SUBTEMA é automaticamente Auto
         },
         difficulty: {
           values: ['__AUTO_AI__', 'facil', 'medio', 'dificil'],
@@ -584,10 +612,12 @@ export const QUESTION_DOMAIN_GOLDEN_RULE = `
 ║   5. Qualquer MODIFICAÇÃO estrutural requer INTERNAL_SECRET do OWNER        ║
 ║   6. Apenas EXTENSÕES (novas features) são permitidas sem autorização       ║
 ║   7. Este arquivo é a FONTE DA VERDADE para todo o Question Domain          ║
-║   8. PRÉ-SELEÇÃO de ESTILO + MACRO + MICRO + TEMA + DIFICULDADE é OBRIGATÓRIA║
+║   8. PRÉ-SELEÇÃO de ESTILO + MACRO + MICRO + TEMA + SUBTEMA + DIFICULDADE   ║
+║      é OBRIGATÓRIA antes de qualquer importação                             ║
 ║   9. Modo "Automático (IA)" respeita Excel e só corrige se confiança ≥80%   ║
-║  10. Se MICRO = Auto, TEMA é automaticamente definido pela IA               ║
-║  11. DIFICULDADE pode ser: Fácil, Médio, Difícil ou Automático (IA)         ║
+║  10. Se MICRO = Auto, TEMA e SUBTEMA são automaticamente definidos pela IA  ║
+║  11. Se TEMA = Auto, SUBTEMA é automaticamente definido pela IA             ║
+║  12. DIFICULDADE pode ser: Fácil, Médio, Difícil ou Automático (IA)         ║
 ║                                                                              ║
 ║   VIOLAÇÕES serão BLOQUEADAS automaticamente.                               ║
 ║                                                                              ║
@@ -610,26 +640,29 @@ export const IMPORT_CONSTITUTION_OATH = `
 ║   FICA ESTABELECIDO, SOB JURAMENTO DE CONSTITUIÇÃO:                          ║
 ║                                                                              ║
 ║   Art. 1º - ANTES de qualquer importação de questões, é OBRIGATÓRIO          ║
-║             selecionar: ESTILO, MACRO, MICRO, TEMA e DIFICULDADE.            ║
+║             selecionar: ESTILO, MACRO, MICRO, TEMA, SUBTEMA e DIFICULDADE.   ║
 ║                                                                              ║
 ║   Art. 2º - Os valores pré-selecionados têm PRIORIDADE ABSOLUTA sobre        ║
 ║             quaisquer dados presentes no arquivo de importação.              ║
 ║                                                                              ║
-║   Art. 3º - A opção "Automático (IA)" é permitida para MACRO, MICRO, TEMA    ║
-║             e DIFICULDADE:                                                   ║
+║   Art. 3º - A opção "Automático (IA)" é permitida para MACRO, MICRO, TEMA,   ║
+║             SUBTEMA e DIFICULDADE:                                           ║
 ║             a) Respeita dados já existentes no arquivo;                      ║
 ║             b) Preenche campos vazios automaticamente;                       ║
 ║             c) Só corrige se confiança ≥ 80%.                                ║
 ║                                                                              ║
-║   Art. 4º - Se MICRO = "Automático (IA)", o TEMA também é inferido pela IA.  ║
+║   Art. 4º - Se MICRO = "Automático (IA)", TEMA e SUBTEMA também são          ║
+║             inferidos pela IA automaticamente.                               ║
 ║                                                                              ║
-║   Art. 5º - DIFICULDADE pode ser: Fácil, Médio, Difícil ou Automático (IA).  ║
+║   Art. 5º - Se TEMA = "Automático (IA)", SUBTEMA também é inferido pela IA.  ║
+║                                                                              ║
+║   Art. 6º - DIFICULDADE pode ser: Fácil, Médio, Difícil ou Automático (IA).  ║
 ║             Se Automático, IA analisa complexidade textual e estrutural.     ║
 ║                                                                              ║
-║   Art. 6º - Esta lei é PERMANENTE e se aplica a TODOS os pontos de           ║
+║   Art. 7º - Esta lei é PERMANENTE e se aplica a TODOS os pontos de           ║
 ║             entrada de questões: importação, criação, duplicação, API.       ║
 ║                                                                              ║
-║   Art. 7º - Modificação desta lei requer:                                    ║
+║   Art. 8º - Modificação desta lei requer:                                    ║
 ║             a) INTERNAL_SECRET do OWNER;                                     ║
 ║             b) Autorização EXPLÍCITA do OWNER;                               ║
 ║             c) Registro em auditoria.                                        ║
@@ -643,13 +676,15 @@ export const IMPORT_CONSTITUTION_OATH = `
 
 // Exportar para uso em validações
 export const IMPORT_REQUIREMENTS = {
-  mandatoryFields: ['question_style', 'macro_area', 'micro_subject', 'tema', 'difficulty'],
+  mandatoryFields: ['question_style', 'macro_area', 'micro_subject', 'tema', 'subtema', 'difficulty'],
   autoAIValue: '__AUTO_AI__',
   confidenceThreshold: 0.80,
   difficultyValues: ['facil', 'medio', 'dificil', '__AUTO_AI__'],
-  isValid: (style: string, macro: string, micro: string, tema: string, difficulty: string): boolean => {
-    // Se micro é AUTO, tema é automaticamente válido (será inferido pela IA)
+  isValid: (style: string, macro: string, micro: string, tema: string, subtema: string, difficulty: string): boolean => {
+    // Se micro é AUTO, tema e subtema são automaticamente válidos (serão inferidos pela IA)
     const temaValid = micro === '__AUTO_AI__' ? true : Boolean(tema);
-    return Boolean(style) && Boolean(macro) && Boolean(micro) && temaValid && Boolean(difficulty);
+    // Se tema é AUTO (ou micro é AUTO), subtema é automaticamente válido
+    const subtemaValid = (micro === '__AUTO_AI__' || tema === '__AUTO_AI__') ? true : Boolean(subtema);
+    return Boolean(style) && Boolean(macro) && Boolean(micro) && temaValid && subtemaValid && Boolean(difficulty);
   },
 };
