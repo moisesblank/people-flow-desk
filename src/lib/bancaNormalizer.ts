@@ -99,14 +99,21 @@ const BANCA_TEXT_PATTERNS: Array<{ pattern: RegExp; value: string }> = [
   { pattern: /\bIBFC\b/i, value: "ibfc" },
   { pattern: /\bQUADRIX\b/i, value: "quadrix" },
   
-  // Militares
+  // Militares e Técnicos
   { pattern: /\bESA\b/i, value: "esa" },
   { pattern: /\bEFOMM\b/i, value: "efomm" },
   { pattern: /\bAFA\b/i, value: "afa" },
   { pattern: /\bESPCEX\b/i, value: "espcex" },
+  { pattern: /\bAMAN\b/i, value: "espcex" }, // AMAN = EsPCEx
   { pattern: /\bEPCAR\b/i, value: "epcar" },
   { pattern: /\bEEAR\b/i, value: "eear" },
   { pattern: /\bEN\b/i, value: "en" },
+  { pattern: /\bCFTMG\b/i, value: "cftmg" },
+  { pattern: /\bCEFET[-\s]?MG\b/i, value: "cftmg" },
+  { pattern: /\bCEFET\b/i, value: "cefet" },
+  { pattern: /\bIF\s*[A-Z]{2}\b/i, value: "ifes" }, // IFSP, IFRJ, etc.
+  { pattern: /G1\s*[-–—]\s*CFTMG/i, value: "cftmg" }, // G1 - cftmg
+  { pattern: /G1\s*[-–—]\s*CEFET/i, value: "cefet" },
   
   // Olimpíadas
   { pattern: /\bOBQ\b/i, value: "obq" },
