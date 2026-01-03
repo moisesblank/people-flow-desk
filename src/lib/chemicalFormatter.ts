@@ -196,11 +196,14 @@ export function formatChemicalFormulas(text: string): string {
   
   // Padrão: H/S/G isolado seguido de = e número (com possível sinal)
   // NÃO captura: pH, CH4, OH-, NH3, etc.
+  // Suporta unidades por mol: kJ/mol, kJ mol-1, kJ·mol⁻¹
   result = result.replace(
-    /(?<![A-Za-zα-ωΑ-Ω₀-₉])([HSG])\s*=\s*([-+]?\s*\d+[.,]?\d*)\s*(kJ|kcal|J|cal)/gi,
-    (match, letter, value, unit) => {
-      // Garantir que é uma grandeza termodinâmica, não parte de fórmula
-      return `Δ${letter.toUpperCase()} = ${value.replace(/\s/g, '')} ${unit}`;
+    /(?<![A-Za-zα-ωΑ-Ω₀-₉])([HSG])\s*=\s*([\-−–+]?\s*\d+[.,]?\d*)\s*(kJ|kcal|J|cal)(\s*(?:\/\s*mol|mol\s*-?1|\u00B7\s*mol\u207B\u00B9|\u00B7\s*mol-1))?/gi,
+    (_match, letter, value, unit, perMol) => {
+      const cleanValue = String(value).replace(/\s/g, '').replace(/[−–]/g, '-');
+      const suffix = (perMol || '').replace(/\s{2,}/g, ' ').trim();
+      const unitWithSuffix = suffix ? `${unit}${suffix.startsWith('/') ? '' : ' '}${suffix}` : unit;
+      return `Δ${String(letter).toUpperCase()} = ${cleanValue} ${unitWithSuffix}`;
     }
   );
   
