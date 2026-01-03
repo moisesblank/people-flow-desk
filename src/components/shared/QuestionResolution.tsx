@@ -1131,16 +1131,29 @@ function parseResolutionText(text: string): ParsedSection[] {
     return normalizeLoose(line);
   };
 
-  // Formata linha ENEM: separa Competência e Habilidade em linhas distintas
+  // Formata linha ENEM: separa Competência/Área e Habilidade em linhas distintas (REGRA PERMANENTE)
   const formatEnemLine = (line: string): string => {
     let s = line.replace(/\s*\|\s*/g, ' | ').replace(/\s+/g, ' ').trim();
-    // Detecta partes de Competência/Área e Habilidade
+
+    // Caso comum: veio tudo em texto corrido na MESMA linha
+    // Ex: "Competência de área: 3 Habilidade: 12" → quebra em 2 linhas
+    if (/\bcompet[eê]ncia\b/i.test(s) && /\bhabilidade\b/i.test(s) && !/\n/.test(s)) {
+      s = s
+        .replace(/\s*(Habilidade\b)/i, '\
+$1')
+        .replace(/\n\s+/g, '\n')
+        .trim();
+    }
+
+    // Caso com delimitadores "|": separar Competência/Área e Habilidade
     const parts = s.split(/\s*\|\s*/g).map(p => p.trim()).filter(Boolean);
     const compPart = parts.find(p => /\b(compet[eê]ncia|área)\b/i.test(p)) || parts[0];
     const habPart = parts.find(p => /\bhabilidade\b/i.test(p));
-    if (habPart && compPart !== habPart) {
-      return `${compPart}\n  ${habPart}`;
+
+    if (habPart && compPart && compPart !== habPart) {
+      return `${compPart}\n${habPart}`;
     }
+
     return s;
   };
   
