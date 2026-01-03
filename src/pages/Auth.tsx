@@ -1131,35 +1131,52 @@ export default function Auth() {
         // ============================================
         // 🔒 DOGMA I: SESSÃO ÚNICA GLOBAL - MODO BLOQUEIO
         // Verifica se já existe sessão ativa ANTES do login
+        // 🔐 FIX P0: Verificar se o token local corresponde à sessão ativa
+        // Se sim, é o MESMO dispositivo tentando re-logar
         // ============================================
+        const localSessionToken = localStorage.getItem('matriz_session_token');
+        
         try {
           const { data: sessionCheck, error: sessionCheckError } = await supabase.rpc(
             'check_active_session_exists',
-            { _email: formData.email.toLowerCase().trim() }
+            { 
+              _email: formData.email.toLowerCase().trim(),
+              _device_hash: localSessionToken  // 🔐 FIX: Passar token local para verificar se é mesmo dispositivo
+            }
           );
 
           if (!sessionCheckError && sessionCheck && sessionCheck.length > 0 && sessionCheck[0].has_active_session) {
             const activeSession = sessionCheck[0];
-            console.warn('[AUTH] 🔴 BLOQUEIO: Sessão ativa detectada em outro dispositivo:', activeSession);
             
-            toast.error("Sessão ativa detectada", {
-              description: `Você já está logado em: ${activeSession.device_name || activeSession.device_type || 'outro dispositivo'}. Encerre a outra sessão primeiro.`,
-              duration: 8000,
-            });
-            
-            // Mostrar opção de forçar logout
-            setShowForceLogoutOption(true);
-            setPendingEmail(formData.email.toLowerCase().trim());
-            setPendingPassword(formData.password); // 🎯 FIX: Guardar senha para login automático
-            setIsLoading(false);
-            return;
+            // 🔐 FIX P0: Se is_same_device = TRUE, sessão é do MESMO dispositivo
+            // (identificado por ter o token local que corresponde à sessão ativa)
+            // Neste caso, NÃO bloquear - apenas prosseguir (a nova sessão substituirá a antiga)
+            if (activeSession.is_same_device) {
+              console.log('[AUTH] ✅ Sessão ativa é do MESMO dispositivo - prosseguindo com login (substituirá sessão antiga)');
+              // Não bloquear, deixar o login continuar normalmente
+            } else {
+              // Sessão ativa em OUTRO dispositivo - bloquear
+              console.warn('[AUTH] 🔴 BLOQUEIO: Sessão ativa detectada em OUTRO dispositivo:', activeSession);
+              
+              toast.error("Sessão ativa detectada", {
+                description: `Você já está logado em: ${activeSession.device_name || activeSession.device_type || 'outro dispositivo'}. Encerre a outra sessão primeiro.`,
+                duration: 8000,
+              });
+              
+              // Mostrar opção de forçar logout
+              setShowForceLogoutOption(true);
+              setPendingEmail(formData.email.toLowerCase().trim());
+              setPendingPassword(formData.password); // 🎯 FIX: Guardar senha para login automático
+              setIsLoading(false);
+              return;
+            }
           }
         } catch (checkErr: any) {
           console.warn('[AUTH] ⚠️ Erro ao verificar sessão ativa (prosseguindo):', checkErr);
           // Se a verificação falhar, permite o login (fail-open temporário para não travar)
         }
 
-        console.log('[AUTH] ✅ Nenhuma sessão ativa encontrada. Iniciando signInWithPassword...');
+        console.log('[AUTH] ✅ Verificação de sessão concluída. Iniciando signInWithPassword...');
 
         const result = await withTimeout(
           'signInWithPassword',
