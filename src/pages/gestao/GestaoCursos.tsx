@@ -716,7 +716,7 @@ export default function GestaoCursos() {
             {/* Neon border glow */}
             <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/50 via-pink-500/50 to-purple-500/50 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
             
-            <Card className="relative h-[600px] flex flex-col bg-card/80 backdrop-blur-sm border-border/50 rounded-2xl overflow-hidden">
+            <Card className="relative min-h-[600px] max-h-[80vh] flex flex-col bg-card/80 backdrop-blur-sm border-border/50 rounded-2xl overflow-hidden">
               <CardHeader className="border-b border-border/50 bg-gradient-to-r from-purple-500/5 to-pink-500/5">
                 {selectedCourse ? (
                   <>
@@ -747,8 +747,8 @@ export default function GestaoCursos() {
                   </CardTitle>
                 )}
               </CardHeader>
-              <CardContent className="flex-1 p-0">
-                <ScrollArea className="h-full">
+              <CardContent className="flex-1 p-0 overflow-hidden">
+                <ScrollArea className="h-[calc(80vh-120px)]">
                   {!selectedCourse ? (
                     <div className="flex flex-col items-center justify-center h-full text-center p-8">
                       <div className="p-4 rounded-full bg-purple-500/10 mb-4">
