@@ -6294,6 +6294,7 @@ export type Database = {
           id: string
           is_free: boolean | null
           is_published: boolean | null
+          legacy_qr_id: number | null
           likes_count: number | null
           material_nome: string | null
           material_url: string | null
@@ -6322,6 +6323,7 @@ export type Database = {
           id?: string
           is_free?: boolean | null
           is_published?: boolean | null
+          legacy_qr_id?: number | null
           likes_count?: number | null
           material_nome?: string | null
           material_url?: string | null
@@ -6350,6 +6352,7 @@ export type Database = {
           id?: string
           is_free?: boolean | null
           is_published?: boolean | null
+          legacy_qr_id?: number | null
           likes_count?: number | null
           material_nome?: string | null
           material_url?: string | null
