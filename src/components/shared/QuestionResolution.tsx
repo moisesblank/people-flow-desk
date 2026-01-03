@@ -1513,13 +1513,149 @@ function extractImagesFromResolution(text: string): { cleanedText: string; image
 
 /**
  * =====================================================
- * FORMATA CONTEÚDO COM FÓRMULAS QUÍMICAS — POLICY v2.0
- * Aplica: limpeza + refinamento pedagógico + química visual
+ * FORMATA CONTEÚDO COM FÓRMULAS QUÍMICAS — POLICY v3.0
+ * LEGIBILIDADE MÁXIMA — PADRÃO INTERNACIONAL DE QUESTÕES
+ * =====================================================
+ * 
+ * REGRAS DE FORMATAÇÃO (IMUTÁVEIS):
+ * 1. Reações químicas: bloco destacado, bold, maior
+ * 2. Estados físicos: sobrescrito (s), (l), (g), (aq)
+ * 3. Um passo por linha, nunca múltiplos passos inline
+ * 4. Equações/cálculos separados do texto
+ * 5. Hierarquia visual clara
+ * 6. Prioridade: legibilidade mobile
  * =====================================================
  */
+
+/**
+ * Detecta se uma linha contém uma reação química
+ * Padrões: A + B → C, A → B + C, equações com setas
+ */
+function isChemicalReaction(line: string): boolean {
+  // Padrões de reação química
+  const reactionPatterns = [
+    /[A-Z][a-z]?\d*\s*[\+\-]\s*[A-Z][a-z]?\d*\s*[→⇌←=>]+/i,  // A + B →
+    /[→⇌←=>]+\s*[A-Z][a-z]?\d*\s*[\+\-]?\s*[A-Z]?/i,         // → C + D
+    /\bΔH\s*[=:]\s*[-+]?\d/i,                                 // ΔH = 
+    /\bH₂O\b.*[→⇌]|[→⇌].*\bH₂O\b/i,                          // H₂O com seta
+    /\bCO₂\b.*[→⇌]|[→⇌].*\bCO₂\b/i,                          // CO₂ com seta
+    /\bO₂\b.*[→⇌]|[→⇌].*\bO₂\b/i,                            // O₂ com seta
+    /C\d+H\d+O?\d*.*[→⇌]/i,                                   // Fórmulas orgânicas
+    /₍[sgla][q]?₎.*[→⇌]|[→⇌].*₍[sgla][q]?₎/i,                // Com estados físicos
+  ];
+  
+  return reactionPatterns.some(p => p.test(line));
+}
+
+/**
+ * Detecta se uma linha contém um cálculo/equação matemática
+ */
+function isMathEquation(line: string): boolean {
+  const mathPatterns = [
+    /\bΔH\s*[_=:]/i,                          // ΔH = 
+    /\bn\s*=\s*m\s*\/\s*M/i,                  // n = m/M
+    /\bPV\s*=\s*nRT/i,                        // PV = nRT
+    /\bm\s*=\s*n\s*[×x]\s*M/i,                // m = n × M
+    /\b\d+\s*[×x]\s*\d+\s*[=:]/,              // 6 × 394 =
+    /[=:]\s*[-+]?\d+(\.\d+)?\s*(kJ|kcal|J)/i, // = -394 kJ
+    /\bΔH_?(final|total|reação)\s*[=:]/i,    // ΔH_final =
+  ];
+  
+  return mathPatterns.some(p => p.test(line));
+}
+
+/**
+ * Formata uma linha como bloco de reação química destacado
+ */
+function formatAsChemicalReactionBlock(line: string): string {
+  // Remover espaços extras e normalizar
+  const cleaned = line.trim().replace(/\s{2,}/g, ' ');
+  
+  // Retorna com marcadores especiais para renderização
+  return `\n【REAÇÃO】${cleaned}【/REAÇÃO】\n`;
+}
+
+/**
+ * Formata uma linha como bloco de equação matemática
+ */
+function formatAsMathBlock(line: string): string {
+  const cleaned = line.trim().replace(/\s{2,}/g, ' ');
+  return `\n【EQUAÇÃO】${cleaned}【/EQUAÇÃO】\n`;
+}
+
+/**
+ * Separa passos que estão na mesma linha
+ * "Etapa 1: ... Etapa 2: ..." → linhas separadas
+ */
+function separateStepsIntoLines(text: string): string {
+  let result = text;
+  
+  // Padrões de passos/etapas
+  const stepPatterns = [
+    /(\s*[-–—]\s*Etapa\s+\d+\s*:)/gi,
+    /(\s*[-–—]\s*Passo\s+\d+\s*:)/gi,
+    /(\s*[-–—]\s*Step\s+\d+\s*:)/gi,
+    /(\.\s*Etapa\s+\d+\s*:)/gi,
+    /(\.\s*Passo\s+\d+\s*:)/gi,
+    /(\.\s*Equação\s+\d+[:\s])/gi,
+    /(\.\s*\d+\.\s+(?:Equação|Reação|Formação))/gi,
+  ];
+  
+  for (const pattern of stepPatterns) {
+    result = result.replace(pattern, '\n\n$1');
+  }
+  
+  // Separar "1. Equação 1 (Formação..." em linhas
+  result = result.replace(/(\d+\.\s*Equação\s+\d+\s*\([^)]+\):\s*)/gi, '\n\n$1\n');
+  
+  // Separar marcadores de mapeamento de etapas
+  result = result.replace(/(MAPEAMENTO\s+DAS\s+ETAPAS[:\s]*)/gi, '\n\n$1\n');
+  result = result.replace(/(O\s+plano\s+é:\s*)/gi, '\n\n$1\n');
+  result = result.replace(/(DEFINIÇÃO\s+D[OE]\s+OBJETIVO[:\s]*)/gi, '\n\n$1\n');
+  result = result.replace(/(EXECUÇÃO\s+D[OE]\s+PLANO[:\s]*)/gi, '\n\n$1\n');
+  result = result.replace(/(VERIFICAÇÃO\s+E\s+RESPOSTA[:\s]*)/gi, '\n\n$1\n');
+  result = result.replace(/(ANÁLISE\s+D[OE]\s+COMANDO[:\s]*)/gi, '\n\n$1\n');
+  
+  return result.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/**
+ * Processa linhas e identifica blocos especiais (reações, equações)
+ */
+function processContentBlocks(text: string): string {
+  // Primeiro, separar passos em linhas
+  let processed = separateStepsIntoLines(text);
+  
+  // Dividir em linhas e processar cada uma
+  const lines = processed.split('\n');
+  const processedLines: string[] = [];
+  
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    
+    if (!trimmedLine) {
+      processedLines.push('');
+      continue;
+    }
+    
+    // Detectar e formatar reações químicas
+    if (isChemicalReaction(trimmedLine) && trimmedLine.length < 200) {
+      processedLines.push(formatAsChemicalReactionBlock(trimmedLine));
+    }
+    // Detectar e formatar equações matemáticas
+    else if (isMathEquation(trimmedLine) && trimmedLine.length < 150) {
+      processedLines.push(formatAsMathBlock(trimmedLine));
+    }
+    else {
+      processedLines.push(line);
+    }
+  }
+  
+  return processedLines.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
 const formatTextContent = (content: string): string => {
   // ========== FASE 1: LIMPEZA GLOBAL ==========
-  // Remover caracteres indesejados antes de qualquer formatação
   let cleaned = content
     .replace(/\*\*/g, '')           // Remove ** (markdown bold)
     .replace(/\*/g, '')             // Remove * soltos
@@ -1533,25 +1669,24 @@ const formatTextContent = (content: string): string => {
     .replace(/[«»„"]/g, '')         // Remove aspas francesas/alemãs
     .replace(/👉\s*/g, '\n\n• ')    // Cada 👉 vira bullet em nova linha
     .replace(/Reunindo:/gi, '\n\nReunindo:')
-    // NORMALIZAÇÃO ENEM: C1-C7 e H1-H30 sempre em MAIÚSCULAS
     .replace(/\b([cC])(\d+)\b/g, (_, _letter, num) => `C${num}`)
     .replace(/\b([hH])(\d+)\b/g, (_, _letter, num) => `H${num}`)
     .trim();
   
-  // ========== FASE 2: FORMATAÇÃO DE BULLET POINTS ==========
-  // REGRA: Bullets com espaçamento MÍNIMO (compacto) para leitura fluida
+  // ========== FASE 2: SEPARAÇÃO DE PASSOS E BLOCOS ==========
+  cleaned = processContentBlocks(cleaned);
+  
+  // ========== FASE 3: FORMATAÇÃO DE BULLET POINTS ==========
   cleaned = cleaned
-    .replace(/\n\s*•\s*/g, '\n• ')           // Bullets no início de linha
-    .replace(/([^\n])\s*•\s*/g, '$1\n• ')    // Bullets no meio do texto
-    .replace(/\n{3,}/g, '\n\n')              // Remove quebras excessivas
+    .replace(/\n\s*•\s*/g, '\n• ')
+    .replace(/([^\n])\s*•\s*/g, '$1\n• ')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
   
-  // ========== FASE 3: REFINAMENTO PEDAGÓGICO ==========
-  // Aplicar regras de organização e qualidade textual
+  // ========== FASE 4: REFINAMENTO PEDAGÓGICO ==========
   cleaned = applyPedagogicalRefinement(cleaned);
   
-  // ========== FASE 4: PADRONIZAÇÃO QUÍMICA VISUAL ==========
-  // Aplicar formatação de fórmulas, cargas, estados físicos e setas
+  // ========== FASE 5: PADRONIZAÇÃO QUÍMICA VISUAL ==========
   return formatChemicalFormulas(cleaned);
 };
 
@@ -1576,21 +1711,115 @@ const ResolutionImage = memo(function ResolutionImage({ src, index }: { src: str
 });
 
 /**
- * Formata conteúdo com fórmulas químicas E renderiza imagens
+ * Componente para renderizar bloco de reação química destacado
+ */
+const ChemicalReactionBlock = memo(function ChemicalReactionBlock({ content }: { content: string }) {
+  return (
+    <div className="my-3 py-2 px-4 bg-blue-500/10 border-l-4 border-l-blue-500 rounded-r-lg">
+      <p className="text-base font-semibold text-blue-600 dark:text-blue-400 font-mono tracking-wide">
+        {formatChemicalFormulas(content)}
+      </p>
+    </div>
+  );
+});
+
+/**
+ * Componente para renderizar bloco de equação matemática
+ */
+const MathEquationBlock = memo(function MathEquationBlock({ content }: { content: string }) {
+  return (
+    <div className="my-3 py-2 px-4 bg-amber-500/10 border-l-4 border-l-amber-500 rounded-r-lg">
+      <p className="text-base font-semibold text-amber-700 dark:text-amber-400 font-mono">
+        {formatChemicalFormulas(content)}
+      </p>
+    </div>
+  );
+});
+
+/**
+ * Renderiza conteúdo com blocos especiais (reações, equações)
+ */
+const RenderFormattedContent = memo(function RenderFormattedContent({ text }: { text: string }) {
+  // Regex para encontrar blocos especiais
+  const blockPattern = /【(REAÇÃO|EQUAÇÃO)】([\s\S]*?)【\/\1】/g;
+  
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+  let keyCounter = 0;
+  
+  // Resetar o lastIndex do regex
+  blockPattern.lastIndex = 0;
+  
+  while ((match = blockPattern.exec(text)) !== null) {
+    // Texto antes do bloco
+    if (match.index > lastIndex) {
+      const beforeText = text.slice(lastIndex, match.index);
+      if (beforeText.trim()) {
+        parts.push(
+          <span key={`text-${keyCounter++}`} className="whitespace-pre-wrap">
+            {beforeText}
+          </span>
+        );
+      }
+    }
+    
+    // Bloco especial
+    const blockType = match[1];
+    const blockContent = match[2].trim();
+    
+    if (blockType === 'REAÇÃO') {
+      parts.push(<ChemicalReactionBlock key={`reaction-${keyCounter++}`} content={blockContent} />);
+    } else if (blockType === 'EQUAÇÃO') {
+      parts.push(<MathEquationBlock key={`math-${keyCounter++}`} content={blockContent} />);
+    }
+    
+    lastIndex = match.index + match[0].length;
+  }
+  
+  // Texto restante
+  if (lastIndex < text.length) {
+    const remainingText = text.slice(lastIndex);
+    if (remainingText.trim()) {
+      parts.push(
+        <span key={`text-${keyCounter++}`} className="whitespace-pre-wrap">
+          {remainingText}
+        </span>
+      );
+    }
+  }
+  
+  // Se não há blocos especiais, retorna texto simples
+  if (parts.length === 0) {
+    return <span className="whitespace-pre-wrap">{text}</span>;
+  }
+  
+  return <>{parts}</>;
+});
+
+/**
+ * Formata conteúdo com fórmulas químicas E renderiza imagens e blocos especiais
  */
 const formatContent = (content: string) => {
   const { cleanedText, images } = extractImagesFromResolution(content);
   const formattedText = formatTextContent(cleanedText);
   
-  // Se não há imagens, retorna só o texto formatado
-  if (images.length === 0) {
+  // Verificar se há blocos especiais
+  const hasSpecialBlocks = /【(REAÇÃO|EQUAÇÃO)】/.test(formattedText);
+  
+  // Se não há imagens nem blocos especiais, retorna texto simples
+  if (images.length === 0 && !hasSpecialBlocks) {
     return formattedText;
   }
   
-  // Retorna texto + imagens
+  // Retorna com renderização de blocos especiais + imagens
   return (
     <>
-      {formattedText}
+      {hasSpecialBlocks ? (
+        <RenderFormattedContent text={formattedText} />
+      ) : (
+        formattedText
+      )}
       {images.map((imgUrl, idx) => (
         <ResolutionImage key={`res-img-${idx}`} src={imgUrl} index={idx} />
       ))}
@@ -1976,45 +2205,53 @@ const QuestionResolution = memo(function QuestionResolution({
                 
                 {/* Conteúdo unificado — fluxo contínuo com divisores sutis */}
                 <div className="divide-y divide-emerald-500/10">
-                  {/* INTRO — Análise contextual inicial */}
+                {/* INTRO — Análise contextual inicial */}
                   {introSection && (
-                    <div className="px-4 py-3">
-                      <p className="text-justify leading-relaxed text-sm text-foreground/90 whitespace-pre-wrap">
+                    <div className="px-4 py-4">
+                      <div className="text-justify leading-relaxed text-sm text-foreground/90">
                         {formatContent(introSection.content)}
-                      </p>
+                      </div>
                     </div>
                   )}
                   
-                  {/* PASSOS — Cada passo em seu próprio parágrafo */}
-                  {sortedPassos.map((section, index) => (
-                    <div key={`passo-${index}`} className="px-4 py-3">
-                      <div className="text-sm text-justify">
-                        <span className="font-bold text-blue-500">
-                          PASSO {section.stepNumber}:
-                        </span>
-                        <span className="text-foreground/90 ml-2 whitespace-pre-wrap">
-                          {formatContent(section.content)}
-                        </span>
-                      </div>
+                  {/* PASSOS — Cada passo em seu próprio bloco visual destacado */}
+                  {sortedPassos.length > 0 && (
+                    <div className="px-4 py-4 space-y-4">
+                      {sortedPassos.map((section, index) => (
+                        <div key={`passo-${index}`} className="border-l-4 border-l-blue-500/50 pl-4 py-2 bg-blue-500/5 rounded-r-lg">
+                          <div className="text-sm font-bold text-blue-500 mb-2 uppercase tracking-wide">
+                            Passo {section.stepNumber}
+                          </div>
+                          <div className="text-sm text-foreground/90 leading-relaxed text-justify">
+                            {formatContent(section.content)}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                   
                   {/* SÍNTESE — Parágrafo de síntese após os passos */}
-                  {sinteseSections.map((section, index) => (
-                    <div key={`sintese-${index}`} className="px-4 py-3">
-                      <div className="text-sm text-justify">
-                        <span className="font-bold text-teal-500">SÍNTESE:</span>
-                        <span className="text-foreground/90 ml-2 whitespace-pre-wrap">
-                          {formatContent(section.content)}
-                        </span>
-                      </div>
+                  {sinteseSections.length > 0 && (
+                    <div className="px-4 py-4">
+                      {sinteseSections.map((section, index) => (
+                        <div key={`sintese-${index}`} className="border-l-4 border-l-teal-500/50 pl-4 py-2 bg-teal-500/5 rounded-r-lg">
+                          <div className="text-sm font-bold text-teal-500 mb-2 uppercase tracking-wide">
+                            Síntese
+                          </div>
+                          <div className="text-sm text-foreground/90 leading-relaxed text-justify">
+                            {formatContent(section.content)}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                   
-                  {/* ANÁLISE DAS ALTERNATIVAS — Cada alternativa em parágrafo próprio (enter entre elas) */}
+                  {/* ANÁLISE DAS ALTERNATIVAS — Cada alternativa em bloco visual próprio */}
                   {alternativasSections.length > 0 && (
-                    <div className="px-4 py-3">
-                      <div className="text-sm font-bold text-indigo-500 mb-3">Análise das alternativas:</div>
+                    <div className="px-4 py-4">
+                      <div className="text-sm font-bold text-indigo-500 mb-3 uppercase tracking-wide">
+                        Análise das Alternativas
+                      </div>
                       <div className="space-y-3">
                         {alternativasSections.map((section, index) => {
                           const isCorrect = section.type === 'alternativa_correta' || section.type === 'afirmacao_correta';
@@ -2030,22 +2267,22 @@ const QuestionResolution = memo(function QuestionResolution({
                             <div 
                               key={`alt-unified-${index}`} 
                               className={cn(
-                                'px-3 py-2 rounded-lg border-l-4',
+                                'px-4 py-3 rounded-lg border-l-4',
                                 isCorrect 
                                   ? 'bg-green-500/10 border-l-green-500' 
                                   : 'bg-red-500/5 border-l-red-500'
                               )}
                             >
-                              <div className="text-sm text-justify">
-                                <span className={cn(
-                                  'font-bold',
+                              <div className="text-sm">
+                                <div className={cn(
+                                  'font-bold mb-1',
                                   isCorrect ? 'text-green-600' : 'text-red-600'
                                 )}>
-                                  {statusIcon} {label} {letter}) {status}:
-                                </span>
-                                <span className="text-foreground/80 ml-2 whitespace-pre-wrap">
+                                  {statusIcon} {label} {letter}) {status}
+                                </div>
+                                <div className="text-foreground/80 leading-relaxed text-justify">
                                   {formatContent(section.content)}
-                                </span>
+                                </div>
                               </div>
                             </div>
                           );
