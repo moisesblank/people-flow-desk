@@ -1729,12 +1729,27 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         if (!q.micro && isMicroAutoAI) camposInferidos.push('micro:auto_ai_mode');
         if (!isMicroAutoAI && selectedMicro && selectedMicro !== q.micro) camposInferidos.push('micro:pre_selected');
         
-        // TEMA e SUBTEMA: Em modo automático, sempre respeitar o que já existe ou deixar vazio
-        const tema = q.tema || '';
-        if (!q.tema) camposInferidos.push('tema:empty_for_ai_inference');
+        // ═══════════════════════════════════════════════════════════════════
+        // TEMA: Se modo automático, usar o que veio do Excel/inferência. Se não, usar pré-seleção.
+        // CORREÇÃO CONSTITUCIONAL: selectedTema tem prioridade absoluta (exceto __AUTO_AI__)
+        // ═══════════════════════════════════════════════════════════════════
+        const isTemaAutoAI = selectedTema === '__AUTO_AI__' || selectedMicro === '__AUTO_AI__';
+        const tema = isTemaAutoAI 
+          ? (q.tema || '') // Respeita o que já tem no Excel ou inferido pela IA
+          : (selectedTema || q.tema || '');
+        if (!q.tema && isTemaAutoAI) camposInferidos.push('tema:auto_ai_mode');
+        if (!isTemaAutoAI && selectedTema && selectedTema !== q.tema) camposInferidos.push('tema:pre_selected');
         
-        const subtema = q.subtema || '';
-        if (!q.subtema) camposInferidos.push('subtema:empty_for_ai_inference');
+        // ═══════════════════════════════════════════════════════════════════
+        // SUBTEMA: Se modo automático, usar o que veio do Excel/inferência. Se não, usar pré-seleção.
+        // CORREÇÃO CONSTITUCIONAL: selectedSubtema tem prioridade absoluta (exceto __AUTO_AI__)
+        // ═══════════════════════════════════════════════════════════════════
+        const isSubtemaAutoAI = selectedSubtema === '__AUTO_AI__' || selectedTema === '__AUTO_AI__' || selectedMicro === '__AUTO_AI__';
+        const subtema = isSubtemaAutoAI 
+          ? (q.subtema || '') // Respeita o que já tem no Excel ou inferido pela IA
+          : (selectedSubtema || q.subtema || '');
+        if (!q.subtema && isSubtemaAutoAI) camposInferidos.push('subtema:auto_ai_mode');
+        if (!isSubtemaAutoAI && selectedSubtema && selectedSubtema !== q.subtema) camposInferidos.push('subtema:pre_selected');
         
         const difficulty = q.difficulty || 'medio';
         if (!q.difficulty) camposInferidos.push('difficulty:fallback_final');
