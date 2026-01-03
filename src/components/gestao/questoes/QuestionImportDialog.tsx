@@ -2607,8 +2607,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                         className={cn(
                           "flex-1 p-3 rounded-lg border-2 transition-all text-left",
                           selectedGroup === 'SIMULADOS'
-                            ? "border-red-500 bg-red-500/10 ring-2 ring-red-500/30"
-                            : "border-muted hover:border-red-500/50 hover:bg-red-500/5"
+                            ? "border-red-500 bg-red-600/30 ring-2 ring-red-500/50"
+                            : "border-red-500/50 bg-red-600/20 hover:bg-red-600/30"
                         )}
                       >
                         <div className="flex items-center gap-2">
