@@ -221,7 +221,7 @@ export const QuestionImportHistory = memo(function QuestionImportHistory({
                               <Badge className={cn(
                                 record.target_group === 'SIMULADOS' ? "bg-red-600" : "bg-purple-600"
                               )}>
-                                {record.target_group === 'SIMULADOS' ? 'Simulados' : 'Treino'}
+                                {record.target_group === 'SIMULADOS' ? 'SIMULADOS' : 'MODO_TREINO'}
                               </Badge>
                               <span className="text-xs text-muted-foreground">
                                 {formatDistanceToNow(new Date(record.created_at), { addSuffix: true, locale: ptBR })}
