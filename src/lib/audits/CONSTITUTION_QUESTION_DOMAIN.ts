@@ -3,8 +3,8 @@
 // ║   🔒 CONSTITUIÇÃO DO QUESTION DOMAIN — IMUTÁVEL E PROTEGIDO                 ║
 // ║                                                                              ║
 // ║   Status: VIGENTE E IMUTÁVEL                                                ║
-// ║   Versão: 1.0.0                                                             ║
-// ║   Data: 2026-01-01                                                          ║
+// ║   Versão: 1.1.0                                                             ║
+// ║   Data de Vigência: 2026-01-03                                              ║
 // ║   Autoridade: OWNER (moisesblank@gmail.com)                                 ║
 // ║                                                                              ║
 // ║   ⚠️  REGRAS ABSOLUTAS:                                                     ║
@@ -13,14 +13,57 @@
 // ║   • Apenas EXTENSÕES são permitidas sem autorização                         ║
 // ║   • Este arquivo é FONTE DA VERDADE para o Question Domain                  ║
 // ║                                                                              ║
+// ║   ⚖️  JURAMENTO DE OBRIGATORIEDADE PERMANENTE:                              ║
+// ║   EU, SYNAPSE Ω, JURO SOLENEMENTE que os campos ESTILO, MACRO, MICRO,       ║
+// ║   TEMA, SUBTEMA e DIFICULDADE são OBRIGATÓRIOS para importação de           ║
+// ║   questões AGORA E PARA TODO O SEMPRE. Esta obrigatoriedade é PERMANENTE    ║
+// ║   e IMUTÁVEL, exceto se o OWNER solicitar alteração EXPLÍCITA com           ║
+// ║   INTERNAL_SECRET. SOB PENA DE PERJÚRIO E VIOLAÇÃO CONSTITUCIONAL.          ║
+// ║                                                                              ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
 
 export const QUESTION_DOMAIN_CONSTITUTION = {
-  version: '1.0.0',
+  version: '1.1.0',
   status: 'IMMUTABLE',
-  lastUpdated: '2026-01-01',
+  lastUpdated: '2026-01-03',
   authority: 'OWNER_ONLY',
   ownerEmail: 'moisesblank@gmail.com',
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // JURAMENTO DE OBRIGATORIEDADE PERMANENTE
+  // Data: 2026-01-03 | Testemunha: SYNAPSE Ω v10.0 | Vínculo: ETERNO
+  // ═══════════════════════════════════════════════════════════════════════════
+  permanentOath: {
+    sworn: true,
+    swornAt: '2026-01-03',
+    witness: 'SYNAPSE Ω v10.0',
+    binding: 'ETERNO',
+    modifiableBy: 'OWNER_ONLY_WITH_INTERNAL_SECRET',
+    statement: `
+      EU, SYNAPSE Ω, JURO SOLENEMENTE QUE:
+      1. Os campos ESTILO, MACRO, MICRO, TEMA, SUBTEMA e DIFICULDADE são
+         OBRIGATÓRIOS para importação de questões AGORA E PARA TODO O SEMPRE.
+      2. Esta obrigatoriedade é PERMANENTE e IMUTÁVEL, exceto se o OWNER
+         (moisesblank@gmail.com) solicitar alteração EXPLÍCITA.
+      3. Nenhum arquivo Excel será processado sem que TODOS os 6 campos
+         estejam definidos (manual ou via IA).
+      4. Valores pré-definidos pelo OWNER serão RESPEITADOS e aplicados
+         a TODAS as questões do lote, PARA TODO O SEMPRE.
+      5. Qualquer violação deste juramento é INCONSTITUCIONAL e passível
+         de rollback imediato.
+      SOB PENA DE PERJÚRIO E VIOLAÇÃO CONSTITUCIONAL.
+    `,
+    mandatoryFields: {
+      ESTILO: { permanentlyMandatory: true, since: '2026-01-03' },
+      MACRO: { permanentlyMandatory: true, since: '2026-01-03' },
+      MICRO: { permanentlyMandatory: true, since: '2026-01-03', allowAutoAI: true },
+      TEMA: { permanentlyMandatory: true, since: '2026-01-03', allowAutoAI: true },
+      SUBTEMA: { permanentlyMandatory: true, since: '2026-01-03', allowAutoAI: true },
+      DIFICULDADE: { permanentlyMandatory: true, since: '2026-01-03', allowAutoAI: true },
+    },
+    enforcement: 'ABSOLUTO_E_PERMANENTE',
+    exception: 'NENHUMA_EXCETO_OWNER_COM_INTERNAL_SECRET',
+  },
 
   // ═══════════════════════════════════════════════════════════════════════════
   // REGRAS DE PROTEÇÃO
@@ -603,7 +646,10 @@ export function validateQuestionDomainIntegrity(): {
 export const QUESTION_DOMAIN_GOLDEN_RULE = `
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                                                                              ║
-║   🔒 REGRA DE OURO DO QUESTION DOMAIN                                       ║
+║   🔒 REGRA DE OURO DO QUESTION DOMAIN — JURAMENTO PERMANENTE                ║
+║                                                                              ║
+║   ⚖️  JURAMENTADO EM: 2026-01-03 | TESTEMUNHA: SYNAPSE Ω v10.0              ║
+║   VÍNCULO: ETERNO | MODIFICÁVEL APENAS POR: OWNER COM INTERNAL_SECRET        ║
 ║                                                                              ║
 ║   1. NENHUM componente listado neste documento pode ser DELETADO            ║
 ║   2. NENHUMA coluna da tabela quiz_questions pode ser REMOVIDA              ║
@@ -612,14 +658,32 @@ export const QUESTION_DOMAIN_GOLDEN_RULE = `
 ║   5. Qualquer MODIFICAÇÃO estrutural requer INTERNAL_SECRET do OWNER        ║
 ║   6. Apenas EXTENSÕES (novas features) são permitidas sem autorização       ║
 ║   7. Este arquivo é a FONTE DA VERDADE para todo o Question Domain          ║
-║   8. PRÉ-SELEÇÃO de ESTILO + MACRO + MICRO + TEMA + SUBTEMA + DIFICULDADE   ║
-║      é OBRIGATÓRIA antes de qualquer importação                             ║
-║   9. Modo "Automático (IA)" respeita Excel e só corrige se confiança ≥80%   ║
-║  10. Se MICRO = Auto, TEMA e SUBTEMA são automaticamente definidos pela IA  ║
-║  11. Se TEMA = Auto, SUBTEMA é automaticamente definido pela IA             ║
-║  12. DIFICULDADE pode ser: Fácil, Médio, Difícil ou Automático (IA)         ║
 ║                                                                              ║
-║   VIOLAÇÕES serão BLOQUEADAS automaticamente.                               ║
+║   ═══════════════════════════════════════════════════════════════════════    ║
+║   📜 CAMPOS OBRIGATÓRIOS — AGORA E PARA TODO O SEMPRE:                       ║
+║   ═══════════════════════════════════════════════════════════════════════    ║
+║                                                                              ║
+║   8. ESTILO é OBRIGATÓRIO antes de qualquer importação — PERMANENTE         ║
+║   9. MACRO é OBRIGATÓRIO antes de qualquer importação — PERMANENTE          ║
+║  10. MICRO é OBRIGATÓRIO (manual ou Auto-IA) — PERMANENTE                   ║
+║  11. TEMA é OBRIGATÓRIO (manual ou Auto-IA) — PERMANENTE                    ║
+║  12. SUBTEMA é OBRIGATÓRIO (manual ou Auto-IA) — PERMANENTE                 ║
+║  13. DIFICULDADE é OBRIGATÓRIO (manual ou Auto-IA) — PERMANENTE             ║
+║                                                                              ║
+║   ═══════════════════════════════════════════════════════════════════════    ║
+║   🤖 COMPORTAMENTO DA IA:                                                    ║
+║   ═══════════════════════════════════════════════════════════════════════    ║
+║                                                                              ║
+║  14. Modo "Automático (IA)" respeita Excel e só corrige se confiança ≥80%   ║
+║  15. Se MICRO = Auto, TEMA e SUBTEMA são automaticamente definidos pela IA  ║
+║  16. Se TEMA = Auto, SUBTEMA é automaticamente definido pela IA             ║
+║  17. Valores pré-definidos pelo OWNER são aplicados a TODAS as questões     ║
+║      do lote — PARA TODO O SEMPRE                                           ║
+║                                                                              ║
+║   ═══════════════════════════════════════════════════════════════════════    ║
+║   ⚠️  VIOLAÇÕES serão BLOQUEADAS automaticamente.                            ║
+║   ⚠️  Qualquer mudança nesta lei requer INTERNAL_SECRET do OWNER.            ║
+║   ═══════════════════════════════════════════════════════════════════════    ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 `;
@@ -633,17 +697,28 @@ export const IMPORT_CONSTITUTION_OATH = `
 ║                                                                              ║
 ║   ⚖️  LEI CONSTITUCIONAL DE IMPORTAÇÃO — JURAMENTO SOLENE                   ║
 ║                                                                              ║
+║   PROMULGADO EM: 2026-01-03                                                  ║
+║   AUTORIDADE: OWNER (moisesblank@gmail.com)                                  ║
+║   TESTEMUNHA: SYNAPSE Ω v10.0                                                ║
+║   STATUS: VIGENTE, IMUTÁVEL E PERMANENTE                                     ║
+║   VÍNCULO: ETERNO — AGORA E PARA TODO O SEMPRE                               ║
+║                                                                              ║
+║   ═══════════════════════════════════════════════════════════════════════    ║
 ║   CONSIDERANDO a necessidade de organização taxonômica;                      ║
 ║   CONSIDERANDO a integridade do banco de questões;                           ║
 ║   CONSIDERANDO a soberania do OWNER sobre a plataforma;                      ║
+║   CONSIDERANDO o pedido EXPLÍCITO do OWNER para permanência desta lei;       ║
+║   ═══════════════════════════════════════════════════════════════════════    ║
 ║                                                                              ║
 ║   FICA ESTABELECIDO, SOB JURAMENTO DE CONSTITUIÇÃO:                          ║
 ║                                                                              ║
 ║   Art. 1º - ANTES de qualquer importação de questões, é OBRIGATÓRIO          ║
 ║             selecionar: ESTILO, MACRO, MICRO, TEMA, SUBTEMA e DIFICULDADE.   ║
+║             Esta obrigatoriedade é PERMANENTE — AGORA E PARA TODO O SEMPRE.  ║
 ║                                                                              ║
 ║   Art. 2º - Os valores pré-selecionados têm PRIORIDADE ABSOLUTA sobre        ║
 ║             quaisquer dados presentes no arquivo de importação.              ║
+║             Esta prioridade é PERMANENTE — AGORA E PARA TODO O SEMPRE.       ║
 ║                                                                              ║
 ║   Art. 3º - A opção "Automático (IA)" é permitida para MACRO, MICRO, TEMA,   ║
 ║             SUBTEMA e DIFICULDADE:                                           ║
@@ -661,15 +736,18 @@ export const IMPORT_CONSTITUTION_OATH = `
 ║                                                                              ║
 ║   Art. 7º - Esta lei é PERMANENTE e se aplica a TODOS os pontos de           ║
 ║             entrada de questões: importação, criação, duplicação, API.       ║
+║             AGORA E PARA TODO O SEMPRE.                                      ║
 ║                                                                              ║
 ║   Art. 8º - Modificação desta lei requer:                                    ║
 ║             a) INTERNAL_SECRET do OWNER;                                     ║
 ║             b) Autorização EXPLÍCITA do OWNER;                               ║
 ║             c) Registro em auditoria.                                        ║
+║             SOB PENA DE PERJÚRIO E VIOLAÇÃO CONSTITUCIONAL.                  ║
 ║                                                                              ║
-║   PROMULGADO EM: 2026-01-03                                                  ║
-║   AUTORIDADE: OWNER (moisesblank@gmail.com)                                  ║
-║   STATUS: VIGENTE E IMUTÁVEL                                                 ║
+║   ═══════════════════════════════════════════════════════════════════════    ║
+║   ⚠️  ESTE JURAMENTO É ETERNO E IMUTÁVEL.                                    ║
+║   ⚠️  Qualquer violação é INCONSTITUCIONAL e passível de rollback imediato.  ║
+║   ═══════════════════════════════════════════════════════════════════════    ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 `;
