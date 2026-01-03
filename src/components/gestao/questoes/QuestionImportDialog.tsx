@@ -1701,6 +1701,12 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         // ═══════════════════════════════════════════════════════════════════
         // REGISTRAR LOGS DE INTERVENÇÃO DE IA
         // ═══════════════════════════════════════════════════════════════════
+        // ═══════════════════════════════════════════════════════════════════
+        // REGISTRAR LOGS DE INTERVENÇÃO DE IA
+        // ═══════════════════════════════════════════════════════════════════
+        // CORREÇÃO CONSTITUCIONAL: SÓ registrar log quando há VALOR REAL no AFTER
+        // Logs com AFTER vazio são INCONSISTENTES e violam a política de auditoria
+        // ═══════════════════════════════════════════════════════════════════
         if (insertedData?.id && camposInferidos.length > 0) {
           const aiLogs = camposInferidos
             // Captura inferências reais (ai_inference) e fallbacks (fallback_*)
@@ -1723,8 +1729,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     ? 'AI_AUTOFILL'
                     : 'AI_SUGGESTION_APPLIED';
               
-              // FIX P0: Usar insertedData (valor final após insert) em vez de payload (valor antes)
-              // Se o campo estiver vazio no insertedData, ainda assim registrar a tentativa de inferência
+              // Obter valor final do banco
               const finalValue = (insertedData as any)[field] ?? (payload as any)[field] ?? '';
               
               return {
@@ -1733,16 +1738,23 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 field_affected: field,
                 value_before: null,
                 value_after: String(finalValue),
-                action_description: `Campo "${field}" ${finalValue ? `inferido como "${String(finalValue).slice(0, 50)}"` : 'marcado para inferência (vazio no Excel)'}`,
+                action_description: `Campo "${field}" inferido como "${String(finalValue).slice(0, 50)}"`,
                 source_type: 'import' as const,
                 source_file: files[0]?.name || 'importação',
-                ai_confidence_score: finalValue ? 0.85 : 0.5,
+                ai_confidence_score: 0.85,
+                has_real_value: !!finalValue && String(finalValue).trim() !== '',
               };
-            });
+            })
+            // ═══════════════════════════════════════════════════════════════════
+            // FILTRO CRÍTICO: Só registrar logs com VALOR REAL no AFTER
+            // ═══════════════════════════════════════════════════════════════════
+            .filter(log => log.has_real_value);
           
           if (aiLogs.length > 0) {
+            // Remover campo auxiliar antes de enviar
+            const cleanLogs = aiLogs.map(({ has_real_value, ...rest }) => rest);
             // Não aguardar para não bloquear a importação
-            logInterventions(aiLogs).catch(err => 
+            logInterventions(cleanLogs).catch(err => 
               console.error('[IMPORT] Erro ao registrar logs de IA:', err)
             );
           }
