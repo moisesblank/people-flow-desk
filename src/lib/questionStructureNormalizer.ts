@@ -152,40 +152,44 @@ export function normalizeEnunciado(text: string): string {
     normalized = normalized.replace(pattern, '');
   }
   
-  // 2. Converter listas de afirmativas (I - ..., II - ...) em texto corrido
+  // 2. Organizar listas de itens (I - ..., II - ...) em linhas separadas
   // Detectar padrões como "I - texto" ou "I. texto" ou "I) texto"
   const affirmativePattern = /^([IVX]+)\s*[\.\)\-–—]\s*/gm;
-  
-  // Se há afirmativas numeradas, convertê-las para texto corrido
+
+  // Se itens romanizados aparecerem no meio de uma linha, quebrar para nova linha
+  // Ex: "... fenilalanina. II. ..." -> "... fenilalanina.\nII. ..."
+  normalized = normalized.replace(
+    /(\S)\s+(?=([IVX]+)\s*[\.\)\-–—]\s+)/g,
+    "$1\n"
+  );
+
+  // Se há afirmativas numeradas, garantir 1 item por linha (com prefixo)
   if (affirmativePattern.test(normalized)) {
-    // Encontrar todas as afirmativas
     const lines = normalized.split('\n');
     const processedLines: string[] = [];
-    
+
     for (const line of lines) {
       const trimmed = line.trim();
-      
-      // Verificar se é uma afirmativa numerada
-      if (/^[IVX]+\s*[\.\)\-–—]/.test(trimmed)) {
-        // Remover o prefixo romano e adicionar como texto corrido
-        const content = trimmed.replace(/^[IVX]+\s*[\.\)\-–—]\s*/, '').trim();
-        if (content) {
-          // Adicionar ponto final se não tiver
-          const finalContent = content.endsWith('.') || content.endsWith('?') || content.endsWith('!')
-            ? content
-            : content + '.';
-          processedLines.push(finalContent);
+      if (!trimmed) continue;
+
+      const match = trimmed.match(/^([IVX]+)\s*[\.\)\-–—]\s*(.*)$/);
+      if (match) {
+        const roman = (match[1] || '').toUpperCase();
+        const contentRaw = (match[2] || '').trim();
+        if (contentRaw) {
+          const content = contentRaw.endsWith('.') || contentRaw.endsWith('?') || contentRaw.endsWith('!')
+            ? contentRaw
+            : `${contentRaw}.`;
+          processedLines.push(`${roman}. ${content}`);
         }
-      } else {
-        // Linha normal
-        if (trimmed) {
-          processedLines.push(trimmed);
-        }
+        continue;
       }
+
+      processedLines.push(trimmed);
     }
-    
-    // Juntar as linhas em texto corrido
-    normalized = processedLines.join(' ').replace(/\s+/g, ' ').trim();
+
+    // Mantém quebras de linha (whitespace-pre-wrap no render garante exibição)
+    normalized = processedLines.join('\n').replace(/[ \t]{2,}/g, ' ').trim();
   }
   
   // 3. Limpar espaços múltiplos e quebras excessivas

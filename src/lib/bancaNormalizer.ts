@@ -374,38 +374,41 @@ export function normalizeBancaHeader(
   bancaField?: string | null,
   ano?: number | null
 ): string {
+  const sanitizedAno = sanitizeYear(ano);
+
   // 1. Se tem campo banca explícito, usar ele
   if (bancaField && bancaField !== "autoral_prof_moises" && bancaField !== "propria" && bancaField !== "autoral") {
     const bancaInfo = findBancaByValue(bancaField);
     if (bancaInfo) {
       const label = bancaInfo.label.toUpperCase();
-      return ano ? `${label} (${ano})` : label;
+      return sanitizedAno ? `${label} (${sanitizedAno})` : label;
     }
     // Se não encontrou na lista, usar o valor em uppercase
     const formattedBanca = bancaField.toUpperCase().replace(/_/g, " ");
-    return ano ? `${formattedBanca} (${ano})` : formattedBanca;
+    return sanitizedAno ? `${formattedBanca} (${sanitizedAno})` : formattedBanca;
   }
-  
+
   // 2. Tentar detectar banca do texto
   const detectedBanca = detectBancaFromText(rawText || "");
   if (detectedBanca) {
     const bancaInfo = findBancaByValue(detectedBanca);
     if (bancaInfo) {
       // Extrair ano e edição do texto original
-      const extractedYear = ano || extractYearFromText(rawText || "");
+      const extractedYearRaw = ano || extractYearFromText(rawText || "");
+      const extractedYear = sanitizeYear(extractedYearRaw);
       const edition = extractEditionFromText(rawText || "");
-      
+
       let label = bancaInfo.label.toUpperCase();
-      
+
       // Adicionar edição especial se houver
       if (edition && !label.includes(edition.toUpperCase())) {
         label = `${label} ${edition}`;
       }
-      
+
       return extractedYear ? `${label} (${extractedYear})` : label;
     }
   }
-  
+
   // 3. Fallback: label genérico
   return DEFAULT_BANCA_HEADER;
 }
