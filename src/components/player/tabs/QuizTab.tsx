@@ -280,7 +280,7 @@ function QuizTab({ lessonId }: QuizTabProps) {
                     <img 
                       src={optionImageUrl} 
                       alt={`Imagem alternativa ${String.fromCharCode(65 + idx)}`}
-                      className="min-h-[300px] max-h-[800px] w-auto object-contain rounded-lg ml-11"
+                      className="min-h-[225px] max-h-[600px] w-auto object-contain rounded-lg ml-11"
                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
                   )}

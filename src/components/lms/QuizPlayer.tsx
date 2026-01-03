@@ -210,7 +210,7 @@ export function QuizPlayer({ quiz, questions, onSubmit, isSubmitting }: QuizPlay
                           <img 
                             src={option.image_url} 
                             alt={`Imagem alternativa ${option.id.toUpperCase()}`}
-                            className="min-h-[300px] max-h-[800px] w-auto object-contain rounded-lg ml-7"
+                            className="min-h-[225px] max-h-[600px] w-auto object-contain rounded-lg ml-7"
                             onError={(e) => { e.currentTarget.style.display = 'none'; }}
                           />
                         )}
