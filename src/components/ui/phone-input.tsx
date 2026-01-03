@@ -34,10 +34,15 @@ export interface PhoneInputProps extends Omit<React.InputHTMLAttributes<HTMLInpu
  */
 export function formatPhone(phone: string): string {
   // Remove tudo que não é dígito
-  const digits = phone.replace(/\D/g, '');
+  let digits = phone.replace(/\D/g, '');
   
-  // Se não tem dígitos, retorna prefixo
-  if (digits.length === 0) return '+55 ';
+  // Se começa com 55 (código do Brasil), remove para evitar duplicação
+  if (digits.startsWith('55') && digits.length > 2) {
+    digits = digits.slice(2);
+  }
+  
+  // Se não tem dígitos, retorna vazio (placeholder será mostrado)
+  if (digits.length === 0) return '';
   
   // Construir formato progressivamente
   let formatted = '+55 ';
@@ -109,8 +114,13 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(({
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     
-    // Extrair apenas dígitos (ignorando o prefixo +55)
-    const rawDigits = inputValue.replace(/\D/g, '');
+    // Extrair apenas dígitos
+    let rawDigits = inputValue.replace(/\D/g, '');
+    
+    // Se começa com 55 (código do Brasil), remove para evitar duplicação
+    if (rawDigits.startsWith('55') && rawDigits.length > 2) {
+      rawDigits = rawDigits.slice(2);
+    }
     
     // Limitar a 11 dígitos (DDD + 9 dígitos)
     const limitedDigits = rawDigits.slice(0, 11);
@@ -137,7 +147,7 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(({
         value={displayValue}
         onChange={handleChange}
         onFocus={handleFocus}
-        placeholder="+55 83 9 9999-9999"
+        placeholder="+55 83 9 9892-0105"
         className={cn(
           "font-mono tracking-wide pr-10",
           isComplete && isValid && "border-emerald-500/50 focus-visible:ring-emerald-500/30",
