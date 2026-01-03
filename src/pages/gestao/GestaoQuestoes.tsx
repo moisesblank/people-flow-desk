@@ -2020,47 +2020,47 @@ function GestaoQuestoes() {
             Importar
           </Button>
           {/* ═══════════════════════════════════════════════════════════════
-              🔴 BOTÕES DE EXCLUSÃO SOBERANOS (SEMPRE VISÍVEIS PARA OWNER)
-              CONSTITUIÇÃO v1.0: "Buttons must be visible by default.
-              Buttons must not depend on mode, filter, or state."
-              Layout: Coluna vertical para empilhar os botões
+              🔴 MENU DROPDOWN DE EXCLUSÃO (OWNER ONLY)
               ═══════════════════════════════════════════════════════════════ */}
           {isOwner && (
-            <div className="flex flex-col gap-1">
-              <Button 
-                variant="outline"
-                size="sm"
-                onClick={() => setDeleteSemGrupoConfirm(true)}
-                disabled={stats.semGrupo === 0}
-                className="gap-2 border-gray-500/50 text-gray-400 hover:bg-gray-500/10 hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
-                title={stats.semGrupo === 0 ? 'Nenhuma questão sem grupo' : `Excluir ${stats.semGrupo} questões sem grupo`}
-              >
-                <Trash2 className="h-3 w-3" />
-                Excluir Sem Grupo ({stats.semGrupo})
-              </Button>
-              <Button 
-                variant="outline"
-                size="sm"
-                onClick={() => setDeleteTreinoConfirm(true)}
-                disabled={stats.modoTreino === 0}
-                className="gap-2 border-orange-500/50 text-orange-500 hover:bg-orange-500/10 hover:text-orange-400 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
-                title={stats.modoTreino === 0 ? 'Nenhuma questão no Modo Treino' : `Excluir ${stats.modoTreino} questões do Modo Treino`}
-              >
-                <Trash2 className="h-3 w-3" />
-                Excluir Treino ({stats.modoTreino})
-              </Button>
-              <Button 
-                variant="outline"
-                size="sm"
-                onClick={() => setDeleteAllConfirm(true)}
-                disabled={questions.length === 0}
-                className="gap-2 border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
-                title={questions.length === 0 ? 'Nenhuma questão para excluir' : `Excluir TODAS as ${questions.length} questões`}
-              >
-                <Trash2 className="h-3 w-3" />
-                Excluir Todas ({questions.length})
-              </Button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline"
+                  className="gap-2 border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-400"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Exclusão
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem 
+                  onClick={() => setDeleteSemGrupoConfirm(true)}
+                  disabled={stats.semGrupo === 0}
+                  className="gap-2 text-gray-400 focus:text-gray-300 focus:bg-gray-500/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Excluir Sem Grupo ({stats.semGrupo})
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setDeleteTreinoConfirm(true)}
+                  disabled={stats.modoTreino === 0}
+                  className="gap-2 text-orange-500 focus:text-orange-400 focus:bg-orange-500/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Excluir Treino ({stats.modoTreino})
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => setDeleteAllConfirm(true)}
+                  disabled={questions.length === 0}
+                  className="gap-2 text-red-500 focus:text-red-400 focus:bg-red-500/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Excluir Todas ({questions.length})
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           <Button 
             onClick={() => {
