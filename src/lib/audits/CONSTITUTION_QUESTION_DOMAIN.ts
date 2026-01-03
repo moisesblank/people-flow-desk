@@ -425,6 +425,87 @@ export const QUESTION_DOMAIN_CONSTITUTION = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // LEI CONSTITUCIONAL DE IMPORTAÇÃO — PRÉ-SELEÇÃO OBRIGATÓRIA
+  // Status: IMUTÁVEL | Versão: 1.0.0 | Data: 2026-01-03
+  // ═══════════════════════════════════════════════════════════════════════════
+  importConstitution: {
+    status: 'IMMUTABLE',
+    version: '1.0.0',
+    createdAt: '2026-01-03',
+    authority: 'OWNER_SWORN_LAW',
+    
+    // REGRA SUPREMA: Seleção obrigatória antes do upload
+    mandatoryPreSelection: {
+      description: 'ANTES de qualquer upload de arquivo, o usuário DEVE escolher ESTILO, MACRO e MICRO',
+      required: ['question_style', 'macro_area', 'micro_subject'],
+      enforcement: 'BLOCKING', // Bloqueia upload se não selecionado
+      
+      // Opções permitidas
+      options: {
+        question_style: {
+          values: ['multiple_choice', 'discursive', 'outros'],
+          labels: ['Múltipla Escolha', 'Discursiva', 'Outros Tipos'],
+          required: true,
+        },
+        macro_area: {
+          values: ['__AUTO_AI__', '...dynamic_from_taxonomy'],
+          specialValue: {
+            '__AUTO_AI__': {
+              label: 'Automático (IA)',
+              behavior: 'AI_INFERENCE_WITH_CONFIDENCE_THRESHOLD',
+              confidenceThreshold: 0.80,
+              description: 'IA infere MACRO. Corrige somente se confiança ≥80%',
+            },
+          },
+          required: true,
+        },
+        micro_subject: {
+          values: ['__AUTO_AI__', '...dynamic_filtered_by_macro'],
+          specialValue: {
+            '__AUTO_AI__': {
+              label: 'Automático (IA)',
+              behavior: 'AI_INFERENCE_WITH_CONFIDENCE_THRESHOLD',
+              confidenceThreshold: 0.80,
+              description: 'IA preenche campos vazios. Corrige MICRO/TEMA/SUBTEMA somente se confiança ≥80%',
+            },
+          },
+          required: true,
+          dependsOn: 'macro_area',
+        },
+      },
+    },
+    
+    // REGRA DE APLICAÇÃO
+    applicationRule: {
+      description: 'Valores pré-selecionados têm PRIORIDADE ABSOLUTA sobre dados do Excel',
+      exceptions: ['__AUTO_AI__'], // Exceto quando modo automático
+      behavior: {
+        normalMode: 'PRE_SELECTED_OVERRIDES_ALL',
+        autoAIMode: {
+          respectExcelData: true,
+          fillEmptyFields: true,
+          correctOnlyIfConfidenceAbove: 0.80,
+          fieldsToCorrect: ['micro', 'tema', 'subtema'],
+        },
+      },
+    },
+    
+    // REGRA DE PERSISTÊNCIA ETERNA
+    eternityClause: {
+      statement: 'Esta lei é PERMANENTE e se aplica a TODO ponto de entrada de questões na plataforma',
+      scope: [
+        'QuestionImportDialog (Excel/CSV)',
+        'Criação manual de questões',
+        'Duplicação de questões',
+        'APIs de importação',
+        'Edge Functions de criação',
+        'Qualquer futuro mecanismo de entrada',
+      ],
+      modificationRequires: 'INTERNAL_SECRET + EXPLICIT_OWNER_AUTHORIZATION',
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // PROTOCOLO DE ANIQUILAÇÃO TOTAL
   // ═══════════════════════════════════════════════════════════════════════════
   annihilationProtocol: {
@@ -486,8 +567,61 @@ export const QUESTION_DOMAIN_GOLDEN_RULE = `
 ║   5. Qualquer MODIFICAÇÃO estrutural requer INTERNAL_SECRET do OWNER        ║
 ║   6. Apenas EXTENSÕES (novas features) são permitidas sem autorização       ║
 ║   7. Este arquivo é a FONTE DA VERDADE para todo o Question Domain          ║
+║   8. PRÉ-SELEÇÃO de ESTILO + MACRO + MICRO é OBRIGATÓRIA antes de upload    ║
+║   9. Modo "Automático (IA)" respeita Excel e só corrige se confiança ≥80%   ║
 ║                                                                              ║
 ║   VIOLAÇÕES serão BLOQUEADAS automaticamente.                               ║
 ║                                                                              ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 `;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LEI JURAMENTADA — IMPORTAÇÃO OBRIGATÓRIA
+// Data: 2026-01-03 | Autoridade: OWNER | Status: PERMANENTE
+// ═══════════════════════════════════════════════════════════════════════════
+export const IMPORT_CONSTITUTION_OATH = `
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║   ⚖️  LEI CONSTITUCIONAL DE IMPORTAÇÃO — JURAMENTO SOLENE                   ║
+║                                                                              ║
+║   CONSIDERANDO a necessidade de organização taxonômica;                      ║
+║   CONSIDERANDO a integridade do banco de questões;                           ║
+║   CONSIDERANDO a soberania do OWNER sobre a plataforma;                      ║
+║                                                                              ║
+║   FICA ESTABELECIDO, SOB JURAMENTO DE CONSTITUIÇÃO:                          ║
+║                                                                              ║
+║   Art. 1º - ANTES de qualquer importação de questões, é OBRIGATÓRIO          ║
+║             selecionar: ESTILO, MACRO ASSUNTO e MICRO ASSUNTO.               ║
+║                                                                              ║
+║   Art. 2º - Os valores pré-selecionados têm PRIORIDADE ABSOLUTA sobre        ║
+║             quaisquer dados presentes no arquivo de importação.              ║
+║                                                                              ║
+║   Art. 3º - A opção "Automático (IA)" é permitida para MACRO e MICRO:        ║
+║             a) Respeita dados já existentes no arquivo;                      ║
+║             b) Preenche campos vazios automaticamente;                       ║
+║             c) Só corrige MICRO/TEMA/SUBTEMA se confiança ≥ 80%.             ║
+║                                                                              ║
+║   Art. 4º - Esta lei é PERMANENTE e se aplica a TODOS os pontos de           ║
+║             entrada de questões: importação, criação, duplicação, API.       ║
+║                                                                              ║
+║   Art. 5º - Modificação desta lei requer:                                    ║
+║             a) INTERNAL_SECRET do OWNER;                                     ║
+║             b) Autorização EXPLÍCITA do OWNER;                               ║
+║             c) Registro em auditoria.                                        ║
+║                                                                              ║
+║   PROMULGADO EM: 2026-01-03                                                  ║
+║   AUTORIDADE: OWNER (moisesblank@gmail.com)                                  ║
+║   STATUS: VIGENTE E IMUTÁVEL                                                 ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+`;
+
+// Exportar para uso em validações
+export const IMPORT_REQUIREMENTS = {
+  mandatoryFields: ['question_style', 'macro_area', 'micro_subject'],
+  autoAIValue: '__AUTO_AI__',
+  confidenceThreshold: 0.80,
+  isValid: (style: string, macro: string, micro: string): boolean => {
+    return Boolean(style) && Boolean(macro) && Boolean(micro);
+  },
+};
