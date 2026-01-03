@@ -66,7 +66,13 @@ const MILITARES: Banca[] = [
   { value: 'esa', label: 'ESA', categoria: 'militar', perfil: ['conteudo_basico', 'objetividade'] },
   { value: 'efomm', label: 'EFOMM', categoria: 'militar', perfil: ['fisico_quimica_forte', 'nivel_medio_alto'] },
   { value: 'afa', label: 'AFA', categoria: 'militar', perfil: ['conteudo_extenso', 'raciocinio_logico'] },
-  { value: 'espcex', label: 'EsPCEx', categoria: 'militar', perfil: ['conteudo_tradicional', 'objetividade'] },
+  { value: 'espcex', label: 'EsPCEx (AMAN)', categoria: 'militar', perfil: ['conteudo_tradicional', 'objetividade'] },
+  { value: 'epcar', label: 'EPCAR', categoria: 'militar', perfil: ['conteudo_medio', 'objetividade'] },
+  { value: 'eear', label: 'EEAR', categoria: 'militar', perfil: ['conteudo_tecnico', 'objetividade'] },
+  { value: 'en', label: 'EN', categoria: 'militar', perfil: ['conteudo_tradicional', 'nivel_alto'] },
+  { value: 'cftmg', label: 'CFTMG', categoria: 'militar', perfil: ['conteudo_tecnico', 'ensino_medio_tecnico'] },
+  { value: 'cefet', label: 'CEFET', categoria: 'militar', perfil: ['conteudo_tecnico', 'ensino_medio_tecnico'] },
+  { value: 'ifes', label: 'IF', categoria: 'militar', perfil: ['conteudo_tecnico', 'ensino_medio_tecnico'] },
 ];
 
 // ============= BANCAS PRÓPRIAS =============
