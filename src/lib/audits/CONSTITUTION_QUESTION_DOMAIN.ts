@@ -567,8 +567,9 @@ export const QUESTION_DOMAIN_GOLDEN_RULE = `
 ║   5. Qualquer MODIFICAÇÃO estrutural requer INTERNAL_SECRET do OWNER        ║
 ║   6. Apenas EXTENSÕES (novas features) são permitidas sem autorização       ║
 ║   7. Este arquivo é a FONTE DA VERDADE para todo o Question Domain          ║
-║   8. PRÉ-SELEÇÃO de ESTILO + MACRO + MICRO é OBRIGATÓRIA antes de upload    ║
+║   8. PRÉ-SELEÇÃO de ESTILO + MACRO + MICRO + TEMA é OBRIGATÓRIA             ║
 ║   9. Modo "Automático (IA)" respeita Excel e só corrige se confiança ≥80%   ║
+║  10. Se MICRO = Auto, TEMA é automaticamente definido pela IA               ║
 ║                                                                              ║
 ║   VIOLAÇÕES serão BLOQUEADAS automaticamente.                               ║
 ║                                                                              ║
@@ -591,20 +592,22 @@ export const IMPORT_CONSTITUTION_OATH = `
 ║   FICA ESTABELECIDO, SOB JURAMENTO DE CONSTITUIÇÃO:                          ║
 ║                                                                              ║
 ║   Art. 1º - ANTES de qualquer importação de questões, é OBRIGATÓRIO          ║
-║             selecionar: ESTILO, MACRO ASSUNTO e MICRO ASSUNTO.               ║
+║             selecionar: ESTILO, MACRO, MICRO e TEMA.                         ║
 ║                                                                              ║
 ║   Art. 2º - Os valores pré-selecionados têm PRIORIDADE ABSOLUTA sobre        ║
 ║             quaisquer dados presentes no arquivo de importação.              ║
 ║                                                                              ║
-║   Art. 3º - A opção "Automático (IA)" é permitida para MACRO e MICRO:        ║
+║   Art. 3º - A opção "Automático (IA)" é permitida para MACRO, MICRO e TEMA:  ║
 ║             a) Respeita dados já existentes no arquivo;                      ║
 ║             b) Preenche campos vazios automaticamente;                       ║
 ║             c) Só corrige MICRO/TEMA/SUBTEMA se confiança ≥ 80%.             ║
 ║                                                                              ║
-║   Art. 4º - Esta lei é PERMANENTE e se aplica a TODOS os pontos de           ║
+║   Art. 4º - Se MICRO = "Automático (IA)", o TEMA também é inferido pela IA.  ║
+║                                                                              ║
+║   Art. 5º - Esta lei é PERMANENTE e se aplica a TODOS os pontos de           ║
 ║             entrada de questões: importação, criação, duplicação, API.       ║
 ║                                                                              ║
-║   Art. 5º - Modificação desta lei requer:                                    ║
+║   Art. 6º - Modificação desta lei requer:                                    ║
 ║             a) INTERNAL_SECRET do OWNER;                                     ║
 ║             b) Autorização EXPLÍCITA do OWNER;                               ║
 ║             c) Registro em auditoria.                                        ║
@@ -618,10 +621,12 @@ export const IMPORT_CONSTITUTION_OATH = `
 
 // Exportar para uso em validações
 export const IMPORT_REQUIREMENTS = {
-  mandatoryFields: ['question_style', 'macro_area', 'micro_subject'],
+  mandatoryFields: ['question_style', 'macro_area', 'micro_subject', 'tema'],
   autoAIValue: '__AUTO_AI__',
   confidenceThreshold: 0.80,
-  isValid: (style: string, macro: string, micro: string): boolean => {
-    return Boolean(style) && Boolean(macro) && Boolean(micro);
+  isValid: (style: string, macro: string, micro: string, tema: string): boolean => {
+    // Se micro é AUTO, tema é automaticamente válido (será inferido pela IA)
+    const temaValid = micro === '__AUTO_AI__' ? true : Boolean(tema);
+    return Boolean(style) && Boolean(macro) && Boolean(micro) && temaValid;
   },
 };
