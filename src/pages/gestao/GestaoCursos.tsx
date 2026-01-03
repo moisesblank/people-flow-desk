@@ -59,6 +59,7 @@ interface Module {
   is_published: boolean;
   status: string | null;
   xp_reward: number | null;
+  thumbnail_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -170,7 +171,8 @@ export default function GestaoCursos() {
     title: '',
     description: '',
     position: 0,
-    is_published: true
+    is_published: true,
+    thumbnail_url: ''
   });
   
   // Queries
@@ -322,7 +324,8 @@ export default function GestaoCursos() {
       title: '',
       description: '',
       position: modules?.length || 0,
-      is_published: true
+      is_published: true,
+      thumbnail_url: ''
     });
   };
   
@@ -348,7 +351,8 @@ export default function GestaoCursos() {
       title: module.title,
       description: module.description || '',
       position: module.position,
-      is_published: module.is_published
+      is_published: module.is_published,
+      thumbnail_url: module.thumbnail_url || ''
     });
     setModuleDialog(true);
   };
@@ -854,6 +858,29 @@ export default function GestaoCursos() {
               />
             </div>
             
+            <div className="space-y-2">
+              <Label htmlFor="module-thumbnail">
+                Imagem do Módulo
+                <span className="text-muted-foreground text-xs ml-2">(752 × 940 px)</span>
+              </Label>
+              <Input
+                id="module-thumbnail"
+                value={moduleForm.thumbnail_url}
+                onChange={(e) => setModuleForm(prev => ({ ...prev, thumbnail_url: e.target.value }))}
+                placeholder="/images/modules/meu-modulo.jpg"
+              />
+              {moduleForm.thumbnail_url && (
+                <div className="relative w-[150px] h-[188px] rounded-lg overflow-hidden border bg-muted">
+                  <img 
+                    src={moduleForm.thumbnail_url} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => e.currentTarget.style.display = 'none'}
+                  />
+                </div>
+              )}
+            </div>
+            
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="module-position">Posição</Label>
@@ -978,6 +1005,18 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
               )}
             </Button>
           </CollapsibleTrigger>
+          
+          {/* Thumbnail do módulo (752x940 → preview 60x75) */}
+          {module.thumbnail_url && (
+            <div className="w-[60px] h-[75px] rounded-md overflow-hidden border bg-muted shrink-0">
+              <img 
+                src={module.thumbnail_url} 
+                alt={module.title} 
+                className="w-full h-full object-cover"
+                onError={(e) => e.currentTarget.style.display = 'none'}
+              />
+            </div>
+          )}
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
