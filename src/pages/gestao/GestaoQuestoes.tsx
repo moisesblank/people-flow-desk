@@ -1704,23 +1704,34 @@ function GestaoQuestoes() {
       const deletedRequestedIds: string[] = [];
       const updatedRequestedIds: string[] = [];
 
-      // 1. Deletar questões que têm APENAS MODO_TREINO
+      // 1. Deletar questões que têm APENAS MODO_TREINO (em batches para evitar URL muito longa)
       if (toDelete.length > 0) {
         const deleteIds = toDelete.map(q => q.id);
         deletedRequestedIds.push(...deleteIds);
 
-        const { data: deletedRows, error } = await supabase
-          .from('quiz_questions')
-          .delete()
-          .in('id', deleteIds)
-          .select('id');
+        // Batch de 100 IDs por vez para evitar Bad Request (URL muito longa)
+        const DELETE_BATCH_SIZE = 100;
+        let allDeletedRows: any[] = [];
 
-        if (error) {
-          console.error('[EXCLUIR_TREINO] Erro ao deletar:', error);
-          throw error;
+        for (let i = 0; i < deleteIds.length; i += DELETE_BATCH_SIZE) {
+          const batchIds = deleteIds.slice(i, i + DELETE_BATCH_SIZE);
+          console.log(`[EXCLUIR_TREINO] Deletando batch ${Math.floor(i / DELETE_BATCH_SIZE) + 1}/${Math.ceil(deleteIds.length / DELETE_BATCH_SIZE)} (${batchIds.length} IDs)`);
+
+          const { data: deletedRows, error } = await supabase
+            .from('quiz_questions')
+            .delete()
+            .in('id', batchIds)
+            .select('id');
+
+          if (error) {
+            console.error('[EXCLUIR_TREINO] Erro ao deletar batch:', error);
+            throw error;
+          }
+
+          allDeletedRows = allDeletedRows.concat(deletedRows || []);
         }
 
-        deletedCount = deletedRows?.length ?? 0;
+        deletedCount = allDeletedRows.length;
 
         if (deletedCount === 0 && deleteIds.length > 0) {
           throw new Error('Nenhuma questão foi excluída (provável bloqueio de permissão).');
