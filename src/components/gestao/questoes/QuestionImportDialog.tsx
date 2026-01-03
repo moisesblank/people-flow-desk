@@ -1679,15 +1679,24 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         // ═══════════════════════════════════════════════════════════════════
         // PRÉ-SELEÇÃO OBRIGATÓRIA: MACRO e MICRO selecionados no diálogo
         // Esses valores têm PRIORIDADE ABSOLUTA sobre quaisquer outros
+        // EXCETO quando MICRO = "__AUTO_AI__" (modo automático)
         // ═══════════════════════════════════════════════════════════════════
         const macro = selectedMacro || q.macro || 'Química Geral';
         if (!q.macro && !selectedMacro) camposInferidos.push('macro:fallback_final');
         if (selectedMacro && selectedMacro !== q.macro) camposInferidos.push('macro:pre_selected');
         
-        const micro = selectedMicro || q.micro || '';
-        if (!q.micro && !selectedMicro) camposInferidos.push('micro:empty_for_ai_inference');
-        if (selectedMicro && selectedMicro !== q.micro) camposInferidos.push('micro:pre_selected');
+        // MODO AUTOMÁTICO (IA): Se selectedMicro === '__AUTO_AI__', respeitar Excel
+        // e deixar para IA preencher campos vazios (já tratado na inferência com threshold 80%)
+        const isAutoAIMode = selectedMicro === '__AUTO_AI__';
         
+        // Se modo automático: usar o que veio do Excel/inferência. Se não, usar pré-seleção.
+        const micro = isAutoAIMode 
+          ? (q.micro || '') // Respeita o que já tem no Excel ou inferido pela IA
+          : (selectedMicro || q.micro || '');
+        if (!q.micro && isAutoAIMode) camposInferidos.push('micro:auto_ai_mode');
+        if (!isAutoAIMode && selectedMicro && selectedMicro !== q.micro) camposInferidos.push('micro:pre_selected');
+        
+        // TEMA e SUBTEMA: Em modo automático, sempre respeitar o que já existe ou deixar vazio
         const tema = q.tema || '';
         if (!q.tema) camposInferidos.push('tema:empty_for_ai_inference');
         
@@ -2058,11 +2067,24 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                               <SelectValue placeholder={selectedMacro ? "Selecione o Micro..." : "Primeiro selecione o Macro"} />
                             </SelectTrigger>
                             <SelectContent className="z-[9999]">
+                              {/* OPÇÃO AUTOMÁTICO (IA) - Respeita Excel e só corrige se confiança ≥80% */}
+                              <SelectItem value="__AUTO_AI__" className="border-b border-primary/20 mb-1">
+                                <span className="flex items-center gap-2">
+                                  <Sparkles className="h-4 w-4 text-primary" />
+                                  <span className="font-medium text-primary">Automático (IA)</span>
+                                </span>
+                              </SelectItem>
                               {filteredMicros.map(m => (
                                 <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
+                          {selectedMicro === '__AUTO_AI__' && (
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Brain className="h-3 w-3" />
+                              IA preenche campos vazios. Corrige MICRO/TEMA/SUBTEMA somente se confiança ≥80%.
+                            </p>
+                          )}
                         </div>
                       </div>
                       
@@ -2077,8 +2099,12 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                               </Badge>
                             )}
                             {selectedMicro && (
-                              <Badge variant="secondary" className="gap-1">
-                                📚 {selectedMicro}
+                              <Badge variant="secondary" className={cn("gap-1", selectedMicro === '__AUTO_AI__' && "bg-primary/20 text-primary border-primary/30")}>
+                                {selectedMicro === '__AUTO_AI__' ? (
+                                  <><Sparkles className="h-3 w-3" /> Automático (IA)</>
+                                ) : (
+                                  <>📚 {selectedMicro}</>
+                                )}
                               </Badge>
                             )}
                           </div>
