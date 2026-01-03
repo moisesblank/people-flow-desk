@@ -242,6 +242,38 @@ export function normalizeEnunciado(text: string): string {
     normalized = processedLines.join('\n').replace(/[ \t]{2,}/g, ' ').trim();
   }
   
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 2f. QUEBRA DE LINHA ANTES DO COMANDO FINAL (PERGUNTA) — LEI PERMANENTE v3.2
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Padrões de comando final que DEVEM estar em nova linha:
+  // - "Assinale a alternativa...", "Utilizando... assinale...", "Marque...",
+  // - "Com base nisso, é correto afirmar...", "Determine...", "Indique...",
+  // - "É correto afirmar que...", "Pode-se concluir que...", etc.
+  const commandPatterns = [
+    // Padrões iniciados por verbos de comando
+    /(\S)\s+(Assinale\s+a\s+alternativa)/gi,
+    /(\S)\s+(Marque\s+a\s+(?:alternativa|opção))/gi,
+    /(\S)\s+(Indique\s+(?:a\s+alternativa|o\s+valor|qual))/gi,
+    /(\S)\s+(Determine\s+(?:o\s+valor|a\s+(?:alternativa|resposta)))/gi,
+    /(\S)\s+(Identifique\s+(?:a\s+alternativa|qual))/gi,
+    /(\S)\s+(Selecione\s+a\s+(?:alternativa|opção))/gi,
+    // Padrões com contexto + comando
+    /(\S)\s+(Utilizando\s+(?:as?\s+)?(?:equações?|informações?|dados?).*?,?\s*assinale)/gi,
+    /(\S)\s+(Com\s+base\s+(?:nos?\s+)?(?:dados?|informações?|texto).*?,?\s*(?:assinale|é\s+correto|pode-se))/gi,
+    /(\S)\s+(A\s+partir\s+(?:dos?\s+)?(?:dados?|informações?).*?,?\s*(?:assinale|é\s+correto))/gi,
+    /(\S)\s+(De\s+acordo\s+com\s+(?:o\s+)?(?:texto|enunciado).*?,?\s*(?:assinale|é\s+correto))/gi,
+    // Padrões de afirmação/conclusão
+    /(\S)\s+(É\s+correto\s+afirmar\s+que)/gi,
+    /(\S)\s+(Pode-se\s+(?:afirmar|concluir)\s+que)/gi,
+    /(\S)\s+(Conclui-se\s+(?:corretamente\s+)?que)/gi,
+    // Padrão genérico: kJ/mol ou similar seguido de comando
+    /([Jj]\/mol|kJ|kcal)\s+(Utilizando|Assinale|Com\s+base|A\s+partir)/gi,
+  ];
+  
+  for (const pattern of commandPatterns) {
+    normalized = normalized.replace(pattern, '$1\n$2');
+  }
+
   // 3. Limpar espaços múltiplos e quebras excessivas
   normalized = normalized
     .replace(/\n{3,}/g, '\n\n')
