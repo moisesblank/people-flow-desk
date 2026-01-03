@@ -296,9 +296,12 @@ export function SmartAutomationsWidget() {
                       />
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                          <button 
+                            type="button"
+                            className="inline-flex items-center justify-center h-7 w-7 rounded-md hover:bg-muted transition-colors"
+                          >
                             <MoreHorizontal className="h-4 w-4" />
-                          </Button>
+                          </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem>
