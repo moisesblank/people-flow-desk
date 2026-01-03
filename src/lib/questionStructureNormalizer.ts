@@ -152,18 +152,38 @@ export function normalizeEnunciado(text: string): string {
     normalized = normalized.replace(pattern, '');
   }
   
-  // 2. Organizar listas de itens (I - ..., II - ...) em linhas separadas
-  // Detectar padrões como "I - texto" ou "I. texto" ou "I) texto"
-  const affirmativePattern = /^([IVX]+)\s*[\.\)\-–—]\s*/gm;
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 2. ORGANIZAR ITENS/SEQUÊNCIAS EM LINHAS SEPARADAS — LEI PERMANENTE v3.1
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Padrões suportados:
+  //   • Romanos: I. II. III. IV. V. (com ., ), -, –, —)
+  //   • Numéricos: 01. 02. 03. ou 1. 2. 3. ou (1) (2) (3)
+  //   • Letras maiúsculas: A) B) C) D) E) (alternativas)
+  // REGRA: Cada item DEVE começar em uma nova linha
 
-  // Se itens romanizados aparecerem no meio de uma linha, quebrar para nova linha
+  // 2a. Quebra de linha ANTES de itens romanos no meio do texto
   // Ex: "... fenilalanina. II. ..." -> "... fenilalanina.\nII. ..."
   normalized = normalized.replace(
     /(\S)\s+(?=([IVX]+)\s*[\.\)\-–—]\s+)/g,
     "$1\n"
   );
 
-  // Se há afirmativas numeradas, garantir 1 item por linha (com prefixo)
+  // 2b. Quebra de linha ANTES de itens numéricos (01. 02. ou 1) 2) etc.) no meio do texto
+  // Ex: "... natureza. 01. A evaporação..." -> "... natureza.\n01. A evaporação..."
+  normalized = normalized.replace(
+    /(\S)\s+(?=(0?\d{1,2})\s*[\.\)\-–—]\s+)/g,
+    "$1\n"
+  );
+
+  // 2c. Quebra de linha ANTES de alternativas (A) B) C) D) E)) no meio do texto
+  // Ex: "... incorreta. B) O processo..." -> "... incorreta.\nB) O processo..."
+  normalized = normalized.replace(
+    /(\S)\s+(?=([A-E])\s*[\)\.\-–—]\s+)/g,
+    "$1\n"
+  );
+
+  // 2d. Processar cada linha para garantir formatação correta de itens romanos
+  const affirmativePattern = /^([IVX]+)\s*[\.\)\-–—]\s*/gm;
   if (affirmativePattern.test(normalized)) {
     const lines = normalized.split('\n');
     const processedLines: string[] = [];
@@ -188,14 +208,44 @@ export function normalizeEnunciado(text: string): string {
       processedLines.push(trimmed);
     }
 
-    // Mantém quebras de linha (whitespace-pre-wrap no render garante exibição)
+    normalized = processedLines.join('\n').replace(/[ \t]{2,}/g, ' ').trim();
+  }
+
+  // 2e. Processar itens numéricos (01. 02. 03. etc.)
+  const numericPattern = /^(0?\d{1,2})\s*[\.\)\-–—]\s*/gm;
+  if (numericPattern.test(normalized)) {
+    const lines = normalized.split('\n');
+    const processedLines: string[] = [];
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      const match = trimmed.match(/^(0?\d{1,2})\s*[\.\)\-–—]\s*(.*)$/);
+      if (match) {
+        const num = match[1] || '';
+        const contentRaw = (match[2] || '').trim();
+        if (contentRaw) {
+          // Manter formato original (01. ou 1.)
+          const prefix = num.length === 1 ? `0${num}` : num;
+          const content = contentRaw.endsWith('.') || contentRaw.endsWith('?') || contentRaw.endsWith('!')
+            ? contentRaw
+            : `${contentRaw}.`;
+          processedLines.push(`${prefix}. ${content}`);
+        }
+        continue;
+      }
+
+      processedLines.push(trimmed);
+    }
+
     normalized = processedLines.join('\n').replace(/[ \t]{2,}/g, ' ').trim();
   }
   
   // 3. Limpar espaços múltiplos e quebras excessivas
   normalized = normalized
     .replace(/\n{3,}/g, '\n\n')
-    .replace(/\s{2,}/g, ' ')
+    .replace(/[ \t]{2,}/g, ' ')
     .trim();
   
   return normalized;
