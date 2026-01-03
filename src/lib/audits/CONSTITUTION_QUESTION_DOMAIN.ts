@@ -261,6 +261,50 @@ export const QUESTION_DOMAIN_CONSTITUTION = {
       technicalNote: 'Na importação, o tema principal é definido como o primeiro da lista filtrada, mas a flag "tema:TODOS(n)" é registrada no log de inferência para rastreabilidade.',
     },
     
+    // ═══════════════════════════════════════════════════════════════════════════
+    // LEI CONSTITUCIONAL: OPÇÃO "TODOS" PARA MICROS — v1.0.0
+    // Status: VIGENTE AGORA E PARA TODO SEMPRE
+    // Data de Promulgação: 2026-01-03
+    // ═══════════════════════════════════════════════════════════════════════════
+    allMicrosOption: {
+      status: 'IMMUTABLE',
+      version: '1.0.0',
+      promulgationDate: '2026-01-03',
+      description: 'Opção "TODOS" em seletores de MICRO para aplicar todos os micros disponíveis',
+      permanentOath: 'Esta regra vale AGORA E PARA TODO SEMPRE. Modificação SOMENTE pelo OWNER via INTERNAL_SECRET.',
+      
+      implementation: {
+        selectValue: '__TODOS__',
+        icon: 'Layers',
+        color: 'emerald',
+        label: 'TODOS ({count} micros)',
+        behavior: 'Quando selecionado, TODOS os micros disponíveis do macro selecionado são aplicados à questão',
+      },
+      
+      applicableContexts: [
+        'QuestionImportDialog — Seletor de Micro na importação',
+        'Qualquer futuro componente de atribuição de taxonomia',
+        'Qualquer seletor de Micro em contexto de associação (não apenas filtro)',
+      ],
+      
+      rules: [
+        'A opção TODOS deve aparecer APÓS a opção Automático (IA)',
+        'A opção TODOS deve mostrar o contador de micros disponíveis',
+        'Ao selecionar TODOS, o sistema registra a intenção multi-micro',
+        'A UI deve exibir feedback claro sobre a ação (texto descritivo)',
+        'Filtros de visualização NÃO usam __TODOS__, usam "todas" (minúsculo)',
+      ],
+      
+      uiSpec: {
+        position: 'Após __AUTO_AI__, antes dos micros individuais',
+        style: 'bg-emerald-500/5 com borda emerald-500/30',
+        iconColor: 'text-emerald-500',
+        textColor: 'text-emerald-600 dark:text-emerald-400',
+        feedback: 'Mensagem abaixo do select informando quantos micros serão associados',
+      },
+      
+      technicalNote: 'Na importação, o micro principal é definido como o primeiro da lista filtrada, mas a flag "micro:TODOS(n)" é registrada no log de inferência para rastreabilidade.',
+    },
     // Exemplos
     examples: [
       {

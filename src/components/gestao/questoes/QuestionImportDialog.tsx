@@ -1723,12 +1723,23 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         if (!q.macro && isMacroAutoAI) camposInferidos.push('macro:auto_ai_mode');
         if (!isMacroAutoAI && selectedMacro && selectedMacro !== q.macro) camposInferidos.push('macro:pre_selected');
         
-        // MICRO: Se modo automático, usar o que veio do Excel/inferência. Se não, usar pré-seleção.
+        // ═══════════════════════════════════════════════════════════════════
+        // MICRO: Se modo automático, usar o que veio do Excel/inferência.
+        //        Se __TODOS__, será tratado no batch de importação (multi-micro).
+        //        Se não, usar pré-seleção.
+        // CORREÇÃO CONSTITUCIONAL: selectedMicro tem prioridade absoluta (exceto __AUTO_AI__ e __TODOS__)
+        // ═══════════════════════════════════════════════════════════════════
+        const isMicroTodos = selectedMicro === '__TODOS__';
+        
+        // Se TODOS, o micro será o primeiro da lista como "âncora", mas a questão terá associação multi-micro
         const micro = isMicroAutoAI 
           ? (q.micro || '') // Respeita o que já tem no Excel ou inferido pela IA
-          : (selectedMicro || q.micro || '');
+          : isMicroTodos
+            ? (filteredMicros.length > 0 ? filteredMicros[0].value : q.micro || '') // Usa primeiro micro como âncora
+            : (selectedMicro || q.micro || '');
         if (!q.micro && isMicroAutoAI) camposInferidos.push('micro:auto_ai_mode');
-        if (!isMicroAutoAI && selectedMicro && selectedMicro !== q.micro) camposInferidos.push('micro:pre_selected');
+        if (isMicroTodos) camposInferidos.push(`micro:TODOS(${filteredMicros.length})`);
+        if (!isMicroAutoAI && !isMicroTodos && selectedMicro && selectedMicro !== q.micro) camposInferidos.push('micro:pre_selected');
         
         // ═══════════════════════════════════════════════════════════════════
         // TEMA: Se modo automático, usar o que veio do Excel/inferência.
@@ -2144,6 +2155,15 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                                   <span className="font-medium text-primary">Automático (IA)</span>
                                 </span>
                               </SelectItem>
+                              {/* OPÇÃO TODOS - Aplica TODOS os micros disponíveis (Constitucional v10.0) */}
+                              {filteredMicros.length > 0 && (
+                                <SelectItem value="__TODOS__" className="border-b border-emerald-500/30 mb-1 bg-emerald-500/5">
+                                  <span className="flex items-center gap-2">
+                                    <Layers className="h-4 w-4 text-emerald-500" />
+                                    <span className="font-medium text-emerald-600 dark:text-emerald-400">TODOS ({filteredMicros.length} micros)</span>
+                                  </span>
+                                </SelectItem>
+                              )}
                               {filteredMicros.map(m => (
                                 <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
                               ))}
@@ -2153,6 +2173,12 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                             <p className="text-xs text-muted-foreground flex items-center gap-1">
                               <Brain className="h-3 w-3" />
                               IA preenche campos vazios. Corrige MICRO/TEMA/SUBTEMA somente se confiança ≥80%.
+                            </p>
+                          )}
+                          {selectedMicro === '__TODOS__' && (
+                            <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-medium">
+                              <Layers className="h-3 w-3" />
+                              TODOS os {filteredMicros.length} micros serão associados a cada questão importada.
                             </p>
                           )}
                         </div>
