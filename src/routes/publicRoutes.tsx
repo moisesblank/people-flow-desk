@@ -15,13 +15,12 @@ const AreaGratuita = lazy(() => import("@/pages/AreaGratuita"));
 const PerfilIncompleto = lazy(() => import("@/pages/PerfilIncompleto"));
 const GuiaDaPlataforma = lazy(() => import("@/pages/GuiaDaPlataforma"));
 const PrimeiroAcesso = lazy(() => import("@/pages/PrimeiroAcesso"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
 // 🛡️ BLOCO 1: Device Limit Gate
 const DeviceLimitGate = lazy(() => import("@/pages/security/DeviceLimitGate"));
 // 🛡️ BEYOND_THE_3_DEVICES: Same Type Replacement Gate
 const SameTypeReplacementGate = lazy(() => import("@/pages/security/SameTypeReplacementGate"));
-// 📱 QR Code Resolver - IMPORT ESTÁTICO para debug
-import QRCodeResolverPage from "@/pages/QRCodeResolver";
+// 📱 QR Code Resolver - Lazy para consistência
+const QRCodeResolverPage = lazy(() => import("@/pages/QRCodeResolver"));
 
 export const publicRoutes = (
   <>

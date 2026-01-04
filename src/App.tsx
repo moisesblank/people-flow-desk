@@ -91,7 +91,7 @@ function useGlobalShortcutsOverlay() {
   return { isOpen, setIsOpen };
 }
 
-// AppContent memoizado
+// AppContent memoizado - UMA ÚNICA instância de Routes
 const AppContent = memo(() => {
   const { isOpen, setIsOpen } = useGlobalShortcutsOverlay();
   useGlobalDevToolsBlock();
