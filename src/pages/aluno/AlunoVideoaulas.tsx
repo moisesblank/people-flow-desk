@@ -23,14 +23,35 @@ function useVideoaulasAluno() {
   return useQuery({
     queryKey: ['aluno-videoaulas'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('lessons')
-        .select('*, module:modules(id, title)')
-        .eq('is_published', true)
-        .order('position', { ascending: true });
+      // Fetch all lessons with pagination to bypass 1000 row limit
+      const allLessons: any[] = [];
+      const pageSize = 1000;
+      let page = 0;
+      let hasMore = true;
       
-      if (error) throw error;
-      return data || [];
+      while (hasMore) {
+        const from = page * pageSize;
+        const to = from + pageSize - 1;
+        
+        const { data, error } = await supabase
+          .from('lessons')
+          .select('*, module:modules(id, title)')
+          .eq('is_published', true)
+          .order('position', { ascending: true })
+          .range(from, to);
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          allLessons.push(...data);
+          hasMore = data.length === pageSize;
+          page++;
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      return allLessons;
     }
   });
 }
