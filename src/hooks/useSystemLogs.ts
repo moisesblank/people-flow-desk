@@ -232,17 +232,38 @@ export function initGlobalErrorCapture(): void {
 
   // Capturar erros do console
   // Preserva o console.error original para fallback seguro dentro do logger
+  // 🛡️ SYNAPSE Ω — Throttle + filtros para evitar cascata
   rawConsoleError = rawConsoleError ?? console.error;
   const originalConsoleError = console.error;
+  let lastConsoleLogTime = 0;
+
   console.error = (...args) => {
     originalConsoleError.apply(console, args);
 
-    // Filtrar logs do próprio sistema para evitar loop
+    // Throttle: máximo 1 log enviado a cada 2 segundos
+    const now = Date.now();
+    if (now - lastConsoleLogTime < 2000) return;
+
+    // Filtrar logs do próprio sistema e ruído para evitar loop/spam
     const message = args
       .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg)))
       .join(' ');
 
-    if (!message.includes('[SystemLog]')) {
+    // Lista de padrões a ignorar (sistema + ruído + perf)
+    const ignorePatterns = [
+      '[SystemLog]',
+      '[MATRIZ]',
+      '[PERF',
+      '[BrowserLogs]',
+      'Long Task',
+      'Failed to fetch',
+      'forwardRef',
+    ];
+
+    const shouldIgnore = ignorePatterns.some(pattern => message.includes(pattern));
+
+    if (!shouldIgnore) {
+      lastConsoleLogTime = now;
       sendSystemLog('error', 'console_error', message.slice(0, 1000), {
         source: 'console_interceptor',
         affectedUrl: window.location.pathname,

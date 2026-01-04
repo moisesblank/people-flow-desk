@@ -134,14 +134,23 @@ if (typeof window !== 'undefined') {
   }, 1000);
 
   // 🚀 DEFER: Performance observers (monitoramento, não crítico)
+  // 🛡️ SYNAPSE Ω — Long Task observer COM THROTTLE para evitar spam
   deferInit(() => {
     if ('PerformanceObserver' in window) {
-      // Monitorar Long Tasks
+      // Monitorar Long Tasks (apenas > 200ms e throttled para 1/5s)
       try {
+        let lastLongTaskLog = 0;
         const longTaskObserver = new PerformanceObserver((list) => {
+          const now = Date.now();
+          // Throttle: no máximo 1 log a cada 5 segundos
+          if (now - lastLongTaskLog < 5000) return;
+
           for (const entry of list.getEntries()) {
-            if (entry.duration > 50) {
+            // Só loga tarefas realmente problemáticas (> 200ms)
+            if (entry.duration > 200) {
+              lastLongTaskLog = now;
               console.warn(`[MATRIZ] ⚠️ Long Task: ${entry.duration.toFixed(0)}ms`);
+              break; // apenas 1 log por batch
             }
           }
         });

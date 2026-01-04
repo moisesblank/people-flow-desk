@@ -56,75 +56,19 @@ function useBrowserConsoleLogs(enabled: boolean) {
     scheduledRef.current = requestAnimationFrame(flush);
   }, [flush]);
 
+  const pushLog = useCallback((newLog: BrowserLog) => {
+    logsRef.current = [newLog, ...logsRef.current].slice(0, 100);
+    scheduleFlush();
+  }, [scheduleFlush]);
+
   useEffect(() => {
-    if (!enabled || interceptedRef.current) return;
+    if (!enabled) return;
 
-    interceptedRef.current = true;
-
-    const originalConsole = {
-      log: console.log,
-      info: console.info,
-      warn: console.warn,
-      error: console.error,
-    };
-
-    const stringifyArgs = (args: unknown[]) =>
-      args
-        .map((arg) => {
-          if (typeof arg === "object") {
-            try {
-              return JSON.stringify(arg, null, 2);
-            } catch {
-              return String(arg);
-            }
-          }
-          return String(arg);
-        })
-        .join(" ");
-
-    const pushLog = (newLog: BrowserLog) => {
-      logsRef.current = [newLog, ...logsRef.current].slice(0, 100);
-      scheduleFlush();
-    };
-
-    const createInterceptor = (type: "log" | "info" | "warn" | "error") => {
-      return (...args: unknown[]) => {
-        try {
-          // Chamar o original
-          originalConsole[type](...args);
-        } catch {
-          // nunca deixar o interceptor quebrar a app
-        }
-
-        try {
-          const message = stringifyArgs(args);
-
-          // Ignorar logs internos/ruído (evita loops e spam)
-          if (
-            message.includes("[BrowserLogs]") ||
-            message.includes("[MATRIZ] ⚠️ Long Task")
-          ) {
-            return;
-          }
-
-          pushLog({
-            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            timestamp: new Date(),
-            type,
-            message,
-            stack: type === "error" ? new Error().stack : undefined,
-          });
-        } catch {
-          // silencioso
-        }
-      };
-    };
-
-    // Interceptar todos os métodos
-    console.log = createInterceptor("log");
-    console.info = createInterceptor("info");
-    console.warn = createInterceptor("warn");
-    console.error = createInterceptor("error");
+    // ╔══════════════════════════════════════════════════════════════════════════════╗
+    // ║   🛡️ SYNAPSE Ω — ANTI TELA PRETA: NÃO substituir console.* globalmente      ║
+    // ║   Usamos abordagem PASSIVA: capturamos apenas erros não tratados            ║
+    // ║   Isso evita conflito com useSystemLogs e loops de interceptores            ║
+    // ╚══════════════════════════════════════════════════════════════════════════════╝
 
     // Capturar erros não tratados (não usa console.* para evitar recursão)
     const handleError = (event: ErrorEvent) => {
@@ -160,19 +104,14 @@ function useBrowserConsoleLogs(enabled: boolean) {
     window.addEventListener("unhandledrejection", handleRejection);
 
     return () => {
-      console.log = originalConsole.log;
-      console.info = originalConsole.info;
-      console.warn = originalConsole.warn;
-      console.error = originalConsole.error;
       window.removeEventListener("error", handleError);
       window.removeEventListener("unhandledrejection", handleRejection);
-      interceptedRef.current = false;
       if (scheduledRef.current) {
         cancelAnimationFrame(scheduledRef.current);
         scheduledRef.current = null;
       }
     };
-  }, [enabled, scheduleFlush, flush]);
+  }, [enabled, pushLog]);
 
   const clearLogs = useCallback(() => {
     logsRef.current = [];
