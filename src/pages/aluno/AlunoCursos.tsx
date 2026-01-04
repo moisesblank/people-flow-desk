@@ -4,7 +4,7 @@
 // 🚀 PERFORMANCE: CSS-only animations, GPU-accelerated
 // ============================================
 
-import { memo, useState, useCallback, useMemo } from 'react';
+import { memo, useState, useCallback, useMemo, forwardRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -349,15 +349,11 @@ const ModuleCard = memo(function ModuleCard({
 // ⚡ NEON LESSON ITEM - Year 2300
 // ============================================
 
-const LessonItem = memo(function LessonItem({ 
-  lesson, 
-  index,
-  onPlay 
-}: { 
+const LessonItem = memo(forwardRef<HTMLDivElement, { 
   lesson: Lesson; 
   index: number;
   onPlay: () => void;
-}) {
+}>(function LessonItem({ lesson, index, onPlay }, ref) {
   const formatDuration = (minutes: number | null) => {
     if (!minutes) return '--';
     const hrs = Math.floor(minutes / 60);
@@ -423,7 +419,7 @@ const LessonItem = memo(function LessonItem({
       </div>
     </div>
   );
-});
+}));
 
 // ============================================
 // 💀 SKELETON LOADER - Year 2300
