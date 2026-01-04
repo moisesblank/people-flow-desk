@@ -257,33 +257,10 @@ if (typeof window !== 'undefined') {
   }, 500);
 
   // ============================================
-  // 🚫 SERVICE WORKER DESABILITADO EM PRODUÇÃO
-  // Motivo: Causava problemas com MIME types e cache de assets
-  // Cache será gerenciado via CDN/Cloudflare + hash de arquivos
+  // 🚫 SERVICE WORKER DESABILITADO (LEI V)
+  // Regra adicional (Owner): NUNCA limpar caches/SW automaticamente.
+  // Se houver algum SW legado, a remoção deve ser feita por ação manual.
   // ============================================
-  // NOTA: Para reativar SW, descomente o código abaixo:
-  // if ('serviceWorker' in navigator) {
-  //   window.addEventListener('load', () => {
-  //     deferInit(() => {
-  //       navigator.serviceWorker.register('/sw.js')
-  //         .then((reg) => console.log('[MATRIZ] ⚡ Service Worker ativo:', reg.scope))
-  //         .catch(() => { /* SW não disponível */ });
-  //     }, 3000);
-  //   });
-  // }
-
-  // Unregister any existing service workers to clean up
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then((registrations) => {
-      for (const registration of registrations) {
-        registration.unregister().then((success) => {
-          if (success) {
-            console.log('[MATRIZ] 🧹 Service Worker removido para evitar cache problems');
-          }
-        });
-      }
-    });
-  }
 }
 
 // Log de inicialização (defer para não bloquear)

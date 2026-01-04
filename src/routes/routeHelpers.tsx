@@ -46,13 +46,6 @@ export const PageLoader = memo(() => {
               <Button size="sm" onClick={() => window.location.reload()}>
                 Recarregar
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => window.dispatchEvent(new Event('mm-clear-cache'))}
-              >
-                Limpar cache
-              </Button>
             </div>
           </div>
         )}
