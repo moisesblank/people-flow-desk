@@ -2,6 +2,10 @@
 // 📱 QR CODE RESOLVER
 // Resolve legacy QR Codes from printed materials
 // Route: /qr?v=XXXXX
+// 
+// SUPORTA DOIS FORMATOS:
+// 1. Numérico: /qr?v=10907 → busca por legacy_qr_id (YouTube ou Panda)
+// 2. UUID: /qr?v=1380a18b-dce2-4f42-9d5b-d4c4c8ec48cf → busca direta por panda_video_id
 // ============================================
 
 import { useEffect, useState } from "react";
@@ -20,6 +24,9 @@ interface LessonData {
   area_id: string | null;
 }
 
+// Regex para detectar UUID v4
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function QRCodeResolver() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -37,25 +44,64 @@ export default function QRCodeResolver() {
         return;
       }
 
-      const qrIdNumber = parseInt(legacyQrId, 10);
-      if (isNaN(qrIdNumber)) {
-        setStatus("error");
-        setErrorMessage("ID do QR Code inválido.");
-        return;
-      }
-
       try {
-        const { data, error } = await supabase
-          .from("lessons")
-          .select("id, title, youtube_video_id, panda_video_id, video_provider, area_id")
-          .eq("legacy_qr_id", qrIdNumber)
-          .single();
+        let data: LessonData | null = null;
+        let error: any = null;
 
-        if (error || !data) {
+        // DETECTAR FORMATO: UUID (Panda direto) ou Numérico (legacy_qr_id)
+        const isUUID = UUID_REGEX.test(legacyQrId);
+        const isNumeric = /^\d+$/.test(legacyQrId);
+
+        console.log(`[QR Resolver] Input: ${legacyQrId}, isUUID: ${isUUID}, isNumeric: ${isNumeric}`);
+
+        if (isUUID) {
+          // FORMATO UUID: Buscar diretamente pelo panda_video_id
+          console.log(`[QR Resolver] Buscando por panda_video_id: ${legacyQrId}`);
+          
+          const result = await supabase
+            .from("lessons")
+            .select("id, title, youtube_video_id, panda_video_id, video_provider, area_id")
+            .eq("panda_video_id", legacyQrId)
+            .maybeSingle();
+          
+          data = result.data;
+          error = result.error;
+          
+        } else if (isNumeric) {
+          // FORMATO NUMÉRICO: Buscar pelo legacy_qr_id
+          const qrIdNumber = parseInt(legacyQrId, 10);
+          console.log(`[QR Resolver] Buscando por legacy_qr_id: ${qrIdNumber}`);
+          
+          const result = await supabase
+            .from("lessons")
+            .select("id, title, youtube_video_id, panda_video_id, video_provider, area_id")
+            .eq("legacy_qr_id", qrIdNumber)
+            .maybeSingle();
+          
+          data = result.data;
+          error = result.error;
+          
+        } else {
+          // FORMATO INVÁLIDO
+          setStatus("error");
+          setErrorMessage("Formato do QR Code inválido. Use numérico ou UUID.");
+          return;
+        }
+
+        if (error) {
+          console.error("[QR Resolver] Database error:", error);
+          setStatus("error");
+          setErrorMessage("Erro ao buscar conteúdo no banco de dados.");
+          return;
+        }
+
+        if (!data) {
+          console.log(`[QR Resolver] Nenhum conteúdo encontrado para: ${legacyQrId}`);
           setStatus("not_found");
           return;
         }
 
+        console.log(`[QR Resolver] Conteúdo encontrado:`, data);
         setLesson(data);
         setStatus("found");
 
@@ -65,7 +111,7 @@ export default function QRCodeResolver() {
         }, 1500);
 
       } catch (err) {
-        console.error("QR Code resolution error:", err);
+        console.error("[QR Resolver] Exception:", err);
         setStatus("error");
         setErrorMessage("Erro ao processar o QR Code.");
       }
@@ -73,6 +119,10 @@ export default function QRCodeResolver() {
 
     resolveQRCode();
   }, [legacyQrId, navigate]);
+
+  // Determinar o tipo de busca para exibição
+  const isUUID = legacyQrId ? UUID_REGEX.test(legacyQrId) : false;
+  const displayId = legacyQrId || "---";
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -86,7 +136,10 @@ export default function QRCodeResolver() {
               <div>
                 <h2 className="text-xl font-semibold">Processando QR Code</h2>
                 <p className="text-muted-foreground text-sm mt-1">
-                  Localizando conteúdo #{legacyQrId}...
+                  Localizando conteúdo...
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-2 font-mono">
+                  {isUUID ? "Panda UUID" : "ID"}: {displayId}
                 </p>
               </div>
             </div>
@@ -103,6 +156,9 @@ export default function QRCodeResolver() {
                 <p className="text-muted-foreground text-sm mt-1">
                   Redirecionando para a aula...
                 </p>
+                <p className="text-xs text-muted-foreground/70 mt-2">
+                  Provedor: {lesson.video_provider === 'panda' ? '🐼 Panda' : '▶️ YouTube'}
+                </p>
               </div>
               <div className="pt-2">
                 <Loader2 className="w-5 h-5 text-primary animate-spin mx-auto" />
@@ -118,7 +174,10 @@ export default function QRCodeResolver() {
               <div>
                 <h2 className="text-xl font-semibold text-amber-600">Conteúdo Não Encontrado</h2>
                 <p className="text-muted-foreground text-sm mt-1">
-                  O QR Code #{legacyQrId} não está vinculado a nenhum conteúdo.
+                  O QR Code não está vinculado a nenhum conteúdo.
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-2 font-mono">
+                  Valor: {displayId}
                 </p>
               </div>
               <Button 
