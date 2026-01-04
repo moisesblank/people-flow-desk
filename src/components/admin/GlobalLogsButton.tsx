@@ -36,18 +36,24 @@ interface BrowserLog {
 }
 
 // Hook para capturar logs do console do navegador
+// 🛡️ SYNAPSE Ω: Captura ATIVA mas com guardas anti-cascata
 function useBrowserConsoleLogs(enabled: boolean) {
   const [logs, setLogs] = useState<BrowserLog[]>([]);
   const logsRef = useRef<BrowserLog[]>([]);
   const interceptedRef = useRef(false);
   const scheduledRef = useRef<number | null>(null);
+  const originalConsoleRef = useRef<{
+    log: typeof console.log;
+    info: typeof console.info;
+    warn: typeof console.warn;
+    error: typeof console.error;
+  } | null>(null);
 
   const flush = useCallback(() => {
     if (scheduledRef.current) {
       cancelAnimationFrame(scheduledRef.current);
       scheduledRef.current = null;
     }
-    // snapshot imutável
     setLogs([...logsRef.current]);
   }, []);
 
@@ -56,56 +62,92 @@ function useBrowserConsoleLogs(enabled: boolean) {
     scheduledRef.current = requestAnimationFrame(flush);
   }, [flush]);
 
-  const pushLog = useCallback((newLog: BrowserLog) => {
-    logsRef.current = [newLog, ...logsRef.current].slice(0, 100);
-    scheduleFlush();
+  const pushLog = useCallback((type: BrowserLog['type'], args: unknown[]) => {
+    try {
+      const message = args
+        .map((a) => (typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)))
+        .join(' ');
+      
+      // 🛡️ Ignorar logs do próprio sistema de logs para evitar loop
+      const ignorePatterns = [
+        '[Logger]',
+        '[System-Log]',
+        'X-System-Log',
+        'log-writer',
+        '[PERF-',
+        '[ReactiveStore]',
+        '[SessionGuard]',
+      ];
+      if (ignorePatterns.some(p => message.includes(p))) return;
+
+      const newLog: BrowserLog = {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: new Date(),
+        type,
+        message,
+        stack: type === 'error' ? new Error().stack : undefined,
+      };
+      logsRef.current = [newLog, ...logsRef.current].slice(0, 100);
+      scheduleFlush();
+    } catch {
+      // silencioso - nunca quebrar
+    }
   }, [scheduleFlush]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || interceptedRef.current) return;
 
-    // ╔══════════════════════════════════════════════════════════════════════════════╗
-    // ║   🛡️ SYNAPSE Ω — ANTI TELA PRETA: NÃO substituir console.* globalmente      ║
-    // ║   Usamos abordagem PASSIVA: capturamos apenas erros não tratados            ║
-    // ║   Isso evita conflito com useSystemLogs e loops de interceptores            ║
-    // ╚══════════════════════════════════════════════════════════════════════════════╝
+    // Salvar originais ANTES de interceptar
+    originalConsoleRef.current = {
+      log: console.log.bind(console),
+      info: console.info.bind(console),
+      warn: console.warn.bind(console),
+      error: console.error.bind(console),
+    };
 
-    // Capturar erros não tratados (não usa console.* para evitar recursão)
+    const orig = originalConsoleRef.current;
+    interceptedRef.current = true;
+
+    // 🛡️ SYNAPSE Ω: Interceptar com segurança (chama original + captura)
+    console.log = (...args: unknown[]) => {
+      orig.log(...args);
+      pushLog('log', args);
+    };
+    console.info = (...args: unknown[]) => {
+      orig.info(...args);
+      pushLog('info', args);
+    };
+    console.warn = (...args: unknown[]) => {
+      orig.warn(...args);
+      pushLog('warn', args);
+    };
+    console.error = (...args: unknown[]) => {
+      orig.error(...args);
+      pushLog('error', args);
+    };
+
+    // Capturar erros não tratados também
     const handleError = (event: ErrorEvent) => {
-      try {
-        pushLog({
-          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          timestamp: new Date(),
-          type: "error",
-          message: `[UNCAUGHT] ${event.message}`,
-          stack: (event.error as any)?.stack,
-        });
-      } catch {
-        // silencioso
-      }
+      pushLog('error', [`[UNCAUGHT] ${event.message}`]);
     };
-
     const handleRejection = (event: PromiseRejectionEvent) => {
-      try {
-        const reason = (event as any).reason;
-        pushLog({
-          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          timestamp: new Date(),
-          type: "error",
-          message: `[PROMISE REJECTED] ${String(reason)}`,
-          stack: reason?.stack,
-        });
-      } catch {
-        // silencioso
-      }
+      pushLog('error', [`[PROMISE REJECTED] ${String(event.reason)}`]);
     };
 
-    window.addEventListener("error", handleError);
-    window.addEventListener("unhandledrejection", handleRejection);
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleRejection);
 
     return () => {
-      window.removeEventListener("error", handleError);
-      window.removeEventListener("unhandledrejection", handleRejection);
+      // Restaurar originais
+      if (originalConsoleRef.current) {
+        console.log = originalConsoleRef.current.log;
+        console.info = originalConsoleRef.current.info;
+        console.warn = originalConsoleRef.current.warn;
+        console.error = originalConsoleRef.current.error;
+      }
+      interceptedRef.current = false;
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleRejection);
       if (scheduledRef.current) {
         cancelAnimationFrame(scheduledRef.current);
         scheduledRef.current = null;
