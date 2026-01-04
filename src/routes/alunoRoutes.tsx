@@ -3,7 +3,7 @@
 // pro.moisesmedeiros.com.br/alunos/*
 // ============================================
 
-import { Route } from "react-router-dom";
+import { Route, Navigate } from "react-router-dom";
 import { lazy } from "react";
 import { ProtectedPage } from "./routeHelpers";
 
@@ -42,6 +42,8 @@ const AlunoCertificados = lazy(() => import("@/pages/aluno/AlunoPlaceholders").t
 
 export const alunoRoutes = (
   <>
+    {/* Alias case-insensitive: evita travar em /ALUNOS */}
+    <Route path="/ALUNOS" element={<Navigate to="/alunos" replace />} />
     <Route path="/alunos" element={<ProtectedPage><AlunosRouteSwitcher /></ProtectedPage>} />
     <Route path="/alunos/dashboard" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
     {/* Canonical - Livros Web */}

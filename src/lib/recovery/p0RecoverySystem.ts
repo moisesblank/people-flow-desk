@@ -176,174 +176,68 @@ export async function forceLogoutAndRestart(): Promise<void> {
 
 // ============================================
 // RECOVERY UI INJECTION (Failsafe)
+// REGRA: SEMPRE NÃO-BLOQUEANTE (MANUAL ONLY)
 // ============================================
 
+function injectManualRefreshButton(): void {
+  try {
+    const existing = document.getElementById('manual-refresh');
+    if (existing) return;
+
+    const host = document.createElement('div');
+    host.id = 'manual-refresh';
+    host.style.cssText = [
+      'position:fixed',
+      'right:16px',
+      'bottom:16px',
+      'z-index:2147483000',
+      'pointer-events:auto',
+    ].join(';');
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = 'Refresh Page';
+    btn.setAttribute('aria-label', 'Recarregar a página (ação manual)');
+    btn.onclick = () => window.location.reload();
+    btn.style.cssText = [
+      'padding:10px 14px',
+      'border-radius:10px',
+      'border:1px solid rgba(255,255,255,0.18)',
+      'background:rgba(16,16,20,0.72)',
+      'color:#f5f5f5',
+      'font-weight:700',
+      'cursor:pointer',
+      'backdrop-filter: blur(10px)',
+      '-webkit-backdrop-filter: blur(10px)',
+    ].join(';');
+
+    host.appendChild(btn);
+    document.body.appendChild(host);
+  } catch {
+    // nunca bloquear
+  }
+}
+
 /**
- * Injects a minimal safe shell UI when everything else fails
+ * Legacy API: mantida por compatibilidade.
+ * NOVA REGRA: não injeta overlay, apenas garante botão manual.
  */
-export function injectSafeShellUI(message: string = 'O sistema encontrou um problema.'): void {
-  // Remove any existing recovery overlay
-  const existing = document.getElementById('p0-recovery');
-  if (existing) existing.remove();
-  
-  const overlay = document.createElement('div');
-  overlay.id = 'p0-recovery';
-  overlay.setAttribute('role', 'alert');
-  overlay.setAttribute('aria-live', 'assertive');
-  overlay.style.cssText = `
-    position: fixed;
-    inset: 0;
-    z-index: 2147483647;
-    background: #0d0d0d;
-    color: #f5f5f5;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    font-family: system-ui, -apple-system, sans-serif;
-  `;
-
-  const card = document.createElement('div');
-  card.style.cssText = `
-    max-width: 520px;
-    width: 100%;
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 16px;
-    background: rgba(18,18,18,0.95);
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-    padding: 24px;
-  `;
-
-  // Header with icon
-  const header = document.createElement('div');
-  header.style.cssText = `display: flex; align-items: center; gap: 12px; margin-bottom: 16px;`;
-  
-  const icon = document.createElement('div');
-  icon.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
-  
-  const title = document.createElement('div');
-  title.style.cssText = `font-size: 18px; font-weight: 700;`;
-  title.textContent = 'Recuperação do Sistema';
-  
-  header.appendChild(icon);
-  header.appendChild(title);
-
-  // Description
-  const desc = document.createElement('div');
-  desc.style.cssText = `font-size: 14px; opacity: 0.85; margin-bottom: 20px; line-height: 1.5;`;
-  desc.textContent = message + ' Escolha uma opção abaixo para continuar.';
-
-  // Buttons container
-  const buttons = document.createElement('div');
-  buttons.style.cssText = `display: flex; flex-direction: column; gap: 10px;`;
-
-  // Button styles
-  const btnPrimary = `
-    padding: 14px 20px;
-    border-radius: 12px;
-    border: none;
-    background: #dc2626;
-    color: #fff;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: background 0.2s;
-  `;
-  
-  const btnSecondary = `
-    padding: 14px 20px;
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.2);
-    background: transparent;
-    color: #f5f5f5;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: background 0.2s;
-  `;
-  
-  const btnDanger = `
-    padding: 14px 20px;
-    border-radius: 12px;
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    background: rgba(239, 68, 68, 0.1);
-    color: #fca5a5;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: background 0.2s;
-  `;
-
-  // Button 1: Soft Reload
-  const btn1 = document.createElement('button');
-  btn1.type = 'button';
-  btn1.style.cssText = btnPrimary;
-  btn1.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg> Recarregar Página`;
-  btn1.onclick = () => softReload();
-
-  // Button 2: Hard Reload
-  const btn2 = document.createElement('button');
-  btn2.type = 'button';
-  btn2.style.cssText = btnSecondary;
-  btn2.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg> Limpar Cache + Recarregar`;
-  btn2.onclick = () => hardReload();
-
-  // Button 3: Go Home
-  const btn3 = document.createElement('button');
-  btn3.type = 'button';
-  btn3.style.cssText = btnSecondary;
-  btn3.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Ir para Início`;
-  btn3.onclick = () => escapeToHome();
-
-  // Button 4: Nuclear Reset (dangerous)
-  const btn4 = document.createElement('button');
-  btn4.type = 'button';
-  btn4.style.cssText = btnDanger;
-  btn4.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Reinício Forçado (Limpa Tudo)`;
-  btn4.onclick = () => {
-    if (confirm('Isso irá limpar TODOS os dados locais (login, preferências, cache). Deseja continuar?')) {
-      nuclearReset();
-    }
-  };
-
-  buttons.appendChild(btn1);
-  buttons.appendChild(btn2);
-  buttons.appendChild(btn3);
-  buttons.appendChild(btn4);
-
-  card.appendChild(header);
-  card.appendChild(desc);
-  card.appendChild(buttons);
-  overlay.appendChild(card);
-  
-  document.body.appendChild(overlay);
-  
-  console.log('[P0-RECOVERY] Safe shell UI injected');
+export function injectSafeShellUI(_message: string = 'O sistema encontrou um problema.'): void {
+  console.warn('[P0-RECOVERY] Safe shell solicitado — modo manual-only (sem overlay).');
+  injectManualRefreshButton();
 }
 
 /**
  * Check if app is in a potentially broken state and show recovery
+ * NOVA REGRA: sem overlay; apenas botão manual.
  */
 export function checkAndShowRecoveryIfNeeded(): void {
   const root = document.getElementById('root');
   const hasContent = !!(root && root.children && root.children.length > 0);
-  const already = document.getElementById('p0-recovery');
-  
-  if (!hasContent && !already) {
-    console.warn('[P0-RECOVERY] Detected black screen state, injecting recovery UI');
-    injectSafeShellUI('A página não carregou corretamente.');
+
+  if (!hasContent) {
+    console.warn('[P0-RECOVERY] Root vazio detectado — modo manual-only (sem overlay).');
+    injectManualRefreshButton();
   }
 }
 
