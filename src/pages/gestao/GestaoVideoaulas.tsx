@@ -93,6 +93,26 @@ function useVideoaulas() {
   });
 }
 
+// Hook para estatísticas via RPC (sem limite de 1000)
+function useVideoaulasStats() {
+  return useQuery({
+    queryKey: ['gestao-videoaulas-stats'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_videoaulas_stats');
+      if (error) throw error;
+      return data?.[0] || {
+        total_aulas: 0,
+        aulas_publicadas: 0,
+        aulas_panda: 0,
+        aulas_youtube: 0,
+        total_views: 0,
+        total_minutes: 0
+      };
+    },
+    staleTime: 10000 // 10s
+  });
+}
+
 // Hook para buscar módulos
 function useModules() {
   return useQuery({
@@ -144,6 +164,7 @@ export default function GestaoVideoaulas() {
   const [isAnnihilating, setIsAnnihilating] = useState(false);
 
   const { data: lessons, isLoading, refetch } = useVideoaulas();
+  const { data: statsData, refetch: refetchStats } = useVideoaulasStats();
   const { data: modules } = useModules();
   const { data: areas } = useAreas();
 
@@ -163,6 +184,7 @@ export default function GestaoVideoaulas() {
         (payload) => {
           console.log('[Realtime] Lesson change:', payload.eventType);
           queryClient.invalidateQueries({ queryKey: ['gestao-videoaulas'] });
+          queryClient.invalidateQueries({ queryKey: ['gestao-videoaulas-stats'] });
         }
       )
       .subscribe((status) => {
@@ -314,14 +336,14 @@ export default function GestaoVideoaulas() {
     return matchesSearch && matchesProvider && matchesPublished;
   }) || [];
 
-  // Stats
+  // Stats - usando RPC para contagem correta (sem limite de 1000)
   const stats = {
-    total: lessons?.length || 0,
-    published: lessons?.filter(l => l.is_published).length || 0,
-    panda: lessons?.filter(l => l.video_provider === 'panda').length || 0,
-    youtube: lessons?.filter(l => l.video_provider === 'youtube').length || 0,
-    totalViews: lessons?.reduce((acc, l) => acc + (l.views_count || 0), 0) || 0,
-    totalMinutes: lessons?.reduce((acc, l) => acc + (l.duration_minutes || 0), 0) || 0
+    total: Number(statsData?.total_aulas || 0),
+    published: Number(statsData?.aulas_publicadas || 0),
+    panda: Number(statsData?.aulas_panda || 0),
+    youtube: Number(statsData?.aulas_youtube || 0),
+    totalViews: Number(statsData?.total_views || 0),
+    totalMinutes: Number(statsData?.total_minutes || 0)
   };
 
   const getProviderIcon = (provider: VideoProvider) => {
