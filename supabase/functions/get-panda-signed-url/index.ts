@@ -151,8 +151,9 @@ serve(async (req) => {
       .replace(/\//g, '_')
       .replace(/=+$/, '');
 
-    // URL assinada do Panda Video
-    const signedUrl = `https://player-vz-${videoId.substring(0, 8)}.tv.pandavideo.com.br/embed/?v=${videoId}&token=${token}&expires=${expiresAt}`;
+    // URL assinada do Panda Video - usando Library ID fixo da conta
+    const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
+    const signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&token=${token}&expires=${expiresAt}`;
 
     console.log(`[get-panda-signed-url] URL gerada para aula ${lessonId}`);
 

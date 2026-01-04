@@ -537,10 +537,9 @@ export function useVideoFortressOmega() {
         });
         embedUrl = `https://www.youtube.com/embed/${options.providerVideoId}?${params}`;
       } else {
-        // Panda Video
-        const videoIdParts = options.providerVideoId.split('-');
-        const playerId = videoIdParts[0] || options.providerVideoId;
-        embedUrl = `https://player-vz-${playerId}.tv.pandavideo.com.br/embed/?v=${options.providerVideoId}`;
+        // Panda Video - usar Library ID fixo da conta
+        const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
+        embedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${options.providerVideoId}`;
       }
 
       const session: VideoSessionOmega = {

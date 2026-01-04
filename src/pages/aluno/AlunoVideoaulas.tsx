@@ -96,6 +96,17 @@ export default function AlunoVideoaulas() {
 
   // Função para abrir uma aula
   const openLesson = (lesson: Lesson) => {
+    const videoType = getVideoType(lesson);
+    const videoId = getVideoId(lesson);
+    console.log('▶️ Play lesson:', { 
+      id: lesson.id, 
+      title: lesson.title,
+      panda_video_id: lesson.panda_video_id,
+      youtube_video_id: lesson.youtube_video_id,
+      video_provider: lesson.video_provider,
+      detected_type: videoType,
+      resolved_video_id: videoId 
+    });
     setSearchParams({ aula: lesson.id });
   };
 
@@ -105,22 +116,32 @@ export default function AlunoVideoaulas() {
   };
 
   // Determinar tipo de player
+  // LÓGICA: UUID em panda_video_id = Panda Video, senão = YouTube
   const getVideoType = (lesson: Lesson): "youtube" | "panda" => {
+    // 1. Prioridade: campo video_provider explícito
     if (lesson.video_provider === 'panda') return "panda";
     if (lesson.video_provider === 'youtube') return "youtube";
-    // Fallback: Se panda_video_id parece UUID, é Panda
-    if (lesson.panda_video_id && /^[0-9a-f]{8}-[0-9a-f]{4}-/.test(lesson.panda_video_id)) {
+    
+    // 2. Fallback: Detectar pelo formato do ID
+    // UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) = Panda Video
+    if (lesson.panda_video_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lesson.panda_video_id)) {
       return "panda";
     }
+    
+    // Tudo mais = YouTube
     return "youtube";
   };
 
   // Obter ID do vídeo
   const getVideoId = (lesson: Lesson): string => {
     const type = getVideoType(lesson);
+    
     if (type === "panda") {
+      // Panda Video: usar UUID do panda_video_id
       return lesson.panda_video_id || "";
     }
+    
+    // YouTube: priorizar youtube_video_id, fallback para panda_video_id (dados legados)
     return lesson.youtube_video_id || lesson.panda_video_id || "";
   };
 

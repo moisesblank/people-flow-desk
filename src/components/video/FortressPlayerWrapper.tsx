@@ -672,7 +672,9 @@ export const getFortressPandaUrl = (videoId: string, autoplay = false): string =
     pip: "0",
   });
 
-  return `https://player-vz-${videoId}.tv.pandavideo.com.br/embed/?${params.toString()}`;
+  // 🐼 Panda Video: Usar Library ID fixo da conta
+  const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
+  return `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&${params.toString()}`;
 };
 
 /**
