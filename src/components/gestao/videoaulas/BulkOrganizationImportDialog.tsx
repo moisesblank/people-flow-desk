@@ -300,7 +300,7 @@ export function BulkOrganizationImportDialog({ open, onClose }: BulkOrganization
       .from('courses')
       .select('id')
       .eq('title', courseName)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       courseCache.set(courseName, existing.id);
@@ -345,7 +345,7 @@ export function BulkOrganizationImportDialog({ open, onClose }: BulkOrganization
       .select('id')
       .eq('title', moduleName)
       .eq('course_id', courseId)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       moduleCache.set(cacheKey, existing.id);
@@ -416,7 +416,7 @@ export function BulkOrganizationImportDialog({ open, onClose }: BulkOrganization
           .from('lessons')
           .select('id, legacy_qr_id')
           .eq('legacy_qr_id', record.legacy_qr_id)
-          .single();
+          .maybeSingle();
 
         if (existing) {
           // Update existing lesson with correct module and order
