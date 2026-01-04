@@ -201,6 +201,7 @@ export function ModulosGlobalManager() {
   // State
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCourse, setFilterCourse] = useState<string>('all');
+  const [filterSubcategory, setFilterSubcategory] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'position' | 'title' | 'lessons'>('position');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
@@ -365,6 +366,20 @@ export function ModulosGlobalManager() {
     setExpandedModules(newSet);
   };
 
+  // Available subcategories (dynamic based on course filter)
+  const availableSubcategories = useMemo(() => {
+    const all = modules || [];
+    const filtered = filterCourse !== 'all' 
+      ? all.filter(m => m.course_id === filterCourse)
+      : all;
+    
+    const subcatSet = new Set<string>();
+    filtered.forEach(m => {
+      if (m.subcategory) subcatSet.add(m.subcategory);
+    });
+    return Array.from(subcatSet).sort();
+  }, [modules, filterCourse]);
+
   // Filtered & sorted modules
   const filteredModules = useMemo(() => {
     let result = modules || [];
@@ -375,6 +390,7 @@ export function ModulosGlobalManager() {
       result = result.filter(m => 
         m.title.toLowerCase().includes(term) ||
         m.description?.toLowerCase().includes(term) ||
+        m.subcategory?.toLowerCase().includes(term) ||
         m.course?.title.toLowerCase().includes(term)
       );
     }
@@ -382,6 +398,11 @@ export function ModulosGlobalManager() {
     // Filter by course
     if (filterCourse !== 'all') {
       result = result.filter(m => m.course_id === filterCourse);
+    }
+
+    // Filter by subcategory
+    if (filterSubcategory !== 'all') {
+      result = result.filter(m => m.subcategory === filterSubcategory);
     }
 
     // Filter by status
@@ -409,7 +430,7 @@ export function ModulosGlobalManager() {
     });
 
     return result;
-  }, [modules, searchTerm, filterCourse, filterStatus, sortBy, sortDir]);
+  }, [modules, searchTerm, filterCourse, filterSubcategory, filterStatus, sortBy, sortDir]);
 
   // Stats
   const stats = useMemo(() => {
@@ -494,6 +515,19 @@ export function ModulosGlobalManager() {
                   <SelectItem value="all">Todos os Cursos</SelectItem>
                   {courses?.map(c => (
                     <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={filterSubcategory} onValueChange={setFilterSubcategory}>
+                <SelectTrigger className="w-[180px] bg-background/50">
+                  <Layers className="h-4 w-4 mr-2 text-amber-400" />
+                  <SelectValue placeholder="Subcategoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas Subcategorias</SelectItem>
+                  {availableSubcategories.map(sub => (
+                    <SelectItem key={sub} value={sub}>{sub}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
