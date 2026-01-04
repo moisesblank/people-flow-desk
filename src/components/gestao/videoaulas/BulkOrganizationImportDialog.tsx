@@ -4,7 +4,7 @@
 // Creates courses/modules automatically, preserves exact ordering
 // ============================================
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -73,6 +73,10 @@ export function BulkOrganizationImportDialog({ open, onClose }: BulkOrganization
   // Cache for created/found courses and modules
   const [courseCache] = useState(new Map<string, string>());
   const [moduleCache] = useState(new Map<string, string>());
+
+  // AbortController for cancellation - CRITICAL for stopping imports
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const [isCancelled, setIsCancelled] = useState(false);
 
   const analyzeHierarchy = (records: ImportRecord[]): HierarchyStats => {
     const courses = new Map<string, { count: number; modules: Set<string> }>();
@@ -375,6 +379,9 @@ export function BulkOrganizationImportDialog({ open, onClose }: BulkOrganization
   const importRecords = async () => {
     if (parsedData.length === 0) return;
 
+    // Create new AbortController for this import session
+    abortControllerRef.current = new AbortController();
+    setIsCancelled(false);
     setIsImporting(true);
     setStep('importing');
     setImportResults([]);
@@ -396,6 +403,13 @@ export function BulkOrganizationImportDialog({ open, onClose }: BulkOrganization
     console.log(`[BULK-IMPORT] 🚀 Iniciando importação: ${parsedData.length} aulas em ${courseGroups.size} cursos`);
 
     for (let i = 0; i < parsedData.length; i++) {
+      // CHECK ABORT SIGNAL - CRITICAL: Stop immediately if cancelled
+      if (abortControllerRef.current?.signal.aborted) {
+        console.log(`[BULK-IMPORT] 🛑 IMPORTAÇÃO CANCELADA pelo usuário após ${i} registros`);
+        toast.warning(`Importação cancelada após ${i} registros processados`);
+        break;
+      }
+
       const record = parsedData[i];
 
       try {
@@ -512,7 +526,23 @@ export function BulkOrganizationImportDialog({ open, onClose }: BulkOrganization
     }
   };
 
+  // CANCEL IMPORT - FORCE STOP ALL OPERATIONS
+  const cancelImport = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      setIsCancelled(true);
+      console.log('[BULK-IMPORT] 🛑 Sinal de ABORT enviado - parando todas as operações');
+      toast.error('Cancelando importação... aguarde.');
+    }
+  }, []);
+
   const resetDialog = () => {
+    // Abort any ongoing import
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = null;
+    setIsCancelled(false);
     setFile(null);
     setParsedData([]);
     setParseErrors([]);
@@ -683,8 +713,17 @@ export function BulkOrganizationImportDialog({ open, onClose }: BulkOrganization
           {step === 'importing' && (
             <div className="space-y-4 py-8">
               <div className="flex items-center justify-center gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <span className="text-lg font-medium">Importando...</span>
+                {isCancelled ? (
+                  <>
+                    <XCircle className="h-8 w-8 text-destructive" />
+                    <span className="text-lg font-medium text-destructive">Cancelando...</span>
+                  </>
+                ) : (
+                  <>
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <span className="text-lg font-medium">Importando...</span>
+                  </>
+                )}
               </div>
               <Progress value={importProgress} className="h-3" />
               <p className="text-center text-muted-foreground">
@@ -692,6 +731,19 @@ export function BulkOrganizationImportDialog({ open, onClose }: BulkOrganization
               </p>
               <div className="text-center text-sm text-muted-foreground">
                 {successCount} sucesso / {failCount} falhas
+              </div>
+              
+              {/* CANCEL BUTTON - CRITICAL */}
+              <div className="flex justify-center">
+                <Button 
+                  variant="destructive" 
+                  onClick={cancelImport}
+                  disabled={isCancelled}
+                  className="gap-2"
+                >
+                  <XCircle className="h-4 w-4" />
+                  {isCancelled ? 'Parando...' : 'PARAR IMPORTAÇÃO'}
+                </Button>
               </div>
             </div>
           )}
