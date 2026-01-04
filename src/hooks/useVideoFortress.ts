@@ -710,37 +710,54 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
 // UTILS
 // ============================================
 async function generateDeviceFingerprint(): Promise<string> {
-  const components = [
-    navigator.userAgent,
-    navigator.language,
-    navigator.languages?.join(','),
-    screen.width + 'x' + screen.height,
-    screen.colorDepth,
-    new Date().getTimezoneOffset(),
-    navigator.hardwareConcurrency || 0,
-    (navigator as any).deviceMemory || 0,
-    navigator.platform,
-    (performance as any).memory?.jsHeapSizeLimit || 0,
-  ];
-  
-  // Canvas fingerprint
+  // Patch: nunca bloquear player por falha de fingerprint
   try {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.textBaseline = 'top';
-      ctx.font = '14px Arial';
-      ctx.fillText('VideoFortress', 2, 2);
-      components.push(canvas.toDataURL());
+    if (typeof window === 'undefined') return 'server';
+
+    const components = [
+      navigator.userAgent,
+      navigator.language,
+      navigator.languages?.join(','),
+      screen.width + 'x' + screen.height,
+      screen.colorDepth,
+      new Date().getTimezoneOffset(),
+      navigator.hardwareConcurrency || 0,
+      (navigator as any).deviceMemory || 0,
+      navigator.platform,
+      (performance as any).memory?.jsHeapSizeLimit || 0,
+    ];
+
+    // Canvas fingerprint (best-effort)
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillText('VideoFortress', 2, 2);
+        components.push(canvas.toDataURL());
+      }
+    } catch {
+      // ignore
     }
-  } catch (e) {}
-  
-  const fingerprint = components.join('|');
-  const encoder = new TextEncoder();
-  const data = encoder.encode(fingerprint);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const fingerprint = components.join('|');
+    const encoder = new TextEncoder();
+    const data = encoder.encode(fingerprint);
+
+    // crypto.subtle pode não existir em contextos inseguros; fallback determinístico
+    if (!globalThis.crypto?.subtle?.digest) {
+      return `no-subtle-${data.length}-${Math.abs(new Date().getTimezoneOffset())}`;
+    }
+
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+  } catch (e) {
+    console.warn('[VideoFortress] Fingerprint fallback due to error:', e);
+    return `fp-fallback-${Date.now()}`;
+  }
 }
 
 export default useVideoFortress;

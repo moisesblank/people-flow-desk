@@ -17023,6 +17023,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      apply_lesson_video_links: { Args: { p_rows: Json }; Returns: Json }
       apply_risk_score_decay: { Args: never; Returns: number }
       assert_role: {
         Args: { _required_role: string; _user_id: string }
@@ -17468,6 +17469,7 @@ export type Database = {
       }
       do_cleanup_expired_sessions: { Args: never; Returns: number }
       do_cleanup_rate_limits: { Args: never; Returns: number }
+      dry_run_lesson_video_links: { Args: { p_rows: Json }; Returns: Json }
       email_exists_globally: {
         Args: {
           check_email: string
