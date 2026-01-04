@@ -10639,6 +10639,258 @@ export type Database = {
           },
         ]
       }
+      simulado_audit_logs: {
+        Row: {
+          action: string
+          attempt_id: string | null
+          category: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_hash: string | null
+          level: string | null
+          session_id: string | null
+          simulado_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          attempt_id?: string | null
+          category: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_hash?: string | null
+          level?: string | null
+          session_id?: string | null
+          simulado_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          attempt_id?: string | null
+          category?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_hash?: string | null
+          level?: string | null
+          session_id?: string | null
+          simulado_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      simulado_consent_logs: {
+        Row: {
+          accepted_at: string | null
+          consent_type: string | null
+          device_fingerprint: string | null
+          id: string
+          ip_hash: string | null
+          is_valid: boolean | null
+          metadata: Json | null
+          simulado_id: string
+          term_version: string
+          user_agent_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          consent_type?: string | null
+          device_fingerprint?: string | null
+          id?: string
+          ip_hash?: string | null
+          is_valid?: boolean | null
+          metadata?: Json | null
+          simulado_id: string
+          term_version: string
+          user_agent_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          consent_type?: string | null
+          device_fingerprint?: string | null
+          id?: string
+          ip_hash?: string | null
+          is_valid?: boolean | null
+          metadata?: Json | null
+          simulado_id?: string
+          term_version?: string
+          user_agent_hash?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      simulado_consent_terms: {
+        Row: {
+          activated_at: string | null
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          title: string
+          version: string
+        }
+        Insert: {
+          activated_at?: string | null
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          title: string
+          version: string
+        }
+        Update: {
+          activated_at?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      simulado_feature_flags: {
+        Row: {
+          description: string | null
+          flag_key: string
+          flag_value: boolean | null
+          id: string
+          metadata: Json | null
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          flag_key: string
+          flag_value?: boolean | null
+          id?: string
+          metadata?: Json | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          flag_key?: string
+          flag_value?: boolean | null
+          id?: string
+          metadata?: Json | null
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      simulado_metrics: {
+        Row: {
+          id: string
+          labels: Json | null
+          metric_key: string
+          metric_type: string | null
+          metric_value: number | null
+          recorded_at: string | null
+        }
+        Insert: {
+          id?: string
+          labels?: Json | null
+          metric_key: string
+          metric_type?: string | null
+          metric_value?: number | null
+          recorded_at?: string | null
+        }
+        Update: {
+          id?: string
+          labels?: Json | null
+          metric_key?: string
+          metric_type?: string | null
+          metric_value?: number | null
+          recorded_at?: string | null
+        }
+        Relationships: []
+      }
+      simulado_ranking_disputes: {
+        Row: {
+          attempt_id: string | null
+          created_at: string | null
+          description: string
+          dispute_type: string
+          evidence: Json | null
+          id: string
+          resolution: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          simulado_id: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          attempt_id?: string | null
+          created_at?: string | null
+          description: string
+          dispute_type: string
+          evidence?: Json | null
+          id?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          simulado_id?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          attempt_id?: string | null
+          created_at?: string | null
+          description?: string
+          dispute_type?: string
+          evidence?: Json | null
+          id?: string
+          resolution?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          simulado_id?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      simulado_ranking_snapshots: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          ranking_data: Json
+          reason: string | null
+          simulado_id: string | null
+          snapshot_type: string
+          total_participants: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          ranking_data: Json
+          reason?: string | null
+          simulado_id?: string | null
+          snapshot_type: string
+          total_participants?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          ranking_data?: Json
+          reason?: string | null
+          simulado_id?: string | null
+          snapshot_type?: string
+          total_participants?: number | null
+        }
+        Relationships: []
+      }
       simulados: {
         Row: {
           created_at: string
@@ -10646,10 +10898,13 @@ export type Database = {
           description: string | null
           duration_minutes: number
           ends_at: string | null
+          hard_mode_override: string | null
           id: string
           is_active: boolean
           is_hard_mode: boolean
           is_published: boolean
+          is_ranking_frozen: boolean | null
+          maintenance_message: string | null
           max_tab_switches: number | null
           passing_score: number | null
           points_per_question: number
@@ -10671,10 +10926,13 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           ends_at?: string | null
+          hard_mode_override?: string | null
           id?: string
           is_active?: boolean
           is_hard_mode?: boolean
           is_published?: boolean
+          is_ranking_frozen?: boolean | null
+          maintenance_message?: string | null
           max_tab_switches?: number | null
           passing_score?: number | null
           points_per_question?: number
@@ -10696,10 +10954,13 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           ends_at?: string | null
+          hard_mode_override?: string | null
           id?: string
           is_active?: boolean
           is_hard_mode?: boolean
           is_published?: boolean
+          is_ranking_frozen?: boolean | null
+          maintenance_message?: string | null
           max_tab_switches?: number | null
           passing_score?: number | null
           points_per_question?: number
@@ -17605,6 +17866,14 @@ export type Database = {
           user_id: string
         }[]
       }
+      create_ranking_snapshot: {
+        Args: {
+          p_reason?: string
+          p_simulado_id?: string
+          p_snapshot_type?: string
+        }
+        Returns: string
+      }
       create_rollback_point: {
         Args: {
           p_description: string
@@ -18095,6 +18364,10 @@ export type Database = {
         }[]
       }
       get_security_dashboard_v3: { Args: never; Returns: Json }
+      get_simulado_feature_flag: {
+        Args: { p_flag_key: string }
+        Returns: boolean
+      }
       get_simulado_ranking: {
         Args: { p_limit?: number; p_simulado_id: string }
         Returns: Json
@@ -18440,6 +18713,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_simulado_audit: {
+        Args: {
+          p_action: string
+          p_attempt_id?: string
+          p_category: string
+          p_details?: Json
+          p_ip_hash?: string
+          p_level?: string
+          p_session_id?: string
+          p_simulado_id?: string
+        }
+        Returns: string
+      }
       log_suspicious_device_event: {
         Args: {
           p_action_taken?: string
@@ -18516,6 +18802,16 @@ export type Database = {
         Args: { p_reason?: string }
         Returns: number
       }
+      open_ranking_dispute: {
+        Args: {
+          p_attempt_id?: string
+          p_description?: string
+          p_dispute_type?: string
+          p_evidence?: Json
+          p_simulado_id: string
+        }
+        Returns: string
+      }
       publish_event: {
         Args: {
           p_entity_id?: string
@@ -18524,6 +18820,15 @@ export type Database = {
           p_payload?: Json
         }
         Returns: number
+      }
+      record_simulado_metric: {
+        Args: {
+          p_labels?: Json
+          p_metric_key: string
+          p_metric_type?: string
+          p_metric_value?: number
+        }
+        Returns: string
       }
       refresh_dashboard_stats: { Args: never; Returns: undefined }
       refresh_global_performance_stats: { Args: never; Returns: undefined }
@@ -18586,6 +18891,17 @@ export type Database = {
           _device_hash?: string
           _ip_address?: string
           _user_id: string
+        }
+        Returns: string
+      }
+      register_simulado_consent: {
+        Args: {
+          p_consent_type?: string
+          p_device_fingerprint?: string
+          p_ip_hash?: string
+          p_simulado_id: string
+          p_term_version?: string
+          p_user_agent_hash?: string
         }
         Returns: string
       }
