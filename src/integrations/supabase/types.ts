@@ -7037,6 +7037,7 @@ export type Database = {
           is_published: boolean | null
           position: number | null
           status: string | null
+          subcategory: string | null
           thumbnail_url: string | null
           title: string
           updated_at: string | null
@@ -7050,6 +7051,7 @@ export type Database = {
           is_published?: boolean | null
           position?: number | null
           status?: string | null
+          subcategory?: string | null
           thumbnail_url?: string | null
           title: string
           updated_at?: string | null
@@ -7063,6 +7065,7 @@ export type Database = {
           is_published?: boolean | null
           position?: number | null
           status?: string | null
+          subcategory?: string | null
           thumbnail_url?: string | null
           title?: string
           updated_at?: string | null
