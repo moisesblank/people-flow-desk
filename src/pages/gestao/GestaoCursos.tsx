@@ -110,10 +110,10 @@ function useModules(courseId?: string) {
   return useQuery({
     queryKey: ['gestao-modules', courseId],
     queryFn: async () => {
-      // CORREÇÃO CRÍTICA: Buscar da tabela 'areas' (fonte da verdade)
+      // FONTE DA VERDADE: Tabela 'modules' (onde lessons.module_id aponta)
       let query = supabase
-        .from('areas')
-        .select('id, name, slug, course_id, position, is_active, thumbnail_url, description, icon, color, created_at, updated_at')
+        .from('modules')
+        .select('id, title, description, course_id, position, is_published, status, xp_reward, thumbnail_url, created_at, updated_at')
         .order('position', { ascending: true });
       
       if (courseId) {
@@ -124,22 +124,22 @@ function useModules(courseId?: string) {
       if (error) throw error;
       
       // Mapear para interface Module esperada
-      return (data || []).map(area => ({
-        id: area.id,
-        name: area.name,
-        title: area.name, // Alias para compatibilidade
-        slug: area.slug,
-        course_id: area.course_id,
-        position: area.position,
-        is_published: area.is_active ?? true,
-        status: area.is_active ? 'active' : 'inactive',
-        xp_reward: null,
-        thumbnail_url: area.thumbnail_url,
-        description: area.description,
-        icon: area.icon,
-        color: area.color,
-        created_at: area.created_at,
-        updated_at: area.updated_at
+      return (data || []).map(mod => ({
+        id: mod.id,
+        name: mod.title,
+        title: mod.title,
+        slug: null,
+        course_id: mod.course_id,
+        position: mod.position,
+        is_published: mod.is_published ?? true,
+        status: mod.status || 'active',
+        xp_reward: mod.xp_reward,
+        thumbnail_url: mod.thumbnail_url,
+        description: mod.description,
+        icon: null,
+        color: null,
+        created_at: mod.created_at,
+        updated_at: mod.updated_at
       })) as Module[];
     },
     enabled: !!courseId || courseId === undefined
@@ -179,9 +179,9 @@ function useGestaoLMSRealtime(queryClient: ReturnType<typeof useQueryClient>) {
       )
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'areas' },
+        { event: '*', schema: 'public', table: 'modules' },
         () => {
-          console.log('[REALTIME-GESTAO] Areas/Modules atualizado');
+          console.log('[REALTIME-GESTAO] Modules atualizado');
           queryClient.invalidateQueries({ queryKey: ['gestao-modules'] });
         }
       )
@@ -386,17 +386,17 @@ export default function GestaoCursos() {
   
   const createModule = useMutation({
     mutationFn: async (data: typeof moduleForm & { course_id: string }) => {
-      // CORREÇÃO: Salvar na tabela 'areas' (fonte da verdade)
+      // FONTE DA VERDADE: Tabela 'modules'
       const { data: result, error } = await supabase
-        .from('areas')
+        .from('modules')
         .insert({
-          name: data.title, // 'areas' usa 'name', não 'title'
+          title: data.title,
           description: data.description,
           position: data.position,
-          is_active: data.is_published,
+          is_published: data.is_published,
           thumbnail_url: data.thumbnail_url,
           course_id: data.course_id,
-          slug: data.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+          status: 'active'
         })
         .select()
         .single();
@@ -417,16 +417,16 @@ export default function GestaoCursos() {
   const updateModule = useMutation({
     mutationFn: async (data: Partial<Module> & { id: string }) => {
       const { id, title, name, is_published, ...rest } = data;
-      // CORREÇÃO: Atualizar na tabela 'areas'
+      // FONTE DA VERDADE: Tabela 'modules'
       const updateData: Record<string, any> = { ...rest };
       if (title !== undefined || name !== undefined) {
-        updateData.name = title || name;
+        updateData.title = title || name;
       }
       if (is_published !== undefined) {
-        updateData.is_active = is_published;
+        updateData.is_published = is_published;
       }
       const { error } = await supabase
-        .from('areas')
+        .from('modules')
         .update(updateData)
         .eq('id', id);
       if (error) throw error;
@@ -445,9 +445,9 @@ export default function GestaoCursos() {
   
   const deleteModule = useMutation({
     mutationFn: async (id: string) => {
-      // CORREÇÃO: Deletar da tabela 'areas'
+      // FONTE DA VERDADE: Tabela 'modules'
       const { error } = await supabase
-        .from('areas')
+        .from('modules')
         .delete()
         .eq('id', id);
       if (error) throw error;
