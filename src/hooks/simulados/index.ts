@@ -31,3 +31,6 @@ export type { CameraState } from "./useCameraStream";
 
 export { useAntiCheat } from "./useAntiCheat";
 export type { AntiCheatState, AntiCheatViolation } from "./useAntiCheat";
+
+// Hook de estado
+export { useSimuladoState } from "./useSimuladoState";
