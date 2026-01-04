@@ -12,7 +12,7 @@ import {
   Eye, EyeOff, Clock, BookOpen, Upload, Youtube, Tv,
   ChevronDown, MoreVertical, ExternalLink, Copy, Check,
   TrendingUp, Users, Zap, RefreshCw, Settings2, Layers,
-  GripVertical, ArrowUpDown, BarChart3
+  GripVertical, ArrowUpDown, BarChart3, QrCode
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -692,7 +692,7 @@ interface LessonFormModalProps {
 }
 
 function LessonFormModal({ open, onClose, lesson, modules, areas, onSubmit, isLoading }: LessonFormModalProps) {
-  const [formData, setFormData] = useState<Partial<Lesson>>({
+  const [formData, setFormData] = useState<Partial<Lesson & { legacy_qr_id?: number }>>({
     title: '',
     description: '',
     video_provider: 'panda',
@@ -704,7 +704,8 @@ function LessonFormModal({ open, onClose, lesson, modules, areas, onSubmit, isLo
     position: 1,
     is_free: false,
     is_published: false,
-    module_id: ''
+    module_id: '',
+    legacy_qr_id: undefined
   });
 
   useEffect(() => {
@@ -721,7 +722,8 @@ function LessonFormModal({ open, onClose, lesson, modules, areas, onSubmit, isLo
         position: lesson.position || 1,
         is_free: lesson.is_free,
         is_published: lesson.is_published,
-        module_id: lesson.module_id
+        module_id: lesson.module_id,
+        legacy_qr_id: (lesson as any).legacy_qr_id || undefined
       });
     } else {
       setFormData({
@@ -736,7 +738,8 @@ function LessonFormModal({ open, onClose, lesson, modules, areas, onSubmit, isLo
         position: 1,
         is_free: false,
         is_published: false,
-        module_id: ''
+        module_id: '',
+        legacy_qr_id: undefined
       });
     }
   }, [lesson, open]);
@@ -1089,6 +1092,36 @@ function LessonFormModal({ open, onClose, lesson, modules, areas, onSubmit, isLo
                 }))}
                 min={1}
               />
+            </div>
+          </div>
+
+          {/* Legacy QR ID - Para QR Codes físicos */}
+          <div className="space-y-2 p-4 rounded-lg border border-amber-500/30 bg-amber-500/5">
+            <div className="flex items-center gap-2 text-amber-600 font-medium mb-2">
+              <QrCode className="w-5 h-5" />
+              QR Code Legado (Livros Físicos)
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="legacy_qr_id">ID do QR Code Legado</Label>
+              <Input
+                id="legacy_qr_id"
+                type="number"
+                value={formData.legacy_qr_id || ''}
+                onChange={(e) => setFormData(prev => ({ 
+                  ...prev, 
+                  legacy_qr_id: e.target.value ? parseInt(e.target.value) : undefined 
+                }))}
+                placeholder="Ex: 10745"
+                disabled={!!lesson && !!(lesson as any).legacy_qr_id}
+              />
+              <p className="text-xs text-muted-foreground">
+                Identificador numérico único usado nos QR Codes impressos. <strong>Não pode ser alterado após criação.</strong>
+              </p>
+              {formData.legacy_qr_id && (
+                <p className="text-xs text-amber-600">
+                  URL do QR: <code className="bg-muted px-1 rounded">/qr?v={formData.legacy_qr_id}</code>
+                </p>
+              )}
             </div>
           </div>
 
