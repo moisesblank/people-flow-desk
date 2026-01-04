@@ -28,10 +28,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { CyberBackground } from '@/components/ui/cyber-background';
 import { FuturisticPageHeader } from '@/components/ui/futuristic-page-header';
+import { ModulosGlobalManager } from '@/components/gestao/cursos/ModulosGlobalManager';
 
 // ============================================
 // TIPOS (baseados no schema real do banco)
@@ -282,6 +284,9 @@ export default function GestaoCursos() {
   
   // 🔄 REALTIME: Sincronização entre múltiplos admins
   useGestaoLMSRealtime(queryClient);
+  
+  // Tab state - Cursos ou Módulos
+  const [activeTab, setActiveTab] = useState<'cursos' | 'modulos'>('cursos');
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -553,57 +558,80 @@ export default function GestaoCursos() {
           icon={GraduationCap}
           accentColor="primary"
           action={
-            <Button 
-              onClick={() => { setEditingCourse(null); resetCourseForm(); setCourseDialog(true); }} 
-              className="gap-2 bg-primary/90 hover:bg-primary shadow-lg shadow-primary/25"
-            >
-              <Plus className="h-4 w-4" />
-              Novo Curso
-            </Button>
+            activeTab === 'cursos' ? (
+              <Button 
+                onClick={() => { setEditingCourse(null); resetCourseForm(); setCourseDialog(true); }} 
+                className="gap-2 bg-primary/90 hover:bg-primary shadow-lg shadow-primary/25"
+              >
+                <Plus className="h-4 w-4" />
+                Novo Curso
+              </Button>
+            ) : null
           }
         />
         
-        {/* Stats — Iron Man HUD Orbs */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <StatOrb
-            icon={<BookOpen className="h-6 w-6" />}
-            value={courses?.length || 0}
-            label="Cursos"
-            color="blue"
-            delay={0}
-          />
-          <StatOrb
-            icon={<Layers className="h-6 w-6" />}
-            value={modules?.length || 0}
-            label="Módulos"
-            color="purple"
-            delay={50}
-          />
-          <StatOrb
-            icon={<Check className="h-6 w-6" />}
-            value={modules?.filter(m => m.thumbnail_url).length || 0}
-            label="Conformes"
-            color="green"
-            delay={100}
-          />
-          <StatOrb
-            icon={<AlertTriangle className="h-6 w-6" />}
-            value={modules?.filter(m => !m.thumbnail_url).length || 0}
-            label="Sem Imagem"
-            color="red"
-            delay={150}
-          />
-          <StatOrb
-            icon={<EyeOff className="h-6 w-6" />}
-            value={courses?.filter(c => !c.is_published).length || 0}
-            label="Rascunhos"
-            color="amber"
-            delay={200}
-          />
-        </div>
-        
-        {/* Main Content — Split View com Cards Neon */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Tabs de Navegação - Cursos / Módulos */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'cursos' | 'modulos')} className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2 bg-card/80 backdrop-blur-sm border border-border/50">
+            <TabsTrigger 
+              value="cursos" 
+              className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-primary"
+            >
+              <BookOpen className="h-4 w-4" />
+              Cursos
+            </TabsTrigger>
+            <TabsTrigger 
+              value="modulos" 
+              className="gap-2 data-[state=active]:bg-purple-500/20 data-[state=active]:text-purple-400"
+            >
+              <Layers className="h-4 w-4" />
+              Módulos
+            </TabsTrigger>
+          </TabsList>
+          
+          {/* ========== TAB: CURSOS ========== */}
+          <TabsContent value="cursos" className="mt-6 space-y-6">
+            {/* Stats — Iron Man HUD Orbs */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <StatOrb
+                icon={<BookOpen className="h-6 w-6" />}
+                value={courses?.length || 0}
+                label="Cursos"
+                color="blue"
+                delay={0}
+              />
+              <StatOrb
+                icon={<Layers className="h-6 w-6" />}
+                value={modules?.length || 0}
+                label="Módulos"
+                color="purple"
+                delay={50}
+              />
+              <StatOrb
+                icon={<Check className="h-6 w-6" />}
+                value={modules?.filter(m => m.thumbnail_url).length || 0}
+                label="Conformes"
+                color="green"
+                delay={100}
+              />
+              <StatOrb
+                icon={<AlertTriangle className="h-6 w-6" />}
+                value={modules?.filter(m => !m.thumbnail_url).length || 0}
+                label="Sem Imagem"
+                color="red"
+                delay={150}
+              />
+              <StatOrb
+                icon={<EyeOff className="h-6 w-6" />}
+                value={courses?.filter(c => !c.is_published).length || 0}
+                label="Rascunhos"
+                color="amber"
+                delay={200}
+              />
+            </div>
+            
+            {/* Main Content — Split View com Cards Neon */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left: Course List — Glassmorphism Card */}
           <div className="relative group">
             {/* Neon border glow */}
@@ -848,7 +876,14 @@ export default function GestaoCursos() {
               </CardContent>
             </Card>
           </div>
-        </div>
+          </div>
+          </TabsContent>
+          
+          {/* ========== TAB: MÓDULOS ========== */}
+          <TabsContent value="modulos" className="mt-6">
+            <ModulosGlobalManager />
+          </TabsContent>
+        </Tabs>
         
         {/* Course Dialog */}
         <Dialog open={courseDialog} onOpenChange={setCourseDialog}>
