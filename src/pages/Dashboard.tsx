@@ -68,6 +68,7 @@ import { YouTubeLiveWidget } from "@/components/youtube";
 
 import { LabStatusWidget } from "@/components/dashboard/LabStatusWidget";
 import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { IntegrationsHubWidget } from "@/components/dashboard/IntegrationsHubWidget";
 import { AutomationRules } from "@/components/dashboard/AutomationRules";
 import { FinancialHealthScore } from "@/components/dashboard/FinancialHealthScore";
@@ -742,7 +743,16 @@ export default function Dashboard() {
 
         {/* Analytics Avançado + Automações */}
         <section className="grid gap-6 lg:grid-cols-2 mb-8">
-          <AdvancedAnalytics />
+          <ErrorBoundary
+            fallback={
+              <div className="rounded-xl border border-border bg-card p-6">
+                <p className="text-sm font-medium">Analytics temporariamente indisponível</p>
+                <p className="text-xs text-muted-foreground mt-1">O painel segue funcionando. Use “Recarregar Página” se necessário.</p>
+              </div>
+            }
+          >
+            <AdvancedAnalytics />
+          </ErrorBoundary>
           <AutomationRules />
         </section>
 

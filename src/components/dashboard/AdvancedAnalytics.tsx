@@ -3,7 +3,7 @@
 // Analytics Avançado com Métricas em Tempo Real
 // ============================================
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
   TrendingUp,
   TrendingDown,
