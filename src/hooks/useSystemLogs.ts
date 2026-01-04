@@ -52,7 +52,8 @@ interface UseSystemLogsReturn {
 let globalLoggerInitialized = false;
 let sessionId: string | null = null;
 
-// Gerar session ID único
+// Raw fetch (antes do interceptor) para evitar loops recursivos ao logar
+let rawFetch: typeof window.fetch | null = null;
 function getSessionId(): string {
   if (!sessionId) {
     sessionId = crypto.randomUUID();
@@ -76,15 +77,20 @@ export async function sendSystemLog(
   try {
     const now = new Date();
     const deviceInfo = navigator.userAgent;
-    
+
+    // Usa o fetch original (pré-interceptor) para impedir recursão infinita
+    const fetchImpl = rawFetch ?? window.fetch;
+
     // Enviar para edge function que salva em TXT + banco
-    const response = await fetch(
+    const response = await fetchImpl(
       `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/log-writer`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          // marcação explícita para qualquer outro interceptor futuro
+          'X-System-Log': '1',
         },
         body: JSON.stringify({
           timestamp: now.toISOString(),
@@ -148,12 +154,12 @@ export function initGlobalErrorCapture(): void {
   });
 
   // Interceptar fetch para capturar erros de API
+  // IMPORTANTE: preserva fetch original para evitar loops durante sendSystemLog
+  rawFetch = window.fetch;
   const originalFetch = window.fetch;
   window.fetch = async (...args) => {
     try {
       const response = await originalFetch(...args);
-      
-      // Logar erros HTTP (4xx, 5xx)
       if (!response.ok && response.status >= 400) {
         const url = typeof args[0] === 'string' ? args[0] : args[0].toString();
         sendSystemLog(
