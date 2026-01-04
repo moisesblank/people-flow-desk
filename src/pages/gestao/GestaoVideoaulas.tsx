@@ -808,9 +808,31 @@ export default function GestaoVideoaulas() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => {
-                            if (lesson.video_url) {
+                          <DropdownMenuItem onClick={async () => {
+                            // Para Panda Video, gerar URL assinada
+                            if (lesson.video_provider === 'panda' && lesson.panda_video_id) {
+                              toast.loading("Gerando URL segura...", { id: "panda-url" });
+                              try {
+                                const { data, error } = await supabase.functions.invoke('get-panda-signed-url', {
+                                  body: { lessonId: lesson.id }
+                                });
+                                if (error) throw error;
+                                if (data?.signedUrl) {
+                                  window.open(data.signedUrl, '_blank');
+                                  toast.success("Vídeo aberto!", { id: "panda-url" });
+                                } else {
+                                  throw new Error("URL não gerada");
+                                }
+                              } catch (err) {
+                                console.error('[Abrir vídeo] Erro:', err);
+                                toast.error("Erro ao gerar URL do vídeo", { id: "panda-url" });
+                              }
+                            } else if (lesson.video_provider === 'youtube' && lesson.youtube_video_id) {
+                              window.open(`https://www.youtube.com/watch?v=${lesson.youtube_video_id}`, '_blank');
+                            } else if (lesson.video_url) {
                               window.open(lesson.video_url, '_blank');
+                            } else {
+                              toast.error("Nenhuma URL de vídeo disponível");
                             }
                           }}>
                             <ExternalLink className="w-4 h-4 mr-2" />
