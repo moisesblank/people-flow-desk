@@ -33,8 +33,16 @@ export function SessionGuard({ children }: SessionGuardProps) {
   /**
    * Exibe overlay visual e prepara logout
    * SOMENTE quando backend confirma revogação por novo dispositivo
+   * 👑 OWNER bypass: nunca exibe overlay para moisesblank@gmail.com
    */
   const handleDeviceRevocation = useCallback(() => {
+    // 👑 OWNER bypass UX-only: NUNCA mostrar overlay para o OWNER
+    const isOwner = user?.email?.toLowerCase() === 'moisesblank@gmail.com';
+    if (isOwner) {
+      console.log('[SessionGuard] 👑 OWNER bypass - NÃO exibindo overlay de revogação');
+      return;
+    }
+
     if (hasLoggedOutRef.current) return;
     hasLoggedOutRef.current = true;
 
@@ -53,7 +61,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
     // Mostrar overlay visual
     setShowRevokedOverlay(true);
-  }, []);
+  }, [user?.email]);
 
   /**
    * Callback quando usuário fecha o overlay
