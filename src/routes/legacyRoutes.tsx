@@ -5,6 +5,10 @@
 // ============================================
 
 import { Route, Navigate } from "react-router-dom";
+import { lazy } from "react";
+
+// Lazy import para NotFound
+const NotFound = lazy(() => import("@/pages/NotFound"));
 
 // ============================================
 // COMPONENTE: Redirect silencioso para home
@@ -91,5 +95,8 @@ export const legacyRoutes = (
     <Route path="/staff/*" element={<LegacyRedirect />} />
     <Route path="/painel" element={<LegacyRedirect />} />
     <Route path="/painel/*" element={<LegacyRedirect />} />
+
+    {/* 🚨 CATCH-ALL: Rota 404 deve ser a ÚLTIMA de todas */}
+    <Route path="*" element={<NotFound />} />
   </>
 );

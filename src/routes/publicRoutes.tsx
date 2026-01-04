@@ -20,8 +20,8 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
 const DeviceLimitGate = lazy(() => import("@/pages/security/DeviceLimitGate"));
 // 🛡️ BEYOND_THE_3_DEVICES: Same Type Replacement Gate
 const SameTypeReplacementGate = lazy(() => import("@/pages/security/SameTypeReplacementGate"));
-// 📱 QR Code Resolver - Legacy QR Codes from printed materials
-const QRCodeResolver = lazy(() => import("@/pages/QRCodeResolver"));
+// 📱 QR Code Resolver - IMPORT ESTÁTICO para debug
+import QRCodeResolverPage from "@/pages/QRCodeResolver";
 
 export const publicRoutes = (
   <>
@@ -42,7 +42,6 @@ export const publicRoutes = (
     {/* 🛡️ BEYOND_THE_3_DEVICES: Substituição de dispositivo do mesmo tipo */}
     <Route path="/security/same-type-replacement" element={<SameTypeReplacementGate />} />
     {/* 📱 QR CODE RESOLVER - Legacy QR Codes from printed materials */}
-    <Route path="/qr" element={<QRCodeResolver />} />
-    <Route path="*" element={<NotFound />} />
+    <Route path="/qr" element={<QRCodeResolverPage />} />
   </>
 );
