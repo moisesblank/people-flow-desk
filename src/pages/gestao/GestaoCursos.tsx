@@ -3,9 +3,10 @@
 // Sistema completo de CRUD para LMS
 // Hierarquia: Curso → Módulo → Aula
 // CSS-ONLY ANIMATIONS (LEI I PERFORMANCE v2.0)
+// 🔄 REALTIME: Sincronização entre múltiplos admins
 // ============================================
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -162,6 +163,47 @@ function useLessons(moduleId?: string) {
 }
 
 // ============================================
+// 🔄 REALTIME HOOK - Sincronização entre admins
+// ============================================
+function useGestaoLMSRealtime(queryClient: ReturnType<typeof useQueryClient>) {
+  useEffect(() => {
+    const channel = supabase
+      .channel('gestao-lms-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'courses' },
+        () => {
+          console.log('[REALTIME-GESTAO] Courses atualizado');
+          queryClient.invalidateQueries({ queryKey: ['gestao-courses'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'areas' },
+        () => {
+          console.log('[REALTIME-GESTAO] Areas/Modules atualizado');
+          queryClient.invalidateQueries({ queryKey: ['gestao-modules'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'lessons' },
+        () => {
+          console.log('[REALTIME-GESTAO] Lessons atualizado');
+          queryClient.invalidateQueries({ queryKey: ['gestao-lessons'] });
+        }
+      )
+      .subscribe((status) => {
+        console.log('[REALTIME-GESTAO] Status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+}
+
+// ============================================
 // STAT ORB COMPONENT — IRON MAN HUD STYLE
 // ============================================
 interface StatOrbProps {
@@ -237,6 +279,9 @@ function StatOrb({ icon, value, label, color, delay = 0 }: StatOrbProps) {
 export default function GestaoCursos() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // 🔄 REALTIME: Sincronização entre múltiplos admins
+  useGestaoLMSRealtime(queryClient);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
