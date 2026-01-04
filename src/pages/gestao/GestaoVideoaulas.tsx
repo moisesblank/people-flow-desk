@@ -12,7 +12,7 @@ import {
   Eye, EyeOff, Clock, BookOpen, Upload, Youtube, Tv,
   ChevronDown, MoreVertical, ExternalLink, Copy, Check,
   TrendingUp, Users, Zap, RefreshCw, Settings2, Layers,
-  GripVertical, ArrowUpDown, BarChart3, QrCode
+  GripVertical, ArrowUpDown, BarChart3, QrCode, Bomb, AlertTriangle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -32,6 +32,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
 import { LegacyQRImportDialog } from "@/components/gestao/videoaulas/LegacyQRImportDialog";
 import { BulkOrganizationImportDialog } from "@/components/gestao/videoaulas/BulkOrganizationImportDialog";
 
@@ -135,6 +136,12 @@ export default function GestaoVideoaulas() {
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  
+  // Aniquilação Total state
+  const [isAnnihilateOpen, setIsAnnihilateOpen] = useState(false);
+  const [annihilateConfirmText, setAnnihilateConfirmText] = useState("");
+  const [annihilateCheckbox, setAnnihilateCheckbox] = useState(false);
+  const [isAnnihilating, setIsAnnihilating] = useState(false);
 
   const { data: lessons, isLoading, refetch } = useVideoaulas();
   const { data: modules } = useModules();
@@ -227,6 +234,59 @@ export default function GestaoVideoaulas() {
     }
   });
 
+  // ============================================
+  // ANIQUILAÇÃO TOTAL: Excluir TODAS as videoaulas + módulos
+  // ============================================
+  const handleAnnihilateAll = async () => {
+    if (!annihilateCheckbox || annihilateConfirmText !== "CONFIRMAR EXCLUSÃO TOTAL") {
+      toast.error("Complete todas as confirmações para prosseguir.");
+      return;
+    }
+
+    setIsAnnihilating(true);
+    
+    try {
+      console.log("[ANNIHILATE] 🔥 Iniciando aniquilação total de vídeos...");
+      
+      // 1. Excluir todas as lessons
+      const { error: lessonsError } = await supabase
+        .from('lessons')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all (workaround)
+      
+      if (lessonsError) throw lessonsError;
+      console.log(`[ANNIHILATE] ✅ Lessons excluídas`);
+      
+      // 2. Excluir todos os modules (após lessons para evitar FK)
+      const { error: modulesError } = await supabase
+        .from('modules')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+      
+      if (modulesError) throw modulesError;
+      console.log(`[ANNIHILATE] ✅ Modules excluídos`);
+      
+      // 3. Invalidar caches
+      queryClient.invalidateQueries({ queryKey: ['gestao-videoaulas'] });
+      queryClient.invalidateQueries({ queryKey: ['gestao-modules'] });
+      queryClient.invalidateQueries({ queryKey: ['lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['modules'] });
+      
+      toast.success("ANIQUILAÇÃO TOTAL CONCLUÍDA! Todas as videoaulas e módulos foram excluídos.");
+      
+      // Reset dialog
+      setIsAnnihilateOpen(false);
+      setAnnihilateConfirmText("");
+      setAnnihilateCheckbox(false);
+      
+    } catch (error: any) {
+      console.error("[ANNIHILATE] ❌ Erro:", error);
+      toast.error(`Erro na aniquilação: ${error.message}`);
+    } finally {
+      setIsAnnihilating(false);
+    }
+  };
+
   const togglePublishMutation = useMutation({
     mutationFn: async ({ id, is_published }: { id: string; is_published: boolean }) => {
       const { error } = await supabase
@@ -300,11 +360,19 @@ export default function GestaoVideoaulas() {
             Gerencie aulas Panda Video + YouTube • Sincronizado com Portal do Aluno
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className="text-primary border-primary">
             <Zap className="w-3 h-3 mr-1" />
             Realtime Ativo
           </Badge>
+          <Button 
+            variant="outline" 
+            className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
+            onClick={() => setIsAnnihilateOpen(true)}
+          >
+            <Bomb className="w-4 h-4 mr-2" />
+            Aniquilar Tudo
+          </Button>
           <Button variant="outline" onClick={() => setIsImportOpen(true)}>
             <QrCode className="w-4 h-4 mr-2" />
             Importar QR Simples
@@ -319,6 +387,82 @@ export default function GestaoVideoaulas() {
           </Button>
         </div>
       </div>
+
+      {/* Dialog: Aniquilação Total */}
+      <Dialog open={isAnnihilateOpen} onOpenChange={setIsAnnihilateOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-6 h-6" />
+              ANIQUILAÇÃO TOTAL DE VÍDEOS
+            </DialogTitle>
+            <DialogDescription className="text-destructive">
+              Esta ação é IRREVERSÍVEL. Todas as videoaulas e módulos serão permanentemente excluídos do sistema.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
+              <p className="text-sm font-medium text-destructive">
+                ⚠️ ATENÇÃO: Serão excluídos permanentemente:
+              </p>
+              <ul className="mt-2 text-sm text-destructive/80 list-disc list-inside space-y-1">
+                <li>Todas as <strong>{stats.total}</strong> videoaulas (lessons)</li>
+                <li>Todos os módulos vinculados</li>
+                <li>Progresso dos alunos associado</li>
+                <li>Esta ação NÃO pode ser desfeita</li>
+              </ul>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <Checkbox
+                id="annihilate-confirm"
+                checked={annihilateCheckbox}
+                onCheckedChange={(checked) => setAnnihilateCheckbox(!!checked)}
+              />
+              <Label htmlFor="annihilate-confirm" className="text-sm">
+                Eu entendo que esta ação é <strong>IRREVERSÍVEL</strong> e que todos os dados de videoaulas serão permanentemente perdidos.
+              </Label>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="annihilate-text" className="text-sm">
+                Digite <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-xs">CONFIRMAR EXCLUSÃO TOTAL</code> para prosseguir:
+              </Label>
+              <Input
+                id="annihilate-text"
+                value={annihilateConfirmText}
+                onChange={(e) => setAnnihilateConfirmText(e.target.value)}
+                placeholder="CONFIRMAR EXCLUSÃO TOTAL"
+                className="font-mono"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAnnihilateOpen(false)} disabled={isAnnihilating}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleAnnihilateAll}
+              disabled={isAnnihilating || !annihilateCheckbox || annihilateConfirmText !== "CONFIRMAR EXCLUSÃO TOTAL"}
+            >
+              {isAnnihilating ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Aniquilando...
+                </>
+              ) : (
+                <>
+                  <Bomb className="w-4 h-4 mr-2" />
+                  ANIQUILAR TUDO
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
