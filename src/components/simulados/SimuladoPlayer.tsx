@@ -4,11 +4,17 @@
  * 
  * Componente principal que gerencia todos os estados do simulado.
  * UI NÃO calcula score, tempo ou invalidação — apenas reflete servidor.
+ * 
+ * FASE 4: Proteções de segurança integradas:
+ * - Race condition (useSimuladoLock)
+ * - Bloqueio de navegação (useSimuladoNavBlock)
+ * - Multi-tab (useSimuladoMultiTab)
+ * - Logging (useSimuladoLogger)
  */
 
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { 
   SimuladoState, 
   SimuladoPlayerProps,
@@ -21,6 +27,10 @@ import { useSimuladoAttempt } from "@/hooks/simulados/useSimuladoAttempt";
 import { useSimuladoTimer } from "@/hooks/simulados/useSimuladoTimer";
 import { useSimuladoAnswers } from "@/hooks/simulados/useSimuladoAnswers";
 import { useAntiCheat } from "@/hooks/simulados/useAntiCheat";
+import { useSimuladoLock } from "@/hooks/simulados/useSimuladoLock";
+import { useSimuladoNavBlock } from "@/hooks/simulados/useSimuladoNavBlock";
+import { useSimuladoMultiTab } from "@/hooks/simulados/useSimuladoMultiTab";
+import { useSimuladoLogger } from "@/hooks/simulados/useSimuladoLogger";
 import {
   SimuladoWaitingScreen,
   SimuladoReadyScreen,
@@ -30,6 +40,16 @@ import {
   SimuladoInvalidatedScreen,
   SimuladoHardModeConsent,
 } from "@/components/simulados/screens";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 
 export function SimuladoPlayer({
@@ -97,6 +117,14 @@ export function SimuladoPlayer({
     enabled: currentState === SimuladoState.RUNNING,
   });
 
+  // === FASE 4: PROTEÇÕES DE SEGURANÇA ===
+  
+  // Logger de eventos (declarado primeiro para uso em outros hooks)
+  const logger = useSimuladoLogger({
+    simuladoId,
+    isSimulado: true,
+  });
+
   // Anti-cheat (Hard Mode)
   const antiCheat = useAntiCheat({
     attemptId: attemptState.attemptId,
@@ -107,8 +135,41 @@ export function SimuladoPlayer({
     startedAt: attemptState.startedAt,
     enabled: currentState === SimuladoState.RUNNING,
     onInvalidate: (reason) => {
-      console.log("[SimuladoPlayer] Invalidated:", reason);
+      logger.logInvalidate(attemptState.attemptId || "", reason);
       refresh();
+    },
+  });
+  
+  // Lock para prevenir race conditions (duplo clique)
+  const { withStartLock, withFinishLock, isStartLocked, isFinishLocked } = useSimuladoLock();
+
+  // Bloqueio de navegação durante RUNNING
+  const {
+    showConfirmDialog: showNavConfirmDialog,
+    setShowConfirmDialog: setShowNavConfirmDialog,
+    handleConfirmExit: handleNavConfirmExit,
+    handleCancelExit: handleNavCancelExit,
+  } = useSimuladoNavBlock({
+    isRunning: currentState === SimuladoState.RUNNING,
+    simuladoTitle: simulado?.title,
+    onConfirmExit: async () => {
+      logger.logExit(attemptState.attemptId);
+      if (currentState === SimuladoState.RUNNING) {
+        await finishAttempt();
+      }
+    },
+  });
+
+  // Detecção de múltiplas abas
+  const { isPrimaryTab, isSecondaryTab } = useSimuladoMultiTab({
+    attemptId: attemptState.attemptId,
+    enabled: currentState === SimuladoState.RUNNING,
+    onSecondaryTabDetected: () => {
+      toast({
+        title: "Aba secundária detectada",
+        description: "Esta tentativa está ativa em outra aba. Use a aba principal.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -126,7 +187,7 @@ export function SimuladoPlayer({
     return map;
   }, [answers]);
 
-  // Handler: Iniciar tentativa
+  // Handler: Iniciar tentativa (COM PROTEÇÃO DE LOCK)
   const handleStart = useCallback(async () => {
     if (!simulado) return;
     
@@ -136,43 +197,59 @@ export function SimuladoPlayer({
       return;
     }
 
-    setIsStarting(true);
-    try {
-      const success = await startAttempt(simuladoId);
-      if (success) {
-        setShowHardModeConsent(false);
-        
-        // Se hard mode com câmera, solicitar
-        if (simulado.requires_camera) {
-          await antiCheat.camera.requestCamera();
+    // Proteger contra duplo clique
+    await withStartLock(async () => {
+      setIsStarting(true);
+      try {
+        const success = await startAttempt(simuladoId);
+        if (success) {
+          logger.logStart(simuladoId, false);
+          setShowHardModeConsent(false);
+          
+          // Se hard mode com câmera, solicitar
+          if (simulado.requires_camera) {
+            await antiCheat.camera.requestCamera();
+          }
+          
+          refresh();
         }
-        
-        refresh();
+      } catch (error) {
+        logger.logError("START", error instanceof Error ? error : String(error));
+      } finally {
+        setIsStarting(false);
       }
-    } finally {
-      setIsStarting(false);
-    }
-  }, [simulado, simuladoId, showHardModeConsent, startAttempt, antiCheat.camera, refresh]);
+    });
+  }, [simulado, simuladoId, showHardModeConsent, startAttempt, antiCheat.camera, refresh, withStartLock, logger]);
 
-  // Handler: Finalizar tentativa
+  // Handler: Finalizar tentativa (COM PROTEÇÃO DE LOCK)
   const handleFinish = useCallback(async () => {
-    setIsFinishing(true);
-    try {
-      const result = await finishAttempt();
-      if (result) {
-        const simuladoResult: SimuladoResult = {
-          ...result,
-          percentage: calculatePercentage(result.correctAnswers, questions.length),
-          passed: calculatePercentage(result.correctAnswers, questions.length) >= (simulado?.passing_score || 60),
-        };
-        setLocalResult(simuladoResult);
-        onComplete?.(simuladoResult);
-        refresh();
+    // Proteger contra duplo clique
+    await withFinishLock(async () => {
+      setIsFinishing(true);
+      try {
+        const result = await finishAttempt();
+        if (result) {
+          logger.logFinish(attemptState.attemptId || "", { 
+            score: result.score, 
+            isScoredForRanking: result.isScoredForRanking 
+          });
+          
+          const simuladoResult: SimuladoResult = {
+            ...result,
+            percentage: calculatePercentage(result.correctAnswers, questions.length),
+            passed: calculatePercentage(result.correctAnswers, questions.length) >= (simulado?.passing_score || 60),
+          };
+          setLocalResult(simuladoResult);
+          onComplete?.(simuladoResult);
+          refresh();
+        }
+      } catch (error) {
+        logger.logError("FINISH", error instanceof Error ? error : String(error));
+      } finally {
+        setIsFinishing(false);
       }
-    } finally {
-      setIsFinishing(false);
-    }
-  }, [finishAttempt, questions.length, simulado?.passing_score, onComplete, refresh]);
+    });
+  }, [finishAttempt, questions.length, simulado?.passing_score, onComplete, refresh, withFinishLock, logger, attemptState.attemptId]);
 
   // Handler: Tempo esgotado
   const handleTimeUp = useCallback(() => {
@@ -254,6 +331,52 @@ export function SimuladoPlayer({
     );
   }
 
+  // Tela de bloqueio para aba secundária
+  if (isSecondaryTab && currentState === SimuladoState.RUNNING) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-md p-6">
+          <AlertTriangle className="h-16 w-16 text-amber-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2">Aba Secundária Detectada</h2>
+          <p className="text-muted-foreground mb-4">
+            Esta tentativa de simulado está ativa em outra aba do navegador.
+            Por favor, use a aba principal para continuar.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Apenas uma aba pode estar ativa por tentativa para garantir
+            a integridade do simulado.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Diálogo de confirmação de saída durante RUNNING
+  const NavigationConfirmDialog = (
+    <AlertDialog open={showNavConfirmDialog} onOpenChange={setShowNavConfirmDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Sair do Simulado?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você está no meio do simulado. Se sair agora, sua tentativa 
+            será finalizada automaticamente com as respostas já marcadas.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleNavCancelExit}>
+            Continuar Simulado
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleNavConfirmExit}
+            className="bg-destructive hover:bg-destructive/90"
+          >
+            Sair e Finalizar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   // Renderizar tela baseada no estado
   switch (currentState) {
     case SimuladoState.WAITING:
@@ -278,25 +401,28 @@ export function SimuladoPlayer({
 
     case SimuladoState.RUNNING:
       return (
-        <SimuladoRunningScreen
-          simulado={simulado}
-          attempt={attempt!}
-          questions={questions}
-          answers={answersMap}
-          remainingSeconds={remainingSeconds}
-          isTimeWarning={isWarning}
-          isTimeCritical={isCritical}
-          tabSwitches={antiCheat.tabFocus.tabSwitches}
-          maxTabSwitches={simulado.max_tab_switches}
-          isCameraActive={antiCheat.camera.isActive}
-          cameraError={antiCheat.camera.errorMessage}
-          onRequestCamera={antiCheat.camera.requestCamera}
-          onSelectAnswer={selectAnswer}
-          onFinish={handleFinish}
-          onTimeUp={handleTimeUp}
-          isSaving={isSaving}
-          isFinishing={isFinishing}
-        />
+        <>
+          {NavigationConfirmDialog}
+          <SimuladoRunningScreen
+            simulado={simulado}
+            attempt={attempt!}
+            questions={questions}
+            answers={answersMap}
+            remainingSeconds={remainingSeconds}
+            isTimeWarning={isWarning}
+            isTimeCritical={isCritical}
+            tabSwitches={antiCheat.tabFocus.tabSwitches}
+            maxTabSwitches={simulado.max_tab_switches}
+            isCameraActive={antiCheat.camera.isActive}
+            cameraError={antiCheat.camera.errorMessage}
+            onRequestCamera={antiCheat.camera.requestCamera}
+            onSelectAnswer={selectAnswer}
+            onFinish={handleFinish}
+            onTimeUp={handleTimeUp}
+            isSaving={isSaving}
+            isFinishing={isFinishing}
+          />
+        </>
       );
 
     case SimuladoState.FINISHED_SCORE_ONLY:
