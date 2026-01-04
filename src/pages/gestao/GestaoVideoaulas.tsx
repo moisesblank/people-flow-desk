@@ -36,6 +36,7 @@ import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LegacyQRImportDialog } from "@/components/gestao/videoaulas/LegacyQRImportDialog";
 import { BulkOrganizationImportDialog } from "@/components/gestao/videoaulas/BulkOrganizationImportDialog";
+import { VideoLinkImportDialog } from "@/components/gestao/videoaulas/VideoLinkImportDialog";
 
 type VideoProvider = 'panda' | 'youtube' | 'vimeo' | 'upload';
 
@@ -177,6 +178,7 @@ export default function GestaoVideoaulas() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [isVideoLinkImportOpen, setIsVideoLinkImportOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   
@@ -461,6 +463,10 @@ export default function GestaoVideoaulas() {
             <QrCode className="w-4 h-4 mr-2" />
             Importar QR Simples
           </Button>
+          <Button variant="outline" onClick={() => setIsVideoLinkImportOpen(true)}>
+            <Upload className="w-4 h-4 mr-2" />
+            Importar Links de Vídeo
+          </Button>
           <Button variant="default" onClick={() => setIsBulkImportOpen(true)}>
             <Layers className="w-4 h-4 mr-2" />
             Importar Organizado
@@ -472,7 +478,8 @@ export default function GestaoVideoaulas() {
         </div>
       </div>
 
-      {/* Dialog: Aniquilação Total */}
+      <VideoLinkImportDialog open={isVideoLinkImportOpen} onOpenChange={setIsVideoLinkImportOpen} />
+
       <Dialog open={isAnnihilateOpen} onOpenChange={setIsAnnihilateOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>

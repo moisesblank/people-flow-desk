@@ -129,6 +129,7 @@ export const OmegaFortressPlayer = memo(({
   const {
     session,
     isLoading: sessionLoading,
+    error: sessionError,
     isActive,
     startSession,
     endSession,
@@ -163,6 +164,13 @@ export const OmegaFortressPlayer = memo(({
       }
     },
   });
+
+  // Patch: se a sessão falhar, nunca deixar o player preso em "Iniciando sessão segura..."
+  useEffect(() => {
+    if (sessionError) {
+      setIsLoading(false);
+    }
+  }, [sessionError]);
 
   // Handler de violações
   function handleViolation(violationType: VideoViolationType, action: ViolationAction) {
@@ -207,7 +215,10 @@ export const OmegaFortressPlayer = memo(({
   // ============================================
   useEffect(() => {
     if (user && !session && !sessionLoading) {
-      startSession();
+      // Patch: se falhar, paramos o loading para mostrar erro + retry
+      startSession().then((ok) => {
+        if (!ok) setIsLoading(false);
+      });
     }
   }, [user, session, sessionLoading, startSession]);
 
@@ -479,9 +490,9 @@ export const OmegaFortressPlayer = memo(({
           <div className="player-container absolute inset-0" />
         )}
 
-        {/* Loading */}
+        {/* Loading / Error gate */}
         <AnimatePresence>
-          {(isLoading || sessionLoading) && !showThumbnail && (
+          {(isLoading || sessionLoading) && !showThumbnail && !sessionError && (
             <motion.div
               className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 gap-4"
               initial={{ opacity: 0 }}
@@ -497,6 +508,44 @@ export const OmegaFortressPlayer = memo(({
                 />
               </div>
               <span className="text-white/70 text-sm">Iniciando sessão segura...</span>
+            </motion.div>
+          )}
+
+          {sessionError && !showThumbnail && (
+            <motion.div
+              className="absolute inset-0 flex flex-col items-center justify-center bg-black/85 z-20 gap-3 p-6 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="flex items-center gap-2 text-white">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+                <span className="font-semibold">Não foi possível iniciar a sessão segura</span>
+              </div>
+              <p className="text-sm text-white/70 max-w-md break-words">
+                {sessionError}
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  className="px-3 py-2 rounded-md bg-primary text-primary-foreground text-sm"
+                  onClick={() => {
+                    setIsLoading(true);
+                    startSession().then((ok) => {
+                      if (!ok) setIsLoading(false);
+                    });
+                  }}
+                >
+                  Tentar novamente
+                </button>
+                <button
+                  className="px-3 py-2 rounded-md bg-white/10 text-white text-sm"
+                  onClick={() => {
+                    onError?.(sessionError);
+                  }}
+                >
+                  Detalhes
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
