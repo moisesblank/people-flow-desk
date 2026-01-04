@@ -2,10 +2,11 @@
 // 📚 CURSOS DO ALUNO - Year 2300 Cinematic Experience
 // CONSTITUTIONAL: Student Courses Canonical Mirror v1.0
 // 🚀 PERFORMANCE: CSS-only animations, GPU-accelerated
+// 🔄 REALTIME: Sincronização instantânea com Gestão
 // ============================================
 
-import { memo, useState, useCallback, useMemo, forwardRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { memo, useState, useCallback, useMemo, forwardRef, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   BookOpen, 
@@ -66,7 +67,7 @@ interface Lesson {
 }
 
 // ============================================
-// HOOKS - Reusing canonical data queries
+// HOOKS - Reusing canonical data queries + REALTIME
 // ============================================
 
 function usePublishedCourses() {
@@ -81,7 +82,7 @@ function usePublishedCourses() {
       if (error) throw error;
       return data as Course[];
     },
-    staleTime: 5 * 60 * 1000
+    staleTime: 0 // Realtime atualiza, mas queremos dados frescos
   });
 }
 
@@ -100,7 +101,7 @@ function usePublishedModules(courseId: string | null) {
       return data as Module[];
     },
     enabled: !!courseId,
-    staleTime: 5 * 60 * 1000
+    staleTime: 0
   });
 }
 
@@ -119,9 +120,64 @@ function usePublishedLessons(moduleId: string | null) {
       return data as Lesson[];
     },
     enabled: !!moduleId,
-    staleTime: 5 * 60 * 1000
+    staleTime: 0
   });
 }
+
+// ============================================
+// 🔄 REALTIME HOOK - Sincronização instantânea
+// ============================================
+
+function useLMSRealtime() {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    // Canal único para todas as tabelas LMS
+    const channel = supabase
+      .channel('lms-realtime-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'courses' },
+        () => {
+          console.log('[REALTIME] Courses atualizado');
+          queryClient.invalidateQueries({ queryKey: ['aluno-courses-published'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'modules' },
+        () => {
+          console.log('[REALTIME] Modules atualizado');
+          queryClient.invalidateQueries({ queryKey: ['aluno-modules-published'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'lessons' },
+        () => {
+          console.log('[REALTIME] Lessons atualizado');
+          queryClient.invalidateQueries({ queryKey: ['aluno-lessons-published'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'areas' },
+        () => {
+          console.log('[REALTIME] Areas atualizado');
+          // Areas podem afetar módulos em alguns cursos
+          queryClient.invalidateQueries({ queryKey: ['aluno-modules-published'] });
+        }
+      )
+      .subscribe((status) => {
+        console.log('[REALTIME] LMS sync status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+}
+
 
 // ============================================
 // 🎬 CINEMATIC COURSE CARD - Year 2300
@@ -449,6 +505,9 @@ const LoadingSkeleton = memo(function LoadingSkeleton() {
 const AlunoCursos = memo(function AlunoCursos() {
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
+  
+  // 🔄 REALTIME: Sincronização instantânea com Gestão
+  useLMSRealtime();
   
   const { data: courses, isLoading: loadingCourses } = usePublishedCourses();
   const { data: modules, isLoading: loadingModules } = usePublishedModules(selectedCourse?.id || null);
