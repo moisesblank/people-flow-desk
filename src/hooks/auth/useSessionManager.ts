@@ -26,16 +26,24 @@ export function useSessionManager() {
       const fingerprint = await collectFingerprint();
       const sessionToken = crypto.randomUUID();
       
-      // Revogar sessões anteriores deste usuário
-      await supabase
-        .from('active_sessions')
-        .update({ 
-          status: 'revoked', 
-          revoked_at: new Date().toISOString(),
-          revoked_reason: 'new_session_started'
-        })
-        .eq('user_id', userId)
-        .eq('status', 'active');
+      // 👑 OWNER bypass: verificar se é o OWNER antes de revogar sessões
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const isOwner = currentUser?.email?.toLowerCase() === 'moisesblank@gmail.com';
+      
+      // Revogar sessões anteriores deste usuário (EXCETO OWNER)
+      if (!isOwner) {
+        await supabase
+          .from('active_sessions')
+          .update({ 
+            status: 'revoked', 
+            revoked_at: new Date().toISOString(),
+            revoked_reason: 'new_session_started'
+          })
+          .eq('user_id', userId)
+          .eq('status', 'active');
+      } else {
+        console.log('[SessionManager] 👑 OWNER bypass - NÃO revogando sessões anteriores');
+      }
 
       // Buscar epoch atual do sistema
       const { data: guardData } = await supabase
