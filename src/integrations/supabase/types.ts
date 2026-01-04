@@ -18377,18 +18377,31 @@ export type Database = {
         Returns: string
       }
       register_user_logout: { Args: never; Returns: undefined }
-      register_video_violation: {
-        Args: {
-          p_details?: Json
-          p_ip_address?: unknown
-          p_key_pressed?: string
-          p_session_token: string
-          p_severity?: number
-          p_user_agent?: string
-          p_violation_type: Database["public"]["Enums"]["video_violation_type"]
-        }
-        Returns: Json
-      }
+      register_video_violation:
+        | {
+            Args: {
+              p_details?: Json
+              p_ip_address?: string
+              p_key_pressed?: string
+              p_session_token: string
+              p_severity?: number
+              p_user_agent?: string
+              p_violation_type: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_details?: Json
+              p_ip_address?: unknown
+              p_key_pressed?: string
+              p_session_token: string
+              p_severity?: number
+              p_user_agent?: string
+              p_violation_type: Database["public"]["Enums"]["video_violation_type"]
+            }
+            Returns: Json
+          }
       register_video_violation_omega:
         | {
             Args: {
