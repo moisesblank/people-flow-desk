@@ -10508,6 +10508,215 @@ export type Database = {
         }
         Relationships: []
       }
+      simulado_answers: {
+        Row: {
+          answered_at: string | null
+          attempt_id: string
+          created_at: string
+          id: string
+          is_correct: boolean | null
+          question_id: string
+          question_order: number | null
+          selected_option: string | null
+          time_spent_seconds: number | null
+        }
+        Insert: {
+          answered_at?: string | null
+          attempt_id: string
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          question_id: string
+          question_order?: number | null
+          selected_option?: string | null
+          time_spent_seconds?: number | null
+        }
+        Update: {
+          answered_at?: string | null
+          attempt_id?: string
+          created_at?: string
+          id?: string
+          is_correct?: boolean | null
+          question_id?: string
+          question_order?: number | null
+          selected_option?: string | null
+          time_spent_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulado_answers_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "simulado_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "simulado_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulado_attempts: {
+        Row: {
+          attempt_number: number
+          camera_active: boolean | null
+          correct_answers: number | null
+          created_at: string
+          device_fingerprint: string | null
+          finished_at: string | null
+          id: string
+          invalidation_reason: string | null
+          ip_address: unknown
+          is_scored_for_ranking: boolean
+          score: number | null
+          simulado_id: string
+          started_at: string
+          status: string
+          tab_switches: number | null
+          time_spent_seconds: number | null
+          unanswered: number | null
+          updated_at: string
+          user_agent: string | null
+          user_id: string
+          wrong_answers: number | null
+        }
+        Insert: {
+          attempt_number?: number
+          camera_active?: boolean | null
+          correct_answers?: number | null
+          created_at?: string
+          device_fingerprint?: string | null
+          finished_at?: string | null
+          id?: string
+          invalidation_reason?: string | null
+          ip_address?: unknown
+          is_scored_for_ranking?: boolean
+          score?: number | null
+          simulado_id: string
+          started_at?: string
+          status?: string
+          tab_switches?: number | null
+          time_spent_seconds?: number | null
+          unanswered?: number | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id: string
+          wrong_answers?: number | null
+        }
+        Update: {
+          attempt_number?: number
+          camera_active?: boolean | null
+          correct_answers?: number | null
+          created_at?: string
+          device_fingerprint?: string | null
+          finished_at?: string | null
+          id?: string
+          invalidation_reason?: string | null
+          ip_address?: unknown
+          is_scored_for_ranking?: boolean
+          score?: number | null
+          simulado_id?: string
+          started_at?: string
+          status?: string
+          tab_switches?: number | null
+          time_spent_seconds?: number | null
+          unanswered?: number | null
+          updated_at?: string
+          user_agent?: string | null
+          user_id?: string
+          wrong_answers?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulado_attempts_simulado_id_fkey"
+            columns: ["simulado_id"]
+            isOneToOne: false
+            referencedRelation: "simulados"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulados: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_minutes: number
+          ends_at: string | null
+          id: string
+          is_active: boolean
+          is_hard_mode: boolean
+          is_published: boolean
+          max_tab_switches: number | null
+          passing_score: number | null
+          points_per_question: number
+          question_ids: string[] | null
+          requires_camera: boolean | null
+          results_released_at: string | null
+          show_correct_answer_after: boolean | null
+          shuffle_options: boolean | null
+          shuffle_questions: boolean | null
+          slug: string | null
+          starts_at: string | null
+          title: string
+          total_questions: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_minutes?: number
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_hard_mode?: boolean
+          is_published?: boolean
+          max_tab_switches?: number | null
+          passing_score?: number | null
+          points_per_question?: number
+          question_ids?: string[] | null
+          requires_camera?: boolean | null
+          results_released_at?: string | null
+          show_correct_answer_after?: boolean | null
+          shuffle_options?: boolean | null
+          shuffle_questions?: boolean | null
+          slug?: string | null
+          starts_at?: string | null
+          title: string
+          total_questions?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_minutes?: number
+          ends_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_hard_mode?: boolean
+          is_published?: boolean
+          max_tab_switches?: number | null
+          passing_score?: number | null
+          points_per_question?: number
+          question_ids?: string[] | null
+          requires_camera?: boolean | null
+          results_released_at?: string | null
+          show_correct_answer_after?: boolean | null
+          shuffle_options?: boolean | null
+          shuffle_questions?: boolean | null
+          slug?: string | null
+          starts_at?: string | null
+          title?: string
+          total_questions?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       smart_checklists: {
         Row: {
           ai_suggested: boolean | null
@@ -17513,6 +17722,7 @@ export type Database = {
         Args: { _additional_days: number; _user_id: string }
         Returns: Json
       }
+      finish_simulado_attempt: { Args: { p_attempt_id: string }; Returns: Json }
       fn_apply_asset_violation: {
         Args: {
           p_device_hash?: string
@@ -17859,6 +18069,10 @@ export type Database = {
           valor: number
         }[]
       }
+      get_question_error_rate: {
+        Args: { p_simulado_id: string }
+        Returns: Json
+      }
       get_quiz_questions_for_student: {
         Args: { p_quiz_id: string }
         Returns: {
@@ -17881,6 +18095,10 @@ export type Database = {
         }[]
       }
       get_security_dashboard_v3: { Args: never; Returns: Json }
+      get_simulado_ranking: {
+        Args: { p_limit?: number; p_simulado_id: string }
+        Returns: Json
+      }
       get_student_performance_stats: {
         Args: { p_days_back?: number; p_user_id: string }
         Returns: {
@@ -18025,6 +18243,7 @@ export type Database = {
             Args: { p_campo: string; p_data: string; p_valor: number }
             Returns: undefined
           }
+      increment_tab_switch: { Args: { p_attempt_id: string }; Returns: Json }
       insert_system_log: {
         Args: {
           p_affected_url: string
@@ -18043,6 +18262,10 @@ export type Database = {
       invalidate_session: {
         Args: { p_session_token?: string }
         Returns: boolean
+      }
+      invalidate_simulado_attempt: {
+        Args: { p_attempt_id: string; p_reason: string }
+        Returns: Json
       }
       is_admin: { Args: { p_user_id?: string }; Returns: boolean }
       is_admin_or_owner: { Args: { _user_id?: string }; Returns: boolean }
@@ -18638,6 +18861,15 @@ export type Database = {
       }
       sna_realtime_stats: { Args: never; Returns: Json }
       sna_system_health: { Args: never; Returns: Json }
+      start_simulado_attempt: {
+        Args: {
+          p_device_fingerprint?: string
+          p_ip_address?: string
+          p_simulado_id: string
+          p_user_agent?: string
+        }
+        Returns: Json
+      }
       toggle_auth_lockdown: {
         Args: { p_enabled: boolean; p_reason?: string }
         Returns: boolean
