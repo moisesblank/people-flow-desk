@@ -19,8 +19,8 @@ const PrimeiroAcesso = lazy(() => import("@/pages/PrimeiroAcesso"));
 const DeviceLimitGate = lazy(() => import("@/pages/security/DeviceLimitGate"));
 // 🛡️ BEYOND_THE_3_DEVICES: Same Type Replacement Gate
 const SameTypeReplacementGate = lazy(() => import("@/pages/security/SameTypeReplacementGate"));
-// 📱 QR Code Resolver - Lazy para consistência
-const QRCodeResolverPage = lazy(() => import("@/pages/QRCodeResolver"));
+// 📱 QR Code Resolver - Import direto para garantir funcionamento
+import QRCodeResolverPage from "@/pages/QRCodeResolver";
 
 export const publicRoutes = (
   <>
