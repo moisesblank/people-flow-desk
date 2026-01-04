@@ -238,8 +238,9 @@ export default function GestaoVideoaulas() {
   // ANIQUILAÇÃO TOTAL: Excluir TODAS as videoaulas + módulos
   // ============================================
   const handleAnnihilateAll = async () => {
-    if (!annihilateCheckbox || annihilateConfirmText !== "CONFIRMAR EXCLUSÃO TOTAL") {
-      toast.error("Complete todas as confirmações para prosseguir.");
+    // 🛡️ PATCH: Apenas texto como confirmação (checkbox removido para simplificar UX)
+    if (annihilateConfirmText.trim() !== "CONFIRMAR EXCLUSÃO TOTAL") {
+      toast.error("Digite exatamente: CONFIRMAR EXCLUSÃO TOTAL");
       return;
     }
 
@@ -414,15 +415,10 @@ export default function GestaoVideoaulas() {
               </ul>
             </div>
 
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="annihilate-confirm"
-                checked={annihilateCheckbox}
-                onCheckedChange={(checked) => setAnnihilateCheckbox(!!checked)}
-              />
-              <Label htmlFor="annihilate-confirm" className="text-sm">
-                Eu entendo que esta ação é <strong>IRREVERSÍVEL</strong> e que todos os dados de videoaulas serão permanentemente perdidos.
-              </Label>
+            <div className="p-3 bg-background border border-border rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                Eu entendo que esta ação é <strong className="text-destructive">IRREVERSÍVEL</strong> e que todos os dados de videoaulas serão permanentemente perdidos.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -446,7 +442,7 @@ export default function GestaoVideoaulas() {
             <Button
               variant="destructive"
               onClick={handleAnnihilateAll}
-              disabled={isAnnihilating || !annihilateCheckbox || annihilateConfirmText !== "CONFIRMAR EXCLUSÃO TOTAL"}
+              disabled={isAnnihilating || annihilateConfirmText.trim() !== "CONFIRMAR EXCLUSÃO TOTAL"}
             >
               {isAnnihilating ? (
                 <>
