@@ -78,17 +78,38 @@ function useVideoaulas() {
   return useQuery({
     queryKey: ['gestao-videoaulas'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('lessons')
-        .select(`
-          *,
-          module:modules(id, title),
-          area:areas(id, name)
-        `)
-        .order('position', { ascending: true });
+      // Fetch all lessons with pagination to bypass 1000 row limit
+      const allLessons: Lesson[] = [];
+      const pageSize = 1000;
+      let page = 0;
+      let hasMore = true;
       
-      if (error) throw error;
-      return (data || []) as unknown as Lesson[];
+      while (hasMore) {
+        const from = page * pageSize;
+        const to = from + pageSize - 1;
+        
+        const { data, error } = await supabase
+          .from('lessons')
+          .select(`
+            *,
+            module:modules(id, title),
+            area:areas(id, name)
+          `)
+          .order('position', { ascending: true })
+          .range(from, to);
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          allLessons.push(...(data as unknown as Lesson[]));
+          hasMore = data.length === pageSize;
+          page++;
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      return allLessons;
     }
   });
 }
