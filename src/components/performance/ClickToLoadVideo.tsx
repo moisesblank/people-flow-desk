@@ -93,7 +93,9 @@ function generateEmbedUrl(props: Pick<ClickToLoadVideoProps, 'embedUrl' | 'youtu
   }
   
   if (props.pandaVideoId) {
-    return `https://player-vz-7b95cf00-d13.tv.pandavideo.com.br/embed/?v=${props.pandaVideoId}`;
+    // 🐼 Panda Video: Usar Library ID fixo da conta
+    const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
+    return `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${props.pandaVideoId}`;
   }
   
   return null;
