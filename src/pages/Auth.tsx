@@ -1115,6 +1115,10 @@ export default function Auth() {
             if (activeSession.is_same_device) {
               console.log('[AUTH] ✅ Sessão ativa é do MESMO dispositivo - prosseguindo com login (substituirá sessão antiga)');
               // Não bloquear, deixar o login continuar normalmente
+            } else if (formData.email.toLowerCase().trim() === 'moisesblank@gmail.com') {
+              // 👑 OWNER: bypass de sessão única - múltiplas sessões simultâneas permitidas
+              console.log('[AUTH] 👑 OWNER bypass - múltiplas sessões simultâneas permitidas');
+              // Não bloquear, deixar o login continuar normalmente
             } else {
               // Sessão ativa em OUTRO dispositivo - bloquear
               console.warn('[AUTH] 🔴 BLOQUEIO: Sessão ativa detectada em OUTRO dispositivo:', activeSession);
