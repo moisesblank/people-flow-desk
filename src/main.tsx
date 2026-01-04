@@ -64,38 +64,48 @@ const rootElement = document.getElementById("root");
 if (rootElement) {
   createRoot(rootElement).render(<App />);
 
-  // ╔══════════════════════════════════════════════════════════════════════════════╗
-  // ║   🛡️ P0 ANTI-TELA-PRETA v2.0 — RUNTIME RECOVERY                            ║
-  // ║   Uses the same recovery system as index.html for consistency               ║
-  // ╚══════════════════════════════════════════════════════════════════════════════╝
+  // ✅ RECOVERY MANUAL ABSOLUTO (NÃO-BLOQUEANTE)
+  // Se o app não montar, adiciona APENAS um botão fixo para reload manual.
   window.setTimeout(() => {
     try {
       const hasContent = rootElement.children.length > 0;
-      const already = document.getElementById('p0-recovery');
-      if (!hasContent && !already) {
-        console.warn('[P0] Root vazio após timeout (runtime) — usando sistema de recuperação');
-        // Import and use the recovery system
-        import('@/lib/recovery/p0RecoverySystem').then(({ injectSafeShellUI }) => {
-          injectSafeShellUI('A página demorou para iniciar.');
-        }).catch(() => {
-          // Fallback: Use window.P0Recovery if import fails
-          if ((window as any).P0Recovery) {
-            // Recovery is already available from index.html
-            console.log('[P0] Using index.html P0Recovery');
-          } else {
-            // Last resort: simple reload button
-            const overlay = document.createElement('div');
-            overlay.id = 'p0-recovery';
-            overlay.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#0d0d0d;color:#f5f5f5;display:flex;align-items:center;justify-content:center;padding:24px';
-            overlay.innerHTML = '<div style="text-align:center"><h2 style="font-size:18px;margin-bottom:16px">Sistema em recuperação</h2><button onclick="window.location.reload()" style="padding:12px 24px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600">Recarregar</button></div>';
-            document.body.appendChild(overlay);
-          }
-        });
+      const existing = document.getElementById('manual-refresh');
+      if (!hasContent && !existing) {
+        console.warn('[RECOVERY] Root vazio após timeout — sem auto-recovery. Exibindo botão manual.');
+
+        const host = document.createElement('div');
+        host.id = 'manual-refresh';
+        host.style.cssText = [
+          'position:fixed',
+          'right:16px',
+          'bottom:16px',
+          'z-index:2147483000',
+          'pointer-events:auto',
+        ].join(';');
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = 'Refresh Page';
+        btn.onclick = () => window.location.reload();
+        btn.style.cssText = [
+          'padding:10px 14px',
+          'border-radius:10px',
+          'border:1px solid rgba(255,255,255,0.18)',
+          'background:rgba(16,16,20,0.72)',
+          'color:#f5f5f5',
+          'font-weight:700',
+          'cursor:pointer',
+          'backdrop-filter: blur(10px)',
+          '-webkit-backdrop-filter: blur(10px)',
+        ].join(';');
+
+        host.appendChild(btn);
+        document.body.appendChild(host);
       }
     } catch {
       // nunca bloquear bootstrap
     }
-  }, 12000); // Aumentado para 12s para evitar falsos positivos
+  }, 12000);
 }
 
 // ============================================
