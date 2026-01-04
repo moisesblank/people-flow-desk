@@ -33,6 +33,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { LegacyQRImportDialog } from "@/components/gestao/videoaulas/LegacyQRImportDialog";
+import { BulkOrganizationImportDialog } from "@/components/gestao/videoaulas/BulkOrganizationImportDialog";
 
 type VideoProvider = 'panda' | 'youtube' | 'vimeo' | 'upload';
 
@@ -131,6 +132,7 @@ export default function GestaoVideoaulas() {
   const [filterPublished, setFilterPublished] = useState<string>("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
@@ -305,7 +307,11 @@ export default function GestaoVideoaulas() {
           </Badge>
           <Button variant="outline" onClick={() => setIsImportOpen(true)}>
             <QrCode className="w-4 h-4 mr-2" />
-            Importar QR Legado
+            Importar QR Simples
+          </Button>
+          <Button variant="default" onClick={() => setIsBulkImportOpen(true)}>
+            <Layers className="w-4 h-4 mr-2" />
+            Importar Organizado
           </Button>
           <Button onClick={() => setIsCreateOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
@@ -683,11 +689,17 @@ export default function GestaoVideoaulas() {
         isLoading={createMutation.isPending || updateMutation.isPending}
       />
 
-      {/* Import Legacy QR Modal */}
+      {/* Import Legacy QR Modal (simple, no organization) */}
       <LegacyQRImportDialog
         open={isImportOpen}
         onClose={() => setIsImportOpen(false)}
         modules={modules || []}
+      />
+
+      {/* Bulk Organization Import Modal (full hierarchy) */}
+      <BulkOrganizationImportDialog
+        open={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
       />
     </div>
   );
