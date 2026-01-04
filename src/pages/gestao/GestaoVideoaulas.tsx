@@ -12,7 +12,8 @@ import {
   Eye, EyeOff, Clock, BookOpen, Upload, Youtube, Tv,
   ChevronDown, MoreVertical, ExternalLink, Copy, Check,
   TrendingUp, Users, Zap, RefreshCw, Settings2, Layers,
-  GripVertical, ArrowUpDown, BarChart3, QrCode, Bomb, AlertTriangle
+  GripVertical, ArrowUpDown, BarChart3, QrCode, Bomb, AlertTriangle,
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -177,6 +178,10 @@ export default function GestaoVideoaulas() {
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  
+  // Paginação (100 por página)
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 100;
   
   // Aniquilação Total state
   const [isAnnihilateOpen, setIsAnnihilateOpen] = useState(false);
@@ -356,6 +361,17 @@ export default function GestaoVideoaulas() {
                              (filterPublished === 'draft' && !lesson.is_published);
     return matchesSearch && matchesProvider && matchesPublished;
   }) || [];
+
+  // Paginação client-side (100 por página)
+  const totalPages = Math.ceil(filteredLessons.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedLessons = filteredLessons.slice(startIndex, endIndex);
+  
+  // Reset página ao mudar filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterProvider, filterPublished]);
 
   // Stats - usando RPC para contagem correta (sem limite de 1000)
   const stats = {
@@ -627,6 +643,55 @@ export default function GestaoVideoaulas() {
         </Button>
       </div>
 
+      {/* Pagination Info + Controls (Top) */}
+      {!isLoading && filteredLessons.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-card rounded-lg border">
+          <div className="text-sm text-muted-foreground">
+            Exibindo <span className="font-semibold text-foreground">{startIndex + 1}</span> - <span className="font-semibold text-foreground">{Math.min(endIndex, filteredLessons.length)}</span> de <span className="font-semibold text-foreground">{filteredLessons.length}</span> aulas
+            {filteredLessons.length !== stats.total && (
+              <span className="ml-2">(filtradas de {stats.total} total)</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronsLeft className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="px-3 py-1 text-sm font-medium bg-primary/10 rounded">
+              Página {currentPage} de {totalPages || 1}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage >= totalPages}
+            >
+              <ChevronsRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       {isLoading ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -636,8 +701,8 @@ export default function GestaoVideoaulas() {
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <AnimatePresence>
-            {filteredLessons.map((lesson, index) => (
+          <AnimatePresence mode="wait">
+            {paginatedLessons.map((lesson, index) => (
               <motion.div
                 key={lesson.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -796,9 +861,9 @@ export default function GestaoVideoaulas() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLessons.map((lesson, index) => (
+                {paginatedLessons.map((lesson, index) => (
                   <TableRow key={lesson.id}>
-                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{startIndex + index + 1}</TableCell>
                     <TableCell className="font-medium max-w-[200px] truncate">
                       {lesson.title}
                     </TableCell>
@@ -835,6 +900,52 @@ export default function GestaoVideoaulas() {
             </Table>
           </ScrollArea>
         </Card>
+      )}
+
+      {/* Pagination Controls (Bottom) */}
+      {!isLoading && filteredLessons.length > ITEMS_PER_PAGE && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-card rounded-lg border">
+          <div className="text-sm text-muted-foreground">
+            Exibindo <span className="font-semibold text-foreground">{startIndex + 1}</span> - <span className="font-semibold text-foreground">{Math.min(endIndex, filteredLessons.length)}</span> de <span className="font-semibold text-foreground">{filteredLessons.length}</span> aulas
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronsLeft className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="px-3 py-1 text-sm font-medium bg-primary/10 rounded">
+              Página {currentPage} de {totalPages || 1}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage >= totalPages}
+            >
+              <ChevronsRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
       )}
 
       {/* Empty State */}
