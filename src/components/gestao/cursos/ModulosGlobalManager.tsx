@@ -39,6 +39,7 @@ interface Module {
   course_id: string;
   title: string;
   description: string | null;
+  subcategory: string | null; // Agrupador intermediário (Resoluções, Teoria, Revisão)
   position: number;
   is_published: boolean;
   status: string | null;
@@ -218,6 +219,7 @@ export function ModulosGlobalManager() {
   const [moduleForm, setModuleForm] = useState({
     title: '',
     description: '',
+    subcategory: '',
     position: 0,
     is_published: true,
     thumbnail_url: '',
@@ -253,6 +255,7 @@ export function ModulosGlobalManager() {
         .insert({
           title: data.title,
           description: data.description,
+          subcategory: data.subcategory || null,
           position: data.position,
           is_published: data.is_published,
           thumbnail_url: data.thumbnail_url || null,
@@ -321,6 +324,7 @@ export function ModulosGlobalManager() {
     setModuleForm({
       title: '',
       description: '',
+      subcategory: '',
       position: 0,
       is_published: true,
       thumbnail_url: '',
@@ -332,6 +336,7 @@ export function ModulosGlobalManager() {
     setModuleForm({
       title: module.title,
       description: module.description || '',
+      subcategory: module.subcategory || '',
       position: module.position,
       is_published: module.is_published,
       thumbnail_url: module.thumbnail_url || '',
@@ -418,17 +423,38 @@ export function ModulosGlobalManager() {
     };
   }, [modules]);
 
-  // Group by course for grid view
-  const modulesByCourse = useMemo(() => {
-    const map = new Map<string, { course: Course | null; modules: Module[] }>();
+  // Group by course AND subcategory for grid view
+  const modulesByCourseAndSubcategory = useMemo(() => {
+    const courseMap = new Map<string, { 
+      course: Course | null; 
+      subcategories: Map<string, Module[]>;
+    }>();
+    
     filteredModules.forEach(m => {
-      const key = m.course_id;
-      if (!map.has(key)) {
-        map.set(key, { course: m.course || null, modules: [] });
+      const courseKey = m.course_id;
+      const subcatKey = m.subcategory || '__sem_subcategoria__';
+      
+      if (!courseMap.has(courseKey)) {
+        courseMap.set(courseKey, { 
+          course: m.course || null, 
+          subcategories: new Map() 
+        });
       }
-      map.get(key)!.modules.push(m);
+      
+      const courseData = courseMap.get(courseKey)!;
+      if (!courseData.subcategories.has(subcatKey)) {
+        courseData.subcategories.set(subcatKey, []);
+      }
+      courseData.subcategories.get(subcatKey)!.push(m);
     });
-    return Array.from(map.values());
+    
+    return Array.from(courseMap.values()).map(({ course, subcategories }) => ({
+      course,
+      subcategoryGroups: Array.from(subcategories.entries()).map(([key, modules]) => ({
+        subcategory: key === '__sem_subcategoria__' ? null : key,
+        modules
+      }))
+    }));
   }, [filteredModules]);
 
   return (
@@ -557,49 +583,75 @@ export function ModulosGlobalManager() {
         </Card>
       ) : (
         <div className="space-y-6">
-          {modulesByCourse.map(({ course, modules: courseModules }) => (
-            <Card key={course?.id || 'no-course'} className="bg-card/80 backdrop-blur-sm border-border/50 overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-purple-500/5 to-pink-500/5 border-b border-border/50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <BookOpen className="h-5 w-5 text-purple-400" />
-                    <div>
-                      <CardTitle className="text-lg">{course?.title || 'Sem Curso'}</CardTitle>
-                      <CardDescription>
-                        {courseModules.length} módulo{courseModules.length !== 1 ? 's' : ''} • 
-                        {courseModules.reduce((s, m) => s + (m._count?.lessons || 0), 0)} aulas
-                      </CardDescription>
+          {modulesByCourseAndSubcategory.map(({ course, subcategoryGroups }) => {
+            // Calcular totais para o curso
+            const totalModules = subcategoryGroups.reduce((acc, g) => acc + g.modules.length, 0);
+            const totalLessons = subcategoryGroups.reduce((acc, g) => 
+              acc + g.modules.reduce((a, m) => a + (m._count?.lessons || 0), 0), 0);
+            
+            return (
+              <Card key={course?.id || 'no-course'} className="bg-card/80 backdrop-blur-sm border-border/50 overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-purple-500/5 to-pink-500/5 border-b border-border/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <BookOpen className="h-5 w-5 text-purple-400" />
+                      <div>
+                        <CardTitle className="text-lg">{course?.title || 'Sem Curso'}</CardTitle>
+                        <CardDescription>
+                          {totalModules} módulo{totalModules !== 1 ? 's' : ''} • 
+                          {subcategoryGroups.length} subcategoria{subcategoryGroups.length !== 1 ? 's' : ''} • 
+                          {totalLessons} aulas
+                        </CardDescription>
+                      </div>
                     </div>
+                    {course?.is_published ? (
+                      <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Publicado</Badge>
+                    ) : (
+                      <Badge variant="secondary">Rascunho</Badge>
+                    )}
                   </div>
-                  {course?.is_published ? (
-                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30">Publicado</Badge>
-                  ) : (
-                    <Badge variant="secondary">Rascunho</Badge>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <ScrollArea className="max-h-[400px]">
-                  <div className="p-4 space-y-2">
-                    {courseModules.map((module, idx) => (
-                      <ModuleCard
-                        key={module.id}
-                        module={module}
-                        index={idx}
-                        isExpanded={expandedModules.has(module.id)}
-                        onToggle={() => toggleExpand(module.id)}
-                        onEdit={() => openEdit(module)}
-                        onDelete={() => setDeleteDialog(module)}
-                        onTogglePublish={() => updateModule.mutate({ id: module.id, is_published: !module.is_published })}
-                        onSelect={() => setSelectedModule(module)}
-                        isSelected={selectedModule?.id === module.id}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          ))}
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ScrollArea className="max-h-[600px]">
+                    <div className="p-4 space-y-4">
+                      {subcategoryGroups.map(({ subcategory, modules: groupModules }, groupIdx) => (
+                        <div key={subcategory || 'default'} className="space-y-2">
+                          {/* Subcategory Header */}
+                          <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-amber-500/5 border border-amber-500/20">
+                            <FolderOpen className="h-4 w-4 text-amber-400" />
+                            <span className="font-medium text-sm text-amber-400">
+                              {subcategory || 'Sem Subcategoria'}
+                            </span>
+                            <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400 ml-auto">
+                              {groupModules.length} módulo{groupModules.length !== 1 ? 's' : ''}
+                            </Badge>
+                          </div>
+                          
+                          {/* Modules in this subcategory */}
+                          <div className="pl-4 space-y-2 border-l-2 border-amber-500/20">
+                            {groupModules.map((module, idx) => (
+                              <ModuleCard
+                                key={module.id}
+                                module={module}
+                                index={idx}
+                                isExpanded={expandedModules.has(module.id)}
+                                onToggle={() => toggleExpand(module.id)}
+                                onEdit={() => openEdit(module)}
+                                onDelete={() => setDeleteDialog(module)}
+                                onTogglePublish={() => updateModule.mutate({ id: module.id, is_published: !module.is_published })}
+                                onSelect={() => setSelectedModule(module)}
+                                isSelected={selectedModule?.id === module.id}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
@@ -868,6 +920,7 @@ function ModuleCard({
 interface ModuleFormState {
   title: string;
   description: string;
+  subcategory: string;
   position: number;
   is_published: boolean;
   thumbnail_url: string;
@@ -903,6 +956,20 @@ function ModuleFormContent({ form, setForm, courses }: {
           placeholder="Ex: Módulo 1 - Introdução"
           className="bg-background/50"
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          Subcategoria
+          <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400">Agrupador</Badge>
+        </Label>
+        <Input
+          value={form.subcategory}
+          onChange={(e) => setForm(p => ({ ...p, subcategory: e.target.value }))}
+          placeholder="Ex: Resoluções, Teoria, Revisão"
+          className="bg-background/50"
+        />
+        <p className="text-xs text-muted-foreground">Agrupa módulos dentro do curso (opcional)</p>
       </div>
 
       <div className="space-y-2">
