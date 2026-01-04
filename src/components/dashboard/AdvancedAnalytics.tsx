@@ -3,8 +3,7 @@
 // Analytics Avançado com Métricas em Tempo Real
 // ============================================
 
-import { useState, useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
+import { useState, useMemo } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -82,11 +81,7 @@ function MetricCard({ metric }: { metric: AnalyticsMetric }) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="p-4 rounded-xl bg-card/50 border border-border/50 hover:border-primary/30 transition-all"
-    >
+    <div className="p-4 rounded-xl bg-card/50 border border-border/50 hover:border-primary/30 transition-all animate-in fade-in-0 zoom-in-95 duration-300">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
           {metric.label}
@@ -110,7 +105,7 @@ function MetricCard({ metric }: { metric: AnalyticsMetric }) {
       <p className="text-xs text-muted-foreground mt-1">
         vs. período anterior: {formatValue(metric.previousValue)}
       </p>
-    </motion.div>
+    </div>
   );
 }
 
