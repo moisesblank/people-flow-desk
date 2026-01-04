@@ -565,7 +565,7 @@ export default function GestaoCursos() {
             <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/50 via-purple-500/50 to-blue-500/50 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
             
             <Card className="relative h-[600px] flex flex-col bg-card/80 backdrop-blur-sm border-border/50 rounded-2xl overflow-hidden">
-              <CardHeader className="border-b border-border/50 bg-gradient-to-r from-blue-500/5 to-purple-500/5">
+              <CardHeader className="border-b border-border/50 bg-gradient-to-r from-blue-500/5 to-purple-500/5 shrink-0">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Sparkles className="h-5 w-5 text-blue-400" />
@@ -585,8 +585,8 @@ export default function GestaoCursos() {
                   />
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 p-0">
-                <ScrollArea className="h-full">
+              <CardContent className="flex-1 p-0 min-h-0 overflow-hidden">
+                <ScrollArea className="h-full w-full">
                   {loadingCourses ? (
                     <div className="p-4 space-y-3">
                       {[...Array(5)].map((_, i) => (
