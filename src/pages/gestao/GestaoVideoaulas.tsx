@@ -32,6 +32,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { LegacyQRImportDialog } from "@/components/gestao/videoaulas/LegacyQRImportDialog";
 
 type VideoProvider = 'panda' | 'youtube' | 'vimeo' | 'upload';
 
@@ -129,6 +130,7 @@ export default function GestaoVideoaulas() {
   const [filterProvider, setFilterProvider] = useState<string>("all");
   const [filterPublished, setFilterPublished] = useState<string>("all");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
 
@@ -301,6 +303,10 @@ export default function GestaoVideoaulas() {
             <Zap className="w-3 h-3 mr-1" />
             Realtime Ativo
           </Badge>
+          <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+            <QrCode className="w-4 h-4 mr-2" />
+            Importar QR Legado
+          </Button>
           <Button onClick={() => setIsCreateOpen(true)}>
             <Plus className="w-4 h-4 mr-2" />
             Nova Videoaula
@@ -675,6 +681,13 @@ export default function GestaoVideoaulas() {
           }
         }}
         isLoading={createMutation.isPending || updateMutation.isPending}
+      />
+
+      {/* Import Legacy QR Modal */}
+      <LegacyQRImportDialog
+        open={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        modules={modules || []}
       />
     </div>
   );
