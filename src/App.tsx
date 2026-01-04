@@ -19,6 +19,7 @@ import { DeviceMFAGuard } from "@/components/security/DeviceMFAGuard";
 import { GestaoNoIndex } from "@/components/seo/GestaoNoIndex";
 import { LegacyRedirectHandler } from "@/components/routing/LegacyRedirectHandler";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ManualRefreshButton } from "@/components/admin/ManualRefreshButton";
 // LegacyDomainBlocker REMOVIDO - domínio gestao.* descontinuado
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
@@ -122,13 +123,14 @@ const AppContent = memo(() => {
             <VisualEditMode />
             <KeyboardShortcutsOverlay isOpen={isOpen} onClose={handleClose} />
 
-            {/* 🔴 BOTÕES FLUTUANTES GLOBAIS: LOGS + TRAMON */}
-            <ErrorBoundary>
-              <Suspense fallback={null}>
-                <LazyGlobalLogsButton />
-                <LazyAITramon />
-              </Suspense>
-            </ErrorBoundary>
+            {/* 🔴 BOTÕES FLUTUANTES GLOBAIS */}
+            <Suspense fallback={null}>
+              <LazyGlobalLogsButton />
+              <LazyAITramon />
+            </Suspense>
+
+            {/* ✅ RECOVERY MANUAL: botão sempre visível (NUNCA auto-reload) */}
+            <ManualRefreshButton />
 
             {/* 🛡️ P0: Nunca mais tela preta - ErrorBoundary global envolvendo as rotas */}
             <ErrorBoundary>
