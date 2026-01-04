@@ -140,11 +140,26 @@
   </head>
 
   <body>
-    <!-- Initial loader for perceived performance -->
-    <div id="initial-loader" class="initial-loader" aria-label="Carregando...">
-      <div class="loader-spinner"></div>
+    <!--
+      P0: Estado inicial NÃO pode ser tela preta.
+      - Conteúdo mínimo (não bloqueante)
+      - Botão "Refresh Page" sempre visível (recarrega APENAS no clique)
+    -->
+    <div id="manual-refresh" style="position:fixed;right:16px;bottom:16px;z-index:2147483000;pointer-events:auto">
+      <button
+        type="button"
+        aria-label="Recarregar a página (ação manual)"
+        onclick="window.location.reload()"
+        style="padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:rgba(16,16,20,0.72);color:#f5f5f5;font-weight:700;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)"
+      >
+        Refresh Page
+      </button>
     </div>
-    
+
+    <div id="bootstrap-status" style="padding:16px;color:#f5f5f5;opacity:0.75;font-family:system-ui,-apple-system,sans-serif;font-size:14px">
+      Carregando…
+    </div>
+
     <div id="root"></div>
     
     <!-- ============================================
@@ -155,47 +170,45 @@
          ============================================ -->
     <script type="module" src="/src/main.tsx"></script>
     
-    <!-- Remove loader when app is ready -->
+    <!--
+      P0: Sem telas pretas e sem overlays bloqueantes.
+      Recovery permitido: botão manual “Refresh Page”.
+      Regra: NUNCA auto-reload / NUNCA auto-limpar cache.
+    -->
     <script>
-      // Remove loader on load event
-      window.addEventListener('load', function() {
-        var loader = document.getElementById('initial-loader');
-        if (loader) {
-          loader.classList.add('fade-out');
-          setTimeout(function() { loader.remove(); }, 300);
-        }
-      });
-      // 🛡️ SAFETY TIMEOUT: Remove loader after 5s even if load event fails
-      setTimeout(function() {
-        var loader = document.getElementById('initial-loader');
-        if (loader) {
-          console.log('[LOADER] Safety timeout - forcing remove');
-          loader.classList.add('fade-out');
-          setTimeout(function() { loader.remove(); }, 300);
-        }
-      }, 5000);
-
       // ╔══════════════════════════════════════════════════════════════════════════════╗
-      // ║   🛡️ P0 ANTI-TELA-PRETA v2.1 — MANUAL RECOVERY ONLY (NÃO-BLOQUEANTE)       ║
-      // ║   REGRA: NUNCA overlay / NUNCA auto-recover. Apenas botão manual visível. ║
+      // ║   🛡️ P0 ANTI-TELA-PRETA v2.2 — MANUAL ONLY (SEM AUTO-RECOVERY)              ║
+      // ║   REGRA: NUNCA overlay / NUNCA auto-reload / NUNCA auto-limpar cache.       ║
       // ╚══════════════════════════════════════════════════════════════════════════════╝
 
-      // Recovery functions (standalone, no dependencies)
-      // Mantidas apenas para chamadas manuais explícitas; não existe UI automática.
-      var P0Recovery = {
-        softReload: function() {
-          console.log('[P0-RECOVERY] Soft reload...');
+      function __p0UserGestureActive() {
+        try {
+          return !!(navigator.userActivation && navigator.userActivation.isActive);
+        } catch (e) {
+          return false;
+        }
+      }
+
+      // API mínima (pré-bundle) — USO MANUAL APENAS.
+      window.P0Recovery = {
+        softReload: function () {
+          if (!__p0UserGestureActive()) {
+            console.warn('[P0-RECOVERY] Bloqueado: reload sem clique do usuário.');
+            return;
+          }
           window.location.reload();
         },
-        goHome: function() {
+        goHome: function () {
+          if (!__p0UserGestureActive()) {
+            console.warn('[P0-RECOVERY] Bloqueado: navegação sem clique do usuário.');
+            return;
+          }
           window.location.href = window.location.origin + '/';
         }
       };
-      window.P0Recovery = P0Recovery;
 
-      // Check for black screen after timeout (12s): NUNCA bloquear tela.
-      // Se root continuar vazio, mostra SOMENTE um botão fixo "Refresh Page".
-      setTimeout(function() {
+      // Failsafe (12s): se root continuar vazio, mostra SOMENTE um botão fixo.
+      setTimeout(function () {
         try {
           var root = document.getElementById('root');
           var hasContent = !!(root && root.children && root.children.length > 0);
@@ -212,7 +225,7 @@
             btn.type = 'button';
             btn.textContent = 'Refresh Page';
             btn.setAttribute('aria-label', 'Recarregar a página (ação manual)');
-            btn.onclick = function() { window.location.reload(); };
+            btn.onclick = function () { window.location.reload(); };
             btn.style.cssText = 'padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:rgba(16,16,20,0.72);color:#f5f5f5;font-weight:700;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)';
 
             host.appendChild(btn);
@@ -222,23 +235,6 @@
           // Nunca bloquear bootstrap
         }
       }, 12000);
-        }
-      }, 12000);
-
-      // ============================================
-      // 🏛️ LEI V Art. 4° - LIMPEZA OBRIGATÓRIA DE SW
-      // PROIBIÇÃO ABSOLUTA de Service Workers
-      // ============================================
-      if('serviceWorker' in navigator){
-        navigator.serviceWorker.getRegistrations().then(function(r){
-          r.forEach(function(s){s.unregister();});
-        });
-        if('caches' in window){
-          caches.keys().then(function(k){
-            k.forEach(function(c){caches.delete(c);});
-          });
-        }
-      }
     </script>
     
     <!-- Art. 41° LEI V: noscript OBRIGATÓRIO -->

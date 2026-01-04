@@ -13,166 +13,78 @@
  */
 
 // ============================================
-// RECOVERY ACTIONS
+// RECOVERY ACTIONS (MANUAL ONLY)
 // ============================================
 
+function isUserGestureActive(): boolean {
+  try {
+    // Supported in modern browsers. If not supported, fail closed.
+    return !!(navigator.userActivation && navigator.userActivation.isActive);
+  } catch {
+    return false;
+  }
+}
+
+
 /**
- * Soft reload - tries to reload the page
+ * Soft reload - recarrega a página (MANUAL ONLY).
+ * Regra: nunca limpar cache/storage automaticamente.
  */
 export async function softReload(): Promise<void> {
-  console.log('[P0-RECOVERY] Executing soft reload...');
-  
-  // Clear React Query cache if available
-  try {
-    window.dispatchEvent(new Event('mm-clear-cache'));
-  } catch {}
-  
-  // Force reload from server (not cache)
+  console.log('[P0-RECOVERY] Soft reload (manual-only)...');
+
+  // Bloqueio duro: não permitir reload programático sem gesto do usuário.
+  if (!isUserGestureActive()) {
+    console.warn('[P0-RECOVERY] Bloqueado: reload sem clique do usuário.');
+    return;
+  }
+
   window.location.reload();
 }
 
 /**
- * Hard reload - clears all caches and forces fresh load
+ * Hard reload - DEPRECATED (mantido por compatibilidade).
+ * Nova regra: igual ao softReload (sem wipes).
  */
 export async function hardReload(): Promise<void> {
-  console.log('[P0-RECOVERY] Executing HARD reload...');
-  
-  try {
-    // 1. Clear React Query cache
-    window.dispatchEvent(new Event('mm-clear-cache'));
-  } catch (e) {
-    console.warn('[P0-RECOVERY] Failed to clear query cache:', e);
-  }
-  
-  try {
-    // 2. Unregister all Service Workers
-    if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map(r => r.unregister()));
-      console.log('[P0-RECOVERY] Service workers unregistered:', registrations.length);
-    }
-  } catch (e) {
-    console.warn('[P0-RECOVERY] Failed to unregister service workers:', e);
-  }
-  
-  try {
-    // 3. Clear all Cache Storage
-    if ('caches' in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
-      console.log('[P0-RECOVERY] Caches cleared:', keys.length);
-    }
-  } catch (e) {
-    console.warn('[P0-RECOVERY] Failed to clear caches:', e);
-  }
-  
-  // 4. Force reload bypassing cache
-  window.location.href = window.location.origin + window.location.pathname + '?_t=' + Date.now();
+  console.log('[P0-RECOVERY] Hard reload (deprecated → softReload)...');
+  return softReload();
 }
 
 /**
- * Nuclear reset - clears EVERYTHING and forces fresh load
+ * Nuclear reset - DEPRECATED (mantido por compatibilidade).
+ * Nova regra: sem wipes. Apenas reload manual.
  */
 export async function nuclearReset(): Promise<void> {
-  console.log('[P0-RECOVERY] ⚠️ Executing NUCLEAR reset...');
-  
-  try {
-    // 1. Clear React Query cache
-    window.dispatchEvent(new Event('mm-clear-cache'));
-  } catch {}
-  
-  try {
-    // 2. Unregister all Service Workers
-    if ('serviceWorker' in navigator) {
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map(r => r.unregister()));
-    }
-  } catch {}
-  
-  try {
-    // 3. Clear all Cache Storage
-    if ('caches' in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
-    }
-  } catch {}
-  
-  try {
-    // 4. Clear LocalStorage
-    localStorage.clear();
-    console.log('[P0-RECOVERY] LocalStorage cleared');
-  } catch {}
-  
-  try {
-    // 5. Clear SessionStorage
-    sessionStorage.clear();
-    console.log('[P0-RECOVERY] SessionStorage cleared');
-  } catch {}
-  
-  try {
-    // 6. Clear IndexedDB (all databases)
-    if ('indexedDB' in window) {
-      const databases = await indexedDB.databases?.();
-      if (databases) {
-        for (const db of databases) {
-          if (db.name) {
-            indexedDB.deleteDatabase(db.name);
-            console.log('[P0-RECOVERY] Deleted IndexedDB:', db.name);
-          }
-        }
-      }
-    }
-  } catch {}
-  
-  try {
-    // 7. Clear all cookies for this domain
-    document.cookie.split(';').forEach((c) => {
-      const name = c.split('=')[0].trim();
-      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-    });
-    console.log('[P0-RECOVERY] Cookies cleared');
-  } catch {}
-  
-  // 8. Force fresh navigation to home with cache buster
-  window.location.href = window.location.origin + '/?_reset=' + Date.now();
+  console.log('[P0-RECOVERY] Nuclear reset (deprecated → softReload)...');
+  return softReload();
 }
 
 /**
- * Escape to home - guaranteed navigation out
+ * Escape to home - navegação (MANUAL ONLY).
  */
 export function escapeToHome(): void {
-  console.log('[P0-RECOVERY] Escaping to home...');
+  console.log('[P0-RECOVERY] Escape to home (manual-only)...');
+  if (!isUserGestureActive()) {
+    console.warn('[P0-RECOVERY] Bloqueado: navegação sem clique do usuário.');
+    return;
+  }
   window.location.href = window.location.origin + '/';
 }
 
 /**
- * Force logout and return to auth
+ * Force logout and return to auth - DEPRECATED.
+ * Nova regra: não limpar storage automaticamente aqui.
  */
 export async function forceLogoutAndRestart(): Promise<void> {
-  console.log('[P0-RECOVERY] Force logout and restart...');
-  
-  // Clear auth-related storage
-  try {
-    const authKeys = Object.keys(localStorage).filter(k => 
-      k.includes('supabase') || 
-      k.includes('auth') || 
-      k.includes('session') ||
-      k.includes('token')
-    );
-    authKeys.forEach(k => localStorage.removeItem(k));
-    
-    const sessionAuthKeys = Object.keys(sessionStorage).filter(k => 
-      k.includes('supabase') || 
-      k.includes('auth') || 
-      k.includes('session') ||
-      k.includes('token')
-    );
-    sessionAuthKeys.forEach(k => sessionStorage.removeItem(k));
-  } catch {}
-  
-  // Navigate to auth
+  console.log('[P0-RECOVERY] Force logout (deprecated — no auto-wipe)...');
+  if (!isUserGestureActive()) {
+    console.warn('[P0-RECOVERY] Bloqueado: ação sem clique do usuário.');
+    return;
+  }
   window.location.href = window.location.origin + '/auth';
 }
+
 
 // ============================================
 // RECOVERY UI INJECTION (Failsafe)
