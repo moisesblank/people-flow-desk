@@ -12,7 +12,7 @@ import {
   ChevronRight, ChevronDown, PlayCircle, MoreHorizontal,
   FolderOpen, BookOpen, Check, AlertTriangle, Image, Video, 
   Clock, Save, X, RefreshCw, Sparkles, GraduationCap,
-  MonitorPlay, FileVideo, Pencil, ChevronUp
+  MonitorPlay, FileVideo, Pencil, ChevronUp, ExternalLink, Link2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -405,8 +405,131 @@ function SubcategorySection({
 }
 
 // ============================================
-// MODULE CARD - Card de módulo com aulas
+// LESSON ROW - Linha de aula clicável e editável
 // ============================================
+function LessonRow({ lesson }: { lesson: Lesson }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [videoUrl, setVideoUrl] = useState(lesson.video_url || '');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const updateMutation = useMutation({
+    mutationFn: async (newUrl: string) => {
+      const { error } = await supabase
+        .from('lessons')
+        .update({ video_url: newUrl || null })
+        .eq('id', lesson.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gestao-module-lessons'] });
+      toast({ title: 'URL atualizada', description: 'O vídeo foi vinculado com sucesso.' });
+      setIsEditing(false);
+    },
+    onError: (error: any) => {
+      toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
+    }
+  });
+
+  const handleSave = () => {
+    updateMutation.mutate(videoUrl);
+  };
+
+  const handleOpenVideo = () => {
+    if (lesson.video_url) {
+      window.open(lesson.video_url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  return (
+    <div 
+      className={cn(
+        "flex items-center gap-2 p-2 rounded-lg text-sm transition-all group",
+        "bg-gradient-to-r from-green-500/5 to-emerald-500/5",
+        "border border-green-500/10 hover:border-green-500/30",
+        !lesson.is_published && "opacity-50"
+      )}
+    >
+      <div className="p-1 rounded bg-green-500/20">
+        <PlayCircle className="h-3 w-3 text-green-400" />
+      </div>
+      
+      {isEditing ? (
+        <div className="flex-1 flex items-center gap-2">
+          <Input
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="Cole a URL do vídeo (YouTube ou Panda)"
+            className="h-7 text-xs bg-background/80 border-cyan-500/30 flex-1"
+            autoFocus
+          />
+          <Button 
+            size="icon" 
+            variant="ghost" 
+            className="h-6 w-6 hover:bg-green-500/20 text-green-400"
+            onClick={handleSave}
+            disabled={updateMutation.isPending}
+          >
+            <Check className="h-3 w-3" />
+          </Button>
+          <Button 
+            size="icon" 
+            variant="ghost" 
+            className="h-6 w-6 hover:bg-red-500/20 text-red-400"
+            onClick={() => { setIsEditing(false); setVideoUrl(lesson.video_url || ''); }}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      ) : (
+        <>
+          <span className="truncate flex-1 text-sm">{lesson.title}</span>
+          
+          {lesson.video_url ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 gap-1 text-xs bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 hover:text-red-200"
+              onClick={handleOpenVideo}
+              title="Abrir vídeo em nova aba"
+            >
+              <MonitorPlay className="h-3 w-3" />
+              Vídeo
+              <ExternalLink className="h-3 w-3 ml-1" />
+            </Button>
+          ) : (
+            <Badge className="text-xs bg-muted/50 text-muted-foreground border-border/30">
+              <Link2 className="h-3 w-3 mr-1" />
+              Sem vídeo
+            </Badge>
+          )}
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:bg-cyan-500/20 text-cyan-400 transition-opacity"
+            onClick={() => setIsEditing(true)}
+            title="Editar URL do vídeo"
+          >
+            <Pencil className="h-3 w-3" />
+          </Button>
+          
+          {lesson.duration_minutes && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {lesson.duration_minutes}min
+            </span>
+          )}
+          <Badge variant="outline" className="text-xs border-border/30">
+            #{lesson.position + 1}
+          </Badge>
+        </>
+      )}
+    </div>
+  );
+}
+
+
 function ModuleCard({ 
   module, 
   index, 
@@ -533,35 +656,7 @@ function ModuleCard({
             <div className="ml-11 pl-3 border-l-2 border-green-500/20 space-y-1">
               {lessons && lessons.length > 0 ? (
                 lessons.map((lesson, idx) => (
-                  <div 
-                    key={lesson.id}
-                    className={cn(
-                      "flex items-center gap-2 p-2 rounded-lg text-sm transition-all",
-                      "bg-gradient-to-r from-green-500/5 to-emerald-500/5",
-                      "border border-green-500/10 hover:border-green-500/30",
-                      !lesson.is_published && "opacity-50"
-                    )}
-                  >
-                    <div className="p-1 rounded bg-green-500/20">
-                      <PlayCircle className="h-3 w-3 text-green-400" />
-                    </div>
-                    <span className="truncate flex-1 text-sm">{lesson.title}</span>
-                    {lesson.video_url && (
-                      <Badge className="text-xs bg-red-500/20 text-red-300 border-red-500/30">
-                        <MonitorPlay className="h-3 w-3 mr-1" />
-                        Vídeo
-                      </Badge>
-                    )}
-                    {lesson.duration_minutes && (
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {lesson.duration_minutes}min
-                      </span>
-                    )}
-                    <Badge variant="outline" className="text-xs border-border/30">
-                      #{lesson.position + 1}
-                    </Badge>
-                  </div>
+                  <LessonRow key={lesson.id} lesson={lesson} />
                 ))
               ) : (
                 <div className="text-sm text-muted-foreground py-3 text-center italic">
