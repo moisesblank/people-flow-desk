@@ -63,7 +63,13 @@ let logFailStreak = 0;
 
 function getSessionId(): string {
   if (!sessionId) {
-    sessionId = crypto.randomUUID();
+    try {
+      sessionId = (globalThis.crypto && 'randomUUID' in globalThis.crypto)
+        ? globalThis.crypto.randomUUID()
+        : `sess_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    } catch {
+      sessionId = `sess_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    }
   }
   return sessionId;
 }
@@ -237,37 +243,65 @@ export function initGlobalErrorCapture(): void {
   const originalConsoleError = console.error;
   let lastConsoleLogTime = 0;
 
+  const safeSerialize = (arg: unknown): string => {
+    try {
+      if (typeof arg === 'string') return arg;
+      if (arg instanceof Error) return `${arg.name}: ${arg.message}`;
+      if (typeof arg === 'object' && arg !== null) {
+        const seen = new WeakSet<object>();
+        return JSON.stringify(arg, (_k, v) => {
+          if (typeof v === 'object' && v !== null) {
+            if (seen.has(v as object)) return '[Circular]';
+            seen.add(v as object);
+          }
+          return v;
+        });
+      }
+      return String(arg);
+    } catch {
+      try {
+        return String(arg);
+      } catch {
+        return '[Unserializable]';
+      }
+    }
+  };
+
   console.error = (...args) => {
-    originalConsoleError.apply(console, args);
+    // Nunca deixar um erro no interceptor derrubar a app
+    try {
+      originalConsoleError.apply(console, args);
 
-    // Throttle: máximo 1 log enviado a cada 2 segundos
-    const now = Date.now();
-    if (now - lastConsoleLogTime < 2000) return;
+      // Throttle: máximo 1 log enviado a cada 2 segundos
+      const now = Date.now();
+      if (now - lastConsoleLogTime < 2000) return;
 
-    // Filtrar logs do próprio sistema e ruído para evitar loop/spam
-    const message = args
-      .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg)))
-      .join(' ');
+      // Filtrar logs do próprio sistema e ruído para evitar loop/spam
+      const message = args.map(safeSerialize).join(' ');
 
-    // Lista de padrões a ignorar (sistema + ruído + perf)
-    const ignorePatterns = [
-      '[SystemLog]',
-      '[MATRIZ]',
-      '[PERF',
-      '[BrowserLogs]',
-      'Long Task',
-      'Failed to fetch',
-      'forwardRef',
-    ];
+      // Lista de padrões a ignorar (sistema + ruído + perf)
+      const ignorePatterns = [
+        '[SystemLog]',
+        '[MATRIZ]',
+        '[PERF',
+        '[BrowserLogs]',
+        'Long Task',
+        'Failed to fetch',
+        'forwardRef',
+      ];
 
-    const shouldIgnore = ignorePatterns.some(pattern => message.includes(pattern));
+      const shouldIgnore = ignorePatterns.some((pattern) => message.includes(pattern));
 
-    if (!shouldIgnore) {
-      lastConsoleLogTime = now;
-      sendSystemLog('error', 'console_error', message.slice(0, 1000), {
-        source: 'console_interceptor',
-        affectedUrl: window.location.pathname,
-      });
+      if (!shouldIgnore) {
+        lastConsoleLogTime = now;
+        // fire-and-forget (sem await) para nunca bloquear UI
+        void sendSystemLog('error', 'console_error', message.slice(0, 1000), {
+          source: 'console_interceptor',
+          affectedUrl: window.location.pathname,
+        });
+      }
+    } catch {
+      // silencioso: regra máxima é não derrubar bootstrap
     }
   };
 
