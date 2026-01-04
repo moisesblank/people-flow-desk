@@ -15,7 +15,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   PlayCircle, Search, Clock, BookOpen,
-  ChevronRight, Star, X, ArrowLeft
+  ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight,
+  Star, ArrowLeft
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,6 +76,9 @@ function useVideoaulasAluno() {
   });
 }
 
+// CONSTANTE DE PAGINAÇÃO
+const ITEMS_PER_PAGE = 100;
+
 export default function AlunoVideoaulas() {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -82,6 +86,7 @@ export default function AlunoVideoaulas() {
   
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todos");
+  const [currentPage, setCurrentPage] = useState(1);
   
   const { data: lessons, isLoading } = useVideoaulasAluno();
 
@@ -156,10 +161,33 @@ export default function AlunoVideoaulas() {
     return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  const filteredLessons = lessons?.filter(l => 
-    l.title.toLowerCase().includes(busca.toLowerCase()) ||
-    l.description?.toLowerCase().includes(busca.toLowerCase())
-  ) || [];
+  // Filtrar lições por busca
+  const filteredLessons = useMemo(() => {
+    return lessons?.filter(l => 
+      l.title.toLowerCase().includes(busca.toLowerCase()) ||
+      l.description?.toLowerCase().includes(busca.toLowerCase())
+    ) || [];
+  }, [lessons, busca]);
+
+  // Reset página ao mudar busca
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [busca]);
+
+  // Cálculos de paginação
+  const totalItems = filteredLessons.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalItems);
+  const paginatedLessons = filteredLessons.slice(startIndex, endIndex);
+
+  // Funções de navegação
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
@@ -305,10 +333,66 @@ export default function AlunoVideoaulas() {
         </Card>
       )}
 
-      {/* Grid de Videoaulas */}
-      {!isLoading && filteredLessons.length > 0 && (
+      {/* ============================================ */}
+      {/* BARRA DE PAGINAÇÃO (TOPO)                   */}
+      {/* ============================================ */}
+      {!isLoading && totalItems > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-3 rounded-lg bg-card/50 border border-border/50 backdrop-blur-sm">
+          <span className="text-sm text-muted-foreground">
+            Exibindo <span className="font-semibold text-foreground">{startIndex + 1} - {endIndex}</span> de{" "}
+            <span className="font-semibold text-foreground">{totalItems}</span> aulas
+          </span>
+          
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => goToPage(1)}
+              disabled={currentPage === 1}
+              className="h-8 w-8"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="h-8 w-8"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <span className="px-3 py-1 text-sm bg-primary/10 rounded-md border border-primary/20">
+              Página <span className="font-semibold">{currentPage}</span> de <span className="font-semibold">{totalPages}</span>
+            </span>
+            
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => goToPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Grid de Videoaulas (PAGINADO) */}
+      {!isLoading && paginatedLessons.length > 0 && (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredLessons.map((lesson, index) => (
+          {paginatedLessons.map((lesson, index) => (
             <motion.div
               key={lesson.id}
               initial={{ opacity: 0, y: 20 }}
@@ -385,13 +469,61 @@ export default function AlunoVideoaulas() {
         </div>
       )}
 
-      {/* Badge contador atualizado */}
-      <div className="flex items-center gap-2 fixed bottom-4 right-4 z-40">
-        <Badge variant="secondary" className="text-sm py-1 px-3 shadow-lg">
-          <PlayCircle className="w-4 h-4 mr-2" />
-          {filteredLessons.length} aula{filteredLessons.length !== 1 ? 's' : ''} disponíve{filteredLessons.length !== 1 ? 'is' : 'l'}
-        </Badge>
-      </div>
+      {/* ============================================ */}
+      {/* BARRA DE PAGINAÇÃO (RODAPÉ)                 */}
+      {/* ============================================ */}
+      {!isLoading && totalItems > 0 && totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-3 rounded-lg bg-card/50 border border-border/50 backdrop-blur-sm">
+          <span className="text-sm text-muted-foreground">
+            Exibindo <span className="font-semibold text-foreground">{startIndex + 1} - {endIndex}</span> de{" "}
+            <span className="font-semibold text-foreground">{totalItems}</span> aulas
+          </span>
+          
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => goToPage(1)}
+              disabled={currentPage === 1}
+              className="h-8 w-8"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="h-8 w-8"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <span className="px-3 py-1 text-sm bg-primary/10 rounded-md border border-primary/20">
+              Página <span className="font-semibold">{currentPage}</span> de <span className="font-semibold">{totalPages}</span>
+            </span>
+            
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => goToPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="h-8 w-8"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
