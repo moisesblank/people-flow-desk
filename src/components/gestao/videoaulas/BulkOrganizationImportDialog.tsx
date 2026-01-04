@@ -4,7 +4,7 @@
 // Creates courses/modules automatically, preserves exact ordering
 // ============================================
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, forwardRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -58,7 +58,8 @@ interface BulkOrganizationImportDialogProps {
   onClose: () => void;
 }
 
-export function BulkOrganizationImportDialog({ open, onClose }: BulkOrganizationImportDialogProps) {
+export const BulkOrganizationImportDialog = forwardRef<HTMLDivElement, BulkOrganizationImportDialogProps>(
+  function BulkOrganizationImportDialog({ open, onClose }, _ref) {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ImportRecord[]>([]);
@@ -821,4 +822,6 @@ export function BulkOrganizationImportDialog({ open, onClose }: BulkOrganization
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+BulkOrganizationImportDialog.displayName = "BulkOrganizationImportDialog";
