@@ -4,7 +4,7 @@
 // Sincronizado em tempo real com /alunos/videoaulas
 // ============================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -13,8 +13,9 @@ import {
   ChevronDown, MoreVertical, ExternalLink, Copy, Check,
   TrendingUp, Users, Zap, RefreshCw, Settings2, Layers,
   GripVertical, ArrowUpDown, BarChart3, QrCode, Bomb, AlertTriangle,
-  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
+  ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X
 } from "lucide-react";
+import { OmegaFortressPlayer } from "@/components/video/OmegaFortressPlayer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -191,6 +192,9 @@ export default function GestaoVideoaulas() {
   const [annihilateConfirmText, setAnnihilateConfirmText] = useState("");
   const [annihilateCheckbox, setAnnihilateCheckbox] = useState(false);
   const [isAnnihilating, setIsAnnihilating] = useState(false);
+  
+  // 🎬 Modal de preview de vídeo
+  const [previewLesson, setPreviewLesson] = useState<Lesson | null>(null);
 
   const { data: lessons, isLoading, refetch } = useVideoaulas();
   const { data: statsData, refetch: refetchStats } = useVideoaulasStats();
@@ -433,6 +437,34 @@ export default function GestaoVideoaulas() {
     );
   };
 
+  // 🎬 Helpers para o player de vídeo
+  const getVideoId = useCallback((lesson: Lesson): string => {
+    if (lesson.video_provider === 'panda' && lesson.panda_video_id) {
+      return lesson.panda_video_id;
+    }
+    if (lesson.video_provider === 'youtube' && lesson.youtube_video_id) {
+      return lesson.youtube_video_id;
+    }
+    // Fallback: extrair ID da URL
+    if (lesson.video_url) {
+      const ytMatch = lesson.video_url.match(/(?:v=|\/embed\/|\.be\/)([a-zA-Z0-9_-]{11})/);
+      if (ytMatch) return ytMatch[1];
+      const pandaMatch = lesson.video_url.match(/[a-f0-9-]{36}/i);
+      if (pandaMatch) return pandaMatch[0];
+    }
+    return '';
+  }, []);
+
+  const getVideoType = useCallback((lesson: Lesson): 'youtube' | 'panda' | 'vimeo' => {
+    if (lesson.video_provider === 'panda') return 'panda';
+    if (lesson.video_provider === 'vimeo') return 'vimeo';
+    return 'youtube';
+  }, []);
+
+  const hasVideo = useCallback((lesson: Lesson): boolean => {
+    return !!(lesson.video_url || lesson.panda_video_id || lesson.youtube_video_id);
+  }, []);
+
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
       {/* Header */}
@@ -547,6 +579,48 @@ export default function GestaoVideoaulas() {
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 🎬 Modal de Preview de Vídeo */}
+      <Dialog open={!!previewLesson} onOpenChange={(open) => !open && setPreviewLesson(null)}>
+        <DialogContent className="max-w-5xl max-h-[90vh] p-0 overflow-hidden" showMaximize defaultSize={{ width: 1000, height: 600 }}>
+          <DialogHeader className="px-6 py-4 border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {previewLesson && getProviderBadge(previewLesson.video_provider)}
+                <div>
+                  <DialogTitle className="text-lg">{previewLesson?.title}</DialogTitle>
+                  <DialogDescription className="text-sm">
+                    {previewLesson?.module?.title || "Sem módulo"} • {previewLesson?.duration_minutes ? `${previewLesson.duration_minutes} min` : "Duração desconhecida"}
+                  </DialogDescription>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setPreviewLesson(null)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </DialogHeader>
+          <div className="relative w-full aspect-video bg-black">
+            {previewLesson && hasVideo(previewLesson) ? (
+              <OmegaFortressPlayer
+                videoId={getVideoId(previewLesson)}
+                type={getVideoType(previewLesson)}
+                title={previewLesson.title}
+                thumbnail={previewLesson.thumbnail_url || undefined}
+                lessonId={previewLesson.id}
+                showSecurityBadge={false}
+                showWatermark={false}
+                autoplay
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
+                <Video className="w-16 h-16 mb-4 opacity-50" />
+                <p>Nenhum vídeo vinculado a esta aula</p>
+                <p className="text-sm mt-1">Configure o vídeo usando o botão "Editar"</p>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -744,13 +818,16 @@ export default function GestaoVideoaulas() {
                 <Card className={`overflow-hidden transition-all hover:shadow-lg ${
                   !lesson.is_published ? 'opacity-70 border-dashed' : ''
                 }`}>
-                  {/* Thumbnail */}
-                  <div className="relative h-40 bg-gradient-to-br from-primary/20 to-primary/5">
+                  {/* Thumbnail - CLICÁVEL para abrir modal de vídeo */}
+                  <div 
+                    className="relative h-40 bg-gradient-to-br from-primary/20 to-primary/5 cursor-pointer group"
+                    onClick={() => setPreviewLesson(lesson)}
+                  >
                     {lesson.thumbnail_url ? (
                       <img 
                         src={lesson.thumbnail_url} 
                         alt={lesson.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -758,12 +835,20 @@ export default function GestaoVideoaulas() {
                         <Video className="w-12 h-12 text-muted-foreground/30" />
                       </div>
                     )}
+                    
+                    {/* Play Button Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-all">
+                      <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all shadow-lg">
+                        <Play className="w-6 h-6 text-primary-foreground ml-1" />
+                      </div>
+                    </div>
+                    
                     {/* Provider Badge */}
-                    <div className="absolute top-2 left-2">
+                    <div className="absolute top-2 left-2 z-10">
                       {getProviderBadge(lesson.video_provider)}
                     </div>
                     {/* Status Badge */}
-                    <div className="absolute top-2 right-2">
+                    <div className="absolute top-2 right-2 z-10">
                       {lesson.is_published ? (
                         <Badge className="bg-green-500/90">
                           <Eye className="w-3 h-3 mr-1" />
@@ -778,7 +863,7 @@ export default function GestaoVideoaulas() {
                     </div>
                     {/* Duration */}
                     {lesson.duration_minutes && (
-                      <div className="absolute bottom-2 right-2">
+                      <div className="absolute bottom-2 right-2 z-10">
                         <Badge variant="secondary" className="bg-black/70 text-white">
                           <Clock className="w-3 h-3 mr-1" />
                           {lesson.duration_minutes}min
@@ -915,10 +1000,18 @@ export default function GestaoVideoaulas() {
               </TableHeader>
               <TableBody>
                 {paginatedLessons.map((lesson, index) => (
-                  <TableRow key={lesson.id}>
+                  <TableRow key={lesson.id} className="group">
                     <TableCell>{startIndex + index + 1}</TableCell>
-                    <TableCell className="font-medium max-w-[200px] truncate">
-                      {lesson.title}
+                    <TableCell 
+                      className="font-medium max-w-[200px] truncate cursor-pointer hover:text-primary transition-colors"
+                      onClick={() => setPreviewLesson(lesson)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Play className="w-3 h-3 text-primary" />
+                        </div>
+                        <span className="truncate">{lesson.title}</span>
+                      </div>
                     </TableCell>
                     <TableCell>{getProviderBadge(lesson.video_provider)}</TableCell>
                     <TableCell>{lesson.module?.title || "-"}</TableCell>
@@ -933,6 +1026,9 @@ export default function GestaoVideoaulas() {
                       />
                     </TableCell>
                     <TableCell className="text-right">
+                      <Button size="sm" variant="ghost" onClick={() => setPreviewLesson(lesson)} title="Assistir vídeo">
+                        <Play className="w-4 h-4 text-primary" />
+                      </Button>
                       <Button size="sm" variant="ghost" onClick={() => setEditingLesson(lesson)}>
                         <Edit2 className="w-4 h-4" />
                       </Button>
