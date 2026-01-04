@@ -255,121 +255,162 @@ export function SessionGuard({ children }: SessionGuardProps) {
     };
   }, [user, validateSession]);
 
-  // 🛡️ Broadcasts de lockdown/epoch/device-revoked/user-deleted
+  // 🛡️ Broadcasts de lockdown/epoch/device-revoked/user-deleted (com retry)
   useEffect(() => {
     if (!user) return;
 
-    const channel = supabase
-      .channel('session-guard-lockdown')
-      .on('broadcast', { event: 'auth-lockdown' }, async () => {
-        console.error('[SessionGuard] 📡 LOCKDOWN BROADCAST recebido!');
-        await handleBackendRevocation('Sistema em manutenção de emergência.');
-      })
-      .on('broadcast', { event: 'epoch-increment' }, async () => {
-        console.error('[SessionGuard] 📡 EPOCH INCREMENT recebido!');
-        await validateSession();
-      })
-      .subscribe();
+    let channel: any = null;
+    let userChannel: any = null;
+    let reconnectTimer: NodeJS.Timeout | null = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT = 5;
+    const BASE_DELAY = 2000;
 
-    const userChannel = supabase
-      .channel(`user:${user.id}`)
-      .on('broadcast', { event: 'device-revoked' }, async (payload) => {
-        console.error('[SessionGuard] 📡 DEVICE REVOKED recebido!', payload);
-        await handleBackendRevocation('Este dispositivo foi removido.');
-      })
-      .on('broadcast', { event: 'user-deleted' }, async () => {
-        console.error('[SessionGuard] 📡 USER DELETED recebido!');
-        await handleBackendRevocation('Sua conta foi removida.');
-      })
-      // 🚀 Broadcast direto para revogação de sessão (conflito)
-      // Só mostra overlay se NÃO for logout manual
-      .on('broadcast', { event: 'session-revoked' }, async (msg) => {
-        const reason = msg?.payload?.reason;
-        console.error('[SessionGuard] 📡 SESSION REVOKED BROADCAST recebido!', { reason });
-        
-        // Ignora se for logout manual do próprio usuário
-        if (reason === 'user_logout') {
-          console.log('[SessionGuard] ✅ Broadcast de logout manual - ignorando overlay');
-          return;
-        }
-        
-        // Conflito real: mostrar overlay
-        handleDeviceRevocation();
-      })
-      .subscribe();
+    const connectChannels = () => {
+      // Limpar canais existentes
+      if (channel) supabase.removeChannel(channel);
+      if (userChannel) supabase.removeChannel(userChannel);
+
+      channel = supabase
+        .channel('session-guard-lockdown')
+        .on('broadcast', { event: 'auth-lockdown' }, async () => {
+          console.error('[SessionGuard] 📡 LOCKDOWN BROADCAST recebido!');
+          await handleBackendRevocation('Sistema em manutenção de emergência.');
+        })
+        .on('broadcast', { event: 'epoch-increment' }, async () => {
+          console.error('[SessionGuard] 📡 EPOCH INCREMENT recebido!');
+          await validateSession();
+        })
+        .subscribe((status) => {
+          console.log('[SessionGuard] 📡 Lockdown channel status:', status);
+          if (status === 'CHANNEL_ERROR' && reconnectAttempts < MAX_RECONNECT) {
+            reconnectAttempts++;
+            const delay = BASE_DELAY * Math.pow(2, reconnectAttempts - 1);
+            console.log(`[SessionGuard] 🔄 Reconectando lockdown (${reconnectAttempts}/${MAX_RECONNECT}) em ${delay}ms`);
+            if (reconnectTimer) clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(connectChannels, delay);
+          }
+        });
+
+      userChannel = supabase
+        .channel(`user:${user.id}`)
+        .on('broadcast', { event: 'device-revoked' }, async (payload) => {
+          console.error('[SessionGuard] 📡 DEVICE REVOKED recebido!', payload);
+          await handleBackendRevocation('Este dispositivo foi removido.');
+        })
+        .on('broadcast', { event: 'user-deleted' }, async () => {
+          console.error('[SessionGuard] 📡 USER DELETED recebido!');
+          await handleBackendRevocation('Sua conta foi removida.');
+        })
+        .on('broadcast', { event: 'session-revoked' }, async (msg) => {
+          const reason = msg?.payload?.reason;
+          console.error('[SessionGuard] 📡 SESSION REVOKED BROADCAST recebido!', { reason });
+          
+          if (reason === 'user_logout') {
+            console.log('[SessionGuard] ✅ Broadcast de logout manual - ignorando overlay');
+            return;
+          }
+          
+          handleDeviceRevocation();
+        })
+        .subscribe((status) => {
+          console.log('[SessionGuard] 📡 User channel status:', status);
+          if (status === 'SUBSCRIBED') {
+            reconnectAttempts = 0;
+          }
+        });
+    };
+
+    connectChannels();
 
     return () => {
-      supabase.removeChannel(channel);
-      supabase.removeChannel(userChannel);
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (channel) supabase.removeChannel(channel);
+      if (userChannel) supabase.removeChannel(userChannel);
     };
   }, [user, handleBackendRevocation, validateSession, handleDeviceRevocation]);
 
-  // 🔒 SESSION_BINDING_ENFORCEMENT: Realtime listener on active_sessions
-  // Filtrar por user_id (suportado) e verificar session_token no callback
+  // 🔒 SESSION_BINDING_ENFORCEMENT: Realtime listener on active_sessions (com retry)
   useEffect(() => {
     if (!user) return;
 
+    let realtimeChannel: any = null;
+    let reconnectTimer: NodeJS.Timeout | null = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT = 5;
+    const BASE_DELAY = 2000;
+
     const myToken = localStorage.getItem(SESSION_TOKEN_KEY);
-    
     console.log('[SessionGuard] 🔗 Iniciando listener Realtime para user:', user.id, 'token:', myToken?.slice(0, 8) + '...');
 
-    const realtimeChannel = supabase
-      .channel(`session-revocation-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'active_sessions',
-          filter: `user_id=eq.${user.id}`,
-        },
-        async (payload) => {
-          const newStatus = payload.new?.status;
-          const payloadToken = payload.new?.session_token;
-          const revokedReason = payload.new?.revoked_reason;
-          const currentToken = localStorage.getItem(SESSION_TOKEN_KEY);
-          
-          console.log('[SessionGuard] 📡 Realtime UPDATE active_sessions:', {
-            newStatus,
-            revokedReason,
-            payloadToken: payloadToken?.slice(0, 8) + '...',
-            currentToken: currentToken?.slice(0, 8) + '...',
-            match: payloadToken === currentToken
-          });
+    const connectSessionChannel = () => {
+      if (realtimeChannel) supabase.removeChannel(realtimeChannel);
 
-          // ⚡ Se MINHA sessão foi revogada → verificar o motivo
-          if (newStatus === 'revoked' && payloadToken === currentToken) {
-            // 🎯 DIFERENCIAR: user_logout vs conflito de sessão
-            const isUserInitiatedLogout = revokedReason === 'user_logout';
+      realtimeChannel = supabase
+        .channel(`session-revocation-${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'active_sessions',
+            filter: `user_id=eq.${user.id}`,
+          },
+          async (payload) => {
+            const newStatus = payload.new?.status;
+            const payloadToken = payload.new?.session_token;
+            const revokedReason = payload.new?.revoked_reason;
+            const currentToken = localStorage.getItem(SESSION_TOKEN_KEY);
             
-            if (isUserInitiatedLogout) {
-              // Logout manual: não mostrar overlay de conflito
-              console.log('[SessionGuard] ✅ Logout manual detectado - sem overlay de conflito');
-              // Apenas limpar e sair silenciosamente
-              const keysToRemove = [
-                'matriz_session_token',
-                'matriz_last_heartbeat',
-                'matriz_device_fingerprint',
-                'matriz_trusted_device',
-                'mfa_trust_cache',
-              ];
-              keysToRemove.forEach((key) => localStorage.removeItem(key));
-              sessionStorage.clear();
-              await signOut();
-            } else {
-              // Conflito de sessão real: mostrar overlay
-              console.error('[SessionGuard] 🔴 Conflito de sessão detectado:', revokedReason);
-              handleDeviceRevocation();
+            console.log('[SessionGuard] 📡 Realtime UPDATE active_sessions:', {
+              newStatus,
+              revokedReason,
+              payloadToken: payloadToken?.slice(0, 8) + '...',
+              currentToken: currentToken?.slice(0, 8) + '...',
+              match: payloadToken === currentToken
+            });
+
+            if (newStatus === 'revoked' && payloadToken === currentToken) {
+              const isUserInitiatedLogout = revokedReason === 'user_logout';
+              
+              if (isUserInitiatedLogout) {
+                console.log('[SessionGuard] ✅ Logout manual detectado - sem overlay de conflito');
+                const keysToRemove = [
+                  'matriz_session_token',
+                  'matriz_last_heartbeat',
+                  'matriz_device_fingerprint',
+                  'matriz_trusted_device',
+                  'mfa_trust_cache',
+                ];
+                keysToRemove.forEach((key) => localStorage.removeItem(key));
+                sessionStorage.clear();
+                await signOut();
+              } else {
+                console.error('[SessionGuard] 🔴 Conflito de sessão detectado:', revokedReason);
+                handleDeviceRevocation();
+              }
             }
           }
-        }
-      )
-      .subscribe((status) => {
-        console.log('[SessionGuard] 📡 Realtime subscription status:', status);
-      });
+        )
+        .subscribe((status) => {
+          console.log('[SessionGuard] 📡 Realtime subscription status:', status);
+          if (status === 'SUBSCRIBED') {
+            reconnectAttempts = 0;
+          } else if (status === 'CHANNEL_ERROR' && reconnectAttempts < MAX_RECONNECT) {
+            reconnectAttempts++;
+            const delay = BASE_DELAY * Math.pow(2, reconnectAttempts - 1);
+            console.log(`[SessionGuard] 🔄 Reconectando session channel (${reconnectAttempts}/${MAX_RECONNECT}) em ${delay}ms`);
+            if (reconnectTimer) clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(connectSessionChannel, delay);
+          }
+        });
+    };
+
+    connectSessionChannel();
 
     return () => {
-      supabase.removeChannel(realtimeChannel);
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (realtimeChannel) supabase.removeChannel(realtimeChannel);
     };
   }, [user, handleDeviceRevocation, signOut]);
 

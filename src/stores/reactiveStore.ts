@@ -621,11 +621,15 @@ export const useReactiveStore = create<ReactiveStore>()(
       }
     },
 
-    // Subscrever a mudanças em tempo real
+    // Subscrever a mudanças em tempo real (com retry para CHANNEL_ERROR)
     subscribeRealtime: () => {
-      const channels: any[] = [];
+      let mainChannel: any = null;
       let debounceTimer: NodeJS.Timeout | null = null;
       let externalTimer: NodeJS.Timeout | null = null;
+      let reconnectTimer: NodeJS.Timeout | null = null;
+      let reconnectAttempts = 0;
+      const MAX_RECONNECT_ATTEMPTS = 5;
+      const BASE_RECONNECT_DELAY = 2000;
       
       const debouncedFetch = () => {
         if (debounceTimer) clearTimeout(debounceTimer);
@@ -634,29 +638,57 @@ export const useReactiveStore = create<ReactiveStore>()(
         }, 150); // 150ms debounce para latência < 300ms
       };
 
-      // Canal único para todas as tabelas (mais eficiente)
-      const mainChannel = supabase
-        .channel('reactive-store-v3')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'entradas' }, debouncedFetch)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'contas_pagar' }, debouncedFetch)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'contas_receber' }, debouncedFetch)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_extra_expenses' }, debouncedFetch)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'company_extra_expenses' }, debouncedFetch)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'company_fixed_expenses' }, debouncedFetch)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, debouncedFetch)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, debouncedFetch)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'affiliates' }, debouncedFetch)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_tasks' }, debouncedFetch)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'transacoes_hotmart_completo' }, debouncedFetch)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'comissoes' }, debouncedFetch)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_leads' }, debouncedFetch)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'nps_responses' }, debouncedFetch)
-        .subscribe((status) => {
-          console.log('[ReactiveStore] Realtime status:', status);
-          get().setConnected(status === 'SUBSCRIBED');
-        });
-      
-      channels.push(mainChannel);
+      const connectToRealtime = () => {
+        // Limpar canal existente se houver
+        if (mainChannel) {
+          supabase.removeChannel(mainChannel);
+        }
+
+        // Canal único para todas as tabelas (mais eficiente)
+        mainChannel = supabase
+          .channel('reactive-store-v3')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'entradas' }, debouncedFetch)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'contas_pagar' }, debouncedFetch)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'contas_receber' }, debouncedFetch)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_extra_expenses' }, debouncedFetch)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'company_extra_expenses' }, debouncedFetch)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'company_fixed_expenses' }, debouncedFetch)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, debouncedFetch)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, debouncedFetch)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'affiliates' }, debouncedFetch)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_tasks' }, debouncedFetch)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'transacoes_hotmart_completo' }, debouncedFetch)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'comissoes' }, debouncedFetch)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'whatsapp_leads' }, debouncedFetch)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'nps_responses' }, debouncedFetch)
+          .subscribe((status) => {
+            console.log('[ReactiveStore] Realtime status:', status);
+            
+            if (status === 'SUBSCRIBED') {
+              get().setConnected(true);
+              reconnectAttempts = 0; // Reset contador de reconexão
+            } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+              get().setConnected(false);
+              
+              // Tentar reconectar com backoff exponencial
+              if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                reconnectAttempts++;
+                const delay = BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts - 1);
+                console.log(`[ReactiveStore] 🔄 Tentando reconectar (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}) em ${delay}ms`);
+                
+                if (reconnectTimer) clearTimeout(reconnectTimer);
+                reconnectTimer = setTimeout(() => {
+                  connectToRealtime();
+                }, delay);
+              } else {
+                console.warn('[ReactiveStore] ⚠️ Máximo de reconexões atingido. Continuando sem Realtime.');
+              }
+            }
+          });
+      };
+
+      // Iniciar conexão
+      connectToRealtime();
 
       // Sync externo a cada 10s (redes sociais e integrações)
       externalTimer = setInterval(() => {
@@ -668,7 +700,8 @@ export const useReactiveStore = create<ReactiveStore>()(
       return () => {
         if (debounceTimer) clearTimeout(debounceTimer);
         if (externalTimer) clearInterval(externalTimer);
-        channels.forEach(ch => supabase.removeChannel(ch));
+        if (reconnectTimer) clearTimeout(reconnectTimer);
+        if (mainChannel) supabase.removeChannel(mainChannel);
       };
     },
 

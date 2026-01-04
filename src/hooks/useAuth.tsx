@@ -342,58 +342,80 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ============================================
   // 🔥 DOGMA SUPREMO: LISTENER REALTIME PARA LOGOUT FORÇADO
-  // Quando usuário é DELETADO, recebe broadcast e faz logout IMEDIATO
+  // Quando usuário é DELETADO, recebe broadcast e faz logout IMEDIATO (com retry)
   // ============================================
   useEffect(() => {
     if (!user?.id) return;
 
-    console.log('[AUTH][REALTIME] 📡 Inscrevendo no canal force-logout...');
+    let channel: any = null;
+    let reconnectTimer: NodeJS.Timeout | null = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT = 5;
+    const BASE_DELAY = 2000;
 
-    const channel = supabase.channel('force-logout')
-      .on('broadcast', { event: 'user-deleted' }, async (payload) => {
-        const { userId, email, reason } = payload.payload as { 
-          userId: string; 
-          email: string; 
-          reason: string;
-        };
+    const connectForceLogout = () => {
+      if (channel) supabase.removeChannel(channel);
 
-        console.log('[AUTH][REALTIME] 🔥 Evento user-deleted recebido:', { userId, email });
+      console.log('[AUTH][REALTIME] 📡 Inscrevendo no canal force-logout...');
 
-        // Verificar se o broadcast é para ESTE usuário
-        if (userId === user.id || email?.toLowerCase() === user.email?.toLowerCase()) {
-          console.error('[AUTH][REALTIME] 💀 ESTE USUÁRIO FOI DELETADO! Forçando logout...');
-          
-          // 1. Limpar TUDO do localStorage
-          const keysToRemove = [
-            'matriz_session_token',
-            'matriz_last_heartbeat',
-            'matriz_device_fingerprint',
-            'matriz_trusted_device',
-            'sb-fyikfsasudgzsjmumdlw-auth-token',
-          ];
-          keysToRemove.forEach(key => localStorage.removeItem(key));
-          
-          // 2. Limpar sessionStorage
-          sessionStorage.clear();
-          
-          // 3. Parar heartbeat
-          stopHeartbeatRef.current();
-          
-          // 4. Mostrar mensagem antes de fazer logout
-          alert(`Sua conta foi removida do sistema.\nMotivo: ${reason || 'Exclusão administrativa'}`);
-          
-          // 5. Signout e redirect
-          await supabase.auth.signOut();
-          window.location.replace('/auth?deleted=true');
-        }
-      })
-      .subscribe((status) => {
-        console.log('[AUTH][REALTIME] Status do canal force-logout:', status);
-      });
+      channel = supabase.channel('force-logout')
+        .on('broadcast', { event: 'user-deleted' }, async (payload) => {
+          const { userId, email, reason } = payload.payload as { 
+            userId: string; 
+            email: string; 
+            reason: string;
+          };
+
+          console.log('[AUTH][REALTIME] 🔥 Evento user-deleted recebido:', { userId, email });
+
+          // Verificar se o broadcast é para ESTE usuário
+          if (userId === user.id || email?.toLowerCase() === user.email?.toLowerCase()) {
+            console.error('[AUTH][REALTIME] 💀 ESTE USUÁRIO FOI DELETADO! Forçando logout...');
+            
+            // 1. Limpar TUDO do localStorage
+            const keysToRemove = [
+              'matriz_session_token',
+              'matriz_last_heartbeat',
+              'matriz_device_fingerprint',
+              'matriz_trusted_device',
+              'sb-fyikfsasudgzsjmumdlw-auth-token',
+            ];
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+            
+            // 2. Limpar sessionStorage
+            sessionStorage.clear();
+            
+            // 3. Parar heartbeat
+            stopHeartbeatRef.current();
+            
+            // 4. Mostrar mensagem antes de fazer logout
+            alert(`Sua conta foi removida do sistema.\nMotivo: ${reason || 'Exclusão administrativa'}`);
+            
+            // 5. Signout e redirect
+            await supabase.auth.signOut();
+            window.location.replace('/auth?deleted=true');
+          }
+        })
+        .subscribe((status) => {
+          console.log('[AUTH][REALTIME] Status do canal force-logout:', status);
+          if (status === 'SUBSCRIBED') {
+            reconnectAttempts = 0;
+          } else if (status === 'CHANNEL_ERROR' && reconnectAttempts < MAX_RECONNECT) {
+            reconnectAttempts++;
+            const delay = BASE_DELAY * Math.pow(2, reconnectAttempts - 1);
+            console.log(`[AUTH][REALTIME] 🔄 Reconectando force-logout (${reconnectAttempts}/${MAX_RECONNECT}) em ${delay}ms`);
+            if (reconnectTimer) clearTimeout(reconnectTimer);
+            reconnectTimer = setTimeout(connectForceLogout, delay);
+          }
+        });
+    };
+
+    connectForceLogout();
 
     return () => {
       console.log('[AUTH][REALTIME] 🔌 Desconectando do canal force-logout');
-      supabase.removeChannel(channel);
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (channel) supabase.removeChannel(channel);
     };
   }, [user?.id, user?.email]);
 
