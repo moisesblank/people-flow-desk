@@ -79,7 +79,7 @@ interface Course {
 // HOOKS
 // ============================================
 
-// Buscar TODOS os módulos com contagem de aulas
+// Buscar TODOS os módulos com contagem de aulas (com batch loading para >1000 aulas)
 function useAllModules() {
   return useQuery({
     queryKey: ['gestao-all-modules'],
@@ -96,16 +96,34 @@ function useAllModules() {
       
       if (error) throw error;
 
-      // Buscar contagem de aulas por módulo
-      const { data: lessonCounts, error: countError } = await supabase
-        .from('lessons')
-        .select('module_id, is_published');
-      
-      if (countError) throw countError;
+      // Buscar contagem de aulas por módulo EM LOTES (limite 1000 por query)
+      const BATCH_SIZE = 1000;
+      let allLessons: { module_id: string; is_published: boolean }[] = [];
+      let offset = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const { data: batch, error: batchError } = await supabase
+          .from('lessons')
+          .select('module_id, is_published')
+          .range(offset, offset + BATCH_SIZE - 1);
+        
+        if (batchError) throw batchError;
+        
+        if (batch && batch.length > 0) {
+          allLessons = [...allLessons, ...batch];
+          offset += BATCH_SIZE;
+          hasMore = batch.length === BATCH_SIZE;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      console.log(`[ModulosGlobalManager] Total aulas carregadas: ${allLessons.length}`);
 
       // Agregar contagens
       const countMap = new Map<string, { total: number; published: number }>();
-      (lessonCounts || []).forEach(l => {
+      allLessons.forEach(l => {
         const curr = countMap.get(l.module_id) || { total: 0, published: 0 };
         curr.total++;
         if (l.is_published) curr.published++;
