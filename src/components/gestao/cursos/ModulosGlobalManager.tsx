@@ -645,9 +645,9 @@ export function ModulosGlobalManager() {
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="p-0">
-                  <ScrollArea className="max-h-[600px]">
-                    <div className="p-4 space-y-4">
+                <CardContent className="p-0 overflow-hidden">
+                  <ScrollArea className="h-[500px]">
+                    <div className="p-4 space-y-4 pb-6">
                       {subcategoryGroups.map(({ subcategory, modules: groupModules }, groupIdx) => (
                         <div key={subcategory || 'default'} className="space-y-2">
                           {/* Subcategory Header */}
