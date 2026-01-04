@@ -326,6 +326,7 @@ export function BulkOrganizationImportDialog({ open, onClose }: BulkOrganization
   };
 
   // Get or create module by name and course
+  // CRITICAL: Uses 'modules' table (FK of lessons.module_id), NOT 'areas' table
   const getOrCreateModule = async (
     moduleName: string, 
     courseId: string, 
@@ -338,11 +339,11 @@ export function BulkOrganizationImportDialog({ open, onClose }: BulkOrganization
       return moduleCache.get(cacheKey)!;
     }
 
-    // Try to find existing module
+    // Try to find existing module in 'modules' table (has 'title', not 'name')
     const { data: existing } = await supabase
-      .from('areas')
+      .from('modules')
       .select('id')
-      .eq('name', moduleName)
+      .eq('title', moduleName)
       .eq('course_id', courseId)
       .single();
 
@@ -351,14 +352,15 @@ export function BulkOrganizationImportDialog({ open, onClose }: BulkOrganization
       return existing.id;
     }
 
-    // Create new module
+    // Create new module in 'modules' table
     const { data: created, error } = await supabase
-      .from('areas')
+      .from('modules')
       .insert({
-        name: moduleName,
+        title: moduleName,
         course_id: courseId,
         position: moduleOrder,
-        is_active: true
+        is_published: true,
+        status: 'active'
       })
       .select('id')
       .single();
