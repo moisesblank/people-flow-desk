@@ -209,7 +209,9 @@ export function LegacyQRImportDialog({ open, onClose, modules }: LegacyQRImportD
     setImportProgress(0);
 
     const results: ImportResult[] = [];
-    const defaultModuleId = modules[0]?.id;
+    // CRITICAL: NULL is now allowed for module_id (QR Legacy import strategy)
+    // Lessons can be organized later via management UI
+    const defaultModuleId = modules[0]?.id || null;
 
     for (let i = 0; i < parsedData.length; i++) {
       const record = parsedData[i];
