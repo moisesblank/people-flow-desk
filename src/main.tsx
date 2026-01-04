@@ -20,12 +20,19 @@ interface PerformanceEventTiming extends PerformanceEntry {
 }
 
 import { createRoot } from "react-dom/client";
-import App from "./App.tsx";
+// P0: App importado de forma dinâmica para não quebrar o bootstrap
+type AppModule = { default: React.ComponentType };
 import "./index.css";
 import { initGlobalErrorCapture } from "@/hooks/useSystemLogs";
 
 // 🚨 GLOBAL ERROR CAPTURE - Captura todos os erros do sistema
-initGlobalErrorCapture();
+// REGRA P0: nunca pode derrubar o bootstrap. Se falhar, segue sem logger.
+try {
+  initGlobalErrorCapture();
+} catch (err) {
+  // não usar console.error (pode estar interceptado em cenários parciais)
+  console.log('[SystemLog] initGlobalErrorCapture falhou (ignorado):', (err as Error)?.message || String(err));
+}
 
 // ============================================
 // 🔁 SPA DEEP LINK FIX (P0 - zero tela preta)
@@ -62,7 +69,33 @@ if (typeof window !== "undefined") {
 // 🚀 CRITICAL: Render React imediatamente (TTI critical path)
 const rootElement = document.getElementById("root");
 if (rootElement) {
-  createRoot(rootElement).render(<App />);
+  (async () => {
+    try {
+      const mod = (await import('./App.tsx')) as unknown as AppModule;
+      const App = mod.default;
+      createRoot(rootElement).render(<App />);
+
+      // ✅ Bootstrap status: esconder assim que o React montou
+      try {
+        const bs = document.getElementById('bootstrap-status');
+        if (bs) bs.style.display = 'none';
+      } catch {
+        // silencioso
+      }
+    } catch (err) {
+      // Sem overlay: apenas deixa evidência no bootstrap-status
+      try {
+        const bs = document.getElementById('bootstrap-status');
+        if (bs) {
+          bs.style.display = 'block';
+          bs.textContent = `Falha ao iniciar a interface: ${(err as Error)?.message || String(err)}`;
+        }
+      } catch {
+        // silencioso
+      }
+      console.log('[P0] Falha ao importar App.tsx (bootstrap continua):', (err as Error)?.message || String(err));
+    }
+  })();
 
   // ✅ RECOVERY MANUAL ABSOLUTO (NÃO-BLOQUEANTE)
   // Se o app não montar, adiciona APENAS um botão fixo para reload manual.

@@ -8,6 +8,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import "@/styles/performance.css";
+import { QueryClient } from "@tanstack/react-query";
 import { BrowserRouter, Routes } from "react-router-dom";
 import { VisualEditMode } from "@/components/editor/VisualEditMode";
 // SessionTracker REMOVIDO - heartbeat já existe em useAuth (DOGMA I)
@@ -54,7 +55,16 @@ const LazyNavigationGuard = lazy(() => import("@/components/admin/MasterModeNavi
 const LazyRealtimeEditOverlay = lazy(() => import("@/components/admin/RealtimeEditOverlay").then(m => ({ default: m.RealtimeEditOverlay })));
 
 // ⚡ QueryClient Sagrado
-const queryClient = createSacredQueryClient();
+// P0: nunca pode quebrar o bootstrap. Se falhar, usa client básico.
+const queryClient = (() => {
+  try {
+    return createSacredQueryClient();
+  } catch (err) {
+    console.warn('[P0] createSacredQueryClient falhou — usando QueryClient padrão:', (err as Error)?.message || String(err));
+    return new QueryClient();
+  }
+})();
+
 
 // Listener global + prefetch
 if (typeof window !== 'undefined') {
