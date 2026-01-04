@@ -78,7 +78,7 @@ serve(async (req) => {
       // Buscar dados do usuário para marca d'água
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('nome_completo, cpf')
+        .select('nome, cpf')
         .eq('id', user.id)
         .single();
 
@@ -88,7 +88,7 @@ serve(async (req) => {
           success: true,
           signedUrl: signedData,
           watermark: {
-            nome: profileData?.nome_completo || user.email?.split('@')[0] || 'Usuário',
+            nome: profileData?.nome || user.email?.split('@')[0] || 'Usuário',
             cpf: profileData?.cpf || null,
             email: user.email
           }
