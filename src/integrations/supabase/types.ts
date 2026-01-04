@@ -17975,6 +17975,17 @@ export type Database = {
           unique_users: number
         }[]
       }
+      get_videoaulas_stats: {
+        Args: never
+        Returns: {
+          aulas_panda: number
+          aulas_publicadas: number
+          aulas_youtube: number
+          total_aulas: number
+          total_minutes: number
+          total_views: number
+        }[]
+      }
       grant_beta_access: {
         Args: { _days?: number; _user_id: string }
         Returns: Json
