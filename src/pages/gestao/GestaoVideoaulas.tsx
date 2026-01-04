@@ -56,6 +56,7 @@ interface Lesson {
   likes_count: number;
   module_id: string;
   area_id: string | null;
+  legacy_qr_id: number | null;
   created_at: string;
   updated_at: string;
   // Joined
@@ -193,6 +194,29 @@ export default function GestaoVideoaulas() {
   const { data: statsData, refetch: refetchStats } = useVideoaulasStats();
   const { data: modules } = useModules();
   const { data: areas } = useAreas();
+
+  // ============================================
+  // AUDIT LOG F: Frontend Rendering Diagnostics
+  // ============================================
+  useEffect(() => {
+    if (lessons && lessons.length > 0) {
+      const sample = lessons[0];
+      console.log('[AUDIT-F] Lessons loaded:', {
+        count: lessons.length,
+        first_lesson: {
+          id: sample.id,
+          title: sample.title,
+          provider: sample.video_provider,
+          legacy_qr_id: sample.legacy_qr_id,
+          module_id: sample.module_id,
+          youtube_id: sample.youtube_video_id,
+          panda_id: sample.panda_video_id
+        }
+      });
+    } else if (!isLoading) {
+      console.warn('[AUDIT-F] ⚠️ No lessons loaded!');
+    }
+  }, [lessons, isLoading]);
 
   // ============================================
   // REALTIME: Sincronização em tempo real

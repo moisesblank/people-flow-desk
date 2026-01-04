@@ -3,7 +3,7 @@
 // Import CSV/JSON files with legacy QR mappings
 // ============================================
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, forwardRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -45,7 +45,8 @@ interface LegacyQRImportDialogProps {
   modules: { id: string; title: string }[];
 }
 
-export function LegacyQRImportDialog({ open, onClose, modules }: LegacyQRImportDialogProps) {
+export const LegacyQRImportDialog = forwardRef<HTMLDivElement, LegacyQRImportDialogProps>(
+  function LegacyQRImportDialog({ open, onClose, modules }, _ref) {
   const queryClient = useQueryClient();
   const [file, setFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ImportRecord[]>([]);
@@ -533,4 +534,6 @@ export function LegacyQRImportDialog({ open, onClose, modules }: LegacyQRImportD
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+LegacyQRImportDialog.displayName = "LegacyQRImportDialog";
