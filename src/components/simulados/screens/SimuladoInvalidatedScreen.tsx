@@ -3,13 +3,17 @@
  * Constituição SYNAPSE Ω v10.0
  * 
  * Estado: Tentativa invalidada (Hard Mode)
- * Ação: Exibir motivo e opções
+ * Ação: Exibir motivo e opções, incluindo contestação
  */
 
-import React from "react";
-import { XCircle, AlertTriangle, RotateCcw, ArrowLeft } from "lucide-react";
+import React, { useState } from "react";
+import { 
+  XCircle, AlertTriangle, RotateCcw, ArrowLeft,
+  MessageCircle, FileQuestion, ExternalLink
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SimuladoAttempt, Simulado } from "@/components/simulados/types";
+import { SimuladoDisputeModal } from "./SimuladoDisputeModal";
 
 interface SimuladoInvalidatedScreenProps {
   simulado: Simulado;
@@ -26,8 +30,10 @@ export function SimuladoInvalidatedScreen({
   onExit,
   canRetry = true,
 }: SimuladoInvalidatedScreenProps) {
+  const [showDispute, setShowDispute] = useState(false);
   const reason = attempt.invalidation_reason || "UNKNOWN";
   const reasonInfo = getReasonInfo(reason);
+  const supportEmail = "suporte@moisesmedeiros.com.br";
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
@@ -73,27 +79,85 @@ export function SimuladoInvalidatedScreen({
       </div>
 
       {/* Ações */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
         {canRetry && onRetry && (
           <Button onClick={onRetry} variant="outline">
             <RotateCcw className="h-4 w-4 mr-2" />
             Tentar Novamente
           </Button>
         )}
+        <Button onClick={() => setShowDispute(true)} variant="destructive">
+          <FileQuestion className="h-4 w-4 mr-2" />
+          Contestar
+        </Button>
         {onExit && (
           <Button onClick={onExit} variant="ghost">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar aos Simulados
+            Voltar
           </Button>
         )}
       </div>
 
+      {/* Suporte */}
+      <div className="text-center space-y-2 mb-6">
+        <p className="text-xs text-muted-foreground">
+          Precisa de ajuda? Entre em contato:
+        </p>
+        <a
+          href={`mailto:${supportEmail}?subject=Contestação Simulado: ${simulado.title}`}
+          className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+        >
+          <MessageCircle className="h-4 w-4" />
+          {supportEmail}
+          <ExternalLink className="h-3 w-3" />
+        </a>
+      </div>
+
       {/* Aviso */}
       {canRetry && (
-        <p className="text-xs text-muted-foreground mt-8 max-w-md">
+        <p className="text-xs text-muted-foreground mt-4 max-w-md">
           Novas tentativas não contarão para o ranking, mas você pode praticar à vontade.
         </p>
       )}
+
+      {/* FAQ */}
+      <div className="mt-8 max-w-lg w-full text-left">
+        <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+          <FileQuestion className="h-4 w-4" />
+          Perguntas Frequentes
+        </h3>
+        <div className="space-y-3 text-xs text-muted-foreground">
+          <details className="bg-card/50 rounded-lg p-3">
+            <summary className="cursor-pointer font-medium">
+              Por que minha tentativa foi invalidada?
+            </summary>
+            <p className="mt-2">
+              O Modo Hard monitora trocas de aba, câmera e outras atividades. 
+              Violar as regras resulta em invalidação automática para garantir 
+              a integridade do simulado.
+            </p>
+          </details>
+
+          <details className="bg-card/50 rounded-lg p-3">
+            <summary className="cursor-pointer font-medium">
+              Como funciona a contestação?
+            </summary>
+            <p className="mt-2">
+              Ao clicar em "Contestar", você abre um chamado que será analisado 
+              pela coordenação. Forneça detalhes sobre o que aconteceu.
+            </p>
+          </details>
+        </div>
+      </div>
+
+      {/* Modal de contestação */}
+      <SimuladoDisputeModal
+        open={showDispute}
+        onOpenChange={setShowDispute}
+        simuladoId={simulado.id}
+        attemptId={attempt.id}
+        simuladoTitle={simulado.title}
+      />
     </div>
   );
 }

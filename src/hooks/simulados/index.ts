@@ -44,3 +44,17 @@ export { useSimuladoLock } from "./useSimuladoLock";
 export { useSimuladoNavBlock } from "./useSimuladoNavBlock";
 export { useSimuladoMultiTab } from "./useSimuladoMultiTab";
 export { useSimuladoLogger } from "./useSimuladoLogger";
+
+// Hooks de Go-Live (Fase Final)
+export { useSimuladoConsent } from "./useSimuladoConsent";
+export { 
+  useSimuladoFeatureFlags, 
+  useSimuladoFlag,
+  SIMULADO_FLAGS 
+} from "./useSimuladoFeatureFlags";
+export type { SimuladoFeatureFlag } from "./useSimuladoFeatureFlags";
+export { 
+  useSimuladoAudit, 
+  useRankingSnapshot, 
+  useRankingDispute 
+} from "./useSimuladoAudit";
