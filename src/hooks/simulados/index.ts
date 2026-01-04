@@ -38,3 +38,9 @@ export { useSimuladoState } from "./useSimuladoState";
 // Hook de listagem
 export { useSimuladosList, useSimuladoDetail } from "./useSimuladosList";
 export type { SimuladoListItem, SimuladosListData } from "./useSimuladosList";
+
+// Hooks de segurança e proteção (Fase 4)
+export { useSimuladoLock } from "./useSimuladoLock";
+export { useSimuladoNavBlock } from "./useSimuladoNavBlock";
+export { useSimuladoMultiTab } from "./useSimuladoMultiTab";
+export { useSimuladoLogger } from "./useSimuladoLogger";
