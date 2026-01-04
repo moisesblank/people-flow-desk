@@ -38,6 +38,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { LegacyQRImportDialog } from "@/components/gestao/videoaulas/LegacyQRImportDialog";
 import { BulkOrganizationImportDialog } from "@/components/gestao/videoaulas/BulkOrganizationImportDialog";
 import { VideoLinkImportDialog } from "@/components/gestao/videoaulas/VideoLinkImportDialog";
+import { LessonFullConfigDialog } from "@/components/gestao/videoaulas/LessonFullConfigDialog";
 
 type VideoProvider = 'panda' | 'youtube' | 'vimeo' | 'upload';
 
@@ -195,6 +196,9 @@ export default function GestaoVideoaulas() {
   
   // 🎬 Modal de preview de vídeo
   const [previewLesson, setPreviewLesson] = useState<Lesson | null>(null);
+  
+  // 🎛️ Modal de configuração completa
+  const [configLesson, setConfigLesson] = useState<Lesson | null>(null);
 
   const { data: lessons, isLoading, refetch } = useVideoaulas();
   const { data: statsData, refetch: refetchStats } = useVideoaulasStats();
@@ -962,6 +966,11 @@ export default function GestaoVideoaulas() {
                             Copiar ID
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setConfigLesson(lesson)}>
+                            <Settings2 className="w-4 h-4 mr-2" />
+                            Configurar Aula
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem 
                             className="text-destructive"
                             onClick={() => {
@@ -1029,8 +1038,11 @@ export default function GestaoVideoaulas() {
                       <Button size="sm" variant="ghost" onClick={() => setPreviewLesson(lesson)} title="Assistir vídeo">
                         <Play className="w-4 h-4 text-primary" />
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setEditingLesson(lesson)}>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingLesson(lesson)} title="Editar">
                         <Edit2 className="w-4 h-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => setConfigLesson(lesson)} title="Configurar">
+                        <Settings2 className="w-4 h-4 text-amber-500" />
                       </Button>
                       <Button 
                         size="sm" 
@@ -1039,6 +1051,7 @@ export default function GestaoVideoaulas() {
                         onClick={() => {
                           if (confirm("Excluir?")) deleteMutation.mutate(lesson.id);
                         }}
+                        title="Excluir"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -1143,6 +1156,13 @@ export default function GestaoVideoaulas() {
       <BulkOrganizationImportDialog
         open={isBulkImportOpen}
         onClose={() => setIsBulkImportOpen(false)}
+      />
+
+      {/* 🎛️ Modal de Configuração Completa da Aula */}
+      <LessonFullConfigDialog
+        lesson={configLesson}
+        open={!!configLesson}
+        onOpenChange={(open) => !open && setConfigLesson(null)}
       />
     </div>
   );
