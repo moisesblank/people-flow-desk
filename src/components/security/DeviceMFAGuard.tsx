@@ -7,6 +7,7 @@
 
 import { ReactNode, useState, useEffect } from 'react';
 import { useDeviceMFAGuard } from '@/hooks/useDeviceMFAGuard';
+import { useAuth } from '@/hooks/useAuth';
 import { MFAActionModal } from './MFAActionModal';
 import { Shield, Smartphone, Loader2, Lock, Fingerprint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ interface DeviceMFAGuardProps {
 }
 
 export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
+  const { user } = useAuth();
   const { 
     isChecking, 
     isVerified, 
@@ -62,7 +64,13 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
     }
   };
 
-  // Loading state
+  // 🌐 BYPASS IMEDIATO para usuários não autenticados (rotas públicas)
+  // Isso evita mostrar loading state para rotas como /qr, /auth, etc.
+  if (!user) {
+    return <>{children}</>;
+  }
+
+  // Loading state (apenas para usuários autenticados)
   if (isChecking) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
