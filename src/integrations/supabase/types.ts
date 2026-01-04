@@ -6298,7 +6298,7 @@ export type Database = {
           likes_count: number | null
           material_nome: string | null
           material_url: string | null
-          module_id: string
+          module_id: string | null
           panda_video_id: string | null
           position: number | null
           status: string | null
@@ -6327,7 +6327,7 @@ export type Database = {
           likes_count?: number | null
           material_nome?: string | null
           material_url?: string | null
-          module_id: string
+          module_id?: string | null
           panda_video_id?: string | null
           position?: number | null
           status?: string | null
@@ -6356,7 +6356,7 @@ export type Database = {
           likes_count?: number | null
           material_nome?: string | null
           material_url?: string | null
-          module_id?: string
+          module_id?: string | null
           panda_video_id?: string | null
           position?: number | null
           status?: string | null
