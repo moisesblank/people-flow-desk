@@ -34,3 +34,7 @@ export type { AntiCheatState, AntiCheatViolation } from "./useAntiCheat";
 
 // Hook de estado
 export { useSimuladoState } from "./useSimuladoState";
+
+// Hook de listagem
+export { useSimuladosList, useSimuladoDetail } from "./useSimuladosList";
+export type { SimuladoListItem, SimuladosListData } from "./useSimuladosList";

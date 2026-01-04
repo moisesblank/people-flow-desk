@@ -1,95 +1,90 @@
-// ============================================
-// CENTRAL DO ALUNO - SIMULADOS ENEM
-// Química ENEM - Prof. Moisés Medeiros
-// Integrado com QUESTION_DOMAIN: SIMULADOS
-// ============================================
+/**
+ * 🎯 CENTRAL DO ALUNO — SIMULADOS
+ * Constituição SYNAPSE Ω v10.0
+ * 
+ * Integração COMPLETA com SimuladoPlayer e dados reais.
+ * Fase 4: Rotas/Integração
+ */
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Brain, Clock, Target, Trophy, Play, 
-  Calendar, BarChart2, CheckCircle2, Lock, FileQuestion, Zap
+  Calendar, CheckCircle2, Lock, FileText, Zap,
+  Shield, Camera, AlertTriangle, Timer
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
-import { supabase } from "@/integrations/supabase/client";
 import { LoadingState } from "@/components/LoadingState";
 import { cn } from "@/lib/utils";
-
-interface Simulado {
-  id: string;
-  titulo: string;
-  tipo: "completo" | "parcial" | "rapido";
-  questoes: number;
-  duracao: string;
-  dataLiberacao: string;
-  realizado: boolean;
-  nota?: number;
-  bloqueado: boolean;
-}
-
-// Mock data para simulados estruturados (será substituído por dados reais do banco)
-const simuladosMock: Simulado[] = [
-  { id: "1", titulo: "Simulado ENEM 2024 - Modelo 1", tipo: "completo", questoes: 45, duracao: "5h", dataLiberacao: "2024-01-15", realizado: true, nota: 780, bloqueado: false },
-  { id: "2", titulo: "Simulado ENEM 2024 - Modelo 2", tipo: "completo", questoes: 45, duracao: "5h", dataLiberacao: "2024-02-01", realizado: true, nota: 820, bloqueado: false },
-];
-
-const tipoConfig = {
-  completo: { label: "Completo", color: "bg-primary" },
-  parcial: { label: "Parcial", color: "bg-purple-500" },
-  rapido: { label: "Rápido", color: "bg-green-500" },
-};
+import { useSimuladosList, SimuladoListItem } from "@/hooks/simulados/useSimuladosList";
+import { SimuladoPlayer } from "@/components/simulados";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { calculatePercentage } from "@/components/simulados/types";
 
 export default function AlunoSimulados() {
   const { gpuAnimationProps } = useQuantumReactivity();
-  const [tab, setTab] = useState("questoes");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [tab, setTab] = useState("disponiveis");
+  
+  // Simulado ativo (do URL ou selecionado)
+  const activeSimuladoId = searchParams.get("s");
+  const [selectedSimuladoId, setSelectedSimuladoId] = useState<string | null>(activeSimuladoId);
+  
+  // Buscar simulados reais
+  const { data: simuladosData, isLoading, refetch } = useSimuladosList();
 
-  // QUESTION_DOMAIN: Buscar questões com tag SIMULADOS
-  const { data: simuladosQuestions, isLoading: isLoadingQuestions } = useQuery({
-    queryKey: ['aluno-questions', 'SIMULADOS'],
-    queryFn: async () => {
-      // ⚡ ESCALA 45K: Batching via range() para superar default 1000
-      const BATCH_SIZE = 1000;
-      const MAX = 45000;
-      let from = 0;
-      let all: any[] = [];
-
-      while (from < MAX) {
-        const to = Math.min(from + BATCH_SIZE - 1, MAX - 1);
-
-        const { data, error } = await supabase
-          .from('quiz_questions')
-          .select('id, question_text, difficulty, banca, ano, macro, micro, points, tags, is_active')
-          .contains('tags', ['SIMULADOS'])
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-          .range(from, to);
-
-        if (error) throw error;
-
-        const batch = data || [];
-        all = all.concat(batch);
-
-        if (batch.length < BATCH_SIZE) break;
-        from += BATCH_SIZE;
-      }
-
-      return all;
-    },
-    staleTime: 0,
-  });
-
-  const estatisticas = {
-    simuladosFeitos: 8,
-    mediaNotas: 756,
-    melhorNota: 820,
-    questoesSimulado: simuladosQuestions?.length || 0,
+  // Estatísticas calculadas
+  const stats = {
+    disponíveis: simuladosData?.available.length || 0,
+    realizados: simuladosData?.completed.length || 0,
+    emBreve: simuladosData?.upcoming.length || 0,
+    total: (simuladosData?.available.length || 0) + 
+           (simuladosData?.completed.length || 0) + 
+           (simuladosData?.upcoming.length || 0),
   };
+
+  // Handlers
+  const handleSelectSimulado = useCallback((id: string) => {
+    setSelectedSimuladoId(id);
+    setSearchParams({ s: id });
+  }, [setSearchParams]);
+
+  const handleCloseSimulado = useCallback(() => {
+    setSelectedSimuladoId(null);
+    setSearchParams({});
+    refetch(); // Atualizar lista após sair
+  }, [setSearchParams, refetch]);
+
+  const handleSimuladoComplete = useCallback(() => {
+    // Refetch para atualizar estatísticas
+    refetch();
+  }, [refetch]);
+
+  // Se há simulado ativo, mostrar player em fullscreen
+  if (selectedSimuladoId) {
+    return (
+      <Dialog open={true} onOpenChange={(open) => !open && handleCloseSimulado()}>
+        <DialogContent className="max-w-7xl w-full h-[95vh] p-0 overflow-hidden">
+          <SimuladoPlayer
+            simuladoId={selectedSimuladoId}
+            onComplete={handleSimuladoComplete}
+            onExit={handleCloseSimulado}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (isLoading) {
+    return <LoadingState message="Carregando simulados..." />;
+  }
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
@@ -98,14 +93,14 @@ export default function AlunoSimulados() {
         {...gpuAnimationProps.fadeUp}
         className="grid md:grid-cols-4 gap-4 will-change-transform transform-gpu"
       >
-        <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
+        <Card className="bg-gradient-to-br from-indigo-500/10 to-violet-500/10 border-indigo-500/20">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-blue-500/20">
-              <Brain className="w-5 h-5 text-blue-500" />
+            <div className="p-2 rounded-lg bg-indigo-500/20">
+              <FileText className="w-5 h-5 text-indigo-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{estatisticas.simuladosFeitos}</p>
-              <p className="text-xs text-muted-foreground">Simulados feitos</p>
+              <p className="text-2xl font-bold">{stats.disponíveis}</p>
+              <p className="text-xs text-muted-foreground">Disponíveis</p>
             </div>
           </CardContent>
         </Card>
@@ -113,11 +108,11 @@ export default function AlunoSimulados() {
         <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/20">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-2 rounded-lg bg-green-500/20">
-              <Target className="w-5 h-5 text-green-500" />
+              <CheckCircle2 className="w-5 h-5 text-green-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{estatisticas.mediaNotas}</p>
-              <p className="text-xs text-muted-foreground">Média TRI</p>
+              <p className="text-2xl font-bold">{stats.realizados}</p>
+              <p className="text-xs text-muted-foreground">Realizados</p>
             </div>
           </CardContent>
         </Card>
@@ -125,23 +120,45 @@ export default function AlunoSimulados() {
         <Card className="bg-gradient-to-br from-amber-500/10 to-yellow-500/10 border-amber-500/20">
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-2 rounded-lg bg-amber-500/20">
-              <Trophy className="w-5 h-5 text-amber-500" />
+              <Calendar className="w-5 h-5 text-amber-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{estatisticas.melhorNota}</p>
-              <p className="text-xs text-muted-foreground">Melhor nota</p>
+              <p className="text-2xl font-bold">{stats.emBreve}</p>
+              <p className="text-xs text-muted-foreground">Em breve</p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-red-500/10 to-orange-500/10 border-red-500/20">
+        <Card className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20">
           <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-red-500/20">
-              <FileQuestion className="w-5 h-5 text-red-500" />
+            <div className="p-2 rounded-lg bg-purple-500/20">
+              <Trophy className="w-5 h-5 text-purple-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{estatisticas.questoesSimulado}</p>
-              <p className="text-xs text-muted-foreground">Questões Simulado</p>
+              <p className="text-2xl font-bold">{stats.total}</p>
+              <p className="text-xs text-muted-foreground">Total</p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Banner XP */}
+      <motion.div {...gpuAnimationProps.fadeUp}>
+        <Card className="border-indigo-500/30 bg-gradient-to-r from-indigo-500/10 to-violet-500/10">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500">
+                <Zap className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-bold">Ganhe XP e suba no ranking!</h3>
+                <p className="text-sm text-muted-foreground">
+                  Cada questão correta vale pontos. Apenas a primeira tentativa pontua.
+                </p>
+              </div>
+              <Badge className="ml-auto bg-gradient-to-r from-indigo-500 to-violet-500 text-white border-0 px-4">
+                +10 XP/questão
+              </Badge>
             </div>
           </CardContent>
         </Card>
@@ -150,192 +167,360 @@ export default function AlunoSimulados() {
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="questoes" className="flex items-center gap-1">
-            <Zap className="h-3 w-3" />
-            Questões
+          <TabsTrigger value="disponiveis" className="flex items-center gap-1">
+            <Play className="h-3 w-3" />
+            Disponíveis ({stats.disponíveis})
           </TabsTrigger>
-          <TabsTrigger value="disponiveis">Simulados</TabsTrigger>
-          <TabsTrigger value="realizados">Realizados</TabsTrigger>
+          <TabsTrigger value="realizados" className="flex items-center gap-1">
+            <CheckCircle2 className="h-3 w-3" />
+            Realizados ({stats.realizados})
+          </TabsTrigger>
+          <TabsTrigger value="embreve" className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            Em Breve ({stats.emBreve})
+          </TabsTrigger>
         </TabsList>
 
-        {/* QUESTION_DOMAIN: Questões SIMULADOS */}
-        <TabsContent value="questoes" className="space-y-4 mt-6">
-          <Card className="border-red-500/30 bg-gradient-to-r from-red-500/5 to-transparent">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Badge className="bg-red-600 text-white">SIMULADOS</Badge>
-                Questões para Simulado
-                <Badge className="bg-amber-500 text-white ml-auto">
-                  <Trophy className="h-3 w-3 mr-1" />
-                  10 pts cada
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingQuestions ? (
-                <div className="flex items-center justify-center py-8">
-                  <LoadingState />
-                </div>
-              ) : simuladosQuestions && simuladosQuestions.length > 0 ? (
-                <div className="grid gap-3 max-h-[500px] overflow-y-auto pr-2">
-                  {simuladosQuestions.map((q: any, i: number) => (
-                    <motion.div 
-                      key={q.id}
-                      {...gpuAnimationProps.fadeUp}
-                      transition={{ ...(gpuAnimationProps.fadeUp.transition ?? {}), delay: i * 0.05 }}
-                      className="p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors will-change-transform transform-gpu"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm line-clamp-2 mb-2">{q.question_text?.substring(0, 180)}...</p>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge className={cn(
-                              "text-xs",
-                              q.difficulty === 'facil' && 'bg-green-500',
-                              q.difficulty === 'medio' && 'bg-yellow-500',
-                              q.difficulty === 'dificil' && 'bg-red-500',
-                            )}>
-                              {q.difficulty === 'facil' ? 'Fácil' : q.difficulty === 'medio' ? 'Médio' : 'Difícil'}
-                            </Badge>
-                            {q.banca && <Badge variant="outline" className="text-xs">{q.banca}</Badge>}
-                            {q.ano && <Badge variant="secondary" className="text-xs">{q.ano}</Badge>}
-                            {q.macro && <Badge variant="outline" className="text-xs">{q.macro}</Badge>}
-                          </div>
-                        </div>
-                        <Button size="sm" className="shrink-0">
-                          <Play className="h-3 w-3 mr-1" />
-                          Resolver
-                        </Button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <FileQuestion className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>Nenhuma questão de simulado disponível ainda.</p>
-                  <p className="text-sm mt-1">Em breve novas questões serão adicionadas!</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
+        {/* Simulados Disponíveis */}
         <TabsContent value="disponiveis" className="space-y-4 mt-6">
-          {simuladosMock.filter(s => !s.realizado).length > 0 ? (
-            simuladosMock.filter(s => !s.realizado).map((simulado, index) => (
-              <motion.div
-                key={simulado.id}
-                {...gpuAnimationProps.fadeUp}
-                transition={{ ...(gpuAnimationProps.fadeUp.transition ?? {}), delay: index * 0.1 }}
-                className="will-change-transform transform-gpu"
-              >
-                <Card className={`transition-all hover:shadow-lg ${simulado.bloqueado ? "opacity-60" : ""}`}>
-                  <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge className={tipoConfig[simulado.tipo].color}>
-                            {tipoConfig[simulado.tipo].label}
-                          </Badge>
-                          {simulado.bloqueado && (
-                            <Badge variant="secondary">
-                              <Lock className="w-3 h-3 mr-1" />
-                              Bloqueado
-                            </Badge>
-                          )}
-                        </div>
-                        <h3 className="text-lg font-semibold">{simulado.titulo}</h3>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Brain className="w-4 h-4" />
-                            {simulado.questoes} questões
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {simulado.duracao}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(simulado.dataLiberacao).toLocaleDateString("pt-BR")}
-                          </span>
-                        </div>
-                      </div>
-                      <Button size="lg" disabled={simulado.bloqueado}>
-                        <Play className="w-4 h-4 mr-2" />
-                        {simulado.bloqueado ? "Em breve" : "Iniciar Simulado"}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))
+          {simuladosData?.available.length === 0 ? (
+            <EmptyState 
+              icon={FileText}
+              title="Nenhum simulado disponível"
+              description="Novos simulados serão liberados em breve!"
+            />
           ) : (
-            <Card className="text-center py-8">
-              <CardContent>
-                <Brain className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground">Nenhum simulado disponível no momento.</p>
-              </CardContent>
-            </Card>
+            <div className="grid gap-4 md:grid-cols-2">
+              {simuladosData?.available.map((simulado, index) => (
+                <SimuladoCard
+                  key={simulado.id}
+                  simulado={simulado}
+                  onStart={() => handleSelectSimulado(simulado.id)}
+                  animationDelay={index * 0.05}
+                />
+              ))}
+            </div>
           )}
         </TabsContent>
 
+        {/* Simulados Realizados */}
         <TabsContent value="realizados" className="space-y-4 mt-6">
-          {simuladosMock.filter(s => s.realizado).length > 0 ? (
-            simuladosMock.filter(s => s.realizado).map((simulado, index) => (
-              <motion.div
-                key={simulado.id}
-                {...gpuAnimationProps.fadeUp}
-                transition={{ ...(gpuAnimationProps.fadeUp.transition ?? {}), delay: index * 0.1 }}
-                className="will-change-transform transform-gpu"
-              >
-                <Card className="border-l-4 border-l-green-500">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge className={tipoConfig[simulado.tipo].color}>
-                            {tipoConfig[simulado.tipo].label}
-                          </Badge>
-                          <Badge variant="outline" className="text-green-600 border-green-600">
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            Concluído
-                          </Badge>
-                        </div>
-                        <h3 className="text-lg font-semibold">{simulado.titulo}</h3>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Brain className="w-4 h-4" />
-                            {simulado.questoes} questões
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {simulado.duracao}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-4xl font-bold text-primary">{simulado.nota}</div>
-                        <p className="text-sm text-muted-foreground">Pontuação TRI</p>
-                      </div>
-                      <Button variant="outline">
-                        Ver Gabarito
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))
+          {simuladosData?.completed.length === 0 ? (
+            <EmptyState 
+              icon={CheckCircle2}
+              title="Nenhum simulado realizado"
+              description="Complete seu primeiro simulado para ver aqui!"
+            />
           ) : (
-            <Card className="text-center py-8">
-              <CardContent>
-                <CheckCircle2 className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground">Você ainda não completou nenhum simulado.</p>
-              </CardContent>
-            </Card>
+            <div className="grid gap-4 md:grid-cols-2">
+              {simuladosData?.completed.map((simulado, index) => (
+                <SimuladoCompletedCard
+                  key={simulado.id}
+                  simulado={simulado}
+                  onReview={() => handleSelectSimulado(simulado.id)}
+                  animationDelay={index * 0.05}
+                />
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Simulados Em Breve */}
+        <TabsContent value="embreve" className="space-y-4 mt-6">
+          {simuladosData?.upcoming.length === 0 ? (
+            <EmptyState 
+              icon={Calendar}
+              title="Nenhum simulado programado"
+              description="Fique atento às novidades!"
+            />
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {simuladosData?.upcoming.map((simulado, index) => (
+                <SimuladoUpcomingCard
+                  key={simulado.id}
+                  simulado={simulado}
+                  animationDelay={index * 0.05}
+                />
+              ))}
+            </div>
           )}
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// ============================================
+// COMPONENTES AUXILIARES
+// ============================================
+
+interface SimuladoCardProps {
+  simulado: SimuladoListItem;
+  onStart: () => void;
+  animationDelay?: number;
+}
+
+function SimuladoCard({ simulado, onStart, animationDelay = 0 }: SimuladoCardProps) {
+  const hasRunningAttempt = simulado.user_attempt?.status === "RUNNING";
+  const isRetake = simulado.user_attempt && !simulado.user_attempt.is_scored_for_ranking;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: animationDelay }}
+      className="will-change-transform transform-gpu"
+    >
+      <Card className={cn(
+        "transition-all hover:shadow-lg hover:border-indigo-500/30",
+        hasRunningAttempt && "border-amber-500/50"
+      )}>
+        <CardContent className="p-6">
+          <div className="flex flex-col gap-4">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  {simulado.is_hard_mode && (
+                    <Badge className="bg-red-600 text-white">
+                      <Shield className="w-3 h-3 mr-1" />
+                      Hard Mode
+                    </Badge>
+                  )}
+                  {simulado.requires_camera && (
+                    <Badge variant="outline" className="border-amber-500 text-amber-500">
+                      <Camera className="w-3 h-3 mr-1" />
+                      Câmera
+                    </Badge>
+                  )}
+                  {hasRunningAttempt && (
+                    <Badge className="bg-amber-500 text-white">
+                      <Timer className="w-3 h-3 mr-1" />
+                      Em andamento
+                    </Badge>
+                  )}
+                  {isRetake && (
+                    <Badge variant="outline" className="border-muted-foreground">
+                      Retake
+                    </Badge>
+                  )}
+                </div>
+                <h3 className="text-lg font-semibold">{simulado.title}</h3>
+                {simulado.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                    {simulado.description}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
+              <span className="flex items-center gap-1">
+                <Target className="w-4 h-4" />
+                {simulado.total_questions} questões
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                {simulado.duration_minutes} min
+              </span>
+              <span className="flex items-center gap-1">
+                <Trophy className="w-4 h-4" />
+                +{simulado.total_questions * simulado.points_per_question} XP
+              </span>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between pt-2">
+              {simulado.ends_at && (
+                <span className="text-xs text-muted-foreground">
+                  Até {format(new Date(simulado.ends_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                </span>
+              )}
+              <Button 
+                onClick={onStart}
+                className="ml-auto bg-gradient-to-r from-indigo-500 to-violet-500"
+              >
+                <Play className="w-4 h-4 mr-2" />
+                {hasRunningAttempt ? "Continuar" : "Iniciar"}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
+interface SimuladoCompletedCardProps {
+  simulado: SimuladoListItem;
+  onReview: () => void;
+  animationDelay?: number;
+}
+
+function SimuladoCompletedCard({ simulado, onReview, animationDelay = 0 }: SimuladoCompletedCardProps) {
+  const attempt = simulado.user_attempt;
+  const percentage = attempt 
+    ? calculatePercentage(attempt.correct_answers, simulado.total_questions) 
+    : 0;
+  const passed = percentage >= simulado.passing_score;
+  const isGabaritoReleased = simulado.results_released_at 
+    ? new Date() >= new Date(simulado.results_released_at)
+    : true;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: animationDelay }}
+      className="will-change-transform transform-gpu"
+    >
+      <Card className={cn(
+        "border-l-4",
+        passed ? "border-l-green-500" : "border-l-amber-500"
+      )}>
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row md:items-center gap-4">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                {passed ? (
+                  <Badge className="bg-green-500/20 text-green-500 border-green-500/30">
+                    <CheckCircle2 className="w-3 h-3 mr-1" />
+                    Aprovado
+                  </Badge>
+                ) : (
+                  <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30">
+                    <AlertTriangle className="w-3 h-3 mr-1" />
+                    Não atingiu meta
+                  </Badge>
+                )}
+                {!attempt?.is_scored_for_ranking && (
+                  <Badge variant="outline">Retake</Badge>
+                )}
+              </div>
+              <h3 className="text-lg font-semibold">{simulado.title}</h3>
+              <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Target className="w-4 h-4" />
+                  {attempt?.correct_answers}/{simulado.total_questions} acertos
+                </span>
+                <span className="flex items-center gap-1">
+                  <Trophy className="w-4 h-4" />
+                  {attempt?.score || 0} XP
+                </span>
+              </div>
+            </div>
+            
+            <div className="text-center shrink-0">
+              <div className={cn(
+                "text-4xl font-bold",
+                passed ? "text-green-500" : "text-amber-500"
+              )}>
+                {percentage}%
+              </div>
+              <p className="text-sm text-muted-foreground">Acertos</p>
+            </div>
+
+            <Button 
+              variant="outline" 
+              onClick={onReview}
+              disabled={!isGabaritoReleased}
+            >
+              {isGabaritoReleased ? "Ver Gabarito" : "Aguardando liberação"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
+interface SimuladoUpcomingCardProps {
+  simulado: SimuladoListItem;
+  animationDelay?: number;
+}
+
+function SimuladoUpcomingCard({ simulado, animationDelay = 0 }: SimuladoUpcomingCardProps) {
+  const startsAt = simulado.starts_at ? new Date(simulado.starts_at) : null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: animationDelay }}
+      className="will-change-transform transform-gpu"
+    >
+      <Card className="opacity-75">
+        <CardContent className="p-6">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="secondary">
+                    <Lock className="w-3 h-3 mr-1" />
+                    Em breve
+                  </Badge>
+                  {simulado.is_hard_mode && (
+                    <Badge className="bg-red-600/50 text-white">
+                      <Shield className="w-3 h-3 mr-1" />
+                      Hard Mode
+                    </Badge>
+                  )}
+                </div>
+                <h3 className="text-lg font-semibold">{simulado.title}</h3>
+                {simulado.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                    {simulado.description}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Target className="w-4 h-4" />
+                {simulado.total_questions} questões
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                {simulado.duration_minutes} min
+              </span>
+            </div>
+
+            {startsAt && (
+              <div className="flex items-center justify-between pt-2 border-t">
+                <div className="flex items-center gap-2 text-sm">
+                  <Calendar className="w-4 h-4 text-primary" />
+                  <span>
+                    Liberação: {format(startsAt, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                  </span>
+                </div>
+                <Button variant="outline" disabled>
+                  Aguardar
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  );
+}
+
+interface EmptyStateProps {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+}
+
+function EmptyState({ icon: Icon, title, description }: EmptyStateProps) {
+  return (
+    <Card className="text-center py-12">
+      <CardContent>
+        <Icon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold mb-2">{title}</h3>
+        <p className="text-muted-foreground">{description}</p>
+      </CardContent>
+    </Card>
   );
 }
