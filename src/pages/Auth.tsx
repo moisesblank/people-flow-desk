@@ -65,86 +65,26 @@ const ForcePasswordChange = lazy(() => import("@/components/auth/ForcePasswordCh
 // Cores: Vermelho/Azul heroico profundo
 // ============================================
 
-// Spider-Man Deep Space Background
+// Spider-Man Deep Space Background (STATIC - no animations per user request)
 function SpiderBackground() {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none auth-spider-bg">
-      {/* Spider Web Pattern Layer */}
-      <div className="absolute inset-0 spider-web-layer" />
-      
-      {/* City Stars - New York Night */}
-      {[...Array(60)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full spider-star"
-          style={{
-            width: `${1 + Math.random() * 2}px`,
-            height: `${1 + Math.random() * 2}px`,
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 60}%`,
-            background: '#fff',
-            animationDelay: `${Math.random() * 5}s`,
-            animationDuration: `${2 + Math.random() * 3}s`,
-          }}
-        />
-      ))}
-    </div>
+    <div 
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        background: 'linear-gradient(135deg, hsl(230 40% 6%) 0%, hsl(230 40% 3%) 100%)',
+      }}
+    />
   );
 }
 
-// Spider Eyes - Vigilant Orbs (Red Glows)
+// Spider Eyes - DISABLED per user request (no animated glows)
 function SpiderEyes() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Left Eye */}
-      <div 
-        className="absolute w-[500px] h-[400px] rounded-full spider-eye-left"
-        style={{
-          top: '10%',
-          left: '5%',
-          background: 'radial-gradient(ellipse, hsl(0 85% 45% / 0.25) 0%, hsl(0 85% 40% / 0.1) 40%, transparent 70%)',
-          filter: 'blur(50px)',
-        }}
-      />
-      {/* Right Eye */}
-      <div 
-        className="absolute w-[400px] h-[350px] rounded-full spider-eye-right"
-        style={{
-          bottom: '15%',
-          right: '8%',
-          background: 'radial-gradient(ellipse, hsl(220 80% 50% / 0.2) 0%, hsl(220 80% 40% / 0.08) 40%, transparent 70%)',
-          filter: 'blur(50px)',
-        }}
-      />
-    </div>
-  );
+  return null;
 }
 
-// Energy Veins - Power Lines (Red/Blue)
+// Energy Veins - DISABLED per user request (no animated lines)
 function SpiderVeins() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Red Power Vein */}
-      <div 
-        className="absolute h-[2px] w-1/2 spider-vein-red"
-        style={{ top: '30%' }}
-      />
-      {/* Blue Power Vein */}
-      <div 
-        className="absolute h-[2px] w-1/2 spider-vein-blue"
-        style={{ top: '70%' }}
-      />
-      {/* Diagonal Red */}
-      <div 
-        className="absolute h-[1px] w-3/4 spider-vein-red"
-        style={{ 
-          top: '50%', 
-          transform: 'rotate(-15deg)',
-          animationDelay: '2s',
-        }}
-      />
-    </div>
-  );
+  return null;
 }
 
 // Spider Card Frame - Tech Interface
