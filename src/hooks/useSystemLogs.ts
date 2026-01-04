@@ -54,6 +54,13 @@ let sessionId: string | null = null;
 
 // Raw fetch (antes do interceptor) para evitar loops recursivos ao logar
 let rawFetch: typeof window.fetch | null = null;
+// Raw console.error (antes de interceptors) para evitar loops durante fallback
+let rawConsoleError: typeof console.error | null = null;
+
+// Circuit breaker: se o endpoint de logs estiver indisponível, não derrubar a app
+let logSuppressedUntil = 0;
+let logFailStreak = 0;
+
 function getSessionId(): string {
   if (!sessionId) {
     sessionId = crypto.randomUUID();
@@ -74,6 +81,9 @@ export async function sendSystemLog(
     metadata?: Record<string, unknown>;
   } = {}
 ): Promise<void> {
+  // Fail-fast se o logger entrou em modo supresso (evita tela preta por loops)
+  if (Date.now() < logSuppressedUntil) return;
+
   try {
     const now = new Date();
     const deviceInfo = navigator.userAgent;
@@ -117,9 +127,25 @@ export async function sendSystemLog(
         p_device_info: deviceInfo,
       });
     }
+
+    // sucesso: reseta circuito
+    logFailStreak = 0;
   } catch (err) {
-    // Fallback final: log no console se tudo falhar
-    console.error('[SystemLog] Failed to send log:', err);
+    // Falha recorrente (ex: offline / endpoint fora): supressão progressiva
+    logFailStreak = Math.min(logFailStreak + 1, 10);
+    const backoffMs = Math.min(30_000, 500 * Math.pow(2, logFailStreak));
+    logSuppressedUntil = Date.now() + backoffMs;
+
+    // Fallback final: NUNCA use o console interceptado (pode reentrar em loop)
+    const safeConsoleError = rawConsoleError ?? console.error;
+    try {
+      safeConsoleError('[SystemLog] Failed to send log (suppressed):', {
+        message: (err as Error)?.message || String(err),
+        backoffMs,
+      });
+    } catch {
+      // silencioso
+    }
   }
 }
 
@@ -158,6 +184,20 @@ export function initGlobalErrorCapture(): void {
   rawFetch = window.fetch;
   const originalFetch = window.fetch;
   window.fetch = async (...args) => {
+    // Nunca interceptar o próprio pipeline de logs
+    try {
+      const url = typeof args[0] === 'string' ? args[0] : args[0].toString();
+      const headers = (args[1] as RequestInit | undefined)?.headers as any;
+      const isSystemLog =
+        url.includes('/functions/v1/log-writer') ||
+        (headers && (headers['X-System-Log'] === '1' || headers['x-system-log'] === '1'));
+      if (isSystemLog) {
+        return await originalFetch(...args);
+      }
+    } catch {
+      // se não der pra inspecionar, segue fluxo normal
+    }
+
     try {
       const response = await originalFetch(...args);
       if (!response.ok && response.status >= 400) {
@@ -177,7 +217,7 @@ export function initGlobalErrorCapture(): void {
           }
         );
       }
-      
+
       return response;
     } catch (err) {
       const url = typeof args[0] === 'string' ? args[0] : args[0].toString();
@@ -191,15 +231,17 @@ export function initGlobalErrorCapture(): void {
   };
 
   // Capturar erros do console
+  // Preserva o console.error original para fallback seguro dentro do logger
+  rawConsoleError = rawConsoleError ?? console.error;
   const originalConsoleError = console.error;
   console.error = (...args) => {
     originalConsoleError.apply(console, args);
-    
+
     // Filtrar logs do próprio sistema para evitar loop
-    const message = args.map(arg => 
-      typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-    ).join(' ');
-    
+    const message = args
+      .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg)))
+      .join(' ');
+
     if (!message.includes('[SystemLog]')) {
       sendSystemLog('error', 'console_error', message.slice(0, 1000), {
         source: 'console_interceptor',
