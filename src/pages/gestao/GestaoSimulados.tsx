@@ -46,6 +46,7 @@ import { SimuladoFeatureFlagsPanel } from '@/components/gestao/simulados/Simulad
 import { DisputesPanel } from '@/components/gestao/simulados/DisputesPanel';
 import { AlertsPanel } from '@/components/gestao/simulados/AlertsPanel';
 import { HealthCheckPanel } from '@/components/gestao/simulados/HealthCheckPanel';
+import { SimuladoQuestionSelector } from '@/components/gestao/simulados/SimuladoQuestionSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -688,73 +689,13 @@ function SimuladoForm({ formData, setFormData, questions, isLoadingQuestions }: 
       
       <Separator />
       
-      {/* Questões */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-medium flex items-center gap-2">
-            <FileQuestion className="h-4 w-4" />
-            Questões
-          </h3>
-          <Badge variant={formData.question_ids.length > 0 ? "default" : "destructive"} className="gap-1">
-            {formData.question_ids.length > 0 ? (
-              <>
-                <CheckCircle2 className="h-3 w-3" />
-                {formData.question_ids.length} selecionadas
-              </>
-            ) : (
-              <>
-                <AlertCircle className="h-3 w-3" />
-                Nenhuma questão
-              </>
-            )}
-          </Badge>
-        </div>
-        
-        {isLoadingQuestions ? (
-          <div className="py-4 text-center text-muted-foreground">Carregando questões...</div>
-        ) : questions && questions.length > 0 ? (
-          <ScrollArea className="h-[200px] border rounded-lg p-2">
-            <div className="space-y-1">
-              {questions.map((q) => (
-                <label
-                  key={q.id}
-                  className={cn(
-                    "flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-muted/50 transition-colors",
-                    formData.question_ids.includes(q.id) && "bg-primary/10 border border-primary/30"
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    checked={formData.question_ids.includes(q.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setFormData({ ...formData, question_ids: [...formData.question_ids, q.id] });
-                      } else {
-                        setFormData({ ...formData, question_ids: formData.question_ids.filter(id => id !== q.id) });
-                      }
-                    }}
-                    className="rounded"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate">{q.question_text?.substring(0, 80)}...</p>
-                    <div className="flex gap-1 mt-1">
-                      <Badge variant="secondary" className="text-xs">{q.difficulty}</Badge>
-                      {q.banca && <Badge variant="outline" className="text-xs">{q.banca}</Badge>}
-                      {q.ano && <Badge variant="outline" className="text-xs">{q.ano}</Badge>}
-                    </div>
-                  </div>
-                </label>
-              ))}
-            </div>
-          </ScrollArea>
-        ) : (
-          <div className="py-4 text-center text-muted-foreground border rounded-lg">
-            <FileQuestion className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Nenhuma questão disponível.</p>
-            <p className="text-xs">Importe questões em /gestaofc/questoes primeiro.</p>
-          </div>
-        )}
-      </div>
+      {/* Questões com Drag-and-Drop */}
+      <SimuladoQuestionSelector
+        allQuestions={questions || []}
+        selectedIds={formData.question_ids}
+        onChange={(ids) => setFormData({ ...formData, question_ids: ids })}
+        isLoading={isLoadingQuestions}
+      />
     </div>
   );
 }

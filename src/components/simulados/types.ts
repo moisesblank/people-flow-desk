@@ -107,7 +107,11 @@ export interface SimuladoQuestion {
   options: Record<string, string>;
   correct_answer?: string; // Só disponível após gabarito
   explanation?: string; // Só disponível após gabarito
+  video_url?: string; // URL do vídeo de resolução (Panda/YouTube)
+  video_provider?: string; // 'panda' | 'youtube' | 'vimeo'
+  has_video_resolution?: boolean;
   image_url?: string;
+  image_urls?: string[]; // Suporte a múltiplas imagens
   difficulty?: string;
   banca?: string;
   ano?: number;
