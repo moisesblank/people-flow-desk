@@ -980,45 +980,70 @@ function GestaoQuestoes() {
   const queryClient = useQueryClient();
 
   // ═══════════════════════════════════════════════════════════════
-  // 📋 ESCALA 5000+ v2: PAGINAÇÃO SERVER-SIDE
-  // Cada página carrega apenas 100 registros do banco
-  // COUNT exato para UI de paginação
+  // 📋 ESCALA 45K: CARREGAMENTO EM LOTES (BATCHING) + PAGINAÇÃO CLIENT-SIDE
+  // LEI CONSTITUCIONAL - AUDIT_ESCALA_45K_LIMITS.ts
+  // Carrega TODAS as questões em lotes de 1000 via .range()
+  // Paginação visual é feita no cliente (100 itens por página)
   // ═══════════════════════════════════════════════════════════════
   
-  // Primeiro: buscar COUNT total para estatísticas (query leve)
-  const { data: totalCount = 0 } = useQuery({
-    queryKey: ['questions-total-count'],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from('quiz_questions')
-        .select('*', { count: 'exact', head: true });
-      if (error) throw error;
-      return count || 0;
-    },
-    staleTime: 30000, // 30s cache
-  });
-
-  // Query paginada server-side
+  // Query que carrega TUDO em lotes para estatísticas precisas
   const { 
-    data: questionsData, 
+    data: allQuestionsData, 
     isLoading: questionsQueryLoading, 
     refetch: refetchQuestions 
   } = useQuery({
-    queryKey: ['questions-paginated', currentPage, ITEMS_PER_PAGE],
+    queryKey: ['quiz-questions-all-batched'],
     queryFn: async () => {
-      const from = (currentPage - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      const BATCH_SIZE = 1000;
+      const MAX_RECORDS = 45000;
+      let allData: any[] = [];
+      let hasMore = true;
+      let offset = 0;
 
-      const { data, error, count } = await supabase
+      // COUNT forense primeiro
+      const { count: totalCount, error: countError } = await supabase
         .from('quiz_questions')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .range(from, to);
+        .select('*', { count: 'exact', head: true });
 
-      if (error) throw error;
+      if (countError) {
+        console.error('[BATCHING] Erro no COUNT:', countError);
+        throw countError;
+      }
+
+      console.log(`[BATCHING] Total no banco: ${totalCount}`);
+
+      // Carregar em lotes de 1000
+      while (hasMore && offset < MAX_RECORDS) {
+        const { data: batch, error } = await supabase
+          .from('quiz_questions')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(offset, offset + BATCH_SIZE - 1);
+
+        if (error) {
+          console.error(`[BATCHING] Erro no lote ${offset}:`, error);
+          throw error;
+        }
+
+        if (batch && batch.length > 0) {
+          allData = [...allData, ...batch];
+          offset += BATCH_SIZE;
+          hasMore = batch.length === BATCH_SIZE;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      console.log(`[BATCHING] Carregados: ${allData.length} de ${totalCount}`);
+
+      // Verificação forense: alertar divergência
+      if (totalCount && allData.length !== totalCount) {
+        console.warn(`[FORENSE] DIVERGÊNCIA! Esperado: ${totalCount}, Carregado: ${allData.length}`);
+        toast.warning(`Divergência detectada: ${allData.length} de ${totalCount} questões carregadas`);
+      }
 
       // Mapear para o tipo Question com fallbacks seguros
-      const mapped = (data || []).map(q => ({
+      const mapped = allData.map(q => ({
         ...q,
         options: (Array.isArray(q.options) ? q.options : []) as unknown as QuestionOption[],
         difficulty: q.difficulty || 'medio',
@@ -1026,17 +1051,20 @@ function GestaoQuestoes() {
         is_active: q.is_active ?? true,
       })) as unknown as Question[];
 
-      return { data: mapped, count: count || 0 };
+      return { data: mapped, count: totalCount || allData.length };
     },
-    staleTime: 30_000, // PATCH 5K: 30s cache para evitar sobrecarga
+    staleTime: 60_000, // 1 min cache (dados completos)
   });
 
   // Compatibilidade: manter setQuestions funcionando
   useEffect(() => {
-    if (questionsData?.data) {
-      setQuestions(questionsData.data);
+    if (allQuestionsData?.data) {
+      setQuestions(allQuestionsData.data);
     }
-  }, [questionsData]);
+  }, [allQuestionsData]);
+
+  // Total real do banco (para display)
+  const totalCount = allQuestionsData?.count || 0;
 
   // Loading state combinado
   useEffect(() => {
@@ -1046,8 +1074,7 @@ function GestaoQuestoes() {
   // Wrapper para refetch (compatibilidade)
   const loadQuestions = useCallback(() => {
     refetchQuestions();
-    queryClient.invalidateQueries({ queryKey: ['questions-total-count'] });
-  }, [refetchQuestions, queryClient]);
+  }, [refetchQuestions]);
 
 
   // Após importar: recarrega e zera filtros para garantir visibilidade imediata
