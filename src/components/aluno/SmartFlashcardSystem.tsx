@@ -57,7 +57,7 @@ export function SmartFlashcardSystem({ cards, onComplete, onCardReview }: Flashc
   const [isFlipped, setIsFlipped] = useState(false);
   const [sessionCards, setSessionCards] = useState<Flashcard[]>(cards);
   const [results, setResults] = useState<{ cardId: string; rating: Rating; correct: boolean }[]>([]);
-  const [startTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(Date.now());
   const [cardStartTime, setCardStartTime] = useState(Date.now());
 
   const currentCard = sessionCards[currentIndex];
@@ -74,6 +74,15 @@ export function SmartFlashcardSystem({ cards, onComplete, onCardReview }: Flashc
       accuracy: results.length > 0 ? (correct / results.length) * 100 : 0
     };
   }, [results]);
+
+  const resetSession = useCallback(() => {
+    setSessionCards(cards);
+    setResults([]);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setStartTime(Date.now());
+    setCardStartTime(Date.now());
+  }, [cards]);
 
   const handleFlip = useCallback(() => {
     setIsFlipped(prev => !prev);
@@ -166,7 +175,7 @@ export function SmartFlashcardSystem({ cards, onComplete, onCardReview }: Flashc
           </Card>
         </div>
 
-        <Button onClick={() => window.location.reload()} size="lg">
+        <Button onClick={resetSession} size="lg">
           <RotateCcw className="w-4 h-4 mr-2" />
           Nova Sessão
         </Button>

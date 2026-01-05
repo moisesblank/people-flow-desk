@@ -8,8 +8,11 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
  * Regra: APENAS para OWNER logado. Clique explícito do usuário.
  */
 export const ManualRefreshButton = memo(function ManualRefreshButton() {
-  const { isOwner, isLoading } = useAdminCheck();
-  
+  const { role, isLoading } = useAdminCheck();
+
+  // 🔒 P0: condição EXCLUSIVAMENTE baseada no role vindo do backend (public.user_roles)
+  const isOwner = role === "owner";
+
   const handleRefresh = useCallback(() => {
     window.location.reload();
   }, []);

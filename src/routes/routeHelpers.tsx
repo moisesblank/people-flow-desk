@@ -6,7 +6,6 @@
 import { memo, useEffect, useState } from "react";
 import { RoleProtectedRoute } from "@/components/layout/RoleProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Button } from "@/components/ui/button";
 
 // Protected route wrapper - memoized
 export const ProtectedPage = memo(({ children }: { children: React.ReactNode }) => (
@@ -42,11 +41,9 @@ export const PageLoader = memo(() => {
             <p className="text-xs text-muted-foreground">
               Isso está demorando mais que o normal.
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <Button size="sm" onClick={() => window.location.reload()}>
-                Recarregar
-              </Button>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Dica: tente atualizar a página do navegador.
+            </p>
           </div>
         )}
       </div>
