@@ -11,11 +11,12 @@ const SESSION_TOKEN_KEY = 'matriz_session_token';
 
 // Códigos de erro específicos
 export type AuthGuardError = 
-  | 'AUTH_DISABLED'      // auth_enabled = false (lockdown total)
-  | 'AUTH_EPOCH_REVOKED' // sessão criada em epoch anterior
-  | 'SESSION_NOT_FOUND'  // sessão não existe
-  | 'SESSION_EXPIRED'    // sessão expirada
-  | 'VALID';             // tudo ok
+  | 'AUTH_DISABLED'       // auth_enabled = false (lockdown total)
+  | 'AUTH_EPOCH_REVOKED'  // sessão criada em epoch anterior
+  | 'SESSION_NOT_FOUND'   // sessão não existe
+  | 'SESSION_EXPIRED'     // sessão expirada
+  | 'INACTIVITY_TIMEOUT'  // 12h sem atividade
+  | 'VALID';              // tudo ok
 
 interface SystemGuardState {
   authEnabled: boolean;
