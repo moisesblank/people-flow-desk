@@ -64,7 +64,7 @@ export function useStudentPerformanceStats(userId: string | undefined, daysBack:
       };
     },
     enabled: !!userId,
-    staleTime: 0,
+    staleTime: 60_000, // PATCH 5K: 60s cache para performance de usuário
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,

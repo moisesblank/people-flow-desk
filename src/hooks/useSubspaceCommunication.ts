@@ -57,10 +57,12 @@ export const SUBSPACE_CACHE_PROFILES = {
     persistTTL: 0,
   },
   
-  // ⚡ REALTIME - Sem cache
+  // ⚡ REALTIME - Cache mínimo de 30s para evitar loops de automação
+  // PATCH 5K: staleTime:0 causa sobrecarga com 5000 usuários
+  // Use Supabase Realtime subscriptions para dados verdadeiramente tempo real
   realtime: {
-    staleTime: 0,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000, // 30s - evita loops, usa Realtime subscription para invalidar
+    gcTime: 60 * 1000,    // 1 min garbage collection
     persistToLocalStorage: false,
     persistTTL: 0,
   },

@@ -42,7 +42,7 @@ export function useStudentTrends(userId: string | undefined, periodDays: number 
       }));
     },
     enabled: !!userId,
-    staleTime: 0,
+    staleTime: 60_000, // PATCH 5K: 60s cache para performance de usuário
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,

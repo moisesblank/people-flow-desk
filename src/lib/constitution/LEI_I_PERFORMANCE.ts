@@ -192,7 +192,7 @@ export const QUERY_CONSTITUTION = {
     dashboard: { staleTime: 2 * 60 * 1000, gcTime: 15 * 60 * 1000 },
     list: { staleTime: 30 * 1000, gcTime: 10 * 60 * 1000 },
     user: { staleTime: 60 * 1000, gcTime: 10 * 60 * 1000 },
-    realtime: { staleTime: 0, gcTime: 0 },
+    realtime: { staleTime: 30 * 1000, gcTime: 60 * 1000 }, // PATCH 5K: 30s mínimo para evitar loops
   },
   
   // Artigo 17° - Network mode SEMPRE offlineFirst

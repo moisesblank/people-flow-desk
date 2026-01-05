@@ -675,7 +675,7 @@ export default function AlunoQuestoes() {
 
       return { data: mapped, totalCount: count || 0 };
     },
-    staleTime: 0,
+    staleTime: 30_000, // PATCH 5K: 30s cache para evitar sobrecarga
   });
 
   // Extrair dados da query
