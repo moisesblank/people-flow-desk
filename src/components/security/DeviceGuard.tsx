@@ -5,7 +5,7 @@
 // ✅ forwardRef para compatibilidade com Radix UI
 // ============================================
 
-import { useEffect, useState, ReactNode, useCallback, useRef, forwardRef } from 'react';
+import { useEffect, useState, ReactNode, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useDeviceLimitServer } from '@/hooks/useDeviceLimitServer';

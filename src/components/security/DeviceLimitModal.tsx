@@ -4,7 +4,7 @@
 // ✅ forwardRef para compatibilidade com Radix UI
 // ============================================
 
-import { useState, forwardRef } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Monitor, Smartphone, Tablet, AlertTriangle, Loader2, Shield, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
