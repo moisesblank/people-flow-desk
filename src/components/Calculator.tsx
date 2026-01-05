@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, forwardRef } from "react";
 import { 
   Calculator as CalculatorIcon, 
   History, 
@@ -35,38 +35,44 @@ interface HistoryItem {
 const STORAGE_KEY = "calculator_history_v2";
 const MEMORY_KEY = "calculator_memory";
 
-export function CalculatorButton() {
-  const [isOpen, setIsOpen] = useState(false);
+// ForwardRef wrapper para compatibilidade com TooltipTrigger/Radix
+export const CalculatorButton = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  (props, ref) => {
+    const [isOpen, setIsOpen] = useState(false);
 
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 hover:bg-blue-500/20 transition-all duration-200 group"
-          title="Calculadora Científica"
-        >
-          <CalculatorIcon className="h-5 w-5 text-blue-400 group-hover:text-blue-300 group-hover:scale-110 transition-all duration-300" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden bg-gradient-to-b from-background to-background/95 border-primary/20">
-        <DialogHeader className="px-4 py-3 border-b border-border/50 bg-gradient-to-r from-primary/10 via-transparent to-accent/10">
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <div className="p-1.5 rounded-lg bg-primary/20">
-              <CalculatorIcon className="h-5 w-5 text-primary" />
-            </div>
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent font-bold">
-              Calculadora Científica
-            </span>
-            <Sparkles className="h-4 w-4 text-yellow-500 animate-pulse" />
-          </DialogTitle>
-        </DialogHeader>
-        <CalculatorContent />
-      </DialogContent>
-    </Dialog>
-  );
-}
+    return (
+      <div ref={ref} {...props}>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 hover:bg-blue-500/20 transition-all duration-200 group"
+              title="Calculadora Científica"
+            >
+              <CalculatorIcon className="h-5 w-5 text-blue-400 group-hover:text-blue-300 group-hover:scale-110 transition-all duration-300" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden bg-gradient-to-b from-background to-background/95 border-primary/20">
+            <DialogHeader className="px-4 py-3 border-b border-border/50 bg-gradient-to-r from-primary/10 via-transparent to-accent/10">
+              <DialogTitle className="flex items-center gap-2 text-lg">
+                <div className="p-1.5 rounded-lg bg-primary/20">
+                  <CalculatorIcon className="h-5 w-5 text-primary" />
+                </div>
+                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent font-bold">
+                  Calculadora Científica
+                </span>
+                <Sparkles className="h-4 w-4 text-yellow-500 animate-pulse" />
+              </DialogTitle>
+            </DialogHeader>
+            <CalculatorContent />
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+);
+CalculatorButton.displayName = 'CalculatorButton';
 
 function CalculatorContent() {
   const [display, setDisplay] = useState("0");
