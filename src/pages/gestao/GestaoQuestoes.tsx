@@ -103,7 +103,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useCacheManager } from '@/hooks/useCacheManager';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { invalidateAllQuestionCaches } from '@/hooks/useQuestionImageAnnihilation';
 
 // ============================================
@@ -971,54 +971,54 @@ function GestaoQuestoes() {
   const [isDeletingSimulados, setIsDeletingSimulados] = useState(false);
   const [simuladosConfirmText, setSimuladosConfirmText] = useState('');
   
-  // PAGINATION: 100 itens por página (frontend)
+  // PAGINATION: 100 itens por página (server-side)
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 100;
 
   const { clearQueryCache } = useCacheManager();
   const { isOwner } = useRolePermissions();
+  const queryClient = useQueryClient();
 
   // ═══════════════════════════════════════════════════════════════
-  // 📋 ESCALA 45K (LEI CONSTITUCIONAL): Carregar em lotes via .range()
-  // Paginação de 100 por página é feita NO FRONTEND após carregar tudo
+  // 📋 ESCALA 5000+ v2: PAGINAÇÃO SERVER-SIDE
+  // Cada página carrega apenas 100 registros do banco
+  // COUNT exato para UI de paginação
   // ═══════════════════════════════════════════════════════════════
-  const loadQuestions = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const BATCH_SIZE = 1000;
-      const MAX = 45000;
-      let from = 0;
-      let all: any[] = [];
-
-      // Carregar em lotes de 1000 até 45k
-      while (from < MAX) {
-        const to = Math.min(from + BATCH_SIZE - 1, MAX - 1);
-
-        const { data, error } = await supabase
-          .from('quiz_questions')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .range(from, to);
-
-        if (error) throw error;
-
-        const batch = data || [];
-        all = all.concat(batch);
-
-        // Se veio menos que o lote, acabou
-        if (batch.length < BATCH_SIZE) break;
-        from += BATCH_SIZE;
-      }
-
-      // COUNT real do banco para validação forense
-      const { count: dbCount, error: countError } = await supabase
+  
+  // Primeiro: buscar COUNT total para estatísticas (query leve)
+  const { data: totalCount = 0 } = useQuery({
+    queryKey: ['questions-total-count'],
+    queryFn: async () => {
+      const { count, error } = await supabase
         .from('quiz_questions')
-        .select('id', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true });
+      if (error) throw error;
+      return count || 0;
+    },
+    staleTime: 30000, // 30s cache
+  });
 
-      if (countError) throw countError;
+  // Query paginada server-side
+  const { 
+    data: questionsData, 
+    isLoading: questionsQueryLoading, 
+    refetch: refetchQuestions 
+  } = useQuery({
+    queryKey: ['questions-paginated', currentPage, ITEMS_PER_PAGE],
+    queryFn: async () => {
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      const { data, error, count } = await supabase
+        .from('quiz_questions')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) throw error;
 
       // Mapear para o tipo Question com fallbacks seguros
-      const mapped = all.map(q => ({
+      const mapped = (data || []).map(q => ({
         ...q,
         options: (Array.isArray(q.options) ? q.options : []) as unknown as QuestionOption[],
         difficulty: q.difficulty || 'medio',
@@ -1026,20 +1026,28 @@ function GestaoQuestoes() {
         is_active: q.is_active ?? true,
       })) as unknown as Question[];
 
-      setQuestions(mapped);
+      return { data: mapped, count: count || 0 };
+    },
+    staleTime: 0,
+  });
 
-      // Guard constitucional: alertar divergência
-      if (typeof dbCount === 'number' && dbCount !== mapped.length) {
-        console.warn(`[ESCALA_45K] Divergência: carregado=${mapped.length} vs banco=${dbCount}`);
-        toast.error(`Divergência: UI carregou ${mapped.length}, banco tem ${dbCount}.`);
-      }
-    } catch (err) {
-      console.error('Erro ao carregar questões:', err);
-      toast.error('Erro ao carregar questões');
-    } finally {
-      setIsLoading(false);
+  // Compatibilidade: manter setQuestions funcionando
+  useEffect(() => {
+    if (questionsData?.data) {
+      setQuestions(questionsData.data);
     }
-  }, []);
+  }, [questionsData]);
+
+  // Loading state combinado
+  useEffect(() => {
+    setIsLoading(questionsQueryLoading);
+  }, [questionsQueryLoading]);
+
+  // Wrapper para refetch (compatibilidade)
+  const loadQuestions = useCallback(() => {
+    refetchQuestions();
+    queryClient.invalidateQueries({ queryKey: ['questions-total-count'] });
+  }, [refetchQuestions, queryClient]);
 
 
   // Após importar: recarrega e zera filtros para garantir visibilidade imediata
@@ -1081,9 +1089,7 @@ function GestaoQuestoes() {
     return [...new Set(anos)].sort((a, b) => b - a);
   }, [questions]);
 
-  useEffect(() => {
-    loadQuestions();
-  }, [loadQuestions]);
+  // Nota: loadQuestions agora é gerenciado pelo useQuery - não precisa de useEffect inicial
 
   // Helper: classificar macro em grande área - TAXONOMIA OFICIAL 5 MACROS
   const classifyMacroArea = useCallback((macro: string | null | undefined): 'organica' | 'fisico_quimica' | 'geral' | 'ambiental' | 'bioquimica' => {
