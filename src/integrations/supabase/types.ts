@@ -19437,8 +19437,8 @@ export type Database = {
       validate_session_epoch: {
         Args: { p_session_token: string }
         Returns: {
-          is_valid: boolean
           reason: string
+          status: string
           user_id: string
         }[]
       }
