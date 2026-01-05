@@ -2,11 +2,7 @@
  * 🎯 GESTÃO DE SIMULADOS — Constituição SYNAPSE Ω v10.0
  * 
  * Centro de comando COMPLETO para criação, monitoramento e controle de simulados.
- * Usa tabela 'simulados' (não 'quizzes') com todos os campos:
- * - Hard Mode, datas início/fim, gabarito, câmera
- * - Monitoramento em tempo real
- * - Ranking e snapshots
- * - Auditoria completa
+ * FASE 2 COMPLETA: Edição, validações, hard_mode_override, manutenção, rascunho
  */
 
 import { useState, useMemo, useEffect } from 'react';
@@ -23,7 +19,8 @@ import {
   RefreshCw, Search, MoreVertical, Camera, Lock,
   Activity, TrendingUp, Timer, Download, Upload,
   Zap, Target, Medal, BarChart, History, Gavel,
-  AlertCircle, FileText, UserX, UserCheck
+  AlertCircle, FileText, UserX, UserCheck, Wrench,
+  Save, Power, PowerOff
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,12 +30,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { LoadingState } from '@/components/LoadingState';
 import { SimuladoFeatureFlagsPanel } from '@/components/gestao/simulados/SimuladoFeatureFlagsPanel';
 import { supabase } from '@/integrations/supabase/client';
@@ -54,6 +53,7 @@ interface Simulado {
   description: string | null;
   slug: string | null;
   duration_minutes: number;
+  tolerance_minutes: number;
   starts_at: string | null;
   ends_at: string | null;
   results_released_at: string | null;
@@ -80,6 +80,7 @@ interface SimuladoFormData {
   title: string;
   description: string;
   duration_minutes: number;
+  tolerance_minutes: number;
   starts_at: string;
   ends_at: string;
   results_released_at: string;
@@ -91,6 +92,9 @@ interface SimuladoFormData {
   points_per_question: number;
   passing_score: number;
   question_ids: string[];
+  hard_mode_override: string;
+  maintenance_message: string;
+  is_active: boolean;
 }
 
 interface AttemptStats {
@@ -115,6 +119,37 @@ interface AuditLog {
   session_id: string | null;
   created_at: string;
 }
+
+// ============================================
+// CONSTANTES
+// ============================================
+
+const EMPTY_FORM: SimuladoFormData = {
+  title: '',
+  description: '',
+  duration_minutes: 180,
+  tolerance_minutes: 15,
+  starts_at: '',
+  ends_at: '',
+  results_released_at: '',
+  is_hard_mode: false,
+  max_tab_switches: 3,
+  requires_camera: false,
+  shuffle_questions: true,
+  shuffle_options: true,
+  points_per_question: 10,
+  passing_score: 60,
+  question_ids: [],
+  hard_mode_override: 'default',
+  maintenance_message: '',
+  is_active: true,
+};
+
+const HARD_MODE_OVERRIDE_OPTIONS = [
+  { value: 'default', label: 'Seguir Flag Global', description: 'Usa a configuração global de Hard Mode' },
+  { value: 'force_on', label: 'Forçar Ativado', description: 'Hard Mode SEMPRE ativo neste simulado' },
+  { value: 'force_off', label: 'Forçar Desativado', description: 'Hard Mode NUNCA ativo neste simulado' },
+];
 
 // ============================================
 // HOOKS
@@ -143,7 +178,6 @@ function useSimuladoQuestions() {
       const { data, error } = await supabase
         .from('quiz_questions')
         .select('id, question_text, difficulty, banca, ano, macro')
-        .contains('tags', ['SIMULADOS'])
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(500);
@@ -168,7 +202,6 @@ function useSimuladoAttemptStats() {
         return new Map<string, AttemptStats>();
       }
       
-      // Agrupar por simulado
       const statsMap = new Map<string, AttemptStats>();
       
       (data || []).forEach(attempt => {
@@ -249,7 +282,6 @@ function useCreateSimulado() {
   
   return useMutation({
     mutationFn: async (formData: SimuladoFormData) => {
-      // Gerar slug a partir do título
       const slug = formData.title
         .toLowerCase()
         .normalize('NFD')
@@ -265,6 +297,7 @@ function useCreateSimulado() {
           description: formData.description || null,
           slug,
           duration_minutes: formData.duration_minutes,
+          tolerance_minutes: formData.tolerance_minutes,
           starts_at: formData.starts_at || null,
           ends_at: formData.ends_at || null,
           results_released_at: formData.results_released_at || null,
@@ -277,8 +310,10 @@ function useCreateSimulado() {
           passing_score: formData.passing_score,
           question_ids: formData.question_ids.length > 0 ? formData.question_ids : null,
           total_questions: formData.question_ids.length,
-          is_active: true,
-          is_published: false,
+          hard_mode_override: formData.hard_mode_override,
+          maintenance_message: formData.maintenance_message || null,
+          is_active: formData.is_active,
+          is_published: false, // Sempre começa como rascunho
         })
         .select()
         .single();
@@ -288,7 +323,7 @@ function useCreateSimulado() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['gestao-simulados-full'] });
-      toast.success('Simulado criado com sucesso!');
+      toast.success('Simulado criado como rascunho!');
     },
     onError: (error: Error) => {
       toast.error(`Erro ao criar simulado: ${error.message}`);
@@ -303,7 +338,7 @@ function useUpdateSimulado() {
     mutationFn: async ({ id, data }: { id: string; data: Partial<Simulado> }) => {
       const { error } = await supabase
         .from('simulados')
-        .update(data)
+        .update({ ...data, updated_at: new Date().toISOString() })
         .eq('id', id);
       
       if (error) throw error;
@@ -365,7 +400,361 @@ function useCreateRankingSnapshot() {
 }
 
 // ============================================
-// COMPONENTES
+// COMPONENTES — FORMULÁRIO DE SIMULADO
+// ============================================
+
+interface SimuladoFormProps {
+  formData: SimuladoFormData;
+  setFormData: (data: SimuladoFormData) => void;
+  questions: Array<{ id: string; question_text: string | null; difficulty: string | null; banca: string | null; ano: number | null; macro: string | null }> | undefined;
+  isLoadingQuestions: boolean;
+}
+
+function SimuladoForm({ formData, setFormData, questions, isLoadingQuestions }: SimuladoFormProps) {
+  return (
+    <div className="space-y-6 py-4">
+      {/* Título e Descrição */}
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="title">Título *</Label>
+          <Input
+            id="title"
+            placeholder="Ex: Simulado ENEM 2025 - Química"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="description">Descrição</Label>
+          <Textarea
+            id="description"
+            placeholder="Descrição do simulado..."
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          />
+        </div>
+      </div>
+      
+      <Separator />
+      
+      {/* Datas */}
+      <div className="space-y-4">
+        <h3 className="font-medium flex items-center gap-2">
+          <Calendar className="h-4 w-4" />
+          Agendamento
+        </h3>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label>Data/Hora de Início</Label>
+            <Input
+              type="datetime-local"
+              value={formData.starts_at}
+              onChange={(e) => setFormData({ ...formData, starts_at: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">Quando o simulado fica disponível</p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Data/Hora de Término</Label>
+            <Input
+              type="datetime-local"
+              value={formData.ends_at}
+              onChange={(e) => setFormData({ ...formData, ends_at: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">Quando encerra novas tentativas</p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Liberação do Gabarito</Label>
+            <Input
+              type="datetime-local"
+              value={formData.results_released_at}
+              onChange={(e) => setFormData({ ...formData, results_released_at: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">Quando o gabarito fica visível</p>
+          </div>
+        </div>
+      </div>
+      
+      <Separator />
+      
+      {/* Configurações de Tempo e Pontuação */}
+      <div className="space-y-4">
+        <h3 className="font-medium flex items-center gap-2">
+          <Timer className="h-4 w-4" />
+          Configurações
+        </h3>
+        <div className="grid grid-cols-5 gap-4">
+          <div className="space-y-2">
+            <Label>Tempo Limite (min)</Label>
+            <Input
+              type="number"
+              min={10}
+              max={480}
+              value={formData.duration_minutes}
+              onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) || 180 })}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Tolerância (min)</Label>
+            <Input
+              type="number"
+              min={0}
+              max={60}
+              value={formData.tolerance_minutes}
+              onChange={(e) => setFormData({ ...formData, tolerance_minutes: parseInt(e.target.value) || 15 })}
+            />
+            <p className="text-xs text-muted-foreground">Entrada após início</p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label>XP por Questão</Label>
+            <Input
+              type="number"
+              min={1}
+              max={100}
+              value={formData.points_per_question}
+              onChange={(e) => setFormData({ ...formData, points_per_question: parseInt(e.target.value) || 10 })}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Nota Mínima (%)</Label>
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              value={formData.passing_score}
+              onChange={(e) => setFormData({ ...formData, passing_score: parseInt(e.target.value) || 60 })}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Máx. Trocas Aba</Label>
+            <Input
+              type="number"
+              min={1}
+              max={10}
+              value={formData.max_tab_switches}
+              onChange={(e) => setFormData({ ...formData, max_tab_switches: parseInt(e.target.value) || 3 })}
+            />
+          </div>
+        </div>
+      </div>
+      
+      <Separator />
+      
+      {/* Modo Hard */}
+      <div className="space-y-4">
+        <h3 className="font-medium flex items-center gap-2">
+          <Shield className="h-4 w-4 text-red-500" />
+          Modo Hard (Anti-Cola)
+        </h3>
+        
+        <div className="grid grid-cols-3 gap-4">
+          <Card className={cn(
+            "p-4 cursor-pointer border-2 transition-colors",
+            formData.is_hard_mode ? "border-red-500 bg-red-500/5" : "border-border"
+          )} onClick={() => setFormData({ ...formData, is_hard_mode: !formData.is_hard_mode })}>
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={formData.is_hard_mode}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_hard_mode: checked })}
+              />
+              <div>
+                <Label className="text-sm font-medium">Ativar Modo Hard</Label>
+                <p className="text-xs text-muted-foreground">
+                  Monitora trocas de aba
+                </p>
+              </div>
+            </div>
+          </Card>
+          
+          <Card className={cn(
+            "p-4 cursor-pointer border-2 transition-colors",
+            formData.requires_camera ? "border-amber-500 bg-amber-500/5" : "border-border",
+            !formData.is_hard_mode && "opacity-50 cursor-not-allowed"
+          )} onClick={() => formData.is_hard_mode && setFormData({ ...formData, requires_camera: !formData.requires_camera })}>
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={formData.requires_camera}
+                onCheckedChange={(checked) => setFormData({ ...formData, requires_camera: checked })}
+                disabled={!formData.is_hard_mode}
+              />
+              <div>
+                <Label className="text-sm font-medium flex items-center gap-1">
+                  <Camera className="h-3 w-3" />
+                  Câmera Ativa
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Efeito deterrent
+                </p>
+              </div>
+            </div>
+          </Card>
+          
+          {/* HARD MODE OVERRIDE */}
+          <div className="space-y-2">
+            <Label>Override Hard Mode</Label>
+            <Select
+              value={formData.hard_mode_override}
+              onValueChange={(value) => setFormData({ ...formData, hard_mode_override: value })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {HARD_MODE_OVERRIDE_OPTIONS.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <div>
+                      <span>{opt.label}</span>
+                      <span className="text-xs text-muted-foreground ml-2">({opt.description})</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Sobrescreve a flag global</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div>
+              <Label className="text-sm">Embaralhar Questões</Label>
+              <p className="text-xs text-muted-foreground">Ordem diferente para cada aluno</p>
+            </div>
+            <Switch
+              checked={formData.shuffle_questions}
+              onCheckedChange={(checked) => setFormData({ ...formData, shuffle_questions: checked })}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div>
+              <Label className="text-sm">Embaralhar Alternativas</Label>
+              <p className="text-xs text-muted-foreground">Letras diferentes para cada aluno</p>
+            </div>
+            <Switch
+              checked={formData.shuffle_options}
+              onCheckedChange={(checked) => setFormData({ ...formData, shuffle_options: checked })}
+            />
+          </div>
+        </div>
+      </div>
+      
+      <Separator />
+      
+      {/* Manutenção */}
+      <div className="space-y-4">
+        <h3 className="font-medium flex items-center gap-2">
+          <Wrench className="h-4 w-4 text-amber-500" />
+          Manutenção
+        </h3>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div>
+              <Label className="text-sm">Simulado Ativo</Label>
+              <p className="text-xs text-muted-foreground">
+                {formData.is_active ? 'Visível para alunos' : 'Oculto para alunos'}
+              </p>
+            </div>
+            <Switch
+              checked={formData.is_active}
+              onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Mensagem de Manutenção</Label>
+            <Input
+              placeholder="Ex: Simulado em manutenção até 15h"
+              value={formData.maintenance_message}
+              onChange={(e) => setFormData({ ...formData, maintenance_message: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">Exibida aos alunos se preenchida</p>
+          </div>
+        </div>
+      </div>
+      
+      <Separator />
+      
+      {/* Questões */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-medium flex items-center gap-2">
+            <FileQuestion className="h-4 w-4" />
+            Questões
+          </h3>
+          <Badge variant={formData.question_ids.length > 0 ? "default" : "destructive"} className="gap-1">
+            {formData.question_ids.length > 0 ? (
+              <>
+                <CheckCircle2 className="h-3 w-3" />
+                {formData.question_ids.length} selecionadas
+              </>
+            ) : (
+              <>
+                <AlertCircle className="h-3 w-3" />
+                Nenhuma questão
+              </>
+            )}
+          </Badge>
+        </div>
+        
+        {isLoadingQuestions ? (
+          <div className="py-4 text-center text-muted-foreground">Carregando questões...</div>
+        ) : questions && questions.length > 0 ? (
+          <ScrollArea className="h-[200px] border rounded-lg p-2">
+            <div className="space-y-1">
+              {questions.map((q) => (
+                <label
+                  key={q.id}
+                  className={cn(
+                    "flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-muted/50 transition-colors",
+                    formData.question_ids.includes(q.id) && "bg-primary/10 border border-primary/30"
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={formData.question_ids.includes(q.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setFormData({ ...formData, question_ids: [...formData.question_ids, q.id] });
+                      } else {
+                        setFormData({ ...formData, question_ids: formData.question_ids.filter(id => id !== q.id) });
+                      }
+                    }}
+                    className="rounded"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm truncate">{q.question_text?.substring(0, 80)}...</p>
+                    <div className="flex gap-1 mt-1">
+                      <Badge variant="secondary" className="text-xs">{q.difficulty}</Badge>
+                      {q.banca && <Badge variant="outline" className="text-xs">{q.banca}</Badge>}
+                      {q.ano && <Badge variant="outline" className="text-xs">{q.ano}</Badge>}
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </ScrollArea>
+        ) : (
+          <div className="py-4 text-center text-muted-foreground border rounded-lg">
+            <FileQuestion className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm">Nenhuma questão disponível.</p>
+            <p className="text-xs">Importe questões em /gestaofc/questoes primeiro.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// DIALOG CRIAR SIMULADO
 // ============================================
 
 function CreateSimuladoDialog({ 
@@ -377,23 +766,7 @@ function CreateSimuladoDialog({
 }) {
   const { data: questions, isLoading: isLoadingQuestions } = useSimuladoQuestions();
   const createSimulado = useCreateSimulado();
-  
-  const [formData, setFormData] = useState<SimuladoFormData>({
-    title: '',
-    description: '',
-    duration_minutes: 180,
-    starts_at: '',
-    ends_at: '',
-    results_released_at: '',
-    is_hard_mode: false,
-    max_tab_switches: 3,
-    requires_camera: false,
-    shuffle_questions: true,
-    shuffle_options: true,
-    points_per_question: 10,
-    passing_score: 60,
-    question_ids: [],
-  });
+  const [formData, setFormData] = useState<SimuladoFormData>(EMPTY_FORM);
   
   const handleSubmit = () => {
     if (!formData.title.trim()) {
@@ -404,297 +777,30 @@ function CreateSimuladoDialog({
     createSimulado.mutate(formData, {
       onSuccess: () => {
         onOpenChange(false);
-        setFormData({
-          title: '',
-          description: '',
-          duration_minutes: 180,
-          starts_at: '',
-          ends_at: '',
-          results_released_at: '',
-          is_hard_mode: false,
-          max_tab_switches: 3,
-          requires_camera: false,
-          shuffle_questions: true,
-          shuffle_options: true,
-          points_per_question: 10,
-          passing_score: 60,
-          question_ids: [],
-        });
+        setFormData(EMPTY_FORM);
       },
     });
   };
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
             Criar Novo Simulado
           </DialogTitle>
           <DialogDescription>
-            Configure todos os detalhes do simulado incluindo Modo Hard, datas e questões.
+            Configure todos os detalhes do simulado. Será salvo como rascunho.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-6 py-4">
-          {/* Título e Descrição */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Título *</Label>
-              <Input
-                id="title"
-                placeholder="Ex: Simulado ENEM 2025 - Química"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="description">Descrição</Label>
-              <Textarea
-                id="description"
-                placeholder="Descrição do simulado..."
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-          </div>
-          
-          <Separator />
-          
-          {/* Datas */}
-          <div className="space-y-4">
-            <h3 className="font-medium flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Agendamento
-            </h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Data/Hora de Início</Label>
-                <Input
-                  type="datetime-local"
-                  value={formData.starts_at}
-                  onChange={(e) => setFormData({ ...formData, starts_at: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">Quando o simulado fica disponível</p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Data/Hora de Término</Label>
-                <Input
-                  type="datetime-local"
-                  value={formData.ends_at}
-                  onChange={(e) => setFormData({ ...formData, ends_at: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">Quando encerra novas tentativas</p>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Liberação do Gabarito</Label>
-                <Input
-                  type="datetime-local"
-                  value={formData.results_released_at}
-                  onChange={(e) => setFormData({ ...formData, results_released_at: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">Quando o gabarito fica visível</p>
-              </div>
-            </div>
-          </div>
-          
-          <Separator />
-          
-          {/* Configurações de Tempo e Pontuação */}
-          <div className="space-y-4">
-            <h3 className="font-medium flex items-center gap-2">
-              <Timer className="h-4 w-4" />
-              Configurações
-            </h3>
-            <div className="grid grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label>Tempo Limite (min)</Label>
-                <Input
-                  type="number"
-                  min={10}
-                  max={480}
-                  value={formData.duration_minutes}
-                  onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) || 180 })}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>XP por Questão</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={100}
-                  value={formData.points_per_question}
-                  onChange={(e) => setFormData({ ...formData, points_per_question: parseInt(e.target.value) || 10 })}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Nota Mínima (%)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={formData.passing_score}
-                  onChange={(e) => setFormData({ ...formData, passing_score: parseInt(e.target.value) || 60 })}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Máx. Trocas de Aba</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={10}
-                  value={formData.max_tab_switches}
-                  onChange={(e) => setFormData({ ...formData, max_tab_switches: parseInt(e.target.value) || 3 })}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <Separator />
-          
-          {/* Modo Hard */}
-          <div className="space-y-4">
-            <h3 className="font-medium flex items-center gap-2">
-              <Shield className="h-4 w-4 text-red-500" />
-              Modo Hard (Anti-Cola)
-            </h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <Card className={cn(
-                "p-4 cursor-pointer border-2 transition-colors",
-                formData.is_hard_mode ? "border-red-500 bg-red-500/5" : "border-border"
-              )} onClick={() => setFormData({ ...formData, is_hard_mode: !formData.is_hard_mode })}>
-                <div className="flex items-center gap-3">
-                  <Switch
-                    checked={formData.is_hard_mode}
-                    onCheckedChange={(checked) => setFormData({ ...formData, is_hard_mode: checked })}
-                  />
-                  <div>
-                    <Label className="text-sm font-medium">Ativar Modo Hard</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Monitora trocas de aba e pode invalidar tentativas
-                    </p>
-                  </div>
-                </div>
-              </Card>
-              
-              <Card className={cn(
-                "p-4 cursor-pointer border-2 transition-colors",
-                formData.requires_camera ? "border-amber-500 bg-amber-500/5" : "border-border",
-                !formData.is_hard_mode && "opacity-50 cursor-not-allowed"
-              )} onClick={() => formData.is_hard_mode && setFormData({ ...formData, requires_camera: !formData.requires_camera })}>
-                <div className="flex items-center gap-3">
-                  <Switch
-                    checked={formData.requires_camera}
-                    onCheckedChange={(checked) => setFormData({ ...formData, requires_camera: checked })}
-                    disabled={!formData.is_hard_mode}
-                  />
-                  <div>
-                    <Label className="text-sm font-medium flex items-center gap-1">
-                      <Camera className="h-3 w-3" />
-                      Câmera Ativa
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      Efeito deterrent (não grava)
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <Label className="text-sm">Embaralhar Questões</Label>
-                  <p className="text-xs text-muted-foreground">Ordem diferente para cada aluno</p>
-                </div>
-                <Switch
-                  checked={formData.shuffle_questions}
-                  onCheckedChange={(checked) => setFormData({ ...formData, shuffle_questions: checked })}
-                />
-              </div>
-              
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <Label className="text-sm">Embaralhar Alternativas</Label>
-                  <p className="text-xs text-muted-foreground">Letras diferentes para cada aluno</p>
-                </div>
-                <Switch
-                  checked={formData.shuffle_options}
-                  onCheckedChange={(checked) => setFormData({ ...formData, shuffle_options: checked })}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <Separator />
-          
-          {/* Questões */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium flex items-center gap-2">
-                <FileQuestion className="h-4 w-4" />
-                Questões
-              </h3>
-              <Badge variant="outline" className="gap-1">
-                <CheckCircle2 className="h-3 w-3" />
-                {formData.question_ids.length} selecionadas
-              </Badge>
-            </div>
-            
-            {isLoadingQuestions ? (
-              <div className="py-4 text-center text-muted-foreground">Carregando questões...</div>
-            ) : questions && questions.length > 0 ? (
-              <ScrollArea className="h-[200px] border rounded-lg p-2">
-                <div className="space-y-1">
-                  {questions.map((q) => (
-                    <label
-                      key={q.id}
-                      className={cn(
-                        "flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-muted/50 transition-colors",
-                        formData.question_ids.includes(q.id) && "bg-primary/10 border border-primary/30"
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={formData.question_ids.includes(q.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFormData({ ...formData, question_ids: [...formData.question_ids, q.id] });
-                          } else {
-                            setFormData({ ...formData, question_ids: formData.question_ids.filter(id => id !== q.id) });
-                          }
-                        }}
-                        className="rounded"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate">{q.question_text?.substring(0, 80)}...</p>
-                        <div className="flex gap-1 mt-1">
-                          <Badge variant="secondary" className="text-xs">{q.difficulty}</Badge>
-                          {q.banca && <Badge variant="outline" className="text-xs">{q.banca}</Badge>}
-                          {q.ano && <Badge variant="outline" className="text-xs">{q.ano}</Badge>}
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </ScrollArea>
-            ) : (
-              <div className="py-4 text-center text-muted-foreground border rounded-lg">
-                <FileQuestion className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">Nenhuma questão com tag SIMULADOS disponível.</p>
-                <p className="text-xs">Importe questões em /gestaofc/questoes primeiro.</p>
-              </div>
-            )}
-          </div>
-        </div>
+        <SimuladoForm 
+          formData={formData} 
+          setFormData={setFormData} 
+          questions={questions}
+          isLoadingQuestions={isLoadingQuestions}
+        />
         
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -703,8 +809,8 @@ function CreateSimuladoDialog({
           <Button onClick={handleSubmit} disabled={createSimulado.isPending} className="gap-2">
             {createSimulado.isPending ? 'Criando...' : (
               <>
-                <Plus className="h-4 w-4" />
-                Criar Simulado
+                <Save className="h-4 w-4" />
+                Salvar Rascunho
               </>
             )}
           </Button>
@@ -714,13 +820,141 @@ function CreateSimuladoDialog({
   );
 }
 
+// ============================================
+// DIALOG EDITAR SIMULADO
+// ============================================
+
+function EditSimuladoDialog({ 
+  simulado,
+  open, 
+  onOpenChange 
+}: { 
+  simulado: Simulado | null;
+  open: boolean; 
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { data: questions, isLoading: isLoadingQuestions } = useSimuladoQuestions();
+  const updateSimulado = useUpdateSimulado();
+  
+  const [formData, setFormData] = useState<SimuladoFormData>(EMPTY_FORM);
+  
+  // Preencher form quando simulado muda
+  useEffect(() => {
+    if (simulado) {
+      setFormData({
+        title: simulado.title,
+        description: simulado.description || '',
+        duration_minutes: simulado.duration_minutes,
+        tolerance_minutes: simulado.tolerance_minutes || 15,
+        starts_at: simulado.starts_at ? simulado.starts_at.substring(0, 16) : '',
+        ends_at: simulado.ends_at ? simulado.ends_at.substring(0, 16) : '',
+        results_released_at: simulado.results_released_at ? simulado.results_released_at.substring(0, 16) : '',
+        is_hard_mode: simulado.is_hard_mode,
+        max_tab_switches: simulado.max_tab_switches,
+        requires_camera: simulado.requires_camera || false,
+        shuffle_questions: simulado.shuffle_questions,
+        shuffle_options: simulado.shuffle_options,
+        points_per_question: simulado.points_per_question,
+        passing_score: simulado.passing_score || 60,
+        question_ids: simulado.question_ids || [],
+        hard_mode_override: simulado.hard_mode_override || 'default',
+        maintenance_message: simulado.maintenance_message || '',
+        is_active: simulado.is_active,
+      });
+    }
+  }, [simulado]);
+  
+  const handleSubmit = () => {
+    if (!simulado) return;
+    if (!formData.title.trim()) {
+      toast.error('Título é obrigatório');
+      return;
+    }
+    
+    updateSimulado.mutate({
+      id: simulado.id,
+      data: {
+        title: formData.title,
+        description: formData.description || null,
+        duration_minutes: formData.duration_minutes,
+        tolerance_minutes: formData.tolerance_minutes,
+        starts_at: formData.starts_at || null,
+        ends_at: formData.ends_at || null,
+        results_released_at: formData.results_released_at || null,
+        is_hard_mode: formData.is_hard_mode,
+        max_tab_switches: formData.max_tab_switches,
+        requires_camera: formData.requires_camera,
+        shuffle_questions: formData.shuffle_questions,
+        shuffle_options: formData.shuffle_options,
+        points_per_question: formData.points_per_question,
+        passing_score: formData.passing_score,
+        question_ids: formData.question_ids.length > 0 ? formData.question_ids : null,
+        total_questions: formData.question_ids.length,
+        hard_mode_override: formData.hard_mode_override,
+        maintenance_message: formData.maintenance_message || null,
+        is_active: formData.is_active,
+      },
+    }, {
+      onSuccess: () => {
+        onOpenChange(false);
+      },
+    });
+  };
+  
+  if (!simulado) return null;
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Edit className="h-5 w-5 text-primary" />
+            Editar Simulado
+          </DialogTitle>
+          <DialogDescription>
+            Modifique as configurações do simulado "{simulado.title}"
+          </DialogDescription>
+        </DialogHeader>
+        
+        <SimuladoForm 
+          formData={formData} 
+          setFormData={setFormData} 
+          questions={questions}
+          isLoadingQuestions={isLoadingQuestions}
+        />
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} disabled={updateSimulado.isPending} className="gap-2">
+            {updateSimulado.isPending ? 'Salvando...' : (
+              <>
+                <Save className="h-4 w-4" />
+                Salvar Alterações
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================
+// LISTA DE SIMULADOS
+// ============================================
+
 function SimuladosList() {
   const { data: simulados, isLoading, refetch } = useSimulados();
   const { data: statsMap } = useSimuladoAttemptStats();
   const deleteSimulado = useDeleteSimulado();
   const updateSimulado = useUpdateSimulado();
+  
   const [search, setSearch] = useState('');
-  const [selectedSimulado, setSelectedSimulado] = useState<Simulado | null>(null);
+  const [editingSimulado, setEditingSimulado] = useState<Simulado | null>(null);
+  const [detailsSimulado, setDetailsSimulado] = useState<Simulado | null>(null);
+  const [confirmDeactivate, setConfirmDeactivate] = useState<Simulado | null>(null);
   
   const filtered = useMemo(() => {
     if (!simulados) return [];
@@ -735,10 +969,45 @@ function SimuladosList() {
     const startsAt = sim.starts_at ? new Date(sim.starts_at) : null;
     const endsAt = sim.ends_at ? new Date(sim.ends_at) : null;
     
-    if (!sim.is_published) return { label: 'Rascunho', color: 'bg-muted text-muted-foreground' };
-    if (startsAt && now < startsAt) return { label: 'Agendado', color: 'bg-blue-500' };
-    if (endsAt && now > endsAt) return { label: 'Encerrado', color: 'bg-gray-500' };
-    return { label: 'Ativo', color: 'bg-green-500' };
+    if (!sim.is_active) return { label: 'Inativo', color: 'bg-gray-500', icon: PowerOff };
+    if (!sim.is_published) return { label: 'Rascunho', color: 'bg-muted text-muted-foreground', icon: FileText };
+    if (sim.maintenance_message) return { label: 'Manutenção', color: 'bg-amber-500', icon: Wrench };
+    if (startsAt && now < startsAt) return { label: 'Agendado', color: 'bg-blue-500', icon: Calendar };
+    if (endsAt && now > endsAt) return { label: 'Encerrado', color: 'bg-gray-500', icon: XCircle };
+    return { label: 'Ativo', color: 'bg-green-500', icon: Play };
+  };
+  
+  const handlePublish = (simulado: Simulado) => {
+    // VALIDAÇÃO: Não publica sem questões
+    if (!simulado.question_ids || simulado.question_ids.length === 0) {
+      toast.error('Não é possível publicar um simulado sem questões!');
+      return;
+    }
+    
+    updateSimulado.mutate({ 
+      id: simulado.id, 
+      data: { is_published: true } 
+    });
+  };
+  
+  const handleUnpublish = (simulado: Simulado) => {
+    updateSimulado.mutate({ 
+      id: simulado.id, 
+      data: { is_published: false } 
+    });
+  };
+  
+  const handleToggleActive = (simulado: Simulado) => {
+    if (simulado.is_active) {
+      // Desativar requer confirmação
+      setConfirmDeactivate(simulado);
+    } else {
+      // Ativar direto
+      updateSimulado.mutate({ 
+        id: simulado.id, 
+        data: { is_active: true } 
+      });
+    }
   };
   
   if (isLoading) {
@@ -746,260 +1015,378 @@ function SimuladosList() {
   }
   
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5" />
-            Simulados Cadastrados
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 w-[200px]"
-              />
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              Simulados Cadastrados
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 w-[200px]"
+                />
+              </div>
+              <Button variant="outline" size="icon" onClick={() => refetch()}>
+                <RefreshCw className="h-4 w-4" />
+              </Button>
             </div>
-            <Button variant="outline" size="icon" onClick={() => refetch()}>
-              <RefreshCw className="h-4 w-4" />
-            </Button>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {filtered.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Nenhum simulado cadastrado.</p>
-            <p className="text-sm">Clique em "Novo Simulado" para criar.</p>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Título</TableHead>
-                <TableHead>Questões</TableHead>
-                <TableHead>Tempo</TableHead>
-                <TableHead>Hard Mode</TableHead>
-                <TableHead>Início</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Tentativas</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((simulado) => {
-                const status = getStatus(simulado);
-                const stats = statsMap?.get(simulado.id);
-                
-                return (
-                  <TableRow key={simulado.id}>
-                    <TableCell>
-                      <div>
-                        <span className="font-medium">{simulado.title}</span>
-                        {simulado.is_ranking_frozen && (
-                          <Badge variant="outline" className="ml-2 text-xs">
-                            <Lock className="h-3 w-3 mr-1" />
-                            Ranking Congelado
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{simulado.total_questions || 0}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        {simulado.duration_minutes} min
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {simulado.is_hard_mode ? (
-                        <Badge className="bg-red-500 gap-1">
-                          <Shield className="h-3 w-3" />
-                          Hard
-                          {simulado.requires_camera && <Camera className="h-3 w-3" />}
+        </CardHeader>
+        <CardContent>
+          {filtered.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Brain className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Nenhum simulado cadastrado.</p>
+              <p className="text-sm">Clique em "Novo Simulado" para criar.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Questões</TableHead>
+                  <TableHead>Tempo</TableHead>
+                  <TableHead>Modo</TableHead>
+                  <TableHead>Início</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Tentativas</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((simulado) => {
+                  const status = getStatus(simulado);
+                  const stats = statsMap?.get(simulado.id);
+                  const StatusIcon = status.icon;
+                  
+                  return (
+                    <TableRow key={simulado.id} className={!simulado.is_active ? 'opacity-50' : ''}>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <span className="font-medium">{simulado.title}</span>
+                          <div className="flex gap-1">
+                            {simulado.is_ranking_frozen && (
+                              <Badge variant="outline" className="text-xs">
+                                <Lock className="h-3 w-3 mr-1" />
+                                Ranking Congelado
+                              </Badge>
+                            )}
+                            {simulado.maintenance_message && (
+                              <Badge variant="outline" className="text-xs text-amber-500">
+                                <Wrench className="h-3 w-3 mr-1" />
+                                {simulado.maintenance_message.substring(0, 20)}...
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={simulado.total_questions > 0 ? "outline" : "destructive"}>
+                          {simulado.total_questions || 0}
                         </Badge>
-                      ) : (
-                        <Badge variant="secondary">Normal</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {simulado.starts_at 
-                        ? format(new Date(simulado.starts_at), "dd/MM HH:mm", { locale: ptBR })
-                        : '—'
-                      }
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={status.color}>{status.label}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {stats ? (
-                        <div className="text-xs space-y-0.5">
-                          <div className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            {stats.total_attempts} total
-                          </div>
-                          <div className="flex items-center gap-1 text-green-600">
-                            <CheckCircle2 className="h-3 w-3" />
-                            {stats.finished_count} finalizados
-                          </div>
-                          {stats.invalidated_count > 0 && (
-                            <div className="flex items-center gap-1 text-red-500">
-                              <XCircle className="h-3 w-3" />
-                              {stats.invalidated_count} invalidados
-                            </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          {simulado.duration_minutes} min
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {simulado.is_hard_mode ? (
+                            <Badge className="bg-red-500 gap-1">
+                              <Shield className="h-3 w-3" />
+                              Hard
+                              {simulado.requires_camera && <Camera className="h-3 w-3" />}
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">Normal</Badge>
+                          )}
+                          {simulado.hard_mode_override !== 'default' && (
+                            <Badge variant="outline" className="text-xs block mt-1">
+                              {simulado.hard_mode_override === 'force_on' ? '⚡ Forçado ON' : '⭕ Forçado OFF'}
+                            </Badge>
                           )}
                         </div>
-                      ) : (
-                        <span className="text-muted-foreground text-xs">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => updateSimulado.mutate({ 
-                            id: simulado.id, 
-                            data: { is_published: !simulado.is_published } 
-                          })}>
-                            {simulado.is_published ? (
-                              <>
-                                <Pause className="h-4 w-4 mr-2" /> Despublicar
-                              </>
-                            ) : (
-                              <>
-                                <Play className="h-4 w-4 mr-2" /> Publicar
-                              </>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {simulado.starts_at 
+                          ? format(new Date(simulado.starts_at), "dd/MM HH:mm", { locale: ptBR })
+                          : '—'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={cn(status.color, "gap-1")}>
+                          <StatusIcon className="h-3 w-3" />
+                          {status.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {stats ? (
+                          <div className="text-xs space-y-0.5">
+                            <div className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {stats.total_attempts} total
+                            </div>
+                            <div className="flex items-center gap-1 text-green-600">
+                              <CheckCircle2 className="h-3 w-3" />
+                              {stats.finished_count} finalizados
+                            </div>
+                            {stats.invalidated_count > 0 && (
+                              <div className="flex items-center gap-1 text-red-500">
+                                <XCircle className="h-3 w-3" />
+                                {stats.invalidated_count} invalidados
+                              </div>
                             )}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => updateSimulado.mutate({ 
-                            id: simulado.id, 
-                            data: { is_ranking_frozen: !simulado.is_ranking_frozen } 
-                          })}>
-                            <Lock className="h-4 w-4 mr-2" />
-                            {simulado.is_ranking_frozen ? 'Descongelar Ranking' : 'Congelar Ranking'}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setSelectedSimulado(simulado)}>
-                            <Eye className="h-4 w-4 mr-2" /> Ver Detalhes
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-red-500" 
-                            onClick={() => {
-                              if (confirm(`Excluir "${simulado.title}"?`)) {
-                                deleteSimulado.mutate(simulado.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {/* EDITAR */}
+                            <DropdownMenuItem onClick={() => setEditingSimulado(simulado)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuItem onClick={() => setDetailsSimulado(simulado)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Ver Detalhes
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {/* PUBLICAR/DESPUBLICAR */}
+                            {simulado.is_published ? (
+                              <DropdownMenuItem onClick={() => handleUnpublish(simulado)}>
+                                <Pause className="h-4 w-4 mr-2" />
+                                Despublicar
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => handlePublish(simulado)}>
+                                <Play className="h-4 w-4 mr-2" />
+                                Publicar
+                              </DropdownMenuItem>
+                            )}
+                            
+                            {/* ATIVAR/DESATIVAR */}
+                            <DropdownMenuItem onClick={() => handleToggleActive(simulado)}>
+                              {simulado.is_active ? (
+                                <>
+                                  <PowerOff className="h-4 w-4 mr-2" />
+                                  Desativar
+                                </>
+                              ) : (
+                                <>
+                                  <Power className="h-4 w-4 mr-2" />
+                                  Ativar
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                            
+                            {/* RANKING */}
+                            <DropdownMenuItem onClick={() => updateSimulado.mutate({ 
+                              id: simulado.id, 
+                              data: { is_ranking_frozen: !simulado.is_ranking_frozen } 
+                            })}>
+                              <Lock className="h-4 w-4 mr-2" />
+                              {simulado.is_ranking_frozen ? 'Descongelar Ranking' : 'Congelar Ranking'}
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {/* EXCLUIR */}
+                            <DropdownMenuItem 
+                              className="text-red-500" 
+                              onClick={() => {
+                                if (confirm(`Excluir "${simulado.title}"? Esta ação não pode ser desfeita.`)) {
+                                  deleteSimulado.mutate(simulado.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
       
-      {/* Dialog de detalhes */}
-      {selectedSimulado && (
-        <SimuladoDetailsDialog 
-          simulado={selectedSimulado} 
-          onClose={() => setSelectedSimulado(null)} 
-        />
-      )}
-    </Card>
+      {/* Dialog de Edição */}
+      <EditSimuladoDialog 
+        simulado={editingSimulado}
+        open={!!editingSimulado}
+        onOpenChange={(open) => !open && setEditingSimulado(null)}
+      />
+      
+      {/* Dialog de Detalhes */}
+      <SimuladoDetailsDialog
+        simulado={detailsSimulado}
+        onClose={() => setDetailsSimulado(null)}
+      />
+      
+      {/* Confirmação de Desativar */}
+      <AlertDialog open={!!confirmDeactivate} onOpenChange={(open) => !open && setConfirmDeactivate(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Desativar Simulado?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              O simulado "{confirmDeactivate?.title}" será ocultado para todos os alunos.
+              Tentativas em andamento serão mantidas, mas novas tentativas não serão permitidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-amber-500 hover:bg-amber-600"
+              onClick={() => {
+                if (confirmDeactivate) {
+                  updateSimulado.mutate({ 
+                    id: confirmDeactivate.id, 
+                    data: { is_active: false } 
+                  });
+                }
+                setConfirmDeactivate(null);
+              }}
+            >
+              Desativar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
+
+// ============================================
+// DIALOG DE DETALHES
+// ============================================
 
 function SimuladoDetailsDialog({ 
   simulado, 
   onClose 
 }: { 
-  simulado: Simulado; 
-  onClose: () => void; 
+  simulado: Simulado | null; 
+  onClose: () => void;
 }) {
-  const { data: snapshots } = useRankingSnapshots(simulado.id);
+  const { data: snapshots } = useRankingSnapshots(simulado?.id || null);
   const createSnapshot = useCreateRankingSnapshot();
   
+  if (!simulado) return null;
+  
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open={!!simulado} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Brain className="h-5 w-5 text-primary" />
+            <Brain className="h-5 w-5" />
             {simulado.title}
           </DialogTitle>
+          <DialogDescription>
+            Criado em {format(new Date(simulado.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">
           {/* Info básica */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="p-3 border rounded-lg">
-              <p className="text-xs text-muted-foreground">Tempo</p>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Duração</Label>
               <p className="font-medium">{simulado.duration_minutes} minutos</p>
             </div>
-            <div className="p-3 border rounded-lg">
-              <p className="text-xs text-muted-foreground">Questões</p>
-              <p className="font-medium">{simulado.total_questions}</p>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Tolerância</Label>
+              <p className="font-medium">{simulado.tolerance_minutes} minutos</p>
             </div>
-            <div className="p-3 border rounded-lg">
-              <p className="text-xs text-muted-foreground">XP por Questão</p>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Questões</Label>
+              <p className="font-medium">{simulado.total_questions || 0}</p>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">XP por Questão</Label>
               <p className="font-medium">{simulado.points_per_question}</p>
             </div>
-            <div className="p-3 border rounded-lg">
-              <p className="text-xs text-muted-foreground">Nota Mínima</p>
-              <p className="font-medium">{simulado.passing_score}%</p>
-            </div>
           </div>
           
-          {/* Datas */}
-          <div className="space-y-2">
-            <h4 className="font-medium text-sm">Agendamento</h4>
-            <div className="grid grid-cols-3 gap-2 text-sm">
-              <div className="p-2 bg-muted rounded">
-                <p className="text-xs text-muted-foreground">Início</p>
-                <p>{simulado.starts_at ? format(new Date(simulado.starts_at), "dd/MM/yy HH:mm") : '—'}</p>
-              </div>
-              <div className="p-2 bg-muted rounded">
-                <p className="text-xs text-muted-foreground">Término</p>
-                <p>{simulado.ends_at ? format(new Date(simulado.ends_at), "dd/MM/yy HH:mm") : '—'}</p>
-              </div>
-              <div className="p-2 bg-muted rounded">
-                <p className="text-xs text-muted-foreground">Gabarito</p>
-                <p>{simulado.results_released_at ? format(new Date(simulado.results_released_at), "dd/MM/yy HH:mm") : '—'}</p>
-              </div>
-            </div>
-          </div>
+          <Separator />
           
           {/* Hard Mode */}
-          {simulado.is_hard_mode && (
-            <div className="p-3 border border-red-500/30 bg-red-500/5 rounded-lg">
-              <div className="flex items-center gap-2 text-red-500 font-medium">
-                <Shield className="h-4 w-4" />
-                Modo Hard Ativo
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Máx. {simulado.max_tab_switches} trocas de aba
-                {simulado.requires_camera && ' • Câmera ativa'}
-              </p>
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Modo Hard
+            </h4>
+            <div className="grid grid-cols-3 gap-2">
+              <Badge variant={simulado.is_hard_mode ? "default" : "secondary"} className="justify-center">
+                {simulado.is_hard_mode ? '✅ Ativado' : '❌ Desativado'}
+              </Badge>
+              <Badge variant={simulado.requires_camera ? "default" : "secondary"} className="justify-center">
+                {simulado.requires_camera ? '📷 Câmera' : '🚫 Sem Câmera'}
+              </Badge>
+              <Badge variant="outline" className="justify-center">
+                Override: {simulado.hard_mode_override || 'default'}
+              </Badge>
             </div>
+          </div>
+          
+          {/* Manutenção */}
+          {simulado.maintenance_message && (
+            <>
+              <Separator />
+              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <div className="flex items-center gap-2 text-amber-500 font-medium text-sm">
+                  <Wrench className="h-4 w-4" />
+                  Mensagem de Manutenção
+                </div>
+                <p className="text-sm mt-1">{simulado.maintenance_message}</p>
+              </div>
+            </>
           )}
           
+          {/* Datas */}
+          <Separator />
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div>
+              <Label className="text-xs text-muted-foreground">Início</Label>
+              <p>{simulado.starts_at ? format(new Date(simulado.starts_at), "dd/MM HH:mm") : '—'}</p>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Término</Label>
+              <p>{simulado.ends_at ? format(new Date(simulado.ends_at), "dd/MM HH:mm") : '—'}</p>
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">Gabarito</Label>
+              <p>{simulado.results_released_at ? format(new Date(simulado.results_released_at), "dd/MM HH:mm") : '—'}</p>
+            </div>
+          </div>
+          
           {/* Snapshots */}
+          <Separator />
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h4 className="font-medium text-sm">Snapshots do Ranking</h4>
@@ -1040,11 +1427,14 @@ function SimuladoDetailsDialog({
   );
 }
 
+// ============================================
+// MONITORAMENTO
+// ============================================
+
 function MonitoringDashboard() {
   const { data: simulados } = useSimulados();
   const { data: statsMap, refetch: refetchStats } = useSimuladoAttemptStats();
   
-  // Métricas agregadas
   const metrics = useMemo(() => {
     if (!statsMap) return { total: 0, finished: 0, invalidated: 0, avgScore: 0 };
     
@@ -1114,9 +1504,9 @@ function MonitoringDashboard() {
           </div>
         </CardHeader>
         <CardContent>
-          {simulados && simulados.filter(s => s.is_published).length > 0 ? (
+          {simulados && simulados.filter(s => s.is_published && s.is_active).length > 0 ? (
             <div className="space-y-4">
-              {simulados.filter(s => s.is_published).map(sim => {
+              {simulados.filter(s => s.is_published && s.is_active).map(sim => {
                 const stats = statsMap?.get(sim.id);
                 const completionRate = stats && stats.total_attempts > 0 
                   ? (stats.finished_count / stats.total_attempts) * 100 
@@ -1126,12 +1516,20 @@ function MonitoringDashboard() {
                   <div key={sim.id} className="p-4 border rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium">{sim.title}</h4>
-                      {sim.is_hard_mode && (
-                        <Badge className="bg-red-500">
-                          <Shield className="h-3 w-3 mr-1" />
-                          Hard Mode
-                        </Badge>
-                      )}
+                      <div className="flex gap-2">
+                        {sim.is_hard_mode && (
+                          <Badge className="bg-red-500">
+                            <Shield className="h-3 w-3 mr-1" />
+                            Hard Mode
+                          </Badge>
+                        )}
+                        {sim.maintenance_message && (
+                          <Badge variant="outline" className="text-amber-500">
+                            <Wrench className="h-3 w-3 mr-1" />
+                            Manutenção
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     
                     {stats ? (
@@ -1172,7 +1570,7 @@ function MonitoringDashboard() {
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhum simulado publicado para monitorar.</p>
+              <p>Nenhum simulado ativo para monitorar.</p>
             </div>
           )}
         </CardContent>
@@ -1180,6 +1578,10 @@ function MonitoringDashboard() {
     </div>
   );
 }
+
+// ============================================
+// AUDITORIA
+// ============================================
 
 function AuditLogsPanel() {
   const { data: logs, isLoading, refetch } = useAuditLogs();
@@ -1276,12 +1678,15 @@ function AuditLogsPanel() {
   );
 }
 
+// ============================================
+// RANKING
+// ============================================
+
 function RankingPanel() {
   const { data: simulados } = useSimulados();
   const [selectedSimuladoId, setSelectedSimuladoId] = useState<string | null>(null);
   const createSnapshot = useCreateRankingSnapshot();
   
-  // Buscar ranking do simulado selecionado
   const { data: ranking, isLoading: isLoadingRanking, refetch: refetchRanking } = useQuery({
     queryKey: ['simulado-ranking', selectedSimuladoId],
     queryFn: async () => {
@@ -1306,7 +1711,6 @@ function RankingPanel() {
   
   return (
     <div className="space-y-6">
-      {/* Seletor de simulado */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -1328,27 +1732,27 @@ function RankingPanel() {
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <Label>Selecione um Simulado</Label>
-                  <select
-                    className="w-full mt-1 p-2 border rounded-lg bg-background"
+                  <Select
                     value={selectedSimuladoId || ''}
-                    onChange={(e) => setSelectedSimuladoId(e.target.value || null)}
+                    onValueChange={(value) => setSelectedSimuladoId(value || null)}
                   >
-                    <option value="">Escolha...</option>
-                    {publishedSimulados.map(sim => (
-                      <option key={sim.id} value={sim.id}>
-                        {sim.title}
-                        {sim.is_ranking_frozen && ' 🔒'}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Escolha..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {publishedSimulados.map(sim => (
+                        <SelectItem key={sim.id} value={sim.id}>
+                          {sim.title}
+                          {sim.is_ranking_frozen && ' 🔒'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 {selectedSimuladoId && (
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => refetchRanking()}
-                    >
+                  <div className="flex gap-2 mt-6">
+                    <Button variant="outline" onClick={() => refetchRanking()}>
                       <RefreshCw className="h-4 w-4 mr-1" />
                       Atualizar
                     </Button>
@@ -1366,7 +1770,6 @@ function RankingPanel() {
                 )}
               </div>
               
-              {/* Ranking Table */}
               {selectedSimuladoId && (
                 isLoadingRanking ? (
                   <LoadingState message="Carregando ranking..." />
@@ -1421,7 +1824,7 @@ function RankingPanel() {
                   </Table>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
-                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <Medal className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>Nenhuma tentativa finalizada neste simulado.</p>
                   </div>
                 )
@@ -1434,66 +1837,32 @@ function RankingPanel() {
   );
 }
 
-function MetricsDashboard() {
-  const { data: simulados } = useSimulados();
-  const { data: statsMap } = useSimuladoAttemptStats();
-  
-  const stats = useMemo(() => {
-    if (!simulados) return { total: 0, published: 0, hardMode: 0, questions: 0 };
-    return {
-      total: simulados.length,
-      published: simulados.filter(s => s.is_published).length,
-      hardMode: simulados.filter(s => s.is_hard_mode).length,
-      questions: simulados.reduce((acc, s) => acc + (s.total_questions || 0), 0),
-    };
-  }, [simulados]);
-  
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {[
-        { label: 'Total Simulados', value: stats.total, icon: Brain, color: 'text-primary' },
-        { label: 'Publicados', value: stats.published, icon: CheckCircle2, color: 'text-green-500' },
-        { label: 'Hard Mode', value: stats.hardMode, icon: Shield, color: 'text-red-500' },
-        { label: 'Questões', value: stats.questions, icon: FileQuestion, color: 'text-blue-500' },
-      ].map((stat, idx) => (
-        <motion.div
-          key={stat.label}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: idx * 0.1 }}
-        >
-          <Card>
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className={cn("p-3 rounded-xl bg-muted", stat.color)}>
-                <stat.icon className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stat.value}</p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      ))}
-    </div>
-  );
-}
-
 // ============================================
 // PÁGINA PRINCIPAL
 // ============================================
 
 export default function GestaoSimulados() {
+  const { data: simulados } = useSimulados();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  
+  // Métricas
+  const metrics = useMemo(() => {
+    if (!simulados) return { total: 0, published: 0, active: 0, hardMode: 0 };
+    return {
+      total: simulados.length,
+      published: simulados.filter(s => s.is_published).length,
+      active: simulados.filter(s => s.is_active && s.is_published).length,
+      hardMode: simulados.filter(s => s.is_hard_mode).length,
+    };
+  }, [simulados]);
   
   return (
     <>
       <Helmet>
-        <title>Gestão de Simulados | Moisés Medeiros</title>
-        <meta name="description" content="Gerenciamento completo de simulados com Modo Hard" />
+        <title>Gestão de Simulados | PRO Moisés Medeiros</title>
       </Helmet>
       
-      <div className="container mx-auto py-6 px-4 space-y-6">
+      <div className="container mx-auto p-6 space-y-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -1506,27 +1875,53 @@ export default function GestaoSimulados() {
               Gestão de Simulados
             </h1>
             <p className="text-muted-foreground mt-1">
-              Crie, configure e monitore simulados com Modo Hard, ranking e auditoria.
+              Crie, configure e monitore simulados com Modo Hard e ranking competitivo.
             </p>
           </div>
           
           <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
+            <Plus className="h-5 w-5" />
             Novo Simulado
           </Button>
         </motion.div>
         
-        {/* Métricas */}
-        <MetricsDashboard />
+        {/* Cards de métricas */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'Total', value: metrics.total, icon: Brain, color: 'text-primary' },
+            { label: 'Publicados', value: metrics.published, icon: Play, color: 'text-green-500' },
+            { label: 'Ativos', value: metrics.active, icon: Activity, color: 'text-blue-500' },
+            { label: 'Hard Mode', value: metrics.hardMode, icon: Shield, color: 'text-red-500' },
+          ].map((stat, idx) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
+            >
+              <Card>
+                <CardContent className="p-4 flex items-center gap-4">
+                  <div className={cn("p-3 rounded-xl bg-muted", stat.color)}>
+                    <stat.icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{stat.value}</p>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
         
         {/* Tabs */}
-        <Tabs defaultValue="simulados" className="space-y-6">
-          <TabsList className="grid grid-cols-5 w-full max-w-2xl">
+        <Tabs defaultValue="simulados" className="space-y-4">
+          <TabsList className="grid grid-cols-5 w-full max-w-3xl">
             <TabsTrigger value="simulados" className="gap-2">
               <Brain className="h-4 w-4" />
               Simulados
             </TabsTrigger>
-            <TabsTrigger value="monitoring" className="gap-2">
+            <TabsTrigger value="monitoramento" className="gap-2">
               <Activity className="h-4 w-4" />
               Monitoramento
             </TabsTrigger>
@@ -1534,7 +1929,7 @@ export default function GestaoSimulados() {
               <Trophy className="h-4 w-4" />
               Ranking
             </TabsTrigger>
-            <TabsTrigger value="audit" className="gap-2">
+            <TabsTrigger value="auditoria" className="gap-2">
               <History className="h-4 w-4" />
               Auditoria
             </TabsTrigger>
@@ -1548,7 +1943,7 @@ export default function GestaoSimulados() {
             <SimuladosList />
           </TabsContent>
           
-          <TabsContent value="monitoring">
+          <TabsContent value="monitoramento">
             <MonitoringDashboard />
           </TabsContent>
           
@@ -1556,7 +1951,7 @@ export default function GestaoSimulados() {
             <RankingPanel />
           </TabsContent>
           
-          <TabsContent value="audit">
+          <TabsContent value="auditoria">
             <AuditLogsPanel />
           </TabsContent>
           
@@ -1566,8 +1961,11 @@ export default function GestaoSimulados() {
         </Tabs>
       </div>
       
-      {/* Dialog de Criação */}
-      <CreateSimuladoDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
+      {/* Dialog de criação */}
+      <CreateSimuladoDialog 
+        open={createDialogOpen} 
+        onOpenChange={setCreateDialogOpen} 
+      />
     </>
   );
 }
