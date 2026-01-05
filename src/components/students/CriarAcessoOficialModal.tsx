@@ -23,6 +23,7 @@ import { PhoneInput, cleanPhone } from "@/components/ui/phone-input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { StudentRole, STUDENT_ROLE_LABELS } from "@/types/studentIdentityContract";
+import { cn } from "@/lib/utils";
 
 // ============================================
 // SCHEMA DE VALIDAÇÃO (Zod)
@@ -125,6 +126,10 @@ export function CriarAcessoOficialModal({
   const [customExpiresValue, setCustomExpiresValue] = useState('');
   const [cpfValidated, setCpfValidated] = useState(false);
   const [cpfValidating, setCpfValidating] = useState(false);
+  
+  // 🔒 CONSTITUIÇÃO v10.x — Nome oficial vinculado ao CPF (Receita Federal)
+  // O primeiro nome DEVE bater obrigatoriamente. Campo é BLOQUEADO após validação.
+  const [nomeOficialReceita, setNomeOficialReceita] = useState<string | null>(null);
   
   // Estado para upload de foto
   const [fotoFile, setFotoFile] = useState<File | null>(null);
@@ -234,9 +239,21 @@ export function CriarAcessoOficialModal({
 
   const handleSubmit = async (data: CriarAcessoFormData) => {
     // 🔒 VALIDAÇÃO OBRIGATÓRIA: CPF deve estar validado na Receita Federal
-    if (!cpfValidated) {
+    if (!cpfValidated || !nomeOficialReceita) {
       toast.error("CPF não validado", {
         description: "Aguarde a validação do CPF na Receita Federal antes de continuar."
+      });
+      return;
+    }
+    
+    // 🔒 CONSTITUIÇÃO v10.x — PRIMEIRO NOME DEVE BATER OBRIGATORIAMENTE
+    const nomeDigitado = data.nome.trim().split(/\s+/)[0]?.toUpperCase() || '';
+    const nomeOficial = nomeOficialReceita.trim().split(/\s+/)[0]?.toUpperCase() || '';
+    
+    if (nomeDigitado !== nomeOficial) {
+      toast.error("❌ Nome não corresponde ao CPF", {
+        description: `O primeiro nome "${nomeDigitado}" não corresponde ao nome oficial "${nomeOficial}" vinculado ao CPF na Receita Federal.`,
+        duration: 8000,
       });
       return;
     }
@@ -406,6 +423,8 @@ export function CriarAcessoOficialModal({
       setShowCustomExpires(false);
       setCustomExpiresValue('');
       handleRemoveFoto(); // Limpar foto
+      setCpfValidated(false);
+      setNomeOficialReceita(null); // 🔒 Reset nome oficial
       onOpenChange(false);
       
       // Callback de sucesso (para refetch/invalidate)
@@ -448,6 +467,8 @@ export function CriarAcessoOficialModal({
       setShowCustomExpires(false);
       setCustomExpiresValue('');
       handleRemoveFoto(); // Limpar foto
+      setCpfValidated(false);
+      setNomeOficialReceita(null); // 🔒 Reset nome oficial
       onOpenChange(false);
     }
   };
@@ -480,15 +501,30 @@ export function CriarAcessoOficialModal({
                   <FormLabel className="flex items-center gap-1">
                     <User className="h-4 w-4" />
                     Nome Completo Vinculado ao CPF *
+                    {nomeOficialReceita && (
+                      <span className="text-[10px] text-green-500 ml-1">
+                        (✓ Receita Federal)
+                      </span>
+                    )}
                   </FormLabel>
                   <FormControl>
                     <Input 
                       {...field} 
-                      placeholder="João da Silva"
-                      className="border-emerald-500/30 focus:border-emerald-500"
-                      disabled={isSubmitting}
+                      placeholder={nomeOficialReceita ? nomeOficialReceita : "Valide o CPF primeiro"}
+                      className={cn(
+                        "border-emerald-500/30 focus:border-emerald-500",
+                        nomeOficialReceita && "bg-muted/50 cursor-not-allowed"
+                      )}
+                      disabled={isSubmitting || !!nomeOficialReceita}
+                      readOnly={!!nomeOficialReceita}
                     />
                   </FormControl>
+                  <FormDescription className="text-[10px]">
+                    {nomeOficialReceita 
+                      ? "🔒 Nome preenchido automaticamente pela Receita Federal"
+                      : "Preencha o CPF para vincular o nome automaticamente"
+                    }
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -767,7 +803,11 @@ export function CriarAcessoOficialModal({
                       onChange={(val) => {
                         field.onChange(val);
                         // Reset validação quando CPF muda
-                        if (cpfValidated) setCpfValidated(false);
+                        if (cpfValidated) {
+                          setCpfValidated(false);
+                          setNomeOficialReceita(null);
+                          form.setValue("nome", "", { shouldValidate: false });
+                        }
                       }}
                       validateOnBlur={true}
                       showStatusIcon={true}
@@ -777,12 +817,15 @@ export function CriarAcessoOficialModal({
                         setCpfValidated(isValid);
                         setCpfValidating(false);
                         if (isValid && nome) {
-                          // OBRIGATÓRIO: Nome da Receita Federal SEMPRE preenche o campo
-                          // CPF e nome são vinculados — são a mesma pessoa
+                          // 🔒 CONSTITUIÇÃO v10.x — Nome da Receita é OBRIGATÓRIO e IMUTÁVEL
+                          // O primeiro nome DEVE bater — armazena nome oficial para validação
+                          setNomeOficialReceita(nome);
                           form.setValue("nome", nome, { shouldValidate: true });
                           toast.success("✅ CPF validado na Receita Federal!", {
                             description: `Nome vinculado: ${nome}`
                           });
+                        } else {
+                          setNomeOficialReceita(null);
                         }
                       }}
                       className="border-muted-foreground/30"
