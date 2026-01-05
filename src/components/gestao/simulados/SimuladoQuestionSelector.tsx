@@ -686,8 +686,8 @@ export function SimuladoQuestionSelector({
           </div>
         </div>
 
-        {/* Split panel layout */}
-        <div className="flex h-[600px]">
+        {/* Split panel layout - altura expandida para mais espaço */}
+        <div className="flex h-[850px]">
           {/* LEFT: Available questions */}
           <div className="flex-1 flex flex-col border-r">
             {/* Search */}
@@ -728,12 +728,12 @@ export function SimuladoQuestionSelector({
                 </div>
               </div>
 
-              {/* Macro filters */}
+              {/* Macro filters - SEM LIMITE */}
               {Object.keys(filterData.macros).length > 0 && (
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Macro</span>
                   <div className="flex gap-1 flex-wrap">
-                    {Object.entries(filterData.macros).slice(0, 5).map(([key, count]) => (
+                    {Object.entries(filterData.macros).map(([key, count]) => (
                       <FilterChip
                         key={key}
                         label={key}
@@ -747,78 +747,69 @@ export function SimuladoQuestionSelector({
                 </div>
               )}
 
-              {/* Micro filters - usa dinâmico quando há macro selecionado, senão mostra todos */}
+              {/* Micro filters - SEM LIMITE - scroll horizontal se necessário */}
               {(activeMacros.size > 0 ? Object.keys(dynamicFilterOptions.micros).length > 0 : Object.keys(filterData.micros).length > 0) && (
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Micro</span>
-                  <div className="flex gap-1 flex-wrap max-h-16 overflow-y-auto">
-                    {Object.entries(activeMacros.size > 0 ? dynamicFilterOptions.micros : filterData.micros).slice(0, 8).map(([key, count]) => (
+                  <div className="flex gap-1 flex-wrap max-h-24 overflow-y-auto flex-1">
+                    {Object.entries(activeMacros.size > 0 ? dynamicFilterOptions.micros : filterData.micros).map(([key, count]) => (
                       <FilterChip
                         key={key}
-                        label={key.length > 20 ? key.substring(0, 20) + '...' : key}
+                        label={key.length > 25 ? key.substring(0, 25) + '...' : key}
                         value={key}
                         count={count}
                         isActive={activeMicros.has(key)}
                         onClick={() => handleMicroToggle(key)}
                       />
                     ))}
-                    {Object.keys(activeMacros.size > 0 ? dynamicFilterOptions.micros : filterData.micros).length > 8 && (
-                      <span className="text-[10px] text-muted-foreground self-center">+{Object.keys(activeMacros.size > 0 ? dynamicFilterOptions.micros : filterData.micros).length - 8}</span>
-                    )}
                   </div>
                 </div>
               )}
 
-              {/* Tema filters - usa dinâmico quando há micro selecionado, senão mostra todos */}
+              {/* Tema filters - SEM LIMITE */}
               {(activeMicros.size > 0 ? Object.keys(dynamicFilterOptions.temas).length > 0 : Object.keys(filterData.temas).length > 0) && (
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Tema</span>
-                  <div className="flex gap-1 flex-wrap max-h-16 overflow-y-auto">
-                    {Object.entries(activeMicros.size > 0 ? dynamicFilterOptions.temas : filterData.temas).slice(0, 6).map(([key, count]) => (
+                  <div className="flex gap-1 flex-wrap max-h-24 overflow-y-auto flex-1">
+                    {Object.entries(activeMicros.size > 0 ? dynamicFilterOptions.temas : filterData.temas).map(([key, count]) => (
                       <FilterChip
                         key={key}
-                        label={key.length > 20 ? key.substring(0, 20) + '...' : key}
+                        label={key.length > 25 ? key.substring(0, 25) + '...' : key}
                         value={key}
                         count={count}
                         isActive={activeTemas.has(key)}
                         onClick={() => handleTemaToggle(key)}
                       />
                     ))}
-                    {Object.keys(activeMicros.size > 0 ? dynamicFilterOptions.temas : filterData.temas).length > 6 && (
-                      <span className="text-[10px] text-muted-foreground self-center">+{Object.keys(activeMicros.size > 0 ? dynamicFilterOptions.temas : filterData.temas).length - 6}</span>
-                    )}
                   </div>
                 </div>
               )}
 
-              {/* Subtema filters - usa dinâmico quando há tema selecionado, senão mostra todos */}
+              {/* Subtema filters - SEM LIMITE */}
               {(activeTemas.size > 0 ? Object.keys(dynamicFilterOptions.subtemas).length > 0 : Object.keys(filterData.subtemas).length > 0) && (
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Subtema</span>
-                  <div className="flex gap-1 flex-wrap max-h-16 overflow-y-auto">
-                    {Object.entries(activeTemas.size > 0 ? dynamicFilterOptions.subtemas : filterData.subtemas).slice(0, 6).map(([key, count]) => (
+                  <div className="flex gap-1 flex-wrap max-h-24 overflow-y-auto flex-1">
+                    {Object.entries(activeTemas.size > 0 ? dynamicFilterOptions.subtemas : filterData.subtemas).map(([key, count]) => (
                       <FilterChip
                         key={key}
-                        label={key.length > 20 ? key.substring(0, 20) + '...' : key}
+                        label={key.length > 25 ? key.substring(0, 25) + '...' : key}
                         value={key}
                         count={count}
                         isActive={activeSubtemas.has(key)}
                         onClick={() => toggleFilter(activeSubtemas, setActiveSubtemas, key)}
                       />
                     ))}
-                    {Object.keys(activeTemas.size > 0 ? dynamicFilterOptions.subtemas : filterData.subtemas).length > 6 && (
-                      <span className="text-[10px] text-muted-foreground self-center">+{Object.keys(activeTemas.size > 0 ? dynamicFilterOptions.subtemas : filterData.subtemas).length - 6}</span>
-                    )}
                   </div>
                 </div>
               )}
 
-              {/* Banca, Ano & Tipo in one row */}
-              <div className="flex items-center gap-4 flex-wrap">
+              {/* Banca filters - SEM LIMITE */}
+              {Object.keys(filterData.bancas).length > 0 && (
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Banca</span>
-                  <div className="flex gap-1 flex-wrap">
-                    {Object.entries(filterData.bancas).slice(0, 4).map(([key, count]) => (
+                  <div className="flex gap-1 flex-wrap max-h-20 overflow-y-auto flex-1">
+                    {Object.entries(filterData.bancas).map(([key, count]) => (
                       <FilterChip
                         key={key}
                         label={key}
@@ -830,10 +821,14 @@ export function SimuladoQuestionSelector({
                     ))}
                   </div>
                 </div>
+              )}
+
+              {/* Ano filters - SEM LIMITE */}
+              {Object.keys(filterData.anos).length > 0 && (
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider shrink-0">Ano</span>
-                  <div className="flex gap-1 flex-wrap">
-                    {Object.entries(filterData.anos).sort((a, b) => Number(b[0]) - Number(a[0])).slice(0, 4).map(([key, count]) => (
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Ano</span>
+                  <div className="flex gap-1 flex-wrap max-h-20 overflow-y-auto flex-1">
+                    {Object.entries(filterData.anos).sort((a, b) => Number(b[0]) - Number(a[0])).map(([key, count]) => (
                       <FilterChip
                         key={key}
                         label={key}
@@ -845,24 +840,26 @@ export function SimuladoQuestionSelector({
                     ))}
                   </div>
                 </div>
-                {Object.keys(filterData.types).length > 0 && (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider shrink-0">Tipo</span>
-                    <div className="flex gap-1 flex-wrap">
-                      {Object.entries(filterData.types).slice(0, 3).map(([key, count]) => (
-                        <FilterChip
-                          key={key}
-                          label={key === 'multiple_choice' ? 'Múltipla' : key === 'discursive' ? 'Discursiva' : key}
-                          value={key}
-                          count={count}
-                          isActive={activeTypes.has(key)}
-                          onClick={() => toggleFilter(activeTypes, setActiveTypes, key)}
-                        />
-                      ))}
-                    </div>
+              )}
+
+              {/* Tipo filters - SEM LIMITE */}
+              {Object.keys(filterData.types).length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Tipo</span>
+                  <div className="flex gap-1 flex-wrap">
+                    {Object.entries(filterData.types).map(([key, count]) => (
+                      <FilterChip
+                        key={key}
+                        label={key === 'multiple_choice' ? 'Múltipla Escolha' : key === 'discursive' ? 'Discursiva' : key === 'somatorio' ? 'Somatório' : key === 'vf' ? 'V/F' : key}
+                        value={key}
+                        count={count}
+                        isActive={activeTypes.has(key)}
+                        onClick={() => toggleFilter(activeTypes, setActiveTypes, key)}
+                      />
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
 
             {/* Actions bar */}
