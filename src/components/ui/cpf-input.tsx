@@ -3,7 +3,7 @@
 // Lei III - Segurança de Dados | CONSTITUIÇÃO SYNAPSE
 // ============================================
 
-import React, { useState, useCallback, forwardRef } from 'react';
+import React, { useState, useCallback, forwardRef, useEffect, useRef } from 'react';
 import { Input } from './input';
 import { Label } from './label';
 import { cn } from '@/lib/utils';
@@ -83,8 +83,53 @@ export const CPFInput = forwardRef<HTMLInputElement, CPFInputProps>(({
 }, ref) => {
   const [validationState, setValidationState] = useState<'idle' | 'valid' | 'invalid'>('idle');
   const [localError, setLocalError] = useState<string | null>(null);
+  const lastValidatedCPF = useRef<string>('');
   
   const { validateCPF, isValidating } = useValidateCPFReal();
+
+  // Auto-validação quando CPF atinge 11 dígitos (autofill, paste, etc)
+  useEffect(() => {
+    const cleanedValue = cleanCPF(value);
+    
+    // Se já validou esse CPF ou está validando, não repetir
+    if (cleanedValue === lastValidatedCPF.current || isValidating) return;
+    
+    // Se CPF completo e ainda não validado
+    if (cleanedValue.length === 11 && validationState === 'idle') {
+      // Validação de formato local primeiro
+      if (!validateCPFFormat(cleanedValue)) {
+        setValidationState('invalid');
+        setLocalError('CPF inválido (dígitos verificadores)');
+        onValidationComplete?.(false);
+        return;
+      }
+      
+      // Se formatOnly, não consulta Receita Federal
+      if (formatOnly) {
+        setValidationState('valid');
+        setLocalError(null);
+        lastValidatedCPF.current = cleanedValue;
+        onValidationComplete?.(true);
+        return;
+      }
+      
+      // Validação completa na Receita Federal
+      if (validateOnBlur) {
+        lastValidatedCPF.current = cleanedValue;
+        validateCPF(cleanedValue).then(result => {
+          if (result?.valid) {
+            setValidationState('valid');
+            setLocalError(null);
+            onValidationComplete?.(true, result.nome);
+          } else {
+            setValidationState('invalid');
+            setLocalError(result?.error || 'CPF não validado');
+            onValidationComplete?.(false);
+          }
+        });
+      }
+    }
+  }, [value, validationState, isValidating, formatOnly, validateOnBlur, validateCPF, onValidationComplete]);
 
   // Handler de mudança com formatação automática
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,6 +140,7 @@ export const CPFInput = forwardRef<HTMLInputElement, CPFInputProps>(({
     if (validationState !== 'idle') {
       setValidationState('idle');
       setLocalError(null);
+      lastValidatedCPF.current = '';
     }
   }, [onChange, validationState]);
 
@@ -123,9 +169,8 @@ export const CPFInput = forwardRef<HTMLInputElement, CPFInputProps>(({
       return;
     }
     
-    if (!validateOnBlur) {
-      setValidationState('valid');
-      onValidationComplete?.(true);
+    // Se formatOnly ou não valida no blur, já tratado pelo useEffect
+    if (formatOnly || !validateOnBlur) {
       return;
     }
     
