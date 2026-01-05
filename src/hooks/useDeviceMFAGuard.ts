@@ -118,6 +118,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
 
   /**
    * Callback chamado após verificação do código 2FA
+   * 🔧 FIX CRÍTICO: Agora também cria a sessão única e salva o token
    */
   const onVerificationComplete = useCallback(async (success: boolean) => {
     if (!success) {
@@ -144,6 +145,37 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
           console.error('[DeviceMFAGuard] Erro ao registrar verificação:', error);
         } else {
           console.log('[DeviceMFAGuard] ✅ Dispositivo verificado por 24h:', data);
+        }
+        
+        // 🔧 FIX CRÍTICO: Criar sessão única e salvar token no localStorage
+        // Isso evita que o SessionGuard detecte SESSION_NOT_FOUND
+        const SESSION_TOKEN_KEY = 'matriz_session_token';
+        const existingToken = localStorage.getItem(SESSION_TOKEN_KEY);
+        
+        if (!existingToken) {
+          console.log('[DeviceMFAGuard] 🔐 Criando sessão única após verificação de dispositivo...');
+          
+          const { data: sessionData, error: sessionError } = await supabase.rpc('create_single_session', {
+            _ip_address: null,
+            _user_agent: navigator.userAgent.slice(0, 255),
+            _device_type: /mobile/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+            _browser: navigator.userAgent.includes('Chrome') ? 'Chrome' : 
+                      navigator.userAgent.includes('Firefox') ? 'Firefox' : 
+                      navigator.userAgent.includes('Safari') ? 'Safari' : 'Other',
+            _os: navigator.userAgent.includes('Windows') ? 'Windows' : 
+                 navigator.userAgent.includes('Mac') ? 'macOS' : 
+                 navigator.userAgent.includes('Linux') ? 'Linux' : 'Other',
+            _device_hash_from_server: state.deviceHash,
+          });
+          
+          if (sessionError) {
+            console.warn('[DeviceMFAGuard] ⚠️ Erro ao criar sessão:', sessionError);
+          } else if (sessionData?.[0]?.session_token) {
+            localStorage.setItem(SESSION_TOKEN_KEY, sessionData[0].session_token);
+            console.log('[DeviceMFAGuard] ✅ Sessão única criada e token salvo no localStorage');
+          }
+        } else {
+          console.log('[DeviceMFAGuard] Token já existe, mantendo sessão atual');
         }
       } catch (err) {
         console.error('[DeviceMFAGuard] Erro ao salvar verificação:', err);
