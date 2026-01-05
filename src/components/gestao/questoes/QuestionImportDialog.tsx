@@ -1980,7 +1980,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="w-[min(98vw,90rem)] max-w-none h-[95vh] max-h-[95vh] flex flex-col p-0">
         <DialogHeader className="flex-shrink-0 p-6 pb-4 border-b">
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 flex-wrap">
             <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 border border-primary/30">
               <Upload className="h-5 w-5 text-primary" />
             </div>
@@ -1995,6 +1995,13 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             {flowState && (
               <Badge variant="secondary" className="ml-1 text-[10px]">
                 {flowState.replace(/_/g, ' ')}
+              </Badge>
+            )}
+            {/* NOME DO ARQUIVO EM EVIDÊNCIA */}
+            {files.length > 0 && uiStep !== 'upload' && (
+              <Badge className="ml-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1 text-sm">
+                <FileSpreadsheet className="h-4 w-4 mr-1.5" />
+                {files.length === 1 ? files[0].name : `${files.length} arquivos (${files[currentFileIndex]?.name || '...'})`}
               </Badge>
             )}
           </DialogTitle>
