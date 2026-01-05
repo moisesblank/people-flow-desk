@@ -1,22 +1,29 @@
 /**
  * 🎯 GESTÃO DE SIMULADOS — Constituição SYNAPSE Ω v10.0
  * 
- * Centro de comando para criação, monitoramento e controle de simulados.
- * Inclui: Criação, Feature Flags, Métricas, Auditoria.
+ * Centro de comando COMPLETO para criação, monitoramento e controle de simulados.
+ * Usa tabela 'simulados' (não 'quizzes') com todos os campos:
+ * - Hard Mode, datas início/fim, gabarito, câmera
+ * - Monitoramento em tempo real
+ * - Ranking e snapshots
+ * - Auditoria completa
  */
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   Brain, Plus, Settings, BarChart3, FileQuestion, Shield,
   Trophy, Clock, Calendar, Users, Eye, Edit, Trash2,
   Play, Pause, AlertTriangle, CheckCircle2, XCircle,
-  RefreshCw, Search, Filter, MoreVertical
+  RefreshCw, Search, MoreVertical, Camera, Lock,
+  Activity, TrendingUp, Timer, Download, Upload,
+  Zap, Target, Medal, BarChart, History, Gavel,
+  AlertCircle, FileText, UserX, UserCheck
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,11 +33,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Progress } from '@/components/ui/progress';
 import { LoadingState } from '@/components/LoadingState';
 import { SimuladoFeatureFlagsPanel } from '@/components/gestao/simulados/SimuladoFeatureFlagsPanel';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,24 +52,68 @@ interface Simulado {
   id: string;
   title: string;
   description: string | null;
-  quiz_type: string;
-  time_limit_minutes: number | null;
-  passing_score: number;
-  xp_reward: number;
+  slug: string | null;
+  duration_minutes: number;
+  starts_at: string | null;
+  ends_at: string | null;
+  results_released_at: string | null;
+  is_hard_mode: boolean;
+  max_tab_switches: number;
+  requires_camera: boolean;
+  is_active: boolean;
   is_published: boolean;
-  max_attempts: number;
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
+  show_correct_answer_after: boolean;
+  question_ids: string[] | null;
+  total_questions: number;
+  points_per_question: number;
+  passing_score: number;
   created_at: string;
-  questions_count?: number;
+  updated_at: string;
+  hard_mode_override: string | null;
+  is_ranking_frozen: boolean;
+  maintenance_message: string | null;
 }
 
 interface SimuladoFormData {
   title: string;
   description: string;
-  time_limit_minutes: number;
+  duration_minutes: number;
+  starts_at: string;
+  ends_at: string;
+  results_released_at: string;
+  is_hard_mode: boolean;
+  max_tab_switches: number;
+  requires_camera: boolean;
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
+  points_per_question: number;
   passing_score: number;
-  xp_reward: number;
-  max_attempts: number;
   question_ids: string[];
+}
+
+interface AttemptStats {
+  simulado_id: string;
+  total_attempts: number;
+  finished_count: number;
+  invalidated_count: number;
+  average_score: number;
+  average_time_seconds: number;
+}
+
+interface AuditLog {
+  id: string;
+  simulado_id: string | null;
+  attempt_id: string | null;
+  user_id: string | null;
+  action: string;
+  details: Record<string, unknown> | null;
+  ip_hash: string | null;
+  category: string | null;
+  level: string | null;
+  session_id: string | null;
+  created_at: string;
 }
 
 // ============================================
@@ -70,37 +122,15 @@ interface SimuladoFormData {
 
 function useSimulados() {
   return useQuery({
-    queryKey: ['gestao-simulados'],
+    queryKey: ['gestao-simulados-full'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('quizzes')
+        .from('simulados')
         .select('*')
-        .eq('quiz_type', 'simulado')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      
-      // Buscar contagem de questões separadamente
-      const ids = (data || []).map(s => s.id);
-      let questionCounts: Record<string, number> = {};
-      
-      if (ids.length > 0) {
-        const { data: qData } = await supabase
-          .from('quiz_questions')
-          .select('quiz_id')
-          .in('quiz_id', ids);
-        
-        if (qData) {
-          qData.forEach(q => {
-            questionCounts[q.quiz_id] = (questionCounts[q.quiz_id] || 0) + 1;
-          });
-        }
-      }
-      
-      return (data || []).map(s => ({
-        ...s,
-        questions_count: questionCounts[s.id] || 0
-      })) as Simulado[];
+      return (data || []) as Simulado[];
     },
     staleTime: 30_000,
   });
@@ -125,22 +155,91 @@ function useSimuladoQuestions() {
   });
 }
 
-function useSimuladoMetrics() {
+function useSimuladoAttemptStats() {
   return useQuery({
-    queryKey: ['simulado-metrics'],
+    queryKey: ['simulado-attempt-stats'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('simulado_metrics')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
+        .from('simulado_attempts')
+        .select('simulado_id, status, score, time_spent_seconds');
       
       if (error) {
-        console.warn('[Metrics] Tabela pode não existir:', error.message);
+        console.warn('[Stats] Erro ao buscar tentativas:', error.message);
+        return new Map<string, AttemptStats>();
+      }
+      
+      // Agrupar por simulado
+      const statsMap = new Map<string, AttemptStats>();
+      
+      (data || []).forEach(attempt => {
+        const existing = statsMap.get(attempt.simulado_id) || {
+          simulado_id: attempt.simulado_id,
+          total_attempts: 0,
+          finished_count: 0,
+          invalidated_count: 0,
+          average_score: 0,
+          average_time_seconds: 0,
+        };
+        
+        existing.total_attempts++;
+        if (attempt.status === 'FINISHED') {
+          existing.finished_count++;
+          existing.average_score = (existing.average_score * (existing.finished_count - 1) + (attempt.score || 0)) / existing.finished_count;
+          existing.average_time_seconds = (existing.average_time_seconds * (existing.finished_count - 1) + (attempt.time_spent_seconds || 0)) / existing.finished_count;
+        }
+        if (attempt.status === 'INVALIDATED') {
+          existing.invalidated_count++;
+        }
+        
+        statsMap.set(attempt.simulado_id, existing);
+      });
+      
+      return statsMap;
+    },
+    staleTime: 30_000,
+  });
+}
+
+function useAuditLogs() {
+  return useQuery({
+    queryKey: ['simulado-audit-logs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('simulado_audit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+      
+      if (error) {
+        console.warn('[Audit] Tabela pode não existir:', error.message);
+        return [];
+      }
+      return (data || []) as AuditLog[];
+    },
+    staleTime: 60_000,
+  });
+}
+
+function useRankingSnapshots(simuladoId: string | null) {
+  return useQuery({
+    queryKey: ['ranking-snapshots', simuladoId],
+    queryFn: async () => {
+      if (!simuladoId) return [];
+      
+      const { data, error } = await supabase
+        .from('simulado_ranking_snapshots')
+        .select('*')
+        .eq('simulado_id', simuladoId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (error) {
+        console.warn('[Snapshots] Erro:', error.message);
         return [];
       }
       return data || [];
     },
+    enabled: !!simuladoId,
     staleTime: 60_000,
   });
 }
@@ -150,38 +249,71 @@ function useCreateSimulado() {
   
   return useMutation({
     mutationFn: async (formData: SimuladoFormData) => {
-      // 1. Criar o quiz
-      const { data: quiz, error: quizError } = await supabase
-        .from('quizzes')
+      // Gerar slug a partir do título
+      const slug = formData.title
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+        + '-' + Date.now().toString(36);
+      
+      const { data, error } = await supabase
+        .from('simulados')
         .insert({
           title: formData.title,
           description: formData.description || null,
-          quiz_type: 'simulado',
-          time_limit_minutes: formData.time_limit_minutes,
+          slug,
+          duration_minutes: formData.duration_minutes,
+          starts_at: formData.starts_at || null,
+          ends_at: formData.ends_at || null,
+          results_released_at: formData.results_released_at || null,
+          is_hard_mode: formData.is_hard_mode,
+          max_tab_switches: formData.max_tab_switches,
+          requires_camera: formData.requires_camera,
+          shuffle_questions: formData.shuffle_questions,
+          shuffle_options: formData.shuffle_options,
+          points_per_question: formData.points_per_question,
           passing_score: formData.passing_score,
-          xp_reward: formData.xp_reward,
+          question_ids: formData.question_ids.length > 0 ? formData.question_ids : null,
+          total_questions: formData.question_ids.length,
+          is_active: true,
           is_published: false,
-          max_attempts: formData.max_attempts,
         })
         .select()
         .single();
       
-      if (quizError) throw quizError;
-      
-      // 2. Associar questões se houver (via quiz_id na quiz_questions)
-      // Nota: A associação é feita no momento da importação/edição das questões
-      // Aqui apenas criamos o quiz base
-      
-      return quiz;
-      
-      return quiz;
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gestao-simulados'] });
+      queryClient.invalidateQueries({ queryKey: ['gestao-simulados-full'] });
       toast.success('Simulado criado com sucesso!');
     },
     onError: (error: Error) => {
       toast.error(`Erro ao criar simulado: ${error.message}`);
+    },
+  });
+}
+
+function useUpdateSimulado() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Simulado> }) => {
+      const { error } = await supabase
+        .from('simulados')
+        .update(data)
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gestao-simulados-full'] });
+      toast.success('Simulado atualizado!');
+    },
+    onError: (error: Error) => {
+      toast.error(`Erro: ${error.message}`);
     },
   });
 }
@@ -192,14 +324,14 @@ function useDeleteSimulado() {
   return useMutation({
     mutationFn: async (simuladoId: string) => {
       const { error } = await supabase
-        .from('quizzes')
+        .from('simulados')
         .delete()
         .eq('id', simuladoId);
       
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['gestao-simulados'] });
+      queryClient.invalidateQueries({ queryKey: ['gestao-simulados-full'] });
       toast.success('Simulado excluído');
     },
     onError: (error: Error) => {
@@ -208,21 +340,23 @@ function useDeleteSimulado() {
   });
 }
 
-function useTogglePublish() {
+function useCreateRankingSnapshot() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, is_published }: { id: string; is_published: boolean }) => {
-      const { error } = await supabase
-        .from('quizzes')
-        .update({ is_published })
-        .eq('id', id);
+    mutationFn: async ({ simuladoId, reason }: { simuladoId: string; reason: string }) => {
+      const { data, error } = await supabase.rpc('create_ranking_snapshot', {
+        p_simulado_id: simuladoId,
+        p_snapshot_type: 'manual',
+        p_reason: reason,
+      });
       
       if (error) throw error;
+      return data;
     },
-    onSuccess: (_, { is_published }) => {
-      queryClient.invalidateQueries({ queryKey: ['gestao-simulados'] });
-      toast.success(is_published ? 'Simulado publicado!' : 'Simulado despublicado');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ranking-snapshots'] });
+      toast.success('Snapshot do ranking criado!');
     },
     onError: (error: Error) => {
       toast.error(`Erro: ${error.message}`);
@@ -247,10 +381,17 @@ function CreateSimuladoDialog({
   const [formData, setFormData] = useState<SimuladoFormData>({
     title: '',
     description: '',
-    time_limit_minutes: 120,
+    duration_minutes: 180,
+    starts_at: '',
+    ends_at: '',
+    results_released_at: '',
+    is_hard_mode: false,
+    max_tab_switches: 3,
+    requires_camera: false,
+    shuffle_questions: true,
+    shuffle_options: true,
+    points_per_question: 10,
     passing_score: 60,
-    xp_reward: 100,
-    max_attempts: 1,
     question_ids: [],
   });
   
@@ -266,10 +407,17 @@ function CreateSimuladoDialog({
         setFormData({
           title: '',
           description: '',
-          time_limit_minutes: 120,
+          duration_minutes: 180,
+          starts_at: '',
+          ends_at: '',
+          results_released_at: '',
+          is_hard_mode: false,
+          max_tab_switches: 3,
+          requires_camera: false,
+          shuffle_questions: true,
+          shuffle_options: true,
+          points_per_question: 10,
           passing_score: 60,
-          xp_reward: 100,
-          max_attempts: 1,
           question_ids: [],
         });
       },
@@ -278,14 +426,14 @@ function CreateSimuladoDialog({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
             Criar Novo Simulado
           </DialogTitle>
           <DialogDescription>
-            Configure os detalhes do simulado e associe questões.
+            Configure todos os detalhes do simulado incluindo Modo Hard, datas e questões.
           </DialogDescription>
         </DialogHeader>
         
@@ -315,62 +463,174 @@ function CreateSimuladoDialog({
           
           <Separator />
           
-          {/* Configurações */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Tempo Limite (minutos)</Label>
-              <Input
-                type="number"
-                min={10}
-                max={300}
-                value={formData.time_limit_minutes}
-                onChange={(e) => setFormData({ ...formData, time_limit_minutes: parseInt(e.target.value) || 120 })}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Nota Mínima (%)</Label>
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                value={formData.passing_score}
-                onChange={(e) => setFormData({ ...formData, passing_score: parseInt(e.target.value) || 60 })}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>XP de Recompensa</Label>
-              <Input
-                type="number"
-                min={0}
-                value={formData.xp_reward}
-                onChange={(e) => setFormData({ ...formData, xp_reward: parseInt(e.target.value) || 100 })}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Máximo de Tentativas</Label>
-              <Input
-                type="number"
-                min={1}
-                max={10}
-                value={formData.max_attempts}
-                onChange={(e) => setFormData({ ...formData, max_attempts: parseInt(e.target.value) || 1 })}
-              />
+          {/* Datas */}
+          <div className="space-y-4">
+            <h3 className="font-medium flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              Agendamento
+            </h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label>Data/Hora de Início</Label>
+                <Input
+                  type="datetime-local"
+                  value={formData.starts_at}
+                  onChange={(e) => setFormData({ ...formData, starts_at: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">Quando o simulado fica disponível</p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Data/Hora de Término</Label>
+                <Input
+                  type="datetime-local"
+                  value={formData.ends_at}
+                  onChange={(e) => setFormData({ ...formData, ends_at: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">Quando encerra novas tentativas</p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Liberação do Gabarito</Label>
+                <Input
+                  type="datetime-local"
+                  value={formData.results_released_at}
+                  onChange={(e) => setFormData({ ...formData, results_released_at: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">Quando o gabarito fica visível</p>
+              </div>
             </div>
           </div>
           
           <Separator />
           
-          {/* Info sobre Feature Flags */}
-          <div className="flex items-center gap-3 p-4 border rounded-lg bg-amber-500/5 border-amber-500/20">
-            <Shield className="h-5 w-5 text-amber-500" />
-            <div>
-              <Label className="text-sm font-medium">Modo Hard</Label>
-              <p className="text-xs text-muted-foreground">
-                O Modo Hard é controlado globalmente via Feature Flags na aba "Feature Flags".
-              </p>
+          {/* Configurações de Tempo e Pontuação */}
+          <div className="space-y-4">
+            <h3 className="font-medium flex items-center gap-2">
+              <Timer className="h-4 w-4" />
+              Configurações
+            </h3>
+            <div className="grid grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label>Tempo Limite (min)</Label>
+                <Input
+                  type="number"
+                  min={10}
+                  max={480}
+                  value={formData.duration_minutes}
+                  onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) || 180 })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>XP por Questão</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={formData.points_per_question}
+                  onChange={(e) => setFormData({ ...formData, points_per_question: parseInt(e.target.value) || 10 })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Nota Mínima (%)</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={formData.passing_score}
+                  onChange={(e) => setFormData({ ...formData, passing_score: parseInt(e.target.value) || 60 })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Máx. Trocas de Aba</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={formData.max_tab_switches}
+                  onChange={(e) => setFormData({ ...formData, max_tab_switches: parseInt(e.target.value) || 3 })}
+                />
+              </div>
+            </div>
+          </div>
+          
+          <Separator />
+          
+          {/* Modo Hard */}
+          <div className="space-y-4">
+            <h3 className="font-medium flex items-center gap-2">
+              <Shield className="h-4 w-4 text-red-500" />
+              Modo Hard (Anti-Cola)
+            </h3>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <Card className={cn(
+                "p-4 cursor-pointer border-2 transition-colors",
+                formData.is_hard_mode ? "border-red-500 bg-red-500/5" : "border-border"
+              )} onClick={() => setFormData({ ...formData, is_hard_mode: !formData.is_hard_mode })}>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={formData.is_hard_mode}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_hard_mode: checked })}
+                  />
+                  <div>
+                    <Label className="text-sm font-medium">Ativar Modo Hard</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Monitora trocas de aba e pode invalidar tentativas
+                    </p>
+                  </div>
+                </div>
+              </Card>
+              
+              <Card className={cn(
+                "p-4 cursor-pointer border-2 transition-colors",
+                formData.requires_camera ? "border-amber-500 bg-amber-500/5" : "border-border",
+                !formData.is_hard_mode && "opacity-50 cursor-not-allowed"
+              )} onClick={() => formData.is_hard_mode && setFormData({ ...formData, requires_camera: !formData.requires_camera })}>
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={formData.requires_camera}
+                    onCheckedChange={(checked) => setFormData({ ...formData, requires_camera: checked })}
+                    disabled={!formData.is_hard_mode}
+                  />
+                  <div>
+                    <Label className="text-sm font-medium flex items-center gap-1">
+                      <Camera className="h-3 w-3" />
+                      Câmera Ativa
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Efeito deterrent (não grava)
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <Label className="text-sm">Embaralhar Questões</Label>
+                  <p className="text-xs text-muted-foreground">Ordem diferente para cada aluno</p>
+                </div>
+                <Switch
+                  checked={formData.shuffle_questions}
+                  onCheckedChange={(checked) => setFormData({ ...formData, shuffle_questions: checked })}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between p-3 border rounded-lg">
+                <div>
+                  <Label className="text-sm">Embaralhar Alternativas</Label>
+                  <p className="text-xs text-muted-foreground">Letras diferentes para cada aluno</p>
+                </div>
+                <Switch
+                  checked={formData.shuffle_options}
+                  onCheckedChange={(checked) => setFormData({ ...formData, shuffle_options: checked })}
+                />
+              </div>
             </div>
           </div>
           
@@ -379,8 +639,12 @@ function CreateSimuladoDialog({
           {/* Questões */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Questões Associadas</Label>
-              <Badge variant="outline">
+              <h3 className="font-medium flex items-center gap-2">
+                <FileQuestion className="h-4 w-4" />
+                Questões
+              </h3>
+              <Badge variant="outline" className="gap-1">
+                <CheckCircle2 className="h-3 w-3" />
                 {formData.question_ids.length} selecionadas
               </Badge>
             </div>
@@ -388,37 +652,40 @@ function CreateSimuladoDialog({
             {isLoadingQuestions ? (
               <div className="py-4 text-center text-muted-foreground">Carregando questões...</div>
             ) : questions && questions.length > 0 ? (
-              <div className="max-h-[200px] overflow-y-auto border rounded-lg p-2 space-y-1">
-                {questions.map((q) => (
-                  <label
-                    key={q.id}
-                    className={cn(
-                      "flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-muted/50 transition-colors",
-                      formData.question_ids.includes(q.id) && "bg-primary/10 border border-primary/30"
-                    )}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formData.question_ids.includes(q.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFormData({ ...formData, question_ids: [...formData.question_ids, q.id] });
-                        } else {
-                          setFormData({ ...formData, question_ids: formData.question_ids.filter(id => id !== q.id) });
-                        }
-                      }}
-                      className="rounded"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate">{q.question_text?.substring(0, 80)}...</p>
-                      <div className="flex gap-1 mt-1">
-                        <Badge variant="secondary" className="text-xs">{q.difficulty}</Badge>
-                        {q.banca && <Badge variant="outline" className="text-xs">{q.banca}</Badge>}
+              <ScrollArea className="h-[200px] border rounded-lg p-2">
+                <div className="space-y-1">
+                  {questions.map((q) => (
+                    <label
+                      key={q.id}
+                      className={cn(
+                        "flex items-center gap-3 p-2 rounded cursor-pointer hover:bg-muted/50 transition-colors",
+                        formData.question_ids.includes(q.id) && "bg-primary/10 border border-primary/30"
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.question_ids.includes(q.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({ ...formData, question_ids: [...formData.question_ids, q.id] });
+                          } else {
+                            setFormData({ ...formData, question_ids: formData.question_ids.filter(id => id !== q.id) });
+                          }
+                        }}
+                        className="rounded"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm truncate">{q.question_text?.substring(0, 80)}...</p>
+                        <div className="flex gap-1 mt-1">
+                          <Badge variant="secondary" className="text-xs">{q.difficulty}</Badge>
+                          {q.banca && <Badge variant="outline" className="text-xs">{q.banca}</Badge>}
+                          {q.ano && <Badge variant="outline" className="text-xs">{q.ano}</Badge>}
+                        </div>
                       </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
+                    </label>
+                  ))}
+                </div>
+              </ScrollArea>
             ) : (
               <div className="py-4 text-center text-muted-foreground border rounded-lg">
                 <FileQuestion className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -433,8 +700,13 @@ function CreateSimuladoDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={createSimulado.isPending}>
-            {createSimulado.isPending ? 'Criando...' : 'Criar Simulado'}
+          <Button onClick={handleSubmit} disabled={createSimulado.isPending} className="gap-2">
+            {createSimulado.isPending ? 'Criando...' : (
+              <>
+                <Plus className="h-4 w-4" />
+                Criar Simulado
+              </>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -444,9 +716,11 @@ function CreateSimuladoDialog({
 
 function SimuladosList() {
   const { data: simulados, isLoading, refetch } = useSimulados();
+  const { data: statsMap } = useSimuladoAttemptStats();
   const deleteSimulado = useDeleteSimulado();
-  const togglePublish = useTogglePublish();
+  const updateSimulado = useUpdateSimulado();
   const [search, setSearch] = useState('');
+  const [selectedSimulado, setSelectedSimulado] = useState<Simulado | null>(null);
   
   const filtered = useMemo(() => {
     if (!simulados) return [];
@@ -455,6 +729,17 @@ function SimuladosList() {
       s.title.toLowerCase().includes(search.toLowerCase())
     );
   }, [simulados, search]);
+  
+  const getStatus = (sim: Simulado) => {
+    const now = new Date();
+    const startsAt = sim.starts_at ? new Date(sim.starts_at) : null;
+    const endsAt = sim.ends_at ? new Date(sim.ends_at) : null;
+    
+    if (!sim.is_published) return { label: 'Rascunho', color: 'bg-muted text-muted-foreground' };
+    if (startsAt && now < startsAt) return { label: 'Agendado', color: 'bg-blue-500' };
+    if (endsAt && now > endsAt) return { label: 'Encerrado', color: 'bg-gray-500' };
+    return { label: 'Ativo', color: 'bg-green-500' };
+  };
   
   if (isLoading) {
     return <LoadingState message="Carregando simulados..." />;
@@ -498,94 +783,677 @@ function SimuladosList() {
                 <TableHead>Título</TableHead>
                 <TableHead>Questões</TableHead>
                 <TableHead>Tempo</TableHead>
+                <TableHead>Hard Mode</TableHead>
+                <TableHead>Início</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Criado em</TableHead>
+                <TableHead>Tentativas</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((simulado) => (
-                <TableRow key={simulado.id}>
-                  <TableCell>
-                    <span className="font-medium">{simulado.title}</span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{simulado.questions_count || 0}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {simulado.time_limit_minutes || '—'} min
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {simulado.is_published ? (
-                      <Badge className="bg-green-500">
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Publicado
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary">
-                        <Pause className="h-3 w-3 mr-1" />
-                        Rascunho
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {format(new Date(simulado.created_at), "dd/MM/yyyy", { locale: ptBR })}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => togglePublish.mutate({ id: simulado.id, is_published: !simulado.is_published })}>
-                          {simulado.is_published ? (
-                            <>
-                              <Pause className="h-4 w-4 mr-2" /> Despublicar
-                            </>
-                          ) : (
-                            <>
-                              <Play className="h-4 w-4 mr-2" /> Publicar
-                            </>
+              {filtered.map((simulado) => {
+                const status = getStatus(simulado);
+                const stats = statsMap?.get(simulado.id);
+                
+                return (
+                  <TableRow key={simulado.id}>
+                    <TableCell>
+                      <div>
+                        <span className="font-medium">{simulado.title}</span>
+                        {simulado.is_ranking_frozen && (
+                          <Badge variant="outline" className="ml-2 text-xs">
+                            <Lock className="h-3 w-3 mr-1" />
+                            Ranking Congelado
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{simulado.total_questions || 0}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {simulado.duration_minutes} min
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {simulado.is_hard_mode ? (
+                        <Badge className="bg-red-500 gap-1">
+                          <Shield className="h-3 w-3" />
+                          Hard
+                          {simulado.requires_camera && <Camera className="h-3 w-3" />}
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">Normal</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {simulado.starts_at 
+                        ? format(new Date(simulado.starts_at), "dd/MM HH:mm", { locale: ptBR })
+                        : '—'
+                      }
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={status.color}>{status.label}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {stats ? (
+                        <div className="text-xs space-y-0.5">
+                          <div className="flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            {stats.total_attempts} total
+                          </div>
+                          <div className="flex items-center gap-1 text-green-600">
+                            <CheckCircle2 className="h-3 w-3" />
+                            {stats.finished_count} finalizados
+                          </div>
+                          {stats.invalidated_count > 0 && (
+                            <div className="flex items-center gap-1 text-red-500">
+                              <XCircle className="h-3 w-3" />
+                              {stats.invalidated_count} invalidados
+                            </div>
                           )}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-500" onClick={() => deleteSimulado.mutate(simulado.id)}>
-                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => updateSimulado.mutate({ 
+                            id: simulado.id, 
+                            data: { is_published: !simulado.is_published } 
+                          })}>
+                            {simulado.is_published ? (
+                              <>
+                                <Pause className="h-4 w-4 mr-2" /> Despublicar
+                              </>
+                            ) : (
+                              <>
+                                <Play className="h-4 w-4 mr-2" /> Publicar
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => updateSimulado.mutate({ 
+                            id: simulado.id, 
+                            data: { is_ranking_frozen: !simulado.is_ranking_frozen } 
+                          })}>
+                            <Lock className="h-4 w-4 mr-2" />
+                            {simulado.is_ranking_frozen ? 'Descongelar Ranking' : 'Congelar Ranking'}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setSelectedSimulado(simulado)}>
+                            <Eye className="h-4 w-4 mr-2" /> Ver Detalhes
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-red-500" 
+                            onClick={() => {
+                              if (confirm(`Excluir "${simulado.title}"?`)) {
+                                deleteSimulado.mutate(simulado.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
+        )}
+      </CardContent>
+      
+      {/* Dialog de detalhes */}
+      {selectedSimulado && (
+        <SimuladoDetailsDialog 
+          simulado={selectedSimulado} 
+          onClose={() => setSelectedSimulado(null)} 
+        />
+      )}
+    </Card>
+  );
+}
+
+function SimuladoDetailsDialog({ 
+  simulado, 
+  onClose 
+}: { 
+  simulado: Simulado; 
+  onClose: () => void; 
+}) {
+  const { data: snapshots } = useRankingSnapshots(simulado.id);
+  const createSnapshot = useCreateRankingSnapshot();
+  
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            {simulado.title}
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="space-y-4">
+          {/* Info básica */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 border rounded-lg">
+              <p className="text-xs text-muted-foreground">Tempo</p>
+              <p className="font-medium">{simulado.duration_minutes} minutos</p>
+            </div>
+            <div className="p-3 border rounded-lg">
+              <p className="text-xs text-muted-foreground">Questões</p>
+              <p className="font-medium">{simulado.total_questions}</p>
+            </div>
+            <div className="p-3 border rounded-lg">
+              <p className="text-xs text-muted-foreground">XP por Questão</p>
+              <p className="font-medium">{simulado.points_per_question}</p>
+            </div>
+            <div className="p-3 border rounded-lg">
+              <p className="text-xs text-muted-foreground">Nota Mínima</p>
+              <p className="font-medium">{simulado.passing_score}%</p>
+            </div>
+          </div>
+          
+          {/* Datas */}
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm">Agendamento</h4>
+            <div className="grid grid-cols-3 gap-2 text-sm">
+              <div className="p-2 bg-muted rounded">
+                <p className="text-xs text-muted-foreground">Início</p>
+                <p>{simulado.starts_at ? format(new Date(simulado.starts_at), "dd/MM/yy HH:mm") : '—'}</p>
+              </div>
+              <div className="p-2 bg-muted rounded">
+                <p className="text-xs text-muted-foreground">Término</p>
+                <p>{simulado.ends_at ? format(new Date(simulado.ends_at), "dd/MM/yy HH:mm") : '—'}</p>
+              </div>
+              <div className="p-2 bg-muted rounded">
+                <p className="text-xs text-muted-foreground">Gabarito</p>
+                <p>{simulado.results_released_at ? format(new Date(simulado.results_released_at), "dd/MM/yy HH:mm") : '—'}</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Hard Mode */}
+          {simulado.is_hard_mode && (
+            <div className="p-3 border border-red-500/30 bg-red-500/5 rounded-lg">
+              <div className="flex items-center gap-2 text-red-500 font-medium">
+                <Shield className="h-4 w-4" />
+                Modo Hard Ativo
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Máx. {simulado.max_tab_switches} trocas de aba
+                {simulado.requires_camera && ' • Câmera ativa'}
+              </p>
+            </div>
+          )}
+          
+          {/* Snapshots */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-sm">Snapshots do Ranking</h4>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => createSnapshot.mutate({ 
+                  simuladoId: simulado.id, 
+                  reason: 'Snapshot manual via gestão' 
+                })}
+                disabled={createSnapshot.isPending}
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Criar Snapshot
+              </Button>
+            </div>
+            {snapshots && snapshots.length > 0 ? (
+              <div className="space-y-1 max-h-[150px] overflow-y-auto">
+                {snapshots.map((snap: { id: string; created_at: string; snapshot_type: string; reason: string | null }) => (
+                  <div key={snap.id} className="flex items-center justify-between text-xs p-2 bg-muted rounded">
+                    <span>{format(new Date(snap.created_at), "dd/MM HH:mm:ss")}</span>
+                    <Badge variant="outline">{snap.snapshot_type}</Badge>
+                    <span className="text-muted-foreground truncate max-w-[150px]">{snap.reason}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Nenhum snapshot criado.</p>
+            )}
+          </div>
+        </div>
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Fechar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MonitoringDashboard() {
+  const { data: simulados } = useSimulados();
+  const { data: statsMap, refetch: refetchStats } = useSimuladoAttemptStats();
+  
+  // Métricas agregadas
+  const metrics = useMemo(() => {
+    if (!statsMap) return { total: 0, finished: 0, invalidated: 0, avgScore: 0 };
+    
+    let total = 0, finished = 0, invalidated = 0, scoreSum = 0, scoreCount = 0;
+    
+    statsMap.forEach(stats => {
+      total += stats.total_attempts;
+      finished += stats.finished_count;
+      invalidated += stats.invalidated_count;
+      if (stats.finished_count > 0) {
+        scoreSum += stats.average_score * stats.finished_count;
+        scoreCount += stats.finished_count;
+      }
+    });
+    
+    return {
+      total,
+      finished,
+      invalidated,
+      avgScore: scoreCount > 0 ? Math.round(scoreSum / scoreCount) : 0,
+    };
+  }, [statsMap]);
+  
+  return (
+    <div className="space-y-6">
+      {/* Cards de métricas */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Tentativas', value: metrics.total, icon: Users, color: 'text-primary' },
+          { label: 'Finalizados', value: metrics.finished, icon: CheckCircle2, color: 'text-green-500' },
+          { label: 'Invalidados', value: metrics.invalidated, icon: XCircle, color: 'text-red-500' },
+          { label: 'Média Score', value: `${metrics.avgScore}%`, icon: TrendingUp, color: 'text-blue-500' },
+        ].map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.1 }}
+          >
+            <Card>
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className={cn("p-3 rounded-xl bg-muted", stat.color)}>
+                  <stat.icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stat.value}</p>
+                  <p className="text-sm text-muted-foreground">{stat.label}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+      
+      {/* Lista de simulados ativos com stats */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Monitoramento em Tempo Real
+            </CardTitle>
+            <Button variant="outline" size="sm" onClick={() => refetchStats()}>
+              <RefreshCw className="h-4 w-4 mr-1" />
+              Atualizar
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {simulados && simulados.filter(s => s.is_published).length > 0 ? (
+            <div className="space-y-4">
+              {simulados.filter(s => s.is_published).map(sim => {
+                const stats = statsMap?.get(sim.id);
+                const completionRate = stats && stats.total_attempts > 0 
+                  ? (stats.finished_count / stats.total_attempts) * 100 
+                  : 0;
+                
+                return (
+                  <div key={sim.id} className="p-4 border rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium">{sim.title}</h4>
+                      {sim.is_hard_mode && (
+                        <Badge className="bg-red-500">
+                          <Shield className="h-3 w-3 mr-1" />
+                          Hard Mode
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    {stats ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-4 gap-2 text-sm">
+                          <div className="flex items-center gap-1">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span>{stats.total_attempts} tentativas</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-green-600">
+                            <CheckCircle2 className="h-4 w-4" />
+                            <span>{stats.finished_count} finalizados</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-red-500">
+                            <XCircle className="h-4 w-4" />
+                            <span>{stats.invalidated_count} invalidados</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-blue-500">
+                            <Target className="h-4 w-4" />
+                            <span>Média: {Math.round(stats.average_score)}%</span>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                            <span>Taxa de conclusão</span>
+                            <span>{Math.round(completionRate)}%</span>
+                          </div>
+                          <Progress value={completionRate} className="h-2" />
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Nenhuma tentativa ainda.</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Nenhum simulado publicado para monitorar.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function AuditLogsPanel() {
+  const { data: logs, isLoading, refetch } = useAuditLogs();
+  const [filter, setFilter] = useState('');
+  
+  const filtered = useMemo(() => {
+    if (!logs) return [];
+    if (!filter) return logs;
+    return logs.filter(log => 
+      log.action.toLowerCase().includes(filter.toLowerCase())
+    );
+  }, [logs, filter]);
+  
+  const getActionIcon = (action: string) => {
+    if (action.includes('START')) return <Play className="h-4 w-4 text-green-500" />;
+    if (action.includes('FINISH')) return <CheckCircle2 className="h-4 w-4 text-blue-500" />;
+    if (action.includes('INVALIDAT')) return <XCircle className="h-4 w-4 text-red-500" />;
+    if (action.includes('DISQUALIF')) return <UserX className="h-4 w-4 text-red-600" />;
+    if (action.includes('TAB')) return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+    return <FileText className="h-4 w-4 text-muted-foreground" />;
+  };
+  
+  if (isLoading) {
+    return <LoadingState message="Carregando logs..." />;
+  }
+  
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <History className="h-5 w-5" />
+            Logs de Auditoria
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="Filtrar por ação..."
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="w-[200px]"
+            />
+            <Button variant="outline" size="icon" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+        <CardDescription>
+          Registros de tentativas, invalidações e eventos do sistema.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {filtered.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Nenhum log de auditoria registrado.</p>
+            <p className="text-sm mt-1">Os logs aparecerão aqui após as primeiras tentativas.</p>
+          </div>
+        ) : (
+          <ScrollArea className="h-[400px]">
+            <div className="space-y-2">
+              {filtered.map((log) => (
+                <div key={log.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50">
+                  {getActionIcon(log.action)}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        {log.action}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: ptBR })}
+                      </span>
+                    </div>
+                    {log.details && (
+                      <p className="text-xs text-muted-foreground mt-1 truncate">
+                        {JSON.stringify(log.details).substring(0, 100)}...
+                      </p>
+                    )}
+                    {log.user_id && (
+                      <p className="text-xs text-muted-foreground">
+                        User: {log.user_id.substring(0, 8)}...
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {format(new Date(log.created_at), "HH:mm:ss")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
         )}
       </CardContent>
     </Card>
   );
 }
 
+function RankingPanel() {
+  const { data: simulados } = useSimulados();
+  const [selectedSimuladoId, setSelectedSimuladoId] = useState<string | null>(null);
+  const createSnapshot = useCreateRankingSnapshot();
+  
+  // Buscar ranking do simulado selecionado
+  const { data: ranking, isLoading: isLoadingRanking, refetch: refetchRanking } = useQuery({
+    queryKey: ['simulado-ranking', selectedSimuladoId],
+    queryFn: async () => {
+      if (!selectedSimuladoId) return [];
+      
+      const { data, error } = await supabase.rpc('get_simulado_ranking', {
+        p_simulado_id: selectedSimuladoId,
+        p_limit: 100,
+      });
+      
+      if (error) {
+        console.warn('[Ranking] Erro:', error.message);
+        return [];
+      }
+      return data || [];
+    },
+    enabled: !!selectedSimuladoId,
+    staleTime: 30_000,
+  });
+  
+  const publishedSimulados = simulados?.filter(s => s.is_published) || [];
+  
+  return (
+    <div className="space-y-6">
+      {/* Seletor de simulado */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-amber-500" />
+            Ranking e Classificação
+          </CardTitle>
+          <CardDescription>
+            Visualize o ranking e crie snapshots imutáveis para auditoria.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {publishedSimulados.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Trophy className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Nenhum simulado publicado.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Label>Selecione um Simulado</Label>
+                  <select
+                    className="w-full mt-1 p-2 border rounded-lg bg-background"
+                    value={selectedSimuladoId || ''}
+                    onChange={(e) => setSelectedSimuladoId(e.target.value || null)}
+                  >
+                    <option value="">Escolha...</option>
+                    {publishedSimulados.map(sim => (
+                      <option key={sim.id} value={sim.id}>
+                        {sim.title}
+                        {sim.is_ranking_frozen && ' 🔒'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                {selectedSimuladoId && (
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => refetchRanking()}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-1" />
+                      Atualizar
+                    </Button>
+                    <Button
+                      onClick={() => createSnapshot.mutate({
+                        simuladoId: selectedSimuladoId,
+                        reason: 'Snapshot manual para auditoria'
+                      })}
+                      disabled={createSnapshot.isPending}
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Criar Snapshot
+                    </Button>
+                  </div>
+                )}
+              </div>
+              
+              {/* Ranking Table */}
+              {selectedSimuladoId && (
+                isLoadingRanking ? (
+                  <LoadingState message="Carregando ranking..." />
+                ) : ranking && Array.isArray(ranking) && ranking.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[60px]">Pos.</TableHead>
+                        <TableHead>Aluno</TableHead>
+                        <TableHead>Score</TableHead>
+                        <TableHead>Acertos</TableHead>
+                        <TableHead>Tempo</TableHead>
+                        <TableHead>XP</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(ranking as Array<{ rank: number; user_name: string; score: number; correct_answers: number; time_spent_seconds: number; xp_awarded: number }>).map((entry, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              {entry.rank <= 3 ? (
+                                <Medal className={cn(
+                                  "h-5 w-5",
+                                  entry.rank === 1 && "text-amber-500",
+                                  entry.rank === 2 && "text-gray-400",
+                                  entry.rank === 3 && "text-amber-700"
+                                )} />
+                              ) : (
+                                <span className="text-muted-foreground">{entry.rank}º</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {entry.user_name || 'Anônimo'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{entry.score}%</Badge>
+                          </TableCell>
+                          <TableCell>{entry.correct_answers}</TableCell>
+                          <TableCell>
+                            {Math.floor((entry.time_spent_seconds || 0) / 60)}min
+                          </TableCell>
+                          <TableCell>
+                            <Badge className="bg-amber-500">
+                              <Zap className="h-3 w-3 mr-1" />
+                              {entry.xp_awarded}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>Nenhuma tentativa finalizada neste simulado.</p>
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function MetricsDashboard() {
   const { data: simulados } = useSimulados();
+  const { data: statsMap } = useSimuladoAttemptStats();
   
   const stats = useMemo(() => {
-    if (!simulados) return { total: 0, published: 0, questions: 0 };
+    if (!simulados) return { total: 0, published: 0, hardMode: 0, questions: 0 };
     return {
       total: simulados.length,
       published: simulados.filter(s => s.is_published).length,
-      questions: simulados.reduce((acc, s) => acc + (s.questions_count || 0), 0),
+      hardMode: simulados.filter(s => s.is_hard_mode).length,
+      questions: simulados.reduce((acc, s) => acc + (s.total_questions || 0), 0),
     };
   }, [simulados]);
   
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       {[
-        { label: 'Total', value: stats.total, icon: Brain, color: 'text-primary' },
+        { label: 'Total Simulados', value: stats.total, icon: Brain, color: 'text-primary' },
         { label: 'Publicados', value: stats.published, icon: CheckCircle2, color: 'text-green-500' },
+        { label: 'Hard Mode', value: stats.hardMode, icon: Shield, color: 'text-red-500' },
         { label: 'Questões', value: stats.questions, icon: FileQuestion, color: 'text-blue-500' },
       ].map((stat, idx) => (
         <motion.div
@@ -622,7 +1490,7 @@ export default function GestaoSimulados() {
     <>
       <Helmet>
         <title>Gestão de Simulados | Moisés Medeiros</title>
-        <meta name="description" content="Gerenciamento de simulados e avaliações" />
+        <meta name="description" content="Gerenciamento completo de simulados com Modo Hard" />
       </Helmet>
       
       <div className="container mx-auto py-6 px-4 space-y-6">
@@ -638,7 +1506,7 @@ export default function GestaoSimulados() {
               Gestão de Simulados
             </h1>
             <p className="text-muted-foreground mt-1">
-              Crie, configure e monitore simulados com Modo Hard.
+              Crie, configure e monitore simulados com Modo Hard, ranking e auditoria.
             </p>
           </div>
           
@@ -653,18 +1521,26 @@ export default function GestaoSimulados() {
         
         {/* Tabs */}
         <Tabs defaultValue="simulados" className="space-y-6">
-          <TabsList>
+          <TabsList className="grid grid-cols-5 w-full max-w-2xl">
             <TabsTrigger value="simulados" className="gap-2">
               <Brain className="h-4 w-4" />
               Simulados
             </TabsTrigger>
+            <TabsTrigger value="monitoring" className="gap-2">
+              <Activity className="h-4 w-4" />
+              Monitoramento
+            </TabsTrigger>
+            <TabsTrigger value="ranking" className="gap-2">
+              <Trophy className="h-4 w-4" />
+              Ranking
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="gap-2">
+              <History className="h-4 w-4" />
+              Auditoria
+            </TabsTrigger>
             <TabsTrigger value="flags" className="gap-2">
               <Settings className="h-4 w-4" />
-              Feature Flags
-            </TabsTrigger>
-            <TabsTrigger value="metrics" className="gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Auditoria
+              Flags
             </TabsTrigger>
           </TabsList>
           
@@ -672,29 +1548,20 @@ export default function GestaoSimulados() {
             <SimuladosList />
           </TabsContent>
           
-          <TabsContent value="flags">
-            <SimuladoFeatureFlagsPanel />
+          <TabsContent value="monitoring">
+            <MonitoringDashboard />
           </TabsContent>
           
-          <TabsContent value="metrics">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Logs de Auditoria
-                </CardTitle>
-                <CardDescription>
-                  Registros de tentativas, invalidações e eventos do sistema.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Os logs de auditoria serão exibidos aqui após as primeiras tentativas.</p>
-                  <p className="text-sm mt-1">Consulte o Runbook para auditoria manual.</p>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="ranking">
+            <RankingPanel />
+          </TabsContent>
+          
+          <TabsContent value="audit">
+            <AuditLogsPanel />
+          </TabsContent>
+          
+          <TabsContent value="flags">
+            <SimuladoFeatureFlagsPanel />
           </TabsContent>
         </Tabs>
       </div>
