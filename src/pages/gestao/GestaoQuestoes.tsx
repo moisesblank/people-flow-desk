@@ -966,6 +966,11 @@ function GestaoQuestoes() {
   const [isDeletingSemGrupo, setIsDeletingSemGrupo] = useState(false);
   const [semGrupoConfirmText, setSemGrupoConfirmText] = useState('');
   
+  // SIMULADOS deletion states
+  const [deleteSimuladosConfirm, setDeleteSimuladosConfirm] = useState(false);
+  const [isDeletingSimulados, setIsDeletingSimulados] = useState(false);
+  const [simuladosConfirmText, setSimuladosConfirmText] = useState('');
+  
   // PAGINATION: 100 itens por página (frontend)
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 100;
@@ -1969,6 +1974,195 @@ function GestaoQuestoes() {
     }
   };
 
+  // Resetar campos quando fechar modal de Simulados
+  const handleCloseSimuladosModal = (open: boolean) => {
+    setDeleteSimuladosConfirm(open);
+    if (!open) {
+      setSimuladosConfirmText('');
+    }
+  };
+
+  // Handler para excluir questões SIMULADOS
+  const handleDeleteSimuladosQuestions = async () => {
+    if (!isOwner) {
+      toast.error('Apenas o Owner pode executar esta ação');
+      return;
+    }
+
+    if (simuladosConfirmText !== 'EXCLUIR SIMULADOS') {
+      toast.error('Digite exatamente: EXCLUIR SIMULADOS');
+      return;
+    }
+
+    setIsDeletingSimulados(true);
+    
+    try {
+      // ESCALA 45K: Batching via range() para superar default 1000
+      const BATCH_SIZE = 1000;
+      const MAX = 45000;
+      let from = 0;
+      let allSimulados: any[] = [];
+
+      while (from < MAX) {
+        const to = Math.min(from + BATCH_SIZE - 1, MAX - 1);
+
+        const { data: batch, error: fetchError } = await supabase
+          .from('quiz_questions')
+          .select('id, tags')
+          .contains('tags', ['SIMULADOS'])
+          .range(from, to);
+
+        if (fetchError) throw fetchError;
+
+        allSimulados = allSimulados.concat(batch || []);
+
+        if ((batch || []).length < BATCH_SIZE) break;
+        from += BATCH_SIZE;
+      }
+
+      const simuladosQuestions = allSimulados;
+      
+      if (!simuladosQuestions || simuladosQuestions.length === 0) {
+        toast.info('Nenhuma questão de Simulados encontrada');
+        setDeleteSimuladosConfirm(false);
+        setIsDeletingSimulados(false);
+        return;
+      }
+
+      console.log(`[EXCLUIR_SIMULADOS] Encontradas ${simuladosQuestions.length} questões com SIMULADOS no banco`);
+
+      // Questões que têm APENAS SIMULADOS (ou SIMULADOS + tags vazias)
+      const toDelete = simuladosQuestions.filter(q => {
+        const otherTags = ((q.tags as string[]) || []).filter(t => t !== 'SIMULADOS');
+        return otherTags.length === 0;
+      });
+
+      // Questões que têm SIMULADOS + outras tags (ex: MODO_TREINO)
+      const toUpdate = simuladosQuestions.filter(q => {
+        const otherTags = ((q.tags as string[]) || []).filter(t => t !== 'SIMULADOS');
+        return otherTags.length > 0;
+      });
+
+      console.log(`[EXCLUIR_SIMULADOS] Para deletar: ${toDelete.length}, Para atualizar: ${toUpdate.length}`);
+
+      let deletedCount = 0;
+      let updatedCount = 0;
+      const deletedRequestedIds: string[] = [];
+      const updatedRequestedIds: string[] = [];
+
+      // 1. Deletar questões que têm APENAS SIMULADOS (em batches para evitar URL muito longa)
+      if (toDelete.length > 0) {
+        const deleteIds = toDelete.map(q => q.id);
+        deletedRequestedIds.push(...deleteIds);
+
+        // Batch de 500 IDs por vez para evitar Bad Request (URL muito longa)
+        const DELETE_BATCH_SIZE = 500;
+        let allDeletedRows: any[] = [];
+
+        for (let i = 0; i < deleteIds.length; i += DELETE_BATCH_SIZE) {
+          const batchIds = deleteIds.slice(i, i + DELETE_BATCH_SIZE);
+          console.log(`[EXCLUIR_SIMULADOS] Deletando batch ${Math.floor(i / DELETE_BATCH_SIZE) + 1}/${Math.ceil(deleteIds.length / DELETE_BATCH_SIZE)} (${batchIds.length} IDs)`);
+
+          const { data: deletedRows, error } = await supabase
+            .from('quiz_questions')
+            .delete()
+            .in('id', batchIds)
+            .select('id');
+
+          if (error) {
+            console.error('[EXCLUIR_SIMULADOS] Erro ao deletar batch:', error);
+            throw error;
+          }
+
+          allDeletedRows = allDeletedRows.concat(deletedRows || []);
+        }
+
+        deletedCount = allDeletedRows.length;
+
+        if (deletedCount === 0 && deleteIds.length > 0) {
+          throw new Error('Nenhuma questão foi excluída (provável bloqueio de permissão).');
+        }
+
+        if (deletedCount !== deleteIds.length) {
+          console.warn(`[EXCLUIR_SIMULADOS] Deleção parcial: solicitado=${deleteIds.length}, efetivado=${deletedCount}`);
+        }
+
+        console.log(`[EXCLUIR_SIMULADOS] ${deletedCount} questões deletadas com sucesso`);
+      }
+
+      // 2. Atualizar questões removendo apenas a tag SIMULADOS
+      if (toUpdate.length > 0) {
+        for (const q of toUpdate) {
+          updatedRequestedIds.push(q.id);
+          const newTags = ((q.tags as string[]) || []).filter(t => t !== 'SIMULADOS');
+
+          const { data: updatedRows, error } = await supabase
+            .from('quiz_questions')
+            .update({ tags: newTags, updated_at: new Date().toISOString() })
+            .eq('id', q.id)
+            .select('id');
+
+          if (error) {
+            console.error(`[EXCLUIR_SIMULADOS] Erro ao atualizar ${q.id}:`, error);
+            throw error;
+          }
+
+          if (!updatedRows || updatedRows.length === 0) {
+            throw new Error(`Questão ${q.id} não foi atualizada (provável bloqueio de permissão).`);
+          }
+
+          updatedCount++;
+        }
+        console.log(`[EXCLUIR_SIMULADOS] ${updatedCount} questões atualizadas com sucesso`);
+      }
+
+      // 3. Validação pós-ação
+      if (deletedRequestedIds.length > 0) {
+        const { data: stillExists, error } = await supabase
+          .from('quiz_questions')
+          .select('id')
+          .in('id', deletedRequestedIds);
+
+        if (error) throw error;
+        if (stillExists && stillExists.length > 0) {
+          throw new Error(`Validação falhou: ${stillExists.length} questões que deveriam ser ANIQUILADAS ainda existem.`);
+        }
+      }
+
+      if (updatedRequestedIds.length > 0) {
+        const { data: updatedNow, error } = await supabase
+          .from('quiz_questions')
+          .select('id, tags')
+          .in('id', updatedRequestedIds);
+
+        if (error) throw error;
+
+        const stillHasSimulados = (updatedNow || []).filter(r => (r.tags as string[] | null)?.includes('SIMULADOS'));
+        if (stillHasSimulados.length > 0) {
+          throw new Error(`Validação falhou: ${stillHasSimulados.length} questões ainda estão marcadas como SIMULADOS.`);
+        }
+      }
+
+      // Limpar cache e recarregar
+      clearQueryCache();
+      await loadQuestions();
+      
+      toast.success(`🎯 Simulados processados!`, {
+        description: `${deletedCount} excluídas | ${updatedCount} atualizadas (mantiveram MODO_TREINO)`,
+        duration: 5000,
+      });
+      
+      // Reset do modal
+      setDeleteSimuladosConfirm(false);
+      setSimuladosConfirmText('');
+    } catch (err) {
+      console.error('Erro ao processar simulados:', err);
+      toast.error('Erro: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsDeletingSimulados(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
       {/* Header */}
@@ -2077,6 +2271,14 @@ function GestaoQuestoes() {
                 >
                   <Trash2 className="h-4 w-4" />
                   Excluir Treino ({stats.modoTreino})
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => setDeleteSimuladosConfirm(true)}
+                  disabled={stats.simulados === 0}
+                  className="gap-2 text-blue-500 focus:text-blue-400 focus:bg-blue-500/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Excluir Simulados ({stats.simulados})
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
@@ -3145,6 +3347,82 @@ function GestaoQuestoes() {
                 <>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Excluir Sem Grupo
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmação de EXCLUSÃO SIMULADOS */}
+      <Dialog open={deleteSimuladosConfirm} onOpenChange={handleCloseSimuladosModal}>
+        <DialogContent className="border-blue-500/50 max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-blue-500 text-xl">
+              <Trash2 className="h-6 w-6" />
+              🎯 Excluir Simulados
+            </DialogTitle>
+            <DialogDescription className="space-y-4 pt-4">
+              <div className="bg-blue-500/20 border border-blue-500/50 p-4 rounded-lg">
+                <p className="text-blue-400 font-bold text-lg mb-2">
+                  ⚠️ Esta ação remove apenas questões de SIMULADOS
+                </p>
+                <p className="text-foreground">
+                  Você está prestes a excluir <strong className="text-blue-400">{stats.simulados} questões</strong> de Simulados.
+                </p>
+              </div>
+              
+              <ul className="text-sm space-y-2 bg-muted/50 p-4 rounded-lg border">
+                <li className="flex items-center gap-2">
+                  <span className="text-blue-500">✗</span>
+                  Questões com tag SIMULADOS serão removidas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-500">✓</span>
+                  Questões de MODO_TREINO permanecerão intactas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-500">✓</span>
+                  Questões sem grupo também permanecerão
+                </li>
+              </ul>
+
+              {/* Confirmação por digitação */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Digite <code className="bg-blue-500/20 px-2 py-1 rounded text-blue-400">EXCLUIR SIMULADOS</code> para continuar:
+                </label>
+                <Input 
+                  value={simuladosConfirmText}
+                  onChange={(e) => setSimuladosConfirmText(e.target.value)}
+                  placeholder="EXCLUIR SIMULADOS"
+                  className="border-blue-500/50 focus-visible:ring-blue-500"
+                />
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => handleCloseSimuladosModal(false)} 
+              disabled={isDeletingSimulados}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleDeleteSimuladosQuestions}
+              disabled={isDeletingSimulados || simuladosConfirmText !== 'EXCLUIR SIMULADOS'}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {isDeletingSimulados ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir Simulados
                 </>
               )}
             </Button>
