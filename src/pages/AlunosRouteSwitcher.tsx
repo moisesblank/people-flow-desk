@@ -11,7 +11,7 @@
 // ============================================
 
 import { useMemo } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useRolePermissions, isGestaoHost, isProHost, isPublicHost } from "@/hooks/useRolePermissions";
@@ -21,10 +21,15 @@ import AlunoDashboard from "@/pages/aluno/AlunoDashboard";
 import Alunos from "@/pages/Alunos";
 
 export default function AlunosRouteSwitcher() {
+  const location = useLocation();
   const { isAdminOrOwner, isLoading: adminLoading } = useAdminCheck();
   const { role, isLoading: roleLoading, isBeta, isOwner } = useRolePermissions();
 
   const isLoading = adminLoading || roleLoading;
+
+  // 🔎 DEBUG temporário (P0): tornar visível o estado real quando /alunos fica “tela preta”
+  // Ativa com ?debugAlunos=1
+  const debugAlunos = new URLSearchParams(location.search).get('debugAlunos') === '1';
 
   // Detectar domínio atual usando funções centralizadas
   const { isGestao, isPro, isPublic } = useMemo(() => {
@@ -39,12 +44,38 @@ export default function AlunosRouteSwitcher() {
     };
   }, []);
 
+  const DebugPanel = debugAlunos ? (
+    <div className="fixed left-3 top-3 z-[9999] max-w-[92vw] rounded-lg border border-border bg-card/95 backdrop-blur p-3 text-xs text-foreground shadow-lg">
+      <div className="font-semibold">DEBUG /alunos</div>
+      <pre className="mt-2 whitespace-pre-wrap break-words text-muted-foreground">
+        {JSON.stringify(
+          {
+            path: location.pathname,
+            search: location.search,
+            adminLoading,
+            roleLoading,
+            role,
+            isBeta,
+            isOwner,
+            isAdminOrOwner,
+            domain: { isGestao, isPro, isPublic },
+          },
+          null,
+          2
+        )}
+      </pre>
+    </div>
+  ) : null;
+
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center relative z-10">
-        <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
+      <>
+        {DebugPanel}
+        <div className="min-h-screen bg-background flex items-center justify-center relative z-10">
+          <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </>
     );
   }
 
@@ -64,6 +95,7 @@ export default function AlunosRouteSwitcher() {
     if (isGestao) {
       return (
         <>
+          {DebugPanel}
           <Helmet>
             <title>Gestão de Alunos | Matriz Digital</title>
             <meta
@@ -79,6 +111,7 @@ export default function AlunosRouteSwitcher() {
     // Owner em pro.* ou outros domínios → vê Portal do Aluno (para testar experiência)
     return (
       <>
+        {DebugPanel}
         <Helmet>
           <title>Dashboard do Aluno | Química ENEM</title>
           <meta
@@ -96,6 +129,7 @@ export default function AlunosRouteSwitcher() {
   if (isBeta) {
     return (
       <>
+        {DebugPanel}
         <Helmet>
           <title>Dashboard do Aluno | Química ENEM</title>
           <meta
@@ -115,13 +149,19 @@ export default function AlunosRouteSwitcher() {
   // Role lida da tabela user_roles (não metadata)
   // ============================================
   if (role === "aluno_gratuito") {
-    return <Navigate to="/comunidade" replace />;
+    return (
+      <>
+        {DebugPanel}
+        <Navigate to="/comunidade" replace />
+      </>
+    );
   }
 
   // ADMIN/FUNCIONÁRIOS no domínio de gestão → Gestão de Alunos
   if (isAdminOrOwner && isGestao) {
     return (
       <>
+        {DebugPanel}
         <Helmet>
           <title>Gestão de Alunos | Matriz Digital</title>
           <meta
@@ -139,6 +179,7 @@ export default function AlunosRouteSwitcher() {
   if (isAdminOrOwner) {
     return (
       <>
+        {DebugPanel}
         <Helmet>
           <title>Dashboard do Aluno | Química ENEM</title>
           <meta
@@ -154,5 +195,10 @@ export default function AlunosRouteSwitcher() {
 
   // Outros roles sem permissão → redireciona conforme MATRIZ SUPREMA v2.0.0
   // GESTAO roles → /gestaofc, outros → /comunidade
-  return <Navigate to="/comunidade" replace />;
+  return (
+    <>
+      {DebugPanel}
+      <Navigate to="/comunidade" replace />
+    </>
+  );
 }
