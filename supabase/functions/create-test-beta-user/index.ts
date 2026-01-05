@@ -95,7 +95,6 @@ const testPassword = "Eocomando32!!!";
         id: userId,
         email: testEmail,
         nome: "Aluno Teste Beta",
-        status: "ativo",
         created_at: new Date().toISOString(),
       });
 
