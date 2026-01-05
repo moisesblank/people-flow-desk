@@ -40,19 +40,28 @@ Deno.serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const testEmail = "aluno.teste.beta@promoisesmedeiros.com.br";
-    const testPassword = "TesteBeta2025!";
+const testEmail = "testedomoisa@gmail.com";
+const testPassword = "Eocomando32!!!";
 
     // 1. Verificar se já existe
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
     const existing = existingUsers?.users?.find(u => u.email === testEmail);
     
     if (existing) {
-      // Já existe, retornar credenciais
+      // Já existe - resetar senha
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        existing.id,
+        { password: testPassword }
+      );
+      
+      if (updateError) {
+        throw new Error(`Erro ao resetar senha: ${updateError.message}`);
+      }
+      
       return new Response(
         JSON.stringify({
           success: true,
-          message: "Usuário de teste já existe!",
+          message: "Senha resetada com sucesso!",
           credentials: {
             email: testEmail,
             password: testPassword,
@@ -62,7 +71,6 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
     // 2. Criar usuário no Auth
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: testEmail,
