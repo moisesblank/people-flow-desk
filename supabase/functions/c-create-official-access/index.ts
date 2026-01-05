@@ -268,8 +268,8 @@ async function sendWelcomeEmail(
   generatedPassword?: string,
 ): Promise<{ success: boolean; error?: string }> {
   const roleLabel = ROLE_LABELS[role];
-  const platformUrl = 'https://pro.moisesmedeiros.com.br/alunos';
-  
+  const platformUrl = 'https://pro.moisesmedeiros.com.br/auth';
+
   // 🎯 P0 FIX: Agora SEMPRE envia senha gerada no email (autorizado pelo OWNER)
   const hasPassword = !!generatedPassword;
   

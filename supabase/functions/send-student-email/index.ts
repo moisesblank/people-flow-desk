@@ -129,7 +129,7 @@ const handler = async (req: Request): Promise<Response> => {
           <!-- CTA -->
           <tr>
             <td style="padding: 0 40px 40px 40px; text-align: center;">
-              <a href="https://pro.moisesmedeiros.com.br/alunos" style="display: inline-block; background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
+              <a href="https://pro.moisesmedeiros.com.br/auth" style="display: inline-block; background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); color: #ffffff; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
                 Acessar Plataforma →
               </a>
             </td>

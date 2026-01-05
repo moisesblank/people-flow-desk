@@ -283,7 +283,7 @@ const getEmailTemplate = (type: EmailType, data: Record<string, any> = {}): { su
         <p style="margin:0;">O curso que mais aprova e comprova está pronto para te levar ao topo! 🚀</p>
         `,
         "Acessar Plataforma",
-        "https://pro.moisesmedeiros.com.br/alunos"
+        "https://pro.moisesmedeiros.com.br/auth"
       ),
     },
 
@@ -303,7 +303,7 @@ const getEmailTemplate = (type: EmailType, data: Record<string, any> = {}): { su
         </ul>
         `,
         "Começar a Estudar",
-        "https://pro.moisesmedeiros.com.br/alunos"
+        "https://pro.moisesmedeiros.com.br/auth"
       ),
     },
 
@@ -320,7 +320,7 @@ const getEmailTemplate = (type: EmailType, data: Record<string, any> = {}): { su
         </div>
         `,
         "Acessar Área Premium",
-        "https://pro.moisesmedeiros.com.br/alunos"
+        "https://pro.moisesmedeiros.com.br/auth"
       ),
     },
 
@@ -355,7 +355,7 @@ const getEmailTemplate = (type: EmailType, data: Record<string, any> = {}): { su
         <p style="margin:0;">Seu acesso já está liberado! Bons estudos! 📚</p>
         `,
         "Acessar Curso",
-        "https://pro.moisesmedeiros.com.br/alunos"
+        "https://pro.moisesmedeiros.com.br/auth"
       ),
     },
 
@@ -385,7 +385,7 @@ const getEmailTemplate = (type: EmailType, data: Record<string, any> = {}): { su
         <p style="margin:0;">Por favor, verifique seus dados de pagamento ou entre em contato conosco.</p>
         `,
         "Atualizar Pagamento",
-        "https://pro.moisesmedeiros.com.br/alunos/pagamento"
+        "https://pro.moisesmedeiros.com.br/auth"
       ),
     },
 
@@ -418,7 +418,7 @@ const getEmailTemplate = (type: EmailType, data: Record<string, any> = {}): { su
         </div>
         `,
         "Acessar Plataforma",
-        "https://pro.moisesmedeiros.com.br/alunos"
+        "https://pro.moisesmedeiros.com.br/auth"
       ),
     },
 
