@@ -51,6 +51,7 @@ export interface Simulado {
   
   // Tempo
   duration_minutes: number;
+  tolerance_minutes: number;
   starts_at?: string;
   ends_at?: string;
   results_released_at?: string;
