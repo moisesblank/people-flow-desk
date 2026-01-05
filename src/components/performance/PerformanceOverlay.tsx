@@ -314,13 +314,6 @@ export const PerformanceOverlay = memo(({
         </div>
         <div className="flex items-center gap-1">
           <button
-            onClick={() => window.location.reload()}
-            className="p-1 hover:bg-muted rounded"
-            title="Refresh"
-          >
-            <Activity className="w-3 h-3" />
-          </button>
-          <button
             onClick={() => setIsOpen(false)}
             className="p-1 hover:bg-muted rounded"
           >

@@ -3463,12 +3463,6 @@ class GestaoQuestoesErrorBoundary extends Component<
             <pre className="bg-background/50 p-3 rounded text-sm overflow-auto max-h-48 text-red-400">
               {this.state.error?.message}
             </pre>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            >
-              Recarregar Página
-            </button>
           </div>
         </div>
       );

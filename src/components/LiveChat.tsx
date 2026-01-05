@@ -174,9 +174,9 @@ export function LiveChat({ classId, className }: LiveChatProps) {
       <div className={cn('flex flex-col items-center justify-center h-full gap-3 p-4', className)}>
         <AlertCircle className="w-10 h-10 text-destructive" />
         <p className="text-sm text-center text-muted-foreground">{error}</p>
-        <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
-          Recarregar
-        </Button>
+        <p className="text-xs text-center text-muted-foreground">
+          Se o problema persistir, atualize a página do navegador.
+        </p>
       </div>
     );
   }
