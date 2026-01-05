@@ -33,12 +33,17 @@ interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof Dialo
   defaultSize?: { width: number; height: number };
   minSize?: { width: number; height: number };
   disableResize?: boolean;
+  /** 
+   * EXCEÇÃO CONSTITUCIONAL: Quando true, usa dimensões originais (não 98vw × 98vh)
+   * Uso exclusivo para área /auth onde modais compactos são necessários
+   */
+  useOriginalSize?: boolean;
 }
 
 // ============================================
 // LEI CONSTITUCIONAL DOS MODAIS v3.0
 // DIMENSÃO PADRÃO UNIVERSAL: 98vw × 98vh
-// Esta é a ÚNICA fonte da verdade para dimensões
+// EXCEÇÃO: área /auth usa dimensões originais
 // ============================================
 const MODAL_DEFAULT_SIZE = { width: 98, height: 98 }; // em vw/vh
 const MODAL_MIN_SIZE = { width: 320, height: 200 }; // em px
@@ -50,13 +55,15 @@ const DialogContent = React.forwardRef<
   className, 
   children, 
   showMaximize = true,
-  defaultSize, // IGNORADO - sempre usa 98vw × 98vh
+  defaultSize,
   minSize = MODAL_MIN_SIZE,
   disableResize = false,
+  useOriginalSize = false, // EXCEÇÃO para /auth
   ...props 
 }, ref) => {
-  // SEMPRE inicia maximizado por padrão (98vw × 98vh)
-  const [isMaximized, setIsMaximized] = React.useState(true);
+  // EXCEÇÃO: /auth usa tamanho original (não maximizado)
+  // PADRÃO: inicia maximizado (98vw × 98vh)
+  const [isMaximized, setIsMaximized] = React.useState(!useOriginalSize);
   const [customSize, setCustomSize] = React.useState({ width: 800, height: 600 });
   const [isDragging, setIsDragging] = React.useState<"right" | "bottom" | "corner" | null>(null);
   const startPos = React.useRef({ x: 0, y: 0 });
@@ -125,10 +132,12 @@ const DialogContent = React.forwardRef<
         className={cn(
           "fixed left-[50%] top-[50%] z-50 translate-x-[-50%] translate-y-[-50%] border bg-background shadow-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-xl overflow-hidden flex flex-col",
           isDragging && "select-none",
+          // EXCEÇÃO /auth: usa classes CSS originais quando useOriginalSize=true
+          useOriginalSize && "w-full max-w-lg h-auto max-h-[85vh]",
           className,
         )}
-        style={{
-          // LEI CONSTITUCIONAL: 98vw × 98vh como padrão universal
+        style={useOriginalSize ? undefined : {
+          // LEI CONSTITUCIONAL: 98vw × 98vh como padrão universal (exceto /auth)
           width: isMaximized ? "98vw" : customSize.width,
           height: isMaximized ? "98vh" : customSize.height,
           maxWidth: "98vw",

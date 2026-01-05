@@ -618,7 +618,7 @@ export default function DeviceLimitGate() {
 
       {/* Dialog de confirmação */}
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent useOriginalSize>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar desconexão?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -643,7 +643,7 @@ export default function DeviceLimitGate() {
 
       {/* Dialog de lockdown */}
       <AlertDialog open={showLockdownDialog} onOpenChange={setShowLockdownDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent useOriginalSize>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="w-5 h-5" />
