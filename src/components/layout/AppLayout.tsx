@@ -1,4 +1,4 @@
-import { ReactNode, useState, useCallback, useEffect, memo } from "react";
+import { ReactNode, useState, useCallback, useEffect, memo, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Command, Crown, MessageSquare, RefreshCw } from "lucide-react";
 import { AIAssistant, AIAssistantTrigger } from "@/components/ai/AIAssistant";
@@ -37,7 +37,12 @@ interface AppLayoutProps {
 }
 
 // ⚡ DOGMA VIII: Componentes memoizados para evitar re-renders
-const MemoizedSidebar = memo(RoleBasedSidebar);
+// ✅ forwardRef wrapper para compatibilidade com Radix UI (Tooltip, Popover triggers)
+const MemoizedSidebar = memo(forwardRef<HTMLDivElement, Record<string, never>>((props, ref) => (
+  <div ref={ref}>
+    <RoleBasedSidebar />
+  </div>
+)));
 MemoizedSidebar.displayName = 'MemoizedSidebar';
 
 const MemoizedSystemHealth = memo(SystemHealthIndicator);
@@ -51,8 +56,27 @@ const PageLoader = memo(() => (
 ));
 PageLoader.displayName = 'PageLoader';
 
-// ⚡ Header otimizado e memoizado
-const AppHeader = memo(({ 
+// ⚡ Header otimizado e memoizado + forwardRef para Radix UI
+interface AppHeaderProps {
+  openSearch: () => void;
+  handleClearCache: () => void;
+  isCacheClearing: boolean;
+  setIsTeamChatOpen: (open: boolean) => void;
+  notifications: any[];
+  onMarkAsRead: (id: string) => void;
+  onMarkAllAsRead: () => void;
+  onDelete: (id: string) => void;
+  onClearAll: () => void;
+  user: any;
+  roleLabel: string;
+  roleColor: string;
+  isGodMode: boolean;
+  signOut: () => void;
+  navigate: (path: string) => void;
+  appVersion: string;
+}
+
+const AppHeader = memo(forwardRef<HTMLElement, AppHeaderProps>(({ 
   openSearch, 
   handleClearCache, 
   isCacheClearing, 
@@ -69,13 +93,13 @@ const AppHeader = memo(({
   signOut,
   navigate,
   appVersion,
-}: any) => {
+}, ref) => {
   const getInitials = useCallback((name: string) => {
     return name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
   }, []);
 
   return (
-    <header className="h-14 flex items-center gap-4 px-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-40 header-2300">
+    <header ref={ref} className="h-14 flex items-center gap-4 px-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-40 header-2300">
       <SidebarTrigger className="-ml-1" />
       
       <Button
@@ -182,7 +206,7 @@ const AppHeader = memo(({
       </DropdownMenu>
     </header>
   );
-});
+}));
 AppHeader.displayName = 'AppHeader';
 
 // ⚡ Main Content com animação otimizada

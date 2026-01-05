@@ -6,7 +6,7 @@
 // + MODO MASTER: editar títulos e reordenar/realocar itens e categorias
 // ============================================
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, forwardRef } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -349,7 +349,10 @@ const alunoMenuGroups: MenuGroup[] = [
   },
 ];
 
-export function RoleBasedSidebar() {
+// ✅ forwardRef para compatibilidade com Radix UI (evita warnings de ref)
+export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>>(function RoleBasedSidebar(_props, ref) {
+  // ref é passado mas não usado diretamente pois Sidebar do Radix gerencia seu próprio DOM
+  void ref;
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
@@ -595,4 +598,5 @@ export function RoleBasedSidebar() {
       </SidebarFooter>
     </Sidebar>
   );
-}
+});
+RoleBasedSidebar.displayName = 'RoleBasedSidebar';
