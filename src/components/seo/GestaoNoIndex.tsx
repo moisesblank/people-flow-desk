@@ -4,7 +4,7 @@
 // ✅ forwardRef para compatibilidade com Radix UI
 // ============================================
 
-import { useEffect, forwardRef } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 

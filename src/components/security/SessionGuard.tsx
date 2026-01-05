@@ -5,7 +5,7 @@
 // ✅ forwardRef para compatibilidade com Radix UI
 // ============================================
 
-import { useEffect, useRef, useCallback, useState, forwardRef } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { SessionRevokedOverlay } from './SessionRevokedOverlay';
