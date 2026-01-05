@@ -4,12 +4,14 @@
  * 
  * Estado: Gabarito liberado
  * Ação: Exibir respostas, correção e explicações
+ * 
+ * ATUALIZADO: Usa QuestionEnunciado + QuestionResolution + Vídeo
  */
 
 import React, { useState } from "react";
 import { 
   ChevronLeft, ChevronRight, CheckCircle2, XCircle, 
-  BookOpen, Play, ArrowLeft, Eye
+  BookOpen, Play, ArrowLeft, Eye, Video
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,6 +21,8 @@ import {
   SimuladoQuestion,
   SimuladoAnswer,
 } from "@/components/simulados/types";
+import QuestionEnunciado from "@/components/shared/QuestionEnunciado";
+import QuestionResolution from "@/components/shared/QuestionResolution";
 import { cn } from "@/lib/utils";
 
 interface SimuladoReviewScreenProps {
@@ -28,6 +32,89 @@ interface SimuladoReviewScreenProps {
   answers: Map<string, SimuladoAnswer>;
   isRetake: boolean;
   onExit?: () => void;
+}
+
+/**
+ * Detecta o tipo de vídeo pela URL
+ */
+function getVideoType(url: string): 'panda' | 'youtube' | 'vimeo' | 'unknown' {
+  if (url.includes('pandavideo') || url.includes('player-vz')) return 'panda';
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+  if (url.includes('vimeo.com')) return 'vimeo';
+  return 'unknown';
+}
+
+/**
+ * Extrai YouTube Video ID
+ */
+function getYouTubeId(url: string): string | null {
+  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^?&]+)/);
+  return match ? match[1] : null;
+}
+
+/**
+ * Componente de vídeo universal
+ */
+function VideoPlayer({ url }: { url: string }) {
+  const type = getVideoType(url);
+  
+  if (type === 'youtube') {
+    const videoId = getYouTubeId(url);
+    if (!videoId) return null;
+    
+    return (
+      <div className="aspect-video rounded-lg overflow-hidden border border-border">
+        <iframe
+          src={`https://www.youtube.com/embed/${videoId}`}
+          className="w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title="Vídeo de Resolução"
+        />
+      </div>
+    );
+  }
+  
+  if (type === 'panda') {
+    return (
+      <div className="aspect-video rounded-lg overflow-hidden border border-border">
+        <iframe
+          src={url}
+          className="w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title="Vídeo de Resolução"
+        />
+      </div>
+    );
+  }
+  
+  if (type === 'vimeo') {
+    return (
+      <div className="aspect-video rounded-lg overflow-hidden border border-border">
+        <iframe
+          src={url.replace('vimeo.com', 'player.vimeo.com/video')}
+          className="w-full h-full"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowFullScreen
+          title="Vídeo de Resolução"
+        />
+      </div>
+    );
+  }
+  
+  // Fallback: link direto
+  return (
+    <a 
+      href={url} 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-2 text-primary hover:underline"
+    >
+      <Play className="h-4 w-4" />
+      Assistir Vídeo de Resolução
+    </a>
+  );
 }
 
 export function SimuladoReviewScreen({
@@ -129,105 +216,117 @@ export function SimuladoReviewScreen({
         </div>
 
         {/* Questão */}
-        <div className="flex-1 p-6 overflow-y-auto">
-          {/* Indicador de resultado */}
-          <div
-            className={cn(
-              "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium mb-4",
-              wasAnswered && isCorrect && "bg-green-500/20 text-green-400",
-              wasAnswered && !isCorrect && "bg-red-500/20 text-red-400",
-              !wasAnswered && "bg-muted text-muted-foreground"
-            )}
-          >
-            {wasAnswered ? (
-              isCorrect ? (
-                <>
-                  <CheckCircle2 className="h-4 w-4" />
-                  Resposta Correta
-                </>
+        <ScrollArea className="flex-1">
+          <div className="p-6">
+            {/* Indicador de resultado */}
+            <div
+              className={cn(
+                "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium mb-4",
+                wasAnswered && isCorrect && "bg-green-500/20 text-green-400",
+                wasAnswered && !isCorrect && "bg-red-500/20 text-red-400",
+                !wasAnswered && "bg-muted text-muted-foreground"
+              )}
+            >
+              {wasAnswered ? (
+                isCorrect ? (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    Resposta Correta
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-4 w-4" />
+                    Resposta Incorreta
+                  </>
+                )
               ) : (
                 <>
-                  <XCircle className="h-4 w-4" />
-                  Resposta Incorreta
+                  <Eye className="h-4 w-4" />
+                  Não respondida
                 </>
-              )
-            ) : (
-              <>
-                <Eye className="h-4 w-4" />
-                Não respondida
-              </>
-            )}
-          </div>
-
-          {/* Enunciado */}
-          <div className="prose prose-invert max-w-none mb-6">
-            <p className="text-lg whitespace-pre-wrap">
-              {currentQuestion.question_text}
-            </p>
-            {currentQuestion.image_url && (
-              <img
-                src={currentQuestion.image_url}
-                alt="Imagem da questão"
-                className="max-h-[400px] rounded-lg mt-4"
-              />
-            )}
-          </div>
-
-          {/* Alternativas */}
-          <div className="space-y-3 mb-6">
-            {Object.entries(currentQuestion.options || {}).map(([key, text]) => {
-              const isSelected = currentAnswer?.selectedOption === key;
-              const isCorrectOption = currentQuestion.correct_answer === key;
-              
-              return (
-                <div
-                  key={key}
-                  className={cn(
-                    "p-4 rounded-lg border transition-all",
-                    isCorrectOption && "bg-green-500/10 border-green-500/50",
-                    isSelected && !isCorrectOption && "bg-red-500/10 border-red-500/50",
-                    !isSelected && !isCorrectOption && "bg-muted/20 border-border"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0",
-                        isCorrectOption && "bg-green-500 text-white",
-                        isSelected && !isCorrectOption && "bg-red-500 text-white",
-                        !isSelected && !isCorrectOption && "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      {key}
-                    </div>
-                    <p className="flex-1 pt-1">{text}</p>
-                    {isCorrectOption && (
-                      <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
-                    )}
-                    {isSelected && !isCorrectOption && (
-                      <XCircle className="h-5 w-5 text-red-500 shrink-0" />
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Explicação */}
-          {currentQuestion.explanation && (
-            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
-              <div className="flex items-center gap-2 text-primary mb-2">
-                <BookOpen className="h-5 w-5" />
-                <span className="font-medium">Explicação</span>
-              </div>
-              <div className="prose prose-invert prose-sm max-w-none">
-                <p className="whitespace-pre-wrap text-muted-foreground">
-                  {currentQuestion.explanation}
-                </p>
-              </div>
+              )}
             </div>
-          )}
-        </div>
+
+            {/* Enunciado - Usando componente padronizado */}
+            <div className="mb-6">
+              <QuestionEnunciado
+                questionText={currentQuestion.question_text}
+                imageUrl={currentQuestion.image_url}
+                imageUrls={currentQuestion.image_urls}
+                banca={currentQuestion.banca}
+                ano={currentQuestion.ano}
+                textSize="lg"
+              />
+            </div>
+
+            {/* Alternativas */}
+            <div className="space-y-3 mb-6">
+              {Object.entries(currentQuestion.options || {}).map(([key, text]) => {
+                const isSelected = currentAnswer?.selectedOption === key;
+                const isCorrectOption = currentQuestion.correct_answer === key;
+                
+                return (
+                  <div
+                    key={key}
+                    className={cn(
+                      "p-4 rounded-lg border transition-all",
+                      isCorrectOption && "bg-green-500/10 border-green-500/50",
+                      isSelected && !isCorrectOption && "bg-red-500/10 border-red-500/50",
+                      !isSelected && !isCorrectOption && "bg-muted/20 border-border"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0",
+                          isCorrectOption && "bg-green-500 text-white",
+                          isSelected && !isCorrectOption && "bg-red-500 text-white",
+                          !isSelected && !isCorrectOption && "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {key}
+                      </div>
+                      <p className="flex-1 pt-1">{text}</p>
+                      {isCorrectOption && (
+                        <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+                      )}
+                      {isSelected && !isCorrectOption && (
+                        <XCircle className="h-5 w-5 text-red-500 shrink-0" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Resolução Comentada - Usando componente padronizado */}
+            {currentQuestion.explanation && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 text-primary mb-3">
+                  <BookOpen className="h-5 w-5" />
+                  <span className="font-medium text-lg">Resolução Comentada</span>
+                </div>
+                <QuestionResolution
+                  resolutionText={currentQuestion.explanation}
+                  banca={currentQuestion.banca}
+                  ano={currentQuestion.ano}
+                  difficulty={currentQuestion.difficulty}
+                />
+              </div>
+            )}
+
+            {/* Vídeo de Resolução */}
+            {currentQuestion.video_url && (
+              <div className="mt-6">
+                <div className="flex items-center gap-2 text-primary mb-3">
+                  <Video className="h-5 w-5" />
+                  <span className="font-medium text-lg">Vídeo de Resolução</span>
+                </div>
+                <VideoPlayer url={currentQuestion.video_url} />
+              </div>
+            )}
+          </div>
+        </ScrollArea>
       </div>
 
       {/* Footer navegação */}

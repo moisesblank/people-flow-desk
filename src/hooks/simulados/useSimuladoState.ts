@@ -97,18 +97,42 @@ export function useSimuladoState(options: UseSimuladoStateOptions) {
       
       // Carregar questões
       if (simData.question_ids && simData.question_ids.length > 0) {
+        // Selecionar campos base + campos de gabarito (correct_answer, explanation, video)
+        // RLS e a lógica de exibição controlam quando mostrar gabarito
         const { data: questionsData, error: questionsError } = await supabase
           .from("quiz_questions")
-          .select("id, question_text, question_type, options, image_url, difficulty, banca, ano")
+          .select("id, question_text, question_type, options, image_url, image_urls, difficulty, banca, ano, correct_answer, explanation, video_url, video_provider, has_video_resolution")
           .in("id", simData.question_ids);
         
         if (questionsError) {
           console.error("[useSimuladoState] Error loading questions:", questionsError);
         } else if (questionsData) {
+          // Verificar se gabarito já foi liberado
+          const gabaritoAt = simData.results_released_at ? new Date(simData.results_released_at) : null;
+          const isGabaritoReleased = gabaritoAt ? new Date() >= gabaritoAt : false;
+          
           // Ordenar conforme question_ids
           const orderedQuestions = simData.question_ids.map((id: string, index: number) => {
-            const q = questionsData.find((q: { id: string }) => q.id === id);
-            return q ? { ...q, order: index } : null;
+            const q = questionsData.find((q) => q.id === id);
+            if (!q) return null;
+            
+            // Se gabarito não liberado, omitir campos sensíveis
+            if (!isGabaritoReleased) {
+              return { 
+                id: q.id,
+                question_text: q.question_text,
+                question_type: q.question_type,
+                options: q.options,
+                image_url: q.image_url,
+                image_urls: q.image_urls,
+                difficulty: q.difficulty,
+                banca: q.banca,
+                ano: q.ano,
+                order: index 
+              };
+            }
+            
+            return { ...q, order: index };
           }).filter(Boolean) as SimuladoQuestion[];
           
           setQuestions(orderedQuestions);
