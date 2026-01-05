@@ -110,6 +110,162 @@ const criarAcessoSchema = z.object({
 
 type CriarAcessoFormData = z.infer<typeof criarAcessoSchema>;
 
+// ============================================
+// 🔒 CONSTITUIÇÃO v10.x — TRADUTOR DE ERROS
+// Todas as mensagens de erro devem ser em português
+// claro para que o admin entenda o motivo do erro
+// ============================================
+interface MensagemErro {
+  titulo: string;
+  descricao: string;
+}
+
+function traduzirErroCriacaoAcesso(errorCode: string): MensagemErro {
+  const msg = errorCode?.toLowerCase() || '';
+  
+  // ========== ERROS DE DUPLICIDADE ==========
+  if (errorCode === 'CPF_DUPLICADO' || (msg.includes('cpf') && (msg.includes('cadastrado') || msg.includes('existe') || msg.includes('outro') || msg.includes('duplicate')))) {
+    return {
+      titulo: '❌ CPF Já Cadastrado',
+      descricao: 'Este CPF já está vinculado a outro usuário no sistema. Verifique se a pessoa já possui acesso.'
+    };
+  }
+  if (errorCode === 'EMAIL_DUPLICADO' || (msg.includes('email') && (msg.includes('cadastrado') || msg.includes('existe') || msg.includes('outro') || msg.includes('duplicate') || msg.includes('already registered')))) {
+    return {
+      titulo: '❌ Email Já Cadastrado',
+      descricao: 'Este email já está vinculado a outro usuário no sistema. Verifique se a pessoa já possui acesso.'
+    };
+  }
+  if (errorCode === 'TELEFONE_DUPLICADO' || (msg.includes('telefone') && (msg.includes('cadastrado') || msg.includes('existe') || msg.includes('outro') || msg.includes('duplicate')))) {
+    return {
+      titulo: '❌ Telefone Já Cadastrado',
+      descricao: 'Este telefone já está vinculado a outro usuário no sistema. Verifique se a pessoa já possui acesso.'
+    };
+  }
+  
+  // ========== ERROS DE SESSÃO/AUTENTICAÇÃO ==========
+  if (msg.includes('sessão expirada') || msg.includes('session') || msg.includes('auth session missing') || msg.includes('token') || msg.includes('401') || msg.includes('logout')) {
+    return {
+      titulo: '⚠️ Sessão Expirada',
+      descricao: 'Sua sessão expirou por segurança. Faça logout e login novamente para continuar.'
+    };
+  }
+  if (msg.includes('permissão') || msg.includes('permission') || msg.includes('403') || msg.includes('unauthorized') || msg.includes('não autorizado')) {
+    return {
+      titulo: '🚫 Sem Permissão',
+      descricao: 'Você não tem permissão para criar acessos. Contate o administrador do sistema.'
+    };
+  }
+  
+  // ========== ERROS DE VALIDAÇÃO ==========
+  if (msg.includes('cpf') && (msg.includes('inválido') || msg.includes('invalid'))) {
+    return {
+      titulo: '❌ CPF Inválido',
+      descricao: 'O CPF informado não é válido. Verifique se digitou corretamente os 11 dígitos.'
+    };
+  }
+  if (msg.includes('email') && (msg.includes('inválido') || msg.includes('invalid'))) {
+    return {
+      titulo: '❌ Email Inválido',
+      descricao: 'O email informado não é válido. Verifique o formato (exemplo@dominio.com).'
+    };
+  }
+  if (msg.includes('telefone') && (msg.includes('inválido') || msg.includes('invalid'))) {
+    return {
+      titulo: '❌ Telefone Inválido',
+      descricao: 'O telefone informado não é válido. Use apenas números com DDD.'
+    };
+  }
+  if (msg.includes('senha') && (msg.includes('fraca') || msg.includes('curta') || msg.includes('weak') || msg.includes('short'))) {
+    return {
+      titulo: '❌ Senha Muito Fraca',
+      descricao: 'A senha deve ter pelo menos 8 caracteres. Use letras, números e símbolos para maior segurança.'
+    };
+  }
+  if (msg.includes('nome') && (msg.includes('obrigatório') || msg.includes('required'))) {
+    return {
+      titulo: '❌ Nome Obrigatório',
+      descricao: 'O nome completo do aluno é obrigatório para criar o acesso.'
+    };
+  }
+  
+  // ========== ERROS DE CONEXÃO ==========
+  if (msg.includes('timeout') || msg.includes('tempo esgotado') || msg.includes('timed out')) {
+    return {
+      titulo: '⏱️ Tempo Esgotado',
+      descricao: 'A operação demorou muito para responder. Verifique sua conexão e tente novamente.'
+    };
+  }
+  if (msg.includes('conexão') || msg.includes('connection') || msg.includes('network') || msg.includes('fetch') || msg.includes('failed to fetch')) {
+    return {
+      titulo: '🌐 Erro de Conexão',
+      descricao: 'Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.'
+    };
+  }
+  if (msg.includes('servidor') || msg.includes('server') || msg.includes('500') || msg.includes('502') || msg.includes('503') || msg.includes('504')) {
+    return {
+      titulo: '🔧 Erro no Servidor',
+      descricao: 'O servidor está temporariamente indisponível. Aguarde alguns minutos e tente novamente.'
+    };
+  }
+  
+  // ========== ERROS DE RECEITA FEDERAL ==========
+  if (msg.includes('receita federal') || msg.includes('cpf não encontrado')) {
+    return {
+      titulo: '🔍 CPF Não Encontrado',
+      descricao: 'O CPF não foi encontrado na base da Receita Federal. Verifique se o número está correto.'
+    };
+  }
+  if (msg.includes('irregular') || msg.includes('pendente')) {
+    return {
+      titulo: '⚠️ CPF Irregular',
+      descricao: 'O CPF possui pendências na Receita Federal. O titular deve regularizar a situação.'
+    };
+  }
+  
+  // ========== ERROS DE STORAGE (FOTO) ==========
+  if (msg.includes('upload') || msg.includes('foto') || msg.includes('imagem') || msg.includes('storage')) {
+    return {
+      titulo: '📷 Erro no Upload da Foto',
+      descricao: 'Não foi possível fazer upload da foto. Verifique se o arquivo é uma imagem válida (máx 5MB).'
+    };
+  }
+  
+  // ========== ERROS DE ROLE/ACESSO ==========
+  if (msg.includes('role') || msg.includes('tipo de acesso')) {
+    return {
+      titulo: '❌ Tipo de Acesso Inválido',
+      descricao: 'Selecione um tipo de acesso válido: Beta, Beta Expira, Aluno Gratuito ou Aluno Presencial.'
+    };
+  }
+  if (msg.includes('expiração') || msg.includes('expires') || msg.includes('dias')) {
+    return {
+      titulo: '❌ Período de Expiração Inválido',
+      descricao: 'Para Beta Expira, defina quantos dias o acesso ficará ativo (1 a 3650 dias).'
+    };
+  }
+  if (msg.includes('tipo_produto') || msg.includes('livroweb') || msg.includes('físico')) {
+    return {
+      titulo: '❌ Tipo de Produto Obrigatório',
+      descricao: 'Para alunos Beta, selecione se o produto é LIVROWEB ou FÍSICO.'
+    };
+  }
+  
+  // ========== ERRO GENÉRICO (FALLBACK) ==========
+  // Se não encontrou tradução específica, mostra a mensagem original
+  if (errorCode && errorCode.trim().length > 0 && errorCode !== 'undefined') {
+    return {
+      titulo: '❌ Erro ao Criar Acesso',
+      descricao: errorCode
+    };
+  }
+  
+  return {
+    titulo: '❌ Erro Inesperado',
+    descricao: 'Ocorreu um erro ao criar o acesso. Verifique os dados e tente novamente.'
+  };
+}
+
 interface CriarAcessoOficialModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -433,29 +589,14 @@ export function CriarAcessoOficialModal({
     } catch (error: any) {
       console.error("Erro ao criar acesso:", error);
       
-      // 🎯 MENSAGENS ESPECÍFICAS E CLARAS PARA DUPLICADOS
+      // 🎯 CONSTITUIÇÃO v10.x — TODAS AS MENSAGENS DE ERRO EM PORTUGUÊS CLARO
       const errorCode = error.message || '';
+      const mensagemTraduzida = traduzirErroCriacaoAcesso(errorCode);
       
-      if (errorCode === 'CPF_DUPLICADO') {
-        toast.error("❌ CPF JÁ CADASTRADO", {
-          description: "Este CPF já está vinculado a outro usuário no sistema.",
-          duration: 8000,
-        });
-      } else if (errorCode === 'EMAIL_DUPLICADO') {
-        toast.error("❌ EMAIL JÁ CADASTRADO", {
-          description: "Este email já está vinculado a outro usuário no sistema.",
-          duration: 8000,
-        });
-      } else if (errorCode === 'TELEFONE_DUPLICADO') {
-        toast.error("❌ TELEFONE JÁ CADASTRADO", {
-          description: "Este telefone já está vinculado a outro usuário no sistema.",
-          duration: 8000,
-        });
-      } else {
-        toast.error("Erro ao criar acesso", {
-          description: error.message || "Tente novamente",
-        });
-      }
+      toast.error(mensagemTraduzida.titulo, {
+        description: mensagemTraduzida.descricao,
+        duration: 8000,
+      });
     } finally {
       setIsSubmitting(false);
     }
