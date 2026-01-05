@@ -3,11 +3,12 @@
  * Constituição SYNAPSE Ω v10.0
  * 
  * Layout: Header + Timer Bar + 2 Colunas (Questão + Navegação)
+ * Feature: Tesoura (Scissors) para eliminar alternativas
  */
 
 import React, { useState, useCallback } from "react";
 import { 
-  ChevronLeft, ChevronRight, Flag, AlertTriangle, X, ArrowLeft
+  ChevronLeft, ChevronRight, Flag, AlertTriangle, ArrowLeft, Scissors
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -87,10 +88,17 @@ export function SimuladoRunningScreen({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showFinishDialog, setShowFinishDialog] = useState(false);
   const [selectingOption, setSelectingOption] = useState<string | null>(null);
+  
+  // 🔪 Estado de alternativas eliminadas por questão
+  // Map<questionId, Set<optionKey>>
+  const [eliminatedOptions, setEliminatedOptions] = useState<Map<string, Set<string>>>(new Map());
 
   const currentQuestion = questions[currentIndex];
   const currentAnswer = answers.get(currentQuestion?.id);
   const isRetake = !attempt.is_scored_for_ranking;
+
+  // Set de alternativas eliminadas para a questão atual
+  const currentEliminated = eliminatedOptions.get(currentQuestion?.id) ?? new Set<string>();
 
   // Navegação
   const goToNext = useCallback(() => {
@@ -109,9 +117,13 @@ export function SimuladoRunningScreen({
     setCurrentIndex(index);
   }, []);
 
-  // Selecionar resposta
+  // Selecionar resposta (não pode selecionar eliminada)
   const handleSelectOption = useCallback(async (optionKey: string) => {
     if (!currentQuestion || selectingOption) return;
+    
+    // Não pode selecionar alternativa eliminada
+    const eliminated = eliminatedOptions.get(currentQuestion.id) ?? new Set<string>();
+    if (eliminated.has(optionKey)) return;
     
     setSelectingOption(optionKey);
     try {
@@ -119,7 +131,32 @@ export function SimuladoRunningScreen({
     } finally {
       setSelectingOption(null);
     }
-  }, [currentQuestion, selectingOption, onSelectAnswer]);
+  }, [currentQuestion, selectingOption, onSelectAnswer, eliminatedOptions]);
+
+  // 🔪 Toggle eliminar alternativa
+  const handleToggleEliminate = useCallback((optionKey: string) => {
+    if (!currentQuestion) return;
+    
+    // Não pode eliminar a alternativa selecionada
+    const selectedOption = answers.get(currentQuestion.id)?.selectedOption;
+    if (selectedOption === optionKey) return;
+    
+    setEliminatedOptions(prev => {
+      const newMap = new Map(prev);
+      const currentSet = new Set(newMap.get(currentQuestion.id) ?? []);
+      
+      if (currentSet.has(optionKey)) {
+        // Restaurar
+        currentSet.delete(optionKey);
+      } else {
+        // Eliminar
+        currentSet.add(optionKey);
+      }
+      
+      newMap.set(currentQuestion.id, currentSet);
+      return newMap;
+    });
+  }, [currentQuestion, answers]);
 
   // Confirmar finalização
   const handleConfirmFinish = useCallback(async () => {
@@ -230,11 +267,12 @@ export function SimuladoRunningScreen({
                 )}
               </div>
 
-              {/* Alternativas - Estilo Print */}
+              {/* Alternativas - Estilo Print com Tesoura */}
               <div className="space-y-3">
                 {sortedOptions.map(([key, optionValue]) => {
                   const isSelected = currentAnswer?.selectedOption === key;
                   const isSelecting = selectingOption === key;
+                  const isEliminated = currentEliminated.has(key);
 
                   // Extrair texto: pode ser string ou objeto {id, text}
                   const rawText: unknown =
@@ -247,40 +285,72 @@ export function SimuladoRunningScreen({
                     typeof rawText === "string" ? rawText : rawText == null ? "" : String(rawText);
 
                   return (
-                    <button
+                    <div
                       key={key}
-                      onClick={() => handleSelectOption(key)}
-                      disabled={isSelecting || isFinishing}
                       className={cn(
-                        "w-full p-4 rounded-lg border text-left transition-all flex items-center justify-between",
-                        "hover:border-primary/50",
-                        isSelected && "border-primary bg-primary/10",
-                        !isSelected && "border-zinc-700 bg-zinc-800/50 hover:bg-zinc-800",
+                        "w-full p-4 rounded-lg border text-left transition-all flex items-center justify-between gap-2",
+                        // Estado: Eliminada
+                        isEliminated && "opacity-40 bg-zinc-800/50 border-zinc-600",
+                        // Estado: Selecionada
+                        isSelected && !isEliminated && "border-green-500 bg-green-600/20",
+                        // Estado: Normal
+                        !isSelected && !isEliminated && "border-zinc-700 bg-zinc-800/50 hover:border-primary/50 hover:bg-zinc-800",
                         isSelecting && "opacity-50"
                       )}
                     >
-                      <div className="flex items-center gap-3">
+                      {/* Área clicável para selecionar */}
+                      <button
+                        onClick={() => handleSelectOption(key)}
+                        disabled={isSelecting || isFinishing || isEliminated}
+                        className={cn(
+                          "flex items-center gap-3 flex-1 text-left",
+                          isEliminated && "cursor-not-allowed"
+                        )}
+                      >
                         {/* Radio indicator */}
                         <div
                           className={cn(
                             "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
-                            isSelected ? "border-primary bg-primary" : "border-zinc-500"
+                            isSelected ? "border-green-500 bg-green-500" : "border-zinc-500",
+                            isEliminated && "border-zinc-600"
                           )}
                         >
-                          {isSelected && <div className="w-2 h-2 rounded-full bg-primary-foreground" />}
+                          {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                         </div>
                         
-                        <span className="font-bold text-foreground">{key})</span>
-                        <span className="text-foreground/90">{optionText}</span>
-                      </div>
+                        <span className={cn(
+                          "font-bold text-foreground",
+                          isEliminated && "line-through"
+                        )}>
+                          {key})
+                        </span>
+                        <span className={cn(
+                          "text-foreground/90",
+                          isEliminated && "line-through"
+                        )}>
+                          {optionText}
+                        </span>
+                      </button>
                       
-                      {/* X button - Estilo Print */}
-                      <div className="shrink-0 ml-2">
-                        <div className="w-8 h-8 rounded-full bg-red-600/80 flex items-center justify-center">
-                          <X className="h-4 w-4 text-white" />
-                        </div>
-                      </div>
-                    </button>
+                      {/* Botão Tesoura (Eliminar) - NÃO aparece se estiver selecionada */}
+                      {!isSelected && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleEliminate(key);
+                          }}
+                          className={cn(
+                            "shrink-0 p-2 rounded-full transition-colors",
+                            isEliminated 
+                              ? "text-red-500 hover:text-zinc-400 hover:bg-zinc-700/50" 
+                              : "text-zinc-400 hover:text-red-400 hover:bg-red-400/10"
+                          )}
+                          title={isEliminated ? "Restaurar alternativa" : "Eliminar alternativa"}
+                        >
+                          <Scissors className="w-5 h-5" />
+                        </button>
+                      )}
+                    </div>
                   );
                 })}
               </div>
