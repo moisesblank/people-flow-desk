@@ -23,6 +23,8 @@ export interface AlunoRow {
   id: string;
   nome: string;
   email: string;
+  cpf: string | null;
+  telefone: string | null;
   status: string;
   fonte: string | null;
   role: StudentRoleType | null;
@@ -172,18 +174,31 @@ export function useAlunosPaginados(
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      // Query base - inclui fonte para filtro de universo
+      // Query base - inclui fonte, cpf e telefone para filtro de universo e busca
       let query = supabase
         .from('alunos')
-        .select('id, nome, email, status, fonte', { count: 'exact' });
+        .select('id, nome, email, cpf, telefone, status, fonte', { count: 'exact' });
 
       // Aplicar filtros
       if (statusFilter) {
         query = query.ilike('status', statusFilter);
       }
 
+      // Busca por nome, email, CPF ou telefone
       if (searchTerm && searchTerm.trim()) {
-        query = query.or(`nome.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
+        // Limpa caracteres especiais para busca de CPF/telefone
+        const cleanedSearch = searchTerm.replace(/[.\-\s()]/g, '');
+        
+        // Se parece ser numérico, busca também em cpf e telefone
+        const isNumeric = /^\d+$/.test(cleanedSearch);
+        
+        if (isNumeric) {
+          // Busca numérica: nome, email, cpf (limpo) ou telefone (limpo)
+          query = query.or(`nome.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,cpf.ilike.%${cleanedSearch}%,telefone.ilike.%${cleanedSearch}%`);
+        } else {
+          // Busca textual: nome, email, cpf ou telefone (com formatação original)
+          query = query.or(`nome.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,cpf.ilike.%${searchTerm}%,telefone.ilike.%${searchTerm}%`);
+        }
       }
 
       // ⚡ PARTE 6 FIX: Filtro por fonte/modalidade baseado no universo
@@ -237,6 +252,8 @@ export function useAlunosPaginados(
         id: a.id,
         nome: a.nome,
         email: a.email || '',
+        cpf: a.cpf || null,
+        telefone: a.telefone || null,
         status: a.status || 'ativo',
         fonte: a.fonte || null,
         role: roleMap[(a.email || '').toLowerCase()] || null,
