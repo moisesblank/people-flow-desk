@@ -32,9 +32,8 @@ const OWNER_EMAIL = 'moisesblank@gmail.com';
  * Cache de 24 horas por dispositivo
  */
 export function useDeviceMFAGuard(): DeviceMFAGuardResult {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user } = useAuth();
   const hasChecked = useRef(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const [state, setState] = useState<DeviceMFAGuardState>({
     isChecking: true, // Começa verificando
@@ -44,30 +43,6 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
     deviceHash: null,
     expiresAt: null
   });
-
-  // 🛡️ TIMEOUT DE SEGURANÇA: evita loading infinito (máx 8s)
-  useEffect(() => {
-    if (state.isChecking && !timeoutRef.current) {
-      timeoutRef.current = setTimeout(() => {
-        if (state.isChecking) {
-          console.warn('[DeviceMFAGuard] ⚠️ Timeout atingido - bypass de segurança');
-          setState(prev => ({
-            ...prev,
-            isChecking: false,
-            isVerified: true, // Bypass para evitar tela travada
-            needsMFA: false
-          }));
-        }
-      }, 8000);
-    }
-    
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    };
-  }, [state.isChecking]);
 
   // Owner tem bypass total
   const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
@@ -201,12 +176,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
 
   // Verifica automaticamente ao montar (apenas uma vez)
   useEffect(() => {
-    // 🛡️ Se auth ainda está carregando, aguardar (timeout protege)
-    if (isAuthLoading) {
-      return;
-    }
-
-    // Se não há usuário após auth carregar, bypass imediato (páginas públicas)
+    // Se não há usuário, bypass imediato (não precisa verificar dispositivo)
     if (!user?.id) {
       setState(prev => ({ 
         ...prev, 
@@ -217,9 +187,8 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       return;
     }
 
-    // 👑 Owner bypass IMEDIATO
+    // Owner bypass
     if (isOwner) {
-      console.log('[DeviceMFAGuard] 👑 OWNER bypass');
       setState(prev => ({ 
         ...prev, 
         isChecking: false,
@@ -235,7 +204,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       hasChecked.current = true;
       checkDeviceMFA();
     }
-  }, [user?.id, isOwner, isAuthLoading, checkDeviceMFA]);
+  }, [user?.id, isOwner, checkDeviceMFA]);
 
   return {
     ...state,
