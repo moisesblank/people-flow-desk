@@ -890,3 +890,5 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
     </>
   );
 }
+
+export default AITramonGlobal;

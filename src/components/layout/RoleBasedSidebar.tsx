@@ -523,7 +523,7 @@ export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>
   };
 
   return (
-    <div ref={ref} className="contents" data-role-based-sidebar>
+    <aside ref={ref} data-role-based-sidebar>
       <Sidebar collapsible="icon" className="border-r border-sidebar-border">
         <SidebarHeader className="p-4">
           <div className={`flex flex-col gap-2 ${collapsed ? "items-center" : ""}`}>
@@ -596,7 +596,7 @@ export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>
           </div>
         </SidebarFooter>
       </Sidebar>
-    </div>
+    </aside>
   );
 });
 RoleBasedSidebar.displayName = 'RoleBasedSidebar';
