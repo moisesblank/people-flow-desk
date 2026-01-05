@@ -601,6 +601,11 @@ export function SimuladoQuestionSelector({
   };
 
   const handleSelectAll = () => onChange([...selectedIds, ...filteredQuestions.map(q => q.id)]);
+  const handleSelect20 = () => {
+    const notSelected = filteredQuestions.filter(q => !selectedIds.includes(q.id));
+    const toAdd = notSelected.slice(0, 20).map(q => q.id);
+    onChange([...selectedIds, ...toAdd]);
+  };
   const handleClearAll = () => onChange([]);
   const handleClearFilters = () => {
     setSearchTerm("");
@@ -697,6 +702,16 @@ export function SimuladoQuestionSelector({
             >
               <RotateCcw className="h-3 w-3" />
               Restaurar Filtros
+            </Button>
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              onClick={handleSelect20}
+              disabled={filteredQuestions.filter(q => !selectedIds.includes(q.id)).length === 0}
+              className="text-xs gap-1"
+            >
+              <Plus className="h-3 w-3" />
+              +20 Questões
             </Button>
             <Badge variant={selectedIds.length > 0 ? "default" : "destructive"} className="text-sm px-3 py-1 gap-1">
               <CheckCircle2 className="h-3 w-3" />
