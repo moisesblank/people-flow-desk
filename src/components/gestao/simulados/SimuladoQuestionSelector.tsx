@@ -70,6 +70,7 @@ interface Question {
   tema?: string | null;
   subtema?: string | null;
   question_type?: string | null;
+  tags?: string[] | null;
 }
 
 // Hook para buscar questões já usadas em outros simulados
@@ -407,6 +408,7 @@ export function SimuladoQuestionSelector({
   const [activeTemas, setActiveTemas] = useState<Set<string>>(new Set());
   const [activeSubtemas, setActiveSubtemas] = useState<Set<string>>(new Set());
   const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set());
+  const [activeGrupos, setActiveGrupos] = useState<Set<string>>(new Set());
   
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -445,6 +447,12 @@ export function SimuladoQuestionSelector({
       }
       if (excludeFilter !== 'type' && activeTypes.size > 0) {
         result = result.filter(q => q.question_type && activeTypes.has(q.question_type));
+      }
+      if (excludeFilter !== 'grupo' && activeGrupos.size > 0) {
+        result = result.filter(q => {
+          if (!q.tags || q.tags.length === 0) return false;
+          return Array.from(activeGrupos).some(grupo => q.tags!.includes(grupo));
+        });
       }
       
       return result;
@@ -505,9 +513,17 @@ export function SimuladoQuestionSelector({
     typeBase.forEach(q => {
       if (q.question_type) types[q.question_type] = (types[q.question_type] || 0) + 1;
     });
+    
+    // Contagem de grupos (SIMULADOS, MODO_TREINO)
+    const grupoBase = applyFiltersExcept(available, 'grupo');
+    const grupos: Record<string, number> = { 'SIMULADOS': 0, 'MODO_TREINO': 0 };
+    grupoBase.forEach(q => {
+      if (q.tags?.includes('SIMULADOS')) grupos['SIMULADOS']++;
+      if (q.tags?.includes('MODO_TREINO')) grupos['MODO_TREINO']++;
+    });
 
-    return { difficulties, bancas, anos, macros, micros, temas, subtemas, types, total: available.length };
-  }, [allQuestions, selectedIds, activeDifficulties, activeMacros, activeMicros, activeTemas, activeSubtemas, activeBancas, activeAnos, activeTypes]);
+    return { difficulties, bancas, anos, macros, micros, temas, subtemas, types, grupos, total: available.length };
+  }, [allQuestions, selectedIds, activeDifficulties, activeMacros, activeMicros, activeTemas, activeSubtemas, activeBancas, activeAnos, activeTypes, activeGrupos]);
   
   // Dynamic filter options - agora usa filterData diretamente pois já é dinâmico
   const dynamicFilterOptions = useMemo(() => {
@@ -555,15 +571,21 @@ export function SimuladoQuestionSelector({
     if (activeTypes.size > 0) {
       result = result.filter(q => q.question_type && activeTypes.has(q.question_type));
     }
+    if (activeGrupos.size > 0) {
+      result = result.filter(q => {
+        if (!q.tags || q.tags.length === 0) return false;
+        return Array.from(activeGrupos).some(grupo => q.tags!.includes(grupo));
+      });
+    }
 
     return result;
-  }, [allQuestions, selectedIds, searchTerm, activeDifficulties, activeBancas, activeAnos, activeMacros, activeMicros, activeTemas, activeSubtemas, activeTypes]);
+  }, [allQuestions, selectedIds, searchTerm, activeDifficulties, activeBancas, activeAnos, activeMacros, activeMicros, activeTemas, activeSubtemas, activeTypes, activeGrupos]);
 
   const selectedQuestions = useMemo(() => {
     return selectedIds.map(id => allQuestions.find(q => q.id === id)).filter((q): q is Question => !!q);
   }, [selectedIds, allQuestions]);
 
-  const hasActiveFilters = activeDifficulties.size > 0 || activeBancas.size > 0 || activeAnos.size > 0 || activeMacros.size > 0 || activeMicros.size > 0 || activeTemas.size > 0 || activeSubtemas.size > 0 || activeTypes.size > 0 || searchTerm;
+  const hasActiveFilters = activeDifficulties.size > 0 || activeBancas.size > 0 || activeAnos.size > 0 || activeMacros.size > 0 || activeMicros.size > 0 || activeTemas.size > 0 || activeSubtemas.size > 0 || activeTypes.size > 0 || activeGrupos.size > 0 || searchTerm;
 
   // Paginação calculada
   const totalPages = Math.ceil(filteredQuestions.length / ITEMS_PER_PAGE);
@@ -575,7 +597,7 @@ export function SimuladoQuestionSelector({
   // Resetar página ao mudar filtros
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeDifficulties, activeBancas, activeAnos, activeMacros, activeMicros, activeTemas, activeSubtemas, activeTypes, searchTerm]);
+  }, [activeDifficulties, activeBancas, activeAnos, activeMacros, activeMicros, activeTemas, activeSubtemas, activeTypes, activeGrupos, searchTerm]);
 
   // Handlers
   const toggleFilter = useCallback(<T,>(set: Set<T>, setFn: React.Dispatch<React.SetStateAction<Set<T>>>, value: T) => {
@@ -617,6 +639,7 @@ export function SimuladoQuestionSelector({
     setActiveTemas(new Set());
     setActiveSubtemas(new Set());
     setActiveTypes(new Set());
+    setActiveGrupos(new Set());
   };
   
   // Handler para filtros hierárquicos - limpa níveis inferiores ao mudar
@@ -739,6 +762,28 @@ export function SimuladoQuestionSelector({
 
             {/* Filter chips */}
             <div className="p-3 border-b space-y-2 bg-muted/5">
+              {/* GRUPO filters (SIMULADOS / MODO_TREINO) - PRIMEIRO */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Grupo</span>
+                <div className="flex gap-1 flex-wrap">
+                  {Object.entries(filterData.grupos).filter(([_, count]) => count > 0).map(([key, count]) => (
+                    <FilterChip
+                      key={key}
+                      label={key === 'SIMULADOS' ? 'Simulados' : 'Modo Treino'}
+                      value={key}
+                      count={count}
+                      isActive={activeGrupos.has(key)}
+                      onClick={() => toggleFilter(activeGrupos, setActiveGrupos, key)}
+                      color={cn(
+                        activeGrupos.has(key) ? "" :
+                        key === "SIMULADOS" && "hover:border-red-500/50",
+                        key === "MODO_TREINO" && "hover:border-purple-500/50"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+              
               {/* Difficulty filters */}
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Dificuldade</span>
