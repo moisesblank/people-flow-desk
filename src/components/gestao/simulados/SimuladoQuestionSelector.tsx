@@ -409,72 +409,110 @@ export function SimuladoQuestionSelector({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Extract filter options with counts
+  // CONTADORES DINÂMICOS: Cada filtro mostra contagem baseada nos OUTROS filtros ativos
+  // Isso garante que os números reflitam combinações válidas
   const filterData = useMemo(() => {
     const available = allQuestions.filter(q => !selectedIds.includes(q.id));
     
+    // Helper para aplicar todos os filtros EXCETO um específico
+    const applyFiltersExcept = (questions: Question[], excludeFilter: string) => {
+      let result = questions;
+      
+      if (excludeFilter !== 'difficulty' && activeDifficulties.size > 0) {
+        result = result.filter(q => q.difficulty && activeDifficulties.has(q.difficulty));
+      }
+      if (excludeFilter !== 'macro' && activeMacros.size > 0) {
+        result = result.filter(q => q.macro && activeMacros.has(q.macro));
+      }
+      if (excludeFilter !== 'micro' && activeMicros.size > 0) {
+        result = result.filter(q => q.micro && activeMicros.has(q.micro));
+      }
+      if (excludeFilter !== 'tema' && activeTemas.size > 0) {
+        result = result.filter(q => q.tema && activeTemas.has(q.tema));
+      }
+      if (excludeFilter !== 'subtema' && activeSubtemas.size > 0) {
+        result = result.filter(q => q.subtema && activeSubtemas.has(q.subtema));
+      }
+      if (excludeFilter !== 'banca' && activeBancas.size > 0) {
+        result = result.filter(q => q.banca && activeBancas.has(q.banca));
+      }
+      if (excludeFilter !== 'ano' && activeAnos.size > 0) {
+        result = result.filter(q => q.ano && activeAnos.has(q.ano));
+      }
+      if (excludeFilter !== 'type' && activeTypes.size > 0) {
+        result = result.filter(q => q.question_type && activeTypes.has(q.question_type));
+      }
+      
+      return result;
+    };
+    
+    // Contagem de dificuldades (excluindo o filtro de dificuldade para mostrar todas as opções válidas)
+    const difficultyBase = applyFiltersExcept(available, 'difficulty');
     const difficulties: Record<string, number> = {};
-    const bancas: Record<string, number> = {};
-    const anos: Record<number, number> = {};
-    const macros: Record<string, number> = {};
-    const micros: Record<string, number> = {};
-    const temas: Record<string, number> = {};
-    const subtemas: Record<string, number> = {};
-    const types: Record<string, number> = {};
-
-    available.forEach(q => {
+    difficultyBase.forEach(q => {
       if (q.difficulty) difficulties[q.difficulty] = (difficulties[q.difficulty] || 0) + 1;
-      if (q.banca) bancas[q.banca] = (bancas[q.banca] || 0) + 1;
-      if (q.ano) anos[q.ano] = (anos[q.ano] || 0) + 1;
+    });
+    
+    // Contagem de macros
+    const macroBase = applyFiltersExcept(available, 'macro');
+    const macros: Record<string, number> = {};
+    macroBase.forEach(q => {
       if (q.macro) macros[q.macro] = (macros[q.macro] || 0) + 1;
+    });
+    
+    // Contagem de micros (considera macro se ativo)
+    const microBase = applyFiltersExcept(available, 'micro');
+    const micros: Record<string, number> = {};
+    microBase.forEach(q => {
       if (q.micro) micros[q.micro] = (micros[q.micro] || 0) + 1;
+    });
+    
+    // Contagem de temas (considera macro + micro se ativos)
+    const temaBase = applyFiltersExcept(available, 'tema');
+    const temas: Record<string, number> = {};
+    temaBase.forEach(q => {
       if (q.tema) temas[q.tema] = (temas[q.tema] || 0) + 1;
+    });
+    
+    // Contagem de subtemas (considera macro + micro + tema se ativos)
+    const subtemaBase = applyFiltersExcept(available, 'subtema');
+    const subtemas: Record<string, number> = {};
+    subtemaBase.forEach(q => {
       if (q.subtema) subtemas[q.subtema] = (subtemas[q.subtema] || 0) + 1;
+    });
+    
+    // Contagem de bancas
+    const bancaBase = applyFiltersExcept(available, 'banca');
+    const bancas: Record<string, number> = {};
+    bancaBase.forEach(q => {
+      if (q.banca) bancas[q.banca] = (bancas[q.banca] || 0) + 1;
+    });
+    
+    // Contagem de anos
+    const anoBase = applyFiltersExcept(available, 'ano');
+    const anos: Record<number, number> = {};
+    anoBase.forEach(q => {
+      if (q.ano) anos[q.ano] = (anos[q.ano] || 0) + 1;
+    });
+    
+    // Contagem de tipos
+    const typeBase = applyFiltersExcept(available, 'type');
+    const types: Record<string, number> = {};
+    typeBase.forEach(q => {
       if (q.question_type) types[q.question_type] = (types[q.question_type] || 0) + 1;
     });
 
     return { difficulties, bancas, anos, macros, micros, temas, subtemas, types, total: available.length };
-  }, [allQuestions, selectedIds]);
+  }, [allQuestions, selectedIds, activeDifficulties, activeMacros, activeMicros, activeTemas, activeSubtemas, activeBancas, activeAnos, activeTypes]);
   
-  // Dynamic filter options based on hierarchy (Macro → Micro → Tema → Subtema)
+  // Dynamic filter options - agora usa filterData diretamente pois já é dinâmico
   const dynamicFilterOptions = useMemo(() => {
-    let baseQuestions = allQuestions.filter(q => !selectedIds.includes(q.id));
-    
-    // Filter by macro if active
-    if (activeMacros.size > 0) {
-      baseQuestions = baseQuestions.filter(q => q.macro && activeMacros.has(q.macro));
-    }
-    
-    // Get micros from filtered set
-    const micros: Record<string, number> = {};
-    baseQuestions.forEach(q => {
-      if (q.micro) micros[q.micro] = (micros[q.micro] || 0) + 1;
-    });
-    
-    // Filter by micro for temas
-    let temasBase = baseQuestions;
-    if (activeMicros.size > 0) {
-      temasBase = baseQuestions.filter(q => q.micro && activeMicros.has(q.micro));
-    }
-    
-    const temas: Record<string, number> = {};
-    temasBase.forEach(q => {
-      if (q.tema) temas[q.tema] = (temas[q.tema] || 0) + 1;
-    });
-    
-    // Filter by tema for subtemas
-    let subtemasBase = temasBase;
-    if (activeTemas.size > 0) {
-      subtemasBase = temasBase.filter(q => q.tema && activeTemas.has(q.tema));
-    }
-    
-    const subtemas: Record<string, number> = {};
-    subtemasBase.forEach(q => {
-      if (q.subtema) subtemas[q.subtema] = (subtemas[q.subtema] || 0) + 1;
-    });
-    
-    return { micros, temas, subtemas };
-  }, [allQuestions, selectedIds, activeMacros, activeMicros, activeTemas]);
+    return {
+      micros: filterData.micros,
+      temas: filterData.temas,
+      subtemas: filterData.subtemas
+    };
+  }, [filterData]);
 
   // Filtered questions
   const filteredQuestions = useMemo(() => {
