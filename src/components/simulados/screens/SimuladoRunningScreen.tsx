@@ -236,9 +236,9 @@ export function SimuladoRunningScreen({
         <div className="flex-1 overflow-y-auto">
           <Card className="bg-card border-border h-full">
             <CardContent className="p-6">
-              {/* Pergunta X - Verde */}
-              <p className="text-green-500 font-medium mb-4">
-                Pergunta {currentIndex + 1}
+              {/* QUESTÃO SIMULADO X - Verde */}
+              <p className="text-green-500 font-semibold mb-4 uppercase tracking-wide">
+                QUESTÃO SIMULADO {currentIndex + 1}
               </p>
 
               {/* Título centralizado - Vermelho */}
