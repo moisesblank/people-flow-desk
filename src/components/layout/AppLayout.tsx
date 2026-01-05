@@ -1,5 +1,5 @@
 import { ReactNode, useState, useCallback, useEffect, memo, forwardRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+// OTIMIZAÇÃO: Removido framer-motion (~50KB) - usar CSS puro
 import { Search, Command, Crown, MessageSquare, RefreshCw } from "lucide-react";
 import { AIAssistant, AIAssistantTrigger } from "@/components/ai/AIAssistant";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
@@ -209,20 +209,12 @@ const AppHeader = memo(forwardRef<HTMLElement, AppHeaderProps>(({
 }));
 AppHeader.displayName = 'AppHeader';
 
-// ⚡ Main Content com animação otimizada
+// ⚡ Main Content com animação CSS pura (sem framer-motion)
+// OTIMIZAÇÃO: CSS animations são nativas e não adicionam ao bundle
 const MainContent = memo(({ children }: { children: ReactNode }) => (
-  <AnimatePresence mode="wait">
-    <motion.main
-      key="main-content"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.15 }}
-      className="flex-1"
-    >
-      {children}
-    </motion.main>
-  </AnimatePresence>
+  <main className="flex-1 animate-fade-in">
+    {children}
+  </main>
 ));
 MainContent.displayName = 'MainContent';
 
