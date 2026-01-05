@@ -222,15 +222,44 @@ function useSimuladoQuestions() {
   return useQuery({
     queryKey: ['simulado-questions-available'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('quiz_questions')
-        .select('id, question_text, difficulty, banca, ano, macro, micro, tema, subtema, tags')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(5000);
+      // BATCHING via .range() para escala 45K - Constituição SYNAPSE Ω v10.0
+      const BATCH_SIZE = 1000;
+      let allData: Array<{
+        id: string;
+        question_text: string | null;
+        difficulty: string | null;
+        banca: string | null;
+        ano: number | null;
+        macro: string | null;
+        micro: string | null;
+        tema: string | null;
+        subtema: string | null;
+        tags: string[] | null;
+      }> = [];
+      let from = 0;
+      let hasMore = true;
       
-      if (error) throw error;
-      return data || [];
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('quiz_questions')
+          .select('id, question_text, difficulty, banca, ano, macro, micro, tema, subtema, tags')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .range(from, from + BATCH_SIZE - 1);
+        
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          allData = [...allData, ...data];
+          from += BATCH_SIZE;
+          hasMore = data.length === BATCH_SIZE;
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      console.log(`[SimuladoQuestions] ✅ Carregadas ${allData.length} questões via batching`);
+      return allData;
     },
     staleTime: 60_000,
   });
