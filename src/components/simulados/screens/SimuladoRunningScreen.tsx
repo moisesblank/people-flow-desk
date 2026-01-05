@@ -1,17 +1,16 @@
 /**
- * 🎯 SIMULADOS — Tela RUNNING
+ * 🎯 SIMULADOS — Tela RUNNING (Estilo Print)
  * Constituição SYNAPSE Ω v10.0
  * 
- * Estado: Tentativa em andamento
- * Timer deriva do servidor, respostas persistem em tempo real
+ * Layout: Header + Timer Bar + 2 Colunas (Questão + Navegação)
  */
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { 
-  ChevronLeft, ChevronRight, Flag, AlertTriangle,
-  Save, Check
+  ChevronLeft, ChevronRight, Flag, AlertTriangle, X, ArrowLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -29,12 +28,11 @@ import {
   SimuladoAnswer,
 } from "@/components/simulados/types";
 import { 
-  SimuladoTimer, 
   SimuladoCameraWidget, 
-  SimuladoProgress,
-  SimuladoQuestionNav,
   SimuladoRetakeBadge,
 } from "@/components/simulados/widgets";
+import { SimuladoTimerBar } from "@/components/simulados/widgets/SimuladoTimerBar";
+import { SimuladoQuestionNavGrid } from "@/components/simulados/widgets/SimuladoQuestionNavGrid";
 import { cn } from "@/lib/utils";
 
 interface SimuladoRunningScreenProps {
@@ -59,6 +57,7 @@ interface SimuladoRunningScreenProps {
   onSelectAnswer: (questionId: string, optionKey: string) => Promise<void>;
   onFinish: () => Promise<void>;
   onTimeUp: () => void;
+  onExit?: () => void;
   
   // Estado
   isSaving: boolean;
@@ -81,6 +80,7 @@ export function SimuladoRunningScreen({
   onSelectAnswer,
   onFinish,
   onTimeUp,
+  onExit,
   isSaving,
   isFinishing,
 }: SimuladoRunningScreenProps) {
@@ -140,27 +140,32 @@ export function SimuladoRunningScreen({
     return null;
   }
 
+  // Ordenar opções por chave (A, B, C, D, E)
+  const sortedOptions = Object.entries(currentQuestion.options || {}).sort(([a], [b]) => a.localeCompare(b));
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Header fixo */}
-      <div className="border-b border-border p-4 bg-background/95 backdrop-blur sticky top-0 z-10">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          {/* Info do simulado */}
-          <div className="flex items-center gap-4">
-            <div>
-              <h2 className="font-semibold line-clamp-1">{simulado.title}</h2>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  Questão {currentIndex + 1} de {questions.length}
-                </span>
-                {isRetake && <SimuladoRetakeBadge attemptNumber={attempt.attempt_number} />}
-              </div>
+    <div className="flex flex-col h-full bg-background">
+      {/* Header - Estilo Print */}
+      <div className="border-b border-border px-4 py-3 bg-background">
+        <div className="flex items-center gap-3">
+          {onExit && (
+            <button 
+              onClick={onExit}
+              className="p-1 hover:bg-muted rounded-full transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5 text-muted-foreground" />
+            </button>
+          )}
+          <div>
+            <h1 className="font-semibold text-foreground line-clamp-1">{simulado.title}</h1>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Simulado</span>
+              {isRetake && <SimuladoRetakeBadge attemptNumber={attempt.attempt_number} />}
             </div>
           </div>
-
-          {/* Timer e controles */}
-          <div className="flex items-center gap-4">
-            {/* Hard Mode: Camera */}
+          
+          {/* Hard Mode indicators */}
+          <div className="ml-auto flex items-center gap-3">
             {simulado.is_hard_mode && simulado.requires_camera && (
               <SimuladoCameraWidget
                 isActive={isCameraActive}
@@ -168,169 +173,179 @@ export function SimuladoRunningScreen({
                 onRequestCamera={onRequestCamera}
               />
             )}
-
-            {/* Hard Mode: Tab switches */}
             {simulado.is_hard_mode && (
               <div className={cn(
-                "px-3 py-1 rounded-full text-sm font-medium",
+                "px-3 py-1 rounded-full text-xs font-medium",
                 tabSwitches >= maxTabSwitches - 1 ? "bg-red-500/20 text-red-400" : "bg-muted text-muted-foreground"
               )}>
                 Abas: {tabSwitches}/{maxTabSwitches}
               </div>
             )}
-
-            {/* Timer */}
-            <SimuladoTimer
-              remainingSeconds={remainingSeconds}
-              isWarning={isTimeWarning}
-              isCritical={isTimeCritical}
-              onTimeUp={onTimeUp}
-            />
-
-            {/* Salvo */}
-            {isSaving && (
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <Save className="h-4 w-4 animate-pulse" />
-                Salvando...
-              </div>
-            )}
           </div>
-        </div>
-
-        {/* Progresso */}
-        <div className="mt-4">
-          <SimuladoProgress
-            current={currentIndex}
-            total={questions.length}
-            answered={answeredCount}
-          />
         </div>
       </div>
 
-      {/* Conteúdo principal */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Navegação lateral (desktop) */}
-        <div className="w-auto border-r border-border p-3 hidden lg:block overflow-y-auto">
-          <SimuladoQuestionNav
+      {/* Timer Bar - Estilo Print (vermelho) */}
+      <SimuladoTimerBar
+        remainingSeconds={remainingSeconds}
+        isWarning={isTimeWarning}
+        isCritical={isTimeCritical}
+        onTimeUp={onTimeUp}
+      />
+
+      {/* Conteúdo Principal - 2 Colunas */}
+      <div className="flex-1 flex overflow-hidden p-4 gap-4">
+        {/* Coluna Principal - Card da Questão */}
+        <div className="flex-1 overflow-y-auto">
+          <Card className="bg-card border-border h-full">
+            <CardContent className="p-6">
+              {/* Pergunta X - Verde */}
+              <p className="text-green-500 font-medium mb-4">
+                Pergunta {currentIndex + 1}
+              </p>
+
+              {/* Título centralizado - Vermelho */}
+              {currentQuestion.banca && (
+                <h2 className="text-center text-xl font-bold text-red-500 mb-2">
+                  QUESTÃO {currentQuestion.banca.toUpperCase()} {currentQuestion.ano || ""}
+                </h2>
+              )}
+              
+              {/* Autor/Professor */}
+              <p className="text-center font-bold text-foreground mb-6">
+                PROF.MOISÉS MEDEIROS
+              </p>
+
+              {/* Enunciado */}
+              <div className="prose prose-invert max-w-none mb-6">
+                <p className="text-base leading-relaxed text-foreground/90 whitespace-pre-wrap text-justify">
+                  {currentQuestion.question_text}
+                </p>
+                {currentQuestion.image_url && (
+                  <img
+                    src={currentQuestion.image_url}
+                    alt="Imagem da questão"
+                    className="max-h-[500px] rounded-lg mt-4 mx-auto"
+                  />
+                )}
+              </div>
+
+              {/* Alternativas - Estilo Print */}
+              <div className="space-y-3">
+                {sortedOptions.map(([key, text]) => {
+                  const isSelected = currentAnswer?.selectedOption === key;
+                  const isSelecting = selectingOption === key;
+                  
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => handleSelectOption(key)}
+                      disabled={isSelecting || isFinishing}
+                      className={cn(
+                        "w-full p-4 rounded-lg border text-left transition-all flex items-center justify-between",
+                        "hover:border-primary/50",
+                        isSelected && "border-primary bg-primary/10",
+                        !isSelected && "border-zinc-700 bg-zinc-800/50 hover:bg-zinc-800",
+                        isSelecting && "opacity-50"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Radio indicator */}
+                        <div
+                          className={cn(
+                            "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
+                            isSelected ? "border-primary bg-primary" : "border-zinc-500"
+                          )}
+                        >
+                          {isSelected && <div className="w-2 h-2 rounded-full bg-primary-foreground" />}
+                        </div>
+                        
+                        <span className="font-bold text-foreground">{key})</span>
+                        <span className="text-foreground/90">{text}</span>
+                      </div>
+                      
+                      {/* X button - Estilo Print */}
+                      <div className="shrink-0 ml-2">
+                        <div className="w-8 h-8 rounded-full bg-red-600/80 flex items-center justify-center">
+                          <X className="h-4 w-4 text-white" />
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Footer com navegação */}
+              <div className="flex items-center justify-between mt-8 pt-4 border-t border-border">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    onClick={goToPrev}
+                    disabled={currentIndex === 0}
+                    className="text-muted-foreground"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Anterior
+                  </Button>
+                  
+                  <Button
+                    variant="secondary"
+                    onClick={goToNext}
+                    disabled={currentIndex === questions.length - 1}
+                  >
+                    Próxima
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+
+                <Button
+                  onClick={() => setShowFinishDialog(true)}
+                  disabled={isFinishing}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Flag className="h-4 w-4 mr-2" />
+                  Finalizar Simulado
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Coluna Lateral - Navegação Grid (Desktop) */}
+        <div className="w-64 shrink-0 hidden lg:block">
+          <SimuladoQuestionNavGrid
             total={questions.length}
             current={currentIndex}
             answeredMap={answeredMap}
             onNavigate={goToQuestion}
           />
         </div>
-
-        {/* Questão */}
-        <div className="flex-1 p-6 overflow-y-auto">
-          {/* Badges da questão */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {currentQuestion.difficulty && (
-              <span className={cn(
-                "px-2 py-1 rounded text-xs font-medium",
-                currentQuestion.difficulty === "facil" && "bg-green-500/20 text-green-400",
-                currentQuestion.difficulty === "medio" && "bg-amber-500/20 text-amber-400",
-                currentQuestion.difficulty === "dificil" && "bg-red-500/20 text-red-400"
-              )}>
-                {currentQuestion.difficulty}
-              </span>
-            )}
-            {currentQuestion.banca && (
-              <span className="px-2 py-1 rounded text-xs bg-secondary text-secondary-foreground">
-                {currentQuestion.banca}
-              </span>
-            )}
-            {currentQuestion.ano && (
-              <span className="px-2 py-1 rounded text-xs bg-secondary text-secondary-foreground">
-                {currentQuestion.ano}
-              </span>
-            )}
-          </div>
-
-          {/* Enunciado */}
-          <div className="prose prose-invert max-w-none mb-6">
-            <p className="text-lg whitespace-pre-wrap leading-relaxed">
-              {currentQuestion.question_text}
-            </p>
-            {currentQuestion.image_url && (
-              <img
-                src={currentQuestion.image_url}
-                alt="Imagem da questão"
-                className="max-h-[500px] rounded-lg mt-4"
-              />
-            )}
-          </div>
-
-          {/* Alternativas */}
-          <div className="space-y-3">
-            {Object.entries(currentQuestion.options || {}).map(([key, text]) => {
-              const isSelected = currentAnswer?.selectedOption === key;
-              const isSelecting = selectingOption === key;
-              
-              return (
-                <button
-                  key={key}
-                  onClick={() => handleSelectOption(key)}
-                  disabled={isSelecting || isFinishing}
-                  className={cn(
-                    "w-full p-4 rounded-lg border text-left transition-all",
-                    "hover:border-primary/50 hover:bg-primary/5",
-                    isSelected && "border-primary bg-primary/10",
-                    !isSelected && "border-border bg-card",
-                    isSelecting && "opacity-50"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <div
-                      className={cn(
-                        "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-all",
-                        isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                      )}
-                    >
-                      {isSelected ? <Check className="h-4 w-4" /> : key}
-                    </div>
-                    <p className="flex-1 pt-1">{text}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </div>
 
-      {/* Footer navegação */}
-      <div className="border-t border-border p-4 bg-background/95 backdrop-blur sticky bottom-0">
+      {/* Navegação Mobile */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 border-t border-border p-3 bg-background/95 backdrop-blur">
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
+            size="sm"
             onClick={goToPrev}
             disabled={currentIndex === 0}
           >
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Anterior
+            <ChevronLeft className="h-4 w-4" />
           </Button>
-
-          {/* Navegação mobile */}
-          <div className="flex items-center gap-2 lg:hidden">
-            <span className="text-sm text-muted-foreground">
-              {currentIndex + 1} / {questions.length}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {currentIndex === questions.length - 1 ? (
-              <Button
-                onClick={() => setShowFinishDialog(true)}
-                disabled={isFinishing}
-              >
-                <Flag className="h-4 w-4 mr-2" />
-                Finalizar
-              </Button>
-            ) : (
-              <Button onClick={goToNext}>
-                Próxima
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            )}
-          </div>
+          
+          <span className="text-sm text-muted-foreground">
+            {currentIndex + 1} / {questions.length}
+          </span>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToNext}
+            disabled={currentIndex === questions.length - 1}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
