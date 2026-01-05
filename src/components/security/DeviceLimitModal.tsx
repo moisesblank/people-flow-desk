@@ -1,11 +1,11 @@
 // ============================================
 // 🛡️ DOGMA XI v2.0: Modal de Limite de Dispositivos
 // Estilo inspirado no JusBrasil - Clean e profissional
+// ✅ forwardRef para compatibilidade com Radix UI
 // ============================================
 
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { Monitor, Smartphone, Tablet, AlertTriangle, Loader2, Shield, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
