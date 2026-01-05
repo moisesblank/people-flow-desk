@@ -750,204 +750,215 @@ export function CriarAcessoOficialModal({
               )}
             />
 
-            {/* Role + Expiração lado a lado */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Role */}
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-1">
-                      <UserPlus className="h-4 w-4" />
-                      Tipo de Acesso *
-                    </FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      disabled={isSubmitting}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="border-emerald-500/30">
-                          <SelectValue placeholder="Selecione" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="beta">
-                          {STUDENT_ROLE_LABELS.beta}
-                        </SelectItem>
-                        <SelectItem value="aluno_gratuito">
-                          {STUDENT_ROLE_LABELS.aluno_gratuito}
-                        </SelectItem>
-                        <SelectItem value="aluno_presencial">
-                          {STUDENT_ROLE_LABELS.aluno_presencial}
-                        </SelectItem>
-                        <SelectItem value="beta_expira">
-                          {STUDENT_ROLE_LABELS.beta_expira}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Dias de Expiração (OPCIONAL para todos, OBRIGATÓRIO só para beta_expira) */}
-              <FormField
-                control={form.control}
-                name="expires_days"
-                render={({ field }) => {
-                  const handleSelectChange = (value: string) => {
-                    if (value === 'custom') {
-                      setShowCustomExpires(true);
-                      setCustomExpiresValue('');
-                    } else {
-                      setShowCustomExpires(false);
-                      field.onChange(value === 'permanente' ? undefined : Number(value));
-                    }
-                  };
-                  
-                  const handleCustomDaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                    const value = e.target.value.replace(/\D/g, '');
-                    setCustomExpiresValue(value);
-                    if (value && Number(value) > 0) {
-                      field.onChange(Number(value));
-                    }
-                  };
-                  
-                  const currentValue = showCustomExpires 
-                    ? 'custom' 
-                    : (field.value?.toString() || 'permanente');
-                  
-                  return (
+            {/* ============================================ */}
+            {/* 🔴 ÁREA DESTACADA: TIPO DE ACESSO + PRODUTO */}
+            {/* Fundo vermelho claro para diferenciação visual */}
+            {/* ============================================ */}
+            <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-4 space-y-4">
+              <div className="text-xs font-medium text-red-400 flex items-center gap-1">
+                <UserPlus className="h-3.5 w-3.5" />
+                Configuração de Acesso
+              </div>
+              
+              {/* Role + Expiração lado a lado */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Role */}
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
                     <FormItem>
                       <FormLabel className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        Expiração {selectedRole === 'beta_expira' ? '*' : '(opcional)'}
+                        <UserPlus className="h-4 w-4" />
+                        Tipo de Acesso *
                       </FormLabel>
-                      <div className="space-y-2">
-                        <Select 
-                          onValueChange={handleSelectChange} 
-                          value={currentValue}
-                          disabled={isSubmitting}
-                        >
-                          <FormControl>
-                            <SelectTrigger className={selectedRole === 'beta_expira' ? "border-amber-500/30" : "border-muted-foreground/30"}>
-                              <SelectValue placeholder="Vitalício" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="permanente">♾️ Vitalício</SelectItem>
-                            <SelectItem value="30">30 dias</SelectItem>
-                            <SelectItem value="60">60 dias</SelectItem>
-                            <SelectItem value="90">90 dias</SelectItem>
-                            <SelectItem value="180">180 dias</SelectItem>
-                            <SelectItem value="365">1 ano</SelectItem>
-                            <SelectItem value="custom">✏️ Personalizado...</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        
-                        {/* Campo de dias personalizados */}
-                        {showCustomExpires && (
-                          <div className="flex items-center gap-2">
-                            <Input
-                              type="number"
-                              min={1}
-                              max={3650}
-                              placeholder="Quantidade de dias"
-                              value={customExpiresValue}
-                              onChange={handleCustomDaysChange}
-                              className="border-amber-500/30 focus:border-amber-500"
-                              disabled={isSubmitting}
-                            />
-                            <span className="text-xs text-muted-foreground whitespace-nowrap">dias</span>
-                          </div>
-                        )}
-                      </div>
-                      <FormDescription className="text-[10px]">
-                        Quando expirar, aluno vai para Área Gratuita automaticamente
-                      </FormDescription>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={isSubmitting}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="border-red-500/30">
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="beta">
+                            {STUDENT_ROLE_LABELS.beta}
+                          </SelectItem>
+                          <SelectItem value="aluno_gratuito">
+                            {STUDENT_ROLE_LABELS.aluno_gratuito}
+                          </SelectItem>
+                          <SelectItem value="aluno_presencial">
+                            {STUDENT_ROLE_LABELS.aluno_presencial}
+                          </SelectItem>
+                          <SelectItem value="beta_expira">
+                            {STUDENT_ROLE_LABELS.beta_expira}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
-                  );
-                }}
-              />
-            </div>
+                  )}
+                />
 
-            {/* Tipo de Produto — Aparece APENAS para Beta ou Beta Expira */}
-            {(selectedRole === 'beta' || selectedRole === 'beta_expira') && (
-              <FormField
-                control={form.control}
-                name="tipo_produto"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-1">
-                      <Package className="h-4 w-4 text-purple-400" />
-                      Tipo de Produto *
-                    </FormLabel>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div
-                        onClick={() => !isSubmitting && field.onChange('livroweb')}
-                        className={`
-                          cursor-pointer rounded-lg border-2 p-3 transition-all
-                          ${field.value === 'livroweb' 
-                            ? 'border-violet-500 bg-violet-500/10 shadow-lg shadow-violet-500/20' 
-                            : 'border-muted-foreground/30 hover:border-violet-500/50 hover:bg-violet-500/5'
-                          }
-                          ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}
-                        `}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Globe className={`h-5 w-5 ${field.value === 'livroweb' ? 'text-violet-400' : 'text-muted-foreground'}`} />
-                          <div>
-                            <div className={`font-semibold text-sm ${field.value === 'livroweb' ? 'text-violet-400' : 'text-foreground'}`}>
-                              Livroweb
+                {/* Dias de Expiração (OPCIONAL para todos, OBRIGATÓRIO só para beta_expira) */}
+                <FormField
+                  control={form.control}
+                  name="expires_days"
+                  render={({ field }) => {
+                    const handleSelectChange = (value: string) => {
+                      if (value === 'custom') {
+                        setShowCustomExpires(true);
+                        setCustomExpiresValue('');
+                      } else {
+                        setShowCustomExpires(false);
+                        field.onChange(value === 'permanente' ? undefined : Number(value));
+                      }
+                    };
+                    
+                    const handleCustomDaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      setCustomExpiresValue(value);
+                      if (value && Number(value) > 0) {
+                        field.onChange(Number(value));
+                      }
+                    };
+                    
+                    const currentValue = showCustomExpires 
+                      ? 'custom' 
+                      : (field.value?.toString() || 'permanente');
+                    
+                    return (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          Expiração {selectedRole === 'beta_expira' ? '*' : '(opcional)'}
+                        </FormLabel>
+                        <div className="space-y-2">
+                          <Select 
+                            onValueChange={handleSelectChange} 
+                            value={currentValue}
+                            disabled={isSubmitting}
+                          >
+                            <FormControl>
+                              <SelectTrigger className={selectedRole === 'beta_expira' ? "border-amber-500/30" : "border-red-500/30"}>
+                                <SelectValue placeholder="Vitalício" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="permanente">♾️ Vitalício</SelectItem>
+                              <SelectItem value="30">30 dias</SelectItem>
+                              <SelectItem value="60">60 dias</SelectItem>
+                              <SelectItem value="90">90 dias</SelectItem>
+                              <SelectItem value="180">180 dias</SelectItem>
+                              <SelectItem value="365">1 ano</SelectItem>
+                              <SelectItem value="custom">✏️ Personalizado...</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          
+                          {/* Campo de dias personalizados */}
+                          {showCustomExpires && (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="number"
+                                min={1}
+                                max={3650}
+                                placeholder="Quantidade de dias"
+                                value={customExpiresValue}
+                                onChange={handleCustomDaysChange}
+                                className="border-amber-500/30 focus:border-amber-500"
+                                disabled={isSubmitting}
+                              />
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">dias</span>
                             </div>
-                            <div className="text-[10px] text-muted-foreground">
-                              Material Digital
+                          )}
+                        </div>
+                        <FormDescription className="text-[10px]">
+                          Quando expirar, aluno vai para Área Gratuita automaticamente
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+              </div>
+
+              {/* Tipo de Produto — Aparece APENAS para Beta ou Beta Expira */}
+              {(selectedRole === 'beta' || selectedRole === 'beta_expira') && (
+                <FormField
+                  control={form.control}
+                  name="tipo_produto"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        <Package className="h-4 w-4 text-red-400" />
+                        Tipo de Produto *
+                      </FormLabel>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div
+                          onClick={() => !isSubmitting && field.onChange('livroweb')}
+                          className={`
+                            cursor-pointer rounded-lg border-2 p-3 transition-all
+                            ${field.value === 'livroweb' 
+                              ? 'border-violet-500 bg-violet-500/10 shadow-lg shadow-violet-500/20' 
+                              : 'border-red-500/30 hover:border-violet-500/50 hover:bg-violet-500/5'
+                            }
+                            ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}
+                          `}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Globe className={`h-5 w-5 ${field.value === 'livroweb' ? 'text-violet-400' : 'text-muted-foreground'}`} />
+                            <div>
+                              <div className={`font-semibold text-sm ${field.value === 'livroweb' ? 'text-violet-400' : 'text-foreground'}`}>
+                                Livroweb
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">
+                                Material Digital
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div
+                          onClick={() => !isSubmitting && field.onChange('fisico')}
+                          className={`
+                            cursor-pointer rounded-lg border-2 p-3 transition-all
+                            ${field.value === 'fisico' 
+                              ? 'border-fuchsia-500 bg-fuchsia-500/10 shadow-lg shadow-fuchsia-500/20' 
+                              : 'border-red-500/30 hover:border-fuchsia-500/50 hover:bg-fuchsia-500/5'
+                            }
+                            ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}
+                          `}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Package className={`h-5 w-5 ${field.value === 'fisico' ? 'text-fuchsia-400' : 'text-muted-foreground'}`} />
+                            <div>
+                              <div className={`font-semibold text-sm ${field.value === 'fisico' ? 'text-fuchsia-400' : 'text-foreground'}`}>
+                                Físico
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">
+                                Material Físico
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                      
-                      <div
-                        onClick={() => !isSubmitting && field.onChange('fisico')}
-                        className={`
-                          cursor-pointer rounded-lg border-2 p-3 transition-all
-                          ${field.value === 'fisico' 
-                            ? 'border-fuchsia-500 bg-fuchsia-500/10 shadow-lg shadow-fuchsia-500/20' 
-                            : 'border-muted-foreground/30 hover:border-fuchsia-500/50 hover:bg-fuchsia-500/5'
-                          }
-                          ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}
-                        `}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Package className={`h-5 w-5 ${field.value === 'fisico' ? 'text-fuchsia-400' : 'text-muted-foreground'}`} />
-                          <div>
-                            <div className={`font-semibold text-sm ${field.value === 'fisico' ? 'text-fuchsia-400' : 'text-foreground'}`}>
-                              Físico
-                            </div>
-                            <div className="text-[10px] text-muted-foreground">
-                              Material Físico
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            
-            {/* Descrição do tipo de acesso */}
-            <p className="text-xs text-muted-foreground -mt-2">
-              {selectedRole === 'beta' && "Beta = acesso completo permanente"}
-              {selectedRole === 'aluno_gratuito' && "Gratuito = acesso limitado"}
-              {selectedRole === 'aluno_presencial' && "Presencial = aulas presenciais"}
-              {selectedRole === 'beta_expira' && "Beta Expira = acesso completo com prazo definido"}
-              {!selectedRole && "Selecione o tipo de acesso"}
-            </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+              
+              {/* Descrição do tipo de acesso */}
+              <p className="text-xs text-muted-foreground">
+                {selectedRole === 'beta' && "Beta = acesso completo permanente"}
+                {selectedRole === 'aluno_gratuito' && "Gratuito = acesso limitado"}
+                {selectedRole === 'aluno_presencial' && "Presencial = aulas presenciais"}
+                {selectedRole === 'beta_expira' && "Beta Expira = acesso completo com prazo definido"}
+                {!selectedRole && "Selecione o tipo de acesso"}
+              </p>
+            </div>
 
             {/* ============================================ */}
             {/* TELEFONE — OBRIGATÓRIO */}
