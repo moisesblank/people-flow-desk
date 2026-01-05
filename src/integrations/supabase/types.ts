@@ -794,6 +794,42 @@ export type Database = {
           },
         ]
       }
+      assuntos: {
+        Row: {
+          ativo: boolean | null
+          cor: string | null
+          created_at: string | null
+          descricao: string | null
+          icone: string | null
+          id: string
+          nome: string
+          posicao: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cor?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome: string
+          posicao?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cor?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nome?: string
+          posicao?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -9056,6 +9092,113 @@ export type Database = {
             columns: ["quiz_id"]
             isOneToOne: false
             referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questoes: {
+        Row: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_d: string
+          alternativa_e: string
+          ano: number | null
+          assunto_id: string | null
+          banca: string | null
+          competencia_enem: number | null
+          competencia_enem_descricao: string | null
+          created_at: string | null
+          dificuldade: string
+          direcionamento: string | null
+          enunciado: string
+          gabarito: string
+          habilidade_enem: number | null
+          habilidade_enem_descricao: string | null
+          id: string
+          imagem_a: string | null
+          imagem_b: string | null
+          imagem_c: string | null
+          imagem_d: string | null
+          imagem_e: string | null
+          imagem_enunciado: string | null
+          resolucao: string | null
+          taxa_erro: number | null
+          total_acertos: number | null
+          total_respostas: number | null
+          updated_at: string | null
+          video_resolucao_id: string | null
+        }
+        Insert: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_d: string
+          alternativa_e: string
+          ano?: number | null
+          assunto_id?: string | null
+          banca?: string | null
+          competencia_enem?: number | null
+          competencia_enem_descricao?: string | null
+          created_at?: string | null
+          dificuldade?: string
+          direcionamento?: string | null
+          enunciado: string
+          gabarito: string
+          habilidade_enem?: number | null
+          habilidade_enem_descricao?: string | null
+          id?: string
+          imagem_a?: string | null
+          imagem_b?: string | null
+          imagem_c?: string | null
+          imagem_d?: string | null
+          imagem_e?: string | null
+          imagem_enunciado?: string | null
+          resolucao?: string | null
+          taxa_erro?: number | null
+          total_acertos?: number | null
+          total_respostas?: number | null
+          updated_at?: string | null
+          video_resolucao_id?: string | null
+        }
+        Update: {
+          alternativa_a?: string
+          alternativa_b?: string
+          alternativa_c?: string
+          alternativa_d?: string
+          alternativa_e?: string
+          ano?: number | null
+          assunto_id?: string | null
+          banca?: string | null
+          competencia_enem?: number | null
+          competencia_enem_descricao?: string | null
+          created_at?: string | null
+          dificuldade?: string
+          direcionamento?: string | null
+          enunciado?: string
+          gabarito?: string
+          habilidade_enem?: number | null
+          habilidade_enem_descricao?: string | null
+          id?: string
+          imagem_a?: string | null
+          imagem_b?: string | null
+          imagem_c?: string | null
+          imagem_d?: string | null
+          imagem_e?: string | null
+          imagem_enunciado?: string | null
+          resolucao?: string | null
+          taxa_erro?: number | null
+          total_acertos?: number | null
+          total_respostas?: number | null
+          updated_at?: string | null
+          video_resolucao_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questoes_assunto_id_fkey"
+            columns: ["assunto_id"]
+            isOneToOne: false
+            referencedRelation: "assuntos"
             referencedColumns: ["id"]
           },
         ]
