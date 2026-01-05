@@ -10917,6 +10917,7 @@ export type Database = {
           slug: string | null
           starts_at: string | null
           title: string
+          tolerance_minutes: number
           total_questions: number | null
           updated_at: string
         }
@@ -10945,6 +10946,7 @@ export type Database = {
           slug?: string | null
           starts_at?: string | null
           title: string
+          tolerance_minutes?: number
           total_questions?: number | null
           updated_at?: string
         }
@@ -10973,6 +10975,7 @@ export type Database = {
           slug?: string | null
           starts_at?: string | null
           title?: string
+          tolerance_minutes?: number
           total_questions?: number | null
           updated_at?: string
         }
