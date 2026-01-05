@@ -1,12 +1,11 @@
 /**
- * 🎯 SIMULADOS — Seletor de Questões com Drag-and-Drop
+ * 🎯 SIMULADOS — Seletor de Questões AVANÇADO
  * Constituição SYNAPSE Ω v10.0
  * 
- * Permite selecionar e ORDENAR questões do simulado
- * UI expandida para melhor visualização
+ * Interface imersiva com filtros, grid compacto e seleção em massa
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   DndContext,
   closestCenter,
@@ -29,6 +28,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { 
   GripVertical, 
@@ -39,7 +40,14 @@ import {
   Plus,
   Minus,
   ArrowUpDown,
-  Eye
+  Filter,
+  Grid3X3,
+  List,
+  CheckSquare,
+  Square,
+  X,
+  Sparkles,
+  Layers
 } from "lucide-react";
 
 interface Question {
@@ -51,6 +59,10 @@ interface Question {
   macro?: string | null;
   micro?: string | null;
 }
+
+// ═══════════════════════════════════════════════════════════════
+// SORTABLE ITEM (para a aba de selecionadas)
+// ═══════════════════════════════════════════════════════════════
 
 interface SortableQuestionProps {
   question: Question;
@@ -73,7 +85,6 @@ function SortableQuestion({ question, index, onRemove }: SortableQuestionProps) 
     transition,
   };
 
-  // Limpa o texto de HTML e mostra mais caracteres
   const cleanText = question.question_text
     ?.replace(/<[^>]*>/g, '')
     .replace(/&nbsp;/g, ' ')
@@ -85,78 +96,56 @@ function SortableQuestion({ question, index, onRemove }: SortableQuestionProps) 
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-start gap-3 p-4 rounded-lg border bg-card/80 backdrop-blur transition-all",
+        "flex items-center gap-2 p-2 rounded-lg border bg-card/80 transition-all",
         isDragging && "opacity-50 shadow-lg ring-2 ring-primary"
       )}
     >
       <button
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing p-2 hover:bg-muted rounded mt-1 shrink-0"
+        className="cursor-grab active:cursor-grabbing p-1 hover:bg-muted rounded shrink-0"
       >
-        <GripVertical className="h-5 w-5 text-muted-foreground" />
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
       </button>
       
-      <Badge 
-        variant="default" 
-        className="shrink-0 w-10 h-10 justify-center text-lg font-bold rounded-lg"
-      >
+      <Badge variant="default" className="shrink-0 w-7 h-7 justify-center text-sm font-bold rounded">
         {index + 1}
       </Badge>
       
-      <div className="flex-1 min-w-0 space-y-2">
-        <p className="text-sm leading-relaxed line-clamp-3">
-          {cleanText.substring(0, 200)}{cleanText.length > 200 ? "..." : ""}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Badge 
-            variant="secondary" 
-            className={cn(
-              "text-xs px-2 py-1",
-              question.difficulty === "facil" && "bg-green-500/20 text-green-400",
-              question.difficulty === "medio" && "bg-yellow-500/20 text-yellow-400",
-              question.difficulty === "dificil" && "bg-red-500/20 text-red-400"
-            )}
-          >
+      <div className="flex-1 min-w-0">
+        <p className="text-xs line-clamp-1">{cleanText.substring(0, 80)}...</p>
+        <div className="flex gap-1 mt-0.5">
+          <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
             {question.difficulty || "?"}
           </Badge>
-          {question.banca && (
-            <Badge variant="outline" className="text-xs px-2 py-1">
-              {question.banca}
-            </Badge>
-          )}
-          {question.ano && (
-            <Badge variant="outline" className="text-xs px-2 py-1">
-              {question.ano}
-            </Badge>
-          )}
-          {question.macro && (
-            <Badge variant="outline" className="text-xs px-2 py-1 bg-primary/10 text-primary">
-              {question.macro}
-            </Badge>
-          )}
+          {question.banca && <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">{question.banca}</Badge>}
+          {question.ano && <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">{question.ano}</Badge>}
         </div>
       </div>
       
       <Button
         variant="ghost"
         size="icon"
-        className="h-9 w-9 text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+        className="h-6 w-6 text-destructive hover:bg-destructive/10 shrink-0"
         onClick={() => onRemove(question.id)}
       >
-        <Minus className="h-5 w-5" />
+        <X className="h-3 w-3" />
       </Button>
     </div>
   );
 }
 
-interface QuestionCardProps {
+// ═══════════════════════════════════════════════════════════════
+// COMPACT QUESTION CARD
+// ═══════════════════════════════════════════════════════════════
+
+interface CompactCardProps {
   question: Question;
-  onAdd: (id: string) => void;
+  isSelected: boolean;
+  onToggle: (id: string) => void;
 }
 
-function QuestionCard({ question, onAdd }: QuestionCardProps) {
-  // Limpa o texto de HTML e mostra mais caracteres
+function CompactCard({ question, isSelected, onToggle }: CompactCardProps) {
   const cleanText = question.question_text
     ?.replace(/<[^>]*>/g, '')
     .replace(/&nbsp;/g, ' ')
@@ -164,57 +153,64 @@ function QuestionCard({ question, onAdd }: QuestionCardProps) {
     .trim() || "Sem texto";
 
   return (
-    <div className="flex items-start gap-3 p-4 rounded-lg border bg-card/60 hover:bg-card/90 transition-all hover:border-primary/50">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-10 w-10 text-primary hover:text-primary-foreground hover:bg-primary shrink-0 mt-1"
-        onClick={() => onAdd(question.id)}
-      >
-        <Plus className="h-5 w-5" />
-      </Button>
-      
-      <div className="flex-1 min-w-0 space-y-2">
-        <p className="text-sm leading-relaxed line-clamp-3">
-          {cleanText.substring(0, 200)}{cleanText.length > 200 ? "..." : ""}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <Badge 
-            variant="secondary" 
-            className={cn(
-              "text-xs px-2 py-1",
-              question.difficulty === "facil" && "bg-green-500/20 text-green-400",
-              question.difficulty === "medio" && "bg-yellow-500/20 text-yellow-400",
-              question.difficulty === "dificil" && "bg-red-500/20 text-red-400"
-            )}
-          >
-            {question.difficulty || "?"}
+    <div
+      onClick={() => onToggle(question.id)}
+      className={cn(
+        "relative p-3 rounded-lg border cursor-pointer transition-all hover:scale-[1.02]",
+        isSelected 
+          ? "bg-primary/20 border-primary ring-1 ring-primary" 
+          : "bg-card/60 border-border/50 hover:border-primary/50 hover:bg-card/90"
+      )}
+    >
+      {/* Selection indicator */}
+      <div className={cn(
+        "absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center transition-all",
+        isSelected ? "bg-primary text-primary-foreground" : "bg-muted"
+      )}>
+        {isSelected ? <CheckCircle2 className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+      </div>
+
+      {/* Question text */}
+      <p className="text-xs leading-relaxed line-clamp-2 pr-6 mb-2">
+        {cleanText.substring(0, 120)}...
+      </p>
+
+      {/* Badges row */}
+      <div className="flex flex-wrap gap-1">
+        <Badge 
+          variant="secondary" 
+          className={cn(
+            "text-[10px] px-1.5 py-0 h-4",
+            question.difficulty === "facil" && "bg-green-500/20 text-green-400 border-green-500/30",
+            question.difficulty === "medio" && "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+            question.difficulty === "dificil" && "bg-red-500/20 text-red-400 border-red-500/30"
+          )}
+        >
+          {question.difficulty || "?"}
+        </Badge>
+        {question.banca && (
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+            {question.banca}
           </Badge>
-          {question.banca && (
-            <Badge variant="outline" className="text-xs px-2 py-1">
-              {question.banca}
-            </Badge>
-          )}
-          {question.ano && (
-            <Badge variant="outline" className="text-xs px-2 py-1">
-              {question.ano}
-            </Badge>
-          )}
-          {question.macro && (
-            <Badge variant="outline" className="text-xs px-2 py-1 bg-primary/10 text-primary">
-              {question.macro}
-            </Badge>
-          )}
-          {question.micro && (
-            <Badge variant="outline" className="text-xs px-2 py-1">
-              {question.micro}
-            </Badge>
-          )}
-        </div>
+        )}
+        {question.ano && (
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+            {question.ano}
+          </Badge>
+        )}
+        {question.macro && (
+          <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-primary/10 text-primary border-primary/30">
+            {question.macro}
+          </Badge>
+        )}
       </div>
     </div>
   );
 }
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════════
 
 interface SimuladoQuestionSelectorProps {
   allQuestions: Question[];
@@ -231,37 +227,79 @@ export function SimuladoQuestionSelector({
 }: SimuladoQuestionSelectorProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState<"available" | "selected">("available");
+  const [showFilters, setShowFilters] = useState(true);
+  
+  // Filters
+  const [filterDifficulty, setFilterDifficulty] = useState<string>("all");
+  const [filterBanca, setFilterBanca] = useState<string>("all");
+  const [filterAno, setFilterAno] = useState<string>("all");
+  const [filterMacro, setFilterMacro] = useState<string>("all");
   
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Questões selecionadas na ordem correta
+  // Extract unique values for filters
+  const filterOptions = useMemo(() => {
+    const difficulties = new Set<string>();
+    const bancas = new Set<string>();
+    const anos = new Set<number>();
+    const macros = new Set<string>();
+
+    allQuestions.forEach(q => {
+      if (q.difficulty) difficulties.add(q.difficulty);
+      if (q.banca) bancas.add(q.banca);
+      if (q.ano) anos.add(q.ano);
+      if (q.macro) macros.add(q.macro);
+    });
+
+    return {
+      difficulties: Array.from(difficulties).sort(),
+      bancas: Array.from(bancas).sort(),
+      anos: Array.from(anos).sort((a, b) => b - a),
+      macros: Array.from(macros).sort(),
+    };
+  }, [allQuestions]);
+
+  // Selected questions in correct order
   const selectedQuestions = useMemo(() => {
     return selectedIds
       .map(id => allQuestions.find(q => q.id === id))
       .filter((q): q is Question => q !== undefined);
   }, [selectedIds, allQuestions]);
 
-  // Questões disponíveis (não selecionadas)
-  const availableQuestions = useMemo(() => {
-    return allQuestions.filter(q => !selectedIds.includes(q.id));
-  }, [allQuestions, selectedIds]);
+  // Available questions (not selected) with filters
+  const filteredQuestions = useMemo(() => {
+    let result = allQuestions.filter(q => !selectedIds.includes(q.id));
 
-  // Filtradas por busca
-  const filteredAvailable = useMemo(() => {
-    if (!searchTerm) return availableQuestions;
-    const term = searchTerm.toLowerCase();
-    return availableQuestions.filter(q =>
-      q.question_text?.toLowerCase().includes(term) ||
-      q.banca?.toLowerCase().includes(term) ||
-      q.difficulty?.toLowerCase().includes(term) ||
-      q.ano?.toString().includes(term) ||
-      q.macro?.toLowerCase().includes(term) ||
-      q.micro?.toLowerCase().includes(term)
-    );
-  }, [availableQuestions, searchTerm]);
+    // Apply search
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(q =>
+        q.question_text?.toLowerCase().includes(term) ||
+        q.banca?.toLowerCase().includes(term) ||
+        q.macro?.toLowerCase().includes(term) ||
+        q.micro?.toLowerCase().includes(term)
+      );
+    }
+
+    // Apply filters
+    if (filterDifficulty !== "all") {
+      result = result.filter(q => q.difficulty === filterDifficulty);
+    }
+    if (filterBanca !== "all") {
+      result = result.filter(q => q.banca === filterBanca);
+    }
+    if (filterAno !== "all") {
+      result = result.filter(q => q.ano?.toString() === filterAno);
+    }
+    if (filterMacro !== "all") {
+      result = result.filter(q => q.macro === filterMacro);
+    }
+
+    return result;
+  }, [allQuestions, selectedIds, searchTerm, filterDifficulty, filterBanca, filterAno, filterMacro]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -272,13 +310,32 @@ export function SimuladoQuestionSelector({
     }
   };
 
-  const handleAdd = (id: string) => {
-    onChange([...selectedIds, id]);
-  };
+  const handleToggle = useCallback((id: string) => {
+    if (selectedIds.includes(id)) {
+      onChange(selectedIds.filter(i => i !== id));
+    } else {
+      onChange([...selectedIds, id]);
+    }
+  }, [selectedIds, onChange]);
 
   const handleRemove = (id: string) => {
     onChange(selectedIds.filter(i => i !== id));
   };
+
+  const handleSelectAll = () => {
+    const newIds = [...selectedIds, ...filteredQuestions.map(q => q.id)];
+    onChange(newIds);
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setFilterDifficulty("all");
+    setFilterBanca("all");
+    setFilterAno("all");
+    setFilterMacro("all");
+  };
+
+  const hasActiveFilters = filterDifficulty !== "all" || filterBanca !== "all" || filterAno !== "all" || filterMacro !== "all" || searchTerm;
 
   if (isLoading) {
     return (
@@ -292,84 +349,188 @@ export function SimuladoQuestionSelector({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-lg flex items-center gap-2">
-          <FileQuestion className="h-5 w-5 text-primary" />
+          <Layers className="h-5 w-5 text-primary" />
           Questões do Simulado
         </h3>
-        <Badge 
-          variant={selectedIds.length > 0 ? "default" : "destructive"} 
-          className="gap-2 px-3 py-1.5 text-sm"
-        >
-          {selectedIds.length > 0 ? (
-            <>
-              <CheckCircle2 className="h-4 w-4" />
-              {selectedIds.length} selecionadas
-            </>
-          ) : (
-            <>
-              <AlertCircle className="h-4 w-4" />
-              Nenhuma questão
-            </>
-          )}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(showFilters && "bg-primary/10 border-primary")}
+          >
+            <Filter className="h-4 w-4 mr-1" />
+            Filtros
+          </Button>
+          <Badge 
+            variant={selectedIds.length > 0 ? "default" : "destructive"} 
+            className="gap-1 px-3 py-1.5"
+          >
+            {selectedIds.length > 0 ? (
+              <><CheckCircle2 className="h-3 w-3" />{selectedIds.length}</>
+            ) : (
+              <><AlertCircle className="h-3 w-3" />0</>
+            )}
+          </Badge>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-        <TabsList className="grid w-full grid-cols-2 h-12">
-          <TabsTrigger value="available" className="gap-2 text-base">
-            <Plus className="h-4 w-4" />
-            Disponíveis ({availableQuestions.length})
+        <TabsList className="grid w-full grid-cols-2 h-10">
+          <TabsTrigger value="available" className="gap-2">
+            <Grid3X3 className="h-4 w-4" />
+            Disponíveis ({allQuestions.length - selectedIds.length})
           </TabsTrigger>
-          <TabsTrigger value="selected" className="gap-2 text-base">
+          <TabsTrigger value="selected" className="gap-2">
             <ArrowUpDown className="h-4 w-4" />
             Selecionadas ({selectedIds.length})
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="available" className="mt-4 space-y-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por texto, banca, ano, macro, micro..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 h-11 text-base"
-            />
-          </div>
-          
-          <ScrollArea className="h-[400px] border rounded-xl p-3 bg-muted/20">
-            {filteredAvailable.length > 0 ? (
-              <div className="space-y-2">
-                {filteredAvailable.map((q) => (
-                  <QuestionCard key={q.id} question={q} onAdd={handleAdd} />
+        <TabsContent value="available" className="mt-3 space-y-3">
+          {/* Filters Bar */}
+          {showFilters && (
+            <div className="p-3 rounded-lg bg-muted/30 border space-y-3">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar no enunciado..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 h-9 bg-background"
+                />
+              </div>
+
+              {/* Filter dropdowns */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Select value={filterDifficulty} onValueChange={setFilterDifficulty}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Dificuldade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas dificuldades</SelectItem>
+                    {filterOptions.difficulties.map(d => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterBanca} onValueChange={setFilterBanca}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Banca" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todas bancas</SelectItem>
+                    {filterOptions.bancas.map(b => (
+                      <SelectItem key={b} value={b}>{b}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterAno} onValueChange={setFilterAno}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Ano" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos anos</SelectItem>
+                    {filterOptions.anos.map(a => (
+                      <SelectItem key={a} value={a.toString()}>{a}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterMacro} onValueChange={setFilterMacro}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Macro" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos macros</SelectItem>
+                    {filterOptions.macros.map(m => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Actions row */}
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-xs text-muted-foreground">
+                  {filteredQuestions.length} questões encontradas
+                </span>
+                <div className="flex gap-2">
+                  {hasActiveFilters && (
+                    <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-7 text-xs">
+                      <X className="h-3 w-3 mr-1" />
+                      Limpar
+                    </Button>
+                  )}
+                  <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    onClick={handleSelectAll}
+                    disabled={filteredQuestions.length === 0}
+                    className="h-7 text-xs"
+                  >
+                    <CheckSquare className="h-3 w-3 mr-1" />
+                    Selecionar todos ({filteredQuestions.length})
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Questions Grid */}
+          <ScrollArea className="h-[500px] border rounded-xl p-3 bg-gradient-to-b from-muted/10 to-muted/30">
+            {filteredQuestions.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                {filteredQuestions.map((q) => (
+                  <CompactCard 
+                    key={q.id} 
+                    question={q} 
+                    isSelected={selectedIds.includes(q.id)}
+                    onToggle={handleToggle} 
+                  />
                 ))}
               </div>
             ) : (
               <div className="py-16 text-center text-muted-foreground">
                 <FileQuestion className="h-12 w-12 mx-auto mb-3 opacity-50" />
                 <p className="text-base font-medium">
-                  {searchTerm ? "Nenhuma questão encontrada" : "Todas as questões já foram selecionadas"}
+                  {hasActiveFilters ? "Nenhuma questão com esses filtros" : "Todas selecionadas!"}
                 </p>
-                <p className="text-sm mt-1 opacity-70">
-                  {searchTerm && "Tente termos diferentes"}
-                </p>
+                {hasActiveFilters && (
+                  <Button variant="link" onClick={handleClearFilters} className="mt-2">
+                    Limpar filtros
+                  </Button>
+                )}
               </div>
             )}
           </ScrollArea>
         </TabsContent>
 
-        <TabsContent value="selected" className="mt-4">
+        <TabsContent value="selected" className="mt-3">
           {selectedIds.length > 0 ? (
             <>
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 mb-3">
-                <GripVertical className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  Arraste para reordenar as questões do simulado
+              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30 mb-2">
+                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <GripVertical className="h-3 w-3" />
+                  Arraste para reordenar
                 </span>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => onChange([])}
+                  className="h-6 text-xs text-destructive hover:text-destructive"
+                >
+                  Remover todas
+                </Button>
               </div>
-              <ScrollArea className="h-[400px] border rounded-xl p-3 bg-muted/20">
+              <ScrollArea className="h-[500px] border rounded-xl p-2 bg-gradient-to-b from-muted/10 to-muted/30">
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -379,7 +540,7 @@ export function SimuladoQuestionSelector({
                     items={selectedIds}
                     strategy={verticalListSortingStrategy}
                   >
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {selectedQuestions.map((q, index) => (
                         <SortableQuestion
                           key={q.id}
@@ -395,10 +556,10 @@ export function SimuladoQuestionSelector({
             </>
           ) : (
             <div className="py-16 text-center text-muted-foreground border rounded-xl bg-muted/20">
-              <FileQuestion className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <Sparkles className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p className="text-base font-medium">Nenhuma questão selecionada</p>
               <p className="text-sm mt-1 opacity-70">
-                Adicione questões na aba "Disponíveis"
+                Clique nas questões na aba "Disponíveis"
               </p>
             </div>
           )}
