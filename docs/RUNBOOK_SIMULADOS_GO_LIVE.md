@@ -1,7 +1,162 @@
 # 📋 RUNBOOK — SIMULADOS GO-LIVE
 
 **Documento Operacional para Lançamento de Simulados com Modo Hard**
-**Versão:** 1.0.0 | **Data:** 2026-01-04
+**Versão:** 1.1.0 | **Data:** 2026-01-05
+
+> ⚠️ **ESTE RUNBOOK É EXECUTÁVEL POR TERCEIROS** — não depende do desenvolvedor.
+
+---
+
+## 📅 PROCEDIMENTO DIA DE PROVA
+
+### T-24h (Um dia antes)
+1. **Verificar simulado configurado**
+   ```sql
+   SELECT id, title, starts_at, ends_at, duration_minutes, is_hard_mode, is_active 
+   FROM simulados WHERE id = 'SIMULADO_ID';
+   ```
+
+2. **Verificar flags globais**
+   ```sql
+   SELECT flag_key, flag_value FROM simulado_feature_flags;
+   ```
+   - `simulados_enabled` deve ser `true`
+   - `new_attempts_blocked` deve ser `false`
+   - `hard_mode_enabled` deve ser `true` (se for Hard Mode)
+
+3. **Criar snapshot de baseline** (opcional)
+   ```sql
+   SELECT create_ranking_snapshot('SIMULADO_ID'::uuid, 'manual', 'Baseline T-24h');
+   ```
+
+### T-1h (Uma hora antes)
+1. **Healthcheck completo**
+   ```sql
+   -- Sistema ativo?
+   SELECT * FROM simulado_feature_flags WHERE flag_key = 'simulados_enabled';
+   
+   -- RPC funcionando?
+   SELECT get_simulado_feature_flag('simulados_enabled');
+   ```
+
+2. **Monitorar logs recentes**
+   ```sql
+   SELECT * FROM simulado_audit_logs 
+   WHERE created_at > now() - interval '1 hour' 
+   ORDER BY created_at DESC LIMIT 20;
+   ```
+
+### Durante a Prova
+1. **Monitorar tentativas**
+   ```sql
+   SELECT status, COUNT(*) 
+   FROM simulado_attempts 
+   WHERE simulado_id = 'SIMULADO_ID' 
+   GROUP BY status;
+   ```
+
+2. **Monitorar invalidações**
+   ```sql
+   SELECT invalidation_reason, COUNT(*) 
+   FROM simulado_attempts 
+   WHERE simulado_id = 'SIMULADO_ID' AND status = 'INVALIDATED' 
+   GROUP BY invalidation_reason;
+   ```
+
+3. **Se taxa de invalidação > 30%**: Avaliar desativar Hard Mode
+   ```sql
+   UPDATE simulados SET hard_mode_override = 'force_off' WHERE id = 'SIMULADO_ID';
+   ```
+
+### T+1h (Uma hora após término)
+1. **Congelar ranking**
+   ```sql
+   UPDATE simulados SET is_ranking_frozen = true WHERE id = 'SIMULADO_ID';
+   ```
+
+2. **Criar snapshot final**
+   ```sql
+   SELECT create_ranking_snapshot('SIMULADO_ID'::uuid, 'freeze', 'Resultado final');
+   ```
+
+3. **Exportar ranking**
+   ```sql
+   SELECT ranking_data FROM simulado_ranking_snapshots 
+   WHERE simulado_id = 'SIMULADO_ID' 
+   ORDER BY created_at DESC LIMIT 1;
+   ```
+
+---
+
+## 🚨 PROCEDIMENTO DE INCIDENTE
+
+### Severidade P0 (Sistema Indisponível)
+1. **Desativar sistema imediatamente**
+   ```sql
+   UPDATE simulado_feature_flags SET flag_value = false WHERE flag_key = 'simulados_enabled';
+   ```
+2. **Comunicar** via banner/email
+3. **Diagnosticar** via logs
+4. **Corrigir** e testar
+5. **Reativar**
+   ```sql
+   UPDATE simulado_feature_flags SET flag_value = true WHERE flag_key = 'simulados_enabled';
+   ```
+
+### Severidade P1 (Hard Mode com Falhas)
+1. **Desativar Hard Mode**
+   ```sql
+   UPDATE simulado_feature_flags SET flag_value = false WHERE flag_key = 'hard_mode_enabled';
+   ```
+2. **Tentativas em andamento continuam** sem monitoramento
+3. **Diagnosticar** problema específico
+4. **Reativar** quando resolvido
+
+### Severidade P2 (Simulado Específico com Problema)
+1. **Colocar em manutenção**
+   ```sql
+   UPDATE simulados SET maintenance_message = 'Este simulado está em manutenção.' WHERE id = 'SIMULADO_ID';
+   ```
+2. **Tentativas RUNNING podem ser finalizadas** mas novas são bloqueadas
+3. **Remover manutenção**
+   ```sql
+   UPDATE simulados SET maintenance_message = NULL WHERE id = 'SIMULADO_ID';
+   ```
+
+---
+
+## 📝 PROCEDIMENTO DE CONTESTAÇÃO
+
+### Fluxo Completo
+1. **Aluno abre contestação** via `SimuladoDisputeModal`
+2. **Sistema registra** em `simulado_ranking_disputes`
+3. **Admin visualiza pendentes**
+   ```sql
+   SELECT d.*, p.full_name, p.email 
+   FROM simulado_ranking_disputes d
+   JOIN profiles p ON d.user_id = p.id
+   WHERE d.status = 'pending' 
+   ORDER BY d.created_at;
+   ```
+
+4. **Admin analisa evidências**
+   - Ver tentativa: `SELECT * FROM simulado_attempts WHERE id = 'ATTEMPT_ID'`
+   - Ver logs: `SELECT * FROM simulado_audit_logs WHERE attempt_id = 'ATTEMPT_ID'`
+
+5. **Admin resolve**
+   ```sql
+   UPDATE simulado_ranking_disputes 
+   SET status = 'resolved', 
+       resolution = 'Explicação da decisão aqui.',
+       resolved_at = now(),
+       resolved_by = 'ADMIN_USER_ID'
+   WHERE id = 'DISPUTE_ID';
+   ```
+
+6. **Se decisão favorável ao aluno** (raro, requer evidência clara):
+   - Entrar em contato manual
+   - Não há alteração automática de score
+   - Documentar decisão no campo `resolution`
 
 ---
 
