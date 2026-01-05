@@ -705,8 +705,8 @@ export function SimuladoQuestionSelector({
           </div>
         </div>
 
-        {/* Split panel layout - FULL PAGE HEIGHT para máximo espaço */}
-        <div className="flex h-[calc(100vh-280px)] min-h-[700px]">
+        {/* Split panel layout - MAXIMUM VIEWPORT HEIGHT */}
+        <div className="flex h-[calc(100vh-180px)] min-h-[800px]">
           {/* LEFT: Available questions */}
           <div className="flex-1 flex flex-col border-r">
             {/* Search */}
