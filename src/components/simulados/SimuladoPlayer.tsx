@@ -92,7 +92,24 @@ export function SimuladoPlayer({
     isRunning: isAttemptRunning,
   } = useSimuladoAttempt();
 
-  // Timer derivado do servidor
+  // Timer derivado do servidor - SEMPRE usar dados do banco (attempt/simulado)
+  // NÃO depender de attemptConfig que só existe após startAttempt() nesta sessão
+  const timerStartedAt = React.useMemo(() => {
+    // Prioridade: attempt do banco > attemptState local
+    if (attempt?.started_at) {
+      return new Date(attempt.started_at);
+    }
+    if (attemptState.startedAt) {
+      return attemptState.startedAt;
+    }
+    return null;
+  }, [attempt?.started_at, attemptState.startedAt]);
+
+  const timerDurationMinutes = React.useMemo(() => {
+    // Prioridade: simulado do banco > config local > fallback
+    return simulado?.duration_minutes || attemptConfig?.durationMinutes || 60;
+  }, [simulado?.duration_minutes, attemptConfig?.durationMinutes]);
+
   const {
     timeRemaining: remainingSeconds,
     timeElapsed: elapsedSeconds,
@@ -100,9 +117,9 @@ export function SimuladoPlayer({
     isCritical,
     isExpired,
   } = useSimuladoTimer({
-    startedAt: attemptState.startedAt,
-    durationMinutes: attemptConfig?.durationMinutes || simulado?.duration_minutes || 180,
-    enabled: currentState === SimuladoState.RUNNING,
+    startedAt: timerStartedAt,
+    durationMinutes: timerDurationMinutes,
+    enabled: currentState === SimuladoState.RUNNING && timerStartedAt !== null,
   });
 
   // Respostas
