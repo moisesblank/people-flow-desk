@@ -24,6 +24,7 @@ import { ManualRefreshButton } from "@/components/admin/ManualRefreshButton";
 // LegacyDomainBlocker REMOVIDO - domínio gestao.* descontinuado
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 // ⚡ PROVIDERS CONSOLIDADOS
@@ -172,6 +173,11 @@ const AppContent = memo(() => {
   const { isOpen, setIsOpen } = useGlobalShortcutsOverlay();
   useGlobalDevToolsBlock();
 
+  // 🛡️ P0 anti-tela-preta: overlays globais só podem existir para o OWNER.
+  // Isso garante que um crash em ferramentas internas NÃO derrube /alunos (nem login) para alunos.
+  const { user, role } = useAuth();
+  const isOwner = (role === 'owner') || ((user?.email || '').toLowerCase() === 'moisesblank@gmail.com');
+
   const handleClose = useCallback(() => setIsOpen(false), [setIsOpen]);
 
   return (
@@ -181,28 +187,37 @@ const AppContent = memo(() => {
           <DeviceMFAGuard>
             {/* SessionTracker REMOVIDO - useAuth já gerencia heartbeat (DOGMA I) */}
 
-            <Suspense fallback={null}>
-              <LazyGodModePanel />
-              <LazyInlineEditor />
-              <LazyMasterQuickAddMenu />
-              <LazyGlobalDuplication />
-              <LazyMasterUndoIndicator />
-              <LazyMasterDeleteOverlay />
-              <LazyMasterContextMenu />
-              {/* 🆕 BARRA DE SALVAMENTO GLOBAL + GUARD DE NAVEGAÇÃO */}
-              <LazyGlobalSaveBar />
-              <LazyNavigationGuard />
-              <LazyRealtimeEditOverlay />
-            </Suspense>
+            {/* 🔥 P0: Overlays do OWNER dentro de ErrorBoundary dedicado */}
+            {isOwner && (
+              <ErrorBoundary>
+                <Suspense fallback={null}>
+                  <LazyGodModePanel />
+                  <LazyInlineEditor />
+                  <LazyMasterQuickAddMenu />
+                  <LazyGlobalDuplication />
+                  <LazyMasterUndoIndicator />
+                  <LazyMasterDeleteOverlay />
+                  <LazyMasterContextMenu />
+                  {/* 🆕 BARRA DE SALVAMENTO GLOBAL + GUARD DE NAVEGAÇÃO */}
+                  <LazyGlobalSaveBar />
+                  <LazyNavigationGuard />
+                  <LazyRealtimeEditOverlay />
+                </Suspense>
+              </ErrorBoundary>
+            )}
 
             <VisualEditMode />
             <KeyboardShortcutsOverlay isOpen={isOpen} onClose={handleClose} />
 
-            {/* 🔴 BOTÕES FLUTUANTES GLOBAIS */}
-            <Suspense fallback={null}>
-              <LazyGlobalLogsButton />
-              <LazyAITramon />
-            </Suspense>
+            {/* 🔴 BOTÕES FLUTUANTES GLOBAIS (OWNER ONLY) */}
+            {isOwner && (
+              <ErrorBoundary>
+                <Suspense fallback={null}>
+                  <LazyGlobalLogsButton />
+                  <LazyAITramon />
+                </Suspense>
+              </ErrorBoundary>
+            )}
 
             {/* ✅ RECOVERY MANUAL: botão sempre visível (NUNCA auto-reload) */}
             <ManualRefreshButton />
