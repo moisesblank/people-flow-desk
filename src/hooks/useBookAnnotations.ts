@@ -94,7 +94,7 @@ export function useBookAnnotations(bookId: string) {
       return (data || []) as BookAnnotation[];
     },
     enabled: !!bookId,
-    staleTime: 0,
+    staleTime: 30_000, // PATCH 5K: 30s cache
   });
 
   // Buscar todos os bookmarks do livro
@@ -115,7 +115,7 @@ export function useBookAnnotations(bookId: string) {
       return (data || []) as BookBookmark[];
     },
     enabled: !!bookId,
-    staleTime: 0,
+    staleTime: 30_000, // PATCH 5K: 30s cache
   });
 
   // ============================================

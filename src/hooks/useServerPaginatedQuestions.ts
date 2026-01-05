@@ -130,7 +130,7 @@ export function useServerPaginatedQuestions<T = any>(
       };
     },
     enabled,
-    staleTime: 0,
+    staleTime: 30_000, // PATCH 5K: 30s cache para evitar sobrecarga
   });
 
   const totalCount = data?.totalCount || 0;

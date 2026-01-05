@@ -44,7 +44,7 @@ export function useBookPageOverlays(bookId: string) {
       return (data || []) as BookUserPageOverlay[];
     },
     enabled: !!bookId,
-    staleTime: 0,
+    staleTime: 30_000, // PATCH 5K: 30s cache
   });
 
   const overlaysByPage = useMemo(() => {

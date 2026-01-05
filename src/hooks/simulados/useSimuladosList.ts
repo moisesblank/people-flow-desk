@@ -159,7 +159,7 @@ export function useSimuladosList(options: UseSimuladosListOptions = {}) {
       return { available, completed, upcoming };
     },
     enabled,
-    staleTime: 0, // Sempre buscar dados frescos
+    staleTime: 30_000, // PATCH 5K: 30s cache para evitar sobrecarga
     refetchOnWindowFocus: true,
   });
 }

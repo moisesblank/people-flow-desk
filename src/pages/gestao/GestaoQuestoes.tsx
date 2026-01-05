@@ -1028,7 +1028,7 @@ function GestaoQuestoes() {
 
       return { data: mapped, count: count || 0 };
     },
-    staleTime: 0,
+    staleTime: 30_000, // PATCH 5K: 30s cache para evitar sobrecarga
   });
 
   // Compatibilidade: manter setQuestions funcionando
