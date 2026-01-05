@@ -6,6 +6,7 @@
 import { Route, Navigate } from "react-router-dom";
 import { lazy } from "react";
 import { ProtectedPage } from "./routeHelpers";
+import { CaseInsensitiveAlunosRedirect } from "@/components/routing/CaseInsensitiveAlunosRedirect";
 
 // Lazy imports - Central do Aluno
 const AlunosRouteSwitcher = lazy(() => import("@/pages/AlunosRouteSwitcher"));
@@ -42,7 +43,8 @@ const AlunoCertificados = lazy(() => import("@/pages/aluno/AlunoPlaceholders").t
 
 export const alunoRoutes = (
   <>
-    {/* Alias case-insensitive: evita travar em /ALUNOS */}
+    {/* Alias case-insensitive: evita travar em /ALUNOS e /ALUNOS/* */}
+    <Route path="/ALUNOS/*" element={<ProtectedPage><CaseInsensitiveAlunosRedirect /></ProtectedPage>} />
     <Route path="/ALUNOS" element={<Navigate to="/alunos" replace />} />
     <Route path="/alunos" element={<ProtectedPage><AlunosRouteSwitcher /></ProtectedPage>} />
     <Route path="/alunos/dashboard" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
