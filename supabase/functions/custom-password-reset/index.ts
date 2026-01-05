@@ -200,6 +200,23 @@ serve(async (req: Request) => {
         );
       }
 
+      // 🎯 P0 FIX: Atualizar profile para limpar password_change_required
+      // Isso é CRÍTICO para o fluxo de primeiro acesso funcionar
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          password_change_required: false,
+          password_changed_at: new Date().toISOString(),
+        })
+        .eq("id", userId);
+
+      if (profileError) {
+        console.warn("[custom-password-reset] Erro ao atualizar profile (não crítico):", profileError);
+        // Não falha - a senha já foi alterada, apenas loga
+      } else {
+        console.log("[custom-password-reset] ✅ Profile atualizado: password_change_required = false");
+      }
+
       console.log("[custom-password-reset] ✅ Senha atualizada com sucesso para user:", userId);
 
       return new Response(

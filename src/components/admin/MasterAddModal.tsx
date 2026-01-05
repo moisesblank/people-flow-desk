@@ -5,7 +5,7 @@
 // Owner exclusivo: moisesblank@gmail.com
 // ============================================
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, forwardRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -900,7 +900,9 @@ interface MasterAddModalProps {
   onSuccess?: (data: Record<string, unknown>) => void;
 }
 
-export function MasterAddModal({ isOpen, onClose, entityType, onSuccess }: MasterAddModalProps) {
+// ✅ forwardRef para compatibilidade com Radix UI (Dialog)
+export const MasterAddModal = forwardRef<HTMLDivElement, MasterAddModalProps>(
+  function MasterAddModal({ isOpen, onClose, entityType, onSuccess }, ref) {
   const { isOwner } = useGodMode();
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -1218,61 +1220,66 @@ export function MasterAddModal({ isOpen, onClose, entityType, onSuccess }: Maste
 
   if (!config) {
     return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <span className="text-2xl">⚠️</span>
-              Tipo não suportado
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-muted-foreground">
-            O tipo "<span className="font-mono text-primary">{entityType}</span>" ainda não está configurado no sistema.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Tipos disponíveis: {Object.keys(ENTITY_CONFIGS).slice(0, 10).join(', ')}...
-          </p>
-        </DialogContent>
-      </Dialog>
+      <div ref={ref}>
+        <Dialog open={isOpen} onOpenChange={onClose}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <span className="text-2xl">⚠️</span>
+                Tipo não suportado
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-muted-foreground">
+              O tipo "<span className="font-mono text-primary">{entityType}</span>" ainda não está configurado no sistema.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Tipos disponíveis: {Object.keys(ENTITY_CONFIGS).slice(0, 10).join(', ')}...
+            </p>
+          </DialogContent>
+        </Dialog>
+      </div>
     );
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <span className="text-2xl">{config.icon}</span>
-            {config.title}
-            <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-          </DialogTitle>
-        </DialogHeader>
+    <div ref={ref}>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-2xl">{config.icon}</span>
+              {config.title}
+              <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {config.fields.map((field) => (
-            <div key={field.name} className="space-y-2">
-              <Label htmlFor={field.name} className="flex items-center gap-1">
-                {field.label}
-                {field.required && <span className="text-destructive">*</span>}
-              </Label>
-              {renderField(field)}
-            </div>
-          ))}
-        </div>
+          <div className="space-y-4 py-4">
+            {config.fields.map((field) => (
+              <div key={field.name} className="space-y-2">
+                <Label htmlFor={field.name} className="flex items-center gap-1">
+                  {field.label}
+                  {field.required && <span className="text-destructive">*</span>}
+                </Label>
+                {renderField(field)}
+              </div>
+            ))}
+          </div>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit} disabled={isLoading} className="gap-2">
-            {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-            <span>Criar {config.icon}</span>
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={onClose} disabled={isLoading}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmit} disabled={isLoading} className="gap-2">
+              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+              <span>Criar {config.icon}</span>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
-}
+});
+MasterAddModal.displayName = 'MasterAddModal';
 
 // Exportar lista de tipos disponíveis
 export const AVAILABLE_ENTITY_TYPES = Object.keys(ENTITY_CONFIGS);
