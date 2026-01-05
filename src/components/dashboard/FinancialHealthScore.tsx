@@ -258,8 +258,8 @@ export function FinancialHealthScore({
                   <span className="text-sm font-medium text-foreground">{indicator.name}</span>
                   {indicator.recommendation && (
                     <Tooltip>
-                      <TooltipTrigger>
-                        <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                      <TooltipTrigger asChild>
+                        <span><Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" /></span>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p className="max-w-xs">{indicator.recommendation}</p>

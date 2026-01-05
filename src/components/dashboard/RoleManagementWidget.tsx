@@ -492,8 +492,8 @@ function RoleMatrixView() {
                       return (
                         <td key={area} className="text-center py-2 px-1">
                           <Tooltip>
-                            <TooltipTrigger>
-                              <div className="flex justify-center">
+                            <TooltipTrigger asChild>
+                              <span className="flex justify-center cursor-help">
                                 {hasAccess ? (
                                   <motion.div 
                                     className="p-1 rounded-full bg-green-500/20"
@@ -508,7 +508,7 @@ function RoleMatrixView() {
                                     <X className="h-3 w-3 text-destructive/50" />
                                   </div>
                                 )}
-                              </div>
+                              </span>
                             </TooltipTrigger>
                             <TooltipContent>
                               {hasAccess ? "Tem acesso" : "Sem acesso"} a {AREA_LABELS[area]}

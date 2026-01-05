@@ -689,7 +689,7 @@ export default function ReceitasEmpresariais() {
                 Receita Total
                 <TooltipProvider>
                   <UITooltip>
-                    <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
+                    <TooltipTrigger asChild><span><Info className="w-3 h-3 text-muted-foreground cursor-help" /></span></TooltipTrigger>
                     <TooltipContent>
                       <p className="font-mono text-xs">SUM(entradas.valor)</p>
                       <p className="text-xs">Fonte: Tabela entradas</p>
@@ -718,7 +718,7 @@ export default function ReceitasEmpresariais() {
                 Receita Líquida
                 <TooltipProvider>
                   <UITooltip>
-                    <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
+                    <TooltipTrigger asChild><span><Info className="w-3 h-3 text-muted-foreground cursor-help" /></span></TooltipTrigger>
                     <TooltipContent>
                       <p className="font-mono text-xs">Receita - Taxas - Comissões</p>
                     </TooltipContent>
