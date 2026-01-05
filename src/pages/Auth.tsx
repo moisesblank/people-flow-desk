@@ -43,7 +43,13 @@ import { isOwnerEmail } from "@/lib/security";
 import { getPostLoginRedirect } from "@/core/urlAccessControl";
 import { registerDeviceBeforeSession, getDeviceErrorMessage } from "@/lib/deviceRegistration";
 import { useDeviceGateStore, DeviceGatePayload, DeviceInfo, CurrentDeviceInfo } from "@/state/deviceGateStore";
+import { useSameTypeReplacementStore } from "@/state/sameTypeReplacementStore";
 import { collectFingerprintRawData, generateDeviceName } from "@/lib/deviceFingerprintRaw";
+
+// 🛡️ CRITÉRIO EXPLÍCITO: Getter para setLoginIntent (evita re-render desnecessário)
+const getDeviceGateActions = () => useDeviceGateStore.getState();
+// 🛡️ BEYOND_THE_3_DEVICES: Getter para SameTypeReplacementStore
+const getSameTypeReplacementActions = () => useSameTypeReplacementStore.getState();
 
 // Lazy load componentes pesados (apenas owner usa)
 const EditableText = lazy(() => import("@/components/editor/EditableText").then(m => ({ default: m.EditableText })));
@@ -1318,6 +1324,21 @@ export default function Auth() {
             if (!deviceResult.success) {
               console.error('[AUTH][BLOCO3] ❌ Falha no registro de dispositivo:', deviceResult.error);
               
+              // 🛡️ BEYOND_THE_3_DEVICES: Substituição do mesmo tipo
+              if (deviceResult.error === 'SAME_TYPE_REPLACEMENT_REQUIRED') {
+                console.log('[AUTH][BEYOND_3] 🔄 Same-type replacement oferecida - redirecionando');
+                
+                if (deviceResult.sameTypePayload) {
+                  getSameTypeReplacementActions().setPayload(deviceResult.sameTypePayload);
+                }
+                
+                resetTurnstile();
+                setIsLoading(false);
+                getDeviceGateActions().setLoginIntent(false);
+                navigate('/security/same-type-replacement');
+                return;
+              }
+              
               // FAIL-CLOSED: Bloquear login se limite excedido
               if (deviceResult.error === 'DEVICE_LIMIT_EXCEEDED') {
                 console.log('[AUTH][BLOCO3] 🛡️ Limite excedido - redirecionando para DeviceLimitGate');
@@ -1359,6 +1380,7 @@ export default function Auth() {
                 
                 resetTurnstile();
                 setIsLoading(false);
+                getDeviceGateActions().setLoginIntent(false);
                 navigate('/security/device-limit');
                 return;
               }
@@ -1369,6 +1391,7 @@ export default function Auth() {
               await supabase.auth.signOut();
               resetTurnstile();
               setIsLoading(false);
+              getDeviceGateActions().setLoginIntent(false);
               return;
             }
             
@@ -1745,6 +1768,20 @@ export default function Auth() {
               
               if (!deviceResult.success) {
                 console.error('[AUTH][BLOCO3] ❌ Falha no registro de dispositivo pós-2FA:', deviceResult.error);
+                
+                // 🛡️ BEYOND_THE_3_DEVICES: Substituição do mesmo tipo
+                if (deviceResult.error === 'SAME_TYPE_REPLACEMENT_REQUIRED') {
+                  console.log('[AUTH][BEYOND_3] 🔄 Same-type replacement oferecida pós-2FA - redirecionando');
+                  
+                  if (deviceResult.sameTypePayload) {
+                    getSameTypeReplacementActions().setPayload(deviceResult.sameTypePayload);
+                  }
+                  
+                  setShow2FA(false);
+                  setPending2FAUser(null);
+                  navigate('/security/same-type-replacement', { replace: true });
+                  return;
+                }
                 
                 // FAIL-CLOSED: Bloquear login se limite excedido
                 if (deviceResult.error === 'DEVICE_LIMIT_EXCEEDED') {
