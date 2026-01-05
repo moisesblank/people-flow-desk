@@ -97,48 +97,7 @@ if (rootElement) {
     }
   })();
 
-  // ✅ RECOVERY MANUAL ABSOLUTO (NÃO-BLOQUEANTE)
-  // Se o app não montar, adiciona APENAS um botão fixo para reload manual.
-  window.setTimeout(() => {
-    try {
-      const hasContent = rootElement.children.length > 0;
-      const existing = document.getElementById('manual-refresh');
-      if (!hasContent && !existing) {
-        console.warn('[RECOVERY] Root vazio após timeout — sem auto-recovery. Exibindo botão manual.');
-
-        const host = document.createElement('div');
-        host.id = 'manual-refresh';
-        host.style.cssText = [
-          'position:fixed',
-          'right:16px',
-          'bottom:16px',
-          'z-index:2147483000',
-          'pointer-events:auto',
-        ].join(';');
-
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.textContent = 'Refresh Page';
-        btn.onclick = () => window.location.reload();
-        btn.style.cssText = [
-          'padding:10px 14px',
-          'border-radius:10px',
-          'border:1px solid rgba(255,255,255,0.18)',
-          'background:rgba(16,16,20,0.72)',
-          'color:#f5f5f5',
-          'font-weight:700',
-          'cursor:pointer',
-          'backdrop-filter: blur(10px)',
-          '-webkit-backdrop-filter: blur(10px)',
-        ].join(';');
-
-        host.appendChild(btn);
-        document.body.appendChild(host);
-      }
-    } catch {
-      // nunca bloquear bootstrap
-    }
-  }, 12000);
+  // Botão Refresh Page removido do bootstrap: controlado APENAS via React para OWNER
 }
 
 // ============================================

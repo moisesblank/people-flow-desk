@@ -91,43 +91,9 @@ export async function forceLogoutAndRestart(): Promise<void> {
 // REGRA: SEMPRE NÃO-BLOQUEANTE (MANUAL ONLY)
 // ============================================
 
+// Função removida: botão Refresh Page controlado APENAS via React para OWNER
 function injectManualRefreshButton(): void {
-  try {
-    const existing = document.getElementById('manual-refresh');
-    if (existing) return;
-
-    const host = document.createElement('div');
-    host.id = 'manual-refresh';
-    host.style.cssText = [
-      'position:fixed',
-      'right:16px',
-      'bottom:16px',
-      'z-index:2147483000',
-      'pointer-events:auto',
-    ].join(';');
-
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.textContent = 'Refresh Page';
-    btn.setAttribute('aria-label', 'Recarregar a página (ação manual)');
-    btn.onclick = () => window.location.reload();
-    btn.style.cssText = [
-      'padding:10px 14px',
-      'border-radius:10px',
-      'border:1px solid rgba(255,255,255,0.18)',
-      'background:rgba(16,16,20,0.72)',
-      'color:#f5f5f5',
-      'font-weight:700',
-      'cursor:pointer',
-      'backdrop-filter: blur(10px)',
-      '-webkit-backdrop-filter: blur(10px)',
-    ].join(';');
-
-    host.appendChild(btn);
-    document.body.appendChild(host);
-  } catch {
-    // nunca bloquear
-  }
+  // NO-OP: Injeção removida. Botão controlado exclusivamente pelo ManualRefreshButton.tsx
 }
 
 /**

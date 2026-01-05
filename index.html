@@ -145,16 +145,7 @@
       - Conteúdo mínimo (não bloqueante)
       - Botão "Refresh Page" sempre visível (recarrega APENAS no clique)
     -->
-    <div id="manual-refresh" style="position:fixed;right:16px;bottom:16px;z-index:2147483000;pointer-events:auto">
-      <button
-        type="button"
-        aria-label="Recarregar a página (ação manual)"
-        onclick="window.location.reload()"
-        style="padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:rgba(16,16,20,0.72);color:#f5f5f5;font-weight:700;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)"
-      >
-        Refresh Page
-      </button>
-    </div>
+    <!-- Botão Refresh Page removido: controlado apenas via React para OWNER -->
 
     <div id="bootstrap-status" style="padding:16px;color:#f5f5f5;opacity:0.75;font-family:system-ui,-apple-system,sans-serif;font-size:14px">
       Carregando…
@@ -207,34 +198,7 @@
         }
       };
 
-      // Failsafe (12s): se root continuar vazio, mostra SOMENTE um botão fixo.
-      setTimeout(function () {
-        try {
-          var root = document.getElementById('root');
-          var hasContent = !!(root && root.children && root.children.length > 0);
-          var existing = document.getElementById('manual-refresh');
-
-          if (!hasContent && !existing) {
-            console.warn('[P0] Root vazio após timeout — sem overlay. Exibindo botão manual.');
-
-            var host = document.createElement('div');
-            host.id = 'manual-refresh';
-            host.style.cssText = 'position:fixed;right:16px;bottom:16px;z-index:2147483000;pointer-events:auto';
-
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.textContent = 'Refresh Page';
-            btn.setAttribute('aria-label', 'Recarregar a página (ação manual)');
-            btn.onclick = function () { window.location.reload(); };
-            btn.style.cssText = 'padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:rgba(16,16,20,0.72);color:#f5f5f5;font-weight:700;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)';
-
-            host.appendChild(btn);
-            document.body.appendChild(host);
-          }
-        } catch (e) {
-          // Nunca bloquear bootstrap
-        }
-      }, 12000);
+      // Failsafe removido: botão Refresh Page controlado APENAS via React para OWNER
     </script>
     
     <!-- Art. 41° LEI V: noscript OBRIGATÓRIO -->
