@@ -18333,10 +18333,19 @@ export type Database = {
         Args: { p_current_token: string; p_user_id: string }
         Returns: number
       }
-      fortress_session_validate: {
-        Args: { p_session_token: string }
-        Returns: Json
-      }
+      fortress_session_validate:
+        | {
+            Args: { p_session_token: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.fortress_session_validate(p_session_token => text), public.fortress_session_validate(p_session_token => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
+        | {
+            Args: { p_session_token: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.fortress_session_validate(p_session_token => text), public.fortress_session_validate(p_session_token => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
       fortress_webhook_check: {
         Args: {
           p_event_id: string
