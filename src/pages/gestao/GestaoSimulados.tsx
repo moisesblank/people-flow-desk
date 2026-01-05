@@ -128,8 +128,37 @@ interface AuditLog {
 }
 
 // ============================================
-// CONSTANTES
+// CONSTANTES E HELPERS
 // ============================================
+
+/**
+ * Converte datetime-local (horário local) para ISO UTC (para salvar no banco)
+ * datetime-local: "2026-01-05T08:00" (local)
+ * Resultado: "2026-01-05T11:00:00.000Z" (UTC, considerando Brasil UTC-3)
+ */
+function localDatetimeToUTC(localDatetime: string): string | null {
+  if (!localDatetime) return null;
+  // datetime-local não tem timezone, então new Date() interpreta como local
+  const date = new Date(localDatetime);
+  return date.toISOString();
+}
+
+/**
+ * Converte ISO UTC (do banco) para datetime-local (horário local, para exibir no input)
+ * ISO: "2026-01-05T11:00:00.000Z" (UTC)
+ * Resultado: "2026-01-05T08:00" (local, para datetime-local input)
+ */
+function utcToLocalDatetime(isoUtc: string | null): string {
+  if (!isoUtc) return '';
+  const date = new Date(isoUtc);
+  // Formata para datetime-local (YYYY-MM-DDTHH:mm)
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
 
 const EMPTY_FORM: SimuladoFormData = {
   title: '',
@@ -305,9 +334,9 @@ function useCreateSimulado() {
           slug,
           duration_minutes: formData.duration_minutes,
           tolerance_minutes: formData.tolerance_minutes,
-          starts_at: formData.starts_at || null,
-          ends_at: formData.ends_at || null,
-          results_released_at: formData.results_released_at || null,
+          starts_at: localDatetimeToUTC(formData.starts_at),
+          ends_at: localDatetimeToUTC(formData.ends_at),
+          results_released_at: localDatetimeToUTC(formData.results_released_at),
           is_hard_mode: formData.is_hard_mode,
           max_tab_switches: formData.max_tab_switches,
           requires_camera: formData.requires_camera,
@@ -792,9 +821,9 @@ function EditSimuladoDialog({
         description: simulado.description || '',
         duration_minutes: simulado.duration_minutes,
         tolerance_minutes: simulado.tolerance_minutes || 15,
-        starts_at: simulado.starts_at ? simulado.starts_at.substring(0, 16) : '',
-        ends_at: simulado.ends_at ? simulado.ends_at.substring(0, 16) : '',
-        results_released_at: simulado.results_released_at ? simulado.results_released_at.substring(0, 16) : '',
+        starts_at: utcToLocalDatetime(simulado.starts_at),
+        ends_at: utcToLocalDatetime(simulado.ends_at),
+        results_released_at: utcToLocalDatetime(simulado.results_released_at),
         is_hard_mode: simulado.is_hard_mode,
         max_tab_switches: simulado.max_tab_switches,
         requires_camera: simulado.requires_camera || false,
@@ -824,9 +853,9 @@ function EditSimuladoDialog({
         description: formData.description || null,
         duration_minutes: formData.duration_minutes,
         tolerance_minutes: formData.tolerance_minutes,
-        starts_at: formData.starts_at || null,
-        ends_at: formData.ends_at || null,
-        results_released_at: formData.results_released_at || null,
+        starts_at: localDatetimeToUTC(formData.starts_at),
+        ends_at: localDatetimeToUTC(formData.ends_at),
+        results_released_at: localDatetimeToUTC(formData.results_released_at),
         is_hard_mode: formData.is_hard_mode,
         max_tab_switches: formData.max_tab_switches,
         requires_camera: formData.requires_camera,
