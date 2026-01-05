@@ -9,7 +9,7 @@
 // ❌ LiveSheetProvider → já usa useReducer interno, opcional
 // ============================================
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, forwardRef } from "react";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { TooltipProvider } from "@/components/ui/tooltip";

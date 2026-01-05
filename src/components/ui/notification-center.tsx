@@ -3,7 +3,7 @@
 // Pilar 5: Sistema de Notificações
 // ============================================
 
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
@@ -156,127 +156,133 @@ function NotificationItem({
   );
 }
 
-export function NotificationCenter({
-  notifications,
-  onMarkAsRead,
-  onMarkAllAsRead,
-  onDelete,
-  onClearAll,
-}: NotificationCenterProps) {
-  const { gpuAnimationProps } = useQuantumReactivity();
+// ✅ forwardRef para compatibilidade com Radix UI (Tooltip, Popover triggers)
+export const NotificationCenter = forwardRef<HTMLDivElement, NotificationCenterProps>(
+  function NotificationCenter({
+    notifications,
+    onMarkAsRead,
+    onMarkAllAsRead,
+    onDelete,
+    onClearAll,
+  }, ref) {
+    const { gpuAnimationProps } = useQuantumReactivity();
 
-  const [isOpen, setIsOpen] = useState(false);
-  const unreadCount = notifications.filter(n => !n.read).length;
+    const [isOpen, setIsOpen] = useState(false);
+    const unreadCount = notifications.filter(n => !n.read).length;
 
-  return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-          aria-label={`Notificações${unreadCount > 0 ? `, ${unreadCount} não lidas` : ''}`}
-        >
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <motion.span
-              {...gpuAnimationProps.scaleIn}
-              className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center will-change-transform transform-gpu"
-            >
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </motion.span>
-          )}
-        </Button>
-      </PopoverTrigger>
-      
-      <PopoverContent 
-        className="w-96 p-0 border-border/50 bg-card/95 backdrop-blur-xl"
-        align="end"
-        sideOffset={8}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border/30">
-          <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-foreground">Notificações</h3>
-            {unreadCount > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                {unreadCount} nova{unreadCount > 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-1">
-            {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onMarkAllAsRead}
-                className="h-8 px-2 text-xs"
-              >
-                <CheckCheck className="h-3.5 w-3.5 mr-1" />
-                Marcar todas
-              </Button>
-            )}
+    return (
+      <div ref={ref}>
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+          <PopoverTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
-              aria-label="Configurações de notificação"
+              className="relative"
+              aria-label={`Notificações${unreadCount > 0 ? `, ${unreadCount} não lidas` : ''}`}
             >
-              <Settings className="h-4 w-4" />
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <motion.span
+                  {...gpuAnimationProps.scaleIn}
+                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center will-change-transform transform-gpu"
+                >
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </motion.span>
+              )}
             </Button>
-          </div>
-        </div>
-        
-        {/* Notifications List */}
-        <ScrollArea className="h-[400px]">
-          <div className="p-3 space-y-2">
-            {notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-                  <Bell className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Nenhuma notificação
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Você está em dia!
-                </p>
+          </PopoverTrigger>
+          
+          <PopoverContent 
+            className="w-96 p-0 border-border/50 bg-card/95 backdrop-blur-xl"
+            align="end"
+            sideOffset={8}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-border/30">
+              <div className="flex items-center gap-2">
+                <Bell className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-foreground">Notificações</h3>
+                {unreadCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                    {unreadCount} nova{unreadCount > 1 ? "s" : ""}
+                  </span>
+                )}
               </div>
-            ) : (
-              <AnimatePresence mode="popLayout">
-                {notifications.map(notification => (
-                  <NotificationItem
-                    key={notification.id}
-                    notification={notification}
-                    onMarkAsRead={onMarkAsRead}
-                    onDelete={onDelete}
-                  />
-                ))}
-              </AnimatePresence>
+              
+              <div className="flex items-center gap-1">
+                {unreadCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onMarkAllAsRead}
+                    className="h-8 px-2 text-xs"
+                  >
+                    <CheckCheck className="h-3.5 w-3.5 mr-1" />
+                    Marcar todas
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  aria-label="Configurações de notificação"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Notifications List */}
+            <ScrollArea className="h-[400px]">
+              <div className="p-3 space-y-2">
+                {notifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+                      <Bell className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Nenhuma notificação
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Você está em dia!
+                    </p>
+                  </div>
+                ) : (
+                  <AnimatePresence mode="popLayout">
+                    {notifications.map(notification => (
+                      <NotificationItem
+                        key={notification.id}
+                        notification={notification}
+                        onMarkAsRead={onMarkAsRead}
+                        onDelete={onDelete}
+                      />
+                    ))}
+                  </AnimatePresence>
+                )}
+              </div>
+            </ScrollArea>
+            
+            {/* Footer */}
+            {notifications.length > 0 && (
+              <div className="p-3 border-t border-border/30">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClearAll}
+                  className="w-full h-8 text-xs text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-2" />
+                  Limpar todas as notificações
+                </Button>
+              </div>
             )}
-          </div>
-        </ScrollArea>
-        
-        {/* Footer */}
-        {notifications.length > 0 && (
-          <div className="p-3 border-t border-border/30">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClearAll}
-              className="w-full h-8 text-xs text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="h-3.5 w-3.5 mr-2" />
-              Limpar todas as notificações
-            </Button>
-          </div>
-        )}
-      </PopoverContent>
-    </Popover>
-  );
-}
+          </PopoverContent>
+        </Popover>
+      </div>
+    );
+  }
+);
+NotificationCenter.displayName = 'NotificationCenter';
 
 // Hook para gerenciar notificações
 export function useNotifications() {

@@ -2,9 +2,10 @@
 // 🛡️ DOGMA XI v3.2: Device Guard (BLOCO 3 COMPLIANT)
 // FAIL-CLOSED: Se isGateActive=true, bloqueia e redireciona
 // O vínculo real acontece ANTES da sessão no Auth.tsx
+// ✅ forwardRef para compatibilidade com Radix UI
 // ============================================
 
-import { useEffect, useState, ReactNode, useCallback, useRef } from 'react';
+import { useEffect, useState, ReactNode, useCallback, useRef, forwardRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useDeviceLimitServer } from '@/hooks/useDeviceLimitServer';

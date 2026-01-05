@@ -1,9 +1,10 @@
 // ============================================
 // 🚫 GESTAO NOINDEX - Bloco 6 Compliance
 // Área /gestaofc não deve ser indexada por bots
+// ✅ forwardRef para compatibilidade com Radix UI
 // ============================================
 
-import { useEffect } from 'react';
+import { useEffect, forwardRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 
