@@ -38,11 +38,13 @@ interface AppLayoutProps {
 
 // ⚡ DOGMA VIII: Componentes memoizados para evitar re-renders
 // ✅ forwardRef wrapper para compatibilidade com Radix UI (Tooltip, Popover triggers)
-const MemoizedSidebar = memo(forwardRef<HTMLDivElement, Record<string, never>>((props, ref) => (
-  <div ref={ref}>
-    <RoleBasedSidebar />
-  </div>
-)));
+const MemoizedSidebar = memo(forwardRef<HTMLDivElement, Record<string, never>>(function MemoizedSidebar(_props, ref) {
+  return (
+    <div ref={ref}>
+      <RoleBasedSidebar />
+    </div>
+  );
+}));
 MemoizedSidebar.displayName = 'MemoizedSidebar';
 
 const MemoizedSystemHealth = memo(SystemHealthIndicator);

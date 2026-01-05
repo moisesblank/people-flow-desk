@@ -4,7 +4,7 @@
 // GLASSMORPHISM + ANIMAÇÕES + QUICK INSIGHTS
 // ============================================
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, forwardRef } from "react";
 import { useFileUploadWorker } from "@/hooks/useWebWorker";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -78,7 +78,7 @@ const quickActions = {
   ]
 };
 
-export function AITramonGlobal() {
+export const AITramonGlobal = forwardRef<HTMLDivElement, Record<string, never>>(function AITramonGlobal(_props, ref) {
   const { user, role } = useAuth();
   const { canAccessTramon, isLoading: roleLoading, isOwner: ownerCheck, isAdmin } = useAdminCheck();
   const location = useLocation();
@@ -507,7 +507,7 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
   // 🎨 RENDER - BUILD 2024.12.17.v9
   // ========================================
   return (
-    <>
+    <div ref={ref}>
       <input
         type="file"
         ref={fileInputRef}
@@ -887,8 +887,9 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
-}
+});
 
+AITramonGlobal.displayName = 'AITramonGlobal';
 export default AITramonGlobal;
