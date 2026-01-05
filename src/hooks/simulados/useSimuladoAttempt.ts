@@ -240,6 +240,42 @@ export function useSimuladoAttempt() {
   }, [state.attemptId, toast]);
 
   /**
+   * Sincroniza estado local com tentativa já existente no servidor
+   * (ex: refresh/reload no meio do simulado)
+   */
+  const syncFromServerAttempt = useCallback((attempt: {
+    id: string;
+    status: "RUNNING" | "FINISHED" | "ABANDONED" | "INVALIDATED";
+    started_at: string;
+    attempt_number: number;
+    is_scored_for_ranking: boolean;
+  }) => {
+    setState(prev => {
+      // Evitar setState redundante
+      if (prev.attemptId === attempt.id && prev.status !== "IDLE") return prev;
+
+      const mappedStatus: AttemptState["status"] =
+        attempt.status === "RUNNING"
+          ? "RUNNING"
+          : attempt.status === "INVALIDATED"
+            ? "INVALIDATED"
+            : "FINISHED";
+
+      return {
+        ...prev,
+        attemptId: attempt.id,
+        // Já existe no servidor = foi retomada (mesmo que seja a primeira sessão do usuário)
+        isResumed: true,
+        isScoredForRanking: attempt.is_scored_for_ranking,
+        startedAt: attempt.started_at ? new Date(attempt.started_at) : prev.startedAt,
+        attemptNumber: attempt.attempt_number || prev.attemptNumber || 1,
+        status: mappedStatus,
+        error: null,
+      };
+    });
+  }, []);
+
+  /**
    * Reseta o estado (para novo simulado)
    */
   const reset = useCallback(() => {
@@ -261,12 +297,13 @@ export function useSimuladoAttempt() {
     state,
     config,
     result,
-    
+
     // Ações
     startAttempt,
     finishAttempt,
+    syncFromServerAttempt,
     reset,
-    
+
     // Conveniências
     isRunning: state.status === "RUNNING",
     isLoading: state.status === "LOADING",
