@@ -211,7 +211,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
       const result = data?.[0];
 
-      if (!result?.is_valid) {
+      if (result?.status !== 'valid') {
         const reason = result?.reason || 'SESSION_INVALID';
 
         // 🔧 P0 PATCH: Recuperação segura para SESSION_NOT_FOUND

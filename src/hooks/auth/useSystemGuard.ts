@@ -144,10 +144,10 @@ export function useSystemGuard(): UseSystemGuardReturn {
         return 'VALID'; // Fail-open
       }
 
-      // Resultado é array com {is_valid, reason, user_id}
+      // Resultado é array com {status, reason, user_id}
       const result = data?.[0];
       
-      if (!result?.is_valid) {
+      if (result?.status !== 'valid') {
         const reason = result?.reason as AuthGuardError || 'SESSION_NOT_FOUND';
         console.error(`[SYSTEM_GUARD] 🔴 Sessão inválida: ${reason}`);
         setState(prev => ({ ...prev, error: reason }));
