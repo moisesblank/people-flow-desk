@@ -12,7 +12,7 @@
  * - Logging (useSimuladoLogger)
  */
 
-import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { 
@@ -297,41 +297,16 @@ export function SimuladoPlayer({
     refresh();
   }, [refresh]);
 
-  // Efeito: Reiniciar cronômetro SEMPRE que o simulado for aberto (RUNNING)
-  // Regra: ao entrar em RUNNING, chamamos startAttempt() (idempotente) que agora reseta started_at no servidor.
-  const timerResetInFlightRef = useRef(false);
-  const hasAutoResetTimerRef = useRef(false);
-
-  useEffect(() => {
-    if (currentState !== SimuladoState.RUNNING) {
-      hasAutoResetTimerRef.current = false;
-      timerResetInFlightRef.current = false;
-      return;
-    }
-
-    if (hasAutoResetTimerRef.current) return;
-    if (!simuladoId) return;
-
-    hasAutoResetTimerRef.current = true;
-    timerResetInFlightRef.current = true;
-
-    void withStartLock(async () => {
-      try {
-        await startAttempt(simuladoId);
-        refresh();
-      } finally {
-        timerResetInFlightRef.current = false;
-      }
-    });
-  }, [currentState, simuladoId, startAttempt, refresh, withStartLock]);
+  // Timer reset: NÃO mais chamamos startAttempt automaticamente aqui.
+  // O reset do timer acontece no servidor quando o usuário INICIA manualmente (handleStart).
+  // Isso evita loops infinitos e chamadas duplicadas.
 
   // Efeito: Auto-finalizar quando tempo acabar
   useEffect(() => {
     if (
       isExpired &&
       currentState === SimuladoState.RUNNING &&
-      !isFinishing &&
-      !timerResetInFlightRef.current
+      !isFinishing
     ) {
       handleTimeUp();
     }
