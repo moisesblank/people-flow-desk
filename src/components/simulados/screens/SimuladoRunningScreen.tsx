@@ -430,7 +430,7 @@ export function SimuladoRunningScreen({
 
       {/* Dialog de confirmação */}
       <AlertDialog open={showFinishDialog} onOpenChange={setShowFinishDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent useOriginalSize className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle>Finalizar Simulado?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
