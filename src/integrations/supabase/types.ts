@@ -18599,6 +18599,13 @@ export type Database = {
       }
       get_user_device_count: { Args: never; Returns: number }
       get_user_devices: { Args: { p_user_id?: string }; Returns: Json }
+      get_user_rank: {
+        Args: { p_user_id: string }
+        Returns: {
+          rank: number
+          total: number
+        }[]
+      }
       get_user_role: { Args: { p_user_id: string }; Returns: string }
       get_user_role_secure: {
         Args: { _user_id?: string }
