@@ -235,12 +235,17 @@ export function SimuladoRunningScreen({
                 {sortedOptions.map(([key, optionValue]) => {
                   const isSelected = currentAnswer?.selectedOption === key;
                   const isSelecting = selectingOption === key;
-                  
+
                   // Extrair texto: pode ser string ou objeto {id, text}
-                  const optionText = typeof optionValue === 'string' 
-                    ? optionValue 
-                    : (optionValue as { text?: string })?.text || '';
-                  
+                  const rawText: unknown =
+                    typeof optionValue === "string"
+                      ? optionValue
+                      : (optionValue as { text?: unknown })?.text ?? optionValue;
+
+                  // Garantia anti-"React child object": sempre coerção para string
+                  const optionText =
+                    typeof rawText === "string" ? rawText : rawText == null ? "" : String(rawText);
+
                   return (
                     <button
                       key={key}
