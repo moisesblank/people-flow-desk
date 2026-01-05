@@ -26,6 +26,9 @@ export interface DeviceMFAGuardResult extends DeviceMFAGuardState {
 
 const OWNER_EMAIL = 'moisesblank@gmail.com';
 
+// ⏱️ P0 FIX: Timeout para evitar loading infinito (tela preta)
+const MFA_CHECK_TIMEOUT_MS = 8000;
+
 /**
  * Hook para gerenciar 2FA por DISPOSITIVO
  * Cada dispositivo diferente precisa verificar 2FA separadamente
@@ -34,6 +37,7 @@ const OWNER_EMAIL = 'moisesblank@gmail.com';
 export function useDeviceMFAGuard(): DeviceMFAGuardResult {
   const { user } = useAuth();
   const hasChecked = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const [state, setState] = useState<DeviceMFAGuardState>({
     isChecking: true, // Começa verificando
@@ -208,6 +212,12 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
 
   // Verifica automaticamente ao montar (apenas uma vez)
   useEffect(() => {
+    // Limpar timeout anterior
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
     // Se não há usuário, bypass imediato (não precisa verificar dispositivo)
     if (!user?.id) {
       setState(prev => ({ 
@@ -231,11 +241,36 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       return;
     }
 
+    // ⏱️ P0 FIX: Timeout de segurança - se demorar muito, liberar acesso
+    timeoutRef.current = setTimeout(() => {
+      setState(prev => {
+        if (prev.isChecking) {
+          console.warn('[DeviceMFAGuard] ⚠️ Timeout de 8s atingido - liberando acesso como fallback');
+          return { 
+            ...prev, 
+            isChecking: false, 
+            isVerified: true, // Liberar acesso após timeout
+            needsMFA: false,
+            error: null
+          };
+        }
+        return prev;
+      });
+    }, MFA_CHECK_TIMEOUT_MS);
+
     // Verificar apenas uma vez
     if (!hasChecked.current) {
       hasChecked.current = true;
       checkDeviceMFA();
     }
+
+    // Cleanup
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
   }, [user?.id, isOwner, checkDeviceMFA]);
 
   return {
