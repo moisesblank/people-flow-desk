@@ -1,5 +1,5 @@
 // ============================================
-// ⚡ MATRIZ DIGITAL v11.0 - ROTEADOR /alunos
+// ⚡ MATRIZ DIGITAL v11.1 - ROTEADOR /alunos
 // ARQUITETURA MONO-DOMÍNIO:
 // - pro.moisesmedeiros.com.br/gestaofc → Funcionários (Gestão)
 // - pro.moisesmedeiros.com.br/alunos → Alunos Beta (Central)
@@ -8,9 +8,10 @@
 //   Owner (role='owner' do banco) = Acesso total
 //   Beta = Aluno Pagante → vê Portal do Aluno
 //   Staff = Funcionários → vê Gestão de Alunos (/gestaofc)
+// ⏱️ P0 FIX v11.1: Timeout para evitar loading infinito (tela preta)
 // ============================================
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
@@ -20,14 +21,30 @@ import { useRolePermissions, isGestaoHost, isProHost, isPublicHost } from "@/hoo
 import AlunoDashboard from "@/pages/aluno/AlunoDashboard";
 import Alunos from "@/pages/Alunos";
 
+// ⏱️ P0 FIX: Timeout máximo de loading (evita tela preta infinita)
+const LOADING_TIMEOUT_MS = 6000;
+const LOADING_SLOW_MS = 2000;
+
 export default function AlunosRouteSwitcher() {
+  // ============================================
+  // 🔒 TODOS OS HOOKS DEVEM ESTAR NO TOPO (React Rules of Hooks)
+  // ============================================
+  
   const location = useLocation();
-  const { isAdminOrOwner, isLoading: adminLoading } = useAdminCheck();
+  const { isAdminOrOwner, isLoading: adminLoading, userEmail } = useAdminCheck();
   const { role, isLoading: roleLoading, isBeta, isOwner } = useRolePermissions();
 
-  const isLoading = adminLoading || roleLoading;
+  // ⏱️ P0 FIX: Timeout para evitar loading infinito (causa de tela preta)
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+  
+  // ⏱️ Loading demorado: mostrar indicador visual de que está funcionando
+  const [isLoadingSlow, setIsLoadingSlow] = useState(false);
 
-  // 🔎 DEBUG temporário (P0): tornar visível o estado real quando /alunos fica “tela preta”
+  // P0 FIX: Se timeout foi atingido, parar de esperar loading
+  const rawLoading = adminLoading || roleLoading;
+  const isLoading = rawLoading && !loadingTimeout;
+
+  // 🔎 DEBUG temporário (P0): tornar visível o estado real quando /alunos fica "tela preta"
   // Ativa com ?debugAlunos=1
   const debugAlunos = new URLSearchParams(location.search).get('debugAlunos') === '1';
 
@@ -43,6 +60,48 @@ export default function AlunosRouteSwitcher() {
       isPublic: isPublicHost(hostname),
     };
   }, []);
+  
+  // ⏱️ Timeout effect: evita loading infinito
+  useEffect(() => {
+    if (!rawLoading) {
+      // Reset timeout quando loading termina naturalmente
+      return;
+    }
+    
+    const timeout = setTimeout(() => {
+      if (rawLoading) {
+        console.warn("[AlunosRouteSwitcher] ⚠️ Timeout de 6s atingido - prosseguindo com estado atual", {
+          adminLoading,
+          roleLoading,
+          role,
+          userEmail,
+        });
+        setLoadingTimeout(true);
+      }
+    }, LOADING_TIMEOUT_MS);
+    
+    return () => clearTimeout(timeout);
+  }, [rawLoading, adminLoading, roleLoading, role, userEmail]);
+  
+  // ⏱️ Slow loading indicator
+  useEffect(() => {
+    if (!isLoading) {
+      if (isLoadingSlow) setIsLoadingSlow(false);
+      return;
+    }
+    
+    const slowTimer = setTimeout(() => {
+      if (isLoading) {
+        setIsLoadingSlow(true);
+      }
+    }, LOADING_SLOW_MS);
+    
+    return () => clearTimeout(slowTimer);
+  }, [isLoading, isLoadingSlow]);
+
+  // ============================================
+  // 🔒 FIM DOS HOOKS - LÓGICA DE RENDER ABAIXO
+  // ============================================
 
   const DebugPanel = debugAlunos ? (
     <div className="fixed left-3 top-3 z-[9999] max-w-[92vw] rounded-lg border border-border bg-card/95 backdrop-blur p-3 text-xs text-foreground shadow-lg">
@@ -54,6 +113,8 @@ export default function AlunosRouteSwitcher() {
             search: location.search,
             adminLoading,
             roleLoading,
+            loadingTimeout,
+            isLoading,
             role,
             isBeta,
             isOwner,
@@ -67,13 +128,21 @@ export default function AlunosRouteSwitcher() {
     </div>
   ) : null;
 
-  // Loading state
+  // Loading state (P0: com feedback visual para o usuário, NUNCA tela preta)
   if (isLoading) {
     return (
       <>
         {DebugPanel}
-        <div className="min-h-screen bg-background flex items-center justify-center relative z-10">
-          <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center relative z-10 gap-4 p-6">
+          <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <div className="text-center space-y-2">
+            <p className="text-sm font-medium text-foreground">Carregando...</p>
+            {isLoadingSlow && (
+              <p className="text-xs text-muted-foreground max-w-xs">
+                Verificando permissões. Aguarde um momento...
+              </p>
+            )}
+          </div>
         </div>
       </>
     );
@@ -125,7 +194,7 @@ export default function AlunosRouteSwitcher() {
     );
   }
 
-// BETA = Aluno pagante → SEMPRE portal do aluno (pro.moisesmedeiros.com.br/alunos)
+  // BETA = Aluno pagante → SEMPRE portal do aluno (pro.moisesmedeiros.com.br/alunos)
   if (isBeta) {
     return (
       <>
@@ -187,6 +256,27 @@ export default function AlunosRouteSwitcher() {
             content="Dashboard do aluno com progresso, metas e próximos passos no curso de Química ENEM."
           />
           <link rel="canonical" href={typeof window !== "undefined" ? `${window.location.origin}/alunos` : "/alunos"} />
+        </Helmet>
+        <AlunoDashboard />
+      </>
+    );
+  }
+
+  // ============================================
+  // ⏱️ P0 FIX: Se chegou aqui após timeout sem role válido,
+  // mostrar fallback ao invés de redirecionar cegamente
+  // ============================================
+  if (loadingTimeout && !role) {
+    console.warn("[AlunosRouteSwitcher] ⚠️ Timeout sem role - mostrando AlunoDashboard como fallback seguro");
+    return (
+      <>
+        {DebugPanel}
+        <Helmet>
+          <title>Dashboard do Aluno | Química ENEM</title>
+          <meta
+            name="description"
+            content="Sua central de estudos com videoaulas, questões, simulados e progresso gamificado."
+          />
         </Helmet>
         <AlunoDashboard />
       </>
