@@ -2537,8 +2537,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                               {fr.error && (
                                 <TooltipProvider>
                                   <Tooltip>
-                                    <TooltipTrigger>
-                                      <AlertCircle className="h-4 w-4 text-red-500" />
+                                    <TooltipTrigger asChild>
+                                      <span><AlertCircle className="h-4 w-4 text-red-500 cursor-help" /></span>
                                     </TooltipTrigger>
                                     <TooltipContent>
                                       <p className="text-xs max-w-[200px]">{fr.error}</p>
@@ -3013,11 +3013,13 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                                 {q.campos_inferidos.length > 0 && (
                                   <TooltipProvider>
                                     <Tooltip>
-                                      <TooltipTrigger>
-                                        <Badge className="bg-blue-500/20 text-blue-500 text-[10px] h-5 cursor-help">
-                                          <Sparkles className="h-2.5 w-2.5 mr-1" />
-                                          {q.campos_inferidos.length} inferidos
-                                        </Badge>
+                                      <TooltipTrigger asChild>
+                                        <span>
+                                          <Badge className="bg-blue-500/20 text-blue-500 text-[10px] h-5 cursor-help">
+                                            <Sparkles className="h-2.5 w-2.5 mr-1" />
+                                            {q.campos_inferidos.length} inferidos
+                                          </Badge>
+                                        </span>
                                       </TooltipTrigger>
                                       <TooltipContent>
                                         <div className="text-xs space-y-1">
@@ -3034,11 +3036,13 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                                 {q.campos_null.length > 0 && (
                                   <TooltipProvider>
                                     <Tooltip>
-                                      <TooltipTrigger>
-                                        <Badge className="bg-orange-500/20 text-orange-500 text-[10px] h-5 cursor-help">
-                                          <AlertOctagon className="h-2.5 w-2.5 mr-1" />
-                                          {q.campos_null.length} null
-                                        </Badge>
+                                      <TooltipTrigger asChild>
+                                        <span>
+                                          <Badge className="bg-orange-500/20 text-orange-500 text-[10px] h-5 cursor-help">
+                                            <AlertOctagon className="h-2.5 w-2.5 mr-1" />
+                                            {q.campos_null.length} null
+                                          </Badge>
+                                        </span>
                                       </TooltipTrigger>
                                       <TooltipContent>
                                         <div className="text-xs space-y-1">
