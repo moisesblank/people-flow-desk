@@ -4,7 +4,7 @@
 // Mesmo padrão visual da Gestão, mas modo leitura
 // ============================================
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -158,25 +158,35 @@ function useModuleLessons(moduleId: string | null) {
 // ============================================
 function useLMSRealtime() {
   const queryClient = useQueryClient();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounce 5s para conteúdo de gestão (evita Thundering Herd com 5.000 alunos)
+  const debouncedInvalidate = useCallback((queryKeys: string[][]) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      queryKeys.forEach(key => queryClient.invalidateQueries({ queryKey: key }));
+    }, 5000);
+  }, [queryClient]);
 
   useEffect(() => {
     const channel = supabase
       .channel('lms-aluno-hierarchy-sync')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'courses' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['aluno-all-modules-hierarchy'] });
-        queryClient.invalidateQueries({ queryKey: ['aluno-courses-dropdown'] });
+        debouncedInvalidate([['aluno-all-modules-hierarchy'], ['aluno-courses-dropdown']]);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'modules' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['aluno-all-modules-hierarchy'] });
+        debouncedInvalidate([['aluno-all-modules-hierarchy']]);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lessons' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['aluno-all-modules-hierarchy'] });
-        queryClient.invalidateQueries({ queryKey: ['aluno-module-lessons'] });
+        debouncedInvalidate([['aluno-all-modules-hierarchy'], ['aluno-module-lessons']]);
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
-  }, [queryClient]);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      supabase.removeChannel(channel);
+    };
+  }, [debouncedInvalidate]);
 }
 
 // ============================================

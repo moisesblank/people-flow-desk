@@ -1,5 +1,5 @@
 // ============================================
-// ⚡ REALTIME CORE v1.0.0
+// ⚡ REALTIME CORE v1.1.0
 // CONSTITUIÇÃO SYNAPSE Ω v10.x — PARTE 4
 // ============================================
 // REGRAS:
@@ -8,10 +8,12 @@
 // - Cleanup obrigatório
 // - /alunos: filtra por user_id
 // - /gestaofc: invalidation, não stream completo
+// - DEBOUNCE: Evita Thundering Herd (5.000 usuários)
 // ============================================
 
 import { supabase } from "@/integrations/supabase/client";
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import { debounce, getDebounceTimeForTable } from "@/utils/debounce";
 
 // ============================================
 // TYPES
@@ -30,6 +32,8 @@ export interface RealtimeSubscription {
   filter?: string;
   /** Callback quando receber evento */
   onEvent: (payload: RealtimePostgresChangesPayload<{ [key: string]: unknown }>) => void;
+  /** Tempo de debounce em ms (0 = sem debounce). Se não informado, usa auto-detecção. */
+  debounceMs?: number;
 }
 
 export interface RealtimeChannelState {
@@ -50,6 +54,8 @@ export interface RealtimeCoreOptions {
   onStatusChange?: (status: RealtimeStatus) => void;
   /** Callback para qualquer evento (debug) */
   onAnyEvent?: (table: string, event: RealtimeEvent, payload: unknown) => void;
+  /** Se true, usa debounce automático baseado na tabela (default: true) */
+  autoDebounce?: boolean;
 }
 
 // ============================================
@@ -59,13 +65,14 @@ export interface RealtimeCoreOptions {
 export class RealtimeCore {
   private channel: RealtimeChannel | null = null;
   private subscriptions: RealtimeSubscription[] = [];
+  private debouncedHandlers: Map<string, ReturnType<typeof debounce>> = new Map();
   private status: RealtimeStatus = 'disconnected';
   private lastEventAt: Date | null = null;
   private options: RealtimeCoreOptions;
   private isDestroyed = false;
 
   constructor(options: RealtimeCoreOptions) {
-    this.options = options;
+    this.options = { autoDebounce: true, ...options };
   }
 
   /**
@@ -102,7 +109,7 @@ export class RealtimeCore {
     this.channel = supabase.channel(this.options.channelName);
     
     // Registra subscriptions usando o padrão do projeto
-    this.subscriptions.forEach((sub) => {
+    this.subscriptions.forEach((sub, index) => {
       if (!this.channel) return;
       
       // Configuração base
@@ -117,12 +124,28 @@ export class RealtimeCore {
         config.filter = sub.filter;
       }
 
-      // Handler para este subscription
-      const handler = (payload: RealtimePostgresChangesPayload<{ [key: string]: unknown }>) => {
+      // Determina tempo de debounce
+      const debounceTime = sub.debounceMs !== undefined
+        ? sub.debounceMs
+        : (this.options.autoDebounce ? getDebounceTimeForTable(sub.table) : 0);
+
+      // Handler base
+      const baseHandler = (payload: RealtimePostgresChangesPayload<{ [key: string]: unknown }>) => {
         this.lastEventAt = new Date();
         sub.onEvent(payload);
         this.options.onAnyEvent?.(sub.table, payload.eventType as RealtimeEvent, payload);
       };
+
+      // Aplica debounce se necessário
+      const handler = debounceTime > 0
+        ? (() => {
+            const handlerKey = `${sub.table}-${index}`;
+            const debouncedFn = debounce(baseHandler, debounceTime);
+            this.debouncedHandlers.set(handlerKey, debouncedFn);
+            console.log(`[RealtimeCore] Debounce ${debounceTime}ms aplicado em ${sub.table}`);
+            return debouncedFn;
+          })()
+        : baseHandler;
 
       // Registra no channel (cast para any para evitar problemas de tipagem)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -150,6 +173,12 @@ export class RealtimeCore {
     if (this.isDestroyed) return;
     
     this.isDestroyed = true;
+    
+    // Cancela todos os debounced handlers pendentes
+    this.debouncedHandlers.forEach((handler) => {
+      handler.cancel();
+    });
+    this.debouncedHandlers.clear();
     
     if (this.channel) {
       supabase.removeChannel(this.channel);

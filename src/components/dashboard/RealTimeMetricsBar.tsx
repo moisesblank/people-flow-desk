@@ -4,7 +4,7 @@
 // Conexão Supabase + Animações avançadas
 // ============================================
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Activity, 
@@ -182,20 +182,29 @@ export function RealTimeMetricsBar({ className }: RealTimeMetricsBarProps) {
     }
   }, [metrics?.length]);
 
-  // Subscription para atualizações em tempo real
+  // Subscription para atualizações em tempo real com debounce 10s (métricas financeiras)
+  const metricsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedRefetch = useCallback(() => {
+    if (metricsTimeoutRef.current) clearTimeout(metricsTimeoutRef.current);
+    metricsTimeoutRef.current = setTimeout(() => {
+      refetch();
+    }, 10000); // 10s debounce para métricas de dashboard
+  }, [refetch]);
+
   useEffect(() => {
     const channel = supabase
       .channel('realtime-metrics')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'entradas' }, () => refetch())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'gastos' }, () => refetch())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_tasks' }, () => refetch())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, () => refetch())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'entradas' }, debouncedRefetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gastos' }, debouncedRefetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_tasks' }, debouncedRefetch)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, debouncedRefetch)
       .subscribe();
 
     return () => {
+      if (metricsTimeoutRef.current) clearTimeout(metricsTimeoutRef.current);
       supabase.removeChannel(channel);
     };
-  }, [refetch]);
+  }, [debouncedRefetch]);
 
   const displayMetrics = metrics || [
     { id: "status", icon: Shield, label: "Sistema", value: "Conectando...", color: "text-muted-foreground" }
