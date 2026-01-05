@@ -35,6 +35,14 @@ interface AlertDialogContentProps extends React.ComponentPropsWithoutRef<typeof 
   disableResize?: boolean;
 }
 
+// ============================================
+// LEI CONSTITUCIONAL DOS MODAIS v3.0
+// DIMENSÃO PADRÃO UNIVERSAL: 98vw × 98vh
+// Esta é a ÚNICA fonte da verdade para dimensões
+// ============================================
+const ALERT_MODAL_DEFAULT_SIZE = { width: 98, height: 98 }; // em vw/vh
+const ALERT_MODAL_MIN_SIZE = { width: 320, height: 180 }; // em px
+
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   AlertDialogContentProps
@@ -42,30 +50,31 @@ const AlertDialogContent = React.forwardRef<
   className, 
   children,
   showMaximize = true,
-  defaultSize = { width: 500, height: 300 },
-  minSize = { width: 320, height: 180 },
+  defaultSize, // IGNORADO - sempre usa 98vw × 98vh
+  minSize = ALERT_MODAL_MIN_SIZE,
   disableResize = false,
   ...props 
 }, ref) => {
-  const [size, setSize] = React.useState(defaultSize);
-  const [isMaximized, setIsMaximized] = React.useState(false);
+  // SEMPRE inicia maximizado por padrão (98vw × 98vh)
+  const [isMaximized, setIsMaximized] = React.useState(true);
+  const [customSize, setCustomSize] = React.useState({ width: 500, height: 300 });
   const [isDragging, setIsDragging] = React.useState<"right" | "bottom" | "corner" | null>(null);
   const startPos = React.useRef({ x: 0, y: 0 });
   const startSize = React.useRef({ width: 0, height: 0 });
 
   const maxSize = React.useMemo(() => ({
-    width: typeof window !== 'undefined' ? window.innerWidth * 0.95 : 1200,
-    height: typeof window !== 'undefined' ? window.innerHeight * 0.95 : 800,
+    width: typeof window !== 'undefined' ? window.innerWidth * 0.98 : 1200,
+    height: typeof window !== 'undefined' ? window.innerHeight * 0.98 : 800,
   }), []);
 
   // Handle resize start
   const handleResizeStart = (e: React.MouseEvent, direction: "right" | "bottom" | "corner") => {
-    if (disableResize) return;
+    if (disableResize || isMaximized) return;
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(direction);
     startPos.current = { x: e.clientX, y: e.clientY };
-    startSize.current = { ...size };
+    startSize.current = { ...customSize };
   };
 
   // Handle resize move
@@ -86,7 +95,7 @@ const AlertDialogContent = React.forwardRef<
         newHeight = Math.min(maxSize.height, Math.max(minSize.height, startSize.current.height + deltaY));
       }
 
-      setSize({ width: newWidth, height: newHeight });
+      setCustomSize({ width: newWidth, height: newHeight });
     };
 
     const handleMouseUp = () => {
@@ -102,16 +111,8 @@ const AlertDialogContent = React.forwardRef<
     };
   }, [isDragging, maxSize.height, maxSize.width, minSize.height, minSize.width, disableResize]);
 
-  // Toggle maximize
+  // Toggle maximize - por padrão já está maximizado (98vw × 98vh)
   const handleMaximize = () => {
-    if (isMaximized) {
-      setSize(defaultSize);
-    } else {
-      setSize({ 
-        width: maxSize.width, 
-        height: maxSize.height 
-      });
-    }
     setIsMaximized(!isMaximized);
   };
 
@@ -126,11 +127,11 @@ const AlertDialogContent = React.forwardRef<
           className,
         )}
         style={{
-          width: isMaximized ? "95vw" : size.width,
-          height: isMaximized ? "95vh" : "auto",
-          minHeight: isMaximized ? "95vh" : size.height,
-          maxWidth: "95vw",
-          maxHeight: "95vh",
+          // LEI CONSTITUCIONAL: 98vw × 98vh como padrão universal
+          width: isMaximized ? "98vw" : customSize.width,
+          height: isMaximized ? "98vh" : customSize.height,
+          maxWidth: "98vw",
+          maxHeight: "98vh",
         }}
         {...props}
       >

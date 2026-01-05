@@ -1,34 +1,49 @@
 // ============================================
-// LEI CONSTITUCIONAL — MODAIS REDIMENSIONÁVEIS v1.0.0
+// LEI CONSTITUCIONAL — MODAIS REDIMENSIONÁVEIS v3.0.0
 // Status: VIGENTE E IMUTÁVEL | RETROATIVO E PROSPECTIVO
+// ATUALIZADO: 2025-01-05 — DIMENSÃO PADRÃO UNIVERSAL 98vw × 98vh
 // ============================================
 
 /**
- * 🏛️ LEI CONSTITUCIONAL DOS MODAIS REDIMENSIONÁVEIS
+ * 🏛️ LEI CONSTITUCIONAL DOS MODAIS REDIMENSIONÁVEIS v3.0
  * 
- * Esta lei estabelece que TODOS os modais (Dialog, AlertDialog, Sheet)
- * da plataforma DEVEM suportar:
+ * REGRA SUPREMA: TODOS os modais (Dialog, AlertDialog, Sheet)
+ * DEVEM iniciar com 98vw × 98vh (98% da viewport).
  * 
- * 1. Redimensionamento horizontal (arrastar borda direita)
- * 2. Redimensionamento vertical (arrastar borda inferior)
- * 3. Redimensionamento diagonal (arrastar canto inferior direito)
- * 4. Maximização para viewport completa (botão maximize)
- * 5. Restauração ao tamanho original (botão minimize)
+ * Esta lei estabelece que TODOS os modais da plataforma DEVEM:
+ * 
+ * 1. Iniciar MAXIMIZADOS por padrão (98vw × 98vh)
+ * 2. Suportar redimensionamento horizontal (arrastar borda direita)
+ * 3. Suportar redimensionamento vertical (arrastar borda inferior)
+ * 4. Suportar redimensionamento diagonal (arrastar canto inferior direito)
+ * 5. Permitir minimização para tamanho menor via botão
+ * 6. Permitir restauração ao tamanho padrão (98vw × 98vh) via botão
  * 
  * ESCOPO:
  * - Retroativo: Todos os modais existentes
- * - Prospectivo: Todos os modais futuros
+ * - Prospectivo: Todos os modais futuros (obrigatório)
  * 
- * IMPLEMENTAÇÃO:
- * - src/components/ui/dialog.tsx — Dialog base redimensionável
- * - src/components/ui/alert-dialog.tsx — AlertDialog base redimensionável
- * - src/components/ui/resizable-dialog.tsx — Legacy (manter compatibilidade)
+ * IMPLEMENTAÇÃO (FONTE DA VERDADE):
+ * - src/components/ui/dialog.tsx — Dialog base (98vw × 98vh)
+ * - src/components/ui/alert-dialog.tsx — AlertDialog base (98vw × 98vh)
+ * - src/components/ui/resizable-dialog.tsx — Legacy (herda comportamento)
+ * 
+ * NOTA: O parâmetro defaultSize é IGNORADO. Todos os modais
+ * sempre abrem em 98vw × 98vh, sem exceção.
  */
 
 export const MODAL_CONSTITUTION = {
-  version: '1.0.0',
+  version: '3.0.0',
   status: 'VIGENTE_E_IMUTAVEL',
   scope: 'RETROATIVO_E_PROSPECTIVO',
+  lastUpdated: '2025-01-05',
+  
+  // REGRA SUPREMA: Dimensão padrão universal
+  UNIVERSAL_DEFAULT: {
+    width: '98vw',
+    height: '98vh',
+    startsMaximized: true,
+  },
   
   // Requisitos obrigatórios
   MANDATORY_REQUIREMENTS: {
@@ -39,23 +54,25 @@ export const MODAL_CONSTITUTION = {
     },
     maximizable: {
       enabled: true,
-      behavior: 'EXPAND_TO_FULL_VIEWPORT',
+      behavior: 'STARTS_MAXIMIZED_98VW_98VH',
     },
     viewport_constraints: {
-      max_width: '95vw',
-      max_height: '95vh',
+      max_width: '98vw',
+      max_height: '98vh',
+      default_width: '98vw',
+      default_height: '98vh',
       overflow_policy: 'SCROLL_ONLY_WHEN_NEEDED',
     },
   },
   
-  // Defaults de tamanho
-  DEFAULT_SIZES: {
-    dialog: { width: 500, height: 400 },
+  // Tamanhos quando minimizado (fallback)
+  MINIMIZED_SIZES: {
+    dialog: { width: 800, height: 600 },
     alertDialog: { width: 500, height: 300 },
     sheet: { width: 400, height: '100vh' },
   },
   
-  // Tamanhos mínimos
+  // Tamanhos mínimos absolutos
   MIN_SIZES: {
     dialog: { width: 320, height: 200 },
     alertDialog: { width: 320, height: 180 },
