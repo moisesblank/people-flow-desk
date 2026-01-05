@@ -20,7 +20,7 @@ import {
   Activity, TrendingUp, Timer, Download, Upload,
   Zap, Target, Medal, BarChart, History, Gavel,
   AlertCircle, FileText, UserX, UserCheck, Wrench,
-  Save, Power, PowerOff
+  Save, Power, PowerOff, Heart
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { LoadingState } from '@/components/LoadingState';
 import { SimuladoFeatureFlagsPanel } from '@/components/gestao/simulados/SimuladoFeatureFlagsPanel';
+import { DisputesPanel } from '@/components/gestao/simulados/DisputesPanel';
+import { AlertsPanel } from '@/components/gestao/simulados/AlertsPanel';
+import { HealthCheckPanel } from '@/components/gestao/simulados/HealthCheckPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 
@@ -1916,14 +1919,22 @@ export default function GestaoSimulados() {
         
         {/* Tabs */}
         <Tabs defaultValue="simulados" className="space-y-4">
-          <TabsList className="grid grid-cols-5 w-full max-w-3xl">
+          <TabsList className="grid grid-cols-7 w-full max-w-4xl">
             <TabsTrigger value="simulados" className="gap-2">
               <Brain className="h-4 w-4" />
               Simulados
             </TabsTrigger>
             <TabsTrigger value="monitoramento" className="gap-2">
               <Activity className="h-4 w-4" />
-              Monitoramento
+              Monitor
+            </TabsTrigger>
+            <TabsTrigger value="contestacoes" className="gap-2">
+              <Gavel className="h-4 w-4" />
+              Contestações
+            </TabsTrigger>
+            <TabsTrigger value="alertas" className="gap-2">
+              <AlertCircle className="h-4 w-4" />
+              Alertas
             </TabsTrigger>
             <TabsTrigger value="ranking" className="gap-2">
               <Trophy className="h-4 w-4" />
@@ -1935,7 +1946,7 @@ export default function GestaoSimulados() {
             </TabsTrigger>
             <TabsTrigger value="flags" className="gap-2">
               <Settings className="h-4 w-4" />
-              Flags
+              Sistema
             </TabsTrigger>
           </TabsList>
           
@@ -1947,6 +1958,14 @@ export default function GestaoSimulados() {
             <MonitoringDashboard />
           </TabsContent>
           
+          <TabsContent value="contestacoes">
+            <DisputesPanel />
+          </TabsContent>
+          
+          <TabsContent value="alertas">
+            <AlertsPanel />
+          </TabsContent>
+          
           <TabsContent value="ranking">
             <RankingPanel />
           </TabsContent>
@@ -1956,7 +1975,10 @@ export default function GestaoSimulados() {
           </TabsContent>
           
           <TabsContent value="flags">
-            <SimuladoFeatureFlagsPanel />
+            <div className="space-y-6">
+              <SimuladoFeatureFlagsPanel />
+              <HealthCheckPanel />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
