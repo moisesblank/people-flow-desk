@@ -218,95 +218,100 @@ const MainContent = memo(({ children }: { children: ReactNode }) => (
 ));
 MainContent.displayName = 'MainContent';
 
-export const AppLayout = memo(function AppLayout({ children }: AppLayoutProps) {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
-  const [isTeamChatOpen, setIsTeamChatOpen] = useState(false);
-  const [isCacheClearing, setIsCacheClearing] = useState(false);
-  const { user, signOut } = useAuth();
-  const { roleLabel, roleColor, isGodMode } = useRolePermissions();
-  const { clearAllCache, forceRefresh, appVersion } = useCacheManager();
-  const navigate = useNavigate();
-  
-  // 🛡️ LOG DE ACESSO A /gestaofc (AUTOMÁTICO)
-  // Loga todos os acessos, especialmente do owner
-  const { isGestaoArea, isOwner, logAction } = useGestaoAccessLog({ enabled: true });
+export const AppLayout = memo(
+  forwardRef<HTMLDivElement, AppLayoutProps>(function AppLayout({ children }, ref) {
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
+    const [isTeamChatOpen, setIsTeamChatOpen] = useState(false);
+    const [isCacheClearing, setIsCacheClearing] = useState(false);
+    const { user, signOut } = useAuth();
+    const { roleLabel, roleColor, isGodMode } = useRolePermissions();
+    const { clearAllCache, forceRefresh, appVersion } = useCacheManager();
+    const navigate = useNavigate();
 
-  const handleClearCache = useCallback(async () => {
-    setIsCacheClearing(true);
-    clearAllCache(true);
-    await forceRefresh();
-    setIsCacheClearing(false);
-  }, [clearAllCache, forceRefresh]);
+    // 🛡️ LOG DE ACESSO A /gestaofc (AUTOMÁTICO)
+    // Loga todos os acessos, especialmente do owner
+    const { isGestaoArea, isOwner, logAction } = useGestaoAccessLog({ enabled: true });
 
-  const openSearch = useCallback(() => setIsSearchOpen(true), []);
-  const closeSearch = useCallback(() => setIsSearchOpen(false), []);
-  const openAI = useCallback(() => setIsAIAssistantOpen(true), []);
-  const closeAI = useCallback(() => setIsAIAssistantOpen(false), []);
-  const closeChat = useCallback(() => setIsTeamChatOpen(false), []);
+    const handleClearCache = useCallback(async () => {
+      setIsCacheClearing(true);
+      clearAllCache(true);
+      await forceRefresh();
+      setIsCacheClearing(false);
+    }, [clearAllCache, forceRefresh]);
 
-  useKeyboardShortcuts(openSearch, closeSearch);
+    const openSearch = useCallback(() => setIsSearchOpen(true), []);
+    const closeSearch = useCallback(() => setIsSearchOpen(false), []);
+    const openAI = useCallback(() => setIsAIAssistantOpen(true), []);
+    const closeAI = useCallback(() => setIsAIAssistantOpen(false), []);
+    const closeChat = useCallback(() => setIsTeamChatOpen(false), []);
 
-  const {
-    notifications,
-    addNotification,
-    markAsRead,
-    markAllAsRead,
-    deleteNotification,
-    clearAll,
-  } = useNotificationsDatabase();
+    useKeyboardShortcuts(openSearch, closeSearch);
 
-  useRealtimeNotifications({ addNotification });
+    const {
+      notifications,
+      addNotification,
+      markAsRead,
+      markAllAsRead,
+      deleteNotification,
+      clearAll,
+    } = useNotificationsDatabase();
 
-  // Welcome notification - só uma vez por sessão
-  useEffect(() => {
-    const hasSeenWelcome = sessionStorage.getItem('hasSeenWelcome');
-    if (!hasSeenWelcome && user) {
-      addNotification({
-        type: "success",
-        title: "Bem-vindo! 🚀",
-        message: "Seu painel de gestão está pronto para uso.",
-      });
-      sessionStorage.setItem('hasSeenWelcome', 'true');
-    }
-  }, [user, addNotification]);
+    useRealtimeNotifications({ addNotification });
 
-  return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <MemoizedSidebar />
-        <SidebarInset className="flex-1">
-          <AppHeader
-            openSearch={openSearch}
-            handleClearCache={handleClearCache}
-            isCacheClearing={isCacheClearing}
-            setIsTeamChatOpen={setIsTeamChatOpen}
-            notifications={notifications}
-            onMarkAsRead={markAsRead}
-            onMarkAllAsRead={markAllAsRead}
-            onDelete={deleteNotification}
-            onClearAll={clearAll}
-            user={user}
-            roleLabel={roleLabel}
-            roleColor={roleColor}
-            isGodMode={isGodMode}
-            signOut={signOut}
-            navigate={navigate}
-            appVersion={appVersion}
-          />
-          <MainContent>{children}</MainContent>
-        </SidebarInset>
+    // Welcome notification - só uma vez por sessão
+    useEffect(() => {
+      const hasSeenWelcome = sessionStorage.getItem("hasSeenWelcome");
+      if (!hasSeenWelcome && user) {
+        addNotification({
+          type: "success",
+          title: "Bem-vindo! 🚀",
+          message: "Seu painel de gestão está pronto para uso.",
+        });
+        sessionStorage.setItem("hasSeenWelcome", "true");
+      }
+    }, [user, addNotification]);
+
+    return (
+      <div ref={ref} className="w-full">
+        <SidebarProvider>
+          <div className="min-h-screen flex w-full">
+            <MemoizedSidebar />
+            <SidebarInset className="flex-1">
+              <AppHeader
+                openSearch={openSearch}
+                handleClearCache={handleClearCache}
+                isCacheClearing={isCacheClearing}
+                setIsTeamChatOpen={setIsTeamChatOpen}
+                notifications={notifications}
+                onMarkAsRead={markAsRead}
+                onMarkAllAsRead={markAllAsRead}
+                onDelete={deleteNotification}
+                onClearAll={clearAll}
+                user={user}
+                roleLabel={roleLabel}
+                roleColor={roleColor}
+                isGodMode={isGodMode}
+                signOut={signOut}
+                navigate={navigate}
+                appVersion={appVersion}
+              />
+              <MainContent>{children}</MainContent>
+            </SidebarInset>
+          </div>
+
+          {/* Modais lazy-loaded */}
+          {isSearchOpen && <GlobalSearch isOpen={isSearchOpen} onClose={closeSearch} />}
+
+          <AIAssistantTrigger onClick={openAI} />
+          {isAIAssistantOpen && (
+            <AIAssistant isOpen={isAIAssistantOpen} onClose={closeAI} context="dashboard" />
+          )}
+
+          {isTeamChatOpen && <TeamChat isOpen={isTeamChatOpen} onClose={closeChat} />}
+        </SidebarProvider>
       </div>
-
-      {/* Modais lazy-loaded */}
-      {isSearchOpen && <GlobalSearch isOpen={isSearchOpen} onClose={closeSearch} />}
-      
-      <AIAssistantTrigger onClick={openAI} />
-      {isAIAssistantOpen && (
-        <AIAssistant isOpen={isAIAssistantOpen} onClose={closeAI} context="dashboard" />
-      )}
-
-      {isTeamChatOpen && <TeamChat isOpen={isTeamChatOpen} onClose={closeChat} />}
-    </SidebarProvider>
-  );
-});
+    );
+  }),
+);
+AppLayout.displayName = "AppLayout";
