@@ -162,3 +162,5 @@ export function MasterUndoIndicator() {
     </motion.div>
   );
 }
+
+export default MasterUndoIndicator;

@@ -548,3 +548,5 @@ export const MasterContextMenu = forwardRef<HTMLDivElement, Record<string, never
   );
 });
 MasterContextMenu.displayName = 'MasterContextMenu';
+
+export default MasterContextMenu;

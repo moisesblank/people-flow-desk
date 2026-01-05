@@ -356,3 +356,5 @@ export function MasterDeleteOverlay() {
     </>
   );
 }
+
+export default MasterDeleteOverlay;
