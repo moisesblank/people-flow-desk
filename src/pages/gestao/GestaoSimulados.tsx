@@ -87,17 +87,17 @@ interface SimuladoFormData {
   title: string;
   description: string;
   duration_minutes: number;
-  tolerance_minutes: number;
+  tolerance_minutes: number | null;
   starts_at: string;
   ends_at: string;
   results_released_at: string;
   is_hard_mode: boolean;
-  max_tab_switches: number;
+  max_tab_switches: number | null;
   requires_camera: boolean;
   shuffle_questions: boolean;
   shuffle_options: boolean;
   points_per_question: number;
-  passing_score: number;
+  passing_score: number | null;
   question_ids: string[];
   hard_mode_override: string;
   maintenance_message: string;
@@ -175,17 +175,17 @@ const EMPTY_FORM: SimuladoFormData = {
   title: '',
   description: '',
   duration_minutes: 180,
-  tolerance_minutes: 15,
+  tolerance_minutes: null,
   starts_at: '',
   ends_at: '',
   results_released_at: '',
   is_hard_mode: false,
-  max_tab_switches: 3,
+  max_tab_switches: null,
   requires_camera: false,
   shuffle_questions: true,
   shuffle_options: true,
   points_per_question: 10,
-  passing_score: 60,
+  passing_score: null,
   question_ids: [],
   hard_mode_override: 'default',
   maintenance_message: '',
@@ -544,13 +544,14 @@ function SimuladoForm({ formData, setFormData, questions, isLoadingQuestions }: 
           </div>
           
           <div className="space-y-2">
-            <Label>Tolerância (min)</Label>
+            <Label>Tolerância (min) <span className="text-muted-foreground text-xs">(opcional)</span></Label>
             <Input
               type="number"
               min={0}
               max={60}
-              value={formData.tolerance_minutes}
-              onChange={(e) => setFormData({ ...formData, tolerance_minutes: parseInt(e.target.value) || 15 })}
+              placeholder="Ex: 15"
+              value={formData.tolerance_minutes ?? ''}
+              onChange={(e) => setFormData({ ...formData, tolerance_minutes: e.target.value === '' ? null : parseInt(e.target.value) })}
             />
             <p className="text-xs text-muted-foreground">Entrada após início</p>
           </div>
@@ -567,24 +568,26 @@ function SimuladoForm({ formData, setFormData, questions, isLoadingQuestions }: 
           </div>
           
           <div className="space-y-2">
-            <Label>Nota Mínima (%)</Label>
+            <Label>Nota Mínima (%) <span className="text-muted-foreground text-xs">(opcional)</span></Label>
             <Input
               type="number"
               min={0}
               max={100}
-              value={formData.passing_score}
-              onChange={(e) => setFormData({ ...formData, passing_score: parseInt(e.target.value) || 60 })}
+              placeholder="Ex: 60"
+              value={formData.passing_score ?? ''}
+              onChange={(e) => setFormData({ ...formData, passing_score: e.target.value === '' ? null : parseInt(e.target.value) })}
             />
           </div>
           
           <div className="space-y-2">
-            <Label>Máx. Trocas Aba</Label>
+            <Label>Máx. Trocas Aba <span className="text-muted-foreground text-xs">(opcional)</span></Label>
             <Input
               type="number"
               min={1}
               max={10}
-              value={formData.max_tab_switches}
-              onChange={(e) => setFormData({ ...formData, max_tab_switches: parseInt(e.target.value) || 3 })}
+              placeholder="Ex: 3"
+              value={formData.max_tab_switches ?? ''}
+              onChange={(e) => setFormData({ ...formData, max_tab_switches: e.target.value === '' ? null : parseInt(e.target.value) })}
             />
           </div>
         </div>
