@@ -76,6 +76,8 @@ const statusConfig = {
   perdido: { label: "Perdido", color: "bg-gray-500", icon: XCircle },
 };
 
+const LEADS_PER_PAGE = 100;
+
 export default function LeadsWhatsApp() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
@@ -85,20 +87,30 @@ export default function LeadsWhatsApp() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const { isOwner, isAdmin, isLoading: roleLoading } = useAdminCheck();
 
-  // Fetch leads
-  const fetchLeads = async () => {
+  const totalPages = Math.ceil(totalCount / LEADS_PER_PAGE);
+
+  // Fetch leads with server-side pagination
+  const fetchLeads = async (page: number = 1) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
+      const from = (page - 1) * LEADS_PER_PAGE;
+      const to = from + LEADS_PER_PAGE - 1;
+
+      const { data, error, count } = await supabase
         .from('whatsapp_leads')
-        .select('*')
-        .order('last_contact', { ascending: false });
+        .select('*', { count: 'exact' })
+        .order('last_contact', { ascending: false })
+        .range(from, to);
 
       if (error) throw error;
       setLeads(data || []);
       setFilteredLeads(data || []);
+      setTotalCount(count || 0);
+      setCurrentPage(page);
     } catch (error) {
       console.error('Error fetching leads:', error);
       toast.error('Erro ao carregar leads');
@@ -233,9 +245,9 @@ export default function LeadsWhatsApp() {
         <div className="flex items-center gap-3">
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Total de Leads</p>
-            <p className="text-3xl font-bold text-primary">{leads.length}</p>
+            <p className="text-3xl font-bold text-primary">{totalCount}</p>
           </div>
-          <Button onClick={fetchLeads} variant="outline" size="icon">
+          <Button onClick={() => fetchLeads(currentPage)} variant="outline" size="icon">
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
@@ -379,6 +391,52 @@ export default function LeadsWhatsApp() {
               </Card>
             );
           })}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t pt-4">
+          <div className="text-sm text-muted-foreground">
+            Mostrando {((currentPage - 1) * LEADS_PER_PAGE) + 1} a {Math.min(currentPage * LEADS_PER_PAGE, totalCount)} de {totalCount} leads
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchLeads(1)}
+              disabled={currentPage === 1 || isLoading}
+            >
+              Primeira
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchLeads(currentPage - 1)}
+              disabled={currentPage === 1 || isLoading}
+            >
+              Anterior
+            </Button>
+            <span className="text-sm px-3">
+              Página {currentPage} de {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchLeads(currentPage + 1)}
+              disabled={currentPage === totalPages || isLoading}
+            >
+              Próxima
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchLeads(totalPages)}
+              disabled={currentPage === totalPages || isLoading}
+            >
+              Última
+            </Button>
+          </div>
         </div>
       )}
 
