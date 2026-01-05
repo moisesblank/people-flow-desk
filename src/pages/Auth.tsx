@@ -43,13 +43,7 @@ import { isOwnerEmail } from "@/lib/security";
 import { getPostLoginRedirect } from "@/core/urlAccessControl";
 import { registerDeviceBeforeSession, getDeviceErrorMessage } from "@/lib/deviceRegistration";
 import { useDeviceGateStore, DeviceGatePayload, DeviceInfo, CurrentDeviceInfo } from "@/state/deviceGateStore";
-import { useSameTypeReplacementStore } from "@/state/sameTypeReplacementStore";
 import { collectFingerprintRawData, generateDeviceName } from "@/lib/deviceFingerprintRaw";
-
-// 🛡️ CRITÉRIO EXPLÍCITO: Getter para setLoginIntent (evita re-render desnecessário)
-const getDeviceGateActions = () => useDeviceGateStore.getState();
-// 🛡️ BEYOND_THE_3_DEVICES: Getter para SameTypeReplacementStore
-const getSameTypeReplacementActions = () => useSameTypeReplacementStore.getState();
 
 // Lazy load componentes pesados (apenas owner usa)
 const EditableText = lazy(() => import("@/components/editor/EditableText").then(m => ({ default: m.EditableText })));
@@ -65,26 +59,86 @@ const ForcePasswordChange = lazy(() => import("@/components/auth/ForcePasswordCh
 // Cores: Vermelho/Azul heroico profundo
 // ============================================
 
-// Spider-Man Deep Space Background (STATIC - no animations per user request)
+// Spider-Man Deep Space Background
 function SpiderBackground() {
   return (
-    <div 
-      className="absolute inset-0 pointer-events-none"
-      style={{
-        background: 'linear-gradient(135deg, hsl(230 40% 6%) 0%, hsl(230 40% 3%) 100%)',
-      }}
-    />
+    <div className="absolute inset-0 overflow-hidden pointer-events-none auth-spider-bg">
+      {/* Spider Web Pattern Layer */}
+      <div className="absolute inset-0 spider-web-layer" />
+      
+      {/* City Stars - New York Night */}
+      {[...Array(60)].map((_, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full spider-star"
+          style={{
+            width: `${1 + Math.random() * 2}px`,
+            height: `${1 + Math.random() * 2}px`,
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 60}%`,
+            background: '#fff',
+            animationDelay: `${Math.random() * 5}s`,
+            animationDuration: `${2 + Math.random() * 3}s`,
+          }}
+        />
+      ))}
+    </div>
   );
 }
 
-// Spider Eyes - DISABLED per user request (no animated glows)
+// Spider Eyes - Vigilant Orbs (Red Glows)
 function SpiderEyes() {
-  return null;
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Left Eye */}
+      <div 
+        className="absolute w-[500px] h-[400px] rounded-full spider-eye-left"
+        style={{
+          top: '10%',
+          left: '5%',
+          background: 'radial-gradient(ellipse, hsl(0 85% 45% / 0.25) 0%, hsl(0 85% 40% / 0.1) 40%, transparent 70%)',
+          filter: 'blur(50px)',
+        }}
+      />
+      {/* Right Eye */}
+      <div 
+        className="absolute w-[400px] h-[350px] rounded-full spider-eye-right"
+        style={{
+          bottom: '15%',
+          right: '8%',
+          background: 'radial-gradient(ellipse, hsl(220 80% 50% / 0.2) 0%, hsl(220 80% 40% / 0.08) 40%, transparent 70%)',
+          filter: 'blur(50px)',
+        }}
+      />
+    </div>
+  );
 }
 
-// Energy Veins - DISABLED per user request (no animated lines)
+// Energy Veins - Power Lines (Red/Blue)
 function SpiderVeins() {
-  return null;
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Red Power Vein */}
+      <div 
+        className="absolute h-[2px] w-1/2 spider-vein-red"
+        style={{ top: '30%' }}
+      />
+      {/* Blue Power Vein */}
+      <div 
+        className="absolute h-[2px] w-1/2 spider-vein-blue"
+        style={{ top: '70%' }}
+      />
+      {/* Diagonal Red */}
+      <div 
+        className="absolute h-[1px] w-3/4 spider-vein-red"
+        style={{ 
+          top: '50%', 
+          transform: 'rotate(-15deg)',
+          animationDelay: '2s',
+        }}
+      />
+    </div>
+  );
 }
 
 // Spider Card Frame - Tech Interface
@@ -370,15 +424,6 @@ export default function Auth() {
   useEffect(() => {
     console.log('[AUTH] 1. Componente montado (/auth)');
     
-    // 🛡️ CLEANUP: Resetar loginIntent ao desmontar a tela de Auth
-    return () => {
-      console.log('[AUTH] Componente desmontado - resetando loginIntent');
-      getDeviceGateActions().setLoginIntent(false);
-    };
-  }, []);
-
-  useEffect(() => {
-    console.log('[AUTH] 2. Verificando parâmetros de URL...');
     const urlParams = new URLSearchParams(window.location.search);
     
     // 🎯 P0 FIX: Detectar reset_token (novo fluxo customizado)
@@ -1029,15 +1074,10 @@ export default function Auth() {
     console.log('[AUTH] === INICIANDO FLUXO DE LOGIN/SIGNUP ===');
     console.log('[AUTH] Timestamp:', new Date().toISOString());
 
-    // 🛡️ CRITÉRIO EXPLÍCITO: Ativar loginIntent ao clicar "Entrar"
-    // Nenhuma UI de device limit pode ser renderizada enquanto loginIntent !== true
-    getDeviceGateActions().setLoginIntent(true);
-
     setErrors({});
 
     if (!isLogin && !acceptTerms) {
       toast.error("Você precisa aceitar os termos de uso");
-      getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em early return
       return;
     }
 
@@ -1082,7 +1122,6 @@ export default function Auth() {
         setErrors(fieldErrors);
         resetTurnstile();
         setIsLoading(false);
-        getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de validação
         return;
       }
 
@@ -1092,57 +1131,35 @@ export default function Auth() {
         // ============================================
         // 🔒 DOGMA I: SESSÃO ÚNICA GLOBAL - MODO BLOQUEIO
         // Verifica se já existe sessão ativa ANTES do login
-        // 🔐 FIX P0: Verificar se o token local corresponde à sessão ativa
-        // Se sim, é o MESMO dispositivo tentando re-logar
         // ============================================
-        const localSessionToken = localStorage.getItem('matriz_session_token');
-        
         try {
           const { data: sessionCheck, error: sessionCheckError } = await supabase.rpc(
             'check_active_session_exists',
-            { 
-              _email: formData.email.toLowerCase().trim(),
-              _device_hash: localSessionToken  // 🔐 FIX: Passar token local para verificar se é mesmo dispositivo
-            }
+            { _email: formData.email.toLowerCase().trim() }
           );
 
           if (!sessionCheckError && sessionCheck && sessionCheck.length > 0 && sessionCheck[0].has_active_session) {
             const activeSession = sessionCheck[0];
+            console.warn('[AUTH] 🔴 BLOQUEIO: Sessão ativa detectada em outro dispositivo:', activeSession);
             
-            // 🔐 FIX P0: Se is_same_device = TRUE, sessão é do MESMO dispositivo
-            // (identificado por ter o token local que corresponde à sessão ativa)
-            // Neste caso, NÃO bloquear - apenas prosseguir (a nova sessão substituirá a antiga)
-            if (activeSession.is_same_device) {
-              console.log('[AUTH] ✅ Sessão ativa é do MESMO dispositivo - prosseguindo com login (substituirá sessão antiga)');
-              // Não bloquear, deixar o login continuar normalmente
-            } else if (formData.email.toLowerCase().trim() === 'moisesblank@gmail.com') {
-              // 👑 OWNER: bypass de sessão única - múltiplas sessões simultâneas permitidas
-              console.log('[AUTH] 👑 OWNER bypass - múltiplas sessões simultâneas permitidas');
-              // Não bloquear, deixar o login continuar normalmente
-            } else {
-              // Sessão ativa em OUTRO dispositivo - bloquear
-              console.warn('[AUTH] 🔴 BLOQUEIO: Sessão ativa detectada em OUTRO dispositivo:', activeSession);
-              
-              toast.error("Sessão ativa detectada", {
-                description: `Você já está logado em: ${activeSession.device_name || activeSession.device_type || 'outro dispositivo'}. Encerre a outra sessão primeiro.`,
-                duration: 8000,
-              });
-              
-              // Mostrar opção de forçar logout
-              setShowForceLogoutOption(true);
-              setPendingEmail(formData.email.toLowerCase().trim());
-              setPendingPassword(formData.password); // 🎯 FIX: Guardar senha para login automático
-              setIsLoading(false);
-              getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset - sessão bloqueada (outro dispositivo)
-              return;
-            }
+            toast.error("Sessão ativa detectada", {
+              description: `Você já está logado em: ${activeSession.device_name || activeSession.device_type || 'outro dispositivo'}. Encerre a outra sessão primeiro.`,
+              duration: 8000,
+            });
+            
+            // Mostrar opção de forçar logout
+            setShowForceLogoutOption(true);
+            setPendingEmail(formData.email.toLowerCase().trim());
+            setPendingPassword(formData.password); // 🎯 FIX: Guardar senha para login automático
+            setIsLoading(false);
+            return;
           }
         } catch (checkErr: any) {
           console.warn('[AUTH] ⚠️ Erro ao verificar sessão ativa (prosseguindo):', checkErr);
           // Se a verificação falhar, permite o login (fail-open temporário para não travar)
         }
 
-        console.log('[AUTH] ✅ Verificação de sessão concluída. Iniciando signInWithPassword...');
+        console.log('[AUTH] ✅ Nenhuma sessão ativa encontrada. Iniciando signInWithPassword...');
 
         const result = await withTimeout(
           'signInWithPassword',
@@ -1169,7 +1186,6 @@ export default function Auth() {
           });
           resetTurnstile();
           setIsLoading(false);
-          getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em bloqueio
           return;
         }
 
@@ -1179,7 +1195,6 @@ export default function Auth() {
           });
           resetTurnstile();
           setIsLoading(false);
-          getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em challenge
           return;
         }
 
@@ -1200,7 +1215,6 @@ export default function Auth() {
           }
           resetTurnstile();
           setIsLoading(false);
-          getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de login
           return;
         }
 
@@ -1214,7 +1228,6 @@ export default function Auth() {
             description: "Sua sessão não foi criada. Tente novamente."
           });
           setIsLoading(false);
-          getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro
           return;
         }
 
@@ -1241,7 +1254,6 @@ export default function Auth() {
           });
           resetTurnstile();
           setIsLoading(false);
-          getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em banimento
           return;
         }
 
@@ -1306,20 +1318,6 @@ export default function Auth() {
             if (!deviceResult.success) {
               console.error('[AUTH][BLOCO3] ❌ Falha no registro de dispositivo:', deviceResult.error);
               
-              // 🛡️ BEYOND_THE_3_DEVICES: Substituição do mesmo tipo
-              if (deviceResult.error === 'SAME_TYPE_REPLACEMENT_REQUIRED') {
-                console.log('[AUTH][BEYOND_3] 🔄 Same-type replacement oferecida - redirecionando');
-                
-                if (deviceResult.sameTypePayload) {
-                  getSameTypeReplacementActions().setPayload(deviceResult.sameTypePayload);
-                }
-                
-                resetTurnstile();
-                setIsLoading(false);
-                navigate('/security/same-type-replacement');
-                return;
-              }
-              
               // FAIL-CLOSED: Bloquear login se limite excedido
               if (deviceResult.error === 'DEVICE_LIMIT_EXCEEDED') {
                 console.log('[AUTH][BLOCO3] 🛡️ Limite excedido - redirecionando para DeviceLimitGate');
@@ -1371,7 +1369,6 @@ export default function Auth() {
               await supabase.auth.signOut();
               resetTurnstile();
               setIsLoading(false);
-              getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de dispositivo
               return;
             }
             
@@ -1492,7 +1489,6 @@ export default function Auth() {
                 await supabase.auth.signOut();
                 resetTurnstile();
                 setIsLoading(false);
-                getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de sessão
                 return;
               }
               
@@ -1505,7 +1501,6 @@ export default function Auth() {
                 await supabase.auth.signOut();
                 resetTurnstile();
                 setIsLoading(false);
-                getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de token
                 return;
               }
 
@@ -1560,7 +1555,6 @@ export default function Auth() {
               await supabase.auth.signOut();
               resetTurnstile();
               setIsLoading(false);
-              getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro catch
               return;
             }
             
@@ -1751,20 +1745,6 @@ export default function Auth() {
               
               if (!deviceResult.success) {
                 console.error('[AUTH][BLOCO3] ❌ Falha no registro de dispositivo pós-2FA:', deviceResult.error);
-                
-                // 🛡️ BEYOND_THE_3_DEVICES: Substituição do mesmo tipo
-                if (deviceResult.error === 'SAME_TYPE_REPLACEMENT_REQUIRED') {
-                  console.log('[AUTH][BEYOND_3] 🔄 Same-type replacement oferecida pós-2FA - redirecionando');
-                  
-                  if (deviceResult.sameTypePayload) {
-                    getSameTypeReplacementActions().setPayload(deviceResult.sameTypePayload);
-                  }
-                  
-                  setShow2FA(false);
-                  setPending2FAUser(null);
-                  navigate('/security/same-type-replacement', { replace: true });
-                  return;
-                }
                 
                 // FAIL-CLOSED: Bloquear login se limite excedido
                 if (deviceResult.error === 'DEVICE_LIMIT_EXCEEDED') {
