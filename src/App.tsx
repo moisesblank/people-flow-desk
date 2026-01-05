@@ -41,19 +41,21 @@ import {
 } from "@/routes";
 
 // 🚀 LAZY LOAD: Componentes pesados
-const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then(m => ({ default: m.AITramonGlobal })));
-const LazyGlobalLogsButton = lazy(() => import("@/components/admin/GlobalLogsButton").then(m => ({ default: m.GlobalLogsButton })));
-const LazyGodModePanel = lazy(() => import("@/components/editor/GodModePanel").then(m => ({ default: m.GodModePanel })));
-const LazyInlineEditor = lazy(() => import("@/components/editor/InlineEditor").then(m => ({ default: m.InlineEditor })));
-const LazyMasterQuickAddMenu = lazy(() => import("@/components/admin/MasterQuickAddMenu").then(m => ({ default: m.MasterQuickAddMenu })));
-const LazyGlobalDuplication = lazy(() => import("@/components/admin/GlobalDuplicationSystem").then(m => ({ default: m.GlobalDuplicationSystem })));
-const LazyMasterUndoIndicator = lazy(() => import("@/components/admin/MasterUndoIndicator").then(m => ({ default: m.MasterUndoIndicator })));
-const LazyMasterDeleteOverlay = lazy(() => import("@/components/admin/MasterDeleteOverlay").then(m => ({ default: m.MasterDeleteOverlay })));
-const LazyMasterContextMenu = lazy(() => import("@/components/admin/MasterContextMenu").then(m => ({ default: m.MasterContextMenu })));
+// P0: Evitar "Component is not a function" por mismatch entre export default vs named export.
+// Regra: tenta named export primeiro, depois cai para default.
+const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then((m: any) => ({ default: m.AITramonGlobal ?? m.default })));
+const LazyGlobalLogsButton = lazy(() => import("@/components/admin/GlobalLogsButton").then((m: any) => ({ default: m.GlobalLogsButton ?? m.default })));
+const LazyGodModePanel = lazy(() => import("@/components/editor/GodModePanel").then((m: any) => ({ default: m.GodModePanel ?? m.default })));
+const LazyInlineEditor = lazy(() => import("@/components/editor/InlineEditor").then((m: any) => ({ default: m.InlineEditor ?? m.default })));
+const LazyMasterQuickAddMenu = lazy(() => import("@/components/admin/MasterQuickAddMenu").then((m: any) => ({ default: m.MasterQuickAddMenu ?? m.default })));
+const LazyGlobalDuplication = lazy(() => import("@/components/admin/GlobalDuplicationSystem").then((m: any) => ({ default: m.GlobalDuplicationSystem ?? m.default })));
+const LazyMasterUndoIndicator = lazy(() => import("@/components/admin/MasterUndoIndicator").then((m: any) => ({ default: m.MasterUndoIndicator ?? m.default })));
+const LazyMasterDeleteOverlay = lazy(() => import("@/components/admin/MasterDeleteOverlay").then((m: any) => ({ default: m.MasterDeleteOverlay ?? m.default })));
+const LazyMasterContextMenu = lazy(() => import("@/components/admin/MasterContextMenu").then((m: any) => ({ default: m.MasterContextMenu ?? m.default })));
 // 🆕 TRANSACTIONAL SAVE SYSTEM
-const LazyGlobalSaveBar = lazy(() => import("@/components/admin/GlobalSaveBar").then(m => ({ default: m.GlobalSaveBar })));
-const LazyNavigationGuard = lazy(() => import("@/components/admin/MasterModeNavigationGuard").then(m => ({ default: m.MasterModeNavigationGuard })));
-const LazyRealtimeEditOverlay = lazy(() => import("@/components/admin/RealtimeEditOverlay").then(m => ({ default: m.RealtimeEditOverlay })));
+const LazyGlobalSaveBar = lazy(() => import("@/components/admin/GlobalSaveBar").then((m: any) => ({ default: m.GlobalSaveBar ?? m.default })));
+const LazyNavigationGuard = lazy(() => import("@/components/admin/MasterModeNavigationGuard").then((m: any) => ({ default: m.MasterModeNavigationGuard ?? m.default })));
+const LazyRealtimeEditOverlay = lazy(() => import("@/components/admin/RealtimeEditOverlay").then((m: any) => ({ default: m.RealtimeEditOverlay ?? m.default })));
 
 // ⚡ QueryClient Sagrado
 // P0: nunca pode quebrar o bootstrap. Se falhar, usa client básico.
