@@ -391,6 +391,10 @@ export function SimuladoQuestionSelector({
   const [searchTerm, setSearchTerm] = useState("");
   const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
   
+  // Paginação - 100 por página
+  const ITEMS_PER_PAGE = 100;
+  const [currentPage, setCurrentPage] = useState(1);
+  
   // Buscar questões já usadas em outros simulados
   const { data: questionsInSimulados = {} } = useQuestionsInSimulados();
   
@@ -560,6 +564,18 @@ export function SimuladoQuestionSelector({
   }, [selectedIds, allQuestions]);
 
   const hasActiveFilters = activeDifficulties.size > 0 || activeBancas.size > 0 || activeAnos.size > 0 || activeMacros.size > 0 || activeMicros.size > 0 || activeTemas.size > 0 || activeSubtemas.size > 0 || activeTypes.size > 0 || searchTerm;
+
+  // Paginação calculada
+  const totalPages = Math.ceil(filteredQuestions.length / ITEMS_PER_PAGE);
+  const paginatedQuestions = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredQuestions.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredQuestions, currentPage]);
+  
+  // Resetar página ao mudar filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeDifficulties, activeBancas, activeAnos, activeMacros, activeMicros, activeTemas, activeSubtemas, activeTypes, searchTerm]);
 
   // Handlers
   const toggleFilter = useCallback(<T,>(set: Set<T>, setFn: React.Dispatch<React.SetStateAction<Set<T>>>, value: T) => {
@@ -862,11 +878,16 @@ export function SimuladoQuestionSelector({
               )}
             </div>
 
-            {/* Actions bar */}
+            {/* Actions bar with pagination info */}
             <div className="px-3 py-2 border-b bg-muted/10 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
-                <strong className="text-foreground">{filteredQuestions.length}</strong> questões
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground">
+                  <strong className="text-foreground">{filteredQuestions.length}</strong> questões
+                  {totalPages > 1 && (
+                    <span className="ml-1">• Página {currentPage}/{totalPages}</span>
+                  )}
+                </span>
+              </div>
               <Button 
                 variant="secondary" 
                 size="sm" 
@@ -881,9 +902,9 @@ export function SimuladoQuestionSelector({
 
             {/* Questions grid */}
             <ScrollArea className="flex-1 p-3">
-              {filteredQuestions.length > 0 ? (
+              {paginatedQuestions.length > 0 ? (
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-                  {filteredQuestions.map((q) => (
+                  {paginatedQuestions.map((q) => (
                     <QuestionCard
                       key={q.id}
                       question={q}
@@ -905,6 +926,83 @@ export function SimuladoQuestionSelector({
                 </div>
               )}
             </ScrollArea>
+            
+            {/* Pagination controls */}
+            {totalPages > 1 && (
+              <div className="px-3 py-2 border-t bg-muted/20 flex items-center justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  className="h-7 w-7 p-0"
+                >
+                  <ChevronLeft className="h-3 w-3" />
+                  <ChevronLeft className="h-3 w-3 -ml-2" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="h-7 px-2 gap-1"
+                >
+                  <ChevronLeft className="h-3 w-3" />
+                  Anterior
+                </Button>
+                
+                <div className="flex items-center gap-1 px-2">
+                  {/* Páginas renderizadas dinamicamente */}
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let page: number;
+                    if (totalPages <= 5) {
+                      page = i + 1;
+                    } else if (currentPage <= 3) {
+                      page = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      page = totalPages - 4 + i;
+                    } else {
+                      page = currentPage - 2 + i;
+                    }
+                    return (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        className={cn(
+                          "h-7 w-7 p-0 text-xs",
+                          currentPage === page && "bg-primary text-primary-foreground"
+                        )}
+                      >
+                        {page}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="h-7 px-2 gap-1"
+                >
+                  Próxima
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="h-7 w-7 p-0"
+                >
+                  <ChevronRight className="h-3 w-3" />
+                  <ChevronRight className="h-3 w-3 -ml-2" />
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* RIGHT: Selected questions */}
