@@ -86,6 +86,7 @@ export function SimuladoPlayer({
   const {
     startAttempt,
     finishAttempt,
+    syncFromServerAttempt,
     state: attemptState,
     config: attemptConfig,
     result: attemptResult,
@@ -303,12 +304,13 @@ export function SimuladoPlayer({
     }
   }, [isExpired, currentState, isFinishing, handleTimeUp]);
 
-  // Efeito: Atualizar attempt quando mudar
+  // Efeito: Atualizar attempt quando mudar (e hidratar attemptId local para permitir finalizar)
   useEffect(() => {
     if (attempt && attemptState.attemptId !== attempt.id) {
       updateAttempt(attempt);
+      syncFromServerAttempt(attempt);
     }
-  }, [attempt, attemptState.attemptId, updateAttempt]);
+  }, [attempt, attemptState.attemptId, updateAttempt, syncFromServerAttempt]);
 
   // Loading state
   if (isLoadingState) {
