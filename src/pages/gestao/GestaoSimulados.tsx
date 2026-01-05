@@ -174,7 +174,7 @@ function utcToLocalDatetime(isoUtc: string | null): string {
 const EMPTY_FORM: SimuladoFormData = {
   title: '',
   description: '',
-  duration_minutes: 180,
+  duration_minutes: 60,
   tolerance_minutes: null,
   starts_at: '',
   ends_at: '',
@@ -539,7 +539,7 @@ function SimuladoForm({ formData, setFormData, questions, isLoadingQuestions }: 
               min={10}
               max={480}
               value={formData.duration_minutes}
-              onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) || 180 })}
+              onChange={(e) => setFormData({ ...formData, duration_minutes: parseInt(e.target.value) || 60 })}
             />
           </div>
           
