@@ -709,12 +709,12 @@ export function SimuladoQuestionSelector({
                 </div>
               )}
 
-              {/* Micro filters - dinâmico baseado em Macro */}
-              {Object.keys(dynamicFilterOptions.micros).length > 0 && (
+              {/* Micro filters - usa dinâmico quando há macro selecionado, senão mostra todos */}
+              {(activeMacros.size > 0 ? Object.keys(dynamicFilterOptions.micros).length > 0 : Object.keys(filterData.micros).length > 0) && (
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Micro</span>
                   <div className="flex gap-1 flex-wrap max-h-16 overflow-y-auto">
-                    {Object.entries(dynamicFilterOptions.micros).slice(0, 8).map(([key, count]) => (
+                    {Object.entries(activeMacros.size > 0 ? dynamicFilterOptions.micros : filterData.micros).slice(0, 8).map(([key, count]) => (
                       <FilterChip
                         key={key}
                         label={key.length > 20 ? key.substring(0, 20) + '...' : key}
@@ -724,19 +724,19 @@ export function SimuladoQuestionSelector({
                         onClick={() => handleMicroToggle(key)}
                       />
                     ))}
-                    {Object.keys(dynamicFilterOptions.micros).length > 8 && (
-                      <span className="text-[10px] text-muted-foreground self-center">+{Object.keys(dynamicFilterOptions.micros).length - 8}</span>
+                    {Object.keys(activeMacros.size > 0 ? dynamicFilterOptions.micros : filterData.micros).length > 8 && (
+                      <span className="text-[10px] text-muted-foreground self-center">+{Object.keys(activeMacros.size > 0 ? dynamicFilterOptions.micros : filterData.micros).length - 8}</span>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Tema filters - dinâmico baseado em Micro */}
-              {Object.keys(dynamicFilterOptions.temas).length > 0 && (
+              {/* Tema filters - usa dinâmico quando há micro selecionado, senão mostra todos */}
+              {(activeMicros.size > 0 ? Object.keys(dynamicFilterOptions.temas).length > 0 : Object.keys(filterData.temas).length > 0) && (
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Tema</span>
                   <div className="flex gap-1 flex-wrap max-h-16 overflow-y-auto">
-                    {Object.entries(dynamicFilterOptions.temas).slice(0, 6).map(([key, count]) => (
+                    {Object.entries(activeMicros.size > 0 ? dynamicFilterOptions.temas : filterData.temas).slice(0, 6).map(([key, count]) => (
                       <FilterChip
                         key={key}
                         label={key.length > 20 ? key.substring(0, 20) + '...' : key}
@@ -746,19 +746,19 @@ export function SimuladoQuestionSelector({
                         onClick={() => handleTemaToggle(key)}
                       />
                     ))}
-                    {Object.keys(dynamicFilterOptions.temas).length > 6 && (
-                      <span className="text-[10px] text-muted-foreground self-center">+{Object.keys(dynamicFilterOptions.temas).length - 6}</span>
+                    {Object.keys(activeMicros.size > 0 ? dynamicFilterOptions.temas : filterData.temas).length > 6 && (
+                      <span className="text-[10px] text-muted-foreground self-center">+{Object.keys(activeMicros.size > 0 ? dynamicFilterOptions.temas : filterData.temas).length - 6}</span>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* Subtema filters - dinâmico baseado em Tema */}
-              {Object.keys(dynamicFilterOptions.subtemas).length > 0 && (
+              {/* Subtema filters - usa dinâmico quando há tema selecionado, senão mostra todos */}
+              {(activeTemas.size > 0 ? Object.keys(dynamicFilterOptions.subtemas).length > 0 : Object.keys(filterData.subtemas).length > 0) && (
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Subtema</span>
                   <div className="flex gap-1 flex-wrap max-h-16 overflow-y-auto">
-                    {Object.entries(dynamicFilterOptions.subtemas).slice(0, 6).map(([key, count]) => (
+                    {Object.entries(activeTemas.size > 0 ? dynamicFilterOptions.subtemas : filterData.subtemas).slice(0, 6).map(([key, count]) => (
                       <FilterChip
                         key={key}
                         label={key.length > 20 ? key.substring(0, 20) + '...' : key}
@@ -768,8 +768,8 @@ export function SimuladoQuestionSelector({
                         onClick={() => toggleFilter(activeSubtemas, setActiveSubtemas, key)}
                       />
                     ))}
-                    {Object.keys(dynamicFilterOptions.subtemas).length > 6 && (
-                      <span className="text-[10px] text-muted-foreground self-center">+{Object.keys(dynamicFilterOptions.subtemas).length - 6}</span>
+                    {Object.keys(activeTemas.size > 0 ? dynamicFilterOptions.subtemas : filterData.subtemas).length > 6 && (
+                      <span className="text-[10px] text-muted-foreground self-center">+{Object.keys(activeTemas.size > 0 ? dynamicFilterOptions.subtemas : filterData.subtemas).length - 6}</span>
                     )}
                   </div>
                 </div>
