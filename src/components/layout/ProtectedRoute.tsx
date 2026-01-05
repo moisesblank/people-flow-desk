@@ -46,6 +46,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // 🔐 ONBOARDING OBRIGATÓRIO: Redirecionar para primeiro acesso
   // Exceto se já estamos na página ou é owner
+  // P0 FIX: Agora o default isComplete=false garante redirecionamento seguro
   if (needsOnboarding && !isOnPrimeiroAcesso && !isOwner) {
     console.log('[ProtectedRoute] Onboarding incompleto, redirecionando para /primeiro-acesso');
     return <Navigate to="/primeiro-acesso" replace />;
