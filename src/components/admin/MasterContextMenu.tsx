@@ -6,7 +6,7 @@
 // Owner exclusivo: moisesblank@gmail.com
 // ============================================
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, forwardRef } from 'react';
 import { useGodMode } from '@/stores/godModeStore';
 import { useMasterActions } from '@/hooks/useMasterActions';
 import { MasterActionConfirmDialog } from './MasterActionConfirmDialog';
@@ -221,7 +221,7 @@ function detectEntityFromElement(element: HTMLElement): { type: string; id: stri
   return null;
 }
 
-export function MasterContextMenu() {
+export const MasterContextMenu = forwardRef<HTMLDivElement, Record<string, never>>(function MasterContextMenu(_props, ref) {
   const { isOwner, isActive } = useGodMode();
   const { 
     pendingAction, 
@@ -361,7 +361,7 @@ export function MasterContextMenu() {
   const adjustedY = menuPosition ? Math.min(menuPosition.y, window.innerHeight - 400) : 0;
 
   return (
-    <>
+    <div ref={ref} className="contents" data-master-context-root>
       {/* Menu Contextual */}
       <AnimatePresence>
         {menuPosition && (
@@ -544,6 +544,7 @@ export function MasterContextMenu() {
         onConfirm={handleConfirmAction}
         onCancel={handleCancelAction}
       />
-    </>
+    </div>
   );
-}
+});
+MasterContextMenu.displayName = 'MasterContextMenu';

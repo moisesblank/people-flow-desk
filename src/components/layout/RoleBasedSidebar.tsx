@@ -351,8 +351,6 @@ const alunoMenuGroups: MenuGroup[] = [
 
 // ✅ forwardRef para compatibilidade com Radix UI (evita warnings de ref)
 export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>>(function RoleBasedSidebar(_props, ref) {
-  // ref é passado mas não usado diretamente pois Sidebar do Radix gerencia seu próprio DOM
-  void ref;
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
@@ -525,78 +523,80 @@ export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>
   };
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <SidebarHeader className="p-4">
-        <div className={`flex flex-col gap-2 ${collapsed ? "items-center" : ""}`}>
-          <div className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl brand-gradient shrink-0">
-              <span className="text-sm font-bold text-primary-foreground">MM</span>
+    <div ref={ref} className="contents" data-role-based-sidebar>
+      <Sidebar collapsible="icon" className="border-r border-sidebar-border">
+        <SidebarHeader className="p-4">
+          <div className={`flex flex-col gap-2 ${collapsed ? "items-center" : ""}`}>
+            <div className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl brand-gradient shrink-0">
+                <span className="text-sm font-bold text-primary-foreground">MM</span>
+              </div>
+              {!collapsed && (
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-sidebar-foreground">Moisés Medeiros</span>
+                  <span className="text-xs text-muted-foreground">Curso de Química v10.1</span>
+                </div>
+              )}
             </div>
-            {!collapsed && (
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold text-sidebar-foreground">Moisés Medeiros</span>
-                <span className="text-xs text-muted-foreground">Curso de Química v10.1</span>
+
+            {!collapsed && role && (
+              <div className="mt-2 flex flex-col gap-1">
+                <span className="text-sm font-bold text-foreground">{userName}</span>
+                <Badge className={`${roleColor} text-xs px-2 py-0.5 w-fit`}>
+                  {isGodMode && <Crown className="w-3 h-3 mr-1" />}
+                  {roleLabel}
+                </Badge>
               </div>
             )}
           </div>
+        </SidebarHeader>
 
-          {!collapsed && role && (
-            <div className="mt-2 flex flex-col gap-1">
-              <span className="text-sm font-bold text-foreground">{userName}</span>
-              <Badge className={`${roleColor} text-xs px-2 py-0.5 w-fit`}>
-                {isGodMode && <Crown className="w-3 h-3 mr-1" />}
-                {roleLabel}
-              </Badge>
-            </div>
-          )}
-        </div>
-      </SidebarHeader>
+        <SidebarContent className="px-2">
+          <SidebarNavDnd
+            collapsed={collapsed}
+            groups={filteredMenuGroups as unknown as DndMenuGroup[]}
+            canEditLayout={isGodModeOwner}
+            getContent={getContent}
+            updateContent={updateContent}
+            isActive={isActive}
+          />
+        </SidebarContent>
 
-      <SidebarContent className="px-2">
-        <SidebarNavDnd
-          collapsed={collapsed}
-          groups={filteredMenuGroups as unknown as DndMenuGroup[]}
-          canEditLayout={isGodModeOwner}
-          getContent={getContent}
-          updateContent={updateContent}
-          isActive={isActive}
-        />
-      </SidebarContent>
+        <SidebarFooter className="p-2">
+          <StorageAndBackupWidget collapsed={collapsed} />
 
-      <SidebarFooter className="p-2">
-        <StorageAndBackupWidget collapsed={collapsed} />
+          <div className={`flex items-center gap-3 p-2 ${collapsed ? "justify-center" : ""}`}>
+            <Avatar className="h-10 w-10 border-2 border-primary/30">
+              {userAvatar ? <AvatarImage src={userAvatar} alt={userName || "User"} /> : null}
+              <AvatarFallback className="bg-primary/20 text-primary font-bold">
+                {getInitials(userName, user?.email)}
+              </AvatarFallback>
+            </Avatar>
 
-        <div className={`flex items-center gap-3 p-2 ${collapsed ? "justify-center" : ""}`}>
-          <Avatar className="h-10 w-10 border-2 border-primary/30">
-            {userAvatar ? <AvatarImage src={userAvatar} alt={userName || "User"} /> : null}
-            <AvatarFallback className="bg-primary/20 text-primary font-bold">
-              {getInitials(userName, user?.email)}
-            </AvatarFallback>
-          </Avatar>
+            {!collapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-sidebar-foreground truncate">{userName || user?.email?.split("@")[0]}</p>
+                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+              </div>
+            )}
 
-          {!collapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">{userName || user?.email?.split("@")[0]}</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
-            </div>
-          )}
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleSignOut}
-                className="shrink-0 text-muted-foreground hover:text-destructive"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Sair</TooltipContent>
-          </Tooltip>
-        </div>
-      </SidebarFooter>
-    </Sidebar>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleSignOut}
+                  className="shrink-0 text-muted-foreground hover:text-destructive"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Sair</TooltipContent>
+            </Tooltip>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+    </div>
   );
 });
 RoleBasedSidebar.displayName = 'RoleBasedSidebar';
