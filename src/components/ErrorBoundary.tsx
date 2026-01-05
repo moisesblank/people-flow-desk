@@ -49,6 +49,11 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({ errorInfo });
 
+    // 🚨 EVIDÊNCIA OBRIGATÓRIA: nunca engolir erro silenciosamente
+    // (console sempre, além do logger estruturado)
+    console.error('[ErrorBoundary] caught error:', error);
+    console.error('[ErrorBoundary] componentStack:', errorInfo.componentStack);
+
     // Log do erro (NÃO auto-recover / NÃO auto-reload)
     logger.error('React Error Boundary caught error', {
       error: error.message,
@@ -70,6 +75,10 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) return this.props.fallback;
 
+      const isAlunoPath = typeof window !== 'undefined' && window.location.pathname.toLowerCase().startsWith('/alunos');
+      const debugParam = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debugErrors');
+      const shouldShowFullError = isAlunoPath || debugParam;
+
       return (
         <div className="p-6">
           <div className="rounded-xl border border-border bg-card p-6">
@@ -83,10 +92,18 @@ export class ErrorBoundary extends Component<Props, State> {
                   A página não será recarregada automaticamente. Use o botão fixo “Refresh Page” para recuperar manualmente.
                 </p>
 
-                {import.meta.env.DEV && this.state.error?.message && (
-                  <pre className="mt-3 text-xs text-muted-foreground bg-muted/40 rounded-lg p-3 overflow-auto max-h-48">
-                    {this.state.error.message}
-                  </pre>
+                {shouldShowFullError && (
+                  <div className="mt-3 space-y-2">
+                    <pre className="text-xs text-muted-foreground bg-muted/40 rounded-lg p-3 overflow-auto max-h-48">
+                      {this.state.error?.message || '(sem message)'}
+                      {this.state.error?.stack ? `\n\n${this.state.error.stack}` : ''}
+                    </pre>
+                    {this.state.errorInfo?.componentStack && (
+                      <pre className="text-xs text-muted-foreground bg-muted/40 rounded-lg p-3 overflow-auto max-h-48">
+                        {this.state.errorInfo.componentStack}
+                      </pre>
+                    )}
+                  </div>
                 )}
 
                 <div className="mt-4 flex flex-wrap gap-2">
