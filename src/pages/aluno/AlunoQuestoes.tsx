@@ -646,42 +646,42 @@ export default function AlunoQuestoes() {
   const [rapidoTreinoOpen, setRapidoTreinoOpen] = useState(false);
   const [rapidoTreinoQuestions, setRapidoTreinoQuestions] = useState<Question[]>([]);
   
-  // BLOCK_04: REAL-TIME MIRRORING - Mesma query de /gestaofc/questoes
-  const { data: questions = [], isLoading: questionsLoading } = useQuery({
-    queryKey: ['student-questions', 'MODO_TREINO'],
+  // BLOCK_PAGINATION: Paginação server-side (ESCALA 5000+)
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 50;
+  
+  // BLOCK_04: PAGINAÇÃO SERVER-SIDE - Substituiu loop 45k
+  const { data: questionsData, isLoading: questionsLoading } = useQuery({
+    queryKey: ['student-questions', 'MODO_TREINO', currentPage, ITEMS_PER_PAGE],
     queryFn: async () => {
-      const BATCH_SIZE = 1000;
-      const MAX = 45000;
-      let from = 0;
-      let all: any[] = [];
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
 
-      while (from < MAX) {
-        const to = Math.min(from + BATCH_SIZE - 1, MAX - 1);
+      const { data, error, count } = await supabase
+        .from('quiz_questions')
+        .select('*', { count: 'exact' })
+        .contains('tags', ['MODO_TREINO'])
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
-        const { data, error } = await supabase
-          .from('quiz_questions')
-          .select('*')
-          .contains('tags', ['MODO_TREINO'])
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-          .range(from, to);
+      if (error) throw error;
 
-        if (error) throw error;
-
-        const batch = data || [];
-        all = all.concat(batch);
-
-        if (batch.length < BATCH_SIZE) break;
-        from += BATCH_SIZE;
-      }
-
-      return all.map(q => ({
+      const mapped = (data || []).map(q => ({
         ...q,
         options: Array.isArray(q.options) ? (q.options as unknown as QuestionOption[]) : [],
         difficulty: (q.difficulty || 'medio') as "facil" | "medio" | "dificil",
       })) as Question[];
+
+      return { data: mapped, totalCount: count || 0 };
     },
+    staleTime: 0,
   });
+
+  // Extrair dados da query
+  const questions = questionsData?.data || [];
+  const totalCount = questionsData?.totalCount || 0;
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   // BLOCK_11: Buscar tentativas do usuário (métricas)
   const { data: attempts = [] } = useQuery({
@@ -1180,11 +1180,11 @@ export default function AlunoQuestoes() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Mostrando <strong>{filteredQuestions.length}</strong> questões
+              Mostrando <strong>{filteredQuestions.length}</strong> de <strong>{totalCount.toLocaleString('pt-BR')}</strong> questões
             </p>
           </div>
 
-          {filteredQuestions.slice(0, 100).map((questao) => {
+          {filteredQuestions.map((questao) => {
             const attempt = attemptsByQuestion.get(questao.id);
             const hasAttempt = !!attempt;
             const isCorrect = attempt?.is_correct;
@@ -1239,10 +1239,36 @@ export default function AlunoQuestoes() {
             );
           })}
 
-          {filteredQuestions.length > 100 && (
-            <p className="text-center text-sm text-muted-foreground py-4">
-              Mostrando 100 de {filteredQuestions.length} questões. Use os filtros para refinar.
-            </p>
+          {/* PAGINAÇÃO SERVER-SIDE */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 border-t border-border/50">
+              <p className="text-sm text-muted-foreground">
+                Página {currentPage} de {totalPages} ({totalCount.toLocaleString('pt-BR')} questões)
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1 || questionsLoading}
+                >
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  Anterior
+                </Button>
+                <span className="text-sm font-medium px-3 py-1 bg-muted rounded">
+                  {currentPage} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages || questionsLoading}
+                >
+                  Próxima
+                  <ArrowRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
           )}
         </div>
       )}

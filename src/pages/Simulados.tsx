@@ -38,39 +38,24 @@ export default function Simulados() {
   const { mutate: startAttempt, isPending: isStarting } = useStartQuizAttempt();
   const { mutate: submitQuiz, isPending: isSubmitting } = useSubmitQuiz();
 
-  // QUESTION_DOMAIN: Buscar questões com tag SIMULADOS
+  // QUESTION_DOMAIN: Buscar questões com tag SIMULADOS (ESCALA 5000+: query limitada)
   const { data: simuladosQuestions, isLoading: isLoadingSimuladosQuestions } = useQuery({
     queryKey: ['questions', 'SIMULADOS'],
     queryFn: async () => {
-      // ⚡ ESCALA 45K: Batching via range() para superar default 1000
-      const BATCH_SIZE = 1000;
-      const MAX = 45000;
-      let from = 0;
-      let all: any[] = [];
+      // ⚡ ESCALA 5000+: Query limitada - não carrega tudo
+      // Simulados usa questões pré-cadastradas nos quizzes, esta query é apenas para estatísticas
+      const { data, error, count } = await supabase
+        .from('quiz_questions')
+        .select('id, question_text, difficulty, banca, ano, macro, micro, points, tags, is_active', { count: 'exact' })
+        .contains('tags', ['SIMULADOS'])
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(500); // Limite para estatísticas - não precisa de todas
 
-      while (from < MAX) {
-        const to = Math.min(from + BATCH_SIZE - 1, MAX - 1);
-
-        const { data, error } = await supabase
-          .from('quiz_questions')
-          .select('id, question_text, difficulty, banca, ano, macro, micro, points, tags, is_active')
-          .contains('tags', ['SIMULADOS'])
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-          .range(from, to);
-
-        if (error) throw error;
-
-        const batch = data || [];
-        all = all.concat(batch);
-
-        if (batch.length < BATCH_SIZE) break;
-        from += BATCH_SIZE;
-      }
-
-      return all;
+      if (error) throw error;
+      return { data: data || [], totalCount: count || 0 };
     },
-    staleTime: 0,
+    staleTime: 30000, // 30s cache
   });
 
   const simulados = quizzes?.filter((q) => q.quiz_type === 'simulado') || [];
@@ -268,11 +253,11 @@ export default function Simulados() {
                   <div className="flex items-center justify-center py-8">
                     <LoadingState />
                   </div>
-                ) : simuladosQuestions && simuladosQuestions.length > 0 ? (
+                ) : simuladosQuestions?.data && simuladosQuestions.data.length > 0 ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between mb-4">
                       <Badge variant="outline" className="text-sm">
-                        {simuladosQuestions.length} questões disponíveis
+                        {simuladosQuestions.totalCount.toLocaleString('pt-BR')} questões disponíveis
                       </Badge>
                       <Badge className="bg-amber-500 text-white">
                         <Trophy className="h-3 w-3 mr-1" />
@@ -280,7 +265,7 @@ export default function Simulados() {
                       </Badge>
                     </div>
                     <div className="grid gap-2 max-h-[400px] overflow-y-auto pr-2">
-                      {simuladosQuestions.map((q: any, i: number) => (
+                      {simuladosQuestions.data.map((q: any, i: number) => (
                         <div 
                           key={q.id}
                           className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
