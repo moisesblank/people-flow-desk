@@ -5,7 +5,7 @@
 // Owner exclusivo: moisesblank@gmail.com
 // ============================================
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, AlertTriangle, Loader2, X, Edit, Copy, Check, Zap } from 'lucide-react';
 import { useGodMode } from '@/stores/godModeStore';
@@ -74,7 +74,7 @@ function detectEntityFromElement(element: HTMLElement): { type: string; id: stri
   return null;
 }
 
-export function MasterDeleteOverlay() {
+export const MasterDeleteOverlay = forwardRef<HTMLDivElement, Record<string, never>>(function MasterDeleteOverlay(_props, ref) {
   const { isOwner, isActive } = useGodMode();
   const { removeEntity, getRemovePreview, isRemoving } = useMasterRemove();
   
@@ -220,7 +220,7 @@ export function MasterDeleteOverlay() {
   if (!isOwner || !isActive) return null;
 
   return (
-    <>
+    <div ref={ref}>
       {/* Menu de ações flutuante */}
       <AnimatePresence>
         {actionMenuPosition && selectedItem && (
@@ -353,8 +353,9 @@ export function MasterDeleteOverlay() {
           <span className="text-primary font-medium">SHIFT + Clique</span> para excluir item
         </motion.div>
       )}
-    </>
+    </div>
   );
-}
+});
 
+MasterDeleteOverlay.displayName = 'MasterDeleteOverlay';
 export default MasterDeleteOverlay;
