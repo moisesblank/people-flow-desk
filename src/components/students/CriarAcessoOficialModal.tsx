@@ -630,15 +630,70 @@ export function CriarAcessoOficialModal({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 pt-2">
             {/* ============================================ */}
-            {/* CAMPOS OBRIGATÓRIOS */}
+            {/* 🔒 PASSO 1: CPF — OBRIGATÓRIO + VALIDAÇÃO RECEITA FEDERAL */}
+            {/* O CPF é o PRIMEIRO campo. Só após validação libera o resto. */}
             {/* ============================================ */}
-            
-            {/* Nome */}
+            <FormField
+              control={form.control}
+              name="cpf"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    <CreditCard className="h-4 w-4" />
+                    CPF * 
+                    <span className="text-[10px] text-muted-foreground ml-1">
+                      (validado na Receita Federal)
+                    </span>
+                  </FormLabel>
+                  <FormControl>
+                    <CPFInput
+                      value={field.value || ""}
+                      onChange={(val) => {
+                        field.onChange(val);
+                        // Reset validação quando CPF muda
+                        if (cpfValidated) {
+                          setCpfValidated(false);
+                          setNomeOficialReceita(null);
+                          form.setValue("nome", "", { shouldValidate: false });
+                        }
+                      }}
+                      validateOnBlur={true}
+                      showStatusIcon={true}
+                      showSecurityBadge={true}
+                      disabled={isSubmitting}
+                      onValidationComplete={(isValid, nome) => {
+                        setCpfValidated(isValid);
+                        setCpfValidating(false);
+                        if (isValid && nome) {
+                          // 🔒 CONSTITUIÇÃO v10.x — Nome da Receita é OBRIGATÓRIO e IMUTÁVEL
+                          setNomeOficialReceita(nome);
+                          form.setValue("nome", nome, { shouldValidate: true });
+                          toast.success("✅ CPF validado na Receita Federal!", {
+                            description: `Nome vinculado: ${nome}`
+                          });
+                        } else {
+                          setNomeOficialReceita(null);
+                        }
+                      }}
+                      className="border-muted-foreground/30"
+                    />
+                  </FormControl>
+                  <FormDescription className="text-[10px]">
+                    CPF será validado na Receita Federal. Deve ser único no sistema.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* ============================================ */}
+            {/* 🔒 PASSO 2: NOME — PREENCHIDO AUTOMATICAMENTE APÓS CPF */}
+            {/* ============================================ */}
             <FormField
               control={form.control}
               name="nome"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className={cn(!cpfValidated && "opacity-50")}>
                   <FormLabel className="flex items-center gap-1">
                     <User className="h-4 w-4" />
                     Nome Completo Vinculado ao CPF *
@@ -651,19 +706,19 @@ export function CriarAcessoOficialModal({
                   <FormControl>
                     <Input 
                       {...field} 
-                      placeholder={nomeOficialReceita ? nomeOficialReceita : "Valide o CPF primeiro"}
+                      placeholder={cpfValidated ? nomeOficialReceita || "" : "Aguardando validação do CPF..."}
                       className={cn(
                         "border-emerald-500/30 focus:border-emerald-500",
                         nomeOficialReceita && "bg-muted/50 cursor-not-allowed"
                       )}
-                      disabled={isSubmitting || !!nomeOficialReceita}
+                      disabled={isSubmitting || !cpfValidated || !!nomeOficialReceita}
                       readOnly={!!nomeOficialReceita}
                     />
                   </FormControl>
                   <FormDescription className="text-[10px]">
                     {nomeOficialReceita 
                       ? "🔒 Nome preenchido automaticamente pela Receita Federal"
-                      : "Preencha o CPF para vincular o nome automaticamente"
+                      : "⏳ Aguarde a validação do CPF acima"
                     }
                   </FormDescription>
                   <FormMessage />
@@ -923,62 +978,6 @@ export function CriarAcessoOficialModal({
               )}
             />
 
-            {/* ============================================ */}
-            {/* CPF — OBRIGATÓRIO + VALIDAÇÃO RECEITA FEDERAL */}
-            {/* ============================================ */}
-            <FormField
-              control={form.control}
-              name="cpf"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-1">
-                    <CreditCard className="h-4 w-4" />
-                    CPF * 
-                    <span className="text-[10px] text-muted-foreground ml-1">
-                      (validado na Receita Federal)
-                    </span>
-                  </FormLabel>
-                  <FormControl>
-                    <CPFInput
-                      value={field.value || ""}
-                      onChange={(val) => {
-                        field.onChange(val);
-                        // Reset validação quando CPF muda
-                        if (cpfValidated) {
-                          setCpfValidated(false);
-                          setNomeOficialReceita(null);
-                          form.setValue("nome", "", { shouldValidate: false });
-                        }
-                      }}
-                      validateOnBlur={true}
-                      showStatusIcon={true}
-                      showSecurityBadge={true}
-                      disabled={isSubmitting}
-                      onValidationComplete={(isValid, nome) => {
-                        setCpfValidated(isValid);
-                        setCpfValidating(false);
-                        if (isValid && nome) {
-                          // 🔒 CONSTITUIÇÃO v10.x — Nome da Receita é OBRIGATÓRIO e IMUTÁVEL
-                          // O primeiro nome DEVE bater — armazena nome oficial para validação
-                          setNomeOficialReceita(nome);
-                          form.setValue("nome", nome, { shouldValidate: true });
-                          toast.success("✅ CPF validado na Receita Federal!", {
-                            description: `Nome vinculado: ${nome}`
-                          });
-                        } else {
-                          setNomeOficialReceita(null);
-                        }
-                      }}
-                      className="border-muted-foreground/30"
-                    />
-                  </FormControl>
-                  <FormDescription className="text-[10px]">
-                    CPF será validado na Receita Federal. Deve ser único no sistema.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             {/* ============================================ */}
             {/* CAMPOS ADICIONAIS (sempre visíveis) */}
