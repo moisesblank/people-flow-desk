@@ -69,6 +69,7 @@ function useBrowserConsoleLogs(enabled: boolean) {
         .join(' ');
       
       // 🛡️ Ignorar logs do próprio sistema de logs para evitar loop
+      // + ruído conhecido que pode gerar spam e travar UI do Owner
       const ignorePatterns = [
         '[Logger]',
         '[System-Log]',
@@ -77,6 +78,10 @@ function useBrowserConsoleLogs(enabled: boolean) {
         '[PERF-',
         '[ReactiveStore]',
         '[SessionGuard]',
+        // React/Radix warnings ruidosos (podem disparar em loop durante render)
+        'forwardRef',
+        'Function components cannot be given refs',
+        'Check the render method of `DialogContent`',
       ];
       if (ignorePatterns.some(p => message.includes(p))) return;
 
