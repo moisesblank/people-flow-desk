@@ -8,8 +8,11 @@ import { lazy } from "react";
 import { ProtectedPage } from "./routeHelpers";
 import { CaseInsensitiveAlunosRedirect } from "@/components/routing/CaseInsensitiveAlunosRedirect";
 
-// Lazy imports - Central do Aluno
-const AlunosRouteSwitcher = lazy(() => import("@/pages/AlunosRouteSwitcher"));
+// ✅ P0: /alunos NÃO pode depender de chunk lazy para existir.
+// Root-cause fix: evitar Suspense infinito se o chunk do switcher falhar/stallar.
+import AlunosRouteSwitcher from "@/pages/AlunosRouteSwitcher";
+
+// Lazy imports - Central do Aluno (subrotas)
 const AlunoDashboard = lazy(() => import("@/pages/aluno/AlunoDashboard"));
 const AlunoLivroWeb = lazy(() => import("@/pages/aluno/AlunoLivroWeb"));
 const AlunoCursos = lazy(() => import("@/pages/aluno/AlunoCursos"));

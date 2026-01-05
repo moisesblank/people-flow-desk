@@ -165,7 +165,7 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // ============================================
   if (isActuallyLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 relative z-10">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
       </div>
     );

@@ -26,7 +26,7 @@ export const PageLoader = memo(() => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center relative z-10">
       <div className="flex flex-col items-center gap-4 p-6 text-center">
         <div className="h-7 w-7 border-2 border-foreground/60 border-t-transparent rounded-full animate-spin" />
         <div className="space-y-1">
