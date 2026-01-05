@@ -24,6 +24,7 @@ import { ManualRefreshButton } from "@/components/admin/ManualRefreshButton";
 // LegacyDomainBlocker REMOVIDO - domínio gestao.* descontinuado
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
+import { supabase } from "@/integrations/supabase/client";
 
 // ⚡ PROVIDERS CONSOLIDADOS
 import { AppProviders } from "@/contexts/AppProviders";
@@ -68,6 +69,68 @@ const queryClient = (() => {
 
 // Listener global + prefetch
 if (typeof window !== 'undefined') {
+  // ============================================
+  // 🧾 FORENSIC FATAL LOGGER (P0)
+  // Captura erros fatais (production) para diagnóstico de "tela preta"
+  // Sem secrets no client: usa invoke() com token do usuário quando existir
+  // ============================================
+  if (!(window as any).__fatalLoggerInstalled) {
+    (window as any).__fatalLoggerInstalled = true;
+
+    let lastSentAt = 0;
+    const shouldSend = () => {
+      const now = Date.now();
+      if (now - lastSentAt < 1500) return false;
+      lastSentAt = now;
+      return true;
+    };
+
+    const safeString = (v: unknown) => {
+      try {
+        if (v instanceof Error) return `${v.name}: ${v.message}\n${v.stack || ''}`.trim();
+        if (typeof v === 'string') return v;
+        return JSON.stringify(v);
+      } catch {
+        return String(v);
+      }
+    };
+
+    const send = (payload: Record<string, unknown>) => {
+      if (!shouldSend()) return;
+      supabase.functions
+        .invoke('log-writer', {
+          body: {
+            timestamp: new Date().toISOString(),
+            severity: 'error',
+            triggered_action: 'fatal_runtime_error',
+            affected_url_or_area: typeof window !== 'undefined' ? window.location.href : 'unknown',
+            error_message: safeString(payload),
+          },
+        })
+        .catch(() => {
+          // no-op: nunca bloquear render
+        });
+    };
+
+    window.addEventListener('error', (event) => {
+      send({
+        type: 'window.error',
+        message: event.message,
+        filename: (event as any).filename,
+        lineno: (event as any).lineno,
+        colno: (event as any).colno,
+        error: safeString((event as any).error),
+      });
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+      send({
+        type: 'window.unhandledrejection',
+        reason: safeString((event as any).reason),
+      });
+    });
+  }
+
   window.addEventListener('mm-clear-cache', () => {
     queryClient.clear();
     queryClient.invalidateQueries();
