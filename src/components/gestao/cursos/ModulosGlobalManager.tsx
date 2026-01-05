@@ -4,7 +4,7 @@
 // Hierarquia: Curso → Subcategoria → Módulo → Aulas → Vídeo
 // ============================================
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -846,21 +846,28 @@ export function ModulosGlobalManager() {
   const { data: modules, isLoading, refetch } = useAllModules();
   const { data: courses } = useCoursesDropdown();
 
-  // Realtime
+  // Realtime com debounce 5s (evita Thundering Herd)
+  const invalidateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedInvalidateModules = useCallback(() => {
+    if (invalidateTimeoutRef.current) clearTimeout(invalidateTimeoutRef.current);
+    invalidateTimeoutRef.current = setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['gestao-all-modules'] });
+      queryClient.invalidateQueries({ queryKey: ['gestao-module-lessons'] });
+    }, 5000);
+  }, [queryClient]);
+
   useEffect(() => {
     const channel = supabase
       .channel('modules-global-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'modules' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['gestao-all-modules'] });
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'lessons' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['gestao-all-modules'] });
-        queryClient.invalidateQueries({ queryKey: ['gestao-module-lessons'] });
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'modules' }, debouncedInvalidateModules)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lessons' }, debouncedInvalidateModules)
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
-  }, [queryClient]);
+    return () => {
+      if (invalidateTimeoutRef.current) clearTimeout(invalidateTimeoutRef.current);
+      supabase.removeChannel(channel);
+    };
+  }, [debouncedInvalidateModules]);
 
   // Mutations
   const createModule = useMutation({

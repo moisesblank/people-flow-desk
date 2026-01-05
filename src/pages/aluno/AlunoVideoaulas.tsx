@@ -4,7 +4,7 @@
 // Suporta ?aula=UUID para abrir diretamente via QR Code
 // ============================================
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -150,16 +150,25 @@ export default function AlunoVideoaulas() {
     return lesson.youtube_video_id || lesson.panda_video_id || "";
   };
 
-  // Realtime sync
+  // Realtime sync com debounce (5s para conteúdo de gestão - evita Thundering Herd)
+  const invalidateRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debouncedInvalidate = useCallback(() => {
+    if (invalidateRef.current) clearTimeout(invalidateRef.current);
+    invalidateRef.current = setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['aluno-videoaulas'] });
+    }, 5000); // 5s debounce para lessons
+  }, [queryClient]);
+
   useEffect(() => {
     const channel = supabase
       .channel('videoaulas-aluno-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'lessons' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['aluno-videoaulas'] });
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lessons' }, debouncedInvalidate)
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [queryClient]);
+    return () => {
+      if (invalidateRef.current) clearTimeout(invalidateRef.current);
+      supabase.removeChannel(channel);
+    };
+  }, [debouncedInvalidate]);
 
   // Filtrar lições por busca
   const filteredLessons = useMemo(() => {
