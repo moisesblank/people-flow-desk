@@ -128,36 +128,47 @@ interface AuditLog {
 }
 
 // ============================================
-// CONSTANTES E HELPERS
+// CONSTANTES E HELPERS — BRASÍLIA TIME (BRT) AUTHORITY
 // ============================================
+import { fromZonedTime, toZonedTime, format as formatTz } from 'date-fns-tz';
 
 /**
- * Converte datetime-local (horário local) para ISO UTC (para salvar no banco)
- * datetime-local: "2026-01-05T08:00" (local)
- * Resultado: "2026-01-05T11:00:00.000Z" (UTC, considerando Brasil UTC-3)
+ * GOVERNANÇA DE TIMEZONE — BRASÍLIA TIME (America/Sao_Paulo)
+ * Autoridade única de tempo para toda a plataforma.
+ * Nunca confiar no timezone do navegador do usuário.
+ */
+const BRASILIA_TIMEZONE = 'America/Sao_Paulo';
+
+/**
+ * Converte datetime-local (input em Brasília Time) para ISO UTC (para salvar no banco)
+ * Input: "2026-01-05T08:00" (Brasília Time)
+ * Output: "2026-01-05T11:00:00.000Z" (UTC)
+ * 
+ * IMPORTANTE: O input datetime-local é SEMPRE interpretado como Brasília Time,
+ * independente do timezone do navegador do usuário.
  */
 function localDatetimeToUTC(localDatetime: string): string | null {
   if (!localDatetime) return null;
-  // datetime-local não tem timezone, então new Date() interpreta como local
-  const date = new Date(localDatetime);
-  return date.toISOString();
+  // Interpreta o datetime como Brasília Time e converte para UTC
+  const brasiliaDate = fromZonedTime(localDatetime, BRASILIA_TIMEZONE);
+  return brasiliaDate.toISOString();
 }
 
 /**
- * Converte ISO UTC (do banco) para datetime-local (horário local, para exibir no input)
- * ISO: "2026-01-05T11:00:00.000Z" (UTC)
- * Resultado: "2026-01-05T08:00" (local, para datetime-local input)
+ * Converte ISO UTC (do banco) para datetime-local (Brasília Time, para exibir no input)
+ * Input: "2026-01-05T11:00:00.000Z" (UTC)
+ * Output: "2026-01-05T08:00" (Brasília Time)
+ * 
+ * IMPORTANTE: O output é SEMPRE em Brasília Time,
+ * independente do timezone do navegador do usuário.
  */
 function utcToLocalDatetime(isoUtc: string | null): string {
   if (!isoUtc) return '';
   const date = new Date(isoUtc);
+  // Converte UTC para Brasília Time
+  const brasiliaDate = toZonedTime(date, BRASILIA_TIMEZONE);
   // Formata para datetime-local (YYYY-MM-DDTHH:mm)
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  return formatTz(brasiliaDate, "yyyy-MM-dd'T'HH:mm", { timeZone: BRASILIA_TIMEZONE });
 }
 
 const EMPTY_FORM: SimuladoFormData = {
