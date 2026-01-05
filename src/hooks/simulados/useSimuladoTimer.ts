@@ -6,7 +6,7 @@
  * Não depende de clock local para decisões críticas.
  */
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 
 export interface TimerState {
   timeRemaining: number; // segundos
@@ -40,8 +40,13 @@ export function useSimuladoTimer(options: UseSimuladoTimerOptions) {
     onCritical,
   } = options;
 
+  // Thresholds em segundos (estáveis)
+  const warningThreshold = warningThresholdMinutes * 60;
+  const criticalThreshold = criticalThresholdMinutes * 60;
+  const totalDuration = durationMinutes * 60;
+
   const [state, setState] = useState<TimerState>({
-    timeRemaining: durationMinutes * 60,
+    timeRemaining: totalDuration,
     timeElapsed: 0,
     isExpired: false,
     isWarning: false,
@@ -49,83 +54,82 @@ export function useSimuladoTimer(options: UseSimuladoTimerOptions) {
     progress: 0,
   });
 
-  // Flags para evitar callbacks duplicados
-  const [hasCalledWarning, setHasCalledWarning] = useState(false);
-  const [hasCalledCritical, setHasCalledCritical] = useState(false);
-  const [hasCalledExpire, setHasCalledExpire] = useState(false);
-
-  // Thresholds em segundos
-  const warningThreshold = warningThresholdMinutes * 60;
-  const criticalThreshold = criticalThresholdMinutes * 60;
-  const totalDuration = durationMinutes * 60;
+  // Usar refs para flags de callback (evita re-render loops)
+  const hasCalledWarningRef = useRef(false);
+  const hasCalledCriticalRef = useRef(false);
+  const hasCalledExpireRef = useRef(false);
+  
+  // Refs para callbacks (estabilidade)
+  const onExpireRef = useRef(onExpire);
+  const onWarningRef = useRef(onWarning);
+  const onCriticalRef = useRef(onCritical);
+  
+  // Atualizar refs quando callbacks mudam
+  useEffect(() => {
+    onExpireRef.current = onExpire;
+    onWarningRef.current = onWarning;
+    onCriticalRef.current = onCritical;
+  }, [onExpire, onWarning, onCritical]);
 
   /**
-   * Calcula estado baseado no tempo atual
+   * Loop de atualização do timer - ESTÁVEL
    */
-  const calculateState = useCallback((): TimerState => {
-    if (!startedAt) {
-      return {
+  useEffect(() => {
+    if (!enabled || !startedAt) {
+      // Reset state quando desabilitado
+      setState({
         timeRemaining: totalDuration,
         timeElapsed: 0,
         isExpired: false,
         isWarning: false,
         isCritical: false,
         progress: 0,
-      };
+      });
+      return;
     }
 
-    const now = new Date();
-    const elapsedMs = now.getTime() - startedAt.getTime();
-    const elapsedSeconds = Math.floor(elapsedMs / 1000);
-    const remainingSeconds = Math.max(0, totalDuration - elapsedSeconds);
-
-    const isExpired = remainingSeconds === 0;
-    const isWarning = remainingSeconds <= warningThreshold && remainingSeconds > criticalThreshold;
-    const isCritical = remainingSeconds <= criticalThreshold && remainingSeconds > 0;
-    const progress = Math.min(100, (elapsedSeconds / totalDuration) * 100);
-
-    return {
-      timeRemaining: remainingSeconds,
-      timeElapsed: elapsedSeconds,
-      isExpired,
-      isWarning,
-      isCritical,
-      progress,
-    };
-  }, [startedAt, totalDuration, warningThreshold, criticalThreshold]);
-
-  /**
-   * Loop de atualização
-   */
-  useEffect(() => {
-    if (!enabled || !startedAt) return;
-
     const update = () => {
-      const newState = calculateState();
-      setState(newState);
+      const now = new Date();
+      const elapsedMs = now.getTime() - startedAt.getTime();
+      const elapsedSeconds = Math.floor(elapsedMs / 1000);
+      const remainingSeconds = Math.max(0, totalDuration - elapsedSeconds);
 
-      // Callbacks de threshold (uma vez cada)
-      if (newState.isWarning && !hasCalledWarning) {
-        setHasCalledWarning(true);
-        onWarning?.();
+      const isExpired = remainingSeconds === 0;
+      const isWarning = remainingSeconds <= warningThreshold && remainingSeconds > criticalThreshold;
+      const isCritical = remainingSeconds <= criticalThreshold && remainingSeconds > 0;
+      const progress = Math.min(100, (elapsedSeconds / totalDuration) * 100);
+
+      setState({
+        timeRemaining: remainingSeconds,
+        timeElapsed: elapsedSeconds,
+        isExpired,
+        isWarning,
+        isCritical,
+        progress,
+      });
+
+      // Callbacks de threshold (uma vez cada) - usando refs
+      if (isWarning && !hasCalledWarningRef.current) {
+        hasCalledWarningRef.current = true;
+        onWarningRef.current?.();
       }
 
-      if (newState.isCritical && !hasCalledCritical) {
-        setHasCalledCritical(true);
-        onCritical?.();
+      if (isCritical && !hasCalledCriticalRef.current) {
+        hasCalledCriticalRef.current = true;
+        onCriticalRef.current?.();
       }
 
-      if (newState.isExpired && !hasCalledExpire) {
-        setHasCalledExpire(true);
-        onExpire?.();
+      if (isExpired && !hasCalledExpireRef.current) {
+        hasCalledExpireRef.current = true;
+        onExpireRef.current?.();
       }
     };
 
-    update(); // Primeira execução
+    update(); // Primeira execução imediata
     const interval = setInterval(update, 1000);
 
     return () => clearInterval(interval);
-  }, [enabled, startedAt, calculateState, hasCalledWarning, hasCalledCritical, hasCalledExpire, onWarning, onCritical, onExpire]);
+  }, [enabled, startedAt, totalDuration, warningThreshold, criticalThreshold]);
 
   /**
    * Formata tempo para exibição
@@ -153,9 +157,9 @@ export function useSimuladoTimer(options: UseSimuladoTimerOptions) {
       isCritical: false,
       progress: 0,
     });
-    setHasCalledWarning(false);
-    setHasCalledCritical(false);
-    setHasCalledExpire(false);
+    hasCalledWarningRef.current = false;
+    hasCalledCriticalRef.current = false;
+    hasCalledExpireRef.current = false;
   }, [totalDuration]);
 
   // Formatações memorizadas
