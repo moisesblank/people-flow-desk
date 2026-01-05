@@ -7,6 +7,7 @@
  */
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   DndContext,
   closestCenter,
@@ -30,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   GripVertical, 
   CheckCircle2, 
@@ -53,7 +55,8 @@ import {
   CheckSquare,
   Square,
   ArrowRight,
-  RotateCcw
+  RotateCcw,
+  Copy
 } from "lucide-react";
 
 interface Question {
@@ -64,6 +67,42 @@ interface Question {
   ano: number | null;
   macro?: string | null;
   micro?: string | null;
+}
+
+// Hook para buscar questões já usadas em outros simulados
+function useQuestionsInSimulados() {
+  return useQuery({
+    queryKey: ['questions-in-simulados'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('simulados')
+        .select('id, title, question_ids')
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      
+      // Mapeia cada question_id para os simulados que a contêm
+      const questionToSimulados: Record<string, Array<{ id: string; title: string }>> = {};
+      
+      (data || []).forEach(simulado => {
+        const questionIds = simulado.question_ids as string[] | null;
+        if (questionIds && Array.isArray(questionIds)) {
+          questionIds.forEach(qId => {
+            if (!questionToSimulados[qId]) {
+              questionToSimulados[qId] = [];
+            }
+            questionToSimulados[qId].push({
+              id: simulado.id,
+              title: simulado.title
+            });
+          });
+        }
+      });
+      
+      return questionToSimulados;
+    },
+    staleTime: 30_000,
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -163,10 +202,12 @@ interface QuestionCardProps {
   isSelected: boolean;
   onToggle: () => void;
   onPreview: () => void;
+  usedInSimulados?: Array<{ id: string; title: string }>;
 }
 
-function QuestionCard({ question, isSelected, onToggle, onPreview }: QuestionCardProps) {
+function QuestionCard({ question, isSelected, onToggle, onPreview, usedInSimulados = [] }: QuestionCardProps) {
   const cleanText = question.question_text?.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() || "Sem texto";
+  const isUsedElsewhere = usedInSimulados.length > 0;
 
   return (
     <div
@@ -189,6 +230,30 @@ function QuestionCard({ question, isSelected, onToggle, onPreview }: QuestionCar
         {isSelected ? <CheckCircle2 className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
       </div>
 
+      {/* Used in other simulados indicator */}
+      {isUsedElsewhere && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full flex items-center justify-center bg-amber-500 text-amber-950 z-10 shadow-lg">
+              <Copy className="h-3 w-3" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs">
+            <div className="text-xs">
+              <p className="font-semibold mb-1">Já usada em {usedInSimulados.length} simulado{usedInSimulados.length > 1 ? 's' : ''}:</p>
+              <ul className="list-disc pl-3 space-y-0.5">
+                {usedInSimulados.slice(0, 5).map(s => (
+                  <li key={s.id} className="text-muted-foreground">{s.title}</li>
+                ))}
+                {usedInSimulados.length > 5 && (
+                  <li className="text-muted-foreground">...e mais {usedInSimulados.length - 5}</li>
+                )}
+              </ul>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      )}
+
       {/* Difficulty indicator bar */}
       <div className={cn(
         "absolute left-0 top-0 bottom-0 w-1 rounded-l-lg",
@@ -205,6 +270,11 @@ function QuestionCard({ question, isSelected, onToggle, onPreview }: QuestionCar
         </p>
 
         <div className="flex flex-wrap gap-1">
+          {isUsedElsewhere && (
+            <Badge className="text-[9px] px-1.5 py-0 h-4 bg-amber-500/20 text-amber-400 border-0">
+              Em {usedInSimulados.length} simulado{usedInSimulados.length > 1 ? 's' : ''}
+            </Badge>
+          )}
           {question.banca && (
             <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-background/50">
               {question.banca}
@@ -317,6 +387,9 @@ export function SimuladoQuestionSelector({
 }: SimuladoQuestionSelectorProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [previewQuestion, setPreviewQuestion] = useState<Question | null>(null);
+  
+  // Buscar questões já usadas em outros simulados
+  const { data: questionsInSimulados = {} } = useQuestionsInSimulados();
   
   // Active filters
   const [activeDifficulties, setActiveDifficulties] = useState<Set<string>>(new Set());
@@ -582,6 +655,7 @@ export function SimuladoQuestionSelector({
                       isSelected={selectedIds.includes(q.id)}
                       onToggle={() => handleToggle(q.id)}
                       onPreview={() => setPreviewQuestion(q)}
+                      usedInSimulados={questionsInSimulados[q.id] || []}
                     />
                   ))}
                 </div>
