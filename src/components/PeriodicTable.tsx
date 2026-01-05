@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, forwardRef } from "react";
 import { Atom, X, ExternalLink, Beaker, FlaskConical, Zap, ArrowRight, Sparkles, Info, Search, MousePointer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -275,38 +275,44 @@ const cationsVariaveis = [
   "Pb +2 e Pb +4",
 ];
 
-export function PeriodicTableButton() {
-  const [isOpen, setIsOpen] = useState(false);
+// ForwardRef wrapper para compatibilidade com TooltipTrigger/Radix
+export const PeriodicTableButton = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  (props, ref) => {
+    const [isOpen, setIsOpen] = useState(false);
 
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 hover:bg-teal-500/20 transition-all duration-200 group"
-          title="Tabela Periódica"
-        >
-          <Atom className="h-5 w-5 text-teal-400 group-hover:text-teal-300 group-hover:scale-110 group-hover:rotate-180 transition-all duration-500" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="dark max-w-[98vw] w-[1500px] max-h-[95vh] p-0 gap-0 overflow-hidden bg-slate-900 text-slate-50 border-primary/30">
-        <DialogHeader className="px-4 py-3 border-b border-border/50 bg-gradient-to-r from-teal-600 via-sky-600 to-violet-600">
-          <DialogTitle className="flex items-center gap-3 text-lg text-white">
-            <div className="p-2 rounded-xl bg-white/20 backdrop-blur">
-              <Atom className="h-6 w-6" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-xl">CLASSIFICAÇÃO PERIÓDICA DOS ELEMENTOS</span>
-              <span className="text-xs text-white/80 font-normal">Moisés Medeiros • Curso de Química • IUPAC 2024</span>
-            </div>
-          </DialogTitle>
-        </DialogHeader>
-        <PeriodicTableContent />
-      </DialogContent>
-    </Dialog>
-  );
-}
+    return (
+      <div ref={ref} {...props}>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 hover:bg-teal-500/20 transition-all duration-200 group"
+              title="Tabela Periódica"
+            >
+              <Atom className="h-5 w-5 text-teal-400 group-hover:text-teal-300 group-hover:scale-110 group-hover:rotate-180 transition-all duration-500" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="dark max-w-[98vw] w-[1500px] max-h-[95vh] p-0 gap-0 overflow-hidden bg-slate-900 text-slate-50 border-primary/30">
+            <DialogHeader className="px-4 py-3 border-b border-border/50 bg-gradient-to-r from-teal-600 via-sky-600 to-violet-600">
+              <DialogTitle className="flex items-center gap-3 text-lg text-white">
+                <div className="p-2 rounded-xl bg-white/20 backdrop-blur">
+                  <Atom className="h-6 w-6" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-bold text-xl">CLASSIFICAÇÃO PERIÓDICA DOS ELEMENTOS</span>
+                  <span className="text-xs text-white/80 font-normal">Moisés Medeiros • Curso de Química • IUPAC 2024</span>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+            <PeriodicTableContent />
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+);
+PeriodicTableButton.displayName = 'PeriodicTableButton';
 
 // Dados simplificados para a tabela interativa
 interface ElementoInterativo {
