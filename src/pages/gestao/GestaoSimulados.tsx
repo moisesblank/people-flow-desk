@@ -224,10 +224,10 @@ function useSimuladoQuestions() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('quiz_questions')
-        .select('id, question_text, difficulty, banca, ano, macro')
+        .select('id, question_text, difficulty, banca, ano, macro, micro, tema, subtema, tags')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
-        .limit(500);
+        .limit(5000);
       
       if (error) throw error;
       return data || [];
@@ -452,7 +452,7 @@ function useCreateRankingSnapshot() {
 interface SimuladoFormProps {
   formData: SimuladoFormData;
   setFormData: (data: SimuladoFormData) => void;
-  questions: Array<{ id: string; question_text: string | null; difficulty: string | null; banca: string | null; ano: number | null; macro: string | null }> | undefined;
+  questions: Array<{ id: string; question_text: string | null; difficulty: string | null; banca: string | null; ano: number | null; macro: string | null; micro?: string | null; tema?: string | null; subtema?: string | null; tags?: string[] | null }> | undefined;
   isLoadingQuestions: boolean;
 }
 
