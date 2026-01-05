@@ -97,7 +97,8 @@ const liveSchedule = [
   { day: "Terça", time: "19h", subject: "Físico-Química", status: "em_breve", icon: Atom },
   { day: "Quarta", time: "19h", subject: "Química Geral", status: "ao_vivo", icon: Brain },
   { day: "Quinta", time: "19h", subject: "Bioquímica", status: "em_breve", icon: Flame },
-  { day: "Sexta", time: "20h", subject: "Revisão Semanal", status: "em_breve", icon: Target },
+  { day: "Sexta", time: "19h", subject: "Química Ambiental", status: "em_breve", icon: Target },
+  { day: "Sábado", time: "10h", subject: "Revisão Semanal", status: "em_breve", icon: Target },
 ];
 
 const testimonials = [

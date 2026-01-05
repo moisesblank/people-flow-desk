@@ -19,6 +19,8 @@ const MOCK_VIDEOS = [
   { id: 4, title: "Eletroquímica Básica", duration: "28:00", views: 870, category: "Físico-Química", thumbnail: "⚡" },
   { id: 5, title: "Termoquímica - Entalpia", duration: "22:30", views: 720, category: "Físico-Química", thumbnail: "🔥" },
   { id: 6, title: "Cinética Química", duration: "26:45", views: 650, category: "Físico-Química", thumbnail: "⏱️" },
+  { id: 7, title: "Poluição Atmosférica", duration: "24:00", views: 580, category: "Química Ambiental", thumbnail: "🌍" },
+  { id: 8, title: "Carboidratos e Lipídios", duration: "30:15", views: 620, category: "Bioquímica", thumbnail: "🧬" },
 ];
 
 export const VideoaulasModalContent = memo(function VideoaulasModalContent() {

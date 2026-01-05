@@ -468,8 +468,12 @@ export const QUESTION_DOMAIN_CONSTITUTION = {
   // MACROS CANÔNICOS — QUÍMICA
   // ═══════════════════════════════════════════════════════════════════════════
   canonicalMacros: {
+    // ═══════════════════════════════════════════════════════════════════════════
+    // 5 MACROS CANÔNICOS — AUTORIDADE ABSOLUTA
+    // Química Geral | Físico-Química | Química Orgânica | Química Ambiental | Bioquímica
+    // ═══════════════════════════════════════════════════════════════════════════
     quimica_geral: {
-      value: 'quimica_geral',
+      value: 'Química Geral',
       label: 'Química Geral',
       icon: '⚗️',
       color: 'amber',
@@ -490,7 +494,7 @@ export const QUESTION_DOMAIN_CONSTITUTION = {
       ],
     },
     quimica_organica: {
-      value: 'quimica_organica',
+      value: 'Química Orgânica',
       label: 'Química Orgânica',
       icon: '🧪',
       color: 'purple',
@@ -500,11 +504,10 @@ export const QUESTION_DOMAIN_CONSTITUTION = {
         'Isomeria',
         'Reações Orgânicas',
         'Polímeros',
-        'Bioquímica',
       ],
     },
     fisico_quimica: {
-      value: 'fisico_quimica',
+      value: 'Físico-Química',
       label: 'Físico-Química',
       icon: '⚡',
       color: 'cyan',
@@ -517,6 +520,44 @@ export const QUESTION_DOMAIN_CONSTITUTION = {
         'Soluções',
         'Propriedades Coligativas',
         'Radioatividade',
+      ],
+    },
+    quimica_ambiental: {
+      value: 'Química Ambiental',
+      label: 'Química Ambiental',
+      icon: '🌍',
+      color: 'green',
+      filterKey: 'ambiental',
+      micros: [
+        'Poluição Atmosférica',
+        'Poluição Hídrica',
+        'Efeito Estufa',
+        'Camada de Ozônio',
+        'Chuva Ácida',
+        'Tratamento de Água',
+        'Tratamento de Efluentes',
+        'Reciclagem',
+        'Sustentabilidade',
+        'Ciclos Biogeoquímicos',
+      ],
+    },
+    bioquimica: {
+      value: 'Bioquímica',
+      label: 'Bioquímica',
+      icon: '🧬',
+      color: 'pink',
+      filterKey: 'bioquimica',
+      micros: [
+        'Carboidratos',
+        'Lipídios',
+        'Proteínas',
+        'Aminoácidos',
+        'Enzimas',
+        'Ácidos Nucleicos',
+        'DNA e RNA',
+        'Metabolismo',
+        'Vitaminas',
+        'Hormônios',
       ],
     },
   },
@@ -535,9 +576,11 @@ export const QUESTION_DOMAIN_CONSTITUTION = {
       },
       badgeColors: {
         macro: {
+          geral: 'bg-amber-500/20 text-amber-300',
           organica: 'bg-purple-500/20 text-purple-300',
           fisico_quimica: 'bg-cyan-500/20 text-cyan-300',
-          geral: 'bg-amber-500/20 text-amber-300',
+          ambiental: 'bg-green-500/20 text-green-300',
+          bioquimica: 'bg-pink-500/20 text-pink-300',
         },
         micro: 'bg-indigo-500/20 text-indigo-300',
         tema: 'bg-violet-500/20 text-violet-300',

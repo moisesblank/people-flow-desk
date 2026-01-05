@@ -640,7 +640,7 @@ async function wfCronograma(
     ? Math.ceil((new Date(exam_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : 30;
 
-  const subjectList = subjects || ['Química Geral', 'Química Orgânica', 'Físico-Química'];
+  const subjectList = subjects || ['Química Geral', 'Química Orgânica', 'Físico-Química', 'Química Ambiental', 'Bioquímica'];
 
   const prompt = `Crie um cronograma de estudos científico para vestibular de Medicina.
 
