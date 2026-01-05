@@ -236,11 +236,12 @@ export function SessionGuard({ children }: SessionGuardProps) {
         // Para ser preciso, verificamos se acabamos de fazer logout
         const justLoggedOut = !localStorage.getItem(SESSION_TOKEN_KEY);
         const isUserInitiatedLogout = justLoggedOut || reason === 'USER_LOGOUT';
+        const isInactivityTimeout = reason === 'INACTIVITY_TIMEOUT';
 
         console.warn(`[SessionGuard] 🔴 Backend revogou: ${reason}, justLoggedOut: ${justLoggedOut}`);
         
-        if (isUserInitiatedLogout) {
-          // Logout silencioso
+        if (isUserInitiatedLogout || isInactivityTimeout) {
+          // Logout silencioso (sem overlay de conflito)
           await handleBackendRevocation(reason, false);
         } else {
           // Conflito de sessão: mostrar overlay
