@@ -378,7 +378,7 @@ function TrustedDevicesManagerComponent({
 
       {/* Dialog de confirmação */}
       <AlertDialog open={!!deviceToRemove} onOpenChange={() => setDeviceToRemove(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent useOriginalSize>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-destructive" />
