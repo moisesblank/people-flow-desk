@@ -23,7 +23,7 @@ import {
   Activity, TrendingUp, Timer, Download, Upload,
   Zap, Target, Medal, BarChart, History, Gavel,
   AlertCircle, FileText, UserX, UserCheck, Wrench,
-  Save, Power, PowerOff, Heart, RotateCcw
+  Save, Power, PowerOff, Heart, RotateCcw, Shuffle
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -529,9 +529,9 @@ function SimuladoForm({ formData, setFormData, questions, isLoadingQuestions }: 
       <div className="space-y-4">
         <h3 className="font-medium flex items-center gap-2">
           <Timer className="h-4 w-4" />
-          Configurações
+          Configurações Gerais
         </h3>
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           <div className="space-y-2">
             <Label>Tempo Limite (min)</Label>
             <Input
@@ -578,16 +578,37 @@ function SimuladoForm({ formData, setFormData, questions, isLoadingQuestions }: 
               onChange={(e) => setFormData({ ...formData, passing_score: e.target.value === '' ? null : parseInt(e.target.value) })}
             />
           </div>
+        </div>
+      </div>
+      
+      <Separator />
+      
+      {/* Opções de Prova */}
+      <div className="space-y-4">
+        <h3 className="font-medium flex items-center gap-2">
+          <Shuffle className="h-4 w-4" />
+          Opções de Prova
+        </h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div>
+              <Label className="text-sm">Embaralhar Questões</Label>
+              <p className="text-xs text-muted-foreground">Ordem diferente para cada aluno</p>
+            </div>
+            <Switch
+              checked={formData.shuffle_questions}
+              onCheckedChange={(checked) => setFormData({ ...formData, shuffle_questions: checked })}
+            />
+          </div>
           
-          <div className="space-y-2">
-            <Label>Máx. Trocas Aba <span className="text-muted-foreground text-xs">(opcional)</span></Label>
-            <Input
-              type="number"
-              min={1}
-              max={10}
-              placeholder="Ex: 3"
-              value={formData.max_tab_switches ?? ''}
-              onChange={(e) => setFormData({ ...formData, max_tab_switches: e.target.value === '' ? null : parseInt(e.target.value) })}
+          <div className="flex items-center justify-between p-3 border rounded-lg">
+            <div>
+              <Label className="text-sm">Embaralhar Alternativas</Label>
+              <p className="text-xs text-muted-foreground">Letras diferentes para cada aluno</p>
+            </div>
+            <Switch
+              checked={formData.shuffle_options}
+              onCheckedChange={(checked) => setFormData({ ...formData, shuffle_options: checked })}
             />
           </div>
         </div>
@@ -601,8 +622,11 @@ function SimuladoForm({ formData, setFormData, questions, isLoadingQuestions }: 
           <Shield className="h-4 w-4 text-red-500" />
           Modo Hard (Anti-Cola)
         </h3>
+        <p className="text-xs text-muted-foreground">
+          Configurações de segurança avançada. Só funcionam quando o Modo Hard está ativado.
+        </p>
         
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           <Card className={cn(
             "p-4 cursor-pointer border-2 transition-colors",
             formData.is_hard_mode ? "border-red-500 bg-red-500/5" : "border-border"
@@ -644,12 +668,26 @@ function SimuladoForm({ formData, setFormData, questions, isLoadingQuestions }: 
             </div>
           </Card>
           
-          {/* HARD MODE OVERRIDE */}
-          <div className="space-y-2">
+          <div className={cn("space-y-2", !formData.is_hard_mode && "opacity-50")}>
+            <Label>Máx. Trocas de Aba</Label>
+            <Input
+              type="number"
+              min={0}
+              max={10}
+              placeholder="Ex: 3"
+              value={formData.max_tab_switches ?? ''}
+              onChange={(e) => setFormData({ ...formData, max_tab_switches: e.target.value === '' ? null : parseInt(e.target.value) })}
+              disabled={!formData.is_hard_mode}
+            />
+            <p className="text-xs text-muted-foreground">0 = invalida na 1ª troca</p>
+          </div>
+          
+          <div className={cn("space-y-2", !formData.is_hard_mode && "opacity-50")}>
             <Label>Override Hard Mode</Label>
             <Select
               value={formData.hard_mode_override}
               onValueChange={(value) => setFormData({ ...formData, hard_mode_override: value })}
+              disabled={!formData.is_hard_mode}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -665,31 +703,7 @@ function SimuladoForm({ formData, setFormData, questions, isLoadingQuestions }: 
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">Sobrescreve a flag global</p>
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center justify-between p-3 border rounded-lg">
-            <div>
-              <Label className="text-sm">Embaralhar Questões</Label>
-              <p className="text-xs text-muted-foreground">Ordem diferente para cada aluno</p>
-            </div>
-            <Switch
-              checked={formData.shuffle_questions}
-              onCheckedChange={(checked) => setFormData({ ...formData, shuffle_questions: checked })}
-            />
-          </div>
-          
-          <div className="flex items-center justify-between p-3 border rounded-lg">
-            <div>
-              <Label className="text-sm">Embaralhar Alternativas</Label>
-              <p className="text-xs text-muted-foreground">Letras diferentes para cada aluno</p>
-            </div>
-            <Switch
-              checked={formData.shuffle_options}
-              onCheckedChange={(checked) => setFormData({ ...formData, shuffle_options: checked })}
-            />
+            <p className="text-xs text-muted-foreground">Sobrescreve flag global</p>
           </div>
         </div>
       </div>
