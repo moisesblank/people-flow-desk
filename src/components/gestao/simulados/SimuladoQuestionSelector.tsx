@@ -67,6 +67,9 @@ interface Question {
   ano: number | null;
   macro?: string | null;
   micro?: string | null;
+  tema?: string | null;
+  subtema?: string | null;
+  question_type?: string | null;
 }
 
 // Hook para buscar questões já usadas em outros simulados
@@ -396,6 +399,10 @@ export function SimuladoQuestionSelector({
   const [activeBancas, setActiveBancas] = useState<Set<string>>(new Set());
   const [activeAnos, setActiveAnos] = useState<Set<number>>(new Set());
   const [activeMacros, setActiveMacros] = useState<Set<string>>(new Set());
+  const [activeMicros, setActiveMicros] = useState<Set<string>>(new Set());
+  const [activeTemas, setActiveTemas] = useState<Set<string>>(new Set());
+  const [activeSubtemas, setActiveSubtemas] = useState<Set<string>>(new Set());
+  const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set());
   
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -410,16 +417,64 @@ export function SimuladoQuestionSelector({
     const bancas: Record<string, number> = {};
     const anos: Record<number, number> = {};
     const macros: Record<string, number> = {};
+    const micros: Record<string, number> = {};
+    const temas: Record<string, number> = {};
+    const subtemas: Record<string, number> = {};
+    const types: Record<string, number> = {};
 
     available.forEach(q => {
       if (q.difficulty) difficulties[q.difficulty] = (difficulties[q.difficulty] || 0) + 1;
       if (q.banca) bancas[q.banca] = (bancas[q.banca] || 0) + 1;
       if (q.ano) anos[q.ano] = (anos[q.ano] || 0) + 1;
       if (q.macro) macros[q.macro] = (macros[q.macro] || 0) + 1;
+      if (q.micro) micros[q.micro] = (micros[q.micro] || 0) + 1;
+      if (q.tema) temas[q.tema] = (temas[q.tema] || 0) + 1;
+      if (q.subtema) subtemas[q.subtema] = (subtemas[q.subtema] || 0) + 1;
+      if (q.question_type) types[q.question_type] = (types[q.question_type] || 0) + 1;
     });
 
-    return { difficulties, bancas, anos, macros, total: available.length };
+    return { difficulties, bancas, anos, macros, micros, temas, subtemas, types, total: available.length };
   }, [allQuestions, selectedIds]);
+  
+  // Dynamic filter options based on hierarchy (Macro → Micro → Tema → Subtema)
+  const dynamicFilterOptions = useMemo(() => {
+    let baseQuestions = allQuestions.filter(q => !selectedIds.includes(q.id));
+    
+    // Filter by macro if active
+    if (activeMacros.size > 0) {
+      baseQuestions = baseQuestions.filter(q => q.macro && activeMacros.has(q.macro));
+    }
+    
+    // Get micros from filtered set
+    const micros: Record<string, number> = {};
+    baseQuestions.forEach(q => {
+      if (q.micro) micros[q.micro] = (micros[q.micro] || 0) + 1;
+    });
+    
+    // Filter by micro for temas
+    let temasBase = baseQuestions;
+    if (activeMicros.size > 0) {
+      temasBase = baseQuestions.filter(q => q.micro && activeMicros.has(q.micro));
+    }
+    
+    const temas: Record<string, number> = {};
+    temasBase.forEach(q => {
+      if (q.tema) temas[q.tema] = (temas[q.tema] || 0) + 1;
+    });
+    
+    // Filter by tema for subtemas
+    let subtemasBase = temasBase;
+    if (activeTemas.size > 0) {
+      subtemasBase = temasBase.filter(q => q.tema && activeTemas.has(q.tema));
+    }
+    
+    const subtemas: Record<string, number> = {};
+    subtemasBase.forEach(q => {
+      if (q.subtema) subtemas[q.subtema] = (subtemas[q.subtema] || 0) + 1;
+    });
+    
+    return { micros, temas, subtemas };
+  }, [allQuestions, selectedIds, activeMacros, activeMicros, activeTemas]);
 
   // Filtered questions
   const filteredQuestions = useMemo(() => {
@@ -446,15 +501,27 @@ export function SimuladoQuestionSelector({
     if (activeMacros.size > 0) {
       result = result.filter(q => q.macro && activeMacros.has(q.macro));
     }
+    if (activeMicros.size > 0) {
+      result = result.filter(q => q.micro && activeMicros.has(q.micro));
+    }
+    if (activeTemas.size > 0) {
+      result = result.filter(q => q.tema && activeTemas.has(q.tema));
+    }
+    if (activeSubtemas.size > 0) {
+      result = result.filter(q => q.subtema && activeSubtemas.has(q.subtema));
+    }
+    if (activeTypes.size > 0) {
+      result = result.filter(q => q.question_type && activeTypes.has(q.question_type));
+    }
 
     return result;
-  }, [allQuestions, selectedIds, searchTerm, activeDifficulties, activeBancas, activeAnos, activeMacros]);
+  }, [allQuestions, selectedIds, searchTerm, activeDifficulties, activeBancas, activeAnos, activeMacros, activeMicros, activeTemas, activeSubtemas, activeTypes]);
 
   const selectedQuestions = useMemo(() => {
     return selectedIds.map(id => allQuestions.find(q => q.id === id)).filter((q): q is Question => !!q);
   }, [selectedIds, allQuestions]);
 
-  const hasActiveFilters = activeDifficulties.size > 0 || activeBancas.size > 0 || activeAnos.size > 0 || activeMacros.size > 0 || searchTerm;
+  const hasActiveFilters = activeDifficulties.size > 0 || activeBancas.size > 0 || activeAnos.size > 0 || activeMacros.size > 0 || activeMicros.size > 0 || activeTemas.size > 0 || activeSubtemas.size > 0 || activeTypes.size > 0 || searchTerm;
 
   // Handlers
   const toggleFilter = useCallback(<T,>(set: Set<T>, setFn: React.Dispatch<React.SetStateAction<Set<T>>>, value: T) => {
@@ -487,7 +554,57 @@ export function SimuladoQuestionSelector({
     setActiveBancas(new Set());
     setActiveAnos(new Set());
     setActiveMacros(new Set());
+    setActiveMicros(new Set());
+    setActiveTemas(new Set());
+    setActiveSubtemas(new Set());
+    setActiveTypes(new Set());
   };
+  
+  // Handler para filtros hierárquicos - limpa níveis inferiores ao mudar
+  const handleMacroToggle = useCallback((value: string) => {
+    setActiveMacros(prev => {
+      const next = new Set(prev);
+      if (next.has(value)) {
+        next.delete(value);
+      } else {
+        next.add(value);
+      }
+      // Reset níveis inferiores
+      setActiveMicros(new Set());
+      setActiveTemas(new Set());
+      setActiveSubtemas(new Set());
+      return next;
+    });
+  }, []);
+  
+  const handleMicroToggle = useCallback((value: string) => {
+    setActiveMicros(prev => {
+      const next = new Set(prev);
+      if (next.has(value)) {
+        next.delete(value);
+      } else {
+        next.add(value);
+      }
+      // Reset níveis inferiores
+      setActiveTemas(new Set());
+      setActiveSubtemas(new Set());
+      return next;
+    });
+  }, []);
+  
+  const handleTemaToggle = useCallback((value: string) => {
+    setActiveTemas(prev => {
+      const next = new Set(prev);
+      if (next.has(value)) {
+        next.delete(value);
+      } else {
+        next.add(value);
+      }
+      // Reset nível inferior
+      setActiveSubtemas(new Set());
+      return next;
+    });
+  }, []);
 
   if (isLoading) {
     return (
@@ -585,14 +702,80 @@ export function SimuladoQuestionSelector({
                         value={key}
                         count={count}
                         isActive={activeMacros.has(key)}
-                        onClick={() => toggleFilter(activeMacros, setActiveMacros, key)}
+                        onClick={() => handleMacroToggle(key)}
                       />
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Banca & Ano in one row */}
+              {/* Micro filters - dinâmico baseado em Macro */}
+              {Object.keys(dynamicFilterOptions.micros).length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Micro</span>
+                  <div className="flex gap-1 flex-wrap max-h-16 overflow-y-auto">
+                    {Object.entries(dynamicFilterOptions.micros).slice(0, 8).map(([key, count]) => (
+                      <FilterChip
+                        key={key}
+                        label={key.length > 20 ? key.substring(0, 20) + '...' : key}
+                        value={key}
+                        count={count}
+                        isActive={activeMicros.has(key)}
+                        onClick={() => handleMicroToggle(key)}
+                      />
+                    ))}
+                    {Object.keys(dynamicFilterOptions.micros).length > 8 && (
+                      <span className="text-[10px] text-muted-foreground self-center">+{Object.keys(dynamicFilterOptions.micros).length - 8}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Tema filters - dinâmico baseado em Micro */}
+              {Object.keys(dynamicFilterOptions.temas).length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Tema</span>
+                  <div className="flex gap-1 flex-wrap max-h-16 overflow-y-auto">
+                    {Object.entries(dynamicFilterOptions.temas).slice(0, 6).map(([key, count]) => (
+                      <FilterChip
+                        key={key}
+                        label={key.length > 20 ? key.substring(0, 20) + '...' : key}
+                        value={key}
+                        count={count}
+                        isActive={activeTemas.has(key)}
+                        onClick={() => handleTemaToggle(key)}
+                      />
+                    ))}
+                    {Object.keys(dynamicFilterOptions.temas).length > 6 && (
+                      <span className="text-[10px] text-muted-foreground self-center">+{Object.keys(dynamicFilterOptions.temas).length - 6}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Subtema filters - dinâmico baseado em Tema */}
+              {Object.keys(dynamicFilterOptions.subtemas).length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Subtema</span>
+                  <div className="flex gap-1 flex-wrap max-h-16 overflow-y-auto">
+                    {Object.entries(dynamicFilterOptions.subtemas).slice(0, 6).map(([key, count]) => (
+                      <FilterChip
+                        key={key}
+                        label={key.length > 20 ? key.substring(0, 20) + '...' : key}
+                        value={key}
+                        count={count}
+                        isActive={activeSubtemas.has(key)}
+                        onClick={() => toggleFilter(activeSubtemas, setActiveSubtemas, key)}
+                      />
+                    ))}
+                    {Object.keys(dynamicFilterOptions.subtemas).length > 6 && (
+                      <span className="text-[10px] text-muted-foreground self-center">+{Object.keys(dynamicFilterOptions.subtemas).length - 6}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Banca, Ano & Tipo in one row */}
               <div className="flex items-center gap-4 flex-wrap">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider w-16 shrink-0">Banca</span>
@@ -624,6 +807,23 @@ export function SimuladoQuestionSelector({
                     ))}
                   </div>
                 </div>
+                {Object.keys(filterData.types).length > 0 && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider shrink-0">Tipo</span>
+                    <div className="flex gap-1 flex-wrap">
+                      {Object.entries(filterData.types).slice(0, 3).map(([key, count]) => (
+                        <FilterChip
+                          key={key}
+                          label={key === 'multiple_choice' ? 'Múltipla' : key === 'discursive' ? 'Discursiva' : key}
+                          value={key}
+                          count={count}
+                          isActive={activeTypes.has(key)}
+                          onClick={() => toggleFilter(activeTypes, setActiveTypes, key)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
