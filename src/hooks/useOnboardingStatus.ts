@@ -24,11 +24,11 @@ export function useOnboardingStatus(): OnboardingStatus {
   const { user } = useAuth();
   const [status, setStatus] = useState<Omit<OnboardingStatus, 'needsOnboarding'>>({
     isLoading: true,
-    isComplete: true, // Default true para não bloquear durante loading
-    platformStepsCompleted: true,
-    uiThemeSelected: true,
-    passwordDefined: true,
-    trustedDeviceRegistered: true,
+    isComplete: false, // 🔒 P0 FIX: Default FALSE para garantir redirecionamento seguro
+    platformStepsCompleted: false,
+    uiThemeSelected: false,
+    passwordDefined: false,
+    trustedDeviceRegistered: false,
   });
 
   // Owner bypass - NUNCA bloqueia owner no onboarding
