@@ -19,6 +19,8 @@ const MOCK_MAPAS = [
   { id: 4, name: "Estequiometria", category: "Química Geral", views: 2100, rating: 4.6, premium: false },
   { id: 5, name: "Ligações Químicas", category: "Química Geral", views: 1780, rating: 4.8, premium: false },
   { id: 6, name: "Termoquímica", category: "Físico-Química", views: 1320, rating: 4.5, premium: true },
+  { id: 7, name: "Ciclos Biogeoquímicos", category: "Química Ambiental", views: 890, rating: 4.6, premium: false },
+  { id: 8, name: "Metabolismo Celular", category: "Bioquímica", views: 1050, rating: 4.7, premium: true },
 ];
 
 export const MapasMentaisModalContent = memo(function MapasMentaisModalContent() {

@@ -50,6 +50,8 @@ const CATEGORIES = [
   { value: 'quimica_geral', label: '⚗️ Química Geral' },
   { value: 'quimica_organica', label: '🧪 Química Orgânica' },
   { value: 'fisico_quimica', label: '📊 Físico-Química' },
+  { value: 'quimica_ambiental', label: '🌍 Química Ambiental' },
+  { value: 'bioquimica', label: '🧬 Bioquímica' },
   { value: 'revisao_ciclica', label: '🔄 Revisão Cíclica' },
   { value: 'previsao_final', label: '🎯 Previsão Final' },
   { value: 'exercicios', label: '✏️ Exercícios' },

@@ -24,6 +24,8 @@ export type MacroCategory =
   | 'quimica-geral'
   | 'quimica-organica'
   | 'fisico-quimica'
+  | 'quimica-ambiental'
+  | 'bioquimica'
   | 'revisao'
   | 'previsao';
 

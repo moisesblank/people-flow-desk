@@ -948,6 +948,8 @@ export default function GestaoCursos() {
                       <SelectItem value="quimica-geral">Química Geral</SelectItem>
                       <SelectItem value="quimica-organica">Química Orgânica</SelectItem>
                       <SelectItem value="fisico-quimica">Físico-Química</SelectItem>
+                      <SelectItem value="quimica-ambiental">Química Ambiental</SelectItem>
+                      <SelectItem value="bioquimica">Bioquímica</SelectItem>
                       <SelectItem value="enem">ENEM</SelectItem>
                       <SelectItem value="vestibular">Vestibular</SelectItem>
                     </SelectContent>

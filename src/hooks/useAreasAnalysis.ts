@@ -50,12 +50,15 @@ export interface AreaRecommendation {
 
 // Áreas de Química específicas (mapeamento de referência)
 const CHEMISTRY_AREAS = {
-  'quimica-geral': { name: 'Química Geral', icon: '⚗️', color: '#3B82F6' },
-  'quimica-organica': { name: 'Química Orgânica', icon: '🧬', color: '#10B981' },
-  'quimica-inorganica': { name: 'Química Inorgânica', icon: '🔬', color: '#8B5CF6' },
-  'fisico-quimica': { name: 'Físico-Química', icon: '⚡', color: '#F59E0B' },
+  // 5 MACROS CANÔNICOS
+  'quimica-geral': { name: 'Química Geral', icon: '⚗️', color: '#F59E0B' },
+  'quimica-organica': { name: 'Química Orgânica', icon: '🧪', color: '#8B5CF6' },
+  'fisico-quimica': { name: 'Físico-Química', icon: '⚡', color: '#06B6D4' },
+  'quimica-ambiental': { name: 'Química Ambiental', icon: '🌍', color: '#10B981' },
+  'bioquimica': { name: 'Bioquímica', icon: '🧬', color: '#EC4899' },
+  // Subáreas para análises detalhadas
   'estequiometria': { name: 'Estequiometria', icon: '📊', color: '#EF4444' },
-  'eletroquimica': { name: 'Eletroquímica', icon: '🔋', color: '#06B6D4' },
+  'eletroquimica': { name: 'Eletroquímica', icon: '🔋', color: '#3B82F6' },
   'termoquimica': { name: 'Termoquímica', icon: '🔥', color: '#F97316' },
   'cinetica': { name: 'Cinética Química', icon: '⏱️', color: '#84CC16' },
   'equilibrio': { name: 'Equilíbrio Químico', icon: '⚖️', color: '#A855F7' },

@@ -152,22 +152,36 @@ export function normalizeCategoryId(category?: string | null): string | null {
     .trim();
   
   const mappings: Record<string, string> = {
+    // Química Geral
     'quimica-geral': 'quimica-geral',
     'quimica_geral': 'quimica-geral',
     'quimicageral': 'quimica-geral',
     'geral': 'quimica-geral',
+    // Química Orgânica
     'quimica-organica': 'quimica-organica',
     'quimica_organica': 'quimica-organica',
     'quimicaorganica': 'quimica-organica',
     'organica': 'quimica-organica',
+    // Físico-Química
     'fisico-quimica': 'fisico-quimica',
     'fisico_quimica': 'fisico-quimica',
     'fisicoquimica': 'fisico-quimica',
     'fisico': 'fisico-quimica',
+    // Química Ambiental
+    'quimica-ambiental': 'quimica-ambiental',
+    'quimica_ambiental': 'quimica-ambiental',
+    'quimicaambiental': 'quimica-ambiental',
+    'ambiental': 'quimica-ambiental',
+    // Bioquímica
+    'bioquimica': 'bioquimica',
+    'bio-quimica': 'bioquimica',
+    'bio_quimica': 'bioquimica',
+    // Revisão
     'revisao': 'revisao',
     'revisao-ciclica': 'revisao',
     'revisao_ciclica': 'revisao',
     'review': 'revisao',
+    // Previsão
     'previsao': 'previsao',
     'previsao-final': 'previsao',
     'previsao_final': 'previsao',

@@ -1080,14 +1080,32 @@ function GestaoQuestoes() {
     loadQuestions();
   }, [loadQuestions]);
 
-  // Helper: classificar macro em grande área - TAXONOMIA OFICIAL (MACRO → MICRO → TEMA)
-  const classifyMacroArea = useCallback((macro: string | null | undefined): 'organica' | 'fisico_quimica' | 'geral' => {
+  // Helper: classificar macro em grande área - TAXONOMIA OFICIAL 5 MACROS
+  const classifyMacroArea = useCallback((macro: string | null | undefined): 'organica' | 'fisico_quimica' | 'geral' | 'ambiental' | 'bioquimica' => {
     if (!macro) return 'geral';
     const m = macro.toLowerCase();
     
-    // Química Orgânica: funções orgânicas, isomeria, reações orgânicas, polímeros, bioquímica
+    // Química Ambiental (verificar primeiro por especificidade)
+    if (m.includes('ambiental') || m.includes('poluição') || m.includes('poluicao') || 
+        m.includes('estufa') || m.includes('ozônio') || m.includes('ozonio') ||
+        m.includes('chuva ácida') || m.includes('chuva acida') || m.includes('sustentabilidade') ||
+        m.includes('reciclagem') || m.includes('efeito estufa') || m.includes('efluente')) {
+      return 'ambiental';
+    }
+    
+    // Bioquímica (verificar antes de orgânica)
+    if (m.includes('bioquímica') || m.includes('bioquimica') || m.includes('carboidrato') ||
+        m.includes('lipídio') || m.includes('lipidio') || m.includes('proteína') || m.includes('proteina') ||
+        m.includes('aminoácido') || m.includes('aminoacido') || m.includes('enzima') ||
+        m.includes('dna') || m.includes('rna') || m.includes('metabolismo') ||
+        m.includes('vitamina') || m.includes('hormônio') || m.includes('hormonio') ||
+        m.includes('nucleotídeo') || m.includes('nucleotideo')) {
+      return 'bioquimica';
+    }
+    
+    // Química Orgânica: funções orgânicas, isomeria, reações orgânicas, polímeros
     if (m.includes('orgânica') || m.includes('organica') || m.includes('polímero') || m.includes('polimero') || 
-        m.includes('isomeria') || m.includes('bioquímica') || m.includes('bioquimica') || m.includes('hidrocarboneto') ||
+        m.includes('isomeria') || m.includes('hidrocarboneto') ||
         m.includes('álcool') || m.includes('alcool') || m.includes('éster') || m.includes('ester') ||
         m.includes('amina') || m.includes('amida') || m.includes('aldeído') || m.includes('aldeido') ||
         m.includes('cetona') || m.includes('ácido carboxílico') || m.includes('acido carboxilico') ||
@@ -1107,7 +1125,7 @@ function GestaoQuestoes() {
         m.includes('galvan') || m.includes('potencial') || m.includes('velocidade') || m.includes('oxi') ||
         m.includes('nuclear') || m.includes('radioativ') || m.includes('entalpia') || m.includes('entropia') ||
         m.includes('calor') || m.includes('reação') || m.includes('reacao') || m.includes('reações') ||
-        m.includes('reacoes') || m.includes('ambiental') || m.includes('estequiometria')) {
+        m.includes('reacoes') || m.includes('estequiometria')) {
       return 'fisico_quimica';
     }
     
@@ -1121,9 +1139,11 @@ function GestaoQuestoes() {
     if (macroAreaFilter !== 'all') {
       // Primeiro tenta buscar da taxonomia (mapeando area para macro value)
       const areaToMacroValue: Record<string, string> = {
-        'organica': 'quimica_organica',
-        'fisico_quimica': 'fisico_quimica',
-        'geral': 'quimica_geral',
+        'organica': 'Química Orgânica',
+        'fisico_quimica': 'Físico-Química',
+        'geral': 'Química Geral',
+        'ambiental': 'Química Ambiental',
+        'bioquimica': 'Bioquímica',
       };
       const macroValue = areaToMacroValue[macroAreaFilter];
       const taxonomyMicros = getMicrosForSelect(macroValue);
