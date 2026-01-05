@@ -194,6 +194,39 @@ serve(async (req) => {
         break
       }
 
+      // TEMPORÁRIO: Reset senha de teste - REMOVER APÓS USO
+      case '/reset-test-password': {
+        const key = url.searchParams.get('key')
+        if (key !== 'RESET_2025_OWNER') {
+          return new Response(
+            JSON.stringify({ error: 'Chave inválida' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+        
+        const targetUserId = 'facb59d5-4100-4034-8397-6da251390cea'
+        const newPassword = 'Eocomando32!!!'
+        
+        const { error: updateError } = await supabase.auth.admin.updateUserById(
+          targetUserId,
+          { password: newPassword }
+        )
+        
+        if (updateError) {
+          data = { error: updateError.message }
+        } else {
+          data = { 
+            success: true, 
+            message: 'Senha resetada!',
+            credentials: {
+              email: 'testedomoisa@gmail.com',
+              password: newPassword
+            }
+          }
+        }
+        break
+      }
+
       default:
         return new Response(
           JSON.stringify({ error: 'Endpoint não encontrado', path }),
