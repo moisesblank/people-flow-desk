@@ -269,10 +269,12 @@ export function SimuladoRunningScreen({
 
               {/* Alternativas - Estilo Print com Tesoura */}
               <div className="space-y-3">
-                {sortedOptions.map(([key, optionValue]) => {
+                {sortedOptions.map(([key, optionValue], idx) => {
                   const isSelected = currentAnswer?.selectedOption === key;
                   const isSelecting = selectingOption === key;
                   const isEliminated = currentEliminated.has(key);
+                  // Converter índice para letra A, B, C, D, E
+                  const letterLabel = String.fromCharCode(65 + idx);
 
                   // Extrair texto: pode ser string ou objeto {id, text}
                   const rawText: unknown =
@@ -317,7 +319,7 @@ export function SimuladoRunningScreen({
                             isEliminated && "bg-zinc-700/50 text-zinc-500"
                           )}
                         >
-                          {key.toUpperCase()}
+                          {letterLabel}
                         </div>
                         
                         {/* Texto da alternativa */}
