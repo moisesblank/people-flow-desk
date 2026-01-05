@@ -119,7 +119,9 @@ export function useSimuladoAttempt() {
       const response = data as unknown as StartAttemptResponse;
 
       if (!response.success) {
-        const errorMsg = translateError(response.error || "UNKNOWN_ERROR");
+        // Usar mensagem customizada do servidor quando disponível (feature flags)
+        const serverMessage = (response as unknown as { message?: string }).message;
+        const errorMsg = translateError(response.error || "UNKNOWN_ERROR", serverMessage);
         setState(prev => ({ ...prev, status: "ERROR", error: errorMsg }));
         toast({
           title: "Não foi possível iniciar",
@@ -310,7 +312,7 @@ async function generateDeviceFingerprint(): Promise<string> {
 /**
  * Traduz códigos de erro para mensagens amigáveis
  */
-function translateError(code: string): string {
+function translateError(code: string, message?: string): string {
   const errors: Record<string, string> = {
     NOT_AUTHENTICATED: "Você precisa estar logado para fazer o simulado.",
     SIMULADO_NOT_FOUND: "Simulado não encontrado ou inativo.",
@@ -321,8 +323,15 @@ function translateError(code: string): string {
     ATTEMPT_INVALIDATED: "Esta tentativa foi invalidada.",
     ATTEMPT_NOT_RUNNING: "Esta tentativa não está em andamento.",
     ATTEMPT_ALREADY_TERMINAL: "Esta tentativa já foi finalizada.",
+    // Feature flags - execução cortada no servidor
+    SYSTEM_DISABLED: "O sistema de simulados está temporariamente desativado.",
+    NEW_ATTEMPTS_BLOCKED: "Novas tentativas estão bloqueadas para manutenção.",
+    SIMULADO_MAINTENANCE: "Este simulado está em manutenção. Tente novamente em breve.",
     UNKNOWN_ERROR: "Ocorreu um erro inesperado.",
   };
+  
+  // Usar mensagem customizada do servidor se disponível
+  if (message) return message;
   
   return errors[code] || code;
 }
