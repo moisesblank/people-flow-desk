@@ -307,25 +307,22 @@ export function SimuladoRunningScreen({
                           isEliminated && "cursor-not-allowed"
                         )}
                       >
-                        {/* Radio indicator */}
+                        {/* Círculo com letra A, B, C, D, E */}
                         <div
                           className={cn(
-                            "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all",
-                            isSelected ? "border-green-500 bg-green-500" : "border-zinc-500",
-                            isEliminated && "border-zinc-600"
+                            "w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all font-bold text-lg",
+                            isSelected 
+                              ? "bg-green-600 text-white" 
+                              : "bg-zinc-700 text-foreground",
+                            isEliminated && "bg-zinc-700/50 text-zinc-500"
                           )}
                         >
-                          {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                          {key.toUpperCase()}
                         </div>
                         
+                        {/* Texto da alternativa */}
                         <span className={cn(
-                          "font-bold text-foreground",
-                          isEliminated && "line-through"
-                        )}>
-                          {key})
-                        </span>
-                        <span className={cn(
-                          "text-foreground/90",
+                          "text-foreground/90 flex-1",
                           isEliminated && "line-through"
                         )}>
                           {optionText}
