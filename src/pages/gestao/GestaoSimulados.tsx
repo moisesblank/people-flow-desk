@@ -23,7 +23,7 @@ import {
   Activity, TrendingUp, Timer, Download, Upload,
   Zap, Target, Medal, BarChart, History, Gavel,
   AlertCircle, FileText, UserX, UserCheck, Wrench,
-  Save, Power, PowerOff, Heart
+  Save, Power, PowerOff, Heart, RotateCcw
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -791,18 +791,28 @@ function CreateSimuladoDialog({
           isLoadingQuestions={isLoadingQuestions}
         />
         
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
+        <DialogFooter className="flex justify-between sm:justify-between">
+          <Button 
+            variant="destructive" 
+            onClick={() => setFormData(EMPTY_FORM)}
+            className="gap-1"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Restaurar Padrões
           </Button>
-          <Button onClick={handleSubmit} disabled={createSimulado.isPending} className="gap-2">
-            {createSimulado.isPending ? 'Criando...' : (
-              <>
-                <Save className="h-4 w-4" />
-                Salvar Rascunho
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmit} disabled={createSimulado.isPending} className="gap-2">
+              {createSimulado.isPending ? 'Criando...' : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Salvar Rascunho
+                </>
+              )}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
