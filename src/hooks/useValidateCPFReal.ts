@@ -43,7 +43,7 @@ export function useValidateCPFReal(): UseValidateCPFRealReturn {
       const result: CPFValidationResult = {
         valid: false,
         exists: null,
-        error: 'CPF deve ter 11 dígitos',
+        error: 'O CPF informado deve conter exatamente 11 dígitos numéricos.',
         cpf_sanitized: cpf.replace(/\D/g, '')
       };
       setLastResult(result);
@@ -60,17 +60,18 @@ export function useValidateCPFReal(): UseValidateCPFRealReturn {
 
       if (fnError) {
         console.error('[useValidateCPFReal] Erro na função:', fnError);
-        setError(fnError.message);
-        toast.error('Erro ao validar CPF', {
-          description: fnError.message
+        const mensagemErro = traduzirErroCPF(fnError.message);
+        setError(mensagemErro);
+        toast.error('Falha na Validação do CPF', {
+          description: mensagemErro
         });
         return null;
       }
 
       if (!data?.success) {
-        const errorMsg = data?.error || 'Erro desconhecido na validação';
+        const errorMsg = traduzirErroCPF(data?.error || 'Erro desconhecido na validação');
         setError(errorMsg);
-        toast.error('Falha na validação', {
+        toast.error('Falha na Validação do CPF', {
           description: errorMsg
         });
         return null;
@@ -81,14 +82,15 @@ export function useValidateCPFReal(): UseValidateCPFRealReturn {
 
       // Feedback visual baseado no resultado
       if (result.valid && result.exists) {
-        toast.success('CPF válido!', {
+        toast.success('CPF Válido na Receita Federal', {
           description: result.nome 
             ? `Pertence a: ${result.nome.split(' ')[0]}***`
-            : 'CPF encontrado na Receita Federal'
+            : 'CPF encontrado e regular na Receita Federal'
         });
       } else if (!result.valid) {
-        toast.error('CPF inválido', {
-          description: result.error || 'CPF não passou na validação'
+        const mensagemErro = traduzirErroCPF(result.error || 'CPF não passou na validação');
+        toast.error('CPF Inválido ou Irregular', {
+          description: mensagemErro
         });
       }
 
@@ -96,9 +98,10 @@ export function useValidateCPFReal(): UseValidateCPFRealReturn {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Erro de conexão';
       console.error('[useValidateCPFReal] Erro:', err);
-      setError(errorMsg);
-      toast.error('Erro de conexão', {
-        description: 'Não foi possível validar o CPF. Tente novamente.'
+      const mensagemErro = traduzirErroCPF(errorMsg);
+      setError(mensagemErro);
+      toast.error('Falha na Conexão com a Receita Federal', {
+        description: 'Não foi possível validar o CPF no momento. Verifique sua conexão e tente novamente.'
       });
       return null;
     } finally {
@@ -112,6 +115,79 @@ export function useValidateCPFReal(): UseValidateCPFRealReturn {
     lastResult,
     error
   };
+}
+
+/**
+ * Traduz mensagens de erro de CPF para português claro
+ * Usado em todos os pontos de exibição de erro do sistema
+ */
+function traduzirErroCPF(mensagem: string): string {
+  const msg = mensagem?.toLowerCase() || '';
+  
+  // Erros de formato
+  if (msg.includes('11 dígitos') || msg.includes('11 digits')) {
+    return 'O CPF informado deve conter exatamente 11 dígitos numéricos.';
+  }
+  if (msg.includes('formato') || msg.includes('format') || msg.includes('invalid cpf')) {
+    return 'O formato do CPF está incorreto. Verifique se digitou corretamente.';
+  }
+  if (msg.includes('dígitos iguais') || msg.includes('same digits')) {
+    return 'CPF inválido: todos os dígitos são iguais.';
+  }
+  if (msg.includes('verificador') || msg.includes('check digit')) {
+    return 'CPF inválido: os dígitos verificadores não conferem.';
+  }
+  
+  // Erros da Receita Federal
+  if (msg.includes('não encontrado') || msg.includes('not found')) {
+    return 'CPF não encontrado na base da Receita Federal. Verifique se o número está correto.';
+  }
+  if (msg.includes('irregular') || msg.includes('pendente') || msg.includes('suspenso')) {
+    return 'CPF irregular ou com pendências na Receita Federal. O titular deve regularizar a situação.';
+  }
+  if (msg.includes('cancelado') || msg.includes('nulo') || msg.includes('cancelled')) {
+    return 'CPF cancelado ou anulado pela Receita Federal. Não é possível criar acesso.';
+  }
+  if (msg.includes('falecido') || msg.includes('óbito') || msg.includes('deceased')) {
+    return 'CPF vinculado a pessoa falecida. Não é possível criar acesso.';
+  }
+  
+  // Erros de autenticação/permissão
+  if (msg.includes('auth') || msg.includes('session') || msg.includes('token') || msg.includes('401')) {
+    return 'Sessão expirada. Faça logout e login novamente para continuar.';
+  }
+  if (msg.includes('permissão') || msg.includes('permission') || msg.includes('403') || msg.includes('unauthorized')) {
+    return 'Você não tem permissão para realizar esta validação. Contate o administrador.';
+  }
+  
+  // Erros de conexão/API
+  if (msg.includes('timeout') || msg.includes('tempo esgotado')) {
+    return 'A consulta à Receita Federal demorou muito. Tente novamente em alguns instantes.';
+  }
+  if (msg.includes('conexão') || msg.includes('connection') || msg.includes('network')) {
+    return 'Falha na conexão com a Receita Federal. Verifique sua internet e tente novamente.';
+  }
+  if (msg.includes('servidor') || msg.includes('server') || msg.includes('500') || msg.includes('502') || msg.includes('503')) {
+    return 'O serviço da Receita Federal está temporariamente indisponível. Tente novamente em alguns minutos.';
+  }
+  if (msg.includes('rate limit') || msg.includes('limite') || msg.includes('muitas requisições')) {
+    return 'Muitas consultas realizadas. Aguarde alguns minutos antes de tentar novamente.';
+  }
+  
+  // Erros de crédito/API externa
+  if (msg.includes('crédito') || msg.includes('credit') || msg.includes('saldo')) {
+    return 'Créditos de consulta esgotados. Contate o administrador do sistema.';
+  }
+  if (msg.includes('api key') || msg.includes('chave') || msg.includes('token inválido')) {
+    return 'Configuração do serviço de validação incorreta. Contate o administrador.';
+  }
+  
+  // Se não encontrou tradução específica, retorna a mensagem original ou uma genérica
+  if (mensagem && mensagem.trim().length > 0) {
+    return mensagem;
+  }
+  
+  return 'Ocorreu um erro inesperado ao validar o CPF. Tente novamente.';
 }
 
 /**
