@@ -157,9 +157,10 @@ interface DisputeDetailModalProps {
   dispute: Dispute | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  canRespond?: boolean;
 }
 
-function DisputeDetailModal({ dispute, open, onOpenChange }: DisputeDetailModalProps) {
+function DisputeDetailModal({ dispute, open, onOpenChange, canRespond = true }: DisputeDetailModalProps) {
   const [resolution, setResolution] = useState("");
   const [newStatus, setNewStatus] = useState<string>("");
   const updateDispute = useUpdateDispute();
@@ -289,8 +290,8 @@ function DisputeDetailModal({ dispute, open, onOpenChange }: DisputeDetailModalP
 
             <Separator />
 
-            {/* Ação */}
-            {dispute.status !== "resolved" && dispute.status !== "rejected" && (
+            {/* Ação - 🔒 Só exibe se tiver permissão de responder */}
+            {canRespond && dispute.status !== "resolved" && dispute.status !== "rejected" && (
               <div className="space-y-4">
                 <Label className="font-medium">Responder Contestação</Label>
                 
@@ -336,6 +337,18 @@ function DisputeDetailModal({ dispute, open, onOpenChange }: DisputeDetailModalP
                 )}
               </div>
             )}
+            
+            {/* Mensagem se não tiver permissão */}
+            {!canRespond && dispute.status !== "resolved" && dispute.status !== "rejected" && (
+              <div className="p-4 bg-muted/50 rounded-lg text-center">
+                <p className="text-sm text-muted-foreground">
+                  Você não tem permissão para responder contestações.
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Apenas Owner e Admin podem responder.
+                </p>
+              </div>
+            )}
           </div>
         </ScrollArea>
 
@@ -343,7 +356,8 @@ function DisputeDetailModal({ dispute, open, onOpenChange }: DisputeDetailModalP
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          {dispute.status !== "resolved" && dispute.status !== "rejected" && (
+          {/* 🔒 Só exibe botão se tiver permissão */}
+          {canRespond && dispute.status !== "resolved" && dispute.status !== "rejected" && (
             <Button onClick={handleSubmit} disabled={updateDispute.isPending || !newStatus}>
               {updateDispute.isPending ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -359,7 +373,11 @@ function DisputeDetailModal({ dispute, open, onOpenChange }: DisputeDetailModalP
   );
 }
 
-export function DisputesPanel() {
+interface DisputesPanelProps {
+  canRespond?: boolean;
+}
+
+export function DisputesPanel({ canRespond = true }: DisputesPanelProps) {
   const [statusFilter, setStatusFilter] = useState<string>("pending");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
@@ -553,6 +571,7 @@ export function DisputesPanel() {
         dispute={selectedDispute}
         open={detailOpen}
         onOpenChange={setDetailOpen}
+        canRespond={canRespond}
       />
     </div>
   );

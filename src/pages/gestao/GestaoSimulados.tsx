@@ -3,11 +3,14 @@
  * 
  * Centro de comando COMPLETO para criação, monitoramento e controle de simulados.
  * FASE 2 COMPLETA: Edição, validações, hard_mode_override, manutenção, rascunho
+ * FASE 5 COMPLETA: Permissões granulares (criar ≠ editar ≠ publicar ≠ responder)
+ * FASE 6 COMPLETA: Compliance LGPD documentado
  */
 
 import { useState, useMemo, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
+import { useSimuladoPermissions } from '@/hooks/simulados/useSimuladoPermissions';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format, formatDistanceToNow } from 'date-fns';
@@ -1848,6 +1851,9 @@ export default function GestaoSimulados() {
   const { data: simulados } = useSimulados();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   
+  // 🔒 FASE 5: Permissões Granulares
+  const permissions = useSimuladoPermissions();
+  
   // Métricas
   const metrics = useMemo(() => {
     if (!simulados) return { total: 0, published: 0, active: 0, hardMode: 0 };
@@ -1882,10 +1888,13 @@ export default function GestaoSimulados() {
             </p>
           </div>
           
-          <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
-            <Plus className="h-5 w-5" />
-            Novo Simulado
-          </Button>
+          {/* 🔒 Só exibe botão se tiver permissão de criar */}
+          {permissions.canCreate && (
+            <Button onClick={() => setCreateDialogOpen(true)} className="gap-2">
+              <Plus className="h-5 w-5" />
+              Novo Simulado
+            </Button>
+          )}
         </motion.div>
         
         {/* Cards de métricas */}
@@ -1928,26 +1937,38 @@ export default function GestaoSimulados() {
               <Activity className="h-4 w-4" />
               Monitor
             </TabsTrigger>
-            <TabsTrigger value="contestacoes" className="gap-2">
-              <Gavel className="h-4 w-4" />
-              Contestações
-            </TabsTrigger>
-            <TabsTrigger value="alertas" className="gap-2">
-              <AlertCircle className="h-4 w-4" />
-              Alertas
-            </TabsTrigger>
+            {/* 🔒 Só exibe se tiver permissão de ver contestações */}
+            {permissions.canViewDisputes && (
+              <TabsTrigger value="contestacoes" className="gap-2">
+                <Gavel className="h-4 w-4" />
+                Contestações
+              </TabsTrigger>
+            )}
+            {/* 🔒 Só exibe se tiver permissão de ver alertas */}
+            {permissions.canViewAlerts && (
+              <TabsTrigger value="alertas" className="gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Alertas
+              </TabsTrigger>
+            )}
             <TabsTrigger value="ranking" className="gap-2">
               <Trophy className="h-4 w-4" />
               Ranking
             </TabsTrigger>
-            <TabsTrigger value="auditoria" className="gap-2">
-              <History className="h-4 w-4" />
-              Auditoria
-            </TabsTrigger>
-            <TabsTrigger value="flags" className="gap-2">
-              <Settings className="h-4 w-4" />
-              Sistema
-            </TabsTrigger>
+            {/* 🔒 Só exibe se tiver permissão de ver auditoria */}
+            {permissions.canViewAudit && (
+              <TabsTrigger value="auditoria" className="gap-2">
+                <History className="h-4 w-4" />
+                Auditoria
+              </TabsTrigger>
+            )}
+            {/* 🔒 Só exibe se tiver permissão de gerenciar flags ou ver healthcheck */}
+            {(permissions.canManageFlags || permissions.canViewHealthcheck) && (
+              <TabsTrigger value="flags" className="gap-2">
+                <Settings className="h-4 w-4" />
+                Sistema
+              </TabsTrigger>
+            )}
           </TabsList>
           
           <TabsContent value="simulados">
@@ -1958,28 +1979,38 @@ export default function GestaoSimulados() {
             <MonitoringDashboard />
           </TabsContent>
           
-          <TabsContent value="contestacoes">
-            <DisputesPanel />
-          </TabsContent>
+          {/* 🔒 Só renderiza se tiver permissão */}
+          {permissions.canViewDisputes && (
+            <TabsContent value="contestacoes">
+              <DisputesPanel canRespond={permissions.canRespondDisputes} />
+            </TabsContent>
+          )}
           
-          <TabsContent value="alertas">
-            <AlertsPanel />
-          </TabsContent>
+          {permissions.canViewAlerts && (
+            <TabsContent value="alertas">
+              <AlertsPanel />
+            </TabsContent>
+          )}
           
           <TabsContent value="ranking">
             <RankingPanel />
           </TabsContent>
           
-          <TabsContent value="auditoria">
-            <AuditLogsPanel />
-          </TabsContent>
+          {/* 🔒 Só renderiza se tiver permissão */}
+          {permissions.canViewAudit && (
+            <TabsContent value="auditoria">
+              <AuditLogsPanel />
+            </TabsContent>
+          )}
           
-          <TabsContent value="flags">
-            <div className="space-y-6">
-              <SimuladoFeatureFlagsPanel />
-              <HealthCheckPanel />
-            </div>
-          </TabsContent>
+          {(permissions.canManageFlags || permissions.canViewHealthcheck) && (
+            <TabsContent value="flags">
+              <div className="space-y-6">
+                {permissions.canManageFlags && <SimuladoFeatureFlagsPanel />}
+                {permissions.canViewHealthcheck && <HealthCheckPanel />}
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
       
