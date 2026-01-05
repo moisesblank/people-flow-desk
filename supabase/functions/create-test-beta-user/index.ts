@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-const testEmail = "testedomoisa@gmail.com";
+const testEmail = "moisescursoquimica@gmail.com";
 const testPassword = "Eocomando32!!!";
 
     // 1. Verificar se já existe
