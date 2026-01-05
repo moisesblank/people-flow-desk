@@ -229,6 +229,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     console.log('[AUTH] useEffect de auth state iniciado');
 
+    // ⏱️ P0 FIX: Timeout de segurança para evitar loading infinito
+    const AUTH_TIMEOUT_MS = 8000;
+    let authTimeoutId: NodeJS.Timeout | null = setTimeout(() => {
+      console.warn('[AUTH] ⚠️ Timeout de 8s atingido - liberando isLoading');
+      setIsLoading(false);
+    }, AUTH_TIMEOUT_MS);
+
+    const clearAuthTimeout = () => {
+      if (authTimeoutId) {
+        clearTimeout(authTimeoutId);
+        authTimeoutId = null;
+      }
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, newSession) => {
         console.log('[AUTH][STATE] event:', event, {
@@ -290,6 +304,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      // ⏱️ Limpar timeout pois getSession retornou
+      clearAuthTimeout();
+      
       // ✅ P0 FIX: Evitar re-render desnecessário
       setSession(prev => {
         if (prev?.access_token === initialSession?.access_token) {
@@ -318,9 +335,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         startHeartbeatRef.current();
       }
       setIsLoading(false);
+    }).catch((err) => {
+      // ⏱️ P0 FIX: Se getSession falhar, liberar loading
+      console.error('[AUTH] ❌ Erro no getSession:', err);
+      clearAuthTimeout();
+      setIsLoading(false);
     });
 
     return () => {
+      clearAuthTimeout();
       subscription.unsubscribe();
       stopHeartbeatRef.current();
     };
