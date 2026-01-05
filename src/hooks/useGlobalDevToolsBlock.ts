@@ -210,13 +210,14 @@ export function useGlobalDevToolsBlock() {
         return false;
       }
       
+      // ⚠️ F12 TEMPORARIAMENTE LIBERADO PARA DEBUG
       // Verificar F12 (Windows e Mac com fn+F12)
-      if (key === 'F12') {
-        e.preventDefault();
-        e.stopPropagation();
-        showWarning('devtools');
-        return;
-      }
+      // if (key === 'F12') {
+      //   e.preventDefault();
+      //   e.stopPropagation();
+      //   showWarning('devtools');
+      //   return;
+      // }
 
       // Verificar combinações bloqueadas
       for (const blocked of BLOCKED_KEYS) {
