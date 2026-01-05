@@ -232,9 +232,14 @@ export function SimuladoRunningScreen({
 
               {/* Alternativas - Estilo Print */}
               <div className="space-y-3">
-                {sortedOptions.map(([key, text]) => {
+                {sortedOptions.map(([key, optionValue]) => {
                   const isSelected = currentAnswer?.selectedOption === key;
                   const isSelecting = selectingOption === key;
+                  
+                  // Extrair texto: pode ser string ou objeto {id, text}
+                  const optionText = typeof optionValue === 'string' 
+                    ? optionValue 
+                    : (optionValue as { text?: string })?.text || '';
                   
                   return (
                     <button
@@ -261,7 +266,7 @@ export function SimuladoRunningScreen({
                         </div>
                         
                         <span className="font-bold text-foreground">{key})</span>
-                        <span className="text-foreground/90">{text}</span>
+                        <span className="text-foreground/90">{optionText}</span>
                       </div>
                       
                       {/* X button - Estilo Print */}
