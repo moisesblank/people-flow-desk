@@ -12,7 +12,7 @@
  * - Logging (useSimuladoLogger)
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { 
@@ -93,15 +93,15 @@ export function SimuladoPlayer({
     isRunning: isAttemptRunning,
   } = useSimuladoAttempt();
 
-  // Timer derivado do servidor - SEMPRE usar dados do banco (attempt/simulado)
-  // NÃO depender de attemptConfig que só existe após startAttempt() nesta sessão
+  // Timer derivado do servidor
+  // Fonte de verdade: started_at retornado pelo backend (RPC ou fetch da tentativa)
   const timerStartedAt = React.useMemo(() => {
-    // Prioridade: attempt do banco > attemptState local
-    if (attempt?.started_at) {
-      return new Date(attempt.started_at);
-    }
+    // Prioridade: startedAt retornado pelo RPC (sempre server-side) > attempt do banco
     if (attemptState.startedAt) {
       return attemptState.startedAt;
+    }
+    if (attempt?.started_at) {
+      return new Date(attempt.started_at);
     }
     return null;
   }, [attempt?.started_at, attemptState.startedAt]);
@@ -297,9 +297,42 @@ export function SimuladoPlayer({
     refresh();
   }, [refresh]);
 
+  // Efeito: Reiniciar cronômetro SEMPRE que o simulado for aberto (RUNNING)
+  // Regra: ao entrar em RUNNING, chamamos startAttempt() (idempotente) que agora reseta started_at no servidor.
+  const timerResetInFlightRef = useRef(false);
+  const hasAutoResetTimerRef = useRef(false);
+
+  useEffect(() => {
+    if (currentState !== SimuladoState.RUNNING) {
+      hasAutoResetTimerRef.current = false;
+      timerResetInFlightRef.current = false;
+      return;
+    }
+
+    if (hasAutoResetTimerRef.current) return;
+    if (!simuladoId) return;
+
+    hasAutoResetTimerRef.current = true;
+    timerResetInFlightRef.current = true;
+
+    void withStartLock(async () => {
+      try {
+        await startAttempt(simuladoId);
+        refresh();
+      } finally {
+        timerResetInFlightRef.current = false;
+      }
+    });
+  }, [currentState, simuladoId, startAttempt, refresh, withStartLock]);
+
   // Efeito: Auto-finalizar quando tempo acabar
   useEffect(() => {
-    if (isExpired && currentState === SimuladoState.RUNNING && !isFinishing) {
+    if (
+      isExpired &&
+      currentState === SimuladoState.RUNNING &&
+      !isFinishing &&
+      !timerResetInFlightRef.current
+    ) {
       handleTimeUp();
     }
   }, [isExpired, currentState, isFinishing, handleTimeUp]);
