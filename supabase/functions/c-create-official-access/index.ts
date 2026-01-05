@@ -255,24 +255,20 @@ const getBaseTemplate = (titulo: string, conteudo: string, botaoTexto?: string, 
 `;
 
 // ============================================
-// ENVIAR EMAIL DE BOAS-VINDAS (Resend)
-// ⚠️ NUNCA envia senha em texto
-// AGORA USA O TEMPLATE PADRÃO DA PLATAFORMA
+// ENVIAR EMAIL DE BOAS-VINDAS COM LINK DE DEFINIÇÃO DE SENHA
+// ⚠️ NUNCA envia senha em texto - envia link clicável
+// 🎯 P0 FIX: Botão clicável para primeiro acesso
 // ============================================
-async function sendWelcomeEmail(
+async function sendWelcomeEmailWithSetupLink(
   resend: Resend,
   fromEmail: string,
   toEmail: string,
   nome: string,
   role: StudentRole,
-  generatedPassword?: string,
+  passwordSetupUrl: string, // Link para definir senha
 ): Promise<{ success: boolean; error?: string }> {
   const roleLabel = ROLE_LABELS[role];
-  const platformUrl = 'https://pro.moisesmedeiros.com.br/auth';
 
-  // 🎯 P0 FIX: Agora SEMPRE envia senha gerada no email (autorizado pelo OWNER)
-  const hasPassword = !!generatedPassword;
-  
   // Conteúdo interno usando o template base padrão
   const conteudo = `
     <h2 style="margin:0 0 16px;font-size:18px;color:#ffffff;">🎉 Bem-vindo(a), ${nome}!</h2>
@@ -282,35 +278,17 @@ async function sendWelcomeEmail(
       <p style="margin:0;color:#E62B4A;font-size:16px;font-weight:bold;">✅ ${roleLabel}</p>
     </div>
     
-    ${hasPassword ? `
-    <div style="background:#2a2a2f;border-radius:8px;padding:20px;margin:16px 0;border-left:4px solid #E62B4A;">
-      <p style="margin:0 0 12px;color:#ffffff;font-weight:bold;font-size:15px;">🔐 Suas Credenciais de Acesso</p>
-      <table style="width:100%;border-collapse:collapse;">
-        <tr>
-          <td style="padding:8px 0;color:#9aa0a6;font-size:13px;width:60px;">📧 Email:</td>
-          <td style="padding:8px 0;color:#ffffff;font-size:14px;font-weight:500;">${toEmail}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 0;color:#9aa0a6;font-size:13px;">🔑 Senha:</td>
-          <td style="padding:8px 0;">
-            <code style="background:#1a1a1f;padding:8px 12px;border-radius:6px;font-family:'Courier New',monospace;color:#22c55e;font-size:15px;font-weight:bold;letter-spacing:1px;">${generatedPassword}</code>
-          </td>
-        </tr>
-      </table>
-      <p style="margin:16px 0 0;color:#fbbf24;font-size:12px;">⚠️ Por segurança, recomendamos alterar sua senha no primeiro acesso.</p>
+    <div style="background:#2a2a2f;border-radius:8px;padding:20px;margin:16px 0;border-left:4px solid #22c55e;">
+      <p style="margin:0 0 12px;color:#ffffff;font-weight:bold;font-size:15px;">🔐 Configure sua Senha de Acesso</p>
+      <p style="margin:0;color:#9aa0a6;font-size:13px;">Clique no botão abaixo para definir sua senha e acessar a plataforma pela primeira vez.</p>
+      <p style="margin:12px 0 0;color:#fbbf24;font-size:12px;">⚠️ Este link é válido por 24 horas.</p>
     </div>
-    ` : `
-    <div style="background:#1a2f1a;border-radius:8px;padding:16px;margin:16px 0;border-left:3px solid #22c55e;">
-      <p style="margin:0 0 8px;color:#22c55e;font-weight:bold;">✅ Acesso pronto!</p>
-      <p style="margin:0;color:#9aa0a6;font-size:13px;">Sua conta já está configurada. Faça login com seu email e senha.</p>
-    </div>
-    `}
     
     <h3 style="margin:20px 0 12px;font-size:14px;color:#ffffff;">📚 Próximos passos:</h3>
     <ul style="margin:0;padding-left:20px;color:#9aa0a6;font-size:13px;line-height:1.8;">
-      <li>Acesse a plataforma clicando no botão abaixo</li>
-      <li>Faça login com seu email e senha</li>
-      <li>Explore todo o conteúdo disponível para você</li>
+      <li><strong style="color:#E62B4A;">Clique no botão "Definir Minha Senha" abaixo</strong></li>
+      <li>Crie uma senha forte (mín. 8 caracteres com maiúscula, minúscula, número e símbolo)</li>
+      <li>Acesse a plataforma e explore todo o conteúdo</li>
       <li>Em caso de dúvidas, entre em contato via WhatsApp</li>
     </ul>
   `;
@@ -318,17 +296,17 @@ async function sendWelcomeEmail(
   const htmlContent = getBaseTemplate(
     "Seu acesso foi criado com sucesso!",
     conteudo,
-    "Acessar Plataforma",
-    platformUrl
+    "Definir Minha Senha",
+    passwordSetupUrl
   );
 
   try {
-    console.log('[c-create-official-access] Sending welcome email to:', toEmail);
+    console.log('[c-create-official-access] Sending welcome email with setup link to:', toEmail);
     
     const { data, error } = await resend.emails.send({
       from: fromEmail,
       to: [toEmail],
-      subject: `🎉 Bem-vindo(a), ${nome}! Seu acesso está pronto — Curso Moisés Medeiros`,
+      subject: `🎉 Bem-vindo(a), ${nome}! Configure seu acesso — Curso Moisés Medeiros`,
       html: htmlContent,
     });
 
@@ -337,7 +315,7 @@ async function sendWelcomeEmail(
       return { success: false, error: error.message };
     }
 
-    console.log('[c-create-official-access] Welcome email sent successfully. ID:', data?.id);
+    console.log('[c-create-official-access] Welcome email with setup link sent successfully. ID:', data?.id);
     return { success: true };
     
   } catch (err) {
@@ -620,30 +598,28 @@ serve(async (req) => {
 
     // ============================================
     // 5. CRIAR OU OBTER USUÁRIO
-    // 🎯 P0 FIX: SEMPRE gera senha aleatória se não fornecida
-    // e ENVIA a senha por email (autorizado pelo OWNER)
+    // 🎯 P0 FIX NOVO FLUXO: Criar com senha temporária
+    // O usuário vai definir sua própria senha via link no email
     // ============================================
     let emailStatus: 'sent' | 'queued' | 'failed' | 'password_set' | 'welcome_sent' = 'failed';
-    let generatedPassword: string | undefined;
     let welcomeEmailSent = false;
     let passwordEmailSent = false;
+    
+    // Senha temporária - usuário vai redefinir via link
+    const tempPassword = payload.senha || generateSecurePassword();
 
     if (!userAlreadyExists) {
-      // Determinar senha: usar fornecida ou gerar nova
-      const senhaFinal = payload.senha || generateSecurePassword();
-      generatedPassword = payload.senha ? undefined : senhaFinal; // Só guarda se foi gerada
-      
-      console.log('[c-create-official-access] 🔐 Creating user with password (generated:', !payload.senha, ')');
+      console.log('[c-create-official-access] 🔐 Creating user with temporary password (will be reset via link)');
       
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email: payload.email,
-        password: senhaFinal,
+        password: tempPassword,
         email_confirm: true, // Auto-confirma email
         user_metadata: {
           nome: payload.nome,
           created_by: caller.email,
           created_via: 'c-create-official-access',
-          password_was_generated: !payload.senha,
+          requires_password_setup: !payload.senha, // Flag para indicar que precisa definir senha
         },
       });
 
@@ -657,43 +633,36 @@ serve(async (req) => {
 
       userId = newUser.user.id;
       emailStatus = 'password_set';
-      passwordEmailSent = !payload.senha; // Será enviada se foi gerada
+      passwordEmailSent = !payload.senha;
       console.log('[c-create-official-access] ✅ User created:', userId);
     } else {
       // ============================================
-      // 🎯 P0 FIX: Usuário já existe - SEMPRE gera nova senha
-      // e atualiza no auth para garantir acesso funcional
+      // 🎯 Usuário já existe - NÃO alterar senha (manter existente)
+      // Apenas atualizar metadata e enviar link de reset se necessário
       // ============================================
-      const senhaParaExistente = payload.senha || generateSecurePassword();
-      generatedPassword = payload.senha ? undefined : senhaParaExistente;
+      console.log('[c-create-official-access] ℹ️ User already exists, updating metadata only');
       
-      console.log('[c-create-official-access] 🔐 Updating existing user password (generated:', !payload.senha, ')');
-      
-      // Atualizar senha do usuário existente
       const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
         userId!,
         { 
-          password: senhaParaExistente,
           email_confirm: true, // Garantir email confirmado
           user_metadata: {
             nome: payload.nome,
             updated_by: caller.email,
             updated_via: 'c-create-official-access',
-            password_was_regenerated: !payload.senha,
-            password_regenerated_at: new Date().toISOString(),
+            access_reactivated_at: new Date().toISOString(),
           },
         }
       );
       
       if (updateError) {
-        console.error('[c-create-official-access] ⚠️ Error updating user password:', updateError.message);
-        // Não falha completamente, continua com o fluxo
+        console.error('[c-create-official-access] ⚠️ Error updating user metadata:', updateError.message);
       } else {
-        console.log('[c-create-official-access] ✅ User password updated successfully');
-        passwordEmailSent = !payload.senha;
+        console.log('[c-create-official-access] ✅ User metadata updated successfully');
       }
       
       emailStatus = 'password_set';
+      passwordEmailSent = true; // Vai enviar link de setup
       console.log('[c-create-official-access] ℹ️ Using existing user:', userId);
     }
 
@@ -728,12 +697,13 @@ serve(async (req) => {
       profileData.avatar_url = payload.foto_aluno;
     }
 
-    // 🎯 MAGIC PASSWORD FLOW: Forçar troca de senha no primeiro login
-    // Se senha foi gerada automaticamente (novo OU existente), marca para forçar troca
-    if (generatedPassword) {
+    // 🎯 PRIMEIRO ACESSO: SEMPRE marca password_change_required para novos usuários
+    // O link no email vai permitir que o usuário defina sua própria senha
+    if (!payload.senha) {
       profileData.password_change_required = true;
-      profileData.magic_password_created_at = new Date().toISOString();
-      console.log('[c-create-official-access] 🔐 Magic password flow: will require password change on first login');
+      profileData.onboarding_completed = false;
+      profileData.platform_steps_completed = false;
+      console.log('[c-create-official-access] 🔐 First access: will redirect to password setup via email link');
     }
 
     const { error: profileError } = await supabaseAdmin
@@ -866,24 +836,40 @@ serve(async (req) => {
     console.log('[c-create-official-access] ✅ Role assigned:', payload.role, expiresAt ? `(expires: ${expiresAt})` : '');
 
     // ============================================
-    // 9. ENVIAR EMAIL DE BOAS-VINDAS (COM SENHA SE GERADA)
-    // 🎯 P0 FIX: Envia senha gerada por email (autorizado pelo OWNER)
+    // 9. GERAR TOKEN E ENVIAR EMAIL COM LINK DE DEFINIÇÃO DE SENHA
+    // 🎯 P0 FIX: Link clicável para primeiro acesso (SEM enviar senha)
     // ============================================
-    console.log('[c-create-official-access] 📧 Sending welcome email...');
+    console.log('[c-create-official-access] 📧 Generating password setup link...');
     
-    const emailResult = await sendWelcomeEmail(
+    // Gerar token de definição de senha usando RPC existente
+    const { data: tokenData, error: tokenError } = await supabaseAdmin.rpc("create_password_reset_token", {
+      _email: payload.email,
+    });
+    
+    let passwordSetupUrl = `https://pro.moisesmedeiros.com.br/auth`; // Fallback
+    
+    if (tokenError || !tokenData || tokenData.length === 0) {
+      console.warn('[c-create-official-access] ⚠️ Falha ao gerar token de setup:', tokenError?.message);
+      // Continua com URL simples de login
+    } else {
+      const token = tokenData[0].token;
+      passwordSetupUrl = `https://pro.moisesmedeiros.com.br/auth?reset_token=${token}`;
+      console.log('[c-create-official-access] ✅ Password setup token generated');
+    }
+    
+    const emailResult = await sendWelcomeEmailWithSetupLink(
       resend,
       resendFrom,
       payload.email,
       payload.nome,
       payload.role,
-      generatedPassword, // Envia senha gerada (ou undefined se foi fornecida)
+      passwordSetupUrl,
     );
 
     if (emailResult.success) {
       welcomeEmailSent = true;
       emailStatus = 'welcome_sent';
-      console.log('[c-create-official-access] ✅ Welcome email sent successfully');
+      console.log('[c-create-official-access] ✅ Welcome email with setup link sent successfully');
     } else {
       console.error('[c-create-official-access] ❌ Welcome email failed:', emailResult.error);
       emailStatus = 'failed';
