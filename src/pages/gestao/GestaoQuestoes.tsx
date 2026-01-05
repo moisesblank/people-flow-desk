@@ -1153,11 +1153,11 @@ function GestaoQuestoes() {
       // Fallback: filtrar por classificação e extrair micros dos dados
       const filtered = questions.filter(q => classifyMacroArea(q.macro) === macroAreaFilter);
       const micros = filtered.map(q => q.micro).filter(Boolean) as string[];
-      return [...new Set(micros)].sort();
+      return [...new Set(micros)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
     }
     // Sem filtro: mostrar todos os micros únicos dos dados
     const micros = questions.map(q => q.micro).filter(Boolean) as string[];
-    return [...new Set(micros)].sort();
+    return [...new Set(micros)].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   }, [questions, macroAreaFilter, getMicrosForSelect, classifyMacroArea]);
 
   // TEMAs filtrados pelo microFilter selecionado (MACRO → MICRO → TEMA)
@@ -2426,9 +2426,11 @@ function GestaoQuestoes() {
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
                   <SelectItem value="all">Macro: Todos</SelectItem>
-                  <SelectItem value="organica">Química Orgânica</SelectItem>
+                  <SelectItem value="bioquimica">Bioquímica</SelectItem>
                   <SelectItem value="fisico_quimica">Físico-Química</SelectItem>
                   <SelectItem value="geral">Química Geral</SelectItem>
+                  <SelectItem value="ambiental">Química Ambiental</SelectItem>
+                  <SelectItem value="organica">Química Orgânica</SelectItem>
                 </SelectContent>
               </Select>
 
