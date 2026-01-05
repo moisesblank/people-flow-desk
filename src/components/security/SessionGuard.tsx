@@ -213,6 +213,23 @@ export function SessionGuard({ children }: SessionGuardProps) {
       if (!result?.is_valid) {
         const reason = result?.reason || 'SESSION_INVALID';
 
+        // 🔧 P0 PATCH: Recuperação segura para SESSION_NOT_FOUND
+        // Cenário real: token local existe, mas não está mais no backend (ex: novo dispositivo / storage race).
+        // Estratégia: limpar token local e tentar 1 bootstrap; se persistir, segue fluxo normal (logout/overlay).
+        if (reason === 'SESSION_NOT_FOUND') {
+          const lastRecoveryAt = Number(sessionStorage.getItem('matriz_session_nf_recovery_at') || '0');
+          const canRecover = Date.now() - lastRecoveryAt > 10_000; // anti-loop
+
+          if (canRecover) {
+            console.warn('[SessionGuard] 🟠 SESSION_NOT_FOUND → tentando bootstrap de recuperação');
+            sessionStorage.setItem('matriz_session_nf_recovery_at', String(Date.now()));
+            localStorage.removeItem(SESSION_TOKEN_KEY);
+            await bootstrapSessionTokenIfMissing();
+            isValidatingRef.current = false;
+            return true;
+          }
+        }
+
         // 🎯 DIFERENCIAR: user_logout não mostra overlay de conflito
         // SESSION_NOT_FOUND pode ser user_logout ou conflito real
         // Para ser preciso, verificamos se acabamos de fazer logout
