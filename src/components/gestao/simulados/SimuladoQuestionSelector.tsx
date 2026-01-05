@@ -689,12 +689,15 @@ export function SimuladoQuestionSelector({
           </div>
           
           <div className="flex items-center gap-2">
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={handleClearFilters} className="text-xs gap-1">
-                <RotateCcw className="h-3 w-3" />
-                Limpar filtros
-              </Button>
-            )}
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              onClick={handleClearFilters} 
+              className="text-xs gap-1 bg-red-600 hover:bg-red-700"
+            >
+              <RotateCcw className="h-3 w-3" />
+              Restaurar Filtros
+            </Button>
             <Badge variant={selectedIds.length > 0 ? "default" : "destructive"} className="text-sm px-3 py-1 gap-1">
               <CheckCircle2 className="h-3 w-3" />
               {selectedIds.length}
