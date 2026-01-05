@@ -479,7 +479,7 @@ export function CriarAcessoOficialModal({
                 <FormItem>
                   <FormLabel className="flex items-center gap-1">
                     <User className="h-4 w-4" />
-                    Nome Completo *
+                    Nome Completo Vinculado ao CPF *
                   </FormLabel>
                   <FormControl>
                     <Input 
