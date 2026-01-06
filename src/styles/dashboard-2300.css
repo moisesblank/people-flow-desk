@@ -1,0 +1,514 @@
+/* ============================================
+   🌌 DASHBOARD 2300 - CINEMATIC EXPERIENCE
+   Year 2300 Ultra-Futuristic Student Dashboard
+   GPU-ONLY CSS Animations for Maximum Performance
+   ============================================ */
+
+/* ============================================
+   HERO SECTION - IRON MAN HUD STYLE
+   ============================================ */
+.dashboard-hero-2300 {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  background: linear-gradient(135deg, 
+    hsl(185 100% 25% / 0.9) 0%,
+    hsl(220 80% 15% / 0.95) 30%,
+    hsl(280 70% 12% / 0.95) 70%,
+    hsl(355 70% 18% / 0.9) 100%
+  );
+  border: 1px solid hsl(185 100% 50% / 0.3);
+  box-shadow: 
+    0 0 60px hsl(185 100% 50% / 0.15),
+    0 0 120px hsl(280 100% 50% / 0.1),
+    inset 0 1px 0 hsl(185 100% 80% / 0.15);
+}
+
+/* Holographic Scan Line */
+.dashboard-hero-2300::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    hsl(185 100% 50% / 0.05) 50%,
+    transparent 100%
+  );
+  animation: hero-scan 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes hero-scan {
+  0%, 100% { transform: translateY(-100%); opacity: 0; }
+  50% { transform: translateY(100%); opacity: 1; }
+}
+
+/* Corner Accents - Iron Man Style */
+.dashboard-hero-2300::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    hsl(185 100% 50% / 0.8) 20%,
+    hsl(185 100% 70% / 1) 50%,
+    hsl(185 100% 50% / 0.8) 80%,
+    transparent 100%
+  );
+  animation: hero-top-line 3s ease-in-out infinite;
+}
+
+@keyframes hero-top-line {
+  0%, 100% { opacity: 0.7; filter: brightness(1); }
+  50% { opacity: 1; filter: brightness(1.5); }
+}
+
+/* ============================================
+   STAT ORBS - FLOATING HOLOGRAPHIC METRICS
+   ============================================ */
+.stat-orb-2300 {
+  position: relative;
+  background: linear-gradient(135deg,
+    hsl(220 50% 8% / 0.9) 0%,
+    hsl(220 60% 5% / 0.95) 100%
+  );
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  backdrop-filter: blur(20px);
+  border: 1px solid hsl(185 100% 50% / 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.stat-orb-2300:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: hsl(185 100% 50% / 0.5);
+  box-shadow: 
+    0 20px 40px hsl(185 100% 50% / 0.15),
+    0 0 60px hsl(185 100% 50% / 0.1),
+    inset 0 1px 0 hsl(185 100% 80% / 0.2);
+}
+
+/* Orb Glow Ring */
+.stat-orb-2300::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 1.5rem;
+  background: conic-gradient(from 0deg,
+    hsl(185 100% 50% / 0) 0%,
+    hsl(185 100% 50% / 0.3) 25%,
+    hsl(280 100% 50% / 0.3) 50%,
+    hsl(355 80% 50% / 0.3) 75%,
+    hsl(185 100% 50% / 0) 100%
+  );
+  animation: orb-rotate 8s linear infinite;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.stat-orb-2300:hover::before {
+  opacity: 1;
+}
+
+@keyframes orb-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Orb Icon Container */
+.stat-orb-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-orb-icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 40%, hsl(0 0% 100% / 0.2) 100%);
+}
+
+/* ============================================
+   CARD 2300 - NEURAL GLASS PANELS
+   ============================================ */
+.card-neural-2300 {
+  position: relative;
+  background: linear-gradient(135deg,
+    hsl(220 50% 6% / 0.95) 0%,
+    hsl(220 60% 4% / 0.98) 100%
+  );
+  border-radius: 1.25rem;
+  border: 1px solid hsl(220 40% 20% / 0.5);
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-neural-2300:hover {
+  border-color: hsl(185 100% 50% / 0.4);
+  box-shadow: 
+    0 25px 60px hsl(0 0% 0% / 0.4),
+    0 0 80px hsl(185 100% 50% / 0.08),
+    inset 0 1px 0 hsl(185 100% 80% / 0.1);
+}
+
+/* Neural Grid Background */
+.card-neural-2300::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(hsl(185 100% 50% / 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(185 100% 50% / 0.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+
+.card-neural-2300:hover::before {
+  opacity: 1;
+}
+
+/* Card Accent Line */
+.card-neural-2300::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    hsl(185 100% 50% / 0.5) 50%,
+    transparent 100%
+  );
+  transform: scaleX(0);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-neural-2300:hover::after {
+  transform: scaleX(1);
+}
+
+/* ============================================
+   SECTION HEADERS - HOLOGRAPHIC TITLES
+   ============================================ */
+.section-header-2300 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.section-header-2300 .icon-container {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.section-header-2300 .icon-container::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background: conic-gradient(from 0deg,
+    transparent 0%,
+    hsl(0 0% 100% / 0.3) 50%,
+    transparent 100%
+  );
+  animation: icon-shine 3s linear infinite;
+}
+
+@keyframes icon-shine {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   PROGRESS BARS - ENERGY FLOW
+   ============================================ */
+.progress-energy-2300 {
+  position: relative;
+  height: 1rem;
+  background: hsl(220 50% 10% / 0.8);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid hsl(220 40% 20% / 0.3);
+}
+
+.progress-energy-2300 .fill {
+  height: 100%;
+  border-radius: 0.5rem;
+  position: relative;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progress-energy-2300 .fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    hsl(0 0% 100% / 0.3) 50%,
+    transparent 100%
+  );
+  animation: energy-flow 2s ease-in-out infinite;
+}
+
+@keyframes energy-flow {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ============================================
+   ACHIEVEMENT CARDS - TROPHY GLOW
+   ============================================ */
+.achievement-2300 {
+  position: relative;
+  background: linear-gradient(135deg,
+    hsl(43 80% 20% / 0.15) 0%,
+    hsl(43 60% 10% / 0.1) 100%
+  );
+  border: 1px solid hsl(43 80% 50% / 0.25);
+  border-radius: 1rem;
+  padding: 0.875rem;
+  transition: all 0.3s;
+}
+
+.achievement-2300:hover {
+  transform: scale(1.03);
+  border-color: hsl(43 80% 50% / 0.5);
+  box-shadow: 
+    0 0 30px hsl(43 80% 50% / 0.15),
+    inset 0 0 20px hsl(43 80% 50% / 0.05);
+}
+
+/* ============================================
+   RECOMMENDATION CARDS - AI PULSE
+   ============================================ */
+.rec-card-2300 {
+  position: relative;
+  background: hsl(220 50% 6% / 0.8);
+  border-radius: 1.25rem;
+  padding: 1.25rem;
+  border: 1px solid hsl(220 40% 20% / 0.4);
+  transition: all 0.3s;
+  overflow: hidden;
+}
+
+.rec-card-2300.urgent {
+  border-color: hsl(0 70% 50% / 0.4);
+  background: linear-gradient(135deg,
+    hsl(0 70% 15% / 0.2) 0%,
+    hsl(35 80% 15% / 0.1) 100%
+  );
+}
+
+.rec-card-2300:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 20px 40px hsl(0 0% 0% / 0.3);
+}
+
+/* AI Pulse Effect */
+.rec-card-2300::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg,
+    hsl(280 100% 60% / 0.8) 0%,
+    hsl(185 100% 50% / 0.8) 100%
+  );
+  animation: ai-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ai-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ============================================
+   PERFORMANCE SECTION - DATA VISUALIZATION
+   ============================================ */
+.performance-section-2300 {
+  position: relative;
+  background: linear-gradient(180deg,
+    hsl(220 50% 6% / 0.9) 0%,
+    hsl(220 60% 4% / 0.95) 100%
+  );
+  border-radius: 1.5rem;
+  border: 1px solid hsl(185 100% 50% / 0.2);
+  overflow: hidden;
+}
+
+.performance-section-2300::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg,
+    hsl(355 80% 50%) 0%,
+    hsl(185 100% 50%) 50%,
+    hsl(280 100% 60%) 100%
+  );
+}
+
+/* ============================================
+   SIMULADO SECTION - SCORE DISPLAY
+   ============================================ */
+.score-display-2300 {
+  position: relative;
+  display: inline-block;
+}
+
+.score-display-2300 .value {
+  font-size: 4rem;
+  font-weight: 900;
+  background: linear-gradient(135deg,
+    hsl(152 80% 50%) 0%,
+    hsl(185 100% 50%) 50%,
+    hsl(152 80% 60%) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 40px hsl(152 80% 50% / 0.3);
+  animation: score-pulse 3s ease-in-out infinite;
+}
+
+@keyframes score-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.2); }
+}
+
+/* ============================================
+   FLOATING PARTICLES - AMBIENT DECORATION
+   ============================================ */
+.particles-2300 {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.particles-2300 .particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: hsl(185 100% 70%);
+  animation: particle-float linear infinite;
+}
+
+@keyframes particle-float {
+  0% {
+    transform: translateY(100%) translateX(0);
+    opacity: 0;
+  }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% {
+    transform: translateY(-100%) translateX(20px);
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   BUTTON 2300 - ACTION TRIGGERS
+   ============================================ */
+.btn-2300-primary {
+  position: relative;
+  background: linear-gradient(135deg,
+    hsl(152 80% 40%) 0%,
+    hsl(152 70% 35%) 100%
+  );
+  border: none;
+  border-radius: 0.75rem;
+  padding: 0.875rem 1.5rem;
+  font-weight: 600;
+  color: white;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.btn-2300-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 10px 30px hsl(152 80% 40% / 0.3),
+    0 0 40px hsl(152 80% 50% / 0.2);
+}
+
+.btn-2300-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    hsl(0 0% 100% / 0.2) 50%,
+    transparent 100%
+  );
+  transition: left 0.5s;
+}
+
+.btn-2300-primary:hover::before {
+  left: 100%;
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+@media (max-width: 768px) {
+  .dashboard-hero-2300 {
+    border-radius: 1rem;
+  }
+  
+  .stat-orb-2300 {
+    padding: 1rem;
+    border-radius: 1rem;
+  }
+  
+  .score-display-2300 .value {
+    font-size: 2.5rem;
+  }
+}
+
+/* ============================================
+   REDUCED MOTION SUPPORT
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-hero-2300::before,
+  .dashboard-hero-2300::after,
+  .stat-orb-2300::before,
+  .section-header-2300 .icon-container::before,
+  .progress-energy-2300 .fill::after,
+  .rec-card-2300::before,
+  .particles-2300 .particle,
+  .score-display-2300 .value {
+    animation: none !important;
+  }
+}
