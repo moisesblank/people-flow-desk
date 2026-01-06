@@ -39,13 +39,11 @@ interface AppLayoutProps {
 // ⚡ DOGMA VIII: Componentes memoizados para evitar re-renders
 // ✅ forwardRef wrapper para compatibilidade com Radix UI (Tooltip, Popover triggers)
 const MemoizedSidebar = memo(
-  forwardRef<HTMLDivElement, Record<string, never>>(function MemoizedSidebar(_props, ref) {
-    return (
-      <div ref={ref}>
-        <RoleBasedSidebar />
-      </div>
-    );
-  }),
+  forwardRef<HTMLDivElement, Record<string, never>>((props, ref) => (
+    <div ref={ref}>
+      <RoleBasedSidebar />
+    </div>
+  )),
 );
 MemoizedSidebar.displayName = "MemoizedSidebar";
 
@@ -236,13 +234,13 @@ AppHeader.displayName = "AppHeader";
 // ⚡ Main Content com animação CSS pura (sem framer-motion)
 // OTIMIZAÇÃO: CSS animations são nativas e não adicionam ao bundle
 const MainContent = memo(({ children }: { children: ReactNode }) => (
-  <main className="flex-1">
-    <div style={{ background: "red", padding: "50px", color: "white", fontSize: "30px" }}>
-      TESTE - SE VOCÊ VÊ ISSO, O PROBLEMA ESTÁ NO CHILDREN
-    </div>
-    {children}
-  </main>
+  <main className="flex-1 animate-fade-in">{children}</main>
 ));
+// ⚠️ P0 FIX: Removido animate-fade-in temporariamente para debug
+const MainContent = memo(({ children }: { children: ReactNode }) => {
+  console.log("[MainContent] 🚀 RENDERIZANDO CHILDREN");
+  return <main className="flex-1">{children}</main>;
+});
 MainContent.displayName = "MainContent";
 
 export const AppLayout = memo(
