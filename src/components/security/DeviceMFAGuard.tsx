@@ -3,41 +3,57 @@
 // Exige 2FA uma vez por dispositivo novo
 // Validade: 24 horas por device_hash
 // NÃO TOCA em login/sessão/dispositivo
+// ⏱️ P0 FIX v12.2: Timeout de 10s para evitar tela preta
 // ============================================
 
-import { ReactNode, useState, useEffect } from 'react';
-import { useDeviceMFAGuard } from '@/hooks/useDeviceMFAGuard';
-import { useAuth } from '@/hooks/useAuth';
-import { MFAActionModal } from './MFAActionModal';
-import { Shield, Smartphone, Loader2, Lock, Fingerprint } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { motion } from 'framer-motion';
-import { generateDeviceName, detectDeviceType } from '@/lib/deviceFingerprint';
+import { ReactNode, useState, useEffect, useRef } from "react";
+import { useDeviceMFAGuard } from "@/hooks/useDeviceMFAGuard";
+import { useAuth } from "@/hooks/useAuth";
+import { MFAActionModal } from "./MFAActionModal";
+import { Shield, Smartphone, Loader2, Lock, Fingerprint } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { generateDeviceName, detectDeviceType } from "@/lib/deviceFingerprint";
 
 interface DeviceMFAGuardProps {
   children: ReactNode;
 }
 
+// ⏱️ P0 FIX: Timeout para evitar loading infinito
+const MFA_GUARD_TIMEOUT_MS = 10000;
+
 export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
   const { user } = useAuth();
-  const { 
-    isChecking, 
-    isVerified, 
-    needsMFA, 
-    error,
-    deviceHash,
-    onVerificationComplete 
-  } = useDeviceMFAGuard();
+  const { isChecking, isVerified, needsMFA, error, deviceHash, onVerificationComplete } = useDeviceMFAGuard();
 
   const [showModal, setShowModal] = useState(false);
-  const [deviceInfo, setDeviceInfo] = useState({ name: '', type: 'desktop' as 'desktop' | 'mobile' | 'tablet' });
+  const [deviceInfo, setDeviceInfo] = useState({ name: "", type: "desktop" as "desktop" | "mobile" | "tablet" });
+
+  // ⏱️ P0 FIX: Timeout de segurança
+  const [forceBypass, setForceBypass] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // ⏱️ P0 FIX: Se demorar mais de 10s, liberar acesso
+  useEffect(() => {
+    if (!user || isVerified || forceBypass || !isChecking) {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      return;
+    }
+    timeoutRef.current = setTimeout(() => {
+      console.warn("[DeviceMFAGuard] ⚠️ Timeout 10s - forçando bypass");
+      setForceBypass(true);
+    }, MFA_GUARD_TIMEOUT_MS);
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [user, isChecking, isVerified, forceBypass]);
 
   // Detectar informações do dispositivo
   useEffect(() => {
     setDeviceInfo({
       name: generateDeviceName(),
-      type: detectDeviceType()
+      type: detectDeviceType(),
     });
   }, []);
 
@@ -55,9 +71,9 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
 
   const getDeviceIcon = () => {
     switch (deviceInfo.type) {
-      case 'mobile':
+      case "mobile":
         return <Smartphone className="w-10 h-10 text-primary-foreground" />;
-      case 'tablet':
+      case "tablet":
         return <Fingerprint className="w-10 h-10 text-primary-foreground" />;
       default:
         return <Lock className="w-10 h-10 text-primary-foreground" />;
@@ -67,6 +83,12 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
   // 🌐 BYPASS IMEDIATO para usuários não autenticados (rotas públicas)
   // Isso evita mostrar loading state para rotas como /qr, /auth, etc.
   if (!user) {
+    return <>{children}</>;
+  }
+
+  // ⏱️ P0 FIX: Se timeout atingido, liberar
+  if (forceBypass) {
+    console.log("[DeviceMFAGuard] 🚨 Bypass ativo - liberando acesso");
     return <>{children}</>;
   }
 
@@ -100,11 +122,7 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
   return (
     <>
       <div className="min-h-[60vh] flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
           <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-card to-card/80">
             <CardHeader className="text-center pb-4">
               <motion.div
@@ -130,7 +148,7 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
               <div className="bg-muted/50 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="p-2 rounded-lg bg-primary/10">
-                    {deviceInfo.type === 'mobile' ? (
+                    {deviceInfo.type === "mobile" ? (
                       <Smartphone className="w-5 h-5 text-primary" />
                     ) : (
                       <Lock className="w-5 h-5 text-primary" />
@@ -142,9 +160,7 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
                   </div>
                 </div>
                 {deviceHash && (
-                  <p className="text-xs text-muted-foreground font-mono">
-                    ID: {deviceHash.slice(0, 16)}...
-                  </p>
+                  <p className="text-xs text-muted-foreground font-mono">ID: {deviceHash.slice(0, 16)}...</p>
                 )}
               </div>
 
@@ -158,18 +174,14 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
               {error && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
+                  animate={{ opacity: 1, height: "auto" }}
                   className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive text-center"
                 >
                   {error}
                 </motion.div>
               )}
 
-              <Button 
-                onClick={() => setShowModal(true)} 
-                className="w-full gap-2"
-                size="lg"
-              >
+              <Button onClick={() => setShowModal(true)} className="w-full gap-2" size="lg">
                 <Shield className="w-4 h-4" />
                 Verificar Dispositivo
               </Button>
