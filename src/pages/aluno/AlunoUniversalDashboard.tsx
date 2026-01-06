@@ -28,9 +28,12 @@ export default function AlunoUniversalDashboard() {
   const { gpuAnimationProps } = useQuantumReactivity();
 
   const { user, isLoading: authLoading } = useAuth();
-  const { role, isLoading: roleLoading, isOwner } = useRolePermissions();
-  const isBeta = role === 'beta';
+  // 🔐 CONSTITUIÇÃO v10.x - isBeta do hook já inclui beta, aluno_presencial, beta_expira
+  const { role, isLoading: roleLoading, isOwner, isBeta } = useRolePermissions();
   const navigate = useNavigate();
+  
+  // Debug para rastrear problemas de acesso
+  console.log("[AlunoUniversalDashboard] role:", role, "isOwner:", isOwner, "isBeta:", isBeta, "isLoading:", roleLoading);
 
   // Estado de carregamento unificado
   if (authLoading || roleLoading) {
