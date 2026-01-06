@@ -211,11 +211,15 @@ AppHeader.displayName = 'AppHeader';
 
 // ⚡ Main Content com animação CSS pura (sem framer-motion)
 // OTIMIZAÇÃO: CSS animations são nativas e não adicionam ao bundle
-const MainContent = memo(({ children }: { children: ReactNode }) => (
-  <main className="flex-1 animate-fade-in">
-    {children}
-  </main>
-));
+// ⚠️ P0 FIX: Removido animate-fade-in temporariamente para debug
+const MainContent = memo(({ children }: { children: ReactNode }) => {
+  console.log('[MainContent] 🚀 RENDERIZANDO CHILDREN');
+  return (
+    <main className="flex-1">
+      {children}
+    </main>
+  );
+});
 MainContent.displayName = 'MainContent';
 
 export const AppLayout = memo(
