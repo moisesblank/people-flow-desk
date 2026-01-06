@@ -125,12 +125,6 @@ const AppHeader = memo(
           >
             <Search className="h-4 w-4" />
             <span className="text-sm">Buscar...</span>
-            <div className="ml-auto flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 text-[10px] bg-background/50 rounded border border-border">
-                <Command className="h-3 w-3 inline" />
-              </kbd>
-              <kbd className="px-1.5 py-0.5 text-[10px] bg-background/50 rounded border border-border">K</kbd>
-            </div>
           </Button>
 
           <CalculatorButton />
