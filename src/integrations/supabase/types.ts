@@ -15996,28 +15996,28 @@ export type Database = {
           {
             foreignKeyName: "weekly_xp_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "alunos_presence"
             referencedColumns: ["auth_user_id"]
           },
           {
             foreignKeyName: "weekly_xp_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "weekly_xp_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "weekly_xp_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "profiles_secure"
             referencedColumns: ["id"]
           },
