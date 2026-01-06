@@ -174,8 +174,41 @@ async function detectSpoofOrClone(
   supabase: any,
   userId: string,
   deviceHash: string,
-  fingerprintData: FingerprintRawData
+  fingerprintData: FingerprintRawData,
+  userEmail: string,
+  origin: string | null
 ): Promise<{ isSpoof: boolean; reason?: string }> {
+  
+  // 🔐 P0 FIX: BYPASS para OWNER - pode usar qualquer dispositivo para testes
+  const isOwner = userEmail.toLowerCase() === 'moisesblank@gmail.com';
+  if (isOwner) {
+    console.log(`[register-device-server] 👑 OWNER bypass: verificação de spoof ignorada`);
+    return { isSpoof: false };
+  }
+  
+  // 🔐 P0 FIX: BYPASS para ambiente de preview/testes (lovableproject.com)
+  // Em ambiente de desenvolvimento, múltiplos usuários podem compartilhar o mesmo navegador
+  const isPreviewEnvironment = origin?.includes('lovableproject.com') || origin?.includes('localhost');
+  if (isPreviewEnvironment) {
+    console.log(`[register-device-server] 🧪 Preview environment bypass: ${origin}`);
+    // Em preview, se o hash pertence a outro usuário, apenas desativa o dispositivo antigo
+    const { data: existingDevice } = await supabase
+      .from('user_devices')
+      .select('id, user_id, device_name')
+      .eq('device_fingerprint', deviceHash)
+      .neq('user_id', userId)
+      .eq('is_active', true)
+      .maybeSingle();
+    
+    if (existingDevice) {
+      console.log(`[register-device-server] 🧪 Preview: Desativando dispositivo de outro usuário para permitir teste`);
+      await supabase
+        .from('user_devices')
+        .update({ is_active: false })
+        .eq('id', existingDevice.id);
+    }
+    return { isSpoof: false };
+  }
   
   // 1. Verificar se este hash exato já está registrado para OUTRO usuário
   const { data: existingDevice } = await supabase
@@ -294,7 +327,8 @@ Deno.serve(async (req) => {
     console.log(`[register-device-server] 🔐 Hash server-side gerado: ${deviceHashFinal.slice(0, 16)}...`);
 
     // 🔐 DETECÇÃO DE SPOOF/CLONE
-    const spoofCheck = await detectSpoofOrClone(supabase, userId, deviceHashFinal, fingerprintData);
+    const origin = req.headers.get('origin');
+    const spoofCheck = await detectSpoofOrClone(supabase, userId, deviceHashFinal, fingerprintData, userEmail, origin);
     if (spoofCheck.isSpoof) {
       console.error(`[register-device-server] 🚨 SPOOF BLOQUEADO: ${spoofCheck.reason}`);
       return new Response(
