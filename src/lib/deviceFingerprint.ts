@@ -132,9 +132,16 @@ export function generateDeviceName(): string {
 export function detectDeviceType(): "desktop" | "mobile" | "tablet" {
   const ua = navigator.userAgent;
 
+  // iPad / explicit tablet
   if (/iPad|Tablet/i.test(ua)) return "tablet";
-  if (/Mobi|Android|iPhone/i.test(ua)) return "mobile";
 
+  // Android tablets normalmente NÃO possuem "Mobile" no UA
+  if (/Android/i.test(ua) && !/Mobile/i.test(ua)) return "tablet";
+
+  // Phones
+  if (/Mobi|iPhone/i.test(ua)) return "mobile";
+
+  // Fallback por capacidade (touch + largura)
   const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
   if (isTouchDevice && window.screen.width < 1024) return "tablet";
 

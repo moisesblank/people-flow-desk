@@ -195,8 +195,19 @@ export function generateDeviceName(data: FingerprintRawData): string {
 
 // Funções auxiliares de detecção
 function detectDeviceType(ua: string): 'desktop' | 'mobile' | 'tablet' {
+  // iPad / explicit tablet tokens
   if (/iPad|Tablet/i.test(ua)) return 'tablet';
-  if (/Mobi|Android|iPhone/i.test(ua)) return 'mobile';
+
+  // Android tablet costuma vir como "Android" sem "Mobile" no UA
+  if (/Android/i.test(ua) && !/Mobile/i.test(ua)) return 'tablet';
+
+  // Phones
+  if (/Mobi|iPhone/i.test(ua)) return 'mobile';
+
+  // Fallback por capacidade (touch + largura)
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  if (isTouchDevice && window.screen.width < 1024) return 'tablet';
+
   return 'desktop';
 }
 
