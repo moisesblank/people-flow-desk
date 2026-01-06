@@ -365,7 +365,7 @@ export default function DeviceLimitGate() {
 
       setTimeout(() => {
         reset();
-        navigate('/alunos', { replace: true });
+        navigate('/alunos/dashboard', { replace: true });
       }, 1500);
 
     } catch (err) {

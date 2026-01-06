@@ -48,7 +48,7 @@ export const alunoRoutes = (
   <>
     {/* P0: Alias case-insensitive ANTES de qualquer outra rota /ALUNOS */}
     {/* Rota exata /ALUNOS deve vir ANTES de /ALUNOS/* para evitar conflito */}
-    <Route path="/ALUNOS" element={<Navigate to="/alunos" replace />} />
+    <Route path="/ALUNOS" element={<Navigate to="/alunos/dashboard" replace />} />
     <Route path="/ALUNOS/*" element={<CaseInsensitiveAlunosRedirect />} />
     <Route path="/alunos" element={<ProtectedPage><AlunosRouteSwitcher /></ProtectedPage>} />
     <Route path="/alunos/dashboard" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />

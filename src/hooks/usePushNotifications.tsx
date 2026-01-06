@@ -188,7 +188,7 @@ export function usePushNotifications() {
       if (!preferences.students) return;
       showNotification("Novo Aluno! 🎓", `${name} se matriculou`, {
         tag: "student",
-        onClick: () => (window.location.href = "/alunos"),
+        onClick: () => (window.location.href = "/alunos/dashboard"),
       });
     },
     [preferences.students, showNotification]

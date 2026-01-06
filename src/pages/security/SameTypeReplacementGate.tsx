@@ -398,7 +398,7 @@ export default function SameTypeReplacementGate() {
 
       setTimeout(() => {
         reset();
-        navigate('/alunos', { replace: true });
+        navigate('/alunos/dashboard', { replace: true });
       }, 2000);
 
     } catch (err: any) {

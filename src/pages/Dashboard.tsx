@@ -587,7 +587,7 @@ export default function Dashboard() {
             icon={GraduationCap}
             variant="red"
             delay={7}
-            href="/alunos"
+            href="/alunos/dashboard"
           />
         </section>
 

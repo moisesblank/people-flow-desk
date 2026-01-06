@@ -93,10 +93,10 @@ export default function PrimeiroAcesso() {
 
         setOnboardingState(state);
 
-        // Se já completou, redirecionar para /alunos
+        // Se já completou, redirecionar para /alunos/dashboard
         if (state.onboarding_completed) {
-          console.log('[PrimeiroAcesso] Onboarding já completo, redirecionando para /alunos...');
-          navigate('/alunos', { replace: true });
+          console.log('[PrimeiroAcesso] Onboarding já completo, redirecionando para /alunos/dashboard...');
+          navigate('/alunos/dashboard', { replace: true });
           return;
         }
 
@@ -214,7 +214,7 @@ export default function PrimeiroAcesso() {
       
       // Redirecionar para portal do aluno
       setTimeout(() => {
-        navigate('/alunos', { replace: true });
+        navigate('/alunos/dashboard', { replace: true });
       }, 1500);
 
     } catch (err) {

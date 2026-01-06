@@ -193,12 +193,12 @@ export function validateDomainAccessForLogin(
     const isAllowed = GESTAO_ALLOWED_ROLES.includes(role as DomainAppRole);
     
     if (!isAllowed) {
-      console.log(`[AREA-ACCESS] Role "${role}" sem acesso a /gestaofc - redirecionando para /alunos`);
+      console.log(`[AREA-ACCESS] Role "${role}" sem acesso a /gestaofc - redirecionando para /alunos/dashboard`);
       return { 
         permitido: false, 
         dominioAtual, 
         areaAtual,
-        redirecionarPara: "/alunos",
+        redirecionarPara: "/alunos/dashboard",
         motivo: "Área restrita"
       };
     }

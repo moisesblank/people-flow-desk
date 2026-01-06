@@ -34,7 +34,7 @@ export default function PerfilIncompleto() {
       if (gestaoRoles.includes(role)) {
         navigate("/gestaofc", { replace: true });
       } else if (alunoRoles.includes(role)) {
-        navigate("/alunos", { replace: true });
+        navigate("/alunos/dashboard", { replace: true });
       } else {
         navigate("/comunidade", { replace: true });
       }

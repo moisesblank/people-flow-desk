@@ -276,7 +276,7 @@ export const COMMUNITY_ROUTES: RouteDefinition[] = [
 ];
 
 export const STUDENT_ROUTES: RouteDefinition[] = [
-  { path: "/alunos", domain: "aluno", title: "Portal do Aluno", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno"] },
+  { path: "/alunos/dashboard", domain: "aluno", title: "Portal do Aluno", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno"] },
   { path: "/alunos/dashboard", domain: "aluno", title: "Dashboard", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno"] },
   { path: "/alunos/livro-web", domain: "aluno", title: "Livro Web", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno"] },
   { path: "/alunos/cronograma", domain: "aluno", title: "Cronograma", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno"] },
@@ -491,7 +491,7 @@ export const ROUTE_DEFINITIONS: Record<string, RouteDefinition> = {
   COMUNIDADE_CHAT: { path: "/comunidade/chat", title: "Chat", authRequired: true, roles: ["owner", "admin", "beta", "aluno", "viewer"], status: "active", domain: "comunidade" },
 
   // === PORTAL DO ALUNO BETA ===
-  ALUNOS: { path: "/alunos", title: "Central do Aluno", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS: { path: "/alunos/dashboard", title: "Central do Aluno", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
   ALUNOS_DASHBOARD: { path: "/alunos/dashboard", title: "Dashboard do Aluno", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
   ALUNOS_LIVRO_WEB: { path: "/alunos/livro-web", title: "Livro Web", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
   ALUNOS_CRONOGRAMA: { path: "/alunos/cronograma", title: "Cronograma", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },

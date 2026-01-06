@@ -201,7 +201,7 @@ export default function RankingPage() {
         >
           <Button 
             variant="ghost" 
-            onClick={() => navigate('/alunos')}
+            onClick={() => navigate('/alunos/dashboard')}
             className="absolute left-4 top-4"
           >
             <ChevronLeft className="w-5 h-5 mr-1" />

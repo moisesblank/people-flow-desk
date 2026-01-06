@@ -669,7 +669,7 @@ export function FuturisticHero({
             value={students.toLocaleString()}
             trend="up"
             color="blue"
-            onClick={() => navigate("/alunos")}
+            onClick={() => navigate("/alunos/dashboard")}
             delay={0.8}
           />
           <CyberMetricCard 

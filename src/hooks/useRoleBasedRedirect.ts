@@ -73,7 +73,7 @@ export function useRoleBasedRedirect() {
 
       // Se for aluno pago (beta), vai para central do aluno
       if (ALUNO_ROLES.includes(role)) {
-        return "/alunos";
+        return "/alunos/dashboard";
       }
 
       // Fallback para comunidade (não /)
