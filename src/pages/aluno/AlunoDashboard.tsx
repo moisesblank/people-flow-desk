@@ -466,11 +466,9 @@ export default function AlunoDashboard() {
     setMounted(true);
   }, []);
   
-  // ============================================
+// ============================================
   // DADOS REAIS VIA HOOKS
   // ============================================
-Followup on 471...
-
   
   const { gamification, userBadges, isLoading: gamificationLoading } = useGamification();
   
