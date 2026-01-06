@@ -1397,8 +1397,6 @@
       0 0 0 3px hsl(var(--success) / 0.2),
       0 0 25px hsl(var(--success) / 0.15);
     animation: success-glow 1s ease-out;
-Followup on 1395...
-
   }
   .input-2300.input-error {
     border-color: hsl(var(--destructive) / 0.8);
