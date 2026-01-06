@@ -8,7 +8,6 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import "@/styles/performance.css";
-import { QueryClient } from "@tanstack/react-query";
 import { BrowserRouter, Routes } from "react-router-dom";
 import { VisualEditMode } from "@/components/editor/VisualEditMode";
 // SessionTracker REMOVIDO - heartbeat já existe em useAuth (DOGMA I)
@@ -20,13 +19,9 @@ import { DeviceMFAGuard } from "@/components/security/DeviceMFAGuard";
 import { GestaoNoIndex } from "@/components/seo/GestaoNoIndex";
 import { LegacyRedirectHandler } from "@/components/routing/LegacyRedirectHandler";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { ManualRefreshButton } from "@/components/admin/ManualRefreshButton";
-import { P0AliveBeacon } from "@/components/debug/P0AliveBeacon";
 // LegacyDomainBlocker REMOVIDO - domínio gestao.* descontinuado
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 
 // ⚡ PROVIDERS CONSOLIDADOS
 import { AppProviders } from "@/contexts/AppProviders";
@@ -36,128 +31,47 @@ import { createSacredQueryClient } from "@/lib/performance/cacheConfig";
 import { publicRoutes, comunidadeRoutes, gestaoRoutes, alunoRoutes, legacyRoutes, PageLoader } from "@/routes";
 
 // 🚀 LAZY LOAD: Componentes pesados
-// P0: Evitar "Component is not a function" por mismatch entre export default vs named export.
-// Regra: tenta named export primeiro, depois cai para default.
-const LazyAITramon = lazy(() =>
-  import("@/components/ai/AITramonGlobal").then((m: any) => ({ default: m.AITramonGlobal ?? m.default })),
-);
+const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then((m) => ({ default: m.AITramonGlobal })));
 const LazyGlobalLogsButton = lazy(() =>
-  import("@/components/admin/GlobalLogsButton").then((m: any) => ({ default: m.GlobalLogsButton ?? m.default })),
+  import("@/components/admin/GlobalLogsButton").then((m) => ({ default: m.GlobalLogsButton })),
 );
 const LazyGodModePanel = lazy(() =>
-  import("@/components/editor/GodModePanel").then((m: any) => ({ default: m.GodModePanel ?? m.default })),
+  import("@/components/editor/GodModePanel").then((m) => ({ default: m.GodModePanel })),
 );
 const LazyInlineEditor = lazy(() =>
-  import("@/components/editor/InlineEditor").then((m: any) => ({ default: m.InlineEditor ?? m.default })),
+  import("@/components/editor/InlineEditor").then((m) => ({ default: m.InlineEditor })),
 );
 const LazyMasterQuickAddMenu = lazy(() =>
-  import("@/components/admin/MasterQuickAddMenu").then((m: any) => ({ default: m.MasterQuickAddMenu ?? m.default })),
+  import("@/components/admin/MasterQuickAddMenu").then((m) => ({ default: m.MasterQuickAddMenu })),
 );
 const LazyGlobalDuplication = lazy(() =>
-  import("@/components/admin/GlobalDuplicationSystem").then((m: any) => ({
-    default: m.GlobalDuplicationSystem ?? m.default,
-  })),
+  import("@/components/admin/GlobalDuplicationSystem").then((m) => ({ default: m.GlobalDuplicationSystem })),
 );
 const LazyMasterUndoIndicator = lazy(() =>
-  import("@/components/admin/MasterUndoIndicator").then((m: any) => ({ default: m.MasterUndoIndicator ?? m.default })),
+  import("@/components/admin/MasterUndoIndicator").then((m) => ({ default: m.MasterUndoIndicator })),
 );
 const LazyMasterDeleteOverlay = lazy(() =>
-  import("@/components/admin/MasterDeleteOverlay").then((m: any) => ({ default: m.MasterDeleteOverlay ?? m.default })),
+  import("@/components/admin/MasterDeleteOverlay").then((m) => ({ default: m.MasterDeleteOverlay })),
 );
 const LazyMasterContextMenu = lazy(() =>
-  import("@/components/admin/MasterContextMenu").then((m: any) => ({ default: m.MasterContextMenu ?? m.default })),
+  import("@/components/admin/MasterContextMenu").then((m) => ({ default: m.MasterContextMenu })),
 );
 // 🆕 TRANSACTIONAL SAVE SYSTEM
 const LazyGlobalSaveBar = lazy(() =>
-  import("@/components/admin/GlobalSaveBar").then((m: any) => ({ default: m.GlobalSaveBar ?? m.default })),
+  import("@/components/admin/GlobalSaveBar").then((m) => ({ default: m.GlobalSaveBar })),
 );
 const LazyNavigationGuard = lazy(() =>
-  import("@/components/admin/MasterModeNavigationGuard").then((m: any) => ({
-    default: m.MasterModeNavigationGuard ?? m.default,
-  })),
+  import("@/components/admin/MasterModeNavigationGuard").then((m) => ({ default: m.MasterModeNavigationGuard })),
 );
 const LazyRealtimeEditOverlay = lazy(() =>
-  import("@/components/admin/RealtimeEditOverlay").then((m: any) => ({ default: m.RealtimeEditOverlay ?? m.default })),
+  import("@/components/admin/RealtimeEditOverlay").then((m) => ({ default: m.RealtimeEditOverlay })),
 );
 
 // ⚡ QueryClient Sagrado
-// P0: nunca pode quebrar o bootstrap. Se falhar, usa client básico.
-const queryClient = (() => {
-  try {
-    return createSacredQueryClient();
-  } catch (err) {
-    console.warn(
-      "[P0] createSacredQueryClient falhou — usando QueryClient padrão:",
-      (err as Error)?.message || String(err),
-    );
-    return new QueryClient();
-  }
-})();
+const queryClient = createSacredQueryClient();
 
 // Listener global + prefetch
 if (typeof window !== "undefined") {
-  // ============================================
-  // 🧾 FORENSIC FATAL LOGGER (P0)
-  // Captura erros fatais (production) para diagnóstico de "tela preta"
-  // Sem secrets no client: usa invoke() com token do usuário quando existir
-  // ============================================
-  if (!(window as any).__fatalLoggerInstalled) {
-    (window as any).__fatalLoggerInstalled = true;
-
-    let lastSentAt = 0;
-    const shouldSend = () => {
-      const now = Date.now();
-      if (now - lastSentAt < 1500) return false;
-      lastSentAt = now;
-      return true;
-    };
-
-    const safeString = (v: unknown) => {
-      try {
-        if (v instanceof Error) return `${v.name}: ${v.message}\n${v.stack || ""}`.trim();
-        if (typeof v === "string") return v;
-        return JSON.stringify(v);
-      } catch {
-        return String(v);
-      }
-    };
-
-    const send = (payload: Record<string, unknown>) => {
-      if (!shouldSend()) return;
-      supabase.functions
-        .invoke("log-writer", {
-          body: {
-            timestamp: new Date().toISOString(),
-            severity: "error",
-            triggered_action: "fatal_runtime_error",
-            affected_url_or_area: typeof window !== "undefined" ? window.location.href : "unknown",
-            error_message: safeString(payload),
-          },
-        })
-        .catch(() => {
-          // no-op: nunca bloquear render
-        });
-    };
-
-    window.addEventListener("error", (event) => {
-      send({
-        type: "window.error",
-        message: event.message,
-        filename: (event as any).filename,
-        lineno: (event as any).lineno,
-        colno: (event as any).colno,
-        error: safeString((event as any).error),
-      });
-    });
-
-    window.addEventListener("unhandledrejection", (event) => {
-      send({
-        type: "window.unhandledrejection",
-        reason: safeString((event as any).reason),
-      });
-    });
-  }
-
   window.addEventListener("mm-clear-cache", () => {
     queryClient.clear();
     queryClient.invalidateQueries();
@@ -195,88 +109,78 @@ function useGlobalShortcutsOverlay() {
   return { isOpen, setIsOpen };
 }
 
-// AppContent - UMA ÚNICA instância de Routes
-// 🛡️ P0: Sem memo() para evitar erros de forwardRef com Radix UI
-function AppContent() {
+// AppContent memoizado
+const AppContent = memo(() => {
   const { isOpen, setIsOpen } = useGlobalShortcutsOverlay();
   useGlobalDevToolsBlock();
-
-  // 🛡️ P0 NUCLEAR BYPASS - Guards removidos
-  const { user, role } = useAuth();
-  const isOwner = role === "owner" || (user?.email || "").toLowerCase() === "moisesblank@gmail.com";
 
   const handleClose = useCallback(() => setIsOpen(false), [setIsOpen]);
 
   return (
     <>
-      <P0AliveBeacon />
-      {/* 🔥 P0 NUCLEAR: SessionGuard/DeviceGuard/DeviceMFAGuard são BYPASS - renderizam children direto */}
+      <SessionGuard>
+        <DeviceGuard>
+          <DeviceMFAGuard>
+            {/* SessionTracker REMOVIDO - useAuth já gerencia heartbeat (DOGMA I) */}
 
-      {/* 🔥 P0: Overlays do OWNER dentro de ErrorBoundary dedicado */}
-      {isOwner && (
-        <ErrorBoundary>
-          <Suspense fallback={null}>
-            <LazyGodModePanel />
-            <LazyInlineEditor />
-            <LazyMasterQuickAddMenu />
-            <LazyGlobalDuplication />
-            <LazyMasterUndoIndicator />
-            <LazyMasterDeleteOverlay />
-            <LazyMasterContextMenu />
-            <LazyGlobalSaveBar />
-            <LazyNavigationGuard />
-            <LazyRealtimeEditOverlay />
-          </Suspense>
-        </ErrorBoundary>
-      )}
+            <Suspense fallback={null}>
+              <LazyGodModePanel />
+              <LazyInlineEditor />
+              <LazyMasterQuickAddMenu />
+              <LazyGlobalDuplication />
+              <LazyMasterUndoIndicator />
+              <LazyMasterDeleteOverlay />
+              <LazyMasterContextMenu />
+              {/* 🆕 BARRA DE SALVAMENTO GLOBAL + GUARD DE NAVEGAÇÃO */}
+              <LazyGlobalSaveBar />
+              <LazyNavigationGuard />
+              <LazyRealtimeEditOverlay />
+            </Suspense>
 
-      <VisualEditMode />
-      <KeyboardShortcutsOverlay isOpen={isOpen} onClose={handleClose} />
+            <VisualEditMode />
+            <KeyboardShortcutsOverlay isOpen={isOpen} onClose={handleClose} />
 
-      {/* 🔴 BOTÕES FLUTUANTES GLOBAIS (OWNER ONLY) */}
-      {isOwner && (
-        <ErrorBoundary>
-          <Suspense fallback={null}>
-            <LazyGlobalLogsButton />
-            <LazyAITramon />
-          </Suspense>
-        </ErrorBoundary>
-      )}
+            {/* 🔴 BOTÕES FLUTUANTES GLOBAIS: LOGS + TRAMON */}
+            <ErrorBoundary>
+              <Suspense fallback={null}>
+                <LazyGlobalLogsButton />
+                <LazyAITramon />
+              </Suspense>
+            </ErrorBoundary>
 
-      {/* ✅ RECOVERY MANUAL */}
-      <ManualRefreshButton />
-
-      {/* 🛡️ P0: Rotas diretas sem guards */}
-      <ErrorBoundary>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            {publicRoutes}
-            {comunidadeRoutes}
-            {gestaoRoutes}
-            {alunoRoutes}
-            {legacyRoutes}
-          </Routes>
-        </Suspense>
-      </ErrorBoundary>
+            {/* 🛡️ P0: Nunca mais tela preta - ErrorBoundary global envolvendo as rotas */}
+            <ErrorBoundary>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  {publicRoutes}
+                  {comunidadeRoutes}
+                  {gestaoRoutes}
+                  {alunoRoutes}
+                  {legacyRoutes}
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
+          </DeviceMFAGuard>
+        </DeviceGuard>
+      </SessionGuard>
     </>
   );
-}
+});
+AppContent.displayName = "AppContent";
 
 // ⚡ App Principal com Providers Consolidados
-// 🛡️ P0: Sem memo() para evitar erros de forwardRef
-function App() {
-  return (
-    <AppProviders queryClient={queryClient}>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <GestaoNoIndex />
-        <LegacyRedirectHandler />
-        <AppContent />
-        {/* <DuplicationClipboardIndicator /> */}
-      </BrowserRouter>
-    </AppProviders>
-  );
-}
+const App = memo(() => (
+  <AppProviders queryClient={queryClient}>
+    <Toaster />
+    <Sonner />
+    <BrowserRouter>
+      <GestaoNoIndex />
+      <LegacyRedirectHandler />
+      <AppContent />
+      <DuplicationClipboardIndicator />
+    </BrowserRouter>
+  </AppProviders>
+));
+App.displayName = "App";
 
 export default App;
