@@ -243,7 +243,8 @@ function QuizTab({ lessonId }: QuizTabProps) {
               const showCorrect = showResult && isCorrect;
               const showWrong = showResult && isSelected && !isCorrect;
 
-              const optionText = typeof option === 'string' ? option : (option as any).text;
+              const rawText = typeof option === 'string' ? option : (option as any)?.text;
+              const optionText = typeof rawText === 'string' ? rawText : (rawText as any)?.text ?? String(rawText ?? '');
               const optionImageUrl = typeof option === 'object' ? (option as any).image_url : null;
 
               return (

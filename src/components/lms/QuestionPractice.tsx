@@ -321,7 +321,7 @@ function PracticeSession({
                             `}>
                               {String.fromCharCode(65 + idx)}
                             </div>
-                            <span className="flex-1">{option.text}</span>
+                            <span className="flex-1">{typeof option.text === 'string' ? option.text : (option.text as any)?.text ?? String(option.text ?? '')}</span>
                             
                             {showResult && isCorrectOption && (
                               <CheckCircle2 className="h-5 w-5 text-green-500" />
