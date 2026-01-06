@@ -3133,7 +3133,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                                     )}
                                   >
                                     <span className="font-bold uppercase">{opt.id})</span>{' '}
-                                    {opt.text || <span className="text-muted-foreground italic">vazio</span>}
+                                    {(typeof opt.text === 'string' ? opt.text : ((opt.text as any)?.text ?? String(opt.text ?? ''))) || <span className="text-muted-foreground italic">vazio</span>}
                                   </div>
                                 ))}
                               </div>
