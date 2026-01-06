@@ -533,8 +533,8 @@ export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>
               </div>
               {!collapsed && (
                 <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-sidebar-foreground">Moisés Medeiros</span>
-                  <span className="text-xs text-muted-foreground">Curso de Química v10.1</span>
+                  <span className="text-sm font-bold text-sidebar-foreground">Curso de Química</span>
+                  <span className="text-xs font-bold text-muted-foreground">Moisés Medeiros</span>
                 </div>
               )}
             </div>
