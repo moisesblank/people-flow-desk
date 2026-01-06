@@ -6,7 +6,7 @@
 // - pro.moisesmedeiros.com.br/ → Área pública
 // HIERARQUIA (MONO-DOMÍNIO v2.0):
 //   Owner (role='owner' do banco) = Acesso total
-//   Beta = Aluno Pagante → REDIRECIONA para /alunos/dashboard
+//   Beta = Aluno Pagante → vê Portal do Aluno
 //   Staff = Funcionários → vê Gestão de Alunos (/gestaofc)
 // ============================================
 
@@ -16,8 +16,7 @@ import { Helmet } from "react-helmet";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useRolePermissions, isGestaoHost, isProHost, isPublicHost } from "@/hooks/useRolePermissions";
 
-// Importa as duas experiências
-import AlunoDashboard from "@/pages/aluno/AlunoDashboard";
+// Importa apenas Alunos (gestão) - AlunoDashboard é acessado via redirect
 import Alunos from "@/pages/Alunos";
 
 export default function AlunosRouteSwitcher() {
@@ -68,10 +67,10 @@ export default function AlunosRouteSwitcher() {
   // HIERARQUIA DE VISUALIZAÇÃO (LEI IV - SOBERANIA DO ARQUITETO):
   // 1. OWNER → Acesso total a qualquer domínio
   //    - gestao.* → Gestão de Alunos
-  //    - pro.* ou outros → Portal do Aluno (para visualizar experiência)
-  // 2. BETA (aluno pagante) → REDIRECIONA para /alunos/dashboard
+  //    - pro.* ou outros → REDIRECT para /alunos/dashboard
+  // 2. BETA (aluno pagante) → REDIRECT para /alunos/dashboard
   // 3. FUNCIONÁRIOS no domínio gestao.* → Gestão de Alunos
-  // 4. Outros roles → redirecionados para /dashboard ou /app
+  // 4. Outros roles → redirecionados para /comunidade
   // ============================================
 
   // OWNER - ACESSO SUPREMO (LEI IV)
@@ -95,14 +94,14 @@ export default function AlunosRouteSwitcher() {
         </>
       );
     }
-    // Owner em pro.* ou outros domínios → REDIRECIONA para /alunos/dashboard
-    console.log("[AlunosRouteSwitcher] ✅ Owner em pro.* → Redirecionando para /alunos/dashboard");
+    // Owner em pro.* ou outros domínios → REDIRECT para /alunos/dashboard
+    console.log("[AlunosRouteSwitcher] ✅ Owner em pro.* → Redirect para /alunos/dashboard");
     return <Navigate to="/alunos/dashboard" replace />;
   }
 
-  // BETA = Aluno pagante → REDIRECIONA para /alunos/dashboard
+  // BETA = Aluno pagante → REDIRECT para /alunos/dashboard
   if (isBeta) {
-    console.log("[AlunosRouteSwitcher] ✅ Beta → Redirecionando para /alunos/dashboard");
+    console.log("[AlunosRouteSwitcher] ✅ Beta → Redirect para /alunos/dashboard");
     return <Navigate to="/alunos/dashboard" replace />;
   }
 
@@ -132,13 +131,12 @@ export default function AlunosRouteSwitcher() {
     );
   }
 
-  // ADMIN fora do domínio gestão (ex: pro.*) → REDIRECIONA para /alunos/dashboard
+  // ADMIN fora do domínio gestão (ex: pro.*) → REDIRECT para /alunos/dashboard
   if (isAdminOrOwner) {
-    console.log("[AlunosRouteSwitcher] ✅ Admin em pro.* → Redirecionando para /alunos/dashboard");
+    console.log("[AlunosRouteSwitcher] ✅ Admin em pro.* → Redirect para /alunos/dashboard");
     return <Navigate to="/alunos/dashboard" replace />;
   }
 
-  // Outros roles sem permissão → redireciona conforme MATRIZ SUPREMA v2.0.0
-  // GESTAO roles → /gestaofc, outros → /comunidade
+  // Outros roles sem permissão → redireciona para /comunidade
   return <Navigate to="/comunidade" replace />;
 }
