@@ -98,12 +98,38 @@ serve(async (req) => {
         })
         .eq('id', tokenData.id);
       
-      // Gerar senha temporária para auto-login
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
-      tempPassword = Array.from(
-        { length: 24 }, 
-        () => chars[Math.floor(Math.random() * chars.length)]
-      ).join('');
+      // Gerar senha temporária GARANTINDO todos os tipos de caracteres
+      const lowercase = 'abcdefghjkmnpqrstuvwxyz';
+      const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+      const numbers = '23456789';
+      const special = '!@#$%^&*';
+      
+      // Garantir pelo menos 2 de cada tipo
+      const guaranteed = [
+        lowercase[Math.floor(Math.random() * lowercase.length)],
+        lowercase[Math.floor(Math.random() * lowercase.length)],
+        uppercase[Math.floor(Math.random() * uppercase.length)],
+        uppercase[Math.floor(Math.random() * uppercase.length)],
+        numbers[Math.floor(Math.random() * numbers.length)],
+        numbers[Math.floor(Math.random() * numbers.length)],
+        special[Math.floor(Math.random() * special.length)],
+        special[Math.floor(Math.random() * special.length)],
+      ];
+      
+      // Preencher o resto randomicamente
+      const allChars = lowercase + uppercase + numbers + special;
+      const remaining = Array.from(
+        { length: 16 }, 
+        () => allChars[Math.floor(Math.random() * allChars.length)]
+      );
+      
+      // Embaralhar tudo
+      const combined = [...guaranteed, ...remaining];
+      for (let i = combined.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [combined[i], combined[j]] = [combined[j], combined[i]];
+      }
+      tempPassword = combined.join('');
       
       // Atualizar senha do usuário para permitir auto-login
       const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
