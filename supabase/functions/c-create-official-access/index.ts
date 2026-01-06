@@ -271,7 +271,7 @@ async function sendWelcomeEmailWithMagicLink(
 ): Promise<{ success: boolean; error?: string }> {
   const roleLabel = ROLE_LABELS[role];
 
-  // 🎯 NOVO: Conteúdo atualizado - NÃO menciona "definir senha" (isso é feito no onboarding)
+  // 🎯 P0 FIX v3: Conteúdo atualizado - Token NUNCA expira até ser usado
   const conteudo = `
     <h2 style="margin:0 0 16px;font-size:18px;color:#ffffff;">🎉 Bem-vindo(a), ${nome}!</h2>
     <p style="margin:0 0 12px;">Seu acesso à plataforma foi criado pela equipe de gestão.</p>
@@ -283,7 +283,7 @@ async function sendWelcomeEmailWithMagicLink(
     <div style="background:#2a2a2f;border-radius:8px;padding:20px;margin:16px 0;border-left:4px solid #22c55e;">
       <p style="margin:0 0 12px;color:#ffffff;font-weight:bold;font-size:15px;">🚀 Acesse a Plataforma</p>
       <p style="margin:0;color:#9aa0a6;font-size:13px;">Clique no botão abaixo para iniciar sua configuração inicial. Você vai definir sua senha e personalizar sua experiência.</p>
-      <p style="margin:12px 0 0;color:#fbbf24;font-size:12px;">⚠️ Este link é válido por 24 horas e só pode ser usado uma vez.</p>
+      <p style="margin:12px 0 0;color:#22c55e;font-size:12px;font-weight:bold;">✅ Este link é válido ETERNAMENTE até você utilizá-lo pela primeira vez.</p>
     </div>
     
     <h3 style="margin:20px 0 12px;font-size:14px;color:#ffffff;">📚 O que vai acontecer:</h3>
@@ -839,43 +839,49 @@ serve(async (req) => {
     console.log('[c-create-official-access] ✅ Role assigned:', payload.role, expiresAt ? `(expires: ${expiresAt})` : '');
 
     // ============================================
-    // 9. GERAR MAGIC LINK E ENVIAR EMAIL DE PRIMEIRO ACESSO
-    // 🎯 P0 FIX v2: Magic link autentica e redireciona para /primeiro-acesso
-    // A definição de senha acontece DENTRO do onboarding (etapa 3)
+    // 9. GERAR TOKEN PERSISTENTE DE PRIMEIRO ACESSO
+    // 🎯 P0 FIX v3: Token que NUNCA expira até ser usado
+    // Substitui magic links que expiram em 1 hora
     // ============================================
-    console.log('[c-create-official-access] 📧 Generating magic link for first access...');
+    console.log('[c-create-official-access] 📧 Generating persistent first-access token...');
     
-    // 🎯 NOVO: Gerar magic link com redirectTo para /primeiro-acesso
     const siteUrl = 'https://pro.moisesmedeiros.com.br';
-    let magicLinkUrl = `${siteUrl}/auth`; // Fallback para login manual
     
-    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink', // Magic link de autenticação
-      email: payload.email,
-      options: {
-        redirectTo: `${siteUrl}/primeiro-acesso`, // 🎯 Redireciona direto para onboarding
-      },
-    });
+    // Gerar token único e seguro (32 bytes = 64 hex chars)
+    const tokenBytes = new Uint8Array(32);
+    crypto.getRandomValues(tokenBytes);
+    const persistentToken = Array.from(tokenBytes).map(b => b.toString(16).padStart(2, '0')).join('');
     
-    if (linkError || !linkData?.properties?.action_link) {
-      console.warn('[c-create-official-access] ⚠️ Falha ao gerar magic link:', linkError?.message);
-      // Fallback: tenta gerar link de recovery (tipo alternativo)
-      const { data: recoveryData } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'recovery',
+    // Invalidar tokens anteriores do mesmo usuário
+    await supabaseAdmin
+      .from('first_access_tokens')
+      .update({ is_used: true, used_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .eq('is_used', false);
+    
+    // Criar novo token persistente (SEM expiração!)
+    const { error: tokenError } = await supabaseAdmin
+      .from('first_access_tokens')
+      .insert({
+        user_id: userId,
         email: payload.email,
-        options: {
-          redirectTo: `${siteUrl}/primeiro-acesso`,
+        token: persistentToken,
+        created_by: caller.id,
+        metadata: {
+          role: payload.role,
+          nome: payload.nome,
+          created_via: 'c-create-official-access',
         },
       });
-      
-      if (recoveryData?.properties?.action_link) {
-        magicLinkUrl = recoveryData.properties.action_link;
-        console.log('[c-create-official-access] ✅ Recovery link generated as fallback');
-      }
+    
+    if (tokenError) {
+      console.error('[c-create-official-access] ❌ Failed to create persistent token:', tokenError);
     } else {
-      magicLinkUrl = linkData.properties.action_link;
-      console.log('[c-create-official-access] ✅ Magic link generated for first access');
+      console.log('[c-create-official-access] ✅ Persistent first-access token created (NEVER expires until used)');
     }
+    
+    // URL com token persistente
+    const firstAccessUrl = `${siteUrl}/auth?first_access_token=${persistentToken}`;
     
     const emailResult = await sendWelcomeEmailWithMagicLink(
       resend,
@@ -883,13 +889,13 @@ serve(async (req) => {
       payload.email,
       payload.nome,
       payload.role,
-      magicLinkUrl,
+      firstAccessUrl,
     );
 
     if (emailResult.success) {
       welcomeEmailSent = true;
       emailStatus = 'welcome_sent';
-      console.log('[c-create-official-access] ✅ Welcome email with magic link sent successfully');
+      console.log('[c-create-official-access] ✅ Welcome email with persistent token sent successfully');
     } else {
       console.error('[c-create-official-access] ❌ Welcome email failed:', emailResult.error);
       emailStatus = 'failed';

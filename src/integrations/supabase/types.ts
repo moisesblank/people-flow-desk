@@ -5232,6 +5232,42 @@ export type Database = {
         }
         Relationships: []
       }
+      first_access_tokens: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string
+          id: string
+          is_used: boolean
+          metadata: Json | null
+          token: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email: string
+          id?: string
+          is_used?: boolean
+          metadata?: Json | null
+          token: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          id?: string
+          is_used?: boolean
+          metadata?: Json | null
+          token?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       fluxo_caixa: {
         Row: {
           conta_bancaria_id: string | null
