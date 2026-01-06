@@ -65,7 +65,7 @@ export function GoalsProgress({
       target: studentsTarget,
       icon: GraduationCap,
       color: "hsl(var(--stats-blue))",
-      href: "/alunos",
+      href: "/gestaofc/alunos",
     },
     {
       id: "tasks",

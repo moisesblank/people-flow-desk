@@ -596,9 +596,9 @@ export function getPostLoginRedirect(role?: string | null, email?: string | null
     return "/gestaofc";
   }
   
-  // 3. Alunos → alunos
+  // 3. Alunos → /alunos/dashboard (CONSTITUIÇÃO v10.4.1)
   if (role && isAlunoRole(role)) {
-    return "/alunos";
+    return "/alunos/dashboard";
   }
   
   // 4. aluno_gratuito → comunidade (acesso limitado)

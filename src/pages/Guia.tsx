@@ -134,7 +134,7 @@ export default function Guia() {
     {
       icon: GraduationCap,
       title: "Alunos",
-      path: "/alunos",
+      path: "/gestaofc/alunos",
       description: "Base de alunos dos cursos",
       features: [
         "Lista de alunos cadastrados",

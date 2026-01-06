@@ -164,7 +164,7 @@ export function AlunosRealtimeWidget() {
               variant="ghost"
               size="icon"
               className="h-7 w-7"
-              onClick={() => navigate('/alunos')}
+              onClick={() => navigate('/gestaofc/alunos')}
             >
               <ExternalLink className="w-3 h-3" />
             </Button>

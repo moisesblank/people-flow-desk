@@ -224,7 +224,7 @@ export function CriticalAlertsWidget() {
           description: "Alunos com menos de 30% de progresso",
           impact: "Risco de evasão. Considere ações de reengajamento.",
           actionLabel: "Ver alunos",
-          actionPath: "/alunos",
+          actionPath: "/gestaofc/alunos",
           priority: 4,
           timestamp: new Date(),
           resolved: false,
