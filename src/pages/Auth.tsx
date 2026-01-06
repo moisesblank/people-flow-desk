@@ -503,16 +503,16 @@ export default function Auth() {
   const { token: turnstileToken, isVerified: isTurnstileVerified, TurnstileProps, reset: resetTurnstile } = useTurnstile();
 
   // ============================================
-  // ✅ P0-1 FIX DEFINITIVO: Se já existe sessão/user, /auth deve redirecionar
-  // - SEMPRE busca role do banco antes de redirecionar
-  // - Não redirecionar se 2FA estiver pendente nesta aba
-  // - 🎯 FIX: Não redirecionar se estamos no modo de atualização de senha
+  // 🛡️ POLÍTICA v10.0: ZERO SESSION PERSISTENCE
+  // Nova aba/navegador = SEMPRE mostrar formulário de login
+  // NÃO redirecionar automaticamente com sessão existente
+  // O usuário DEVE clicar em "Entrar" para prosseguir
   // ============================================
   useEffect(() => {
     const pendingKey = "matriz_2fa_pending";
     const pendingUserKey = "matriz_2fa_user";
 
-    // 🎯 FIX CRÍTICO: Verificar se veio de link de recovery ANTES de qualquer redirect
+    // 🎯 FIX CRÍTICO: Verificar se veio de link de recovery ANTES de qualquer coisa
     const urlParams = new URLSearchParams(window.location.search);
     const hash = window.location.hash;
     const isRecoveryFromUrl = urlParams.get('action') === 'set-password' 
@@ -522,115 +522,57 @@ export default function Auth() {
       || hash.includes('type=recovery');
     
     if (isRecoveryFromUrl) {
-      console.log('[AUTH] 🔐 Link de recovery detectado - NÃO redirecionar automaticamente');
+      console.log('[AUTH] 🔐 Link de recovery detectado - mostrando formulário');
       setIsCheckingSession(false);
-      return; // Deixar o outro useEffect tratar o reset de senha
+      return;
     }
 
     // 🎯 FIX: Não redirecionar se já estamos no modo de update password
     if (isUpdatePassword) {
-      console.log('[AUTH] 🔐 Em modo update password - não redirecionar');
+      console.log('[AUTH] 🔐 Em modo update password - mostrando formulário');
       setIsCheckingSession(false);
       return;
     }
 
-    // 👑 OWNER DEV MODE: ?dev=1 permite owner acessar /auth para desenvolvimento
-    const isOwnerDevMode = urlParams.get('dev') === '1' && user?.email?.toLowerCase() === 'moisesblank@gmail.com';
-    if (isOwnerDevMode) {
-      console.log('[AUTH] 👑 OWNER DEV MODE - permanecendo em /auth para desenvolvimento');
-      setIsCheckingSession(false);
-      return;
-    }
-
-    // Função assíncrona para buscar role e redirecionar
-    const redirectWithRole = async (userId: string, email: string | undefined) => {
-      try {
-        // ✅ P0-1 CRÍTICO: Buscar role ANTES de decidir destino
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", userId)
-          .maybeSingle();
-        
-        const userRole = roleData?.role || null;
-        const target = getPostLoginRedirect(userRole, email);
-        console.log('[AUTH] ✅ Redirecionando para', target, '(role:', userRole, ')');
-        navigate(target, { replace: true });
-      } catch (err) {
-        console.error('[AUTH] Erro ao buscar role no mount:', err);
-        // Fallback seguro: usa função centralizada sem role (vai para /perfil-incompleto)
-        const target = getPostLoginRedirect(null, email);
-        navigate(target, { replace: true });
-      }
-    };
-
-    // ✅ PRIMEIRO: Se o usuário já está autenticado
-    // ⚠️ P0: NUNCA limpar 2FA pendente aqui (senão cria bypass/race)
-    if (user) {
-      const is2FAPending = sessionStorage.getItem(pendingKey) === "1";
-      if (!is2FAPending) {
-        sessionStorage.removeItem(pendingKey);
-        sessionStorage.removeItem(pendingUserKey);
-      }
-      console.log('[AUTH] Usuário já autenticado - buscando role para redirect...');
-      redirectWithRole(user.id, user.email);
-      return;
-    }
-
+    // 🛡️ POLÍTICA ZERO SESSION PERSISTENCE:
+    // Se 2FA está pendente NESTA ABA, restaurar o desafio (não é auto-redirect)
     const is2FAPending = sessionStorage.getItem(pendingKey) === "1";
-
     if (is2FAPending) {
-      // ✅ Anti-stuck: se houve refresh com 2FA pendente, restaurar a UI do desafio.
       try {
         const raw = sessionStorage.getItem(pendingUserKey);
         const parsed = raw ? (JSON.parse(raw) as { email: string; userId: string; nome?: string }) : null;
 
         if (parsed?.email && parsed?.userId) {
-          console.log('[AUTH] 0. 2FA pendente nesta aba - restaurando desafio');
+          console.log('[AUTH] 🔐 2FA pendente nesta aba - restaurando desafio');
           setPending2FAUser(parsed);
           setShow2FA(true);
           setIsCheckingSession(false);
           return;
         }
 
-        console.warn('[AUTH] 0. Flag 2FA pendente sem payload - limpando (stale)');
+        console.warn('[AUTH] Flag 2FA pendente sem payload - limpando (stale)');
         sessionStorage.removeItem(pendingKey);
       } catch (e) {
-        console.warn('[AUTH] 0. Falha ao restaurar 2FA - limpando flag (stale)', e);
+        console.warn('[AUTH] Falha ao restaurar 2FA - limpando flag (stale)', e);
         sessionStorage.removeItem(pendingKey);
         sessionStorage.removeItem(pendingUserKey);
       }
     }
 
-    // Fallback: sessão existe no storage, mas o provider ainda não refletiu
-    (async () => {
-      console.log('[AUTH] Verificando sessão existente (fallback)...');
-      const { data: { session } } = await supabase.auth.getSession();
+    // 🛡️ POLÍTICA ZERO SESSION PERSISTENCE:
+    // NÃO verificar sessão existente, NÃO redirecionar automaticamente
+    // O usuário DEVE clicar em "Entrar" para prosseguir
+    console.log('[AUTH] 🛡️ ZERO SESSION PERSISTENCE - mostrando formulário (obrigatório)');
+    setIsCheckingSession(false);
+  }, [isUpdatePassword]);
 
-      if (session?.user) {
-        // 👑 OWNER DEV MODE: também respeitar no fallback
-        const isOwnerDevModeFallback = urlParams.get('dev') === '1' && 
-          session.user.email?.toLowerCase() === 'moisesblank@gmail.com';
-        
-        if (isOwnerDevModeFallback) {
-          console.log('[AUTH] 👑 OWNER DEV MODE (fallback) - permanecendo em /auth');
-          setIsCheckingSession(false);
-          return;
-        }
-        
-        console.log('[AUTH] Sessão encontrada - buscando role para redirect...');
-        await redirectWithRole(session.user.id, session.user.email);
-        return;
-      }
-
-      console.log('[AUTH] Sem sessão - mostrando formulário');
-      setIsCheckingSession(false);
-    })();
-  }, [navigate, user, isUpdatePassword]);
+  // 🛡️ POLÍTICA v10.0: Flag para garantir que redirect só ocorre após login EXPLÍCITO
+  const [loginAttempted, setLoginAttempted] = useState(false);
 
   // Listener: login bem-sucedido deve sair de /auth
   // ✅ P0 FIX: Buscar role do banco ANTES de redirecionar
   // ✅ FIX: Tratar PASSWORD_RECOVERY para links de definição de senha
+  // 🛡️ POLÍTICA v10.0: Só redirecionar se loginAttempted === true
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       // 🎯 FIX: Quando usuário clica no link de recovery, Supabase dispara PASSWORD_RECOVERY
@@ -643,6 +585,14 @@ export default function Auth() {
       }
 
       if (event !== 'SIGNED_IN' || !session?.user) return;
+
+      // 🛡️ POLÍTICA v10.0: ZERO SESSION PERSISTENCE
+      // Só redirecionar se o usuário CLICOU em "Entrar" (loginAttempted === true)
+      // Isso bloqueia auto-redirect de sessões existentes em novas abas
+      if (!loginAttempted) {
+        console.log('[AUTH] 🛡️ SIGNED_IN detectado mas loginAttempted=false - BLOQUEANDO auto-redirect');
+        return;
+      }
 
       // Se estamos no modo de atualização de senha, não redirecionar
       if (isUpdatePassword) {
@@ -695,12 +645,12 @@ export default function Auth() {
 
       // ✅ REGRA DEFINITIVA: Usa função centralizada COM role
       const target = getPostLoginRedirect(userRole, session.user.email);
-      console.log('[AUTH] ✅ SIGNED_IN - redirecionando para', target, '(role:', userRole, ')');
+      console.log('[AUTH] ✅ SIGNED_IN + loginAttempted - redirecionando para', target, '(role:', userRole, ')');
       navigate(target, { replace: true });
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, isUpdatePassword]);
+  }, [navigate, isUpdatePassword, loginAttempted]);
 
   useEffect(() => {
     console.log('[AUTH] 2. Turnstile hook status:', {
@@ -1087,6 +1037,9 @@ export default function Auth() {
       }
 
       if (isLogin) {
+        // 🛡️ POLÍTICA v10.0: Sinaliza que o usuário CLICOU em "Entrar"
+        // Isso habilita o redirect no onAuthStateChange listener
+        setLoginAttempted(true);
         console.log('[AUTH] 4. Verificando sessão ativa existente...');
 
         // ============================================
