@@ -12,13 +12,13 @@ import { collectEnhancedFingerprint } from "@/lib/enhancedFingerprint";
 import { getPostLoginRedirect, type AppRole } from "@/core/urlAccessControl";
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
-const SESSION_TOKEN_KEY = 'matriz_session_token';
+const SESSION_TOKEN_KEY = "matriz_session_token";
 const HEARTBEAT_INTERVAL = 60_000; // 1 minuto
-const LAST_HEARTBEAT_KEY = 'matriz_last_heartbeat';
+const LAST_HEARTBEAT_KEY = "matriz_last_heartbeat";
 
 interface DeviceValidationResult {
   riskScore: number;
-  action: 'allow' | 'monitor' | 'challenge' | 'block';
+  action: "allow" | "monitor" | "challenge" | "block";
   requiresChallenge: boolean;
   isNewDevice: boolean;
 }
@@ -32,7 +32,7 @@ interface AuthContextType {
   signIn: (
     email: string,
     password: string,
-    opts?: { turnstileToken?: string }
+    opts?: { turnstileToken?: string },
   ) => Promise<{ error: Error | null; user?: User | null; needsChallenge?: boolean; blocked?: boolean }>;
   signUp: (email: string, password: string, nome: string) => Promise<{ error: Error | null }>;
   signInWithProvider: (provider: Provider) => Promise<{ error: Error | null }>;
@@ -53,7 +53,7 @@ async function collectFingerprint(): Promise<{ hash: string; data: Record<string
     return { hash: result.hash, data: result.data as unknown as Record<string, unknown> };
   } catch (err) {
     // Fallback para versão básica se o reforçado falhar
-    console.warn('[Auth] Fingerprint reforçado falhou, usando básico:', err);
+    console.warn("[Auth] Fingerprint reforçado falhou, usando básico:", err);
     const data: Record<string, unknown> = {
       screenWidth: window.screen.width,
       screenHeight: window.screen.height,
@@ -63,26 +63,39 @@ async function collectFingerprint(): Promise<{ hash: string; data: Record<string
       language: navigator.language,
       platform: navigator.platform,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      deviceType: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) 
-        ? (/iPad|Tablet/i.test(navigator.userAgent) ? 'tablet' : 'mobile')
-        : 'desktop',
-      browser: navigator.userAgent.includes('Firefox') ? 'Firefox'
-        : navigator.userAgent.includes('Edg') ? 'Edge'
-        : navigator.userAgent.includes('Chrome') ? 'Chrome'
-        : navigator.userAgent.includes('Safari') ? 'Safari' : 'Unknown',
-      os: navigator.userAgent.includes('Windows') ? 'Windows'
-        : navigator.userAgent.includes('Mac') ? 'macOS'
-        : navigator.userAgent.includes('Linux') ? 'Linux'
-        : navigator.userAgent.includes('Android') ? 'Android'
-        : navigator.userAgent.includes('iPhone') ? 'iOS' : 'Unknown',
+      deviceType: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
+        ? /iPad|Tablet/i.test(navigator.userAgent)
+          ? "tablet"
+          : "mobile"
+        : "desktop",
+      browser: navigator.userAgent.includes("Firefox")
+        ? "Firefox"
+        : navigator.userAgent.includes("Edg")
+          ? "Edge"
+          : navigator.userAgent.includes("Chrome")
+            ? "Chrome"
+            : navigator.userAgent.includes("Safari")
+              ? "Safari"
+              : "Unknown",
+      os: navigator.userAgent.includes("Windows")
+        ? "Windows"
+        : navigator.userAgent.includes("Mac")
+          ? "macOS"
+          : navigator.userAgent.includes("Linux")
+            ? "Linux"
+            : navigator.userAgent.includes("Android")
+              ? "Android"
+              : navigator.userAgent.includes("iPhone")
+                ? "iOS"
+                : "Unknown",
     };
-    
+
     const hashSource = JSON.stringify(data);
     const buffer = new TextEncoder().encode(hashSource);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    
+    const hash = hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+
     return { hash, data };
   }
 }
@@ -93,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deviceValidation, setDeviceValidation] = useState<DeviceValidationResult | null>(null);
-  
+
   // ✅ REGRA MATRIZ: Role derivada SÍNCRONAMENTE do email (sem esperar banco)
   // Garante que OWNER_EMAIL SEMPRE resulta em role="owner" IMEDIATAMENTE
   const derivedRole = useMemo((): AppRole | null => {
@@ -102,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (email === OWNER_EMAIL) return "owner";
     return role; // Para outros, usa a role do banco
   }, [user?.email, role]);
-  
+
   // Heartbeat refs
   const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const missedHeartbeatsRef = useRef(0);
@@ -122,26 +135,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================
   const sendHeartbeat = useCallback(async () => {
     const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
-    
+
     if (!sessionToken) {
       return;
     }
 
     try {
       const { error } = await supabase
-        .from('active_sessions')
+        .from("active_sessions")
         .update({ last_activity_at: new Date().toISOString() })
-        .eq('session_token', sessionToken)
-        .eq('status', 'active');
+        .eq("session_token", sessionToken)
+        .eq("status", "active");
 
       if (error) {
         missedHeartbeatsRef.current++;
-        console.warn('[Heartbeat] Erro:', error.message);
-        
+        console.warn("[Heartbeat] Erro:", error.message);
+
         // ✅ Frontend NUNCA revoga sessões por contador de falhas
         // Backend é a fonte da verdade — SessionGuard valida via RPC
         if (missedHeartbeatsRef.current >= 3) {
-          console.warn('[Heartbeat] Múltiplas falhas — aguardando validação do backend');
+          console.warn("[Heartbeat] Múltiplas falhas — aguardando validação do backend");
         }
       } else {
         missedHeartbeatsRef.current = 0;
@@ -157,10 +170,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (heartbeatIntervalRef.current) {
       clearInterval(heartbeatIntervalRef.current);
     }
-    
+
     missedHeartbeatsRef.current = 0;
     sendHeartbeat(); // Primeiro heartbeat imediato
-    
+
     const jitter = Math.floor(Math.random() * 10000);
     heartbeatIntervalRef.current = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL + jitter);
     console.log(`[Heartbeat] ▶️ Iniciado (intervalo: ${HEARTBEAT_INTERVAL + jitter}ms com jitter)`);
@@ -171,7 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearInterval(heartbeatIntervalRef.current);
       heartbeatIntervalRef.current = null;
     }
-    console.log('[Heartbeat] ⏹️ Parado');
+    console.log("[Heartbeat] ⏹️ Parado");
   }, []);
 
   // ============================================
@@ -179,28 +192,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================
   const validateCurrentDevice = useCallback(async (): Promise<DeviceValidationResult | null> => {
     if (!user) return null;
-    
+
     try {
       const { hash, data: fingerprintData } = await collectFingerprint();
-      
-      const { data, error } = await supabase.functions.invoke('validate-device', {
+
+      const { data, error } = await supabase.functions.invoke("validate-device", {
         body: {
           fingerprint: hash,
           fingerprintData,
           userId: user.id,
           email: user.email,
-          action: 'validate',
+          action: "validate",
         },
       });
 
       if (error) {
-        console.error('[DeviceValidation] Erro:', error);
+        console.error("[DeviceValidation] Erro:", error);
         return null;
       }
 
       const result: DeviceValidationResult = {
         riskScore: data.riskScore || 0,
-        action: data.action || 'allow',
+        action: data.action || "allow",
         requiresChallenge: data.requiresChallenge || false,
         isNewDevice: data.isNewDevice || false,
       };
@@ -208,7 +221,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setDeviceValidation(result);
       return result;
     } catch (err) {
-      console.error('[DeviceValidation] Erro:', err);
+      console.error("[DeviceValidation] Erro:", err);
       return null;
     }
   }, [user]);
@@ -219,7 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Usar refs para evitar stale closures no useEffect com []
   const startHeartbeatRef = useRef(startHeartbeat);
   const stopHeartbeatRef = useRef(stopHeartbeat);
-  
+
   // Manter refs atualizadas
   useEffect(() => {
     startHeartbeatRef.current = startHeartbeat;
@@ -227,100 +240,124 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [startHeartbeat, stopHeartbeat]);
 
   useEffect(() => {
-    console.log('[AUTH] useEffect de auth state iniciado');
+    console.log("[AUTH] useEffect de auth state iniciado");
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        console.log('[AUTH][STATE] event:', event, {
-          hasSession: Boolean(newSession),
-          hasUser: Boolean(newSession?.user),
-        });
+    // ⏱️ P0 FIX: Timeout de segurança para evitar loading infinito
+    const AUTH_TIMEOUT_MS = 8000;
+    let authTimeoutId: NodeJS.Timeout | null = setTimeout(() => {
+      console.warn("[AUTH] ⚠️ Timeout de 8s atingido - liberando isLoading");
+      setIsLoading(false);
+    }, AUTH_TIMEOUT_MS);
 
-        // ✅ Atualizações síncronas apenas (evita deadlocks / travas)
-        setSession(prev => {
-          if (prev?.access_token === newSession?.access_token) return prev;
-          return newSession;
-        });
-
-        setUser(prev => {
-          const newUser = newSession?.user ?? null;
-          if (prev?.id === newUser?.id) return prev;
-          return newUser;
-        });
-
-        const email = (newSession?.user?.email || "").toLowerCase();
-        if (email === OWNER_EMAIL) {
-          setRole("owner");
-        } else if (!newSession?.user) {
-          setRole(null);
-          stopHeartbeatRef.current();
-        }
-
-        // ✅ Tudo que faz I/O deve rodar FORA do callback.
-        // P0: Sem setTimeout/delay hacks — usamos um "tick" que dispara useEffect.
-        if (newSession?.user) {
-          // Role + heartbeat são iniciados em um useEffect baseado em user/session.
-
-          // Pós-login/restauração: garantir sessão única + token de segurança
-          // - SIGNED_IN: login explícito
-          // - INITIAL_SESSION: sessão restaurada (ex: segundo device abrindo com cookie)
-          // P0: evita sessões simultâneas por falta de criação do token
-          if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
-            const hasSecurityToken = typeof window !== 'undefined'
-              ? Boolean(localStorage.getItem(SESSION_TOKEN_KEY))
-              : false;
-
-            // Se já temos matriz_session_token, não precisa disparar novamente
-            if (hasSecurityToken) return;
-
-            const tokenKey = newSession.access_token || `${newSession.user.id}:${new Date().toISOString()}`;
-
-            if (processedSignInTokenRef.current !== tokenKey) {
-              processedSignInTokenRef.current = tokenKey;
-              postSignInPayloadRef.current = {
-                userId: newSession.user.id,
-                email: newSession.user.email ?? null,
-              };
-              setPostSignInTick((t) => t + 1);
-            }
-          }
-        }
-
+    const clearAuthTimeout = () => {
+      if (authTimeoutId) {
+        clearTimeout(authTimeoutId);
+        authTimeoutId = null;
       }
-    );
+    };
 
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      // ✅ P0 FIX: Evitar re-render desnecessário
-      setSession(prev => {
-        if (prev?.access_token === initialSession?.access_token) {
-          return prev;
-        }
-        return initialSession;
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
+      console.log("[AUTH][STATE] event:", event, {
+        hasSession: Boolean(newSession),
+        hasUser: Boolean(newSession?.user),
       });
 
-      setUser(prev => {
-        const newUser = initialSession?.user ?? null;
-        if (prev?.id === newUser?.id) {
-          return prev;
-        }
+      // ✅ Atualizações síncronas apenas (evita deadlocks / travas)
+      setSession((prev) => {
+        if (prev?.access_token === newSession?.access_token) return prev;
+        return newSession;
+      });
+
+      setUser((prev) => {
+        const newUser = newSession?.user ?? null;
+        if (prev?.id === newUser?.id) return prev;
         return newUser;
       });
 
-      const email = (initialSession?.user?.email || "").toLowerCase();
+      const email = (newSession?.user?.email || "").toLowerCase();
       if (email === OWNER_EMAIL) {
         setRole("owner");
-      } else if (!initialSession?.user) {
+      } else if (!newSession?.user) {
         setRole(null);
+        stopHeartbeatRef.current();
       }
 
-      if (initialSession?.user) {
-        fetchUserRole(initialSession.user.id);
-        startHeartbeatRef.current();
+      // ✅ Tudo que faz I/O deve rodar FORA do callback.
+      // P0: Sem setTimeout/delay hacks — usamos um "tick" que dispara useEffect.
+      if (newSession?.user) {
+        // Role + heartbeat são iniciados em um useEffect baseado em user/session.
+
+        // Pós-login/restauração: garantir sessão única + token de segurança
+        // - SIGNED_IN: login explícito
+        // - INITIAL_SESSION: sessão restaurada (ex: segundo device abrindo com cookie)
+        // P0: evita sessões simultâneas por falta de criação do token
+        if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+          const hasSecurityToken =
+            typeof window !== "undefined" ? Boolean(localStorage.getItem(SESSION_TOKEN_KEY)) : false;
+
+          // Se já temos matriz_session_token, não precisa disparar novamente
+          if (hasSecurityToken) return;
+
+          const tokenKey = newSession.access_token || `${newSession.user.id}:${new Date().toISOString()}`;
+
+          if (processedSignInTokenRef.current !== tokenKey) {
+            processedSignInTokenRef.current = tokenKey;
+            postSignInPayloadRef.current = {
+              userId: newSession.user.id,
+              email: newSession.user.email ?? null,
+            };
+            setPostSignInTick((t) => t + 1);
+          }
+        }
       }
-      setIsLoading(false);
     });
 
+    supabase.auth
+      .getSession()
+      .then(({ data: { session: initialSession } }) => {
+        // ⏱️ Limpar timeout pois getSession retornou
+        clearAuthTimeout();
+
+        // ✅ P0 FIX: Evitar re-render desnecessário
+        setSession((prev) => {
+          if (prev?.access_token === initialSession?.access_token) {
+            return prev;
+          }
+          return initialSession;
+        });
+
+        setUser((prev) => {
+          const newUser = initialSession?.user ?? null;
+          if (prev?.id === newUser?.id) {
+            return prev;
+          }
+          return newUser;
+        });
+
+        const email = (initialSession?.user?.email || "").toLowerCase();
+        if (email === OWNER_EMAIL) {
+          setRole("owner");
+        } else if (!initialSession?.user) {
+          setRole(null);
+        }
+
+        if (initialSession?.user) {
+          fetchUserRole(initialSession.user.id);
+          startHeartbeatRef.current();
+        }
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        // ⏱️ P0 FIX: Se getSession falhar, liberar loading
+        console.error("[AUTH] ❌ Erro no getSession:", err);
+        clearAuthTimeout();
+        setIsLoading(false);
+      });
+
     return () => {
+      clearAuthTimeout();
       subscription.unsubscribe();
       stopHeartbeatRef.current();
     };
@@ -356,54 +393,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const connectForceLogout = () => {
       if (channel) supabase.removeChannel(channel);
 
-      console.log('[AUTH][REALTIME] 📡 Inscrevendo no canal force-logout...');
+      console.log("[AUTH][REALTIME] 📡 Inscrevendo no canal force-logout...");
 
-      channel = supabase.channel('force-logout')
-        .on('broadcast', { event: 'user-deleted' }, async (payload) => {
-          const { userId, email, reason } = payload.payload as { 
-            userId: string; 
-            email: string; 
+      channel = supabase
+        .channel("force-logout")
+        .on("broadcast", { event: "user-deleted" }, async (payload) => {
+          const { userId, email, reason } = payload.payload as {
+            userId: string;
+            email: string;
             reason: string;
           };
 
-          console.log('[AUTH][REALTIME] 🔥 Evento user-deleted recebido:', { userId, email });
+          console.log("[AUTH][REALTIME] 🔥 Evento user-deleted recebido:", { userId, email });
 
           // Verificar se o broadcast é para ESTE usuário
           if (userId === user.id || email?.toLowerCase() === user.email?.toLowerCase()) {
-            console.error('[AUTH][REALTIME] 💀 ESTE USUÁRIO FOI DELETADO! Forçando logout...');
-            
+            console.error("[AUTH][REALTIME] 💀 ESTE USUÁRIO FOI DELETADO! Forçando logout...");
+
             // 1. Limpar TUDO do localStorage
             const keysToRemove = [
-              'matriz_session_token',
-              'matriz_last_heartbeat',
-              'matriz_device_fingerprint',
-              'matriz_trusted_device',
-              'sb-fyikfsasudgzsjmumdlw-auth-token',
+              "matriz_session_token",
+              "matriz_last_heartbeat",
+              "matriz_device_fingerprint",
+              "matriz_trusted_device",
+              "sb-fyikfsasudgzsjmumdlw-auth-token",
             ];
-            keysToRemove.forEach(key => localStorage.removeItem(key));
-            
+            keysToRemove.forEach((key) => localStorage.removeItem(key));
+
             // 2. Limpar sessionStorage
             sessionStorage.clear();
-            
+
             // 3. Parar heartbeat
             stopHeartbeatRef.current();
-            
+
             // 4. Mostrar mensagem antes de fazer logout
-            alert(`Sua conta foi removida do sistema.\nMotivo: ${reason || 'Exclusão administrativa'}`);
-            
+            alert(`Sua conta foi removida do sistema.\nMotivo: ${reason || "Exclusão administrativa"}`);
+
             // 5. Signout e redirect
             await supabase.auth.signOut();
-            window.location.replace('/auth?deleted=true');
+            window.location.replace("/auth?deleted=true");
           }
         })
         .subscribe((status) => {
-          console.log('[AUTH][REALTIME] Status do canal force-logout:', status);
-          if (status === 'SUBSCRIBED') {
+          console.log("[AUTH][REALTIME] Status do canal force-logout:", status);
+          if (status === "SUBSCRIBED") {
             reconnectAttempts = 0;
-          } else if (status === 'CHANNEL_ERROR' && reconnectAttempts < MAX_RECONNECT) {
+          } else if (status === "CHANNEL_ERROR" && reconnectAttempts < MAX_RECONNECT) {
             reconnectAttempts++;
             const delay = BASE_DELAY * Math.pow(2, reconnectAttempts - 1);
-            console.log(`[AUTH][REALTIME] 🔄 Reconectando force-logout (${reconnectAttempts}/${MAX_RECONNECT}) em ${delay}ms`);
+            console.log(
+              `[AUTH][REALTIME] 🔄 Reconectando force-logout (${reconnectAttempts}/${MAX_RECONNECT}) em ${delay}ms`,
+            );
             if (reconnectTimer) clearTimeout(reconnectTimer);
             reconnectTimer = setTimeout(connectForceLogout, delay);
           }
@@ -413,7 +453,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     connectForceLogout();
 
     return () => {
-      console.log('[AUTH][REALTIME] 🔌 Desconectando do canal force-logout');
+      console.log("[AUTH][REALTIME] 🔌 Desconectando do canal force-logout");
       if (reconnectTimer) clearTimeout(reconnectTimer);
       if (channel) supabase.removeChannel(channel);
     };
@@ -441,7 +481,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Se sair cedo, o SessionGuard em outras rotas aplica fail-closed (~6s) e desloga.
       const token = localStorage.getItem(SESSION_TOKEN_KEY);
       if (!token || !securitySessionReady) {
-        console.warn('[AUTH] Aguardando token de sessão de segurança antes de redirecionar...');
+        console.warn("[AUTH] Aguardando token de sessão de segurança antes de redirecionar...");
         return;
       }
 
@@ -450,7 +490,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // ✅ P0 FIX: Owner pode redirecionar sem esperar role do banco (MAS só após token pronto)
       if (email === ownerEmail) {
-        console.log('[AUTH] Owner detectado - redirecionando para /gestaofc');
+        console.log("[AUTH] Owner detectado - redirecionando para /gestaofc");
         window.location.replace("/gestaofc");
         return;
       }
@@ -458,13 +498,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // ✅ P0 FIX CRÍTICO: Para outros usuários, ESPERAR role ser carregada
       // Se derivedRole ainda é null, NÃO redirecionar ainda
       if (derivedRole === null) {
-        console.log('[AUTH] Aguardando role ser carregada do banco...');
+        console.log("[AUTH] Aguardando role ser carregada do banco...");
         return; // Espera próximo ciclo quando role estiver disponível
       }
 
       // ✅ REGRA DEFINITIVA: Usa função centralizada COM role carregada
       const target = getPostLoginRedirect(derivedRole, email);
-      console.log('[AUTH] Redirecionando para', target, '(role:', derivedRole, ')');
+      console.log("[AUTH] Redirecionando para", target, "(role:", derivedRole, ")");
       window.location.replace(target);
     }
   }, [isLoading, user?.id, session?.access_token, derivedRole, securitySessionReady]);
@@ -487,7 +527,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 🔒 P0 INCIDENTE: se 2FA está pendente, NÃO criar sessão única (sessão final proibida)
     const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
     if (is2FAPending) {
-      console.warn('[AUTH][SESSAO] 2FA pendente - sessão única adiada (será criada pós-2FA no /auth)');
+      console.warn("[AUTH][SESSAO] 2FA pendente - sessão única adiada (será criada pós-2FA no /auth)");
       postSignInPayloadRef.current = null;
       return;
     }
@@ -496,44 +536,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Fora isso, SEMPRE garantir que o token exista rapidamente, mesmo em /auth,
     // pois o redirect pode tirar o usuário de /auth antes do Auth.tsx terminar.
     // (Evita logout ~5-6s pelo SessionGuard em rotas não-/auth)
-    const existingToken = typeof window !== 'undefined'
-      ? localStorage.getItem(SESSION_TOKEN_KEY)
-      : null;
+    const existingToken = typeof window !== "undefined" ? localStorage.getItem(SESSION_TOKEN_KEY) : null;
 
     if (existingToken) {
-      console.log('[AUTH][SESSAO] Token já existe - pulando criação de sessão única');
+      console.log("[AUTH][SESSAO] Token já existe - pulando criação de sessão única");
       setSecuritySessionReady(true);
       startHeartbeatRef.current();
       postSignInPayloadRef.current = null;
       return;
     }
 
-    console.log('[AUTH][SESSAO] Criando sessão única pós-login para:', userId);
+    console.log("[AUTH][SESSAO] Criando sessão única pós-login para:", userId);
 
     const createSession = async () => {
       try {
         const ua = navigator.userAgent;
-        let device_type = 'desktop';
+        let device_type = "desktop";
         if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
-          device_type = /iPad|Tablet/i.test(ua) ? 'tablet' : 'mobile';
+          device_type = /iPad|Tablet/i.test(ua) ? "tablet" : "mobile";
         }
 
-        let browser = 'unknown';
-        if (ua.includes('Firefox')) browser = 'Firefox';
-        else if (ua.includes('Edg')) browser = 'Edge';
-        else if (ua.includes('Chrome')) browser = 'Chrome';
-        else if (ua.includes('Safari')) browser = 'Safari';
+        let browser = "unknown";
+        if (ua.includes("Firefox")) browser = "Firefox";
+        else if (ua.includes("Edg")) browser = "Edge";
+        else if (ua.includes("Chrome")) browser = "Chrome";
+        else if (ua.includes("Safari")) browser = "Safari";
 
-        let os = 'unknown';
-        if (ua.includes('Windows')) os = 'Windows';
-        else if (ua.includes('Mac')) os = 'macOS';
-        else if (ua.includes('Linux')) os = 'Linux';
-        else if (ua.includes('Android')) os = 'Android';
-        else if (ua.includes('iPhone')) os = 'iOS';
+        let os = "unknown";
+        if (ua.includes("Windows")) os = "Windows";
+        else if (ua.includes("Mac")) os = "macOS";
+        else if (ua.includes("Linux")) os = "Linux";
+        else if (ua.includes("Android")) os = "Android";
+        else if (ua.includes("iPhone")) os = "iOS";
 
         // 🔐 BLOCO 6: Criar sessão (useAuth - fallback sem device_hash do servidor)
         // Nota: O fluxo principal passa pelo Auth.tsx que usa device_hash do servidor
-        const { data, error } = await supabase.rpc('create_single_session', {
+        const { data, error } = await supabase.rpc("create_single_session", {
           _ip_address: null,
           _user_agent: navigator.userAgent.slice(0, 255),
           _device_type: device_type,
@@ -543,7 +581,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (error) {
-          console.error('[AUTH][SESSAO] Erro ao criar sessão:', error);
+          console.error("[AUTH][SESSAO] Erro ao criar sessão:", error);
           return;
         }
 
@@ -551,13 +589,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const sessionToken = data[0].session_token;
           localStorage.setItem(SESSION_TOKEN_KEY, sessionToken);
           setSecuritySessionReady(true);
-          console.log('[AUTH][SESSAO] ✅ Sessão única criada com sucesso');
+          console.log("[AUTH][SESSAO] ✅ Sessão única criada com sucesso");
 
           // Iniciar heartbeat
           startHeartbeatRef.current();
         }
       } catch (err) {
-        console.error('[AUTH][SESSAO] Erro crítico:', err);
+        console.error("[AUTH][SESSAO] Erro crítico:", err);
       }
     };
 
@@ -567,11 +605,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchUserRole = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .maybeSingle();
+      const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
 
       if (error) {
         console.error("Error fetching role:", error);
@@ -583,10 +617,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // A role real sempre vem da tabela user_roles
       const dbRole = (data?.role as AppRole) ?? null;
       setRole(dbRole);
-      
+
       // Log para auditoria se for owner
-      if (dbRole === 'owner') {
-        console.log('[AUTH] Owner role confirmed from database');
+      if (dbRole === "owner") {
+        console.log("[AUTH] Owner role confirmed from database");
       }
     } catch (err) {
       console.error("Error fetching role:", err);
@@ -599,7 +633,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (
     email: string,
     password: string,
-    _opts?: { turnstileToken?: string }
+    _opts?: { turnstileToken?: string },
   ): Promise<{ error: Error | null; user?: User | null; needsChallenge?: boolean; blocked?: boolean }> => {
     // 🛡️ LOGIN DETERMINÍSTICO: termina SOMENTE no retorno do signInWithPassword
     // Nada pode bloquear o fluxo (sem validate-device pré-login, sem Turnstile)
@@ -610,7 +644,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // ✅ DEBUG P0: sinalizar resposta (sem expor tokens)
-    console.log('[AUTH][LOGIN] signInWithPassword result:', {
+    console.log("[AUTH][LOGIN] signInWithPassword result:", {
       hasError: Boolean(error),
       hasSession: Boolean(data?.session),
       hasUser: Boolean(data?.user),
@@ -627,37 +661,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return { error, user: null };
   };
-  
+
   const detectDeviceInfo = () => {
     const ua = navigator.userAgent;
-    
-    let device_type = 'desktop';
+
+    let device_type = "desktop";
     if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
-      device_type = /iPad|Tablet/i.test(ua) ? 'tablet' : 'mobile';
+      device_type = /iPad|Tablet/i.test(ua) ? "tablet" : "mobile";
     }
-    
-    let browser = 'unknown';
-    if (ua.includes('Firefox')) browser = 'Firefox';
-    else if (ua.includes('Edg')) browser = 'Edge';
-    else if (ua.includes('Chrome')) browser = 'Chrome';
-    else if (ua.includes('Safari')) browser = 'Safari';
-    
-    let os = 'unknown';
-    if (ua.includes('Windows')) os = 'Windows';
-    else if (ua.includes('Mac')) os = 'macOS';
-    else if (ua.includes('Linux')) os = 'Linux';
-    else if (ua.includes('Android')) os = 'Android';
-    else if (ua.includes('iOS') || ua.includes('iPhone')) os = 'iOS';
-    
+
+    let browser = "unknown";
+    if (ua.includes("Firefox")) browser = "Firefox";
+    else if (ua.includes("Edg")) browser = "Edge";
+    else if (ua.includes("Chrome")) browser = "Chrome";
+    else if (ua.includes("Safari")) browser = "Safari";
+
+    let os = "unknown";
+    if (ua.includes("Windows")) os = "Windows";
+    else if (ua.includes("Mac")) os = "macOS";
+    else if (ua.includes("Linux")) os = "Linux";
+    else if (ua.includes("Android")) os = "Android";
+    else if (ua.includes("iOS") || ua.includes("iPhone")) os = "iOS";
+
     return { device_type, browser, os };
   };
 
   const signUp = async (email: string, password: string, nome: string) => {
     const redirectUrl = `${window.location.origin}/`;
-    
+
     // AXIOMA DE IDENTIDADE: 1 EMAIL = 1 PESSOA = 1 LOGIN
     const normalizedEmail = email.toLowerCase().trim();
-    
+
     const { error } = await supabase.auth.signUp({
       email: normalizedEmail,
       password,
@@ -671,7 +705,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithProvider = async (provider: Provider) => {
     const redirectUrl = `${window.location.origin}/`;
-    
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -709,25 +743,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 🛡️ DOGMA I: Logout invalida sessão
   const signOut = async () => {
     stopHeartbeat();
-    
+
     try {
       const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
-      
+
       // 🎯 LIMPAR TOKEN ANTES do RPC para que SessionGuard saiba que é logout manual
       // Isso evita que o Realtime listener mostre overlay de conflito
       localStorage.removeItem(SESSION_TOKEN_KEY);
-      console.log('[DOGMA I] Token removido ANTES do RPC');
-      
+      console.log("[DOGMA I] Token removido ANTES do RPC");
+
       if (sessionToken) {
-        await supabase.rpc('invalidate_session', {
+        await supabase.rpc("invalidate_session", {
           p_session_token: sessionToken,
         });
-        console.log('[DOGMA I] ✅ Sessão invalidada no backend');
+        console.log("[DOGMA I] ✅ Sessão invalidada no backend");
       }
     } catch (err) {
-      console.error('[DOGMA I] Erro ao invalidar sessão:', err);
+      console.error("[DOGMA I] Erro ao invalidar sessão:", err);
     }
-    
+
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
@@ -738,29 +772,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ✅ LOG FORENSE: Role derivada vs role do banco
   useEffect(() => {
     if (user?.email && derivedRole) {
-      console.log('[AUTH] Role final:', { 
-        email: user.email, 
-        derivedRole, 
+      console.log("[AUTH] Role final:", {
+        email: user.email,
+        derivedRole,
         dbRole: role,
-        isOwnerByEmail: user.email.toLowerCase() === OWNER_EMAIL 
+        isOwnerByEmail: user.email.toLowerCase() === OWNER_EMAIL,
       });
     }
   }, [user?.email, derivedRole, role]);
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      session, 
-      role: derivedRole, // ✅ REGRA MATRIZ: Sempre usar role derivada (owner por email é síncrono)
-      isLoading, 
-      deviceValidation,
-      signIn, 
-      signUp, 
-      signInWithProvider,
-      signOut,
-      resetPassword,
-      validateCurrentDevice,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        role: derivedRole, // ✅ REGRA MATRIZ: Sempre usar role derivada (owner por email é síncrono)
+        isLoading,
+        deviceValidation,
+        signIn,
+        signUp,
+        signInWithProvider,
+        signOut,
+        resetPassword,
+        validateCurrentDevice,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
