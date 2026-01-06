@@ -235,7 +235,14 @@ AppHeader.displayName = "AppHeader";
 
 // ⚡ Main Content com animação CSS pura (sem framer-motion)
 // OTIMIZAÇÃO: CSS animations são nativas e não adicionam ao bundle
-const MainContent = memo(({ children }: { children: ReactNode }) => <main className="flex-1">{children}</main>);
+const MainContent = memo(({ children }: { children: ReactNode }) => (
+  <main className="flex-1">
+    <div style={{ background: "red", padding: "50px", color: "white", fontSize: "30px" }}>
+      TESTE - SE VOCÊ VÊ ISSO, O PROBLEMA ESTÁ NO CHILDREN
+    </div>
+    {children}
+  </main>
+));
 MainContent.displayName = "MainContent";
 
 export const AppLayout = memo(
