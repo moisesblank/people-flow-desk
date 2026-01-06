@@ -148,6 +148,26 @@ export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) 
 
         console.log('[TrustDevice] ✅ Dispositivo registrado:', result.deviceHash?.slice(0, 8) + '...');
 
+        // 🔐 P0 FIX: Registrar TAMBÉM em user_mfa_verifications para que check_device_mfa_valid funcione!
+        // Este é o mesmo registro que o useDeviceMFAGuard.onVerificationComplete faz
+        if (result.deviceHash) {
+          try {
+            const { error: mfaError } = await supabase.rpc("register_device_mfa_verification", {
+              _user_id: userId,
+              _device_hash: result.deviceHash,
+              _ip_address: null,
+            });
+
+            if (mfaError) {
+              console.error('[TrustDevice] ⚠️ Erro ao registrar MFA, mas dispositivo já foi registrado:', mfaError);
+            } else {
+              console.log('[TrustDevice] ✅ Verificação MFA registrada - dispositivo confiável por 24h');
+            }
+          } catch (mfaErr) {
+            console.error('[TrustDevice] ⚠️ Erro inesperado ao registrar MFA:', mfaErr);
+          }
+        }
+
         // Salvar cache local de confiança
         localStorage.setItem('mfa_trust_cache', JSON.stringify({
           deviceHash: result.deviceHash,
