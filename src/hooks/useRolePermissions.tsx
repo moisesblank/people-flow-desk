@@ -20,12 +20,12 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { 
-  MATRIZ_URLS, 
-  MATRIZ_PATHS, 
-  ROLE_TO_CATEGORIA, 
+import {
+  MATRIZ_URLS,
+  MATRIZ_PATHS,
+  ROLE_TO_CATEGORIA,
   validarAcessoUrl,
-  type CategoriaAcesso 
+  type CategoriaAcesso,
 } from "@/config/matriz-urls";
 import {
   isOwner as isOwnerFn,
@@ -40,9 +40,9 @@ import {
   type AccessCategory,
 } from "@/core/urlAccessControl";
 // 🎯 FONTE ÚNICA DE VERDADE - ÁREAS DO SISTEMA
-import { 
-  SystemArea, 
-  URL_TO_AREA as CANONICAL_URL_TO_AREA, 
+import {
+  SystemArea,
+  URL_TO_AREA as CANONICAL_URL_TO_AREA,
   ROLE_AREA_PERMISSIONS,
   getAreaFromUrl,
   roleHasAccess,
@@ -101,33 +101,33 @@ export function getCurrentDomain(): "pro" | "public" | "localhost" | "unknown" {
 // ============================================
 export function validarAcessoPorDominio(
   role: string | null,
-  pathname: string
+  pathname: string,
 ): { permitido: boolean; redirecionarPara?: string; motivo?: string } {
   if (typeof window === "undefined") return { permitido: true };
-  
+
   const hostname = window.location.hostname;
-  const categoria: CategoriaAcesso = role ? (ROLE_TO_CATEGORIA[role] || "publico") : "publico";
-  
+  const categoria: CategoriaAcesso = role ? ROLE_TO_CATEGORIA[role] || "publico" : "publico";
+
   // Owner tem bypass total
   if (categoria === "owner") {
     return { permitido: true };
   }
-  
+
   return validarAcessoUrl(categoria, pathname, hostname);
 }
 
 // Tipos de roles do sistema
-export type FullAppRole = 
-  | "owner" 
-  | "admin" 
-  | "employee" 
-  | "coordenacao" 
-  | "suporte" 
-  | "monitoria" 
-  | "afiliado" 
-  | "marketing" 
+export type FullAppRole =
+  | "owner"
+  | "admin"
+  | "employee"
+  | "coordenacao"
+  | "suporte"
+  | "monitoria"
+  | "afiliado"
+  | "marketing"
   | "contabilidade"
-  | "beta"           // ALUNO PAGANTE (365 dias)
+  | "beta" // ALUNO PAGANTE (365 dias)
   | "aluno_gratuito"; // CADASTRO COMUM (apenas área gratuita)
 
 // 🎯 TIPOS RE-EXPORTADOS DA FONTE ÚNICA
@@ -189,7 +189,15 @@ export const ROLE_DESCRIPTIONS: Record<FullAppRole, string> = {
 
 // Roles que são "funcionários ou acima" (usados para bypass de segurança)
 const FUNCIONARIO_OR_ABOVE_ROLES: FullAppRole[] = [
-  'owner', 'admin', 'coordenacao', 'suporte', 'monitoria', 'employee', 'marketing', 'contabilidade', 'afiliado'
+  "owner",
+  "admin",
+  "coordenacao",
+  "suporte",
+  "monitoria",
+  "employee",
+  "marketing",
+  "contabilidade",
+  "afiliado",
 ];
 
 export interface UseRolePermissionsReturn {
@@ -233,7 +241,7 @@ export function useRolePermissions(): UseRolePermissionsReturn {
 
     // ✅ OWNER BYPASS DETERMINÍSTICO (REGRA MATRIZ)
     if (userEmail === OWNER_EMAIL) {
-      console.log('[ROLE] ✅ OWNER detectado por email - bypass imediato');
+      console.log("[ROLE] ✅ OWNER detectado por email - bypass imediato");
       setRole("owner");
       setIsLoading(false);
       return;
@@ -241,7 +249,7 @@ export function useRolePermissions(): UseRolePermissionsReturn {
 
     // ✅ Se useAuth já tem a role, usar ela (evita fetch duplicado)
     if (authRole) {
-      console.log('[ROLE] ✅ Usando role do AuthProvider:', authRole);
+      console.log("[ROLE] ✅ Usando role do AuthProvider:", authRole);
       setRole(authRole as FullAppRole);
       setIsLoading(false);
       return;
@@ -255,11 +263,7 @@ export function useRolePermissions(): UseRolePermissionsReturn {
 
     async function fetchRole() {
       try {
-        const { data, error } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", user.id).maybeSingle();
 
         if (didTimeout) return;
 
@@ -267,7 +271,7 @@ export function useRolePermissions(): UseRolePermissionsReturn {
           console.error("Erro ao buscar role:", error);
           setRole("employee");
         } else {
-          setRole(data?.role as FullAppRole ?? "employee");
+          setRole((data?.role as FullAppRole) ?? "employee");
         }
       } catch (err) {
         console.error("Erro ao verificar permissões:", err);
@@ -300,7 +304,7 @@ export function useRolePermissions(): UseRolePermissionsReturn {
   }, [user, authRole]);
 
   const userEmail = user?.email || null;
-  
+
   // P1-2 FIX: Role como fonte da verdade (email é apenas log/fallback UX)
   const isOwner = role === "owner";
   const isAdmin = role === "admin";
@@ -311,7 +315,7 @@ export function useRolePermissions(): UseRolePermissionsReturn {
   const isGodMode = isOwner;
   const canEdit = isOwner;
   const canViewAll = isOwner || isAdmin;
-  
+
   // SANCTUM 2.0: Verifica se é funcionário ou acima (bypass de proteção de vídeo)
   const isFuncionarioOrAbove = useMemo(() => {
     if (!role) return false;
@@ -388,13 +392,18 @@ export function useHasAccess(area: SystemArea): boolean {
 
 // Roles permitidos em cada domínio
 export const GESTAO_ALLOWED_ROLES: FullAppRole[] = [
-  "owner", "admin", "coordenacao", "suporte", "monitoria", 
-  "afiliado", "marketing", "contabilidade", "employee"
+  "owner",
+  "admin",
+  "coordenacao",
+  "suporte",
+  "monitoria",
+  "afiliado",
+  "marketing",
+  "contabilidade",
+  "employee",
 ];
 
-export const PRO_ALLOWED_ROLES: FullAppRole[] = [
-  "owner", "beta", "aluno_gratuito"
-];
+export const PRO_ALLOWED_ROLES: FullAppRole[] = ["owner", "beta", "aluno_gratuito"];
 
 export interface DomainAccessResult {
   permitido: boolean;
@@ -406,26 +415,28 @@ export interface DomainAccessResult {
 /**
  * Valida se o role do usuário pode acessar o domínio atual APÓS LOGIN.
  * Usa-se logo após autenticação para verificar se deve redirecionar.
- * 
+ *
  * @param role - Role do usuário logado
  * @param userEmail - Email do usuário (para verificar owner)
  * @returns Objeto com permitido, redirecionarPara e motivo
  */
-export function validateDomainAccessForLogin(
-  role: FullAppRole | null,
-  userEmail: string | null
-): DomainAccessResult {
+export function validateDomainAccessForLogin(role: FullAppRole | null, userEmail: string | null): DomainAccessResult {
   // SSR safety
   if (typeof window === "undefined") {
     return { permitido: true, dominioAtual: "unknown" };
   }
 
   const hostname = window.location.hostname.toLowerCase();
-  
+
   // Detectar domínio atual
   let dominioAtual: DomainAccessResult["dominioAtual"] = "unknown";
   // Localhost + Lovable preview = bypass total
-  if (hostname.includes("localhost") || hostname.includes("127.0.0.1") || hostname.includes("lovable.app") || hostname.includes("lovableproject.com")) {
+  if (
+    hostname.includes("localhost") ||
+    hostname.includes("127.0.0.1") ||
+    hostname.includes("lovable.app") ||
+    hostname.includes("lovableproject.com")
+  ) {
     dominioAtual = "localhost"; // Dev/Preview - permitir tudo
   } else if (isGestaoHost(hostname)) {
     dominioAtual = "gestao";
@@ -458,7 +469,7 @@ export function validateDomainAccessForLogin(
   // Cada domínio é independente - NÃO existe domínio canônico
   // gestao.* e pro.* coexistem sem redirect forçado
   // ============================================
-  
+
   if (dominioAtual === "gestao") {
     const isAllowed = GESTAO_ALLOWED_ROLES.includes(role);
     if (!isAllowed) {
@@ -487,7 +498,7 @@ export function validateDomainAccessForLogin(
  */
 export function useDomainAccessValidation() {
   const { role, isLoading, userEmail } = useRolePermissions();
-  
+
   const validation = useMemo(() => {
     if (isLoading) return null;
     return validateDomainAccessForLogin(role, userEmail);
@@ -495,7 +506,7 @@ export function useDomainAccessValidation() {
 
   return {
     isLoading,
-    ...validation
+    ...validation,
   };
 }
 
