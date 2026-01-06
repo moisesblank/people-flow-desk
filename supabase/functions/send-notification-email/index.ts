@@ -99,6 +99,21 @@ const getEmailTemplate = (type: string, data: Record<string, any> = {}) => {
         <p style="margin:0;">Vamos juntos manter — e elevar — o padrão. 💪🔥</p>`,
         "Acessar Sistema", "https://pro.moisesmedeiros.com.br/gestaofc"),
     },
+    // 🎯 P0 FIX v2: Template para funcionários COM MAGIC LINK (sem senha em texto)
+    welcome_staff_magic: {
+      subject: "Bem-vindo(a) à equipe! — Curso Moisés Medeiros 👊",
+      html: getBaseTemplate("Bem-vindo(a) à equipe!",
+        `<h2 style="margin:0 0 16px;font-size:18px;color:#ffffff;">Olá, ${data.nome || 'Colaborador(a)'}!</h2>
+        <p style="margin:0 0 12px;">Seja muito bem-vindo(a) à equipe do Curso Moisés Medeiros 👊📚</p>
+        <p style="margin:0 0 16px;">Seu acesso foi criado com sucesso. Clique no botão abaixo para iniciar sua configuração:</p>
+        <div style="background:#1a1a1f;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="margin:0 0 8px;"><strong style="color:#E62B4A;">📧 Email:</strong> ${data.email || 'N/A'}</p>
+          <p style="margin:0;"><strong style="color:#E62B4A;">💼 Função:</strong> ${data.funcao || 'Funcionário'}</p>
+        </div>
+        <p style="margin:0 0 12px;color:#9aa0a6;font-size:13px;">⚠️ Este link é válido por 24 horas. Você vai definir sua senha no primeiro acesso.</p>
+        <p style="margin:0;">Vamos juntos manter — e elevar — o padrão. 💪🔥</p>`,
+        "Acessar Plataforma", data.access_link || "https://pro.moisesmedeiros.com.br/auth"),
+    },
     // 🎯 P0 FIX: Template de RECUPERAÇÃO DE SENHA (padrão bonito)
     password_recovery: {
       subject: "Recuperação de Senha — Curso Moisés Medeiros 🔐",

@@ -257,19 +257,21 @@ const getBaseTemplate = (titulo: string, conteudo: string, botaoTexto?: string, 
 // ============================================
 // ENVIAR EMAIL DE BOAS-VINDAS COM LINK DE DEFINIÇÃO DE SENHA
 // ⚠️ NUNCA envia senha em texto - envia link clicável
-// 🎯 P0 FIX: Botão clicável para primeiro acesso
+// 🎯 P0 FIX v2: Botão clicável para PRIMEIRO ACESSO (não reset de senha)
+// O magic link autentica e redireciona direto para /primeiro-acesso
+// A definição de senha acontece DENTRO do onboarding (etapa 3)
 // ============================================
-async function sendWelcomeEmailWithSetupLink(
+async function sendWelcomeEmailWithMagicLink(
   resend: Resend,
   fromEmail: string,
   toEmail: string,
   nome: string,
   role: StudentRole,
-  passwordSetupUrl: string, // Link para definir senha
+  magicLinkUrl: string, // Link de acesso (magic link, não reset token)
 ): Promise<{ success: boolean; error?: string }> {
   const roleLabel = ROLE_LABELS[role];
 
-  // Conteúdo interno usando o template base padrão
+  // 🎯 NOVO: Conteúdo atualizado - NÃO menciona "definir senha" (isso é feito no onboarding)
   const conteudo = `
     <h2 style="margin:0 0 16px;font-size:18px;color:#ffffff;">🎉 Bem-vindo(a), ${nome}!</h2>
     <p style="margin:0 0 12px;">Seu acesso à plataforma foi criado pela equipe de gestão.</p>
@@ -279,34 +281,35 @@ async function sendWelcomeEmailWithSetupLink(
     </div>
     
     <div style="background:#2a2a2f;border-radius:8px;padding:20px;margin:16px 0;border-left:4px solid #22c55e;">
-      <p style="margin:0 0 12px;color:#ffffff;font-weight:bold;font-size:15px;">🔐 Configure sua Senha de Acesso</p>
-      <p style="margin:0;color:#9aa0a6;font-size:13px;">Clique no botão abaixo para definir sua senha e acessar a plataforma pela primeira vez.</p>
-      <p style="margin:12px 0 0;color:#fbbf24;font-size:12px;">⚠️ Este link é válido por 24 horas.</p>
+      <p style="margin:0 0 12px;color:#ffffff;font-weight:bold;font-size:15px;">🚀 Acesse a Plataforma</p>
+      <p style="margin:0;color:#9aa0a6;font-size:13px;">Clique no botão abaixo para iniciar sua configuração inicial. Você vai definir sua senha e personalizar sua experiência.</p>
+      <p style="margin:12px 0 0;color:#fbbf24;font-size:12px;">⚠️ Este link é válido por 24 horas e só pode ser usado uma vez.</p>
     </div>
     
-    <h3 style="margin:20px 0 12px;font-size:14px;color:#ffffff;">📚 Próximos passos:</h3>
+    <h3 style="margin:20px 0 12px;font-size:14px;color:#ffffff;">📚 O que vai acontecer:</h3>
     <ul style="margin:0;padding-left:20px;color:#9aa0a6;font-size:13px;line-height:1.8;">
-      <li><strong style="color:#E62B4A;">Clique no botão "Definir Minha Senha" abaixo</strong></li>
-      <li>Crie uma senha forte (mín. 8 caracteres com maiúscula, minúscula, número e símbolo)</li>
-      <li>Acesse a plataforma e explore todo o conteúdo</li>
-      <li>Em caso de dúvidas, entre em contato via WhatsApp</li>
+      <li><strong style="color:#E62B4A;">Clique no botão "Acessar Plataforma"</strong></li>
+      <li>Conheça as funcionalidades disponíveis</li>
+      <li>Escolha seu tema visual preferido</li>
+      <li>Defina sua senha de acesso</li>
+      <li>Cadastre seu dispositivo de confiança</li>
     </ul>
   `;
   
   const htmlContent = getBaseTemplate(
     "Seu acesso foi criado com sucesso!",
     conteudo,
-    "Definir Minha Senha",
-    passwordSetupUrl
+    "Acessar Plataforma", // 🎯 MUDOU: Não é mais "Definir Minha Senha"
+    magicLinkUrl
   );
 
   try {
-    console.log('[c-create-official-access] Sending welcome email with setup link to:', toEmail);
+    console.log('[c-create-official-access] Sending welcome email with magic link to:', toEmail);
     
     const { data, error } = await resend.emails.send({
       from: fromEmail,
       to: [toEmail],
-      subject: `🎉 Bem-vindo(a), ${nome}! Configure seu acesso — Curso Moisés Medeiros`,
+      subject: `🎉 Bem-vindo(a), ${nome}! Acesse a plataforma — Curso Moisés Medeiros`,
       html: htmlContent,
     });
 
@@ -315,7 +318,7 @@ async function sendWelcomeEmailWithSetupLink(
       return { success: false, error: error.message };
     }
 
-    console.log('[c-create-official-access] Welcome email with setup link sent successfully. ID:', data?.id);
+    console.log('[c-create-official-access] Welcome email with magic link sent successfully. ID:', data?.id);
     return { success: true };
     
   } catch (err) {
@@ -836,40 +839,57 @@ serve(async (req) => {
     console.log('[c-create-official-access] ✅ Role assigned:', payload.role, expiresAt ? `(expires: ${expiresAt})` : '');
 
     // ============================================
-    // 9. GERAR TOKEN E ENVIAR EMAIL COM LINK DE DEFINIÇÃO DE SENHA
-    // 🎯 P0 FIX: Link clicável para primeiro acesso (SEM enviar senha)
+    // 9. GERAR MAGIC LINK E ENVIAR EMAIL DE PRIMEIRO ACESSO
+    // 🎯 P0 FIX v2: Magic link autentica e redireciona para /primeiro-acesso
+    // A definição de senha acontece DENTRO do onboarding (etapa 3)
     // ============================================
-    console.log('[c-create-official-access] 📧 Generating password setup link...');
+    console.log('[c-create-official-access] 📧 Generating magic link for first access...');
     
-    // Gerar token de definição de senha usando RPC existente
-    const { data: tokenData, error: tokenError } = await supabaseAdmin.rpc("create_password_reset_token", {
-      _email: payload.email,
+    // 🎯 NOVO: Gerar magic link com redirectTo para /primeiro-acesso
+    const siteUrl = 'https://pro.moisesmedeiros.com.br';
+    let magicLinkUrl = `${siteUrl}/auth`; // Fallback para login manual
+    
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink', // Magic link de autenticação
+      email: payload.email,
+      options: {
+        redirectTo: `${siteUrl}/primeiro-acesso`, // 🎯 Redireciona direto para onboarding
+      },
     });
     
-    let passwordSetupUrl = `https://pro.moisesmedeiros.com.br/auth`; // Fallback
-    
-    if (tokenError || !tokenData || tokenData.length === 0) {
-      console.warn('[c-create-official-access] ⚠️ Falha ao gerar token de setup:', tokenError?.message);
-      // Continua com URL simples de login
+    if (linkError || !linkData?.properties?.action_link) {
+      console.warn('[c-create-official-access] ⚠️ Falha ao gerar magic link:', linkError?.message);
+      // Fallback: tenta gerar link de recovery (tipo alternativo)
+      const { data: recoveryData } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'recovery',
+        email: payload.email,
+        options: {
+          redirectTo: `${siteUrl}/primeiro-acesso`,
+        },
+      });
+      
+      if (recoveryData?.properties?.action_link) {
+        magicLinkUrl = recoveryData.properties.action_link;
+        console.log('[c-create-official-access] ✅ Recovery link generated as fallback');
+      }
     } else {
-      const token = tokenData[0].token;
-      passwordSetupUrl = `https://pro.moisesmedeiros.com.br/auth?reset_token=${token}`;
-      console.log('[c-create-official-access] ✅ Password setup token generated');
+      magicLinkUrl = linkData.properties.action_link;
+      console.log('[c-create-official-access] ✅ Magic link generated for first access');
     }
     
-    const emailResult = await sendWelcomeEmailWithSetupLink(
+    const emailResult = await sendWelcomeEmailWithMagicLink(
       resend,
       resendFrom,
       payload.email,
       payload.nome,
       payload.role,
-      passwordSetupUrl,
+      magicLinkUrl,
     );
 
     if (emailResult.success) {
       welcomeEmailSent = true;
       emailStatus = 'welcome_sent';
-      console.log('[c-create-official-access] ✅ Welcome email with setup link sent successfully');
+      console.log('[c-create-official-access] ✅ Welcome email with magic link sent successfully');
     } else {
       console.error('[c-create-official-access] ❌ Welcome email failed:', emailResult.error);
       emailStatus = 'failed';

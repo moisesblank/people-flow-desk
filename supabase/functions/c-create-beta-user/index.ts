@@ -147,13 +147,14 @@ serve(async (req) => {
       userId = authUser.user.id;
       console.log(`✅ Usuário auth criado (sem senha): ${userId}`);
 
-      // Gerar link de recuperação/definição de senha
+      // 🎯 P0 FIX v2: Gerar magic link para /primeiro-acesso (não /alunos)
+      // A definição de senha acontece DENTRO do onboarding
       const siteUrl = Deno.env.get('SITE_URL') || 'https://pro.moisesmedeiros.com.br';
       const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-        type: 'recovery',
+        type: 'magiclink', // 🎯 Magic link (não recovery)
         email: customer.email.toLowerCase().trim(),
         options: {
-          redirectTo: `${siteUrl}/alunos?welcome=true`,
+          redirectTo: `${siteUrl}/primeiro-acesso`, // 🎯 Vai direto para onboarding
         },
       });
 
@@ -163,12 +164,12 @@ serve(async (req) => {
 
       // Enviar email com link de acesso (SEM senha plain-text)
       try {
-        const accessLink = linkData?.properties?.action_link || `${siteUrl}/auth?reset=true`;
+        const accessLink = linkData?.properties?.action_link || `${siteUrl}/auth`;
         
         await supabaseAdmin.functions.invoke("send-email", {
           body: {
             to: customer.email,
-            subject: "🎉 Bem-vindo! Configure sua senha para acessar",
+            subject: "🎉 Bem-vindo! Acesse a plataforma",
             template: "welcome_beta_magic",
             data: {
               name: customer.name,

@@ -300,34 +300,55 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send welcome email COM SENHA (P0 FIX: incluir credenciais)
-    try {
-      const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${supabaseServiceKey}`,
-        },
-        body: JSON.stringify({
-          to: email,
-          type: "welcome_staff", // Template específico com senha
-          data: { 
-            nome,
-            senha, // ✅ P0 FIX: Incluir senha no email
-            email, // Para exibir login
+    // 🎯 P0 FIX v2: Gerar magic link para /primeiro-acesso
+    // NÃO enviar senha em texto - funcionário define no onboarding
+    if (newUser.user) {
+      try {
+        const siteUrl = 'https://pro.moisesmedeiros.com.br';
+        
+        // Gerar magic link para primeiro acesso
+        const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+          type: 'magiclink',
+          email: email,
+          options: {
+            redirectTo: `${siteUrl}/primeiro-acesso`,
           },
-        }),
-      });
+        });
+        
+        const accessLink = linkData?.properties?.action_link || `${siteUrl}/auth`;
+        
+        if (linkError) {
+          console.warn("[INVITE] Magic link generation failed:", linkError);
+        }
 
-      if (emailResponse.ok) {
-        const emailData = await emailResponse.json();
-        console.log("[INVITE] Welcome email sent successfully", emailData);
-      } else {
-        const errText = await emailResponse.text();
-        console.warn("[INVITE] Email sending may have failed:", errText);
+        const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            to: email,
+            type: "welcome_staff_magic", // 🎯 NOVO: Template com magic link (sem senha)
+            data: { 
+              nome,
+              email,
+              access_link: accessLink, // Link de acesso
+              funcao: funcao || 'Funcionário',
+            },
+          }),
+        });
+
+        if (emailResponse.ok) {
+          const emailData = await emailResponse.json();
+          console.log("[INVITE] Welcome email with magic link sent successfully", emailData);
+        } else {
+          const errText = await emailResponse.text();
+          console.warn("[INVITE] Email sending may have failed:", errText);
+        }
+      } catch (emailErr) {
+        console.warn("[INVITE] Email error:", emailErr);
       }
-    } catch (emailErr) {
-      console.warn("[INVITE] Email error:", emailErr);
     }
 
     return new Response(
