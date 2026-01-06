@@ -4,13 +4,16 @@
 // ============================================
 
 import { memo, useEffect, useState } from "react";
-import { RoleProtectedRoute } from "@/components/layout/RoleProtectedRoute";
+import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 
 // Protected route wrapper - memoized
-// 🔥 P0 NUCLEAR BYPASS: RoleProtectedRoute REMOVIDO temporariamente
+// ✅ RESTAURADO: ProtectedRoute faz redirect para /auth se não autenticado
+// RoleProtectedRoute REMOVIDO para evitar tela preta
 export const ProtectedPage = memo(({ children }: { children: React.ReactNode }) => (
-  <AppLayout>{children}</AppLayout>
+  <ProtectedRoute>
+    <AppLayout>{children}</AppLayout>
+  </ProtectedRoute>
 ));
 ProtectedPage.displayName = 'ProtectedPage';
 
