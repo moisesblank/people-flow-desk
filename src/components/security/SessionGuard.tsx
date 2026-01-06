@@ -237,11 +237,13 @@ export function SessionGuard({ children }: SessionGuardProps) {
         const justLoggedOut = !localStorage.getItem(SESSION_TOKEN_KEY);
         const isUserInitiatedLogout = justLoggedOut || reason === 'USER_LOGOUT';
         const isInactivityTimeout = reason === 'INACTIVITY_TIMEOUT';
+        const isSessionExpired = reason === 'SESSION_EXPIRED';
 
         console.warn(`[SessionGuard] 🔴 Backend revogou: ${reason}, justLoggedOut: ${justLoggedOut}`);
         
-        if (isUserInitiatedLogout || isInactivityTimeout) {
-          // Logout silencioso (sem overlay de conflito)
+        // 🛡️ POLÍTICA UNIVERSAL: Expiração = /auth OBRIGATÓRIO para TODOS (inclusive Owner)
+        if (isUserInitiatedLogout || isInactivityTimeout || isSessionExpired) {
+          // Logout silencioso (sem overlay de conflito) — redireciona para /auth
           await handleBackendRevocation(reason, false);
         } else {
           // Conflito de sessão: mostrar overlay
