@@ -50,6 +50,9 @@ function NotFoundPage() {
 }
 
 export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRouteProps) {
+  // 🔴 DEBUG P0
+  console.log('[RoleProtectedRoute] 🚀 COMPONENTE INICIANDO RENDER');
+  
   const { user, isLoading: authLoading } = useAuth();
   const { hasAccess, hasAccessToUrl, isLoading: roleLoading, roleLabel, role, isOwner } = useRolePermissions();
   const { isLoading: onboardingLoading, needsOnboarding } = useOnboardingStatus();
@@ -141,6 +144,7 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // 🔥 OWNER BYPASS - DECISÃO (não estrutura)
   // ============================================
   if (shouldBypassForOwner) {
+    console.log('[RoleProtectedRoute] 👑 OWNER BYPASS - renderizando children');
     return <>{children}</>;
   }
 
@@ -164,6 +168,7 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // Spinner máximo 5s, depois prossegue
   // ============================================
   if (isActuallyLoading) {
+    console.log('[RoleProtectedRoute] ⏳ LOADING STATE ATIVO', { authLoading, roleLoading, onboardingLoading, loadingTimeout });
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 relative z-10">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
@@ -210,8 +215,10 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
 
   if (!hasPermission) {
     // Para outras áreas (não /gestaofc), mostrar acesso negado normal
+    console.log('[RoleProtectedRoute] ❌ SEM PERMISSÃO - mostrando 404', { hasPermission, currentArea, role });
     return <NotFoundPage />;
   }
 
+  console.log('[RoleProtectedRoute] ✅ RENDERIZANDO CHILDREN');
   return <>{children}</>;
 }
