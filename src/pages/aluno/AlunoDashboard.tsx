@@ -27,6 +27,7 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useGamification, getLevelInfo } from "@/hooks/useGamification";
 import { cn } from "@/lib/utils";
+import { PageLoader } from "@/routes/routeHelpers";
 
 // ============================================
 // TIPOS
@@ -460,6 +461,12 @@ export default function AlunoDashboard() {
   const { shouldAnimate } = useQuantumReactivity();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // 🔴 P0 FIX: Nunca retornar null enquanto user ainda não foi hidratado
+  if (!user?.id) {
+    console.warn('[AlunoDashboard] user.id é nulo, aguardando...');
+    return <PageLoader />;
+  }
   
   // State para efeitos dinâmicos
   const [mounted, setMounted] = useState(false);
