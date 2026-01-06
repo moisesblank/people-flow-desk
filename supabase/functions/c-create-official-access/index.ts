@@ -202,48 +202,70 @@ function generateSecurePassword(): string {
 }
 
 // ============================================
-// TEMPLATE BASE PADRÃO (Igual send-notification-email)
+// TEMPLATE BASE PADRÃO - OTIMIZADO PARA GMAIL
+// ⚠️ Gmail oculta conteúdo quando detecta CSS "suspeito"
+// ✅ Solução: HTML simples, cores sólidas, sem gradientes
 // ============================================
 const getBaseTemplate = (titulo: string, conteudo: string, botaoTexto?: string, botaoUrl?: string) => `
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
-<body style="margin:0;padding:0;background:#0a0a0f;color:#ffffff;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0a0a0f;">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
+  <title>${titulo}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.5;color:#333333;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#ffffff;">
     <tr>
-      <td align="center" style="padding:24px;">
-        <table role="presentation" width="100%" style="max-width:640px;" cellspacing="0" cellpadding="0">
+      <td align="center" style="padding:20px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background-color:#ffffff;border:1px solid #dddddd;border-radius:8px;">
+          <!-- HEADER -->
           <tr>
-            <td style="background:linear-gradient(180deg,#131318 0%,#0a0a0f 100%);border-radius:16px;padding:28px;border:1px solid #7D1128;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                <tr><td align="center" style="padding-bottom:20px;">
-                  <h1 style="margin:0;color:#E62B4A;font-size:24px;font-weight:700;">Curso Moisés Medeiros</h1>
-                  <p style="margin:8px 0 0;color:#9aa0a6;font-size:13px;">${titulo}</p>
-                </td></tr>
-              </table>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                <tr><td style="color:#e6e6e6;line-height:1.7;font-size:14px;">${conteudo}</td></tr>
-              </table>
-              ${botaoTexto && botaoUrl ? `
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                <tr><td align="center" style="padding-top:24px;">
-                  <a href="${botaoUrl}" style="display:inline-block;background:linear-gradient(135deg,#E62B4A,#7D1128);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:14px;">${botaoTexto}</a>
-                </td></tr>
-              </table>
-              ` : ''}
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                <tr><td style="padding:24px 0 18px;"><hr style="border:none;border-top:1px solid #2a2a2f;margin:0;" /></td></tr>
-              </table>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                <tr><td style="color:#9aa0a6;font-size:12px;line-height:1.6;">
-                  <p style="margin:0 0 8px;"><strong style="color:#e6e6e6;">Prof. Moisés Medeiros Melo</strong></p>
-                  <p style="margin:0 0 8px;">MM CURSO DE QUÍMICA LTDA | O curso que mais aprova e comprova!</p>
-                  <p style="margin:0;">WhatsApp: <a href="https://wa.me/558396169222" style="color:#E62B4A;">+55 83 9616-9222</a></p>
-                </td></tr>
-              </table>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                <tr><td align="center" style="padding-top:18px;"><p style="margin:0;color:#666;font-size:11px;">© ${new Date().getFullYear()} MM Curso de Química Ltda.</p></td></tr>
-              </table>
+            <td align="center" style="padding:30px 20px;background-color:#E62B4A;border-radius:8px 8px 0 0;">
+              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:bold;">Curso Moisés Medeiros</h1>
+              <p style="margin:10px 0 0;color:#ffffff;font-size:14px;opacity:0.9;">${titulo}</p>
+            </td>
+          </tr>
+          <!-- CONTENT -->
+          <tr>
+            <td style="padding:30px 25px;background-color:#ffffff;">
+              ${conteudo}
+            </td>
+          </tr>
+          <!-- BUTTON -->
+          ${botaoTexto && botaoUrl ? `
+          <tr>
+            <td align="center" style="padding:10px 25px 30px;">
+              <!--[if mso]>
+              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${botaoUrl}" style="height:50px;v-text-anchor:middle;width:250px;" arcsize="10%" strokecolor="#C91A32" fillcolor="#E62B4A">
+              <w:anchorlock/>
+              <center style="color:#ffffff;font-family:Arial,sans-serif;font-size:16px;font-weight:bold;">
+              ${botaoTexto}
+              </center>
+              </v:roundrect>
+              <![endif]-->
+              <!--[if !mso]><!-->
+              <a href="${botaoUrl}" target="_blank" style="display:inline-block;background-color:#E62B4A;color:#ffffff;text-decoration:none;padding:15px 40px;border-radius:6px;font-weight:bold;font-size:16px;text-align:center;border:2px solid #C91A32;">
+                ${botaoTexto}
+              </a>
+              <!--<![endif]-->
+            </td>
+          </tr>
+          ` : ''}
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding:20px 25px;background-color:#f5f5f5;border-top:1px solid #dddddd;border-radius:0 0 8px 8px;">
+              <p style="margin:0 0 8px;color:#333333;font-size:14px;font-weight:bold;">Prof. Moisés Medeiros Melo</p>
+              <p style="margin:0 0 8px;color:#666666;font-size:13px;">MM CURSO DE QUÍMICA LTDA | O curso que mais aprova e comprova!</p>
+              <p style="margin:0;color:#666666;font-size:13px;">WhatsApp: <a href="https://wa.me/558396169222" style="color:#E62B4A;text-decoration:none;">+55 83 9616-9222</a></p>
+            </td>
+          </tr>
+          <!-- COPYRIGHT -->
+          <tr>
+            <td align="center" style="padding:15px;">
+              <p style="margin:0;color:#999999;font-size:12px;">© ${new Date().getFullYear()} MM Curso de Química Ltda.</p>
             </td>
           </tr>
         </table>
@@ -271,29 +293,38 @@ async function sendWelcomeEmailWithMagicLink(
 ): Promise<{ success: boolean; error?: string }> {
   const roleLabel = ROLE_LABELS[role];
 
-  // 🎯 P0 FIX v3: Conteúdo atualizado - Token NUNCA expira até ser usado
+  // 🎯 P0 FIX v4: Conteúdo SIMPLIFICADO para Gmail não ocultar
+  // ⚠️ Gmail oculta e-mails com CSS dark/gradientes
   const conteudo = `
-    <h2 style="margin:0 0 16px;font-size:18px;color:#ffffff;">🎉 Bem-vindo(a), ${nome}!</h2>
-    <p style="margin:0 0 12px;">Seu acesso à plataforma foi criado pela equipe de gestão.</p>
+    <h2 style="margin:0 0 16px;font-size:20px;color:#E62B4A;">Bem-vindo(a), ${nome}!</h2>
+    <p style="margin:0 0 16px;color:#333333;font-size:15px;">Seu acesso à plataforma foi criado pela equipe de gestão.</p>
     
-    <div style="background:#1a1a1f;border-radius:8px;padding:16px;margin:16px 0;text-align:center;">
-      <p style="margin:0;color:#E62B4A;font-size:16px;font-weight:bold;">✅ ${roleLabel}</p>
-    </div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:16px 0;">
+      <tr>
+        <td style="background-color:#f0f9ff;border-radius:8px;padding:16px;text-align:center;border:1px solid #bae6fd;">
+          <p style="margin:0;color:#0369a1;font-size:16px;font-weight:bold;">${roleLabel}</p>
+        </td>
+      </tr>
+    </table>
     
-    <div style="background:#2a2a2f;border-radius:8px;padding:20px;margin:16px 0;border-left:4px solid #22c55e;">
-      <p style="margin:0 0 12px;color:#ffffff;font-weight:bold;font-size:15px;">🚀 Acesse a Plataforma</p>
-      <p style="margin:0;color:#9aa0a6;font-size:13px;">Clique no botão abaixo para iniciar sua configuração inicial. Você vai definir sua senha e personalizar sua experiência.</p>
-      <p style="margin:12px 0 0;color:#22c55e;font-size:12px;font-weight:bold;">✅ Este link é válido ETERNAMENTE até você utilizá-lo pela primeira vez.</p>
-    </div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:16px 0;">
+      <tr>
+        <td style="background-color:#f0fdf4;border-radius:8px;padding:20px;border-left:4px solid #22c55e;">
+          <p style="margin:0 0 10px;color:#166534;font-weight:bold;font-size:16px;">Acesse a Plataforma</p>
+          <p style="margin:0 0 10px;color:#333333;font-size:14px;">Clique no botão abaixo para iniciar sua configuração. Você vai definir sua senha e personalizar sua experiência.</p>
+          <p style="margin:0;color:#166534;font-size:13px;font-weight:bold;">Este link NÃO expira. Use quando quiser!</p>
+        </td>
+      </tr>
+    </table>
     
-    <h3 style="margin:20px 0 12px;font-size:14px;color:#ffffff;">📚 O que vai acontecer:</h3>
-    <ul style="margin:0;padding-left:20px;color:#9aa0a6;font-size:13px;line-height:1.8;">
-      <li><strong style="color:#E62B4A;">Clique no botão "Acessar Plataforma"</strong></li>
+    <p style="margin:20px 0 12px;font-size:15px;color:#333333;font-weight:bold;">O que vai acontecer:</p>
+    <ol style="margin:0;padding-left:20px;color:#555555;font-size:14px;line-height:1.8;">
+      <li><strong style="color:#E62B4A;">Clique no botão abaixo</strong></li>
       <li>Conheça as funcionalidades disponíveis</li>
       <li>Escolha seu tema visual preferido</li>
       <li>Defina sua senha de acesso</li>
       <li>Cadastre seu dispositivo de confiança</li>
-    </ul>
+    </ol>
   `;
   
   const htmlContent = getBaseTemplate(
