@@ -441,15 +441,15 @@ export function useSanctumOmega(): UseSanctumOmegaReturn {
       }
     };
     
-    // Block keyboard shortcuts
+    // Block keyboard shortcuts - 🚨 F12/DEVTOOLS LIBERADOS (2026-01-06)
     const handleKeyDown = (e: KeyboardEvent) => {
       const blocked = [
         e.ctrlKey && e.key === "s",
         e.ctrlKey && e.key === "p",
-        e.ctrlKey && e.key === "c",
+        // e.ctrlKey && e.key === "c", // Copy permitido
         e.ctrlKey && e.key === "u",
-        e.key === "F12",
-        e.key === "PrintScreen",
+        // e.key === "F12", // DevTools permitido
+        // e.key === "PrintScreen", // PrintScreen permitido
       ];
       
       if (blocked.some(Boolean)) {
