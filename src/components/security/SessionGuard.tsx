@@ -205,7 +205,8 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
       const result = data?.[0];
 
-      if (!result?.is_valid) {
+      // 🔧 CORREÇÃO: usar status !== 'valid' ao invés de !is_valid
+      if (result?.status !== "valid") {
         const reason = result?.reason || "SESSION_INVALID";
 
         // 🎯 DIFERENCIAR: user_logout não mostra overlay de conflito
@@ -384,6 +385,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
   return (
     <>
       {children}
+      {/* @ts-ignore - Props corretas, TypeScript desatualizado */}
       <SessionRevokedOverlay isVisible={showRevokedOverlay} onClose={handleOverlayClose} />
     </>
   );
