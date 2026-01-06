@@ -1,12 +1,41 @@
 // ============================================
-// 🔐 deviceFingerprint — ATIVADO
+// 🔐 deviceFingerprint — v2.0 CORRIGIDO
 // Gera fingerprint CONSISTENTE para o mesmo dispositivo
-// Usa localStorage para persistir entre sessões
+// IMPORTANTE: O hash do SERVIDOR (com pepper) é a fonte da verdade
+// O hash local é usado apenas como fallback inicial
 // ============================================
 
 const FINGERPRINT_KEY = "matriz_device_fingerprint";
 const FINGERPRINT_EXPIRY_KEY = "matriz_device_fingerprint_expiry";
 const FINGERPRINT_TTL = 30 * 24 * 60 * 60 * 1000; // 30 dias
+
+// 🔐 NOVO: Hash do servidor (com pepper) - FONTE DA VERDADE
+const SERVER_HASH_KEY = "matriz_device_server_hash";
+
+/**
+ * Salva o hash do servidor após registro bem-sucedido
+ * Este hash é a FONTE DA VERDADE para verificações de MFA
+ */
+export function saveServerDeviceHash(serverHash: string): void {
+  if (serverHash) {
+    localStorage.setItem(SERVER_HASH_KEY, serverHash);
+    console.log("[deviceFingerprint] 🔐 Hash do servidor salvo:", serverHash.slice(0, 8) + "...");
+  }
+}
+
+/**
+ * Obtém o hash do servidor (fonte da verdade)
+ */
+export function getServerDeviceHash(): string | null {
+  return localStorage.getItem(SERVER_HASH_KEY);
+}
+
+/**
+ * Limpa o hash do servidor (usado no logout)
+ */
+export function clearServerDeviceHash(): void {
+  localStorage.removeItem(SERVER_HASH_KEY);
+}
 
 /**
  * Gera um fingerprint baseado em características do navegador
@@ -57,31 +86,39 @@ async function generateBrowserFingerprint(): Promise<string> {
 
 /**
  * Gera fingerprint do dispositivo
- * - Usa cache do localStorage se disponível e válido
- * - Gera novo fingerprint se não houver cache
+ * - PRIORIDADE 1: Hash do servidor (fonte da verdade após registro)
+ * - PRIORIDADE 2: Cache do localStorage (fallback inicial)
+ * - PRIORIDADE 3: Gerar novo fingerprint local
  */
 export async function generateDeviceFingerprint(): Promise<string> {
   try {
-    // Verificar cache no localStorage
+    // 🔐 PRIORIDADE 1: Usar hash do servidor se disponível
+    const serverHash = getServerDeviceHash();
+    if (serverHash) {
+      console.log("[deviceFingerprint] 🔐 Usando hash do SERVIDOR:", serverHash.slice(0, 8) + "...");
+      return serverHash;
+    }
+
+    // PRIORIDADE 2: Verificar cache local (para primeira verificação antes do registro)
     const cachedFingerprint = localStorage.getItem(FINGERPRINT_KEY);
     const cachedExpiry = localStorage.getItem(FINGERPRINT_EXPIRY_KEY);
 
     if (cachedFingerprint && cachedExpiry) {
       const expiryTime = parseInt(cachedExpiry, 10);
       if (Date.now() < expiryTime) {
-        console.log("[deviceFingerprint] ✅ Usando fingerprint do cache:", cachedFingerprint.slice(0, 8) + "...");
+        console.log("[deviceFingerprint] ✅ Usando fingerprint do cache local:", cachedFingerprint.slice(0, 8) + "...");
         return cachedFingerprint;
       }
     }
 
-    // Gerar novo fingerprint
+    // PRIORIDADE 3: Gerar novo fingerprint local
     const fingerprint = await generateBrowserFingerprint();
 
     // Salvar no localStorage
     localStorage.setItem(FINGERPRINT_KEY, fingerprint);
     localStorage.setItem(FINGERPRINT_EXPIRY_KEY, String(Date.now() + FINGERPRINT_TTL));
 
-    console.log("[deviceFingerprint] 🔐 Novo fingerprint gerado:", fingerprint.slice(0, 8) + "...");
+    console.log("[deviceFingerprint] 🔐 Novo fingerprint LOCAL gerado:", fingerprint.slice(0, 8) + "...");
 
     return fingerprint;
   } catch (error) {
@@ -154,13 +191,17 @@ export function detectDeviceType(): "desktop" | "mobile" | "tablet" {
 export function clearFingerprintCache(): void {
   localStorage.removeItem(FINGERPRINT_KEY);
   localStorage.removeItem(FINGERPRINT_EXPIRY_KEY);
-  console.log("[deviceFingerprint] 🗑️ Cache de fingerprint limpo");
+  localStorage.removeItem(SERVER_HASH_KEY); // Limpar hash do servidor também
+  console.log("[deviceFingerprint] 🗑️ Cache de fingerprint limpo (local + servidor)");
 }
 
 /**
  * Verifica se há fingerprint em cache
  */
 export function isFingerprintCached(): boolean {
+  // Priorizar hash do servidor
+  if (getServerDeviceHash()) return true;
+  
   const cachedFingerprint = localStorage.getItem(FINGERPRINT_KEY);
   const cachedExpiry = localStorage.getItem(FINGERPRINT_EXPIRY_KEY);
 

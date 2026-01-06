@@ -163,26 +163,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         return;
       }
 
-      // 1) Registrar verificação no banco para ESTE device_hash (24h)
-      if (user?.id && state.deviceHash) {
-        try {
-          const { data, error } = await supabase.rpc("register_device_mfa_verification", {
-            _user_id: user.id,
-            _device_hash: state.deviceHash,
-            _ip_address: null,
-          });
-
-          if (error) {
-            console.error("[DeviceMFAGuard] Erro ao registrar verificação:", error);
-          } else {
-            console.log("[DeviceMFAGuard] ✅ Dispositivo verificado por 24h:", data);
-          }
-        } catch (err) {
-          console.error("[DeviceMFAGuard] Erro ao salvar verificação:", err);
-        }
-      }
-
-      // 2) Registrar o DISPOSITIVO (user_devices) após 2FA (fora do onboarding)
+      // 1) PRIMEIRO: Registrar o DISPOSITIVO (user_devices) para obter hash do servidor
       const deviceReg = await registerDeviceBeforeSession();
       if (!deviceReg.success) {
         console.error("[DeviceMFAGuard] ❌ Falha ao registrar dispositivo pós-2FA:", deviceReg.error);
@@ -193,6 +174,29 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
           error: "Falha ao cadastrar este dispositivo. Faça login novamente.",
         }));
         return;
+      }
+
+      // 🔐 CRÍTICO: Usar o hash do servidor (que acabou de ser salvo no localStorage)
+      const serverHash = deviceReg.deviceHash;
+      const hashParaMFA = serverHash || state.deviceHash;
+
+      // 2) DEPOIS: Registrar verificação MFA com o hash do SERVIDOR
+      if (user?.id && hashParaMFA) {
+        try {
+          const { data, error } = await supabase.rpc("register_device_mfa_verification", {
+            _user_id: user.id,
+            _device_hash: hashParaMFA,
+            _ip_address: null,
+          });
+
+          if (error) {
+            console.error("[DeviceMFAGuard] Erro ao registrar verificação:", error);
+          } else {
+            console.log("[DeviceMFAGuard] ✅ Dispositivo verificado por 24h com hash:", hashParaMFA.slice(0, 8) + "...");
+          }
+        } catch (err) {
+          console.error("[DeviceMFAGuard] Erro ao salvar verificação:", err);
+        }
       }
 
       // 3) Cache global
@@ -208,6 +212,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         needsMFA: false,
         isVerified: true,
         error: null,
+        deviceHash: hashParaMFA, // Atualizar com hash do servidor
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       }));
     },
