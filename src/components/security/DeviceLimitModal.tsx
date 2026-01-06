@@ -4,7 +4,7 @@
 // ✅ forwardRef para compatibilidade com Radix UI
 // ============================================
 
-import { useState } from 'react';
+import { useState, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Monitor, Smartphone, Tablet, AlertTriangle, Loader2, Shield, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,13 +23,13 @@ interface DeviceLimitModalProps {
   maxDevices?: number;
 }
 
-export function DeviceLimitModal({ 
+export const DeviceLimitModal = forwardRef<HTMLDivElement, DeviceLimitModalProps>(({ 
   isOpen, 
   devices, 
   onDeactivate, 
   onClose,
   maxDevices = 3 
-}: DeviceLimitModalProps) {
+}, ref) => {
   const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
   const [isDeactivating, setIsDeactivating] = useState(false);
 
@@ -225,4 +225,6 @@ export function DeviceLimitModal({
       </motion.div>
     </AnimatePresence>
   );
-}
+});
+
+DeviceLimitModal.displayName = "DeviceLimitModal";
