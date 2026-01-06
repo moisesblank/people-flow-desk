@@ -242,20 +242,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     console.log("[AUTH] useEffect de auth state iniciado");
 
-    // ⏱️ P0 FIX: Timeout de segurança para evitar loading infinito
-    const AUTH_TIMEOUT_MS = 8000;
-    let authTimeoutId: NodeJS.Timeout | null = setTimeout(() => {
-      console.warn("[AUTH] ⚠️ Timeout de 8s atingido - liberando isLoading");
-      setIsLoading(false);
-    }, AUTH_TIMEOUT_MS);
-
-    const clearAuthTimeout = () => {
-      if (authTimeoutId) {
-        clearTimeout(authTimeoutId);
-        authTimeoutId = null;
-      }
-    };
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, newSession) => {
@@ -314,50 +300,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    supabase.auth
-      .getSession()
-      .then(({ data: { session: initialSession } }) => {
-        // ⏱️ Limpar timeout pois getSession retornou
-        clearAuthTimeout();
-
-        // ✅ P0 FIX: Evitar re-render desnecessário
-        setSession((prev) => {
-          if (prev?.access_token === initialSession?.access_token) {
-            return prev;
-          }
-          return initialSession;
-        });
-
-        setUser((prev) => {
-          const newUser = initialSession?.user ?? null;
-          if (prev?.id === newUser?.id) {
-            return prev;
-          }
-          return newUser;
-        });
-
-        const email = (initialSession?.user?.email || "").toLowerCase();
-        if (email === OWNER_EMAIL) {
-          setRole("owner");
-        } else if (!initialSession?.user) {
-          setRole(null);
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      // ✅ P0 FIX: Evitar re-render desnecessário
+      setSession((prev) => {
+        if (prev?.access_token === initialSession?.access_token) {
+          return prev;
         }
-
-        if (initialSession?.user) {
-          fetchUserRole(initialSession.user.id);
-          startHeartbeatRef.current();
-        }
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        // ⏱️ P0 FIX: Se getSession falhar, liberar loading
-        console.error("[AUTH] ❌ Erro no getSession:", err);
-        clearAuthTimeout();
-        setIsLoading(false);
+        return initialSession;
       });
 
+      setUser((prev) => {
+        const newUser = initialSession?.user ?? null;
+        if (prev?.id === newUser?.id) {
+          return prev;
+        }
+        return newUser;
+      });
+
+      const email = (initialSession?.user?.email || "").toLowerCase();
+      if (email === OWNER_EMAIL) {
+        setRole("owner");
+      } else if (!initialSession?.user) {
+        setRole(null);
+      }
+
+      if (initialSession?.user) {
+        fetchUserRole(initialSession.user.id);
+        startHeartbeatRef.current();
+      }
+      setIsLoading(false);
+    });
+
     return () => {
-      clearAuthTimeout();
       subscription.unsubscribe();
       stopHeartbeatRef.current();
     };
@@ -379,83 +353,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ============================================
   // 🔥 DOGMA SUPREMO: LISTENER REALTIME PARA LOGOUT FORÇADO
-  // Quando usuário é DELETADO, recebe broadcast e faz logout IMEDIATO (com retry)
+  // Quando usuário é DELETADO, recebe broadcast e faz logout IMEDIATO
   // ============================================
   useEffect(() => {
     if (!user?.id) return;
 
-    let channel: any = null;
-    let reconnectTimer: NodeJS.Timeout | null = null;
-    let reconnectAttempts = 0;
-    const MAX_RECONNECT = 5;
-    const BASE_DELAY = 2000;
+    console.log("[AUTH][REALTIME] 📡 Inscrevendo no canal force-logout...");
 
-    const connectForceLogout = () => {
-      if (channel) supabase.removeChannel(channel);
+    const channel = supabase
+      .channel("force-logout")
+      .on("broadcast", { event: "user-deleted" }, async (payload) => {
+        const { userId, email, reason } = payload.payload as {
+          userId: string;
+          email: string;
+          reason: string;
+        };
 
-      console.log("[AUTH][REALTIME] 📡 Inscrevendo no canal force-logout...");
+        console.log("[AUTH][REALTIME] 🔥 Evento user-deleted recebido:", { userId, email });
 
-      channel = supabase
-        .channel("force-logout")
-        .on("broadcast", { event: "user-deleted" }, async (payload) => {
-          const { userId, email, reason } = payload.payload as {
-            userId: string;
-            email: string;
-            reason: string;
-          };
+        // Verificar se o broadcast é para ESTE usuário
+        if (userId === user.id || email?.toLowerCase() === user.email?.toLowerCase()) {
+          console.error("[AUTH][REALTIME] 💀 ESTE USUÁRIO FOI DELETADO! Forçando logout...");
 
-          console.log("[AUTH][REALTIME] 🔥 Evento user-deleted recebido:", { userId, email });
+          // 1. Limpar TUDO do localStorage
+          const keysToRemove = [
+            "matriz_session_token",
+            "matriz_last_heartbeat",
+            "matriz_device_fingerprint",
+            "matriz_trusted_device",
+            "sb-fyikfsasudgzsjmumdlw-auth-token",
+          ];
+          keysToRemove.forEach((key) => localStorage.removeItem(key));
 
-          // Verificar se o broadcast é para ESTE usuário
-          if (userId === user.id || email?.toLowerCase() === user.email?.toLowerCase()) {
-            console.error("[AUTH][REALTIME] 💀 ESTE USUÁRIO FOI DELETADO! Forçando logout...");
+          // 2. Limpar sessionStorage
+          sessionStorage.clear();
 
-            // 1. Limpar TUDO do localStorage
-            const keysToRemove = [
-              "matriz_session_token",
-              "matriz_last_heartbeat",
-              "matriz_device_fingerprint",
-              "matriz_trusted_device",
-              "sb-fyikfsasudgzsjmumdlw-auth-token",
-            ];
-            keysToRemove.forEach((key) => localStorage.removeItem(key));
+          // 3. Parar heartbeat
+          stopHeartbeatRef.current();
 
-            // 2. Limpar sessionStorage
-            sessionStorage.clear();
+          // 4. Mostrar mensagem antes de fazer logout
+          alert(`Sua conta foi removida do sistema.\nMotivo: ${reason || "Exclusão administrativa"}`);
 
-            // 3. Parar heartbeat
-            stopHeartbeatRef.current();
-
-            // 4. Mostrar mensagem antes de fazer logout
-            alert(`Sua conta foi removida do sistema.\nMotivo: ${reason || "Exclusão administrativa"}`);
-
-            // 5. Signout e redirect
-            await supabase.auth.signOut();
-            window.location.replace("/auth?deleted=true");
-          }
-        })
-        .subscribe((status) => {
-          console.log("[AUTH][REALTIME] Status do canal force-logout:", status);
-          if (status === "SUBSCRIBED") {
-            reconnectAttempts = 0;
-          } else if (status === "CHANNEL_ERROR" && reconnectAttempts < MAX_RECONNECT) {
-            reconnectAttempts++;
-            const delay = BASE_DELAY * Math.pow(2, reconnectAttempts - 1);
-            console.log(
-              `[AUTH][REALTIME] 🔄 Reconectando force-logout (${reconnectAttempts}/${MAX_RECONNECT}) em ${delay}ms`,
-            );
-            if (reconnectTimer) clearTimeout(reconnectTimer);
-            reconnectTimer = setTimeout(connectForceLogout, delay);
-          }
-        });
-    };
-
-    connectForceLogout();
+          // 5. Signout e redirect
+          await supabase.auth.signOut();
+          window.location.replace("/auth?deleted=true");
+        }
+      })
+      .subscribe((status) => {
+        console.log("[AUTH][REALTIME] Status do canal force-logout:", status);
+      });
 
     return () => {
       console.log("[AUTH][REALTIME] 🔌 Desconectando do canal force-logout");
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-      if (channel) supabase.removeChannel(channel);
+      supabase.removeChannel(channel);
     };
   }, [user?.id, user?.email]);
 
@@ -470,12 +420,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isLoading) return;
 
     // Não interromper desafio 2FA na tela de /auth
-    // 🧪 PLANO B (UX): usuário de teste beta não pode ficar preso por flag 2FA
-    const email = (user?.email || "").toLowerCase();
-    const isBetaTestBypass = email === "moisescursoquimica@gmail.com";
-
     const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
-    if (is2FAPending && !isBetaTestBypass) return;
+    if (is2FAPending) return;
 
     const path = typeof window !== "undefined" ? window.location.pathname : "";
     const isAuthPath = path === "/auth" || path.startsWith("/auth/");
@@ -529,10 +475,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isOwner = email?.toLowerCase() === ownerEmail;
 
     // 🔒 P0 INCIDENTE: se 2FA está pendente, NÃO criar sessão única (sessão final proibida)
-    // 🧪 PLANO B (UX): usuário de teste beta não pode ficar preso nesse adiamento
-    const isBetaTestBypass = (email || "").toLowerCase() === "moisescursoquimica@gmail.com";
     const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
-    if (is2FAPending && !isBetaTestBypass) {
+    if (is2FAPending) {
       console.warn("[AUTH][SESSAO] 2FA pendente - sessão única adiada (será criada pós-2FA no /auth)");
       postSignInPayloadRef.current = null;
       return;
