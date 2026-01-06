@@ -24,6 +24,10 @@ interface DeviceMFAGuardProps {
 
 export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
   const { user } = useAuth();
+  
+  // 👑 P0 CRITICAL: Owner bypass IMEDIATO (antes de qualquer hook de device)
+  const isOwner = user?.email?.toLowerCase() === 'moisesblank@gmail.com';
+  
   const { isChecking, isVerified, needsMFA, error, deviceHash, onVerificationComplete } = useDeviceMFAGuard();
 
   // ⏱️ P0 CRITICAL FIX: Timeout de segurança no nível do componente
@@ -93,6 +97,12 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
   // 🌐 BYPASS IMEDIATO para usuários não autenticados (rotas públicas)
   // Isso evita mostrar loading state para rotas como /qr, /auth, etc.
   if (!user) {
+    return <>{children}</>;
+  }
+
+  // 👑 P0 CRITICAL: OWNER BYPASS - Nunca bloquear o owner
+  if (isOwner) {
+    console.log('[DeviceMFAGuard] 👑 Owner bypass ativo - acesso imediato');
     return <>{children}</>;
   }
 

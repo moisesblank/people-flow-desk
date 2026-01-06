@@ -53,7 +53,8 @@ function StoreInitializer() {
     };
   }, [checkOwner, loadContent, fetchFromDB, subscribeRealtime]);
   
-  return null;
+  // 🔴 P0 FIX: Nunca retornar null - usar fragmento vazio
+  return <></>;
 }
 
 /**

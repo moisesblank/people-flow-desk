@@ -326,3 +326,6 @@ export const AppLayout = memo(
   }),
 );
 AppLayout.displayName = "AppLayout";
+
+// 🔴 P0 FIX: Export default garantido
+export default AppLayout;
