@@ -459,32 +459,13 @@ export default function AlunoDashboard() {
   
   const navigate = useNavigate();
   const { shouldAnimate } = useQuantumReactivity();
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
 
-  // 🔴 P0 FIX: Nunca retornar null enquanto user ainda não foi hidratado
-  if (!user?.id) {
-    console.warn('[AlunoDashboard] user.id é nulo, aguardando...');
-    return <PageLoader />;
-  }
-  
+  // ✅ HOOKS DEVEM VIR ANTES DE QUALQUER EARLY RETURN
   // State para efeitos dinâmicos
   const [mounted, setMounted] = useState(false);
   const [hasError, setHasError] = useState(false);
-  
-  useEffect(() => {
-    try {
-      console.log('[AlunoDashboard] ✅ MOUNTED - useEffect executado', { userId: user?.id });
-      setMounted(true);
-    } catch (err) {
-      console.error('[AlunoDashboard] ❌ Erro no mount:', err);
-      setHasError(true);
-    }
-  }, [user?.id]);
-  
-// ============================================
-  // DADOS REAIS VIA HOOKS
-  // ============================================
   
   const { gamification, userBadges, isLoading: gamificationLoading } = useGamification();
   
@@ -547,6 +528,30 @@ export default function AlunoDashboard() {
     enabled: !!user?.id,
     staleTime: 60000,
   });
+  
+  useEffect(() => {
+    if (!user?.id) return;
+    try {
+      console.log('[AlunoDashboard] ✅ MOUNTED - useEffect executado', { userId: user?.id });
+      setMounted(true);
+    } catch (err) {
+      console.error('[AlunoDashboard] ❌ Erro no mount:', err);
+      setHasError(true);
+    }
+  }, [user?.id]);
+
+  // ============================================
+  // ✅ EARLY RETURN AGORA VEM DEPOIS DE TODOS OS HOOKS
+  // ============================================
+  
+  if (authLoading || !user?.id) {
+    console.warn('[AlunoDashboard] Aguardando auth...', { authLoading, userId: user?.id });
+    return <PageLoader />;
+  }
+  
+  // ============================================
+  // DADOS REAIS VIA HOOKS (já declarados acima)
+  // ============================================
   
   // Ranking do usuário - OTIMIZADO via RPC (economia de 99,97% em dados)
   const { data: rankingData } = useQuery({
