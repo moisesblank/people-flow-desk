@@ -200,9 +200,12 @@ export function useQuantumReactivity(): QuantumReactivityConfig {
     startTransitionFn(callback);
   }, [startTransitionFn]);
   
+// 🛡️ P0 FIX: deferValue REMOVIDO - viola regras de hooks
+  // useDeferredValue NÃO pode ser usado dentro de callback
+  // Componentes que precisam diferir valores devem usar useDeferredValue diretamente
   const deferValue = useCallback(<T,>(value: T): T => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useDeferredValue(value);
+    // Retorna valor sem transformação - use useDeferredValue direto no componente
+    return value;
   }, []);
   
   // ============================================
