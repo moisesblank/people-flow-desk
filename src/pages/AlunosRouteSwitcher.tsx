@@ -26,6 +26,18 @@ export default function AlunosRouteSwitcher() {
 
   const isLoading = adminLoading || roleLoading;
 
+  // 🔴 P0 DEBUG: Log para diagnóstico de tela preta
+  console.log('[AlunosRouteSwitcher] 🚀 RENDER', {
+    adminLoading,
+    roleLoading,
+    isLoading,
+    role,
+    isBeta,
+    isOwner,
+    isAdminOrOwner,
+    timestamp: new Date().toISOString(),
+  });
+
   // Detectar domínio atual usando funções centralizadas
   const { isGestao, isPro, isPublic } = useMemo(() => {
     if (typeof window === "undefined") {
@@ -39,11 +51,15 @@ export default function AlunosRouteSwitcher() {
     };
   }, []);
 
-  // Loading state
+  // Loading state - P0: com timeout de segurança
   if (isLoading) {
+    console.warn('[AlunosRouteSwitcher] ⏳ Aguardando loading...', { adminLoading, roleLoading });
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground">Carregando permissões...</p>
+        </div>
       </div>
     );
   }
