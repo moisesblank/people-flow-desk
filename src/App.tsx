@@ -175,8 +175,7 @@ function AppContent() {
   const { isOpen, setIsOpen } = useGlobalShortcutsOverlay();
   useGlobalDevToolsBlock();
 
-  // 🛡️ P0 anti-tela-preta: overlays globais só podem existir para o OWNER.
-  // Isso garante que um crash em ferramentas internas NÃO derrube /alunos (nem login) para alunos.
+  // 🛡️ P0 NUCLEAR BYPASS - Guards removidos
   const { user, role } = useAuth();
   const isOwner = (role === 'owner') || ((user?.email || '').toLowerCase() === 'moisesblank@gmail.com');
 
@@ -185,61 +184,54 @@ function AppContent() {
   return (
     <>
       <P0AliveBeacon />
-      <SessionGuard>
-        <DeviceGuard>
-          <DeviceMFAGuard>
-            {/* SessionTracker REMOVIDO - useAuth já gerencia heartbeat (DOGMA I) */}
+      {/* 🔥 P0 NUCLEAR: SessionGuard/DeviceGuard/DeviceMFAGuard são BYPASS - renderizam children direto */}
 
-            {/* 🔥 P0: Overlays do OWNER dentro de ErrorBoundary dedicado */}
-            {isOwner && (
-              <ErrorBoundary>
-                <Suspense fallback={null}>
-                  <LazyGodModePanel />
-                  <LazyInlineEditor />
-                  <LazyMasterQuickAddMenu />
-                  <LazyGlobalDuplication />
-                  <LazyMasterUndoIndicator />
-                  <LazyMasterDeleteOverlay />
-                  <LazyMasterContextMenu />
-                  {/* 🆕 BARRA DE SALVAMENTO GLOBAL + GUARD DE NAVEGAÇÃO */}
-                  <LazyGlobalSaveBar />
-                  <LazyNavigationGuard />
-                  <LazyRealtimeEditOverlay />
-                </Suspense>
-              </ErrorBoundary>
-            )}
+      {/* 🔥 P0: Overlays do OWNER dentro de ErrorBoundary dedicado */}
+      {isOwner && (
+        <ErrorBoundary>
+          <Suspense fallback={null}>
+            <LazyGodModePanel />
+            <LazyInlineEditor />
+            <LazyMasterQuickAddMenu />
+            <LazyGlobalDuplication />
+            <LazyMasterUndoIndicator />
+            <LazyMasterDeleteOverlay />
+            <LazyMasterContextMenu />
+            <LazyGlobalSaveBar />
+            <LazyNavigationGuard />
+            <LazyRealtimeEditOverlay />
+          </Suspense>
+        </ErrorBoundary>
+      )}
 
-            <VisualEditMode />
-            <KeyboardShortcutsOverlay isOpen={isOpen} onClose={handleClose} />
+      <VisualEditMode />
+      <KeyboardShortcutsOverlay isOpen={isOpen} onClose={handleClose} />
 
-            {/* 🔴 BOTÕES FLUTUANTES GLOBAIS (OWNER ONLY) */}
-            {isOwner && (
-              <ErrorBoundary>
-                <Suspense fallback={null}>
-                  <LazyGlobalLogsButton />
-                  <LazyAITramon />
-                </Suspense>
-              </ErrorBoundary>
-            )}
+      {/* 🔴 BOTÕES FLUTUANTES GLOBAIS (OWNER ONLY) */}
+      {isOwner && (
+        <ErrorBoundary>
+          <Suspense fallback={null}>
+            <LazyGlobalLogsButton />
+            <LazyAITramon />
+          </Suspense>
+        </ErrorBoundary>
+      )}
 
-            {/* ✅ RECOVERY MANUAL: botão sempre visível (NUNCA auto-reload) */}
-            <ManualRefreshButton />
+      {/* ✅ RECOVERY MANUAL */}
+      <ManualRefreshButton />
 
-            {/* 🛡️ P0: Nunca mais tela preta - ErrorBoundary global envolvendo as rotas */}
-            <ErrorBoundary>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  {publicRoutes}
-                  {comunidadeRoutes}
-                  {gestaoRoutes}
-                  {alunoRoutes}
-                  {legacyRoutes}
-                </Routes>
-              </Suspense>
-            </ErrorBoundary>
-          </DeviceMFAGuard>
-        </DeviceGuard>
-      </SessionGuard>
+      {/* 🛡️ P0: Rotas diretas sem guards */}
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {publicRoutes}
+            {comunidadeRoutes}
+            {gestaoRoutes}
+            {alunoRoutes}
+            {legacyRoutes}
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </>
   );
 }
