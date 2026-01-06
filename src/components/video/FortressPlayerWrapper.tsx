@@ -164,33 +164,11 @@ const useInteractionGuardian = (containerRef: React.RefObject<HTMLDivElement>) =
         return false;
       }
 
-      // F12 (DevTools)
-      if (e.key === "F12") {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-
-      // Ctrl+Shift+I (Inspect), Ctrl+Shift+J (Console), Ctrl+Shift+C (Select Element)
-      if (isCtrl && isShift && (key === "i" || key === "j" || key === "c")) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-
-      // Ctrl+Shift+K (Firefox Console)
-      if (isCtrl && isShift && key === "k") {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
-
-      // Alt+Cmd+I (Mac DevTools)
-      if (e.altKey && e.metaKey && key === "i") {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
-      }
+      // 🚨 PROTEÇÃO DEVTOOLS DESATIVADA POR ORDEM DO OWNER (2026-01-06)
+      // F12 (DevTools) - PERMITIDO
+      // Ctrl+Shift+I (Inspect), Ctrl+Shift+J (Console), Ctrl+Shift+C (Select Element) - PERMITIDO
+      // Ctrl+Shift+K (Firefox Console) - PERMITIDO
+      // Alt+Cmd+I (Mac DevTools) - PERMITIDO
     };
 
     // Adicionar listeners ao wrapper

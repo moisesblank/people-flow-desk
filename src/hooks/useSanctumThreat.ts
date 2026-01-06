@@ -202,13 +202,8 @@ export function useThreatEventDetector(recordEvent: (type: string, meta?: Record
       const isCtrl = e.ctrlKey || e.metaKey;
       const key = e.key.toLowerCase();
 
-      // DevTools shortcuts
-      if (e.key === 'F12' || (isCtrl && e.shiftKey && (key === 'i' || key === 'j' || key === 'c'))) {
-        e.preventDefault();
-        if (shouldTrigger('devtools_shortcut')) {
-          recordEvent('devtools_shortcut', { key: e.key });
-        }
-      }
+      // 🚨 PROTEÇÃO DEVTOOLS DESATIVADA POR ORDEM DO OWNER (2026-01-06)
+      // DevTools shortcuts - PERMITIDOS (apenas logging, sem preventDefault)
 
       // Print
       if (isCtrl && key === 'p') {

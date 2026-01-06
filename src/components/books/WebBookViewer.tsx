@@ -609,13 +609,15 @@ export const WebBookViewer = memo(function WebBookViewer({
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 🚨 PROTEÇÃO DEVTOOLS DESATIVADA POR ORDEM DO OWNER (2026-01-06)
+      // F12 e PrintScreen agora permitidos
       const blocked = [
         e.ctrlKey && e.key === 's',
         e.ctrlKey && e.key === 'p',
         e.ctrlKey && e.key === 'c',
         e.ctrlKey && e.key === 'u',
-        e.key === 'F12',
-        e.key === 'PrintScreen',
+        // e.key === 'F12', // DESATIVADO
+        // e.key === 'PrintScreen', // DESATIVADO
       ];
 
       if (blocked.some(Boolean)) {

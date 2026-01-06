@@ -3,10 +3,18 @@
 // Bloqueio Global de DevTools + Print Screen + Cópia de Conteúdo
 // EXCETO para o OWNER: moisesblank@gmail.com
 // ============================================
+// 🚨 PROTEÇÃO DESATIVADA GLOBALMENTE POR ORDEM DO OWNER (2026-01-06)
+// Para reativar, mude DEVTOOLS_PROTECTION_ENABLED para true
+// ============================================
 
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+// ═══════════════════════════════════════════════════════════
+// 🔧 MASTER KILL SWITCH - DESATIVA TODA PROTEÇÃO DE DEVTOOLS
+// ═══════════════════════════════════════════════════════════
+const DEVTOOLS_PROTECTION_ENABLED = false;
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
 
@@ -77,6 +85,12 @@ export function useGlobalDevToolsBlock() {
   const warningShownRef = useRef(false);
 
   useEffect(() => {
+    // 🚨 PROTEÇÃO DESATIVADA - EARLY RETURN
+    if (!DEVTOOLS_PROTECTION_ENABLED) {
+      console.log('🔧 [DevTools Protection] DESATIVADO globalmente');
+      return;
+    }
+
     // Verificar se usuário é owner
     const checkOwner = async () => {
       try {
