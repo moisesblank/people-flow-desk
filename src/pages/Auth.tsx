@@ -7,7 +7,7 @@
 
 import "@/styles/auth-spiderman-2300.css";
 
-import { useState, useEffect, lazy, Suspense, useCallback } from "react";
+import { useState, useEffect, lazy, Suspense, useCallback, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
 import { CloudflareTurnstile, useTurnstile } from "@/components/security/CloudflareTurnstile";
@@ -66,26 +66,26 @@ const ForcePasswordChange = lazy(() => import("@/components/auth/ForcePasswordCh
 // ============================================
 
 // Spider-Man Deep Space Background (STATIC - no animations per user request)
-function SpiderBackground() {
-  return (
-    <div 
-      className="absolute inset-0 pointer-events-none"
-      style={{
-        background: 'linear-gradient(135deg, hsl(230 40% 6%) 0%, hsl(230 40% 3%) 100%)',
-      }}
-    />
-  );
-}
+// ✅ forwardRef para evitar "Function components cannot be given refs"
+
+const SpiderBackground = forwardRef<HTMLDivElement>((_, ref) => (
+  <div 
+    ref={ref}
+    className="absolute inset-0 pointer-events-none"
+    style={{
+      background: 'linear-gradient(135deg, hsl(230 40% 6%) 0%, hsl(230 40% 3%) 100%)',
+    }}
+  />
+));
+SpiderBackground.displayName = 'SpiderBackground';
 
 // Spider Eyes - DISABLED per user request (no animated glows)
-function SpiderEyes() {
-  return null;
-}
+const SpiderEyes = forwardRef<HTMLDivElement>((_, ref) => <span ref={ref} />);
+SpiderEyes.displayName = 'SpiderEyes';
 
 // Energy Veins - DISABLED per user request (no animated lines)
-function SpiderVeins() {
-  return null;
-}
+const SpiderVeins = forwardRef<HTMLDivElement>((_, ref) => <span ref={ref} />);
+SpiderVeins.displayName = 'SpiderVeins';
 
 // Spider Card Frame - Tech Interface
 function SpiderCardFrame() {
