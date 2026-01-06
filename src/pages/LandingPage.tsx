@@ -257,13 +257,13 @@ export default function LandingPage() {
                   Entrar
                 </Button>
               </Link>
-              <a href="https://app.moisesmedeiros.com.br" target="_blank" rel="noopener noreferrer">
+              <Link to="/auth">
                 <Button className="bg-primary hover:bg-primary-hover text-primary-foreground gap-2 rounded-xl shadow-wine">
                   <GraduationCap className="h-4 w-4" />
                   <span className="hidden sm:inline">Área do Aluno</span>
                   <span className="sm:hidden">Entrar</span>
                 </Button>
-              </a>
+              </Link>
             </div>
           </div>
         </div>
