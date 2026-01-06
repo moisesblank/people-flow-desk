@@ -172,11 +172,18 @@ export function useSimuladoAttempt() {
    */
   const finishAttempt = useCallback(async (): Promise<AttemptResult | null> => {
     if (!state.attemptId) {
+      const msg = "Não foi possível finalizar: tentativa não encontrada.";
       console.error("[useSimuladoAttempt] No attemptId to finish");
+      setState(prev => ({ ...prev, status: "ERROR", error: msg }));
+      toast({
+        title: "Erro ao finalizar simulado",
+        description: msg,
+        variant: "destructive",
+      });
       return null;
     }
 
-    setState(prev => ({ ...prev, status: "LOADING" }));
+    setState(prev => ({ ...prev, status: "LOADING", error: null }));
 
     try {
       const { data, error } = await supabase.rpc("finish_simulado_attempt", {
@@ -186,6 +193,11 @@ export function useSimuladoAttempt() {
       if (error) {
         console.error("[useSimuladoAttempt] Finish RPC error:", error);
         setState(prev => ({ ...prev, status: "ERROR", error: error.message }));
+        toast({
+          title: "Erro ao finalizar simulado",
+          description: error.message,
+          variant: "destructive",
+        });
         return null;
       }
 
@@ -194,14 +206,16 @@ export function useSimuladoAttempt() {
       if (!response.success) {
         const errorMsg = translateError(response.error || "UNKNOWN_ERROR");
         setState(prev => ({ ...prev, status: "ERROR", error: errorMsg }));
-        
-        if (response.error === "ATTEMPT_INVALIDATED") {
-          toast({
-            title: "Tentativa invalidada",
-            description: response.reason || "Esta tentativa foi desclassificada.",
-            variant: "destructive",
-          });
-        }
+
+        toast({
+          title: "Não foi possível finalizar",
+          description:
+            response.error === "ATTEMPT_INVALIDATED"
+              ? (response.reason || "Esta tentativa foi desclassificada.")
+              : errorMsg,
+          variant: "destructive",
+        });
+
         return null;
       }
 
