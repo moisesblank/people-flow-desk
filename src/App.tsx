@@ -33,31 +33,52 @@ import { AppProviders } from "@/contexts/AppProviders";
 import { createSacredQueryClient } from "@/lib/performance/cacheConfig";
 
 // 📍 ROTAS MODULARIZADAS
-import { 
-  publicRoutes, 
-  comunidadeRoutes, 
-  gestaoRoutes, 
-  alunoRoutes, 
-  legacyRoutes,
-  PageLoader 
-} from "@/routes";
+import { publicRoutes, comunidadeRoutes, gestaoRoutes, alunoRoutes, legacyRoutes, PageLoader } from "@/routes";
 
 // 🚀 LAZY LOAD: Componentes pesados
 // P0: Evitar "Component is not a function" por mismatch entre export default vs named export.
 // Regra: tenta named export primeiro, depois cai para default.
-const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then((m: any) => ({ default: m.AITramonGlobal ?? m.default })));
-const LazyGlobalLogsButton = lazy(() => import("@/components/admin/GlobalLogsButton").then((m: any) => ({ default: m.GlobalLogsButton ?? m.default })));
-const LazyGodModePanel = lazy(() => import("@/components/editor/GodModePanel").then((m: any) => ({ default: m.GodModePanel ?? m.default })));
-const LazyInlineEditor = lazy(() => import("@/components/editor/InlineEditor").then((m: any) => ({ default: m.InlineEditor ?? m.default })));
-const LazyMasterQuickAddMenu = lazy(() => import("@/components/admin/MasterQuickAddMenu").then((m: any) => ({ default: m.MasterQuickAddMenu ?? m.default })));
-const LazyGlobalDuplication = lazy(() => import("@/components/admin/GlobalDuplicationSystem").then((m: any) => ({ default: m.GlobalDuplicationSystem ?? m.default })));
-const LazyMasterUndoIndicator = lazy(() => import("@/components/admin/MasterUndoIndicator").then((m: any) => ({ default: m.MasterUndoIndicator ?? m.default })));
-const LazyMasterDeleteOverlay = lazy(() => import("@/components/admin/MasterDeleteOverlay").then((m: any) => ({ default: m.MasterDeleteOverlay ?? m.default })));
-const LazyMasterContextMenu = lazy(() => import("@/components/admin/MasterContextMenu").then((m: any) => ({ default: m.MasterContextMenu ?? m.default })));
+const LazyAITramon = lazy(() =>
+  import("@/components/ai/AITramonGlobal").then((m: any) => ({ default: m.AITramonGlobal ?? m.default })),
+);
+const LazyGlobalLogsButton = lazy(() =>
+  import("@/components/admin/GlobalLogsButton").then((m: any) => ({ default: m.GlobalLogsButton ?? m.default })),
+);
+const LazyGodModePanel = lazy(() =>
+  import("@/components/editor/GodModePanel").then((m: any) => ({ default: m.GodModePanel ?? m.default })),
+);
+const LazyInlineEditor = lazy(() =>
+  import("@/components/editor/InlineEditor").then((m: any) => ({ default: m.InlineEditor ?? m.default })),
+);
+const LazyMasterQuickAddMenu = lazy(() =>
+  import("@/components/admin/MasterQuickAddMenu").then((m: any) => ({ default: m.MasterQuickAddMenu ?? m.default })),
+);
+const LazyGlobalDuplication = lazy(() =>
+  import("@/components/admin/GlobalDuplicationSystem").then((m: any) => ({
+    default: m.GlobalDuplicationSystem ?? m.default,
+  })),
+);
+const LazyMasterUndoIndicator = lazy(() =>
+  import("@/components/admin/MasterUndoIndicator").then((m: any) => ({ default: m.MasterUndoIndicator ?? m.default })),
+);
+const LazyMasterDeleteOverlay = lazy(() =>
+  import("@/components/admin/MasterDeleteOverlay").then((m: any) => ({ default: m.MasterDeleteOverlay ?? m.default })),
+);
+const LazyMasterContextMenu = lazy(() =>
+  import("@/components/admin/MasterContextMenu").then((m: any) => ({ default: m.MasterContextMenu ?? m.default })),
+);
 // 🆕 TRANSACTIONAL SAVE SYSTEM
-const LazyGlobalSaveBar = lazy(() => import("@/components/admin/GlobalSaveBar").then((m: any) => ({ default: m.GlobalSaveBar ?? m.default })));
-const LazyNavigationGuard = lazy(() => import("@/components/admin/MasterModeNavigationGuard").then((m: any) => ({ default: m.MasterModeNavigationGuard ?? m.default })));
-const LazyRealtimeEditOverlay = lazy(() => import("@/components/admin/RealtimeEditOverlay").then((m: any) => ({ default: m.RealtimeEditOverlay ?? m.default })));
+const LazyGlobalSaveBar = lazy(() =>
+  import("@/components/admin/GlobalSaveBar").then((m: any) => ({ default: m.GlobalSaveBar ?? m.default })),
+);
+const LazyNavigationGuard = lazy(() =>
+  import("@/components/admin/MasterModeNavigationGuard").then((m: any) => ({
+    default: m.MasterModeNavigationGuard ?? m.default,
+  })),
+);
+const LazyRealtimeEditOverlay = lazy(() =>
+  import("@/components/admin/RealtimeEditOverlay").then((m: any) => ({ default: m.RealtimeEditOverlay ?? m.default })),
+);
 
 // ⚡ QueryClient Sagrado
 // P0: nunca pode quebrar o bootstrap. Se falhar, usa client básico.
@@ -65,14 +86,16 @@ const queryClient = (() => {
   try {
     return createSacredQueryClient();
   } catch (err) {
-    console.warn('[P0] createSacredQueryClient falhou — usando QueryClient padrão:', (err as Error)?.message || String(err));
+    console.warn(
+      "[P0] createSacredQueryClient falhou — usando QueryClient padrão:",
+      (err as Error)?.message || String(err),
+    );
     return new QueryClient();
   }
 })();
 
-
 // Listener global + prefetch
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   // ============================================
   // 🧾 FORENSIC FATAL LOGGER (P0)
   // Captura erros fatais (production) para diagnóstico de "tela preta"
@@ -91,8 +114,8 @@ if (typeof window !== 'undefined') {
 
     const safeString = (v: unknown) => {
       try {
-        if (v instanceof Error) return `${v.name}: ${v.message}\n${v.stack || ''}`.trim();
-        if (typeof v === 'string') return v;
+        if (v instanceof Error) return `${v.name}: ${v.message}\n${v.stack || ""}`.trim();
+        if (typeof v === "string") return v;
         return JSON.stringify(v);
       } catch {
         return String(v);
@@ -102,12 +125,12 @@ if (typeof window !== 'undefined') {
     const send = (payload: Record<string, unknown>) => {
       if (!shouldSend()) return;
       supabase.functions
-        .invoke('log-writer', {
+        .invoke("log-writer", {
           body: {
             timestamp: new Date().toISOString(),
-            severity: 'error',
-            triggered_action: 'fatal_runtime_error',
-            affected_url_or_area: typeof window !== 'undefined' ? window.location.href : 'unknown',
+            severity: "error",
+            triggered_action: "fatal_runtime_error",
+            affected_url_or_area: typeof window !== "undefined" ? window.location.href : "unknown",
             error_message: safeString(payload),
           },
         })
@@ -116,9 +139,9 @@ if (typeof window !== 'undefined') {
         });
     };
 
-    window.addEventListener('error', (event) => {
+    window.addEventListener("error", (event) => {
       send({
-        type: 'window.error',
+        type: "window.error",
         message: event.message,
         filename: (event as any).filename,
         lineno: (event as any).lineno,
@@ -127,24 +150,27 @@ if (typeof window !== 'undefined') {
       });
     });
 
-    window.addEventListener('unhandledrejection', (event) => {
+    window.addEventListener("unhandledrejection", (event) => {
       send({
-        type: 'window.unhandledrejection',
+        type: "window.unhandledrejection",
         reason: safeString((event as any).reason),
       });
     });
   }
 
-  window.addEventListener('mm-clear-cache', () => {
+  window.addEventListener("mm-clear-cache", () => {
     queryClient.clear();
     queryClient.invalidateQueries();
   });
-  
-  if ('requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(() => {
-      import("@/components/ai/AITramonGlobal").catch(() => {});
-      import("@/components/editor/GodModePanel").catch(() => {});
-    }, { timeout: 5000 });
+
+  if ("requestIdleCallback" in window) {
+    (window as any).requestIdleCallback(
+      () => {
+        import("@/components/ai/AITramonGlobal").catch(() => {});
+        import("@/components/editor/GodModePanel").catch(() => {});
+      },
+      { timeout: 5000 },
+    );
   }
 }
 
@@ -158,7 +184,7 @@ function useGlobalShortcutsOverlay() {
         const target = e.target as HTMLElement;
         if (target.tagName !== "INPUT" && target.tagName !== "TEXTAREA" && !target.isContentEditable) {
           e.preventDefault();
-          setIsOpen(prev => !prev);
+          setIsOpen((prev) => !prev);
         }
       }
     };
@@ -177,7 +203,7 @@ function AppContent() {
 
   // 🛡️ P0 NUCLEAR BYPASS - Guards removidos
   const { user, role } = useAuth();
-  const isOwner = (role === 'owner') || ((user?.email || '').toLowerCase() === 'moisesblank@gmail.com');
+  const isOwner = role === "owner" || (user?.email || "").toLowerCase() === "moisesblank@gmail.com";
 
   const handleClose = useCallback(() => setIsOpen(false), [setIsOpen]);
 
@@ -247,7 +273,7 @@ function App() {
         <GestaoNoIndex />
         <LegacyRedirectHandler />
         <AppContent />
-        <DuplicationClipboardIndicator />
+        {/* <DuplicationClipboardIndicator /> */}
       </BrowserRouter>
     </AppProviders>
   );
