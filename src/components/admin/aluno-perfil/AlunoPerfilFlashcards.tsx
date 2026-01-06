@@ -121,7 +121,7 @@ export function AlunoPerfilFlashcards({ userId }: AlunoFlashcardsProps) {
                     key={annotation.id}
                     className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20"
                   >
-                    <p className="text-sm text-foreground line-clamp-2">{annotation.content || annotation.text}</p>
+                    <p className="text-sm text-foreground line-clamp-2">{(() => { const val = annotation.content ?? annotation.text; return typeof val === 'string' ? val : (val as any)?.text ?? String(val ?? ''); })()}</p>
                     <p className="text-xs text-muted-foreground mt-1">
                       {new Date(annotation.created_at).toLocaleDateString('pt-BR')}
                     </p>

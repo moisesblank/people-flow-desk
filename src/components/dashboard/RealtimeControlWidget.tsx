@@ -325,7 +325,7 @@ export function RealtimeControlWidget({ className }: { className?: string }) {
                           )} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{item.text}</p>
+                          <p className="text-sm font-medium truncate">{typeof item.text === 'string' ? item.text : (item.text as any)?.text ?? String(item.text ?? '')}</p>
                           <p className="text-xs text-muted-foreground">
                             {item.entity_type} • {formatDistanceToNow(new Date(item.created_at), { addSuffix: true, locale: ptBR })}
                           </p>

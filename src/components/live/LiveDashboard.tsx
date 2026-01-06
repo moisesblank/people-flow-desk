@@ -298,7 +298,7 @@ export const RunbookChecklist = memo(function RunbookChecklist({
                     "text-left flex-1",
                     item.checked && "line-through"
                   )}>
-                    {item.text}
+                    {typeof item.text === 'string' ? item.text : (item.text as any)?.text ?? String(item.text ?? '')}
                   </span>
                   <Badge className={cn("text-xs", priorityColors[item.priority])}>
                     {item.priority}

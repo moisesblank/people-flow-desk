@@ -421,7 +421,7 @@ export function SmartChecklist({
                       "text-sm transition-all",
                       item.completed && "line-through text-muted-foreground"
                     )}>
-                      {item.text}
+                      {typeof item.text === 'string' ? item.text : (item.text as any)?.text ?? String(item.text ?? '')}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <Badge 
