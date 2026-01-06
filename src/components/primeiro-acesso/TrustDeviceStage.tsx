@@ -2,6 +2,7 @@
 // ETAPA 4: CONFIANÇA NO DISPOSITIVO
 // Modelo Facebook: confiar ou sempre confirmar
 // Limite: Máximo 3 dispositivos confiáveis
+// 🔐 CORRIGIDO: Agora usa registerDeviceBeforeSession
 // ============================================
 
 import { useState, useEffect } from "react";
@@ -17,7 +18,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { collectEnhancedFingerprint } from "@/lib/enhancedFingerprint";
+import { registerDeviceBeforeSession, getDeviceErrorMessage } from "@/lib/deviceRegistration";
+import { collectFingerprintRawData } from "@/lib/deviceFingerprintRaw";
 import { toast } from "sonner";
 
 interface TrustDeviceStageProps {
@@ -74,39 +76,14 @@ export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) 
   useEffect(() => {
     const initialize = async () => {
       try {
-        // 1. Coletar fingerprint do dispositivo atual
-        const fp = await collectEnhancedFingerprint();
+        // 1. Coletar fingerprint do dispositivo atual usando a função correta
+        const fpData = await collectFingerprintRawData();
         
-        // Detectar browser
-        const ua = navigator.userAgent;
-        let browser = 'Navegador Desconhecido';
-        if (ua.includes('Firefox')) browser = 'Firefox';
-        else if (ua.includes('Edg')) browser = 'Microsoft Edge';
-        else if (ua.includes('Chrome')) browser = 'Google Chrome';
-        else if (ua.includes('Safari')) browser = 'Safari';
-        else if (ua.includes('Opera')) browser = 'Opera';
-
-        // Detectar OS
-        let os = 'Sistema Desconhecido';
-        if (ua.includes('Windows')) os = 'Windows';
-        else if (ua.includes('Mac')) os = 'macOS';
-        else if (ua.includes('Linux')) os = 'Linux';
-        else if (ua.includes('Android')) os = 'Android';
-        else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
-
-        // Detectar tipo
-        let deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop';
-        if (/iPad|Tablet/i.test(ua)) {
-          deviceType = 'tablet';
-        } else if (/Mobi|Android/i.test(ua) && !/iPad|Tablet/i.test(ua)) {
-          deviceType = 'mobile';
-        }
-
         setDeviceInfo({
-          browser,
-          os,
-          deviceType,
-          fingerprint: fp.hash,
+          browser: fpData.browser,
+          os: fpData.os,
+          deviceType: fpData.deviceType as 'desktop' | 'tablet' | 'mobile',
+          fingerprint: '', // Não usado mais, o hash é gerado server-side
         });
 
         // 2. Buscar dispositivos já confiáveis
@@ -114,7 +91,7 @@ export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) 
           .from('user_devices')
           .select('id, device_name, device_type, last_seen_at')
           .eq('user_id', userId)
-          .eq('is_trusted', true)
+          .eq('is_active', true)
           .order('last_seen_at', { ascending: false });
 
         if (!error && devices) {
@@ -127,7 +104,7 @@ export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) 
           browser: 'Navegador',
           os: 'Sistema',
           deviceType: 'desktop',
-          fingerprint: 'unknown',
+          fingerprint: '',
         });
       } finally {
         setIsLoading(false);
@@ -144,36 +121,36 @@ export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) 
 
     try {
       if (selectedOption === 'trust') {
-        // Verificar limite de dispositivos
-        if (trustedDevices.length >= MAX_TRUSTED_DEVICES) {
-          toast.error(`Limite de ${MAX_TRUSTED_DEVICES} dispositivos atingido`, {
-            description: "Remova um dispositivo antigo nas configurações para adicionar este.",
-          });
+        // 🔐 CORRIGIDO: Usar registerDeviceBeforeSession que chama Edge Function
+        console.log('[TrustDevice] 🔐 Registrando dispositivo via Edge Function...');
+        
+        const result = await registerDeviceBeforeSession();
+        
+        if (!result.success) {
+          // Verificar se é limite de dispositivos
+          if (result.error === 'DEVICE_LIMIT_EXCEEDED') {
+            toast.error(`Limite de ${result.maxDevices || MAX_TRUSTED_DEVICES} dispositivos atingido`, {
+              description: "Remova um dispositivo antigo nas configurações para adicionar este.",
+            });
+          } else if (result.error === 'SAME_TYPE_REPLACEMENT_REQUIRED') {
+            toast.error("Você já possui um dispositivo do mesmo tipo", {
+              description: "Deseja substituí-lo? Vá para configurações de dispositivos.",
+            });
+          } else {
+            const errorMsg = getDeviceErrorMessage(result.error || 'UNKNOWN');
+            toast.error(errorMsg.title, {
+              description: errorMsg.description,
+            });
+          }
           setIsSubmitting(false);
           return;
         }
 
-        // Registrar dispositivo como confiável
-        const { error } = await supabase
-          .from('user_devices')
-          .upsert({
-            user_id: userId,
-            device_fingerprint: deviceInfo.fingerprint,
-            device_name: `${deviceInfo.browser} no ${deviceInfo.os}`,
-            device_type: deviceInfo.deviceType,
-            is_trusted: true,
-            last_seen_at: new Date().toISOString(),
-          }, {
-            onConflict: 'user_id,device_fingerprint',
-          });
-
-        if (error) {
-          console.error('[TrustDevice] Erro ao salvar dispositivo:', error);
-        }
+        console.log('[TrustDevice] ✅ Dispositivo registrado:', result.deviceHash?.slice(0, 8) + '...');
 
         // Salvar cache local de confiança
         localStorage.setItem('mfa_trust_cache', JSON.stringify({
-          deviceHash: deviceInfo.fingerprint,
+          deviceHash: result.deviceHash,
           trustedAt: new Date().toISOString(),
           everVerified: true,
         }));
