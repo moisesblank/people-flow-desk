@@ -1,5 +1,4 @@
 // ============================================
-// ⚡ MATRIZ DIGITAL v11.0 - ROTEADOR /alunos
 // ⚡ MATRIZ DIGITAL v11.1 - ROTEADOR /alunos
 // ARQUITETURA MONO-DOMÍNIO:
 // - pro.moisesmedeiros.com.br/gestaofc → Funcionários (Gestão)
@@ -12,7 +11,6 @@
 // ⏱️ P0 FIX v11.1: Timeout para evitar loading infinito (tela preta)
 // ============================================
 
-import { useMemo } from "react";
 import { useMemo, useState, useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Helmet } from "react-helmet";
@@ -36,18 +34,15 @@ export default function AlunosRouteSwitcher() {
   // ============================================
   
   const location = useLocation();
-  const { isAdminOrOwner, isLoading: adminLoading } = useAdminCheck();
   const { isAdminOrOwner, isLoading: adminLoading, userEmail } = useAdminCheck();
   const { role, isLoading: roleLoading, isBeta, isOwner } = useRolePermissions();
 
-  const isLoading = adminLoading || roleLoading;
   // ⏱️ P0 FIX: Timeout para evitar loading infinito (causa de tela preta)
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   
   // ⏱️ Loading demorado: mostrar indicador visual de que está funcionando
   const [isLoadingSlow, setIsLoadingSlow] = useState(false);
 
-  // 🔎 DEBUG temporário (P0): tornar visível o estado real quando /alunos fica “tela preta”
   // P0 FIX: Se timeout foi atingido, parar de esperar loading
   const rawLoading = adminLoading || roleLoading;
   const isLoading = rawLoading && !loadingTimeout;
@@ -136,14 +131,11 @@ export default function AlunosRouteSwitcher() {
     </div>
   ) : null;
 
-  // Loading state
   // Loading state (P0: com feedback visual para o usuário, NUNCA tela preta)
   if (isLoading) {
     return (
       <>
         {DebugPanel}
-        <div className="min-h-screen bg-background flex items-center justify-center relative z-10">
-          <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         <div className="min-h-screen bg-background flex flex-col items-center justify-center relative z-10 gap-4 p-6">
           <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           <div className="text-center space-y-2">
@@ -205,7 +197,6 @@ export default function AlunosRouteSwitcher() {
     );
   }
 
-// BETA = Aluno pagante → SEMPRE portal do aluno (pro.moisesmedeiros.com.br/alunos)
   // BETA = Aluno pagante → SEMPRE portal do aluno (pro.moisesmedeiros.com.br/alunos)
   if (isBeta) {
     return (
