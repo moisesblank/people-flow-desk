@@ -192,9 +192,48 @@ export function TwoFactorVerification({
       setCountdown(60);
     } catch (err: any) {
       console.error('[AUTH][2FA] ERROR sendCode:', err);
-      setError(err?.message || "Erro ao enviar código");
-      toast.error("Erro ao enviar código", {
-        description: err.message || "Tente novamente em alguns segundos"
+
+      const status = err?.context?.status ?? err?.status;
+      const message = String(err?.message || '');
+
+      // 🛡️ AUDITORIA/RECOVERY: se o backend diz que o userId não existe,
+      // isso indica sessão/token local stale (ex: conta deletada/recriada).
+      // Regra: fail-closed → limpar artefatos e forçar reauth.
+      if (status === 404 || /usuário não encontrado/i.test(message)) {
+        try {
+          sessionStorage.removeItem('matriz_2fa_pending');
+          sessionStorage.removeItem('matriz_2fa_user');
+          sessionStorage.removeItem('matriz_password_change_pending');
+
+          const keysToRemove: string[] = [
+            'matriz_session_token',
+            'matriz_last_heartbeat',
+            'matriz_device_fingerprint',
+            'matriz_trusted_device',
+          ];
+          keysToRemove.forEach((k) => localStorage.removeItem(k));
+
+          // Remover tokens do client (sb-*-auth-token)
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const k = localStorage.key(i);
+            if (k && /^sb-.*-auth-token$/.test(k)) localStorage.removeItem(k);
+          }
+
+          await supabase.auth.signOut();
+        } catch (cleanupErr) {
+          console.warn('[AUTH][2FA] Cleanup/reauth falhou (continuando):', cleanupErr);
+        }
+
+        toast.error('Sessão inválida', {
+          description: 'Sua sessão estava desatualizada. Faça login novamente.',
+        });
+        window.location.replace('/auth?reauth=1');
+        return;
+      }
+
+      setError(message || 'Erro ao enviar código');
+      toast.error('Erro ao enviar código', {
+        description: message || 'Tente novamente em alguns segundos',
       });
     } finally {
       setIsResending(false);
