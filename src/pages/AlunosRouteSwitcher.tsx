@@ -6,7 +6,7 @@
 // - pro.moisesmedeiros.com.br/ → Área pública
 // HIERARQUIA (MONO-DOMÍNIO v2.0):
 //   Owner (role='owner' do banco) = Acesso total
-//   Beta = Aluno Pagante → vê Portal do Aluno
+//   Beta = Aluno Pagante → REDIRECIONA para /alunos/dashboard
 //   Staff = Funcionários → vê Gestão de Alunos (/gestaofc)
 // ============================================
 
@@ -27,7 +27,7 @@ export default function AlunosRouteSwitcher() {
   const isLoading = adminLoading || roleLoading;
 
   // 🔴 P0 DEBUG: Log para diagnóstico de tela preta
-  console.log('[AlunosRouteSwitcher] 🚀 RENDER', {
+  console.log("[AlunosRouteSwitcher] 🚀 RENDER", {
     adminLoading,
     roleLoading,
     isLoading,
@@ -53,7 +53,7 @@ export default function AlunosRouteSwitcher() {
 
   // Loading state - P0: com timeout de segurança
   if (isLoading) {
-    console.warn('[AlunosRouteSwitcher] ⏳ Aguardando loading...', { adminLoading, roleLoading });
+    console.warn("[AlunosRouteSwitcher] ⏳ Aguardando loading...", { adminLoading, roleLoading });
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -69,7 +69,7 @@ export default function AlunosRouteSwitcher() {
   // 1. OWNER → Acesso total a qualquer domínio
   //    - gestao.* → Gestão de Alunos
   //    - pro.* ou outros → Portal do Aluno (para visualizar experiência)
-  // 2. BETA (aluno pagante) → SEMPRE vê Portal do Aluno
+  // 2. BETA (aluno pagante) → REDIRECIONA para /alunos/dashboard
   // 3. FUNCIONÁRIOS no domínio gestao.* → Gestão de Alunos
   // 4. Outros roles → redirecionados para /dashboard ou /app
   // ============================================
@@ -95,37 +95,15 @@ export default function AlunosRouteSwitcher() {
         </>
       );
     }
-    // Owner em pro.* ou outros domínios → vê Portal do Aluno (para testar experiência)
-    return (
-      <>
-        <Helmet>
-          <title>Dashboard do Aluno | Química ENEM</title>
-          <meta
-            name="description"
-            content="Sua central de estudos com videoaulas, questões, simulados e progresso gamificado."
-          />
-          <link rel="canonical" href={typeof window !== "undefined" ? `${window.location.origin}/alunos` : "/alunos"} />
-        </Helmet>
-        <AlunoDashboard />
-      </>
-    );
+    // Owner em pro.* ou outros domínios → REDIRECIONA para /alunos/dashboard
+    console.log("[AlunosRouteSwitcher] ✅ Owner em pro.* → Redirecionando para /alunos/dashboard");
+    return <Navigate to="/alunos/dashboard" replace />;
   }
 
-  // BETA = Aluno pagante → SEMPRE portal do aluno (pro.moisesmedeiros.com.br/alunos)
+  // BETA = Aluno pagante → REDIRECIONA para /alunos/dashboard
   if (isBeta) {
-    return (
-      <>
-        <Helmet>
-          <title>Dashboard do Aluno | Química ENEM</title>
-          <meta
-            name="description"
-            content="Sua central de estudos com videoaulas, questões, simulados e progresso gamificado."
-          />
-          <link rel="canonical" href={typeof window !== "undefined" ? `${window.location.origin}/alunos` : "/alunos"} />
-        </Helmet>
-        <AlunoDashboard />
-      </>
-    );
+    console.log("[AlunosRouteSwitcher] ✅ Beta → Redirecionando para /alunos/dashboard");
+    return <Navigate to="/alunos/dashboard" replace />;
   }
 
   // ============================================
@@ -154,21 +132,10 @@ export default function AlunosRouteSwitcher() {
     );
   }
 
-  // ADMIN fora do domínio gestão (ex: pro.*) → pode ver portal do aluno para testes
+  // ADMIN fora do domínio gestão (ex: pro.*) → REDIRECIONA para /alunos/dashboard
   if (isAdminOrOwner) {
-    return (
-      <>
-        <Helmet>
-          <title>Dashboard do Aluno | Química ENEM</title>
-          <meta
-            name="description"
-            content="Dashboard do aluno com progresso, metas e próximos passos no curso de Química ENEM."
-          />
-          <link rel="canonical" href={typeof window !== "undefined" ? `${window.location.origin}/alunos` : "/alunos"} />
-        </Helmet>
-        <AlunoDashboard />
-      </>
-    );
+    console.log("[AlunosRouteSwitcher] ✅ Admin em pro.* → Redirecionando para /alunos/dashboard");
+    return <Navigate to="/alunos/dashboard" replace />;
   }
 
   // Outros roles sem permissão → redireciona conforme MATRIZ SUPREMA v2.0.0
