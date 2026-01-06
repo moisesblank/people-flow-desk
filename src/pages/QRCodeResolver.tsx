@@ -273,7 +273,7 @@ export default function QRCodeResolver() {
                 </p>
               </div>
               <Button 
-                onClick={() => navigate("/alunos")}
+                onClick={() => navigate("/alunos/dashboard")}
                 className="mt-4"
               >
                 Ir para o Portal do Aluno

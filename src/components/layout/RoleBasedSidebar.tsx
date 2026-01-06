@@ -278,7 +278,7 @@ const alunoMenuGroups: MenuGroup[] = [
     image: alunosCentralImg,
     color: "from-cyan-600/80 via-blue-600/80",
     items: [
-      { title: "Dashboard Aluno", url: "/alunos", icon: LayoutDashboard, area: "aluno-dashboard", badge: "HOME" },
+      { title: "Dashboard Aluno", url: "/alunos/dashboard", icon: LayoutDashboard, area: "aluno-dashboard", badge: "HOME" },
       { title: "Livro Web", url: "/alunos/livro-web", icon: BookOpen, area: "aluno-livro-web", badge: "NOVO" },
       { title: "Cursos", url: "/alunos/cursos", icon: GraduationCap, area: "aluno-cursos", badge: "NOVO" },
       { title: "Meu Planejamento", url: "/alunos/planejamento", icon: Target, area: "aluno-planejamento", badge: "NOVO" },

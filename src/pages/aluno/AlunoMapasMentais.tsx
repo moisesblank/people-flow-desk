@@ -379,7 +379,7 @@ const AlunoMapasMentais = memo(function AlunoMapasMentais() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/alunos')}>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/alunos/dashboard')}>
               <ChevronLeft className="w-5 h-5" />
             </Button>
             <div>

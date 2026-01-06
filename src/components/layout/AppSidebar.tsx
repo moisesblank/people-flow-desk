@@ -125,7 +125,7 @@ const financeMenuItems = [
 const businessMenuItems = [
   { title: "Cursos", url: "/cursos", icon: PlayCircle },
   { title: "Afiliados", url: "/afiliados", icon: Handshake },
-  { title: "Alunos", url: "/alunos", icon: GraduationCap },
+  { title: "Alunos", url: "/alunos/dashboard", icon: GraduationCap },
   { title: "Portal Aluno", url: "/portal-aluno", icon: UserCheck },
   { title: "Gestão Site", url: "/gestao-site", icon: Globe },
   { title: "Relatórios", url: "/relatorios", icon: FileText },

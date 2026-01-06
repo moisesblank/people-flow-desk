@@ -68,12 +68,12 @@ export const LEGACY_REDIRECTS: LegacyRedirect[] = [
     logEvent: true,
   },
   
-  // /aluno → /alunos
+  // /aluno → /alunos/dashboard
   {
     from: /^\/aluno\/?$/,
-    to: "/alunos",
+    to: "/alunos/dashboard",
     permanent: true,
-    description: "Redirect /aluno para /alunos",
+    description: "Redirect /aluno para /alunos/dashboard",
     logEvent: true,
   },
   

@@ -116,7 +116,7 @@ export function FocusTrack({ userId, currentFocusAreaId }: FocusTrackProps) {
         navigate('/alunos/caderno-erros');
         break;
       default:
-        navigate('/alunos');
+        navigate('/alunos/dashboard');
     }
   };
 

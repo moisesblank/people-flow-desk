@@ -55,7 +55,7 @@ const gestaoMoreItems: NavItem[] = [
 
 // Menu de alunos (para área /alunos)
 const alunosNavItems: NavItem[] = [
-  { icon: Home, label: "Home", path: "/alunos" },
+  { icon: Home, label: "Home", path: "/alunos/dashboard" },
   { icon: GraduationCap, label: "Aulas", path: "/alunos/aulas" },
   { icon: Calendar, label: "Agenda", path: "/alunos/calendario" },
   { icon: CheckSquare, label: "Atividades", path: "/alunos/atividades" },

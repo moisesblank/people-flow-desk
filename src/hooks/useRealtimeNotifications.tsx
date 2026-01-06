@@ -42,7 +42,7 @@ export function useRealtimeNotifications({ addNotification }: UseRealtimeNotific
       type: "info",
       title: "Novo Aluno Matriculado! 📚",
       message: `${student.nome} se matriculou no sistema`,
-      actionUrl: "/alunos",
+      actionUrl: "/alunos/dashboard",
       actionLabel: "Ver aluno",
     });
   }, [addNotification]);

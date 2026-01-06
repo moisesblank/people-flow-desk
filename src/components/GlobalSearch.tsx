@@ -67,7 +67,7 @@ const publicSearchItems: SearchItem[] = [
     id: "alunos-area",
     title: "Área do Aluno",
     description: "Acesse seus cursos",
-    path: "/alunos",
+    path: "/alunos/dashboard",
     icon: GraduationCap,
     keywords: ["aluno", "cursos", "aulas"],
     category: "Alunos",

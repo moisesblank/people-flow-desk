@@ -634,7 +634,7 @@ export function getAccessDeniedRedirect(role?: string | null, isAuthenticated?: 
     case "gestao":
       return "/gestaofc";
     case "beta":
-      return "/alunos";
+      return "/alunos/dashboard";
     case "gratuito":
       return "/comunidade";
     default:
