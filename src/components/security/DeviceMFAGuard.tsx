@@ -5,7 +5,6 @@
 // NÃO TOCA em login/sessão/dispositivo
 // ============================================
 
-import { ReactNode, useState, useEffect } from "react";
 import { ReactNode, useState, useEffect, useRef } from "react";
 import { useDeviceMFAGuard } from "@/hooks/useDeviceMFAGuard";
 import { useAuth } from "@/hooks/useAuth";
