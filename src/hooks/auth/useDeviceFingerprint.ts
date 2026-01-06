@@ -1,55 +1,48 @@
 // ============================================
-// 🔐 useDeviceFingerprint — Fingerprint Isolado
-// Extraído do useAuth para Single Responsibility
+// 🔐 useDeviceFingerprint — DESATIVADO
+// Browser Fingerprinting REMOVIDO
+// Cada acesso gera hash ALEATÓRIO = sempre navegador novo
 // ============================================
 
 import { useCallback } from "react";
-import { collectEnhancedFingerprint } from "@/lib/enhancedFingerprint";
 
 export interface FingerprintResult {
   hash: string;
   data: Record<string, unknown>;
 }
 
+/**
+ * Hook DESATIVADO - retorna hash aleatório sempre
+ * Nenhum reconhecimento de navegador/dispositivo
+ */
 export function useDeviceFingerprint() {
   const collect = useCallback(async (): Promise<FingerprintResult> => {
-    try {
-      const result = await collectEnhancedFingerprint();
-      return { hash: result.hash, data: result.data as unknown as Record<string, unknown> };
-    } catch (err) {
-      console.warn('[Fingerprint] Versão reforçada falhou, usando básico:', err);
-      return collectBasicFingerprint();
-    }
+    // 🔓 DESATIVADO: Gera hash aleatório a cada chamada
+    // Cada acesso = navegador novo = sem reconhecimento
+    const randomHash = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+    
+    console.log('[Fingerprint] 🔓 DESATIVADO - hash aleatório gerado');
+    
+    return {
+      hash: randomHash,
+      data: {
+        deviceType: detectDeviceType(),
+        browser: detectBrowser(),
+        os: detectOS(),
+        _fingerprinting_disabled: true,
+      },
+    };
   }, []);
 
   return { collect };
 }
 
-// Fallback para fingerprint básico
-async function collectBasicFingerprint(): Promise<FingerprintResult> {
-  const data: Record<string, unknown> = {
-    screenWidth: window.screen.width,
-    screenHeight: window.screen.height,
-    hardwareConcurrency: navigator.hardwareConcurrency || 0,
-    deviceMemory: (navigator as any).deviceMemory || null,
-    userAgent: navigator.userAgent,
-    language: navigator.language,
-    platform: navigator.platform,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    deviceType: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) 
-      ? (/iPad|Tablet/i.test(navigator.userAgent) ? 'tablet' : 'mobile')
-      : 'desktop',
-    browser: detectBrowser(),
-    os: detectOS(),
-  };
-  
-  const hashSource = JSON.stringify(data);
-  const buffer = new TextEncoder().encode(hashSource);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  
-  return { hash, data };
+// Funções auxiliares mantidas para metadata básica (não usadas para identificação)
+function detectDeviceType(): 'desktop' | 'mobile' | 'tablet' {
+  const ua = navigator.userAgent;
+  if (/iPad|Tablet/i.test(ua)) return 'tablet';
+  if (/Mobi|Android|iPhone/i.test(ua)) return 'mobile';
+  return 'desktop';
 }
 
 function detectBrowser(): string {
@@ -67,6 +60,6 @@ function detectOS(): string {
   if (ua.includes('Mac')) return 'macOS';
   if (ua.includes('Linux')) return 'Linux';
   if (ua.includes('Android')) return 'Android';
-  if (ua.includes('iPhone')) return 'iOS';
+  if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
   return 'Unknown';
 }

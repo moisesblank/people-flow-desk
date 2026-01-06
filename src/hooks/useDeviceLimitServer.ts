@@ -1,14 +1,11 @@
 // ============================================
-// 🛡️ BLOCO 1 FIX: useDeviceLimitServer
-// Hook que usa Edge Function para registro server-side
-// Cliente envia dados BRUTOS, servidor gera hash final
+// 🔓 useDeviceLimitServer — DESATIVADO
+// Limite de dispositivos REMOVIDO
+// Retorna sucesso sempre sem verificações
 // ============================================
 
-import { useState, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useCallback } from 'react';
 import { useAuth } from './useAuth';
-import { collectFingerprintRawData, generateDeviceName, FingerprintRawData } from '@/lib/deviceFingerprintRaw';
-import { toast } from 'sonner';
 
 export interface Device {
   id: string;
@@ -22,16 +19,6 @@ export interface Device {
   is_current?: boolean;
 }
 
-interface DeviceLimitState {
-  isChecking: boolean;
-  deviceLimitExceeded: boolean;
-  devices: Device[];
-  currentDeviceId: string | null;
-  currentDeviceHash: string | null;
-  maxDevices: number;
-  isOwner: boolean;
-}
-
 export interface DeviceLimitResult {
   success: boolean;
   error?: string;
@@ -41,220 +28,49 @@ export interface DeviceLimitResult {
   deviceId?: string;
 }
 
+/**
+ * DESATIVADO: Retorna sucesso sempre
+ * Nenhuma verificação de limite de dispositivos
+ */
 export function useDeviceLimitServer() {
   const { user } = useAuth();
-  const isCheckingRef = useRef(false);
-  
-  const [state, setState] = useState<DeviceLimitState>({
+
+  const [state] = useState({
     isChecking: false,
     deviceLimitExceeded: false,
-    devices: [],
-    currentDeviceId: null,
-    currentDeviceHash: null,
-    maxDevices: 3,
-    isOwner: false,
+    devices: [] as Device[],
+    currentDeviceId: null as string | null,
+    currentDeviceHash: null as string | null,
+    maxDevices: 999, // Sem limite
+    isOwner: true, // Bypass total
   });
 
-  // Verificar/registrar dispositivo no login (SERVER-SIDE)
+  // DESATIVADO: Sempre retorna sucesso
   const checkAndRegisterDevice = useCallback(async (): Promise<DeviceLimitResult> => {
-    if (!user) return { success: false, error: 'NOT_AUTHENTICATED' };
-    if (isCheckingRef.current) return { success: false, error: 'ALREADY_CHECKING' };
+    console.log('[useDeviceLimitServer] 🔓 DESATIVADO - bypass total');
+    return { 
+      success: true, 
+      message: 'Device limit checking disabled',
+      deviceHash: crypto.randomUUID(),
+      deviceId: crypto.randomUUID(),
+    };
+  }, []);
 
-    isCheckingRef.current = true;
-    setState(prev => ({ ...prev, isChecking: true }));
-
-    try {
-      // 🔐 BLOCO 1: Coletar dados BRUTOS (sem hash)
-      const fingerprintData = await collectFingerprintRawData();
-      const deviceName = generateDeviceName(fingerprintData);
-
-      console.log('[DOGMA XI] 🔐 Registrando dispositivo via servidor...', {
-        deviceName,
-        deviceType: fingerprintData.deviceType,
-        browser: fingerprintData.browser,
-        os: fingerprintData.os,
-      });
-
-      // 🔐 Chamar Edge Function que gera hash no servidor
-      const { data, error } = await supabase.functions.invoke('register-device-server', {
-        body: {
-          fingerprintData,
-          deviceName,
-          deviceType: fingerprintData.deviceType,
-          browser: fingerprintData.browser,
-          os: fingerprintData.os,
-        },
-      });
-
-      if (error) {
-        console.error('[DOGMA XI] ❌ Erro na Edge Function:', error);
-        setState(prev => ({ ...prev, isChecking: false }));
-        isCheckingRef.current = false;
-        return { success: false, error: error.message };
-      }
-
-      // Tratar resposta
-      if (!data.success) {
-        if (data.error === 'DEVICE_LIMIT_EXCEEDED') {
-          console.warn('[DOGMA XI] ⚠️ Limite de dispositivos excedido:', data.currentCount);
-          
-          setState({
-            isChecking: false,
-            deviceLimitExceeded: true,
-            devices: (data.devices || []).map((d: any) => ({
-              ...d,
-              device_type: d.device_type || 'desktop'
-            })),
-            currentDeviceId: null,
-            currentDeviceHash: null,
-            maxDevices: data.maxDevices || 3,
-            isOwner: false,
-          });
-          
-          isCheckingRef.current = false;
-          return { 
-            success: false, 
-            error: 'DEVICE_LIMIT_EXCEEDED', 
-            devices: data.devices,
-          };
-        }
-
-        if (data.error === 'DEVICE_SPOOF_DETECTED') {
-          console.error('[DOGMA XI] 🚨 SPOOF DETECTADO:', data.reason);
-          toast.error('Dispositivo não reconhecido', {
-            description: 'Este dispositivo foi bloqueado por motivos de segurança.',
-          });
-          isCheckingRef.current = false;
-          return { success: false, error: 'DEVICE_SPOOF_DETECTED' };
-        }
-
-        if (data.error === 'INVALID_FINGERPRINT') {
-          console.error('[DOGMA XI] ❌ Fingerprint inválido:', data.reason);
-          isCheckingRef.current = false;
-          return { success: false, error: 'INVALID_FINGERPRINT' };
-        }
-
-        // Outro erro
-        isCheckingRef.current = false;
-        return { success: false, error: data.error };
-      }
-
-      // Sucesso - dispositivo registrado ou reconhecido
-      setState({
-        isChecking: false,
-        deviceLimitExceeded: false,
-        devices: [],
-        currentDeviceId: data.deviceId,
-        currentDeviceHash: data.deviceHash,
-        maxDevices: 3,
-        isOwner: data.isOwner || false,
-      });
-
-      console.log('[DOGMA XI] ✅ Dispositivo registrado (server-side):', {
-        deviceId: data.deviceId,
-        status: data.status,
-        deviceHash: data.deviceHash?.slice(0, 16) + '...',
-      });
-
-      isCheckingRef.current = false;
-      return { 
-        success: true, 
-        deviceId: data.deviceId,
-        deviceHash: data.deviceHash,
-      };
-
-    } catch (err) {
-      console.error('[DOGMA XI] ❌ Erro inesperado:', err);
-      setState(prev => ({ ...prev, isChecking: false }));
-      isCheckingRef.current = false;
-      return { success: false, error: 'UNEXPECTED_ERROR' };
-    }
-  }, [user]);
-
-  // 🔐 BLOCO 5: Desativar dispositivo E revogar sessões associadas
+  // DESATIVADO: Sempre retorna true
   const deactivateDevice = useCallback(async (deviceId: string): Promise<boolean> => {
-    if (!user) return false;
+    console.log('[useDeviceLimitServer] 🔓 deactivateDevice DESATIVADO');
+    return true;
+  }, []);
 
-    try {
-      console.log('[BLOCO 5] 🔐 Revogando dispositivo via Edge Function...', deviceId);
-      
-      // 🔐 Usar Edge Function que revoga dispositivo E sessões
-      const { data, error } = await supabase.functions.invoke('revoke-device', {
-        body: { deviceId, reason: 'user_manual_revoke' },
-      });
-
-      if (error) {
-        console.error('[BLOCO 5] ❌ Erro ao revogar dispositivo:', error);
-        toast.error('Erro ao remover dispositivo', {
-          description: 'Tente novamente ou contate o suporte.',
-        });
-        return false;
-      }
-
-      if (!data?.success) {
-        console.error('[BLOCO 5] ❌ Falha na revogação:', data?.error);
-        toast.error('Erro ao remover dispositivo', {
-          description: data?.error || 'Falha desconhecida',
-        });
-        return false;
-      }
-
-      // Atualizar lista local
-      setState(prev => ({
-        ...prev,
-        devices: prev.devices.filter(d => d.id !== deviceId),
-        deviceLimitExceeded: prev.devices.length - 1 < prev.maxDevices,
-      }));
-
-      toast.success('Dispositivo removido', {
-        description: `${data.sessionsRevoked || 0} sessão(ões) encerrada(s). Você pode registrar um novo dispositivo.`,
-      });
-
-      console.log('[BLOCO 5] ✅ Dispositivo revogado:', {
-        deviceId,
-        sessionsRevoked: data.sessionsRevoked,
-      });
-
-      return true;
-    } catch (err) {
-      console.error('[BLOCO 5] ❌ Erro inesperado:', err);
-      toast.error('Erro ao remover dispositivo');
-      return false;
-    }
-  }, [user]);
-
-  // Buscar dispositivos do usuário
+  // DESATIVADO: Retorna lista vazia
   const fetchUserDevices = useCallback(async (): Promise<Device[]> => {
-    if (!user) return [];
+    console.log('[useDeviceLimitServer] 🔓 fetchUserDevices DESATIVADO');
+    return [];
+  }, []);
 
-    try {
-      const { data, error } = await supabase
-        .from('user_devices')
-        .select('id, device_name, device_type, browser, os, last_seen_at, first_seen_at, is_active')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .order('last_seen_at', { ascending: false });
-
-      if (error) {
-        console.error('[DOGMA XI] Erro ao buscar dispositivos:', error);
-        return [];
-      }
-
-      const devices = (data || []).map(d => ({
-        ...d,
-        device_type: (d.device_type || 'desktop') as 'desktop' | 'mobile' | 'tablet',
-      }));
-
-      setState(prev => ({ ...prev, devices }));
-      return devices;
-    } catch {
-      return [];
-    }
-  }, [user]);
-
-  // Limpar estado de limite excedido
+  // DESATIVADO: Sem efeito
   const clearLimitExceeded = useCallback(() => {
-    setState(prev => ({ ...prev, deviceLimitExceeded: false }));
+    console.log('[useDeviceLimitServer] 🔓 clearLimitExceeded DESATIVADO');
   }, []);
 
   return {

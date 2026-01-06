@@ -1,11 +1,9 @@
 // ============================================
-// 🛡️ BLOCO 3: VÍNCULO USUÁRIO × APARELHO
-// Registro de dispositivo ANTES da sessão
-// Fail-closed: bloqueia login se limite excedido
+// 🔓 deviceRegistration — DESATIVADO
+// Registro de dispositivos REMOVIDO
+// Retorna sucesso sempre
 // ============================================
 
-import { supabase } from '@/integrations/supabase/client';
-import { collectFingerprintRawData, generateDeviceName } from '@/lib/deviceFingerprintRaw';
 import type { DeviceGatePayload } from '@/state/deviceGateStore';
 import type { SameTypeReplacementPayload } from '@/state/sameTypeReplacementStore';
 
@@ -22,7 +20,6 @@ export interface DeviceRegistrationResult {
   isNewDevice?: boolean;
   deviceCount?: number;
   maxDevices?: number;
-  // 🔐 PIECE 1: Aviso progressivo
   notice?: DeviceNotice;
   devices?: Array<{
     id?: string;
@@ -36,186 +33,39 @@ export interface DeviceRegistrationResult {
     first_seen_at?: string;
     is_recommended_to_disconnect?: boolean;
   }>;
-  // Dispositivo atual tentando entrar (para o Gate)
   currentDevice?: {
     device_type: string;
     os_name?: string;
     browser_name?: string;
     label?: string;
   };
-  // Payload completo para o Gate
   gatePayload?: DeviceGatePayload;
-  // 🛡️ BEYOND_THE_3_DEVICES: Payload para substituição do mesmo tipo
   sameTypePayload?: SameTypeReplacementPayload;
 }
 
 /**
- * 🔐 BLOCO 3: Registrar dispositivo ANTES de criar sessão
- * 
- * REGRAS:
- * - VINCULO_FEITO_ANTES_DA_CRIACAO_DA_SESSAO
- * - APARELHO_JA_REGISTRADO_NAO_INCREMENTA_CONTADOR
- * - NOVO_APARELHO_INCREMENTA_CONTADOR
- * - VINCULO_PERSISTIDO_NO_BACKEND
- * - IMPOSSIVEL_VINCULO_SEM_AUTENTICACAO
+ * DESATIVADO: Retorna sucesso sempre
+ * Nenhum registro de dispositivo
  */
 export async function registerDeviceBeforeSession(): Promise<DeviceRegistrationResult> {
-  try {
-    // 🔐 Coletar dados BRUTOS (sem hash)
-    const fingerprintData = await collectFingerprintRawData();
-    const deviceName = generateDeviceName(fingerprintData);
-
-    console.log('[BLOCO 3] 🔐 Registrando dispositivo ANTES da sessão...', {
-      deviceName,
-      deviceType: fingerprintData.deviceType,
-      browser: fingerprintData.browser,
-      os: fingerprintData.os,
-    });
-
-    // 🔐 Chamar Edge Function que gera hash no servidor
-    const { data, error } = await supabase.functions.invoke('register-device-server', {
-      body: {
-        fingerprintData,
-        deviceName,
-        deviceType: fingerprintData.deviceType,
-        browser: fingerprintData.browser,
-        os: fingerprintData.os,
-      },
-    });
-
-    if (error) {
-      console.error('[BLOCO 3] ❌ Erro na Edge Function:', error);
-      return { success: false, error: error.message };
-    }
-
-    // Tratar resposta
-    if (!data.success) {
-      // 🛡️ BEYOND_THE_3_DEVICES: Substituição do mesmo tipo
-      if (data.error === 'SAME_TYPE_REPLACEMENT_REQUIRED' || data.code === 'SAME_TYPE_REPLACEMENT_REQUIRED') {
-        console.log('[BLOCO 3] 🔄 BEYOND_THE_3_DEVICES: Substituição do mesmo tipo oferecida');
-        
-        const sameTypePayload: SameTypeReplacementPayload = {
-          code: 'SAME_TYPE_REPLACEMENT_REQUIRED',
-          message: data.message || 'Substituição de dispositivo disponível',
-          current_device_type: data.current_device_type,
-          current_device: data.current_device,
-          existing_same_type_device: data.existing_same_type_device,
-          new_device_hash: data.new_device_hash,
-        };
-        
-        return {
-          success: false,
-          error: 'SAME_TYPE_REPLACEMENT_REQUIRED',
-          sameTypePayload,
-        };
-      }
-      
-      if (data.error === 'DEVICE_LIMIT_EXCEEDED' || data.code === 'DEVICE_LIMIT_EXCEEDED') {
-        console.warn('[BLOCO 3] ⚠️ LIMITE DE DISPOSITIVOS EXCEDIDO:', data.current_devices || data.currentCount);
-        
-        // 🛡️ Construir payload completo para o DeviceLimitGate
-        const gatePayload: DeviceGatePayload = {
-          code: 'DEVICE_LIMIT_EXCEEDED',
-          message: data.message || 'Você ultrapassou o limite de dispositivos da sua conta',
-          max_devices: data.max_devices || data.maxDevices || 3,
-          current_devices: data.current_devices || data.currentCount || 3,
-          current_device: data.current_device,
-          devices: (data.devices || []).map((d: any) => ({
-            device_id: d.device_id || d.id,
-            label: d.label || d.device_name || `${d.browser || 'Navegador'} • ${d.os || 'Sistema'}`,
-            device_type: d.device_type || 'desktop',
-            last_seen_at: d.last_seen_at,
-            first_seen_at: d.first_seen_at,
-            browser: d.browser,
-            os: d.os,
-            is_recommended_to_disconnect: d.is_recommended_to_disconnect,
-          })),
-          action_required: data.action_required || 'REVOKE_ONE_DEVICE_TO_CONTINUE',
-        };
-        
-        return {
-          success: false,
-          error: 'DEVICE_LIMIT_EXCEEDED',
-          maxDevices: gatePayload.max_devices,
-          deviceCount: gatePayload.current_devices,
-          devices: data.devices || [],
-          currentDevice: data.current_device,
-          gatePayload,
-        };
-      }
-
-      if (data.error === 'DEVICE_SPOOF_DETECTED') {
-        console.error('[BLOCO 3] 🚨 SPOOF DETECTADO:', data.reason);
-        return { success: false, error: 'DEVICE_SPOOF_DETECTED' };
-      }
-
-      if (data.error === 'INVALID_FINGERPRINT') {
-        console.error('[BLOCO 3] ❌ Fingerprint inválido:', data.reason);
-        return { success: false, error: 'INVALID_FINGERPRINT' };
-      }
-
-      return { success: false, error: data.error };
-    }
-
-    // Sucesso
-    const isNewDevice = data.status === 'NEW_DEVICE_REGISTERED';
-    
-    console.log('[BLOCO 3] ✅ Dispositivo vinculado:', {
-      deviceId: data.deviceId,
-      isNewDevice,
-      deviceHash: data.deviceHash?.slice(0, 16) + '...',
-    });
-
-    return {
-      success: true,
-      deviceId: data.deviceId,
-      deviceHash: data.deviceHash,
-      isNewDevice,
-      deviceCount: data.deviceCount,
-      // 🔐 PIECE 1: Propagar aviso progressivo
-      notice: data.notice || undefined,
-    };
-
-  } catch (err) {
-    console.error('[BLOCO 3] ❌ Erro inesperado:', err);
-    return { success: false, error: 'UNEXPECTED_ERROR' };
-  }
+  console.log('[deviceRegistration] 🔓 DESATIVADO - bypass total');
+  
+  return {
+    success: true,
+    deviceId: crypto.randomUUID(),
+    deviceHash: crypto.randomUUID(),
+    isNewDevice: false,
+    deviceCount: 1,
+    maxDevices: 999,
+  };
 }
 
 /**
- * Formatar mensagem de erro para o usuário
+ * DESATIVADO: Retorna mensagem genérica
  */
 export function getDeviceErrorMessage(error: string): { title: string; description: string } {
-  switch (error) {
-    case 'DEVICE_LIMIT_EXCEEDED':
-      return {
-        title: 'Limite de Dispositivos',
-        description: 'Você atingiu o limite de 3 dispositivos. Remova um dispositivo para continuar.',
-      };
-    case 'SAME_TYPE_REPLACEMENT_REQUIRED':
-      return {
-        title: 'Novo Dispositivo Detectado',
-        description: 'Detectamos um novo dispositivo do mesmo tipo. Você pode substituí-lo.',
-      };
-    case 'DEVICE_SPOOF_DETECTED':
-      return {
-        title: 'Dispositivo Bloqueado',
-        description: 'Este dispositivo foi bloqueado por motivos de segurança.',
-      };
-    case 'INVALID_FINGERPRINT':
-      return {
-        title: 'Erro de Identificação',
-        description: 'Não foi possível identificar seu dispositivo. Tente novamente.',
-      };
-    case 'AUTH_REQUIRED':
-      return {
-        title: 'Autenticação Necessária',
-        description: 'Faça login para registrar seu dispositivo.',
-      };
-    default:
-      return {
-        title: 'Erro no Registro',
-        description: 'Ocorreu um erro ao registrar seu dispositivo. Tente novamente.',
-      };
-  }
+  return {
+    title: 'Dispositivo não verificado',
+    description: 'Verificação de dispositivo desativada.',
+  };
 }
