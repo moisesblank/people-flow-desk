@@ -3,9 +3,9 @@
 // Exige 2FA uma vez por dispositivo novo
 // Validade: 24 horas por device_hash
 // NÃO TOCA em login/sessão/dispositivo
-// ⏱️ P0 FIX v12.2: Timeout de 10s para evitar tela preta
 // ============================================
 
+import { ReactNode, useState, useEffect } from "react";
 import { ReactNode, useState, useEffect, useRef } from "react";
 import { useDeviceMFAGuard } from "@/hooks/useDeviceMFAGuard";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,38 +16,49 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { motion } from "framer-motion";
 import { generateDeviceName, detectDeviceType } from "@/lib/deviceFingerprint";
 
+// ⏱️ P0 CRITICAL FIX: Timeout no nível do COMPONENTE para garantir que nunca trave
+const COMPONENT_TIMEOUT_MS = 10000;
+
 interface DeviceMFAGuardProps {
   children: ReactNode;
 }
-
-// ⏱️ P0 FIX: Timeout para evitar loading infinito
-const MFA_GUARD_TIMEOUT_MS = 10000;
 
 export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
   const { user } = useAuth();
   const { isChecking, isVerified, needsMFA, error, deviceHash, onVerificationComplete } = useDeviceMFAGuard();
 
-  const [showModal, setShowModal] = useState(false);
-  const [deviceInfo, setDeviceInfo] = useState({ name: "", type: "desktop" as "desktop" | "mobile" | "tablet" });
-
-  // ⏱️ P0 FIX: Timeout de segurança
+  // ⏱️ P0 CRITICAL FIX: Timeout de segurança no nível do componente
   const [forceBypass, setForceBypass] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // ⏱️ P0 FIX: Se demorar mais de 10s, liberar acesso
   useEffect(() => {
-    if (!user || isVerified || forceBypass || !isChecking) {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    // Se já passou ou não tem usuário, não precisa de timeout
+    if (!user || isVerified || forceBypass) {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
       return;
     }
+
+    // Timeout de segurança: se demorar muito, liberar
     timeoutRef.current = setTimeout(() => {
-      console.warn("[DeviceMFAGuard] ⚠️ Timeout 10s - forçando bypass");
-      setForceBypass(true);
-    }, MFA_GUARD_TIMEOUT_MS);
+      if (isChecking && !isVerified) {
+        console.warn("[DeviceMFAGuard] ⚠️ COMPONENT TIMEOUT 10s - forçando bypass");
+        setForceBypass(true);
+      }
+    }, COMPONENT_TIMEOUT_MS);
+
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     };
   }, [user, isChecking, isVerified, forceBypass]);
+
+  const [showModal, setShowModal] = useState(false);
+  const [deviceInfo, setDeviceInfo] = useState({ name: "", type: "desktop" as "desktop" | "mobile" | "tablet" });
 
   // Detectar informações do dispositivo
   useEffect(() => {
@@ -86,9 +97,9 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
     return <>{children}</>;
   }
 
-  // ⏱️ P0 FIX: Se timeout atingido, liberar
+  // ⏱️ P0 CRITICAL FIX: Se forceBypass, liberar imediatamente
   if (forceBypass) {
-    console.log("[DeviceMFAGuard] 🚨 Bypass ativo - liberando acesso");
+    console.log("[DeviceMFAGuard] 🚨 Force bypass ativo - liberando acesso");
     return <>{children}</>;
   }
 
