@@ -387,6 +387,14 @@ export default function Auth() {
   const [resetToken, setResetToken] = useState<string | null>(null);
   const [resetTokenEmail, setResetTokenEmail] = useState<string | null>(null);
   const [validatingToken, setValidatingToken] = useState(false);
+  
+  // 🎯 P0 FIX v3: Estado para first_access_token (NUNCA expira)
+  const [firstAccessToken, setFirstAccessToken] = useState<string | null>(null);
+  const [firstAccessData, setFirstAccessData] = useState<{
+    email?: string;
+    nome?: string;
+    role?: string;
+  } | null>(null);
 
   // ✅ P0 FIX: Log apenas uma vez na montagem (não no corpo do componente!)
   useEffect(() => {
@@ -402,6 +410,86 @@ export default function Auth() {
   useEffect(() => {
     console.log("[AUTH] 2. Verificando parâmetros de URL...");
     const urlParams = new URLSearchParams(window.location.search);
+
+    // 🎯 P0 FIX v3: Detectar first_access_token (token persistente que NUNCA expira)
+    const firstAccessTokenParam = urlParams.get("first_access_token");
+    if (firstAccessTokenParam) {
+      console.log("[AUTH] 🔐 Token de primeiro acesso detectado (persistente)");
+      setFirstAccessToken(firstAccessTokenParam);
+      setValidatingToken(true);
+      setIsCheckingSession(false);
+
+      // Validar e consumir token
+      const validateAndConsumeToken = async () => {
+        try {
+          const { data, error } = await supabase.functions.invoke("validate-first-access-token", {
+            body: { token: firstAccessTokenParam, consume: true },
+          });
+
+          if (error || !data?.valid) {
+            console.error("[AUTH] Token de primeiro acesso inválido:", error || data);
+            
+            // Se já foi usado, mostrar mensagem amigável
+            if (data?.already_used) {
+              toast.info("Este link já foi utilizado", {
+                description: "Faça login normalmente com seu e-mail e senha.",
+              });
+              // Preencher email para facilitar
+              if (data?.email) {
+                setFormData(prev => ({ ...prev, email: data.email }));
+              }
+            } else {
+              toast.error("Link de acesso inválido", {
+                description: "Entre em contato com o suporte.",
+              });
+            }
+            
+            setFirstAccessToken(null);
+          } else {
+            console.log("[AUTH] ✅ Token de primeiro acesso válido para:", data.email);
+            setFirstAccessData({
+              email: data.email,
+              nome: data.nome,
+              role: data.role,
+            });
+            
+            // Auto-login com senha temporária
+            if (data.temp_password && data.email) {
+              console.log("[AUTH] 🚀 Fazendo auto-login com senha temporária...");
+              
+              const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: data.email,
+                password: data.temp_password,
+              });
+              
+              if (signInError) {
+                console.error("[AUTH] Erro no auto-login:", signInError);
+                toast.error("Erro ao acessar automaticamente", {
+                  description: "Por favor, faça login manualmente.",
+                });
+                setFormData(prev => ({ ...prev, email: data.email || "" }));
+              } else {
+                console.log("[AUTH] ✅ Auto-login bem-sucedido! Redirecionando para /primeiro-acesso");
+                toast.success(`Bem-vindo(a), ${data.nome || "Aluno"}!`, {
+                  description: "Vamos configurar seu acesso.",
+                });
+                navigate("/primeiro-acesso", { replace: true });
+                return;
+              }
+            }
+          }
+        } catch (err) {
+          console.error("[AUTH] Erro ao validar token de primeiro acesso:", err);
+          toast.error("Erro ao validar link de acesso");
+          setFirstAccessToken(null);
+        } finally {
+          setValidatingToken(false);
+        }
+      };
+
+      validateAndConsumeToken();
+      return;
+    }
 
     // 🎯 P0 FIX: Detectar reset_token (novo fluxo customizado)
     const customToken = urlParams.get("reset_token");
