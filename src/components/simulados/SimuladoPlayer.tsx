@@ -124,6 +124,8 @@ export function SimuladoPlayer({
   });
 
   // Respostas
+  const questionIds = useMemo(() => questions.map(q => q.id), [questions]);
+
   const {
     answers,
     selectAnswer,
@@ -131,7 +133,7 @@ export function SimuladoPlayer({
     loadExistingAnswers,
   } = useSimuladoAnswers({
     attemptId: attemptState.attemptId,
-    questionIds: questions.map(q => q.id),
+    questionIds,
     enabled: currentState === SimuladoState.RUNNING,
   });
 
@@ -242,20 +244,22 @@ export function SimuladoPlayer({
   // Handler: Finalizar tentativa (COM PROTEÇÃO DE LOCK)
   const handleFinish = useCallback(async () => {
     // Proteger contra duplo clique
-    await withFinishLock(async () => {
+    const lockResult = await withFinishLock(async () => {
       setIsFinishing(true);
       try {
         const result = await finishAttempt();
         if (result) {
-          logger.logFinish(attemptState.attemptId || "", { 
-            score: result.score, 
-            isScoredForRanking: result.isScoredForRanking 
+          logger.logFinish(attemptState.attemptId || "", {
+            score: result.score,
+            isScoredForRanking: result.isScoredForRanking,
           });
-          
+
           const simuladoResult: SimuladoResult = {
             ...result,
             percentage: calculatePercentage(result.correctAnswers, questions.length),
-            passed: calculatePercentage(result.correctAnswers, questions.length) >= (simulado?.passing_score || 60),
+            passed:
+              calculatePercentage(result.correctAnswers, questions.length) >=
+              (simulado?.passing_score || 60),
           };
           setLocalResult(simuladoResult);
           onComplete?.(simuladoResult);
@@ -267,7 +271,15 @@ export function SimuladoPlayer({
         setIsFinishing(false);
       }
     });
-  }, [finishAttempt, questions.length, simulado?.passing_score, onComplete, refresh, withFinishLock, logger, attemptState.attemptId]);
+
+    // Se o lock bloqueou a ação, dar feedback claro (antes parecia "não acontece nada")
+    if (lockResult === null) {
+      toast({
+        title: "Finalização em andamento",
+        description: "Aguarde alguns segundos…",
+      });
+    }
+  }, [finishAttempt, questions.length, simulado?.passing_score, onComplete, refresh, withFinishLock, logger, attemptState.attemptId, toast]);
 
   // Handler: Tempo esgotado
   const handleTimeUp = useCallback(() => {
@@ -483,6 +495,7 @@ export function SimuladoPlayer({
           isRetake={isRetake}
           gabaritoReleasedAt={simulado.results_released_at}
           gabaritoIn={gabaritoIn || undefined}
+          onReview={() => refresh()}
           onExit={handleExit}
         />
       );

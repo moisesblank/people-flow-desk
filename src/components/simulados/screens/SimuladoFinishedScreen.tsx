@@ -20,6 +20,7 @@ interface SimuladoFinishedScreenProps {
   isRetake: boolean;
   gabaritoReleasedAt?: string;
   gabaritoIn?: number; // segundos até liberação
+  onReview?: () => void;
   onExit?: () => void;
 }
 
@@ -29,9 +30,11 @@ export function SimuladoFinishedScreen({
   isRetake,
   gabaritoReleasedAt,
   gabaritoIn,
+  onReview,
   onExit,
 }: SimuladoFinishedScreenProps) {
   const gabaritoDate = gabaritoReleasedAt ? new Date(gabaritoReleasedAt) : null;
+  const isGabaritoAvailable = !gabaritoIn || gabaritoIn <= 0;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
@@ -62,10 +65,8 @@ export function SimuladoFinishedScreen({
       <h1 className="text-2xl md:text-3xl font-bold mb-2">
         {result.passed ? "Parabéns!" : "Simulado Finalizado"}
       </h1>
-      <p className="text-muted-foreground mb-2">
-        {simulado.title}
-      </p>
-      
+      <p className="text-muted-foreground mb-2">{simulado.title}</p>
+
       {/* Aviso Retake */}
       {isRetake && (
         <p className="text-sm text-amber-400 mb-4">
@@ -122,20 +123,23 @@ export function SimuladoFinishedScreen({
       )}
 
       {/* Gabarito disponível agora */}
-      {(!gabaritoIn || gabaritoIn <= 0) && (
-        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mb-8">
-          <p className="text-green-400 font-medium">
-            ✓ Gabarito já está disponível!
-          </p>
+      {isGabaritoAvailable && (
+        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mb-6 text-center w-full max-w-md">
+          <p className="text-green-400 font-medium">✓ Gabarito já está disponível!</p>
         </div>
       )}
 
-      {/* Ação */}
-      {onExit && (
-        <Button onClick={onExit} variant="outline">
-          Voltar aos Simulados
-        </Button>
-      )}
+      {/* Ações */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        {isGabaritoAvailable && onReview && (
+          <Button onClick={onReview}>Ver gabarito</Button>
+        )}
+        {onExit && (
+          <Button onClick={onExit} variant="outline">
+            Voltar aos Simulados
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

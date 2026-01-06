@@ -274,6 +274,7 @@ export function determineSimuladoState(
   const startsAt = simulado.starts_at ? new Date(simulado.starts_at) : null;
   const endsAt = simulado.ends_at ? new Date(simulado.ends_at) : null;
   const gabaritoAt = simulado.results_released_at ? new Date(simulado.results_released_at) : null;
+  const isGabaritoAvailable = !gabaritoAt || now >= gabaritoAt;
   
   // WAITING: antes de starts_at
   if (startsAt && now < startsAt) {
@@ -301,18 +302,12 @@ export function determineSimuladoState(
     case "ABANDONED":
       // Verificar se é retake
       if (!attempt.is_scored_for_ranking) {
-        // Verificar gabarito
-        if (gabaritoAt && now >= gabaritoAt) {
-          return SimuladoState.REVIEW;
-        }
-        return SimuladoState.DISQUALIFIED;
+        // Retake: pode revisar quando gabarito estiver disponível
+        return isGabaritoAvailable ? SimuladoState.REVIEW : SimuladoState.DISQUALIFIED;
       }
       
       // Primeira tentativa válida
-      if (gabaritoAt && now >= gabaritoAt) {
-        return SimuladoState.REVIEW;
-      }
-      return SimuladoState.FINISHED_SCORE_ONLY;
+      return isGabaritoAvailable ? SimuladoState.REVIEW : SimuladoState.FINISHED_SCORE_ONLY;
       
     default:
       return SimuladoState.ERROR;
