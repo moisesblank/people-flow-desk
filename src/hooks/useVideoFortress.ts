@@ -463,19 +463,9 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
       const isAlt = e.altKey;
       const key = e.key.toLowerCase();
 
-      // F12
-      if (e.key === 'F12') {
-        e.preventDefault();
-        reportViolation('devtools_open', 3, { key: 'F12' });
-        return;
-      }
-
-      // Ctrl+Shift+I/J/C (DevTools)
-      if (isCtrl && isShift && ['i', 'j', 'c'].includes(key)) {
-        e.preventDefault();
-        reportViolation('devtools_open', 4, { key: `Ctrl+Shift+${key.toUpperCase()}` });
-        return;
-      }
+      // 🚨 PROTEÇÃO DEVTOOLS DESATIVADA POR ORDEM DO OWNER (2026-01-06)
+      // F12 - PERMITIDO
+      // Ctrl+Shift+I/J/C (DevTools) - PERMITIDO
 
       // Ctrl+S/P/U (Save/Print/Source)
       if (isCtrl && ['s', 'p', 'u'].includes(key)) {
