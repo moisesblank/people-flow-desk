@@ -15,6 +15,7 @@ import { ThemeProvider } from "next-themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LeiVIIEnforcer } from "@/components/security/LeiVIIEnforcer";
+import { FailOpenBoundary } from "@/components/security/FailOpenBoundary";
 import { PerformanceProvider, PerformanceStyles } from "@/components/performance/PerformanceProvider";
 import { useGodModeStore } from "@/stores/godModeStore";
 import { useReactiveStore } from "@/stores/reactiveStore";
@@ -96,13 +97,15 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
         <PerformanceStyles />
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <LeiVIIEnforcer>
-              <TooltipProvider>
-                <StoreInitializer />
-                <PresenceInitializer />
-                {children}
-              </TooltipProvider>
-            </LeiVIIEnforcer>
+            <FailOpenBoundary name="LeiVIIEnforcer">
+              <LeiVIIEnforcer>
+                <TooltipProvider>
+                  <StoreInitializer />
+                  <PresenceInitializer />
+                  {children}
+                </TooltipProvider>
+              </LeiVIIEnforcer>
+            </FailOpenBoundary>
           </AuthProvider>
         </QueryClientProvider>
       </PerformanceProvider>

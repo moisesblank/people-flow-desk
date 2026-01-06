@@ -51,12 +51,12 @@ interface LeiVIIEnforcerProps {
  * 🔴 P0: FAIL-OPEN - se der erro, renderiza children normalmente
  * 🔴 P0: Hooks SEMPRE no nível superior (React Rules of Hooks)
  */
-export const LeiVIIEnforcer = memo(({ children }: LeiVIIEnforcerProps) => {
+const InnerLeiVIIEnforcer = memo(({ children }: LeiVIIEnforcerProps) => {
   // ═══════════════════════════════════════════════════════════════════════════
   // 🔴 P0: TODOS OS HOOKS NO NÍVEL SUPERIOR (OBRIGATÓRIO - RULES OF HOOKS)
   // ═══════════════════════════════════════════════════════════════════════════
 
-  const [hasError, setHasError] = useState(false);
+  const [hasError] = useState(false);
   const { user } = useAuth();
 
   // Verificar se é owner (MASTER - bypass total)
@@ -214,6 +214,16 @@ export const LeiVIIEnforcer = memo(({ children }: LeiVIIEnforcerProps) => {
   return <>{children}</>;
 });
 
-LeiVIIEnforcer.displayName = "LeiVIIEnforcer";
+InnerLeiVIIEnforcer.displayName = "InnerLeiVIIEnforcer";
+
+// ✅ P0: Try/catch no componente público (fail-open absoluto)
+export function LeiVIIEnforcer({ children }: LeiVIIEnforcerProps) {
+  try {
+    return <InnerLeiVIIEnforcer>{children}</InnerLeiVIIEnforcer>;
+  } catch (error) {
+    console.error("[LeiVIIEnforcer] Erro capturado:", error);
+    return <>{children}</>;
+  }
+}
 
 export default LeiVIIEnforcer;
