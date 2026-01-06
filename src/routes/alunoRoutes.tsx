@@ -46,9 +46,10 @@ const AlunoCertificados = lazy(() => import("@/pages/aluno/AlunoPlaceholders").t
 
 export const alunoRoutes = (
   <>
-    {/* Alias case-insensitive: evita travar em /ALUNOS e /ALUNOS/* */}
-    <Route path="/ALUNOS/*" element={<ProtectedPage><CaseInsensitiveAlunosRedirect /></ProtectedPage>} />
+    {/* P0: Alias case-insensitive ANTES de qualquer outra rota /ALUNOS */}
+    {/* Rota exata /ALUNOS deve vir ANTES de /ALUNOS/* para evitar conflito */}
     <Route path="/ALUNOS" element={<Navigate to="/alunos" replace />} />
+    <Route path="/ALUNOS/*" element={<CaseInsensitiveAlunosRedirect />} />
     <Route path="/alunos" element={<ProtectedPage><AlunosRouteSwitcher /></ProtectedPage>} />
     <Route path="/alunos/dashboard" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
     {/* Canonical - Livros Web */}
