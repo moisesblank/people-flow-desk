@@ -8,6 +8,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { generateDeviceFingerprint } from "@/lib/deviceFingerprint";
+import { registerDeviceBeforeSession } from "@/lib/deviceRegistration";
 
 export interface DeviceMFAGuardState {
   isChecking: boolean;
@@ -162,7 +163,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         return;
       }
 
-      // Registra verificação no banco para ESTE dispositivo
+      // 1) Registrar verificação no banco para ESTE device_hash (24h)
       if (user?.id && state.deviceHash) {
         try {
           const { data, error } = await supabase.rpc("register_device_mfa_verification", {
@@ -181,7 +182,20 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         }
       }
 
-      // 🔐 Salvar no cache global
+      // 2) Registrar o DISPOSITIVO (user_devices) após 2FA (fora do onboarding)
+      const deviceReg = await registerDeviceBeforeSession();
+      if (!deviceReg.success) {
+        console.error("[DeviceMFAGuard] ❌ Falha ao registrar dispositivo pós-2FA:", deviceReg.error);
+        setState((prev) => ({
+          ...prev,
+          needsMFA: true,
+          isVerified: false,
+          error: "Falha ao cadastrar este dispositivo. Faça login novamente.",
+        }));
+        return;
+      }
+
+      // 3) Cache global
       if (user?.id) {
         globalMFACache.set(user.id, {
           verified: true,
