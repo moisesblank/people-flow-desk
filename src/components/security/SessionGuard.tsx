@@ -1,10 +1,12 @@
 // ============================================
-// 🛡️ EVANGELHO DA SEGURANÇA v2.2
+// 🛡️ EVANGELHO DA SEGURANÇA v2.3
 // SESSION_BINDING_ENFORCEMENT — Revogação INSTANTÂNEA via Realtime
 // Frontend NUNCA revoga sessões — só reage a eventos do backend
+// 🎯 P0 FIX v4: Ignora conflitos durante primeiro acesso/onboarding
 // ============================================
 
 import { useEffect, useRef, useCallback, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { SessionRevokedOverlay } from "./SessionRevokedOverlay";
@@ -12,12 +14,21 @@ import { SessionRevokedOverlay } from "./SessionRevokedOverlay";
 const SESSION_TOKEN_KEY = "matriz_session_token";
 const SESSION_CHECK_INTERVAL = 30000; // 30s
 
+// 🎯 Rotas onde NÃO devemos mostrar conflito de sessão (primeiro acesso)
+const ONBOARDING_ROUTES = [
+  '/primeiro-acesso',
+  '/auth',
+  '/security/device-limit',
+  '/security/same-type-replacement',
+];
+
 interface SessionGuardProps {
   children: React.ReactNode;
 }
 
 export function SessionGuard({ children }: SessionGuardProps) {
   const { user, signOut } = useAuth();
+  const location = useLocation();
   const isValidatingRef = useRef(false);
   const isBootstrappingRef = useRef(false);
   const bootstrapAttemptsRef = useRef(0);
@@ -32,16 +43,28 @@ export function SessionGuard({ children }: SessionGuardProps) {
   // 🏛️ CONSTITUIÇÃO: OWNER BYPASS ABSOLUTO para conflitos de sessão
   const isOwner = user?.email?.toLowerCase() === 'moisesblank@gmail.com';
   const MAX_BOOTSTRAP_ATTEMPTS = 3;
+  
+  // 🎯 P0 FIX v4: Detectar se estamos em rota de onboarding
+  const isOnboardingRoute = ONBOARDING_ROUTES.some(route => 
+    location.pathname.startsWith(route)
+  );
 
   /**
    * Exibe overlay visual e prepara logout
    * SOMENTE quando backend confirma revogação por novo dispositivo
    * 🏛️ OWNER BYPASS: Nunca mostra overlay para Owner
+   * 🎯 P0 FIX v4: Nunca mostra overlay durante onboarding
    */
   const handleDeviceRevocation = useCallback(() => {
     // 🏛️ CONSTITUIÇÃO: Owner nunca é bloqueado por conflito de sessão
     if (isOwner) {
       console.log("[SessionGuard] ✅ OWNER BYPASS - conflito de sessão ignorado");
+      return;
+    }
+    
+    // 🎯 P0 FIX v4: Ignorar conflitos durante primeiro acesso
+    if (isOnboardingRoute) {
+      console.log("[SessionGuard] ✅ ONBOARDING BYPASS - conflito de sessão ignorado durante primeiro acesso");
       return;
     }
     
@@ -63,7 +86,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
     // Mostrar overlay visual
     setShowRevokedOverlay(true);
-  }, [isOwner]);
+  }, [isOwner, isOnboardingRoute]);
 
   /**
    * Callback quando usuário fecha o overlay
@@ -77,12 +100,19 @@ export function SessionGuard({ children }: SessionGuardProps) {
    * Limpa TUDO e força logout — SOMENTE quando backend confirma revogação
    * Guarda contra múltiplos logouts simultâneos
    * 🏛️ OWNER BYPASS: Owner nunca é deslogado por conflito de sessão
+   * 🎯 P0 FIX v4: Ignorar conflitos durante onboarding
    */
   const handleBackendRevocation = useCallback(
     async (reason: string, isDeviceChange = false) => {
       // 🏛️ CONSTITUIÇÃO: Owner tem bypass para conflitos de sessão
       if (isOwner && isDeviceChange) {
         console.log("[SessionGuard] ✅ OWNER BYPASS - revogação por dispositivo ignorada:", reason);
+        return;
+      }
+      
+      // 🎯 P0 FIX v4: Ignorar conflitos durante primeiro acesso
+      if (isOnboardingRoute && isDeviceChange) {
+        console.log("[SessionGuard] ✅ ONBOARDING BYPASS - revogação por dispositivo ignorada durante primeiro acesso");
         return;
       }
       
@@ -110,7 +140,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
       await signOut();
     },
-    [signOut, handleDeviceRevocation, isOwner],
+    [signOut, handleDeviceRevocation, isOwner, isOnboardingRoute],
   );
 
   const detectClientDeviceMeta = useCallback(() => {
@@ -143,9 +173,17 @@ export function SessionGuard({ children }: SessionGuardProps) {
    * criamos a sessão única via backend (fonte da verdade).
    *
    * 🔧 FIX CRÍTICO: Falha de bootstrap NUNCA força logout!
+   * 🎯 P0 FIX v4: NÃO fazer bootstrap durante onboarding (criação de sessão é feita lá)
    */
   const bootstrapSessionTokenIfMissing = useCallback(async () => {
     if (!user) return;
+    
+    // 🎯 P0 FIX v4: Não fazer bootstrap durante primeiro acesso
+    // A sessão será criada na etapa 4 do onboarding (TrustDeviceStage)
+    if (isOnboardingRoute) {
+      console.log("[SessionGuard] ⏸️ Bootstrap suspenso - em rota de onboarding");
+      return;
+    }
 
     const existing = localStorage.getItem(SESSION_TOKEN_KEY);
     if (existing) return;
@@ -192,7 +230,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
     } finally {
       isBootstrappingRef.current = false;
     }
-  }, [user, detectClientDeviceMeta]);
+  }, [user, isOnboardingRoute, detectClientDeviceMeta]);
 
   /**
    * Validar sessão consultando o BACKEND — nunca revoga por timer
