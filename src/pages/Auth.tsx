@@ -512,40 +512,64 @@ export default function Auth() {
     const pendingKey = "matriz_2fa_pending";
     const pendingUserKey = "matriz_2fa_user";
 
-    // 🎯 FIX CRÍTICO: Verificar se veio de link de recovery ANTES de qualquer coisa
-    const urlParams = new URLSearchParams(window.location.search);
-    const hash = window.location.hash;
-    const isRecoveryFromUrl = urlParams.get('action') === 'set-password' 
-      || urlParams.get('reset') === 'true' 
-      || urlParams.get('type') === 'recovery'
-      || urlParams.get('reset_token')
-      || hash.includes('type=recovery');
-    
-    if (isRecoveryFromUrl) {
-      console.log('[AUTH] 🔐 Link de recovery detectado - mostrando formulário');
+    // Rodar async fora do corpo do effect (TS/React-safe)
+    void (async () => {
+      // 🎯 FIX CRÍTICO: Verificar se veio de link de recovery ANTES de qualquer coisa
+      const urlParams = new URLSearchParams(window.location.search);
+      const hash = window.location.hash;
+      const isRecoveryFromUrl =
+        urlParams.get('action') === 'set-password' ||
+        urlParams.get('reset') === 'true' ||
+        urlParams.get('type') === 'recovery' ||
+        Boolean(urlParams.get('reset_token')) ||
+        hash.includes('type=recovery');
+
+      if (isRecoveryFromUrl) {
+        console.log('[AUTH] 🔐 Link de recovery detectado - mostrando formulário');
+        setIsCheckingSession(false);
+        return;
+      }
+
+      // 🎯 FIX: Não redirecionar se já estamos no modo de update password
+      if (isUpdatePassword) {
+        console.log('[AUTH] 🔐 Em modo update password - mostrando formulário');
+        setIsCheckingSession(false);
+        return;
+      }
+
+      // 🔓 PLANO B (UX): Sempre limpar flags 2FA pendentes ao entrar em /auth
+      // Evita loop de redirect por estado “meio logado”
+      console.log('[AUTH] 🔓 PLANO B: limpando flags 2FA pendentes ao carregar /auth');
+      sessionStorage.removeItem(pendingKey);
+      sessionStorage.removeItem(pendingUserKey);
+
+      // ✅ PLANO B (UX): Se já existe sessão válida,
+      // redirecionar imediatamente para a área correta.
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          console.log('[AUTH] ✅ Sessão existente detectada em /auth — redirecionando');
+
+          const { data: roleData } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+
+          const userRole = roleData?.role || null;
+          const target = getPostLoginRedirect(userRole, session.user.email);
+          navigate(target, { replace: true });
+          setIsCheckingSession(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('[AUTH] Falha ao verificar sessão existente em /auth (fail-open):', err);
+      }
+
+      // Sem sessão → mostrar formulário
       setIsCheckingSession(false);
-      return;
-    }
-
-    // 🎯 FIX: Não redirecionar se já estamos no modo de update password
-    if (isUpdatePassword) {
-      console.log('[AUTH] 🔐 Em modo update password - mostrando formulário');
-      setIsCheckingSession(false);
-      return;
-    }
-
-    // 🔓 BYPASS C: TODAS AS FLAGS 2FA SÃO LIMPAS — NENHUM DESAFIO RESTAURADO
-    // Login sempre começa do ZERO
-    console.log('[AUTH] 🔓 BYPASS C ATIVO: limpando TODAS as flags 2FA pendentes');
-    sessionStorage.removeItem(pendingKey);
-    sessionStorage.removeItem(pendingUserKey);
-
-    // 🛡️ POLÍTICA ZERO SESSION PERSISTENCE:
-    // NÃO verificar sessão existente, NÃO redirecionar automaticamente
-    // O usuário DEVE clicar em "Entrar" para prosseguir
-    console.log('[AUTH] 🛡️ ZERO SESSION PERSISTENCE - mostrando formulário (obrigatório)');
-    setIsCheckingSession(false);
-  }, [isUpdatePassword]);
+    })();
+  }, [isUpdatePassword, navigate]);
 
   // 🛡️ POLÍTICA v10.0: Flag para garantir que redirect só ocorre após login EXPLÍCITO
   const [loginAttempted, setLoginAttempted] = useState(false);
@@ -565,12 +589,12 @@ export default function Auth() {
         return; // NÃO redirecionar, deixar usuário definir senha
       }
 
-      if (event !== 'SIGNED_IN' || !session?.user) return;
+      if ((event !== 'SIGNED_IN' && event !== 'INITIAL_SESSION') || !session?.user) return;
 
-      // 🛡️ POLÍTICA v10.0: ZERO SESSION PERSISTENCE
-      // Só redirecionar se o usuário CLICOU em "Entrar" (loginAttempted === true)
-      // Isso bloqueia auto-redirect de sessões existentes em novas abas
-      if (!loginAttempted) {
+      // 🛡️ PLANO B (UX):
+      // - SIGNED_IN: só redireciona quando usuário clicou em "Entrar" (evita saltos em novas abas)
+      // - INITIAL_SESSION: sessão restaurada pode redirecionar automaticamente
+      if (event === 'SIGNED_IN' && !loginAttempted) {
         console.log('[AUTH] 🛡️ SIGNED_IN detectado mas loginAttempted=false - BLOQUEANDO auto-redirect');
         return;
       }
