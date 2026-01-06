@@ -271,7 +271,7 @@ export default function AreaProfessor() {
                     {items.map((item, index) => (
                       <div key={item.id} className="flex items-center gap-2 p-2 bg-muted rounded">
                         <span className="text-sm text-muted-foreground">{index + 1}.</span>
-                        <span className="flex-1 text-sm">{item.text}</span>
+                        <span className="flex-1 text-sm">{typeof item.text === 'string' ? item.text : (item.text as any)?.text ?? String(item.text ?? '')}</span>
                         <Button 
                           variant="ghost" 
                           size="icon" 
@@ -485,7 +485,7 @@ export default function AreaProfessor() {
                               <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                             )}
                             <span className={`text-sm ${item.completed ? 'line-through text-muted-foreground' : ''}`}>
-                              {item.text}
+                              {typeof item.text === 'string' ? item.text : (item.text as any)?.text ?? String(item.text ?? '')}
                             </span>
                           </div>
                         ))}

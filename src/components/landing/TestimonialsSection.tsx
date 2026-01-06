@@ -167,7 +167,7 @@ const WhatsAppMessage = ({ testimonial, isActive }: { testimonial: typeof realTe
             whileHover={{ scale: 1.01 }}
           >
             <p className="text-gray-200 text-lg leading-relaxed">
-              {testimonial.text}
+              {typeof testimonial.text === 'string' ? testimonial.text : (testimonial.text as any)?.text ?? String(testimonial.text ?? '')}
             </p>
             <div className="flex items-center justify-end gap-2 mt-3 text-xs text-gray-500">
               <span>Hoje</span>
