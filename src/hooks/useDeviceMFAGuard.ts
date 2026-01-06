@@ -30,7 +30,11 @@ const OWNER_EMAIL = "moisesblank@gmail.com";
 const BETA_TEST_EMAIL = "moisescursoquimica@gmail.com";
 
 // 🔐 Cache global para evitar re-verificação na mesma sessão
+// 🎯 P0 FIX: Cache agora é por user_id + device_hash (não só user_id!)
 const globalMFACache = new Map<string, { verified: boolean; expiresAt: number }>();
+
+// Gerar chave de cache única por usuário+dispositivo
+const getCacheKey = (userId: string, deviceHash: string) => `${userId}:${deviceHash}`;
 
 /**
  * Hook para gerenciar 2FA por DISPOSITIVO
@@ -78,6 +82,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
     }
 
     // 🧪 Beta test bypass - após primeira verificação, não pede mais
+    // Nota: Para beta test, usamos cache por user_id (comportamento original mantido)
     if (isBetaTest) {
       const cached = globalMFACache.get(user.id);
       if (cached && cached.verified && cached.expiresAt > Date.now()) {
@@ -101,7 +106,23 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
 
       setState((prev) => ({ ...prev, deviceHash }));
 
+      // 🔐 P0 FIX: Verificar cache local PRIMEIRO (evita chamada RPC desnecessária)
+      const cacheKey = getCacheKey(user.id, deviceHash);
+      const cached = globalMFACache.get(cacheKey);
+      if (cached && cached.verified && cached.expiresAt > Date.now()) {
+        console.log(`[DeviceMFAGuard] ✅ Usando cache local para ${deviceHash.slice(0, 8)}...`);
+        setState((prev) => ({
+          ...prev,
+          isChecking: false,
+          isVerified: true,
+          needsMFA: false,
+          expiresAt: new Date(cached.expiresAt),
+        }));
+        return true;
+      }
+
       // Verificar no banco se este dispositivo tem MFA válido
+      console.log(`[DeviceMFAGuard] 🔍 Consultando banco para ${deviceHash.slice(0, 8)}...`);
       const { data, error } = await supabase.rpc("check_device_mfa_valid", {
         _user_id: user.id,
         _device_hash: deviceHash,
@@ -121,12 +142,14 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
 
       console.log(`[DeviceMFAGuard] Dispositivo ${deviceHash.slice(0, 8)}... válido: ${isValid}`);
 
-      // 🔐 Salvar no cache global se válido
+      // 🔐 Salvar no cache global se válido (por user_id + device_hash)
       if (isValid) {
-        globalMFACache.set(user.id, {
+        const cacheKey = getCacheKey(user.id, deviceHash);
+        globalMFACache.set(cacheKey, {
           verified: true,
           expiresAt: Date.now() + 24 * 60 * 60 * 1000,
         });
+        console.log(`[DeviceMFAGuard] ✅ Cache atualizado para ${cacheKey.slice(0, 20)}...`);
       }
 
       setState((prev) => ({
@@ -199,12 +222,14 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         }
       }
 
-      // 3) Cache global
-      if (user?.id) {
-        globalMFACache.set(user.id, {
+      // 3) Cache global (por user_id + device_hash)
+      if (user?.id && hashParaMFA) {
+        const cacheKey = getCacheKey(user.id, hashParaMFA);
+        globalMFACache.set(cacheKey, {
           verified: true,
           expiresAt: Date.now() + 24 * 60 * 60 * 1000,
         });
+        console.log(`[DeviceMFAGuard] ✅ Cache pós-2FA atualizado para ${cacheKey.slice(0, 20)}...`);
       }
 
       setState((prev) => ({
@@ -259,21 +284,9 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       return;
     }
 
-    // 🔐 Verificar cache global primeiro (evita re-verificação entre rotas)
-    if (user?.id) {
-      const cached = globalMFACache.get(user.id);
-      if (cached && cached.verified && cached.expiresAt > Date.now()) {
-        console.log("[DeviceMFAGuard] ✅ Usando cache global - dispositivo já verificado");
-        setState((prev) => ({
-          ...prev,
-          isChecking: false,
-          isVerified: true,
-          needsMFA: false,
-          expiresAt: new Date(cached.expiresAt),
-        }));
-        return;
-      }
-    }
+    // 🔐 P0 FIX: Cache por dispositivo - precisa gerar hash ANTES de verificar cache
+    // Não usamos cache aqui pois precisamos do deviceHash, que é async
+    // O checkDeviceMFA já faz a verificação de cache no banco via RPC
 
     // Verificar apenas uma vez
     if (!hasChecked.current) {
