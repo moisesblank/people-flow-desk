@@ -13,7 +13,7 @@ import { CaseInsensitiveAlunosRedirect } from "@/components/routing/CaseInsensit
 import AlunosRouteSwitcher from "@/pages/AlunosRouteSwitcher";
 
 // Lazy imports - Central do Aluno (subrotas)
-const AlunoDashboard = lazy(() => import("@/pages/aluno/AlunoDashboard"));
+const AlunoUniversalDashboard = lazy(() => import("@/pages/aluno/AlunoUniversalDashboard"));
 const AlunoLivroWeb = lazy(() => import("@/pages/aluno/AlunoLivroWeb"));
 const AlunoCursos = lazy(() => import("@/pages/aluno/AlunoCursos"));
 const AlunoVideoaulas = lazy(() => import("@/pages/aluno/AlunoVideoaulas"));
@@ -51,7 +51,7 @@ export const alunoRoutes = (
     <Route path="/ALUNOS" element={<Navigate to="/alunos/dashboard" replace />} />
     <Route path="/ALUNOS/*" element={<CaseInsensitiveAlunosRedirect />} />
     <Route path="/alunos" element={<ProtectedPage><AlunosRouteSwitcher /></ProtectedPage>} />
-    <Route path="/alunos/dashboard" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
+    <Route path="/alunos/dashboard" element={<ProtectedPage><AlunoUniversalDashboard /></ProtectedPage>} />
     {/* Canonical - Livros Web */}
     <Route path="/alunos/livro-web" element={<ProtectedPage><AlunoLivroWeb /></ProtectedPage>} />
     {/* Canonical - Cursos (Mirror Read-Only) */}
