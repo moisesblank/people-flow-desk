@@ -451,7 +451,10 @@ const heroStyles2300 = `
 
 export default function AlunoDashboard() {
   // 🔴 DEBUG P0: Log para verificar se o componente está renderizando
-  console.log('[AlunoDashboard] 🚀 COMPONENTE INICIANDO RENDER');
+  console.log('[AlunoDashboard] 🚀 COMPONENTE INICIANDO RENDER', { 
+    timestamp: new Date().toISOString(),
+    url: typeof window !== 'undefined' ? window.location.href : 'SSR'
+  });
   
   const navigate = useNavigate();
   const { shouldAnimate } = useQuantumReactivity();
@@ -460,11 +463,17 @@ export default function AlunoDashboard() {
   
   // State para efeitos dinâmicos
   const [mounted, setMounted] = useState(false);
+  const [hasError, setHasError] = useState(false);
   
   useEffect(() => {
-    console.log('[AlunoDashboard] ✅ MOUNTED - useEffect executado');
-    setMounted(true);
-  }, []);
+    try {
+      console.log('[AlunoDashboard] ✅ MOUNTED - useEffect executado', { userId: user?.id });
+      setMounted(true);
+    } catch (err) {
+      console.error('[AlunoDashboard] ❌ Erro no mount:', err);
+      setHasError(true);
+    }
+  }, [user?.id]);
   
 // ============================================
   // DADOS REAIS VIA HOOKS
@@ -684,6 +693,23 @@ export default function AlunoDashboard() {
   const userName = userProfile?.nome?.split(' ')[0] || 'Estudante';
   const isLowPerformance = typeof navigator !== 'undefined' && navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4;
   const showEffects = shouldAnimate && !isLowPerformance;
+
+// 🛡️ P0 FALLBACK: Se houver erro crítico, mostrar mensagem
+  if (hasError) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center gap-4">
+        <div className="text-destructive text-4xl">⚠️</div>
+        <h1 className="text-xl font-bold text-foreground">Erro ao carregar o Dashboard</h1>
+        <p className="text-muted-foreground">Por favor, recarregue a página.</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-lg"
+        >
+          Recarregar
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>

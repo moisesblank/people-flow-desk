@@ -413,6 +413,12 @@ export function SessionGuard({ children }: SessionGuardProps) {
                 sessionStorage.clear();
                 await signOut();
               } else {
+                // 👑 OWNER bypass: não fazer NADA se for owner (log apenas informativo)
+                const isOwner = user?.email?.toLowerCase() === 'moisesblank@gmail.com';
+                if (isOwner) {
+                  console.log('[SessionGuard] 👑 OWNER bypass - ignorando conflito de sessão Realtime');
+                  return;
+                }
                 console.error('[SessionGuard] 🔴 Conflito de sessão detectado:', revokedReason);
                 handleDeviceRevocation();
               }
