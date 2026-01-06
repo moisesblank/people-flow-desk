@@ -225,14 +225,15 @@ export function setupContentProtection(onViolation?: (type: string) => void): ()
   };
   
   const handleKeyDown = (e: KeyboardEvent) => {
+    // 🚨 F12/DEVTOOLS LIBERADOS POR ORDEM DO OWNER (2026-01-06)
     const blocked = [
       e.ctrlKey && e.key === "s",
       e.ctrlKey && e.key === "p",
-      e.ctrlKey && e.key === "c",
+      // e.ctrlKey && e.key === "c", // Copy permitido
       e.ctrlKey && e.key === "u",
-      e.ctrlKey && e.shiftKey && e.key === "I",
-      e.key === "F12",
-      e.key === "PrintScreen",
+      // e.ctrlKey && e.shiftKey && e.key === "I", // DevTools permitido
+      // e.key === "F12", // DevTools permitido
+      // e.key === "PrintScreen", // PrintScreen permitido
     ];
     
     if (blocked.some(Boolean)) {

@@ -258,11 +258,8 @@ export function useSanctumCore(ctx: SanctumContext) {
     const isCtrl = e.ctrlKey || e.metaKey;
     const isShift = e.shiftKey;
 
-    // === DEVTOOLS ===
-    const devtoolsKeys =
-      e.key === "F12" ||
-      (isCtrl && isShift && ["i", "j", "c", "k"].includes(key)) ||
-      (isCtrl && ["u"].includes(key));
+    // === DEVTOOLS === 🚨 LIBERADO POR ORDEM DO OWNER (2026-01-06)
+    const devtoolsKeys = false; // F12 e DevTools agora permitidos
 
     // === PRINT ===
     const printKeys = isCtrl && key === "p";

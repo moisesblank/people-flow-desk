@@ -74,7 +74,7 @@ function setupKeyboardProtection(): void {
     const shift = e.shiftKey;
     const alt = e.altKey;
     
-    // Lista de bloqueios
+    // Lista de bloqueios - 🚨 F12/DEVTOOLS LIBERADOS (2026-01-06)
     const blocked = [
       // Salvar/Download
       ctrl && key === 's',
@@ -83,17 +83,17 @@ function setupKeyboardProtection(): void {
       // View Source
       ctrl && key === 'u',
       ctrl && shift && key === 'u',
-      // DevTools
-      key === 'f12',
-      ctrl && shift && key === 'i',
-      ctrl && shift && key === 'j',
-      ctrl && shift && key === 'c',
-      ctrl && shift && key === 'k',
-      // Screenshot Windows
-      key === 'printscreen',
-      alt && key === 'printscreen',
-      // Copiar (em contexto protegido)
-      ctrl && key === 'c' && document.querySelector('[data-sanctum-protected]'),
+      // DevTools - LIBERADO
+      // key === 'f12',
+      // ctrl && shift && key === 'i',
+      // ctrl && shift && key === 'j',
+      // ctrl && shift && key === 'c',
+      // ctrl && shift && key === 'k',
+      // Screenshot Windows - LIBERADO
+      // key === 'printscreen',
+      // alt && key === 'printscreen',
+      // Copiar (em contexto protegido) - LIBERADO
+      // ctrl && key === 'c' && document.querySelector('[data-sanctum-protected]'),
       // Selecionar tudo
       ctrl && key === 'a' && document.querySelector('[data-sanctum-protected]'),
     ];
