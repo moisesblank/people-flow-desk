@@ -208,9 +208,11 @@ serve(async (req) => {
       "user_presence",
       "sensitive_operation_limits",
       "password_reset_tokens",
-      "security_events",       // 🔥 FK bloqueante - DEVE ser limpa antes de auth.users
-      "active_sessions",       // 🔥 Sessões (além do UPDATE já feito)
-      "user_roles",            // 🔥 Roles do usuário
+      "security_events",           // 🔥 FK bloqueante - DEVE ser limpa antes de auth.users
+      "active_sessions",           // 🔥 Sessões (além do UPDATE já feito)
+      "user_roles",                // 🔥 Roles do usuário
+      "user_mfa_verifications",    // 🔥 CRÍTICO: Trust de dispositivo (impede reuso de verificação)
+      "user_devices",              // 🔥 Dispositivos vinculados
     ];
 
     for (const table of tablesToClean) {
