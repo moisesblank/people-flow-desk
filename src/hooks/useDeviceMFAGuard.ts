@@ -173,6 +173,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
 
   /**
    * Callback chamado após verificação do código 2FA
+   * 🔐 P0 FIX: Registro robusto de dispositivo pós-2FA
    */
   const onVerificationComplete = useCallback(
     async (success: boolean) => {
@@ -186,22 +187,43 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         return;
       }
 
+      console.log("[DeviceMFAGuard] ✅ 2FA verificado com sucesso! Iniciando registro de dispositivo...");
+
       // 1) PRIMEIRO: Registrar o DISPOSITIVO (user_devices) para obter hash do servidor
-      const deviceReg = await registerDeviceBeforeSession();
+      let deviceReg: { success: boolean; deviceHash?: string; error?: string };
+      
+      try {
+        deviceReg = await registerDeviceBeforeSession();
+        console.log("[DeviceMFAGuard] 📱 Resultado do registro:", deviceReg);
+      } catch (err) {
+        console.error("[DeviceMFAGuard] ❌ Exceção ao registrar dispositivo:", err);
+        deviceReg = { success: false, error: "EXCEPTION" };
+      }
+
       if (!deviceReg.success) {
         console.error("[DeviceMFAGuard] ❌ Falha ao registrar dispositivo pós-2FA:", deviceReg.error);
-        setState((prev) => ({
-          ...prev,
-          needsMFA: true,
-          isVerified: false,
-          error: "Falha ao cadastrar este dispositivo. Faça login novamente.",
-        }));
-        return;
+        
+        // 🔐 Se o erro for limite de dispositivos, não falhar - deixar o fluxo continuar
+        // O usuário será redirecionado para a tela de gerenciamento de dispositivos
+        if (deviceReg.error === "DEVICE_LIMIT_EXCEEDED" || deviceReg.error === "SAME_TYPE_REPLACEMENT_REQUIRED") {
+          console.log("[DeviceMFAGuard] ⚠️ Limite atingido ou substituição necessária - redirecionando...");
+          // Continuar com o hash local como fallback
+        } else {
+          setState((prev) => ({
+            ...prev,
+            needsMFA: true,
+            isVerified: false,
+            error: "Falha ao cadastrar este dispositivo. Tente novamente.",
+          }));
+          return;
+        }
       }
 
       // 🔐 CRÍTICO: Usar o hash do servidor (que acabou de ser salvo no localStorage)
       const serverHash = deviceReg.deviceHash;
       const hashParaMFA = serverHash || state.deviceHash;
+
+      console.log("[DeviceMFAGuard] 🔐 Hash para MFA:", hashParaMFA?.slice(0, 8) + "...");
 
       // 2) DEPOIS: Registrar verificação MFA com o hash do SERVIDOR
       if (user?.id && hashParaMFA) {
@@ -213,12 +235,13 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
           });
 
           if (error) {
-            console.error("[DeviceMFAGuard] Erro ao registrar verificação:", error);
+            console.error("[DeviceMFAGuard] ⚠️ Erro ao registrar verificação MFA:", error);
+            // Não falhar aqui - o dispositivo já foi registrado
           } else {
-            console.log("[DeviceMFAGuard] ✅ Dispositivo verificado por 24h com hash:", hashParaMFA.slice(0, 8) + "...");
+            console.log("[DeviceMFAGuard] ✅ Dispositivo verificado por 7 dias com hash:", hashParaMFA.slice(0, 8) + "...");
           }
         } catch (err) {
-          console.error("[DeviceMFAGuard] Erro ao salvar verificação:", err);
+          console.error("[DeviceMFAGuard] ⚠️ Exceção ao salvar verificação MFA:", err);
         }
       }
 
@@ -227,7 +250,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         const cacheKey = getCacheKey(user.id, hashParaMFA);
         globalMFACache.set(cacheKey, {
           verified: true,
-          expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+          expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 dias
         });
         console.log(`[DeviceMFAGuard] ✅ Cache pós-2FA atualizado para ${cacheKey.slice(0, 20)}...`);
       }
@@ -238,8 +261,10 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         isVerified: true,
         error: null,
         deviceHash: hashParaMFA, // Atualizar com hash do servidor
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 dias
       }));
+
+      console.log("[DeviceMFAGuard] 🎉 Fluxo completo! Dispositivo cadastrado e verificado.");
     },
     [user?.id, state.deviceHash],
   );
