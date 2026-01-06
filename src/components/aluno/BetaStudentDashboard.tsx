@@ -1,9 +1,10 @@
 // ============================================
-// JORNADA PREDITIVA BETA - SANTUÁRIO v9.0
-// GPU-ONLY animations via useQuantumReactivity
+// 🌌 BETA STUDENT DASHBOARD - YEAR 2300 CINEMATIC
+// Ultra-Futuristic Iron Man HUD Experience
+// GPU-ONLY CSS Animations for Maximum Performance
 // ============================================
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -13,13 +14,33 @@ import {
   Clock, TrendingUp, Star, Zap, Brain, Award, 
   Flame, Rocket, Sparkles, ChevronRight, Atom,
   CheckCircle2, AlertCircle, Lightbulb, Heart,
-  Timer, BarChart3, MessageCircle, Layers
+  Timer, BarChart3, MessageCircle, Layers,
+  Shield, Hexagon, Activity, Wifi
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePerformanceFlags } from "@/hooks/usePerformanceFlags";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
+import { cn } from "@/lib/utils";
+
+// GPU-ONLY variants
+const getGpuVariants = (shouldAnimate: boolean) => ({
+  container: {
+    hidden: shouldAnimate ? { opacity: 0 } : {},
+    show: shouldAnimate ? {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    } : {}
+  },
+  item: {
+    hidden: shouldAnimate ? { opacity: 0, y: 20 } : {},
+    show: shouldAnimate ? { opacity: 1, y: 0 } : {}
+  }
+});
+
+// Import 2300 styles
+import "@/styles/dashboard-2300.css";
 
 // Componentes de IA do Santuário v9.0
 import { FocusTrack } from "./FocusTrack";
@@ -47,21 +68,6 @@ import {
   useStudentTips,
   treeToArray,
 } from "@/hooks/student-performance";
-
-// GPU-ONLY variants
-const getGpuVariants = (shouldAnimate: boolean) => ({
-  container: {
-    hidden: shouldAnimate ? { opacity: 0 } : {},
-    show: shouldAnimate ? {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    } : {}
-  },
-  item: {
-    hidden: shouldAnimate ? { opacity: 0, y: 20 } : {},
-    show: shouldAnimate ? { opacity: 1, y: 0 } : {}
-  }
-});
 
 // Tipos
 interface StudyStats {
@@ -148,10 +154,8 @@ const conquistas = [
 export function BetaStudentDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { shouldAnimate } = useQuantumReactivity();
-  const { container, item } = getGpuVariants(shouldAnimate);
+  const flags = usePerformanceFlags();
   const [stats] = useState<StudyStats>(mockStats);
-  const [showMotivation, setShowMotivation] = useState(true);
   
   const progressoGeral = 65;
   const xpProgresso = (stats.xpTotal / stats.xpProximoNivel) * 100;
@@ -200,107 +204,135 @@ export function BetaStudentDashboard() {
     return "Lenda";
   };
 
-  // Mock de dados do usuário - será substituído por dados reais
+  // Mock de dados do usuário
   const mockUserData = {
-    churnRiskScore: 0.3, // Baixo risco por padrão
+    churnRiskScore: 0.3,
     learningStyle: 'visual',
     bestStudyTime: '19:00 - 21:00',
     currentFocusAreaId: 'area-1'
   };
 
+  const firstName = user?.email?.split('@')[0] || 'Estudante';
+
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-6">
-      {/* ALERTA PREDITIVO DE IA: Só aparece se o risco for significativo */}
-      <ChurnRiskAlert 
-        riskScore={mockUserData.churnRiskScore} 
-        userName={user?.email?.split('@')[0]} 
-      />
+    <div className="min-h-screen">
+      {/* 🌌 COSMIC BACKGROUND LAYER */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full bg-holo-cyan/5 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full bg-holo-purple/5 blur-[100px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-primary/3 blur-[150px]" />
+      </div>
 
-      {/* Header Hero Futurista */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-600 via-blue-600 to-purple-700 p-6 md:p-8"
-      >
-        {/* Partículas decorativas - 🏛️ LEI I: Desligado em lite mode via CSS */}
-        <div className="absolute inset-0 overflow-hidden perf-ambient-only">
-          <div className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-10 right-10 w-40 h-40 bg-cyan-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-purple-400/10 rounded-full blur-2xl animate-float" />
-        </div>
+      <div className="container mx-auto p-4 md:p-6 space-y-8">
+        {/* ALERTA PREDITIVO DE IA */}
+        <ChurnRiskAlert 
+          riskScore={mockUserData.churnRiskScore} 
+          userName={firstName} 
+        />
 
-        <div className="relative z-10">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Atom className="w-6 h-6 text-cyan-300 animate-spin-slow" />
-                <Badge className="bg-white/20 text-white border-0">
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  NÍVEL {stats.nivel} • {getNivelTitulo(stats.nivel).toUpperCase()}
-                </Badge>
+        {/* ============================================ */}
+        {/* 🚀 HERO SECTION - IRON MAN HUD ULTIMATE */}
+        {/* ============================================ */}
+        <div className="dashboard-hero-2300 p-6 md:p-8 animate-fade-in">
+          {/* Floating Particles - CSS Only */}
+          {flags.ui_ambient_fx && (
+            <div className="particles-2300">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="particle"
+                  style={{
+                    left: `${15 + i * 15}%`,
+                    animationDuration: `${4 + i * 0.5}s`,
+                    animationDelay: `${i * 0.3}s`,
+                    background: i % 2 === 0 ? 'hsl(185 100% 70%)' : 'hsl(280 100% 70%)',
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
+          <div className="relative z-10">
+            {/* Top Status Bar */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Hexagon className="w-10 h-10 text-holo-cyan animate-pulse" style={{ animationDuration: '3s' }} />
+                  <Activity className="w-5 h-5 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                </div>
+                <div>
+                  <Badge className="bg-holo-cyan/20 text-holo-cyan border border-holo-cyan/30 backdrop-blur-sm">
+                    <Wifi className="w-3 h-3 mr-1 animate-pulse" />
+                    SISTEMA ATIVO
+                  </Badge>
+                </div>
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white">
-                {getGreeting()}, futuro(a) aprovado(a)! 🧪
-              </h1>
-              <p className="text-white/80 text-lg">
-                A Química é a ciência das transformações. E você está se transformando!
-              </p>
+              <Badge className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-400 border border-amber-500/30">
+                <Shield className="w-3 h-3 mr-1" />
+                NÍVEL {stats.nivel} • {getNivelTitulo(stats.nivel).toUpperCase()}
+              </Badge>
             </div>
 
-            <div className="flex items-center gap-4 md:gap-6">
-              <motion.div 
-                className="text-center bg-white/10 rounded-2xl p-4 backdrop-blur-sm"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="flex items-center justify-center gap-1">
-                  <Flame className="w-6 h-6 text-orange-400 animate-pulse" />
-                  <span className="text-3xl md:text-4xl font-black text-white">{stats.diasConsecutivos}</span>
-                </div>
-                <div className="text-xs text-white/70 font-medium">DIAS SEGUIDOS</div>
-              </motion.div>
+            {/* Main Hero Content */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+              <div className="space-y-3">
+                <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
+                  {getGreeting()}, <span className="bg-gradient-to-r from-holo-cyan via-holo-purple to-holo-pink bg-clip-text text-transparent">{firstName}</span>! 🧪
+                </h1>
+                <p className="text-white/70 text-lg max-w-xl">
+                  A Química é a ciência das transformações. E você está se transformando em um <span className="text-holo-cyan font-semibold">mestre</span>!
+                </p>
+              </div>
 
-              <motion.div 
-                className="text-center bg-white/10 rounded-2xl p-4 backdrop-blur-sm"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="flex items-center justify-center gap-1">
-                  <Zap className="w-6 h-6 text-yellow-400" />
-                  <span className="text-3xl md:text-4xl font-black text-white">{stats.xpTotal.toLocaleString()}</span>
+              {/* Stat Orbs - Floating Metrics */}
+              <div className="flex items-center gap-4 md:gap-5">
+                <div className="stat-orb-2300 text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Flame className="w-6 h-6 text-orange-400" />
+                    <span className="text-3xl md:text-4xl font-black text-white">{stats.diasConsecutivos}</span>
+                  </div>
+                  <div className="text-[10px] uppercase tracking-widest text-white/50 font-medium">Dias Seguidos</div>
                 </div>
-                <div className="text-xs text-white/70 font-medium">XP TOTAL</div>
-              </motion.div>
 
-              <motion.div 
-                className="hidden md:block text-center bg-white/10 rounded-2xl p-4 backdrop-blur-sm"
-                whileHover={{ scale: 1.05 }}
-              >
-                <div className="flex items-center justify-center gap-1">
-                  <Timer className="w-6 h-6 text-cyan-300" />
-                  <span className="text-3xl md:text-4xl font-black text-white">{stats.diasRestantes}</span>
+                <div className="stat-orb-2300 text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Zap className="w-6 h-6 text-yellow-400" />
+                    <span className="text-3xl md:text-4xl font-black text-white">{stats.xpTotal.toLocaleString()}</span>
+                  </div>
+                  <div className="text-[10px] uppercase tracking-widest text-white/50 font-medium">XP Total</div>
                 </div>
-                <div className="text-xs text-white/70 font-medium">DIAS P/ ENEM</div>
-              </motion.div>
+
+                <div className="stat-orb-2300 text-center hidden md:block">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Timer className="w-6 h-6 text-holo-cyan" />
+                    <span className="text-3xl md:text-4xl font-black text-white">{stats.diasRestantes}</span>
+                  </div>
+                  <div className="text-[10px] uppercase tracking-widest text-white/50 font-medium">Dias p/ ENEM</div>
+                </div>
+              </div>
+            </div>
+            
+            {/* XP Progress Bar - Energy Flow */}
+            <div className="mt-8 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-white/70 flex items-center gap-2">
+                  <Rocket className="w-4 h-4 text-holo-cyan" />
+                  <span className="uppercase text-xs tracking-wider">Progresso para Nível {stats.nivel + 1}</span>
+                </span>
+                <span className="text-holo-cyan font-bold">{stats.xpTotal} / {stats.xpProximoNivel} XP</span>
+              </div>
+              <div className="progress-energy-2300">
+                <div 
+                  className="fill bg-gradient-to-r from-holo-cyan via-holo-purple to-holo-pink"
+                  style={{ width: `${xpProgresso}%` }}
+                />
+              </div>
+              <div className="text-center">
+                <span className="text-sm font-bold text-white/80">{Math.round(xpProgresso)}% concluído</span>
+              </div>
             </div>
           </div>
-          
-          {/* Barra de XP para próximo nível */}
-          <div className="mt-6 space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-white/80 flex items-center gap-2">
-                <Rocket className="w-4 h-4" />
-                Progresso para Nível {stats.nivel + 1}
-              </span>
-              <span className="text-white font-bold">{stats.xpTotal} / {stats.xpProximoNivel} XP</span>
-            </div>
-            <div className="relative">
-              <Progress value={xpProgresso} className="h-4 bg-white/20" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-xs font-bold text-white drop-shadow-lg">{Math.round(xpProgresso)}%</span>
-              </div>
-            </div>
-          </div>
         </div>
-      </motion.div>
 
       {/* A TRILHA DE FOCO: O CORAÇÃO DA EXPERIÊNCIA v9.0 */}
       <motion.div
