@@ -971,9 +971,9 @@ function GestaoQuestoes() {
   const [isDeletingSimulados, setIsDeletingSimulados] = useState(false);
   const [simuladosConfirmText, setSimuladosConfirmText] = useState('');
   
-  // PAGINATION: 100 itens por página (server-side)
+  // PAGINATION: 25 itens por página (otimizado para performance)
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 100;
+  const ITEMS_PER_PAGE = 25;
 
   const { clearQueryCache } = useCacheManager();
   const { isOwner } = useRolePermissions();
