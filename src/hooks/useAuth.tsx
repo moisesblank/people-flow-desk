@@ -470,8 +470,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isLoading) return;
 
     // Não interromper desafio 2FA na tela de /auth
+    // 🧪 PLANO B (UX): usuário de teste beta não pode ficar preso por flag 2FA
+    const email = (user?.email || "").toLowerCase();
+    const isBetaTestBypass = email === "moisescursoquimica@gmail.com";
+
     const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
-    if (is2FAPending) return;
+    if (is2FAPending && !isBetaTestBypass) return;
 
     const path = typeof window !== "undefined" ? window.location.pathname : "";
     const isAuthPath = path === "/auth" || path.startsWith("/auth/");
@@ -525,8 +529,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isOwner = email?.toLowerCase() === ownerEmail;
 
     // 🔒 P0 INCIDENTE: se 2FA está pendente, NÃO criar sessão única (sessão final proibida)
+    // 🧪 PLANO B (UX): usuário de teste beta não pode ficar preso nesse adiamento
+    const isBetaTestBypass = (email || "").toLowerCase() === "moisescursoquimica@gmail.com";
     const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
-    if (is2FAPending) {
+    if (is2FAPending && !isBetaTestBypass) {
       console.warn("[AUTH][SESSAO] 2FA pendente - sessão única adiada (será criada pós-2FA no /auth)");
       postSignInPayloadRef.current = null;
       return;

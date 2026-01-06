@@ -25,8 +25,16 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
   }, [user?.email]);
 
+  // 🧪 PLANO B (UX) - BYPASS DE TESTE BETA: não travar rotas por flag 2FA
+  // (não altera segurança server-side; só impede loop de redirect no client)
+  const isBetaTestBypass = useMemo(() => {
+    return (user?.email || "").toLowerCase() === "moisescursoquimica@gmail.com";
+  }, [user?.email]);
+
   // 🔒 BLOQUEIO GLOBAL: se 2FA está pendente, ninguém entra em rota protegida
-  const is2FAPending = typeof window !== "undefined" && sessionStorage.getItem("matriz_2fa_pending") === "1";
+  // EXCETO: OWNER e usuário de teste (bypass UX)
+  const is2FAPendingRaw = typeof window !== "undefined" && sessionStorage.getItem("matriz_2fa_pending") === "1";
+  const is2FAPending = is2FAPendingRaw && !isOwner && !isBetaTestBypass;
 
   // Não redirecionar se já estamos na página de primeiro acesso
   const isOnPrimeiroAcesso = location.pathname === "/primeiro-acesso";
