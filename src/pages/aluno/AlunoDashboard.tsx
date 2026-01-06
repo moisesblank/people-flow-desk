@@ -450,6 +450,9 @@ const heroStyles2300 = `
 `;
 
 export default function AlunoDashboard() {
+  // 🔴 DEBUG P0: Log para verificar se o componente está renderizando
+  console.log('[AlunoDashboard] 🚀 COMPONENTE INICIANDO RENDER');
+  
   const navigate = useNavigate();
   const { shouldAnimate } = useQuantumReactivity();
   const { user } = useAuth();
@@ -459,6 +462,7 @@ export default function AlunoDashboard() {
   const [mounted, setMounted] = useState(false);
   
   useEffect(() => {
+    console.log('[AlunoDashboard] ✅ MOUNTED - useEffect executado');
     setMounted(true);
   }, []);
   

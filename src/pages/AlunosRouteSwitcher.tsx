@@ -26,6 +26,9 @@ const LOADING_TIMEOUT_MS = 6000;
 const LOADING_SLOW_MS = 2000;
 
 export default function AlunosRouteSwitcher() {
+  // 🔴 DEBUG P0: Log para verificar se o componente está renderizando
+  console.log('[AlunosRouteSwitcher] 🚀 COMPONENTE INICIANDO RENDER');
+  
   // ============================================
   // 🔒 TODOS OS HOOKS DEVEM ESTAR NO TOPO (React Rules of Hooks)
   // ============================================
