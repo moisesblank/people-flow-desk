@@ -189,12 +189,15 @@ serve(async (req) => {
     expiresAt.setDate(expiresAt.getDate() + 365);
 
     // 4. Atualizar/criar profile
+    // 🎯 CONSTITUIÇÃO v10.4: SEMPRE marcar password_change_required = true para PRIMEIRO ACESSO
     const { error: profileError } = await supabaseAdmin.from("profiles").upsert({
       id: userId,
       email: customer.email.toLowerCase().trim(),
       nome: customer.name,
       telefone: customer.phone || null,
       cpf: customer.cpf || null,
+      password_change_required: true,  // 🔐 OBRIGATÓRIO: Força primeiro acesso
+      onboarding_completed: false,     // 🔐 OBRIGATÓRIO: Força onboarding
       updated_at: new Date().toISOString(),
     }, { onConflict: "id" });
 

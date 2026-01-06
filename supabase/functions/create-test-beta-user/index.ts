@@ -89,12 +89,15 @@ const testPassword = "Eocomando32!!!";
     const userId = authData.user.id;
 
     // 3. Criar profile
+    // 🎯 CONSTITUIÇÃO v10.4: SEMPRE marcar password_change_required = true para PRIMEIRO ACESSO
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .upsert({
         id: userId,
         email: testEmail,
         nome: "Aluno Teste Beta",
+        password_change_required: true,  // 🔐 OBRIGATÓRIO: Força primeiro acesso
+        onboarding_completed: false,     // 🔐 OBRIGATÓRIO: Força onboarding
         created_at: new Date().toISOString(),
       });
 

@@ -266,6 +266,23 @@ const handler = async (req: Request): Promise<Response> => {
     // - Se user já existia com outra role, agora será staff
     // ============================================
     if (newUser.user) {
+      // 🎯 CONSTITUIÇÃO v10.4: Criar profile com password_change_required = true
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert({
+          id: newUser.user.id,
+          email: email,
+          nome: nome,
+          password_change_required: true,  // 🔐 OBRIGATÓRIO: Força primeiro acesso
+          onboarding_completed: false,     // 🔐 OBRIGATÓRIO: Força onboarding
+        }, { onConflict: "id" });
+      
+      if (profileError) {
+        console.warn("[INVITE] Could not create profile:", profileError);
+      } else {
+        console.log(`[INVITE] Profile created for ${newUser.user.id} with password_change_required=true`);
+      }
+
       const { error: roleError } = await supabase
         .from("user_roles")
         .upsert({ 
