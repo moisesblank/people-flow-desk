@@ -25,6 +25,11 @@ export interface DeviceMFAGuardResult extends DeviceMFAGuardState {
 }
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
+// 🧪 BYPASS BETA TEST - usuário de teste não precisa verificar MFA repetidamente
+const BETA_TEST_EMAIL = "moisescursoquimica@gmail.com";
+
+// 🔐 Cache global para evitar re-verificação na mesma sessão
+const globalMFACache = new Map<string, { verified: boolean; expiresAt: number }>();
 
 /**
  * Hook para gerenciar 2FA por DISPOSITIVO
@@ -47,6 +52,9 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
   // Owner tem bypass total
   const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
 
+  // 🧪 Beta test bypass
+  const isBetaTest = user?.email?.toLowerCase() === BETA_TEST_EMAIL.toLowerCase();
+
   /**
    * Verifica se o dispositivo atual tem verificação MFA válida
    */
@@ -66,6 +74,22 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       }));
       return true;
+    }
+
+    // 🧪 Beta test bypass - após primeira verificação, não pede mais
+    if (isBetaTest) {
+      const cached = globalMFACache.get(user.id);
+      if (cached && cached.verified && cached.expiresAt > Date.now()) {
+        console.log("[DeviceMFAGuard] 🧪 Beta test bypass - usando cache");
+        setState((prev) => ({
+          ...prev,
+          isChecking: false,
+          isVerified: true,
+          needsMFA: false,
+          expiresAt: new Date(cached.expiresAt),
+        }));
+        return true;
+      }
     }
 
     setState((prev) => ({ ...prev, isChecking: true, error: null }));
@@ -96,6 +120,14 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
 
       console.log(`[DeviceMFAGuard] Dispositivo ${deviceHash.slice(0, 8)}... válido: ${isValid}`);
 
+      // 🔐 Salvar no cache global se válido
+      if (isValid) {
+        globalMFACache.set(user.id, {
+          verified: true,
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+        });
+      }
+
       setState((prev) => ({
         ...prev,
         isChecking: false,
@@ -113,7 +145,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       }));
       return false;
     }
-  }, [user?.id, isOwner]);
+  }, [user?.id, isOwner, isBetaTest]);
 
   /**
    * Callback chamado após verificação do código 2FA
@@ -147,6 +179,14 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         } catch (err) {
           console.error("[DeviceMFAGuard] Erro ao salvar verificação:", err);
         }
+      }
+
+      // 🔐 Salvar no cache global
+      if (user?.id) {
+        globalMFACache.set(user.id, {
+          verified: true,
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+        });
       }
 
       setState((prev) => ({
@@ -198,6 +238,22 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       }));
       return;
+    }
+
+    // 🔐 Verificar cache global primeiro (evita re-verificação entre rotas)
+    if (user?.id) {
+      const cached = globalMFACache.get(user.id);
+      if (cached && cached.verified && cached.expiresAt > Date.now()) {
+        console.log("[DeviceMFAGuard] ✅ Usando cache global - dispositivo já verificado");
+        setState((prev) => ({
+          ...prev,
+          isChecking: false,
+          isVerified: true,
+          needsMFA: false,
+          expiresAt: new Date(cached.expiresAt),
+        }));
+        return;
+      }
     }
 
     // Verificar apenas uma vez
