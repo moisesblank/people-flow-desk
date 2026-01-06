@@ -983,6 +983,11 @@
     50% { border-color: hsl(var(--holo-cyan) / 0.6); }
   }
 
+  .animate-fade-in { animation: fade-in 0.3s ease-out; }
+  .animate-fade-up { animation: fade-up 0.4s ease-out; }
+  .animate-fade-down { animation: fade-down 0.3s ease-out; }
+  .animate-scale-in { animation: scale-in 0.2s ease-out; }
+  /* ⚠️ P0 FIX: FORWARDS obrigatório para manter opacity: 1 após animação */
   .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
   .animate-fade-up { animation: fade-up 0.4s ease-out forwards; }
   .animate-fade-down { animation: fade-down 0.3s ease-out forwards; }
@@ -1392,6 +1397,8 @@
       0 0 0 3px hsl(var(--success) / 0.2),
       0 0 25px hsl(var(--success) / 0.15);
     animation: success-glow 1s ease-out;
+Followup on 1395...
+
   }
   .input-2300.input-error {
     border-color: hsl(var(--destructive) / 0.8);
