@@ -109,6 +109,8 @@ import { IntegracoesStatusWidget } from "@/components/dashboard/IntegracoesStatu
 import { QuickActionsV2 } from "@/components/dashboard/QuickActionsV2";
 import { AlertasSistemaWidget } from "@/components/dashboard/AlertasSistemaWidget";
 import { AlunosRealtimeWidget } from "@/components/dashboard/AlunosRealtimeWidget";
+// 🏛️ CONSTITUIÇÃO: Widget OWNER-ONLY
+import { StorageWidget } from "@/components/dashboard/StorageWidget";
 // WordPressSyncWidget removido - WordPress desativado em 2025-12-28
 import { ChurnRiskAlert } from "@/components/dashboard/ChurnRiskAlert";
 import { Button } from "@/components/ui/button";
@@ -761,9 +763,10 @@ export default function Dashboard() {
           <IntegrationsHubWidget />
         </section>
 
-        {/* EMPRESARIAL 2.0 - Gestão Multi-CNPJ (Apenas Owner) */}
+        {/* 🏛️ CONSTITUIÇÃO: OWNER-ONLY Widgets */}
         {role === 'owner' && (
-          <section className="mb-8">
+          <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
+            <StorageWidget />
             <MultiCNPJManager />
           </section>
         )}
