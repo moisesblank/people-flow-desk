@@ -234,6 +234,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
   /**
    * Validar sessão consultando o BACKEND — nunca revoga por timer
+   * 🔐 P0 FIX v5: Também verifica se mfa_verified = true
    */
   const validateSession = useCallback(async (): Promise<boolean> => {
     if (!user || isValidatingRef.current || hasLoggedOutRef.current) return true;
