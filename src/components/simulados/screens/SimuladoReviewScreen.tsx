@@ -261,9 +261,19 @@ export function SimuladoReviewScreen({
 
             {/* Alternativas */}
             <div className="space-y-3 mb-6">
-              {Object.entries(currentQuestion.options || {}).map(([key, text]) => {
+              {Object.entries(currentQuestion.options || {}).map(([key, optionValue]) => {
                 const isSelected = currentAnswer?.selectedOption === key;
                 const isCorrectOption = currentQuestion.correct_answer === key;
+                
+                // Extrair texto: pode ser string ou objeto {id, text}
+                const rawText: unknown =
+                  typeof optionValue === "string"
+                    ? optionValue
+                    : (optionValue as { text?: unknown })?.text ?? optionValue;
+                
+                // Garantia anti-"React child object": sempre coerção para string
+                const optionText =
+                  typeof rawText === "string" ? rawText : rawText == null ? "" : String(rawText);
                 
                 return (
                   <div
@@ -286,7 +296,7 @@ export function SimuladoReviewScreen({
                       >
                         {key}
                       </div>
-                      <p className="flex-1 pt-1">{text}</p>
+                      <p className="flex-1 pt-1">{optionText}</p>
                       {isCorrectOption && (
                         <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
                       )}
