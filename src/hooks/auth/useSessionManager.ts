@@ -26,24 +26,13 @@ export function useSessionManager() {
       const fingerprint = await collectFingerprint();
       const sessionToken = crypto.randomUUID();
       
-      // 👑 OWNER bypass: verificar se é o OWNER antes de revogar sessões
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const isOwner = currentUser?.email?.toLowerCase() === 'moisesblank@gmail.com';
+      // 🗑️ DELETAR sessões anteriores deste usuário (EXCLUSÃO DEFINITIVA)
+      await supabase
+        .from('active_sessions')
+        .delete()
+        .eq('user_id', userId);
       
-      // Revogar sessões anteriores deste usuário (EXCETO OWNER)
-      if (!isOwner) {
-        await supabase
-          .from('active_sessions')
-          .update({ 
-            status: 'revoked', 
-            revoked_at: new Date().toISOString(),
-            revoked_reason: 'new_session_started'
-          })
-          .eq('user_id', userId)
-          .eq('status', 'active');
-      } else {
-        console.log('[SessionManager] 👑 OWNER bypass - NÃO revogando sessões anteriores');
-      }
+      console.log('[SessionManager] 🗑️ Sessões anteriores DELETADAS definitivamente');
 
       // Buscar epoch atual do sistema
       const { data: guardData } = await supabase
@@ -53,7 +42,7 @@ export function useSessionManager() {
       
       const currentEpoch = guardData?.auth_epoch ?? 1;
 
-      // Criar nova sessão COM epoch
+      // Criar nova sessão DO ZERO
       const { error } = await supabase
         .from('active_sessions')
         .insert({
@@ -64,8 +53,8 @@ export function useSessionManager() {
           device_name: `${fingerprint.data.browser} on ${fingerprint.data.os}`,
           user_agent: navigator.userAgent,
           status: 'active',
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 dias
-          auth_epoch_at_login: currentEpoch, // 🛡️ BLOCO 2: Registrar epoch no login
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          auth_epoch_at_login: currentEpoch,
         });
 
       if (error) {
@@ -82,23 +71,22 @@ export function useSessionManager() {
   }, [collectFingerprint]);
 
   /**
-   * Revoga a sessão atual
+   * 🗑️ DELETA a sessão atual (EXCLUSÃO DEFINITIVA - não revoga, DELETA)
    */
-  const revokeCurrentSession = useCallback(async (reason: string = 'user_logout') => {
+  const revokeCurrentSession = useCallback(async (_reason: string = 'user_logout') => {
     const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
     if (!sessionToken) return;
 
     try {
+      // 🗑️ DELETE DEFINITIVO - não UPDATE para 'revoked'
       await supabase
         .from('active_sessions')
-        .update({ 
-          status: 'revoked', 
-          revoked_at: new Date().toISOString(),
-          revoked_reason: reason
-        })
+        .delete()
         .eq('session_token', sessionToken);
+      
+      console.log('[SessionManager] 🗑️ Sessão DELETADA definitivamente');
     } catch (err) {
-      console.warn('[SessionManager] Erro ao revogar sessão:', err);
+      console.warn('[SessionManager] Erro ao deletar sessão:', err);
     } finally {
       localStorage.removeItem(SESSION_TOKEN_KEY);
     }
