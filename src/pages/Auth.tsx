@@ -1212,7 +1212,26 @@ export default function Auth() {
         // - Session Creation RPC: DESATIVADO (session já existe via Supabase)
         // Login vai direto para redirect
         // ====================================================================
-        console.log("[AUTH] 🔓 BYPASS C: Todas as camadas DESATIVADAS - redirecionando diretamente");
+        console.log("[AUTH] 🔓 BYPASS C: Todas as camadas DESATIVADAS");
+
+        // 🎯 P0 FIX v3.2: VERIFICAR password_change_required ANTES de redirecionar
+        const { data: profileCheck } = await supabase
+          .from("profiles")
+          .select("password_change_required")
+          .eq("id", userFor2FA.id)
+          .maybeSingle();
+
+        if (profileCheck?.password_change_required === true) {
+          console.log("[AUTH] 🔐 BYPASS C: Usuário precisa trocar senha - mostrando formulário");
+          sessionStorage.setItem("matriz_password_change_pending", "1");
+          setPendingPasswordChangeUser({
+            email: userFor2FA.email || "",
+            userId: userFor2FA.id,
+          });
+          setShowForcePasswordChange(true);
+          setIsLoading(false);
+          return; // NÃO redirecionar - mostrar formulário de troca de senha
+        }
 
         toast.success("Login realizado com sucesso!");
 
