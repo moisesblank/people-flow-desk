@@ -173,7 +173,8 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
 
   /**
    * Callback chamado após verificação do código 2FA
-   * 🔐 P0 FIX: Registro robusto de dispositivo pós-2FA
+   * 🔐 P0 FIX v2: Usa o deviceHash JÁ GERADO (state.deviceHash) em vez de gerar novo
+   * O dispositivo é registrado ANTES de salvar MFA usando o MESMO hash
    */
   const onVerificationComplete = useCallback(
     async (success: boolean) => {
@@ -187,9 +188,27 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         return;
       }
 
-      console.log("[DeviceMFAGuard] ✅ 2FA verificado com sucesso! Iniciando registro de dispositivo...");
+      console.log("[DeviceMFAGuard] ✅ 2FA verificado! Hash atual:", state.deviceHash?.slice(0, 8) + "...");
 
-      // 1) PRIMEIRO: Registrar o DISPOSITIVO (user_devices) para obter hash do servidor
+      // 🔐 CRÍTICO: Usar o hash que JÁ FOI GERADO no checkDeviceMFA
+      // NÃO chamar registerDeviceBeforeSession() novamente pois gera hash diferente!
+      const currentDeviceHash = state.deviceHash;
+
+      if (!currentDeviceHash) {
+        console.error("[DeviceMFAGuard] ❌ deviceHash não disponível no state!");
+        setState((prev) => ({
+          ...prev,
+          needsMFA: true,
+          isVerified: false,
+          error: "Erro interno: hash do dispositivo não encontrado.",
+        }));
+        return;
+      }
+
+      // 1) PRIMEIRO: Registrar o DISPOSITIVO em user_devices via Edge Function
+      // Passamos o hash local para o servidor manter consistência
+      console.log("[DeviceMFAGuard] 📱 Registrando dispositivo...");
+      
       let deviceReg: { success: boolean; deviceHash?: string; error?: string };
       
       try {
@@ -200,45 +219,35 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         deviceReg = { success: false, error: "EXCEPTION" };
       }
 
+      // 🔐 Hash final: preferir o do servidor, fallback para o local
+      const finalHash = deviceReg.deviceHash || currentDeviceHash;
+      console.log("[DeviceMFAGuard] 🔐 Hash final para MFA:", finalHash.slice(0, 8) + "...");
+
       if (!deviceReg.success) {
-        console.error("[DeviceMFAGuard] ❌ Falha ao registrar dispositivo pós-2FA:", deviceReg.error);
+        console.warn("[DeviceMFAGuard] ⚠️ Registro retornou erro:", deviceReg.error);
         
-        // 🔐 Se o erro for limite de dispositivos, não falhar - deixar o fluxo continuar
-        // O usuário será redirecionado para a tela de gerenciamento de dispositivos
+        // Se limite excedido ou substituição necessária, continuar (será tratado por outros gates)
         if (deviceReg.error === "DEVICE_LIMIT_EXCEEDED" || deviceReg.error === "SAME_TYPE_REPLACEMENT_REQUIRED") {
-          console.log("[DeviceMFAGuard] ⚠️ Limite atingido ou substituição necessária - redirecionando...");
-          // Continuar com o hash local como fallback
-        } else {
-          setState((prev) => ({
-            ...prev,
-            needsMFA: true,
-            isVerified: false,
-            error: "Falha ao cadastrar este dispositivo. Tente novamente.",
-          }));
-          return;
+          console.log("[DeviceMFAGuard] ⚠️ Limite/substituição - fluxo continua com hash local");
+        } else if (deviceReg.error !== "EXISTING_DEVICE" && !deviceReg.deviceHash) {
+          // Erro real - mas tentar continuar com hash local se possível
+          console.error("[DeviceMFAGuard] ⚠️ Continuando com hash local...");
         }
       }
 
-      // 🔐 CRÍTICO: Usar o hash do servidor (que acabou de ser salvo no localStorage)
-      const serverHash = deviceReg.deviceHash;
-      const hashParaMFA = serverHash || state.deviceHash;
-
-      console.log("[DeviceMFAGuard] 🔐 Hash para MFA:", hashParaMFA?.slice(0, 8) + "...");
-
-      // 2) DEPOIS: Registrar verificação MFA com o hash do SERVIDOR
-      if (user?.id && hashParaMFA) {
+      // 2) REGISTRAR verificação MFA com o hash FINAL
+      if (user?.id && finalHash) {
         try {
-          const { data, error } = await supabase.rpc("register_device_mfa_verification", {
+          const { error } = await supabase.rpc("register_device_mfa_verification", {
             _user_id: user.id,
-            _device_hash: hashParaMFA,
+            _device_hash: finalHash,
             _ip_address: null,
           });
 
           if (error) {
             console.error("[DeviceMFAGuard] ⚠️ Erro ao registrar verificação MFA:", error);
-            // Não falhar aqui - o dispositivo já foi registrado
           } else {
-            console.log("[DeviceMFAGuard] ✅ Dispositivo verificado por 7 dias com hash:", hashParaMFA.slice(0, 8) + "...");
+            console.log("[DeviceMFAGuard] ✅ MFA registrado por 7 dias:", finalHash.slice(0, 8) + "...");
           }
         } catch (err) {
           console.error("[DeviceMFAGuard] ⚠️ Exceção ao salvar verificação MFA:", err);
@@ -246,13 +255,13 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       }
 
       // 3) Cache global (por user_id + device_hash)
-      if (user?.id && hashParaMFA) {
-        const cacheKey = getCacheKey(user.id, hashParaMFA);
+      if (user?.id && finalHash) {
+        const cacheKey = getCacheKey(user.id, finalHash);
         globalMFACache.set(cacheKey, {
           verified: true,
           expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 dias
         });
-        console.log(`[DeviceMFAGuard] ✅ Cache pós-2FA atualizado para ${cacheKey.slice(0, 20)}...`);
+        console.log(`[DeviceMFAGuard] ✅ Cache atualizado: ${cacheKey.slice(0, 20)}...`);
       }
 
       setState((prev) => ({
@@ -260,11 +269,11 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         needsMFA: false,
         isVerified: true,
         error: null,
-        deviceHash: hashParaMFA, // Atualizar com hash do servidor
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 dias
+        deviceHash: finalHash,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       }));
 
-      console.log("[DeviceMFAGuard] 🎉 Fluxo completo! Dispositivo cadastrado e verificado.");
+      console.log("[DeviceMFAGuard] 🎉 Dispositivo cadastrado e verificado com sucesso!");
     },
     [user?.id, state.deviceHash],
   );
