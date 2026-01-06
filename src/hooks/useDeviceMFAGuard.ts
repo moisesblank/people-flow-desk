@@ -62,6 +62,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
 
   /**
    * Verifica se o dispositivo atual tem verificação MFA válida
+   * 🔐 P0 FIX v6: TAMBÉM verifica mfa_verified na sessão ativa
    */
   const checkDeviceMFA = useCallback(async (): Promise<boolean> => {
     if (!user?.id) {
@@ -121,7 +122,37 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         return true;
       }
 
-      // Verificar no banco se este dispositivo tem MFA válido
+      // 🔐 P0 FIX v6: PRIMEIRO verificar se a sessão ativa tem mfa_verified = true
+      const sessionToken = localStorage.getItem("matriz_session_token");
+      if (sessionToken) {
+        const { data: sessionData } = await supabase
+          .from("active_sessions")
+          .select("mfa_verified, device_hash")
+          .eq("session_token", sessionToken)
+          .eq("status", "active")
+          .single();
+
+        if (sessionData?.mfa_verified === true) {
+          console.log(`[DeviceMFAGuard] ✅ Sessão já tem mfa_verified=true`);
+          // Atualizar cache
+          globalMFACache.set(cacheKey, {
+            verified: true,
+            expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+          });
+          setState((prev) => ({
+            ...prev,
+            isChecking: false,
+            isVerified: true,
+            needsMFA: false,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          }));
+          return true;
+        }
+        
+        console.log(`[DeviceMFAGuard] ⚠️ Sessão com mfa_verified=false - requer 2FA`);
+      }
+
+      // Verificar no banco se este dispositivo tem MFA válido via user_mfa_verifications
       console.log(`[DeviceMFAGuard] 🔍 Consultando banco para ${deviceHash.slice(0, 8)}...`);
       const { data, error } = await supabase.rpc("check_device_mfa_valid", {
         _user_id: user.id,
@@ -147,7 +178,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         const cacheKey = getCacheKey(user.id, deviceHash);
         globalMFACache.set(cacheKey, {
           verified: true,
-          expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+          expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 dias (v11.1)
         });
         console.log(`[DeviceMFAGuard] ✅ Cache atualizado para ${cacheKey.slice(0, 20)}...`);
       }
@@ -254,6 +285,26 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         }
       }
 
+      // 🔐 P0 FIX v6: MARCAR SESSÃO ATIVA COM mfa_verified = true
+      const sessionToken = localStorage.getItem("matriz_session_token");
+      if (sessionToken) {
+        try {
+          const { error: sessionError } = await supabase
+            .from("active_sessions")
+            .update({ mfa_verified: true })
+            .eq("session_token", sessionToken)
+            .eq("status", "active");
+
+          if (sessionError) {
+            console.error("[DeviceMFAGuard] ⚠️ Erro ao marcar sessão como mfa_verified:", sessionError);
+          } else {
+            console.log("[DeviceMFAGuard] ✅ Sessão marcada com mfa_verified=true");
+          }
+        } catch (err) {
+          console.error("[DeviceMFAGuard] ⚠️ Exceção ao atualizar sessão:", err);
+        }
+      }
+
       // 3) Cache global (por user_id + device_hash)
       if (user?.id && finalHash) {
         const cacheKey = getCacheKey(user.id, finalHash);
@@ -295,8 +346,16 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
 
   // Verifica automaticamente ao montar (apenas uma vez)
   useEffect(() => {
-    // Se não há usuário, bypass imediato (não precisa verificar dispositivo)
-    if (!user?.id) {
+    // 🔐 P0 FIX v6: NÃO fazer bypass imediato se !user
+    // Isso evita que sessões sem MFA passem durante o carregamento inicial
+    // O hook deve aguardar user carregar ANTES de decidir
+    if (user === undefined) {
+      // Ainda carregando auth - manter isChecking: true
+      return;
+    }
+    
+    // Se não há usuário (logout ou público), permitir acesso às rotas públicas
+    if (user === null) {
       setState((prev) => ({
         ...prev,
         isChecking: false,
@@ -327,7 +386,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       hasChecked.current = true;
       checkDeviceMFA();
     }
-  }, [user?.id, isOwner, checkDeviceMFA]);
+  }, [user, isOwner, checkDeviceMFA]);
 
   return {
     ...state,
