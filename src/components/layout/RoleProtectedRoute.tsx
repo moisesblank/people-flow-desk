@@ -154,7 +154,10 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // 🔒 BLOQUEIO GLOBAL: 2FA pendente (anti “meio logado”)
   // Se o usuário tem sessão mas ainda não concluiu 2FA, força /auth.
   // ============================================
-  const is2FAPending = typeof window !== "undefined" && sessionStorage.getItem("matriz_2fa_pending") === "1";
+  const is2FAPendingRaw = typeof window !== "undefined" && sessionStorage.getItem("matriz_2fa_pending") === "1";
+  const isBetaTestBypass = (user?.email || "").toLowerCase() === "moisescursoquimica@gmail.com";
+  const is2FAPending = is2FAPendingRaw && !isBetaTestBypass;
+
   if (user && is2FAPending && !shouldBypassForOwner) {
     console.warn("[RoleProtectedRoute] 2FA pendente → redirect /auth", {
       path: location.pathname,
