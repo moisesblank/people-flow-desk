@@ -9,10 +9,7 @@ import { ReactNode, useEffect, useState, useMemo } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { 
-  useRolePermissions, 
-  OWNER_EMAIL
-} from "@/hooks/useRolePermissions";
+import { useRolePermissions, OWNER_EMAIL } from "@/hooks/useRolePermissions";
 // 🎯 FONTE ÚNICA DE VERDADE - ÁREAS
 import { type SystemArea, URL_TO_AREA } from "@/core/areas";
 import { validateDomainAccessForLogin, type DomainAppRole } from "@/hooks/useDomainAccess";
@@ -34,16 +31,10 @@ function NotFoundPage() {
       <div className="max-w-md w-full text-center space-y-6">
         <div className="text-8xl font-bold text-muted-foreground/30">404</div>
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-foreground">
-            Página não encontrada
-          </h1>
-          <p className="text-muted-foreground">
-            A página que você está procurando não existe ou foi movida.
-          </p>
+          <h1 className="text-2xl font-bold text-foreground">Página não encontrada</h1>
+          <p className="text-muted-foreground">A página que você está procurando não existe ou foi movida.</p>
         </div>
-        <Button onClick={() => window.location.href = '/'}>
-          Voltar para o Início
-        </Button>
+        <Button onClick={() => (window.location.href = "/")}>Voltar para o Início</Button>
       </div>
     </div>
   );
@@ -54,19 +45,19 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   const { hasAccess, hasAccessToUrl, isLoading: roleLoading, roleLabel, role, isOwner } = useRolePermissions();
   const { isLoading: onboardingLoading, needsOnboarding } = useOnboardingStatus();
   const location = useLocation();
-  
+
   // ============================================
   // ⚠️ CRÍTICO: TODOS OS HOOKS DEVEM VIR PRIMEIRO
   // React Error #310 = hooks em ordem diferente
   // NUNCA fazer return antes de TODOS os hooks
   // ============================================
-  
+
   // ============================================
   // ⏱️ TIMEOUT GLOBAL (LEI IV CONSTITUIÇÃO)
   // Se loading > 5s, prosseguir com fallback
   // ============================================
   const [loadingTimeout, setLoadingTimeout] = useState(false);
-  
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (authLoading || roleLoading) {
@@ -74,7 +65,7 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
         setLoadingTimeout(true);
       }
     }, 5000);
-    
+
     return () => clearTimeout(timeout);
   }, [authLoading, roleLoading]);
 
@@ -89,12 +80,12 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   const isOwnerEmailMatch = useMemo(() => {
     return user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
   }, [user?.email]);
-  
+
   // ✅ P1-2 FIX: Preferir verificação por role
   const isOwnerByRole = useMemo(() => {
-    return role === 'owner';
+    return role === "owner";
   }, [role]);
-  
+
   // ✅ BYPASS calculado como VALOR, não como return condicional
   const shouldBypassForOwner = useMemo(() => {
     // 1. Primeiro: verificar role (fonte da verdade)
@@ -122,7 +113,9 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
     const domainValidation = validateDomainAccessForLogin(role, userEmail);
 
     if (!domainValidation.permitido) {
-      console.log(`[DOMAIN-GUARD] Role "${role}" no domínio ${domainValidation.dominioAtual} - acesso pode ser limitado (sem redirect)`);
+      console.log(
+        `[DOMAIN-GUARD] Role "${role}" no domínio ${domainValidation.dominioAtual} - acesso pode ser limitado (sem redirect)`,
+      );
     }
   }, [role, roleLoading, user]);
 
@@ -132,7 +125,16 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   const isGestaoPath = location.pathname.startsWith("/gestaofc");
   const isOnPrimeiroAcesso = location.pathname === "/primeiro-acesso";
   // P1-2 FIX: Sem 'funcionario' e 'employee' deprecated
-  const isStaffRole = ['owner', 'admin', 'coordenacao', 'suporte', 'monitoria', 'marketing', 'contabilidade', 'afiliado'].includes(role || '');
+  const isStaffRole = [
+    "owner",
+    "admin",
+    "coordenacao",
+    "suporte",
+    "monitoria",
+    "marketing",
+    "contabilidade",
+    "afiliado",
+  ].includes(role || "");
   const currentArea = requiredArea || URL_TO_AREA[location.pathname];
   const hasPermission = currentArea ? hasAccess(currentArea) : hasAccessToUrl(location.pathname);
   const isActuallyLoading = (authLoading || roleLoading || onboardingLoading) && !loadingTimeout;
@@ -143,18 +145,25 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   if (shouldBypassForOwner) {
     return <>{children}</>;
   }
-
+  // ============================================
+  // 🎯 P0 FIX: ROTA /alunos SEMPRE PASSA SE AUTENTICADO
+  // A lógica de permissão fica dentro do AlunosRouteSwitcher
+  // ============================================
+  const isAlunosPath = location.pathname.startsWith("/alunos");
+  if (isAlunosPath && user && !isActuallyLoading) {
+    return <>{children}</>;
+  }
   // ============================================
   // 🔒 BLOQUEIO GLOBAL: 2FA pendente (anti “meio logado”)
   // Se o usuário tem sessão mas ainda não concluiu 2FA, força /auth.
   // ============================================
   const is2FAPending = typeof window !== "undefined" && sessionStorage.getItem("matriz_2fa_pending") === "1";
   if (user && is2FAPending && !shouldBypassForOwner) {
-    console.warn('[RoleProtectedRoute] 2FA pendente → redirect /auth', {
+    console.warn("[RoleProtectedRoute] 2FA pendente → redirect /auth", {
       path: location.pathname,
       email: user.email,
       role,
-      hasSupabaseToken: !!localStorage.getItem('sb-fyikfsasudgzsjmumdlw-auth-token'),
+      hasSupabaseToken: !!localStorage.getItem("sb-fyikfsasudgzsjmumdlw-auth-token"),
     });
     return <Navigate to="/auth" replace state={{ from: location }} />;
   }
@@ -173,9 +182,9 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
 
   // Not authenticated
   if (!user) {
-    console.warn('[RoleProtectedRoute] Sem usuário após loading → redirect /auth', {
+    console.warn("[RoleProtectedRoute] Sem usuário após loading → redirect /auth", {
       path: location.pathname,
-      hasSupabaseToken: !!localStorage.getItem('sb-fyikfsasudgzsjmumdlw-auth-token'),
+      hasSupabaseToken: !!localStorage.getItem("sb-fyikfsasudgzsjmumdlw-auth-token"),
       is2FAPending,
     });
     return <Navigate to="/auth" replace />;
@@ -187,7 +196,7 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // (Exceto owner e se já estamos na página)
   // ============================================
   if (needsOnboarding && !isOnPrimeiroAcesso && !shouldBypassForOwner) {
-    console.log('[RoleProtectedRoute] Onboarding incompleto, redirecionando para /primeiro-acesso');
+    console.log("[RoleProtectedRoute] Onboarding incompleto, redirecionando para /primeiro-acesso");
     return <Navigate to="/primeiro-acesso" replace />;
   }
 
