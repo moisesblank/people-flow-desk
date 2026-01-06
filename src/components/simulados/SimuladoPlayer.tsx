@@ -12,7 +12,7 @@
  * - Logging (useSimuladoLogger)
  */
 
-import React, { useState, useCallback, useEffect, useMemo } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, AlertTriangle } from "lucide-react";
 import { 
@@ -301,15 +301,22 @@ export function SimuladoPlayer({
   // O reset do timer acontece no servidor quando o usuário INICIA manualmente (handleStart).
   // Isso evita loops infinitos e chamadas duplicadas.
 
-  // Efeito: Auto-finalizar quando tempo acabar
+  // Efeito: Auto-finalizar quando tempo acabar (DISPARA UMA VEZ)
+  const hasAutoTimeUpFiredRef = useRef(false);
+
   useEffect(() => {
-    if (
-      isExpired &&
-      currentState === SimuladoState.RUNNING &&
-      !isFinishing
-    ) {
-      handleTimeUp();
+    // Reset do latch quando o tempo volta a ser > 0 (ex: reinício, novo attempt)
+    if (!isExpired) {
+      hasAutoTimeUpFiredRef.current = false;
+      return;
     }
+
+    if (currentState !== SimuladoState.RUNNING) return;
+    if (isFinishing) return;
+    if (hasAutoTimeUpFiredRef.current) return;
+
+    hasAutoTimeUpFiredRef.current = true;
+    handleTimeUp();
   }, [isExpired, currentState, isFinishing, handleTimeUp]);
 
   // Efeito: Atualizar attempt quando mudar (e hidratar attemptId local para permitir finalizar)
