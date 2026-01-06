@@ -19,6 +19,7 @@ import { DeviceMFAGuard } from "@/components/security/DeviceMFAGuard";
 import { GestaoNoIndex } from "@/components/seo/GestaoNoIndex";
 import { LegacyRedirectHandler } from "@/components/routing/LegacyRedirectHandler";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { P0AliveBeacon } from "@/components/debug/P0AliveBeacon";
 // LegacyDomainBlocker REMOVIDO - domínio gestao.* descontinuado
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
@@ -176,6 +177,7 @@ const App = memo(() => (
     <BrowserRouter>
       <GestaoNoIndex />
       <LegacyRedirectHandler />
+      <P0AliveBeacon />
       <AppContent />
       <DuplicationClipboardIndicator />
     </BrowserRouter>
