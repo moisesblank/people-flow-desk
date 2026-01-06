@@ -41,9 +41,6 @@ function NotFoundPage() {
 }
 
 export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRouteProps) {
-  // 🔴 DEBUG P0
-  console.log("[RoleProtectedRoute] 🚀 COMPONENTE INICIANDO RENDER");
-
   const { user, isLoading: authLoading } = useAuth();
   const { hasAccess, hasAccessToUrl, isLoading: roleLoading, roleLabel, role, isOwner } = useRolePermissions();
   const { isLoading: onboardingLoading, needsOnboarding } = useOnboardingStatus();
@@ -146,7 +143,6 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // 🔥 OWNER BYPASS - DECISÃO (não estrutura)
   // ============================================
   if (shouldBypassForOwner) {
-    console.log("[RoleProtectedRoute] 👑 OWNER BYPASS - renderizando children");
     return <>{children}</>;
   }
 
@@ -154,10 +150,7 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // 🔒 BLOQUEIO GLOBAL: 2FA pendente (anti “meio logado”)
   // Se o usuário tem sessão mas ainda não concluiu 2FA, força /auth.
   // ============================================
-  const is2FAPendingRaw = typeof window !== "undefined" && sessionStorage.getItem("matriz_2fa_pending") === "1";
-  const isBetaTestBypass = (user?.email || "").toLowerCase() === "moisescursoquimica@gmail.com";
-  const is2FAPending = is2FAPendingRaw && !isBetaTestBypass;
-
+  const is2FAPending = typeof window !== "undefined" && sessionStorage.getItem("matriz_2fa_pending") === "1";
   if (user && is2FAPending && !shouldBypassForOwner) {
     console.warn("[RoleProtectedRoute] 2FA pendente → redirect /auth", {
       path: location.pathname,
@@ -173,14 +166,8 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // Spinner máximo 5s, depois prossegue
   // ============================================
   if (isActuallyLoading) {
-    console.log("[RoleProtectedRoute] ⏳ LOADING STATE ATIVO", {
-      authLoading,
-      roleLoading,
-      onboardingLoading,
-      loadingTimeout,
-    });
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4 relative z-10">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
       </div>
     );
@@ -225,10 +212,8 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
 
   if (!hasPermission) {
     // Para outras áreas (não /gestaofc), mostrar acesso negado normal
-    console.log("[RoleProtectedRoute] ❌ SEM PERMISSÃO - mostrando 404", { hasPermission, currentArea, role });
     return <NotFoundPage />;
   }
 
-  console.log("[RoleProtectedRoute] ✅ RENDERIZANDO CHILDREN");
   return <>{children}</>;
 }
