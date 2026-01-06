@@ -28,13 +28,23 @@ export function SessionGuard({ children }: SessionGuardProps) {
   const [showRevokedOverlay, setShowRevokedOverlay] = useState(false);
 
   const BOOTSTRAP_RETRY_MS = 10_000;
+  
+  // 🏛️ CONSTITUIÇÃO: OWNER BYPASS ABSOLUTO para conflitos de sessão
+  const isOwner = user?.email?.toLowerCase() === 'moisesblank@gmail.com';
   const MAX_BOOTSTRAP_ATTEMPTS = 3;
 
   /**
    * Exibe overlay visual e prepara logout
    * SOMENTE quando backend confirma revogação por novo dispositivo
+   * 🏛️ OWNER BYPASS: Nunca mostra overlay para Owner
    */
   const handleDeviceRevocation = useCallback(() => {
+    // 🏛️ CONSTITUIÇÃO: Owner nunca é bloqueado por conflito de sessão
+    if (isOwner) {
+      console.log("[SessionGuard] ✅ OWNER BYPASS - conflito de sessão ignorado");
+      return;
+    }
+    
     if (hasLoggedOutRef.current) return;
     hasLoggedOutRef.current = true;
 
@@ -53,7 +63,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
     // Mostrar overlay visual
     setShowRevokedOverlay(true);
-  }, []);
+  }, [isOwner]);
 
   /**
    * Callback quando usuário fecha o overlay
@@ -66,9 +76,16 @@ export function SessionGuard({ children }: SessionGuardProps) {
   /**
    * Limpa TUDO e força logout — SOMENTE quando backend confirma revogação
    * Guarda contra múltiplos logouts simultâneos
+   * 🏛️ OWNER BYPASS: Owner nunca é deslogado por conflito de sessão
    */
   const handleBackendRevocation = useCallback(
     async (reason: string, isDeviceChange = false) => {
+      // 🏛️ CONSTITUIÇÃO: Owner tem bypass para conflitos de sessão
+      if (isOwner && isDeviceChange) {
+        console.log("[SessionGuard] ✅ OWNER BYPASS - revogação por dispositivo ignorada:", reason);
+        return;
+      }
+      
       if (hasLoggedOutRef.current) return;
 
       // Se é mudança de dispositivo, usar overlay visual
@@ -93,7 +110,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
       await signOut();
     },
-    [signOut, handleDeviceRevocation],
+    [signOut, handleDeviceRevocation, isOwner],
   );
 
   const detectClientDeviceMeta = useCallback(() => {
