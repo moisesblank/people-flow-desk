@@ -174,6 +174,24 @@ function checkTrustCache(userId: string, deviceHash: string): {
 export async function decide2FA(options: TwoFADecisionOptions): Promise<TwoFADecisionResult> {
   const { userId, email, deviceHash, deviceSignals, isPasswordReset = false } = options;
 
+  // 🧪 BYPASS TEMPORÁRIO: usuário de teste beta (moisescursoquimica@gmail.com)
+  const BETA_TEST_EMAIL = 'moisescursoquimica@gmail.com';
+  if (email?.toLowerCase() === BETA_TEST_EMAIL.toLowerCase()) {
+    console.log('[2FA-DECISION] 🧪 BYPASS: usuário de teste beta - 2FA desativado');
+    return {
+      requires2FA: false,
+      reason: '🧪 Bypass de teste (beta user)',
+      signals: {
+        firstLogin: false,
+        passwordReset: false,
+        isNewDevice: false,
+        countryChanged: false,
+        highRisk: false,
+        trustWindowExpired: false,
+      },
+    };
+  }
+
   console.log('[2FA-DECISION] Iniciando decisão para:', { userId, email, deviceHash });
   console.log('[2FA-DECISION] Sinais recebidos:', deviceSignals);
 
