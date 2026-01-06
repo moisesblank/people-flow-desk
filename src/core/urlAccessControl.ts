@@ -596,14 +596,15 @@ export function getPostLoginRedirect(role?: string | null, email?: string | null
     return "/gestaofc";
   }
   
-  // 3. Alunos → alunos
-  if (role && isAlunoRole(role)) {
-    return "/alunos";
-  }
-  
-  // 4. aluno_gratuito → comunidade (acesso limitado)
+  // 3. aluno_gratuito → comunidade (acesso limitado)
+  // ⚠️ DEVE vir ANTES de isAlunoRole() pois aluno_gratuito está na lista
   if (role === "aluno_gratuito") {
     return "/comunidade";
+  }
+  
+  // 4. Alunos pagantes (beta) → alunos
+  if (role && isAlunoRole(role)) {
+    return "/alunos";
   }
   
   // 🚨 P0-3 CONSTITUIÇÃO v10.0: SEM ROLE = /perfil-incompleto
