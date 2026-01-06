@@ -1,8 +1,9 @@
 // ============================================
-// 🛡️ EVANGELHO DA SEGURANÇA v3.0
+// 🛡️ EVANGELHO DA SEGURANÇA v3.1
 // Autenticação com DOGMA I: Sessão Única
 // + LEI VI: Validação de Dispositivo
 // + Heartbeat Contínuo
+// + P0 FIX: Bloqueia redirect se password_change_pending
 // ============================================
 
 import { useState, useEffect, createContext, useContext, ReactNode, useCallback, useRef, useMemo } from "react";
@@ -416,8 +417,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================
   // ✅ P0 FIX: Redirect com dependências primitivas (evita re-render)
   // ✅ P0 FIX v2: Espera role ser carregada antes de redirecionar FUNCIONARIO
+  // ✅ P0 FIX v3.1: Bloqueia redirect se password_change_pending
   useEffect(() => {
     if (isLoading) return;
+
+    // 🎯 P0 FIX v3.1: Não interromper troca de senha obrigatória
+    const isPasswordChangePending = sessionStorage.getItem("matriz_password_change_pending") === "1";
+    if (isPasswordChangePending) {
+      console.log("[AUTH] 🔐 Password change pendente - bloqueando redirect");
+      return;
+    }
 
     // Não interromper desafio 2FA na tela de /auth
     const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
@@ -454,7 +463,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // ✅ REGRA DEFINITIVA: Usa função centralizada COM role carregada
       const target = getPostLoginRedirect(derivedRole, email);
-      console.log("[AUTH] Redirecionando para", target, "(role:", derivedRole, ")");
+      console.log("[AUTH] ✅ Redirecionando para", target, "(role:", derivedRole, ")");
       window.location.replace(target);
     }
   }, [isLoading, user?.id, session?.access_token, derivedRole, securitySessionReady]);
@@ -478,6 +487,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
     if (is2FAPending) {
       console.warn("[AUTH][SESSAO] 2FA pendente - sessão única adiada (será criada pós-2FA no /auth)");
+      postSignInPayloadRef.current = null;
+      return;
+    }
+
+    // 🎯 P0 FIX v3.1: se password_change está pendente, NÃO criar sessão única ainda
+    const isPasswordChangePending = sessionStorage.getItem("matriz_password_change_pending") === "1";
+    if (isPasswordChangePending) {
+      console.warn("[AUTH][SESSAO] Password change pendente - sessão única adiada");
       postSignInPayloadRef.current = null;
       return;
     }
@@ -701,6 +718,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Isso evita que o Realtime listener mostre overlay de conflito
       localStorage.removeItem(SESSION_TOKEN_KEY);
       console.log("[DOGMA I] Token removido ANTES do RPC");
+
+      // 🎯 P0 FIX v3.1: Limpar flag de password change pendente no logout
+      sessionStorage.removeItem("matriz_password_change_pending");
 
       if (sessionToken) {
         await supabase.rpc("invalidate_session", {
