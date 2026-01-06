@@ -3,13 +3,13 @@
 // ║   Aplica classes de performance ao documento e gerencia estado global        ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
 
-import React, { createContext, useContext, useEffect, useMemo, memo } from 'react';
-import { 
-  detectUltraPerformance, 
+import React, { createContext, useContext, useEffect, useMemo, memo } from "react";
+import {
+  detectUltraPerformance,
   setupPerformanceListener,
   getPerformanceClasses,
-  type UltraPerformanceState 
-} from '@/lib/performance/ultraPerformance3G';
+  type UltraPerformanceState,
+} from "@/lib/performance/ultraPerformance3G";
 
 // ============================================
 // CONTEXT
@@ -33,69 +33,61 @@ interface PerformanceProviderProps {
   children: React.ReactNode;
 }
 
-export const PerformanceProvider = memo(function PerformanceProvider({ 
-  children 
-}: PerformanceProviderProps) {
-  const [state, setState] = React.useState<UltraPerformanceState>(() => 
-    detectUltraPerformance()
-  );
-  
+export const PerformanceProvider = memo(function PerformanceProvider({ children }: PerformanceProviderProps) {
+  const [state, setState] = React.useState<UltraPerformanceState>(() => detectUltraPerformance());
+
   // Aplica classes ao <html> element
   useEffect(() => {
     const html = document.documentElement;
     const classes = getPerformanceClasses();
-    
+
     // Remove classes antigas
-    html.classList.forEach(cls => {
-      if (cls.startsWith('perf-')) {
+    html.classList.forEach((cls) => {
+      if (cls.startsWith("perf-")) {
         html.classList.remove(cls);
       }
     });
-    
+
     // Adiciona novas classes
-    classes.split(' ').forEach(cls => {
+    classes.split(" ").forEach((cls) => {
       if (cls) html.classList.add(cls);
     });
-    
+
     // Log em dev
     if (import.meta.env.DEV) {
       console.log(`[PERF-PROVIDER] ⚡ Tier: ${state.tier}, Classes: ${classes}`);
     }
   }, [state.tier, state.flags]);
-  
+
   // Listener para mudanças de conexão
   useEffect(() => {
     const cleanup = setupPerformanceListener((newState) => {
       setState(newState);
     });
-    
+
     return cleanup;
   }, []);
-  
+
   // CSS Variables para performance
   useEffect(() => {
     const root = document.documentElement;
-    
+
     // Animation variables
-    root.style.setProperty('--perf-duration', `${state.animation.duration}ms`);
-    root.style.setProperty('--perf-stagger', `${state.animation.stagger}ms`);
-    root.style.setProperty('--perf-easing', state.animation.easing);
-    
+    root.style.setProperty("--perf-duration", `${state.animation.duration}ms`);
+    root.style.setProperty("--perf-stagger", `${state.animation.stagger}ms`);
+    root.style.setProperty("--perf-easing", state.animation.easing);
+
     // Image variables
-    root.style.setProperty('--perf-img-quality', String(state.image.quality));
-    root.style.setProperty('--perf-img-max-width', `${state.image.maxWidth}px`);
-    
+    root.style.setProperty("--perf-img-quality", String(state.image.quality));
+    root.style.setProperty("--perf-img-max-width", `${state.image.maxWidth}px`);
+
     // Lazy loading variables
-    root.style.setProperty('--perf-lazy-margin', state.lazy.rootMargin);
+    root.style.setProperty("--perf-lazy-margin", state.lazy.rootMargin);
   }, [state.animation, state.image, state.lazy]);
-  
+
   const value = useMemo(() => state, [state]);
-  
-  return (
-    <PerformanceContext.Provider value={value}>
-      {children}
-    </PerformanceContext.Provider>
-  );
+
+  return <PerformanceContext.Provider value={value}>{children}</PerformanceContext.Provider>;
 });
 
 // ============================================
@@ -104,7 +96,9 @@ export const PerformanceProvider = memo(function PerformanceProvider({
 
 export const PerformanceStyles = memo(function PerformanceStyles() {
   return (
-    <style dangerouslySetInnerHTML={{ __html: `
+    <style
+      dangerouslySetInnerHTML={{
+        __html: `
       /* ============================================ */
       /* ULTRA PERFORMANCE CSS - 3G OPTIMIZED        */
       /* ============================================ */
@@ -219,7 +213,9 @@ export const PerformanceStyles = memo(function PerformanceStyles() {
         text-rendering: optimizeSpeed;
         -webkit-font-smoothing: none;
       }
-    `}} />
+    `,
+      }}
+    />
   );
 });
 
@@ -228,7 +224,7 @@ export const PerformanceStyles = memo(function PerformanceStyles() {
 // ============================================
 
 interface PerformanceGateProps {
-  minTier?: 'critical' | 'low' | 'medium' | 'high' | 'ultra';
+  minTier?: "critical" | "low" | "medium" | "high" | "ultra";
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }
@@ -237,19 +233,19 @@ interface PerformanceGateProps {
  * Renderiza children apenas se tier >= minTier
  */
 export const PerformanceGate = memo(function PerformanceGate({
-  minTier = 'medium',
+  minTier = "medium",
   children,
   fallback = null,
 }: PerformanceGateProps) {
   const state = usePerformanceContext();
-  const tierOrder = ['critical', 'low', 'medium', 'high', 'ultra'];
+  const tierOrder = ["critical", "low", "medium", "high", "ultra"];
   const currentIndex = tierOrder.indexOf(state.tier);
   const minIndex = tierOrder.indexOf(minTier);
-  
+
   if (currentIndex >= minIndex) {
     return <>{children}</>;
   }
-  
+
   return <>{fallback}</>;
 });
 
@@ -273,17 +269,13 @@ export const FastConnectionOnly = memo(function FastConnectionOnly({
 /**
  * Componente que só renderiza partículas/efeitos pesados em hardware bom
  */
-export const ParticlesGate = memo(function ParticlesGate({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export const ParticlesGate = memo(function ParticlesGate({ children }: { children: React.ReactNode }) {
   const state = usePerformanceContext();
-  
+
   if (!state.flags.enableParticles) {
     return null;
   }
-  
+
   return <div className="perf-particles">{children}</div>;
 });
 
@@ -292,16 +284,16 @@ export const ParticlesGate = memo(function ParticlesGate({
  */
 export const BlurGate = memo(function BlurGate({
   children,
-  fallbackBg = 'bg-background/90',
+  fallbackBg = "bg-background/90",
 }: {
   children: React.ReactNode;
   fallbackBg?: string;
 }) {
   const state = usePerformanceContext();
-  
+
   if (!state.flags.enableBlur) {
     return <div className={fallbackBg}>{children}</div>;
   }
-  
+
   return <>{children}</>;
 });
