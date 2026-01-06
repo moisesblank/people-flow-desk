@@ -174,8 +174,10 @@ export function useSystemGuard(): UseSystemGuardReturn {
     }
 
     // 2. Verificar epoch da sessão
+    // 🛡️ POLÍTICA UNIVERSAL: Expiração/Epoch inválido = /auth OBRIGATÓRIO para TODOS (sem exceções)
     const epochStatus = await validateSessionEpoch();
     if (epochStatus !== 'VALID' && epochStatus !== 'SESSION_NOT_FOUND') {
+      console.warn(`[SYSTEM_GUARD] 🛡️ Sessão inválida (${epochStatus}) - TODOS devem relogar`);
       forceLogout(epochStatus);
     }
   }, [checkAuthStatus, validateSessionEpoch, forceLogout]);
