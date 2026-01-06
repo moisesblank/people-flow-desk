@@ -289,7 +289,7 @@ export default function FlashcardsPage() {
                   Voltar ao Normal
                 </Button>
               )}
-              <Button variant="ghost" onClick={() => navigate('/alunos')} size="lg">
+              <Button variant="ghost" onClick={() => navigate('/alunos/dashboard')} size="lg">
                 <ChevronLeft className="w-4 h-4 mr-2" />
                 Dashboard
               </Button>
@@ -307,7 +307,7 @@ export default function FlashcardsPage() {
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
-            <Button variant="ghost" onClick={() => navigate('/alunos')}>
+            <Button variant="ghost" onClick={() => navigate('/alunos/dashboard')}>
               <ChevronLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>
@@ -377,7 +377,7 @@ export default function FlashcardsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/alunos')}>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/alunos/dashboard')}>
               <ChevronLeft className="w-5 h-5" />
             </Button>
             <div>

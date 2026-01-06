@@ -250,7 +250,7 @@ const AREAS_SISTEMA: AreaSistema[] = [
     descricao: "Área interna para quem TRABALHA na empresa"
   },
   {
-    path: "/alunos",
+    path: "/alunos/dashboard",
     nome: "Portal do Aluno",
     roles: ["owner", "beta", "aluno_gratuito"],
     descricao: "Área para quem ESTUDA na plataforma"

@@ -79,7 +79,7 @@ export function ExecutiveSummary({
       trend: 12.5,
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10',
-      href: '/alunos',
+      href: '/gestaofc/alunos',
     },
     {
       label: 'Afiliados',

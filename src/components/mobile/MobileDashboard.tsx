@@ -50,7 +50,7 @@ const quickActions: QuickAction[] = [
   { icon: DollarSign, label: "Lançamento", path: "/lancamento", color: "bg-stats-green" },
   { icon: Calendar, label: "Agenda", path: "/calendario", color: "bg-stats-purple" },
   { icon: MessageSquare, label: "WhatsApp", path: "/central-whatsapp", color: "bg-green-500" },
-  { icon: Users, label: "Alunos", path: "/alunos", color: "bg-amber-500" },
+  { icon: Users, label: "Alunos", path: "/gestaofc/alunos", color: "bg-amber-500" },
 ];
 
 // Memoized Quick Action Button

@@ -59,7 +59,7 @@ const URL_TYPES = [
 const INTERNAL_ROUTES = [
   { path: '/', label: 'Home (Landing Page)' },
   { path: '/dashboard', label: 'Dashboard Principal' },
-  { path: '/alunos', label: 'Gestão de Alunos' },
+  { path: '/gestaofc/alunos', label: 'Gestão de Alunos' },
   { path: '/funcionarios', label: 'Funcionários' },
   { path: '/afiliados', label: 'Programa de Afiliados' },
   { path: '/financas-empresa', label: 'Finanças Empresa' },

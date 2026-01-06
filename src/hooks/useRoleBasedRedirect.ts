@@ -147,9 +147,9 @@ export function useUserHomePath() {
 
         const role = data?.role || "employee";
         
-        // Alunos vão para /alunos
+        // Alunos vão para /alunos/dashboard (CONSTITUIÇÃO v10.4.1)
         if (ALUNO_ROLES.includes(role)) {
-          setHomePath("/alunos");
+          setHomePath("/alunos/dashboard");
           return;
         }
 

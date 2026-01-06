@@ -113,7 +113,7 @@ export function PredictiveMetricsWidget({
         unit: "number",
         icon: Users,
         color: "hsl(var(--stats-blue))",
-        href: "/alunos",
+        href: "/gestaofc/alunos",
       },
       {
         id: "productivity",

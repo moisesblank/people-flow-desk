@@ -130,7 +130,7 @@ export function AIInsightsWidget({ data, onNavigate, className }: AIInsightsWidg
         icon: Sparkles,
         title: "Base de Alunos Ativa",
         message: `${students} alunos cadastrados. Que tal enviar uma comunicação?`,
-        action: { label: "Ver Alunos", path: "/alunos" },
+        action: { label: "Ver Alunos", path: "/gestaofc/alunos" },
         priority: 6,
       });
     }

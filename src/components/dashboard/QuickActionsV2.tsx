@@ -60,7 +60,7 @@ const defaultActions: QuickAction[] = [
     label: "Novo Aluno",
     description: "Cadastrar estudante",
     icon: Users,
-    href: "/alunos",
+    href: "/gestaofc/alunos",
     color: "stats-purple"
   },
   {

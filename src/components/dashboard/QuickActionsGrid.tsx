@@ -111,7 +111,7 @@ const quickActions: QuickAction[] = [
     label: "Alunos",
     description: "Gestão de alunos",
     icon: GraduationCap,
-    path: "/alunos",
+    path: "/gestaofc/alunos",
     color: "text-[hsl(var(--stats-cyan))]",
     bgColor: "bg-[hsl(var(--stats-cyan))]/10 hover:bg-[hsl(var(--stats-cyan))]/20",
     roles: ["owner", "admin", "coordenacao"],
