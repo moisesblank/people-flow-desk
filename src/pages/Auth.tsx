@@ -536,24 +536,31 @@ export default function Auth() {
 
     // 🛡️ POLÍTICA ZERO SESSION PERSISTENCE:
     // Se 2FA está pendente NESTA ABA, restaurar o desafio (não é auto-redirect)
+    // EXCEÇÃO: usuário de teste beta NÃO deve restaurar 2FA (bypass A)
     const is2FAPending = sessionStorage.getItem(pendingKey) === "1";
     if (is2FAPending) {
       try {
         const raw = sessionStorage.getItem(pendingUserKey);
         const parsed = raw ? (JSON.parse(raw) as { email: string; userId: string; nome?: string }) : null;
 
-        if (parsed?.email && parsed?.userId) {
+        const BETA_TEST_EMAIL = 'moisescursoquimica@gmail.com';
+        if (parsed?.email?.toLowerCase() === BETA_TEST_EMAIL.toLowerCase()) {
+          console.log('[AUTH] 🧪 BYPASS: limpando 2FA pendente (beta test user)');
+          sessionStorage.removeItem(pendingKey);
+          sessionStorage.removeItem(pendingUserKey);
+        } else if (parsed?.email && parsed?.userId) {
           console.log('[AUTH] 🔐 2FA pendente nesta aba - restaurando desafio');
           setPending2FAUser(parsed);
           setShow2FA(true);
           setIsCheckingSession(false);
           return;
+        } else {
+          console.warn('[AUTH] Flag 2FA pendente sem payload - limpando (stale)');
+          sessionStorage.removeItem(pendingKey);
+          sessionStorage.removeItem(pendingUserKey);
         }
-
-        console.warn('[AUTH] Flag 2FA pendente sem payload - limpando (stale)');
-        sessionStorage.removeItem(pendingKey);
       } catch (e) {
-        console.warn('[AUTH] Falha ao restaurar 2FA - limpando flag (stale)', e);
+        console.warn('[AUTH] Falha ao restaurar 2FA - limpando flags (stale)', e);
         sessionStorage.removeItem(pendingKey);
         sessionStorage.removeItem(pendingUserKey);
       }
@@ -1001,6 +1008,12 @@ export default function Auth() {
     });
 
     setIsLoading(true);
+
+    // ✅ P0: cada clique em "Entrar" começa do ZERO (não herdar 2FA pendente desta aba)
+    sessionStorage.removeItem("matriz_2fa_pending");
+    sessionStorage.removeItem("matriz_2fa_user");
+    setShow2FA(false);
+    setPending2FAUser(null);
 
     const TIMEOUT_MS = 30_000;
     const withTimeout = async <T,>(label: string, promise: Promise<T>): Promise<T> => {
