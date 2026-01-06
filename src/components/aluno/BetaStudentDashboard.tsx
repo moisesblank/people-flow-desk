@@ -157,6 +157,22 @@ export function BetaStudentDashboard() {
   const flags = usePerformanceFlags();
   const [stats] = useState<StudyStats>(mockStats);
   
+  // Animation variants for staggered children
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+  
   const progressoGeral = 65;
   const xpProgresso = (stats.xpTotal / stats.xpProximoNivel) * 100;
 
@@ -334,7 +350,7 @@ export function BetaStudentDashboard() {
           </div>
         </div>
 
-      {/* A TRILHA DE FOCO: O CORAÇÃO DA EXPERIÊNCIA v9.0 */}
+        {/* A TRILHA DE FOCO: O CORAÇÃO DA EXPERIÊNCIA v9.0 */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -738,6 +754,7 @@ export function BetaStudentDashboard() {
           </CardContent>
         </Card>
       </motion.div>
+      </div>
     </div>
   );
 }
