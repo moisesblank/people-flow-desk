@@ -26,7 +26,7 @@ export default function AlunosRouteSwitcher() {
   const isLoading = adminLoading || roleLoading;
 
   // 🔴 P0 DEBUG: Log para diagnóstico de tela preta
-  console.log('[AlunosRouteSwitcher] 🚀 RENDER', {
+  console.log("[AlunosRouteSwitcher] 🚀 RENDER", {
     adminLoading,
     roleLoading,
     isLoading,
@@ -52,7 +52,7 @@ export default function AlunosRouteSwitcher() {
 
   // Loading state - P0: com timeout de segurança
   if (isLoading) {
-    console.warn('[AlunosRouteSwitcher] ⏳ Aguardando loading...', { adminLoading, roleLoading });
+    console.warn("[AlunosRouteSwitcher] ⏳ Aguardando loading...", { adminLoading, roleLoading });
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -95,13 +95,13 @@ export default function AlunosRouteSwitcher() {
       );
     }
     // Owner em pro.* ou outros domínios → REDIRECT para /alunos/dashboard
-    console.log('[AlunosRouteSwitcher] ✅ Owner em pro.* → Redirect para /alunos/dashboard');
+    console.log("[AlunosRouteSwitcher] ✅ Owner em pro.* → Redirect para /alunos/dashboard");
     return <Navigate to="/alunos/dashboard" replace />;
   }
 
   // BETA = Aluno pagante → REDIRECT para /alunos/dashboard
   if (isBeta) {
-    console.log('[AlunosRouteSwitcher] ✅ Beta → Redirect para /alunos/dashboard');
+    console.log("[AlunosRouteSwitcher] ✅ Beta → Redirect para /alunos/dashboard");
     return <Navigate to="/alunos/dashboard" replace />;
   }
 
@@ -133,7 +133,7 @@ export default function AlunosRouteSwitcher() {
 
   // ADMIN fora do domínio gestão (ex: pro.*) → REDIRECT para /alunos/dashboard
   if (isAdminOrOwner) {
-    console.log('[AlunosRouteSwitcher] ✅ Admin em pro.* → Redirect para /alunos/dashboard');
+    console.log("[AlunosRouteSwitcher] ✅ Admin em pro.* → Redirect para /alunos/dashboard");
     return <Navigate to="/alunos/dashboard" replace />;
   }
 
