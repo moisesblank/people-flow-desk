@@ -169,8 +169,9 @@ function useGlobalShortcutsOverlay() {
   return { isOpen, setIsOpen };
 }
 
-// AppContent memoizado - UMA ÚNICA instância de Routes
-const AppContent = memo(() => {
+// AppContent - UMA ÚNICA instância de Routes
+// 🛡️ P0: Sem memo() para evitar erros de forwardRef com Radix UI
+function AppContent() {
   const { isOpen, setIsOpen } = useGlobalShortcutsOverlay();
   useGlobalDevToolsBlock();
 
@@ -241,22 +242,23 @@ const AppContent = memo(() => {
       </SessionGuard>
     </>
   );
-});
-AppContent.displayName = 'AppContent';
+}
 
 // ⚡ App Principal com Providers Consolidados
-const App = memo(() => (
-  <AppProviders queryClient={queryClient}>
-    <Toaster />
-    <Sonner />
-    <BrowserRouter>
-      <GestaoNoIndex />
-      <LegacyRedirectHandler />
-      <AppContent />
-      <DuplicationClipboardIndicator />
-    </BrowserRouter>
-  </AppProviders>
-));
-App.displayName = 'App';
+// 🛡️ P0: Sem memo() para evitar erros de forwardRef
+function App() {
+  return (
+    <AppProviders queryClient={queryClient}>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <GestaoNoIndex />
+        <LegacyRedirectHandler />
+        <AppContent />
+        <DuplicationClipboardIndicator />
+      </BrowserRouter>
+    </AppProviders>
+  );
+}
 
 export default App;

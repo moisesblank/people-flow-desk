@@ -1,5 +1,4 @@
-import { memo, useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 /**
  * 🔴 P0 Alive Beacon
@@ -7,10 +6,21 @@ import { useLocation } from "react-router-dom";
  * a rota atual e o último erro fatal capturado.
  *
  * Ativa com: ?debugAlunos=1 ou ?debugErrors=1
+ * 
+ * 🛡️ P0 FIX: Sem memo(), sem useLocation() (evita dependências de Router context)
+ * Usa window.location diretamente para máxima robustez.
  */
-export const P0AliveBeacon = memo(() => {
-  const location = useLocation();
+export function P0AliveBeacon() {
   const [lastError, setLastError] = useState<string | null>(null);
+  const [path, setPath] = useState("");
+  const [search, setSearch] = useState("");
+
+  // Ler localização diretamente do window (sem dependência de Router)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setPath(window.location.pathname);
+    setSearch(window.location.search);
+  }, []);
 
   const enabled =
     typeof window !== "undefined" &&
@@ -74,10 +84,10 @@ export const P0AliveBeacon = memo(() => {
       <div className="font-semibold">P0 Beacon (React vivo)</div>
       <div className="mt-1 text-muted-foreground break-words">
         <div>
-          <span className="text-foreground/80">path:</span> {location.pathname}
+          <span className="text-foreground/80">path:</span> {path}
         </div>
         <div>
-          <span className="text-foreground/80">search:</span> {location.search || "(vazio)"}
+          <span className="text-foreground/80">search:</span> {search || "(vazio)"}
         </div>
         {lastError && (
           <div className="mt-1">
@@ -88,6 +98,4 @@ export const P0AliveBeacon = memo(() => {
       </div>
     </div>
   );
-});
-
-P0AliveBeacon.displayName = "P0AliveBeacon";
+}
