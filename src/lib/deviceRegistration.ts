@@ -6,6 +6,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { collectFingerprintRawData } from "@/lib/deviceFingerprintRaw";
+import { saveServerDeviceHash } from "@/lib/deviceFingerprint";
 import type { DeviceGatePayload } from "@/state/deviceGateStore";
 import type { SameTypeReplacementPayload } from "@/state/sameTypeReplacementStore";
 
@@ -150,6 +151,11 @@ export async function registerDeviceBeforeSession(): Promise<DeviceRegistrationR
       data.status,
       data.deviceHash?.slice(0, 8) + "..."
     );
+
+    // 🔐 CRÍTICO: Salvar hash do servidor para verificações futuras de MFA
+    if (data.deviceHash) {
+      saveServerDeviceHash(data.deviceHash);
+    }
 
     return {
       success: true,
