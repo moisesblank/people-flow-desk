@@ -38,17 +38,19 @@ interface AppLayoutProps {
 
 // ⚡ DOGMA VIII: Componentes memoizados para evitar re-renders
 // ✅ forwardRef wrapper para compatibilidade com Radix UI (Tooltip, Popover triggers)
-const MemoizedSidebar = memo(forwardRef<HTMLDivElement, Record<string, never>>(function MemoizedSidebar(_props, ref) {
-  return (
-    <div ref={ref}>
-      <RoleBasedSidebar />
-    </div>
-  );
-}));
-MemoizedSidebar.displayName = 'MemoizedSidebar';
+const MemoizedSidebar = memo(
+  forwardRef<HTMLDivElement, Record<string, never>>(function MemoizedSidebar(_props, ref) {
+    return (
+      <div ref={ref}>
+        <RoleBasedSidebar />
+      </div>
+    );
+  }),
+);
+MemoizedSidebar.displayName = "MemoizedSidebar";
 
 const MemoizedSystemHealth = memo(SystemHealthIndicator);
-MemoizedSystemHealth.displayName = 'MemoizedSystemHealth';
+MemoizedSystemHealth.displayName = "MemoizedSystemHealth";
 
 // ⚡ DOGMA I: Loader CSS-only ultra-leve
 const PageLoader = memo(() => (
@@ -56,7 +58,7 @@ const PageLoader = memo(() => (
     <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
   </div>
 ));
-PageLoader.displayName = 'PageLoader';
+PageLoader.displayName = "PageLoader";
 
 // ⚡ Header otimizado e memoizado + forwardRef para Radix UI
 interface AppHeaderProps {
@@ -78,147 +80,163 @@ interface AppHeaderProps {
   appVersion: string;
 }
 
-const AppHeader = memo(forwardRef<HTMLElement, AppHeaderProps>(({ 
-  openSearch, 
-  handleClearCache, 
-  isCacheClearing, 
-  setIsTeamChatOpen,
-  notifications,
-  onMarkAsRead,
-  onMarkAllAsRead,
-  onDelete,
-  onClearAll,
-  user,
-  roleLabel,
-  roleColor,
-  isGodMode,
-  signOut,
-  navigate,
-  appVersion,
-}, ref) => {
-  const getInitials = useCallback((name: string) => {
-    return name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
-  }, []);
+const AppHeader = memo(
+  forwardRef<HTMLElement, AppHeaderProps>(
+    (
+      {
+        openSearch,
+        handleClearCache,
+        isCacheClearing,
+        setIsTeamChatOpen,
+        notifications,
+        onMarkAsRead,
+        onMarkAllAsRead,
+        onDelete,
+        onClearAll,
+        user,
+        roleLabel,
+        roleColor,
+        isGodMode,
+        signOut,
+        navigate,
+        appVersion,
+      },
+      ref,
+    ) => {
+      const getInitials = useCallback((name: string) => {
+        return name
+          .split(" ")
+          .slice(0, 2)
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase();
+      }, []);
 
-  return (
-    <header ref={ref} className="h-14 flex items-center gap-4 px-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-40 header-2300">
-      <SidebarTrigger className="-ml-1" />
-      
-      <Button
-        variant="ghost"
-        onClick={openSearch}
-        data-search-button
-        className="flex-1 max-w-md justify-start gap-2 text-muted-foreground hover:text-foreground bg-secondary/50 hover:bg-secondary"
-      >
-        <Search className="h-4 w-4" />
-        <span className="text-sm">Buscar...</span>
-        <div className="ml-auto flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 text-[10px] bg-background/50 rounded border border-border">
-            <Command className="h-3 w-3 inline" />
-          </kbd>
-          <kbd className="px-1.5 py-0.5 text-[10px] bg-background/50 rounded border border-border">K</kbd>
-        </div>
-      </Button>
+      return (
+        <header
+          ref={ref}
+          className="h-14 flex items-center gap-4 px-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-40 header-2300"
+        >
+          <SidebarTrigger className="-ml-1" />
 
-      <CalculatorButton />
-      <PeriodicTableButton />
-      <MemoizedSystemHealth />
-
-      {/* 🔒 Botão Refresh - APENAS OWNER (LEI VII) */}
-      {isGodMode && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleClearCache}
-              disabled={isCacheClearing}
-              className="header-btn-glow micro-hover"
-            >
-              <RefreshCw className={`h-4 w-4 ${isCacheClearing ? 'animate-spin text-primary' : ''}`} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className="text-center">
-              <p className="font-medium">Limpar Cache (OWNER)</p>
-              <p className="text-xs text-muted-foreground">v{appVersion}</p>
+          <Button
+            variant="ghost"
+            onClick={openSearch}
+            data-search-button
+            className="flex-1 max-w-md justify-start gap-2 text-muted-foreground hover:text-foreground bg-secondary/50 hover:bg-secondary"
+          >
+            <Search className="h-4 w-4" />
+            <span className="text-sm">Buscar...</span>
+            <div className="ml-auto flex items-center gap-1">
+              <kbd className="px-1.5 py-0.5 text-[10px] bg-background/50 rounded border border-border">
+                <Command className="h-3 w-3 inline" />
+              </kbd>
+              <kbd className="px-1.5 py-0.5 text-[10px] bg-background/50 rounded border border-border">K</kbd>
             </div>
-          </TooltipContent>
-        </Tooltip>
-      )}
-      
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={() => setIsTeamChatOpen(true)} className="header-btn-glow micro-hover">
-            <MessageSquare className="h-4 w-4" />
           </Button>
-        </TooltipTrigger>
-        <TooltipContent>Chat da Equipe</TooltipContent>
-      </Tooltip>
-      
-      <div className="flex-1" />
 
-      <ThemeToggle />
+          <CalculatorButton />
+          <PeriodicTableButton />
+          <MemoizedSystemHealth />
 
-      <div data-notification-center>
-        <NotificationCenter
-          notifications={notifications}
-          onMarkAsRead={onMarkAsRead}
-          onMarkAllAsRead={onMarkAllAsRead}
-          onDelete={onDelete}
-          onClearAll={onClearAll}
-        />
-      </div>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                {user?.email ? getInitials(user.email.split('@')[0]) : 'U'}
-              </AvatarFallback>
-            </Avatar>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel>
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium">Minha Conta</span>
-              <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
-              <Badge className={`${roleColor} text-[10px] px-2 py-0 w-fit mt-1`}>
-                {isGodMode && <Crown className="w-2 h-2 mr-1" />}
-                {roleLabel}
-              </Badge>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {/* Links só aparecem se está em /gestaofc */}
-          {typeof window !== "undefined" && window.location.pathname.startsWith("/gestaofc") && (
-            <>
-              <DropdownMenuItem onClick={() => navigate('/gestaofc/configuracoes')}>Configurações</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/gestaofc/permissoes')}>Permissões</DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
+          {/* 🔒 Botão Refresh - APENAS OWNER (LEI VII) */}
+          {isGodMode && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleClearCache}
+                  disabled={isCacheClearing}
+                  className="header-btn-glow micro-hover"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isCacheClearing ? "animate-spin text-primary" : ""}`} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className="text-center">
+                  <p className="font-medium">Limpar Cache (OWNER)</p>
+                  <p className="text-xs text-muted-foreground">v{appVersion}</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
           )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => signOut()} className="text-destructive focus:text-destructive">
-            Sair
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </header>
-  );
-}));
-AppHeader.displayName = 'AppHeader';
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsTeamChatOpen(true)}
+                className="header-btn-glow micro-hover"
+              >
+                <MessageSquare className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Chat da Equipe</TooltipContent>
+          </Tooltip>
+
+          <div className="flex-1" />
+
+          <ThemeToggle />
+
+          <div data-notification-center>
+            <NotificationCenter
+              notifications={notifications}
+              onMarkAsRead={onMarkAsRead}
+              onMarkAllAsRead={onMarkAllAsRead}
+              onDelete={onDelete}
+              onClearAll={onClearAll}
+            />
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                    {user?.email ? getInitials(user.email.split("@")[0]) : "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-medium">Minha Conta</span>
+                  <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
+                  <Badge className={`${roleColor} text-[10px] px-2 py-0 w-fit mt-1`}>
+                    {isGodMode && <Crown className="w-2 h-2 mr-1" />}
+                    {roleLabel}
+                  </Badge>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {/* Links só aparecem se está em /gestaofc */}
+              {typeof window !== "undefined" && window.location.pathname.startsWith("/gestaofc") && (
+                <>
+                  <DropdownMenuItem onClick={() => navigate("/gestaofc/configuracoes")}>Configurações</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/gestaofc/permissoes")}>Permissões</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => signOut()} className="text-destructive focus:text-destructive">
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </header>
+      );
+    },
+  ),
+);
+AppHeader.displayName = "AppHeader";
 
 // ⚡ Main Content com animação CSS pura (sem framer-motion)
 // OTIMIZAÇÃO: CSS animations são nativas e não adicionam ao bundle
-const MainContent = memo(({ children }: { children: ReactNode }) => (
-  <main className="flex-1 animate-fade-in">
-    {children}
-  </main>
-));
-MainContent.displayName = 'MainContent';
+const MainContent = memo(({ children }: { children: ReactNode }) => <main className="flex-1">{children}</main>);
+MainContent.displayName = "MainContent";
 
 export const AppLayout = memo(
   forwardRef<HTMLDivElement, AppLayoutProps>(function AppLayout({ children }, ref) {
@@ -250,14 +268,8 @@ export const AppLayout = memo(
 
     useKeyboardShortcuts(openSearch, closeSearch);
 
-    const {
-      notifications,
-      addNotification,
-      markAsRead,
-      markAllAsRead,
-      deleteNotification,
-      clearAll,
-    } = useNotificationsDatabase();
+    const { notifications, addNotification, markAsRead, markAllAsRead, deleteNotification, clearAll } =
+      useNotificationsDatabase();
 
     useRealtimeNotifications({ addNotification });
 
@@ -306,9 +318,7 @@ export const AppLayout = memo(
           {isSearchOpen && <GlobalSearch isOpen={isSearchOpen} onClose={closeSearch} />}
 
           <AIAssistantTrigger onClick={openAI} />
-          {isAIAssistantOpen && (
-            <AIAssistant isOpen={isAIAssistantOpen} onClose={closeAI} context="dashboard" />
-          )}
+          {isAIAssistantOpen && <AIAssistant isOpen={isAIAssistantOpen} onClose={closeAI} context="dashboard" />}
 
           {isTeamChatOpen && <TeamChat isOpen={isTeamChatOpen} onClose={closeChat} />}
         </SidebarProvider>
