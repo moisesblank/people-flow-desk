@@ -5,7 +5,7 @@
  * Barra vermelha horizontal com tempo restante centralizado.
  */
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatTime, SimuladoTimerProps } from "@/components/simulados/types";
@@ -16,11 +16,20 @@ export function SimuladoTimerBar({
   isCritical,
   onTimeUp,
 }: SimuladoTimerProps) {
-  // Callback quando tempo acabar
+  // Callback quando tempo acabar (dispara UMA vez por expiração)
+  const hasFiredTimeUpRef = useRef(false);
+
   useEffect(() => {
-    if (remainingSeconds <= 0 && onTimeUp) {
-      onTimeUp();
+    if (remainingSeconds > 0) {
+      hasFiredTimeUpRef.current = false;
+      return;
     }
+
+    if (!onTimeUp) return;
+    if (hasFiredTimeUpRef.current) return;
+
+    hasFiredTimeUpRef.current = true;
+    onTimeUp();
   }, [remainingSeconds, onTimeUp]);
 
   const displayTime = formatTime(Math.max(0, remainingSeconds));
