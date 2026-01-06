@@ -320,3 +320,12 @@ verify_jwt = true
 # 🟢 Requer JWT - Registra intervenções de IA
 [functions.log-question-ai-intervention]
 verify_jwt = true
+
+# --- Token de Primeiro Acesso (NUNCA expira) ---
+# 🔴 SEM JWT - Validação pelo token persistente
+[functions.validate-first-access-token]
+verify_jwt = false
+
+# 🟢 Requer JWT - Apenas Admin/Owner pode reenviar
+[functions.resend-first-access-token]
+verify_jwt = true
