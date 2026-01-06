@@ -204,7 +204,7 @@ export function QuizPlayer({ quiz, questions, onSubmit, isSubmitting }: QuizPlay
                       >
                         <div className="flex items-center gap-3">
                           <RadioGroupItem value={option.id} id={option.id} />
-                          <span className="flex-1">{option.text}</span>
+                          <span className="flex-1">{typeof option.text === 'string' ? option.text : (option.text as any)?.text ?? String(option.text ?? '')}</span>
                         </div>
                         {option.image_url && (
                           <img 

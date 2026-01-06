@@ -283,7 +283,7 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                           >
                             {option.id.toUpperCase()}
                           </Label>
-                          <p className="flex-1 text-sm">{option.text}</p>
+                          <p className="flex-1 text-sm">{typeof option.text === 'string' ? option.text : (option.text as any)?.text ?? String(option.text ?? '')}</p>
                           {hasAnswered && isCorrectOption && (
                             <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
                           )}
@@ -555,7 +555,7 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
                     >
                       {option.id.toUpperCase()}
                     </Label>
-                    <p className="flex-1 text-sm">{option.text}</p>
+                    <p className="flex-1 text-sm">{typeof option.text === 'string' ? option.text : (option.text as any)?.text ?? String(option.text ?? '')}</p>
                     {showResult && isCorrectOption && <CheckCircle2 className="h-5 w-5 text-green-500" />}
                     {showResult && isSelected && !isCorrectOption && <XCircle className="h-5 w-5 text-red-500" />}
                   </div>
