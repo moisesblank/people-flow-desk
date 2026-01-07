@@ -12,7 +12,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { Resend } from 'https://esm.sh/resend@2.0.0';
+import { Resend } from "npm:resend@2.0.0";
 
 import { getWebhookCorsHeaders } from "../_shared/corsConfig.ts";
 

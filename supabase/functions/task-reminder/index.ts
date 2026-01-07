@@ -205,9 +205,9 @@ async function sendReminderEmail(
 
     // Fallback para Resend se RD Station não funcionar
     if (RESEND_API_KEY) {
-      const { Resend } = await import("https://esm.sh/resend@2.0.0");
+      const { Resend } = await import("npm:resend@2.0.0");
       const resend = new Resend(RESEND_API_KEY);
-      
+
       const result = await resend.emails.send({
         from: Deno.env.get("RESEND_FROM") || 'Plataforma Moisés Medeiros <falecom@moisesmedeiros.com.br>',
         to: [email],
