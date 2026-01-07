@@ -82,7 +82,8 @@ const FORTRESS_YT_PARAMS = {
 
 // 🐼 Panda Video Library ID (fixo para a conta)
 // IMPORTANTE: Este ID é específico da conta e NÃO deriva do UUID do vídeo
-const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
+// ID correto extraído das URLs no banco: player-vz-7b4690a0-a6d.tv.pandavideo.com.br
+const PANDA_LIBRARY_ID = "7b4690a0-a6d";
 
 // ============================================
 // COMPONENTE PRINCIPAL
