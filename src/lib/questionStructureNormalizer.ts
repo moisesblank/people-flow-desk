@@ -140,14 +140,15 @@ export function normalizeEnunciado(text: string): string {
   let normalized = text;
   
   // ═══════════════════════════════════════════════════════════════════════════
-  // 0. REMOVER PREFIXO "QUESTÃO" DO INÍCIO — LEI PERMANENTE v3.4
+  // 0. REMOVER PREFIXOS DO INÍCIO — LEI PERMANENTE v3.5
   // ═══════════════════════════════════════════════════════════════════════════
-  // O prefixo "Questão" não faz parte do enunciado pedagógico
-  // Padrões: "Questão", "QUESTÃO", "Questão 1.", "Questão 01)", "QUESTÃO:" etc.
+  // Prefixos proibidos: "Questão", números, traços, hífens no início
+  // Padrões: "Questão", "QUESTÃO", "Questão 1.", "- texto", "– texto" etc.
   // ═══════════════════════════════════════════════════════════════════════════
   normalized = normalized
     .replace(/^\s*Quest[aã]o\s*\d*[\.\)\:\-–—]?\s*/gi, '')
     .replace(/^\s*QUEST[AÃ]O\s*\d*[\.\)\:\-–—]?\s*/g, '')
+    .replace(/^\s*[\-–—]\s*/g, '') // Remove traços/hífens iniciais
     .trim();
   
   // 1. Remover padrões proibidos: "Analise as afirmativas I, II e III..."
