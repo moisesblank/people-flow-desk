@@ -136,8 +136,11 @@ export const SimuladosModalContent = memo(function SimuladosModalContent() {
                 <Card 
                   key={simulado.id}
                   className={cn(
-                    "transition-all hover:border-indigo-500/30 cursor-pointer",
-                    hasRunning && "border-amber-500/50"
+                    "transition-all cursor-pointer",
+                    hasRunning && "border-amber-500/50",
+                    simulado.is_hard_mode 
+                      ? "hover:border-red-500/30" 
+                      : "hover:border-emerald-500/30"
                   )}
                   onClick={() => handleStartSimulado(simulado.id)}
                 >
@@ -147,7 +150,7 @@ export const SimuladosModalContent = memo(function SimuladosModalContent() {
                         "p-3 rounded-xl shrink-0",
                         simulado.is_hard_mode 
                           ? "bg-gradient-to-br from-red-500 to-orange-500"
-                          : "bg-gradient-to-br from-indigo-500 to-violet-500"
+                          : "bg-gradient-to-br from-emerald-500 to-cyan-500"
                       )}>
                         {simulado.is_hard_mode ? (
                           <Shield className="w-5 h-5 text-white" />
@@ -191,8 +194,10 @@ export const SimuladosModalContent = memo(function SimuladosModalContent() {
                           className={cn(
                             "w-full",
                             hasRunning 
-                              ? "bg-amber-500 hover:bg-amber-600" 
-                              : "bg-gradient-to-r from-indigo-500 to-violet-500"
+                              ? "bg-amber-500 hover:bg-amber-600"
+                              : simulado.is_hard_mode
+                                ? "bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600"
+                                : "bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600"
                           )}
                           onClick={(e) => {
                             e.stopPropagation();
