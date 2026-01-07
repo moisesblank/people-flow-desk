@@ -1,6 +1,6 @@
 /**
  * 🎯 SIMULADOS — Tela READY
- * Design: Year 2300 Cinematic
+ * Design: Year 2300 Cinematic + Performance Optimized
  * 
  * Estado: Liberado para iniciar
  * Ação: Exibir regras épicas e botão iniciar
@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Simulado } from "@/components/simulados/types";
 import { cn } from "@/lib/utils";
+import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 
 interface SimuladoReadyScreenProps {
   simulado: Simulado;
@@ -30,6 +31,7 @@ export function SimuladoReadyScreen({
   onStart,
   isLoading = false,
 }: SimuladoReadyScreenProps) {
+  const { shouldAnimate, shouldBlur, isLowEnd } = useConstitutionPerformance();
   const hours = Math.floor(simulado.duration_minutes / 60);
   const mins = simulado.duration_minutes % 60;
   const tempoFormatado = hours > 0 
@@ -38,13 +40,15 @@ export function SimuladoReadyScreen({
 
   return (
     <div className="relative flex flex-col items-center justify-start min-h-[80vh] p-6 md:p-8 overflow-y-auto">
-      {/* Background effects */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-to-b from-primary/10 to-transparent rounded-full blur-[80px]" />
-      </div>
+      {/* Background effects - only on high-end */}
+      {!isLowEnd && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-gradient-to-b from-primary/10 to-transparent rounded-full blur-[80px]" />
+        </div>
+      )}
 
       {/* Header with holographic effect */}
-      <div className="relative text-center mb-8 animate-fade-in">
+      <div className={cn("relative text-center mb-8", shouldAnimate && "animate-fade-in")}>
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/30 text-primary text-sm font-medium mb-4">
           <Rocket className="h-4 w-4" />
           {isRetake ? `Tentativa #${attemptNumber}` : "Pronto para começar"}
@@ -62,9 +66,8 @@ export function SimuladoReadyScreen({
 
       {/* Retake Warning */}
       {isRetake && (
-        <div className="w-full max-w-2xl mb-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+        <div className={cn("w-full max-w-2xl mb-6", shouldAnimate && "animate-fade-in")}>
           <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/10 border border-amber-500/30 p-4">
-            <div className="absolute inset-0 bg-[url('data:image/svg+xml,...')] opacity-5" />
             <div className="relative flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
                 <AlertTriangle className="h-6 w-6 text-amber-400" />
@@ -81,36 +84,44 @@ export function SimuladoReadyScreen({
       )}
 
       {/* Stats Orbs - Holographic Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 w-full max-w-3xl animate-fade-in" style={{ animationDelay: '0.15s' }}>
+      <div className={cn("grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 w-full max-w-3xl", shouldAnimate && "animate-fade-in")}>
         <StatOrb
           icon={<Clock className="h-6 w-6" />}
           value={tempoFormatado}
           label="Tempo"
           gradient="from-indigo-500 to-blue-500"
+          isLowEnd={isLowEnd}
+          shouldBlur={shouldBlur}
         />
         <StatOrb
           icon={<FileQuestion className="h-6 w-6" />}
           value={`${simulado.total_questions || 0}`}
           label="Questões"
           gradient="from-violet-500 to-purple-500"
+          isLowEnd={isLowEnd}
+          shouldBlur={shouldBlur}
         />
         <StatOrb
           icon={<Trophy className="h-6 w-6" />}
           value={`${(simulado.total_questions || 0) * 10}`}
           label="XP Máximo"
           gradient="from-amber-500 to-orange-500"
+          isLowEnd={isLowEnd}
+          shouldBlur={shouldBlur}
         />
         <StatOrb
           icon={<Target className="h-6 w-6" />}
           value={`${simulado.passing_score || 60}%`}
           label="Mínimo"
           gradient="from-emerald-500 to-green-500"
+          isLowEnd={isLowEnd}
+          shouldBlur={shouldBlur}
         />
       </div>
 
       {/* Hard Mode & Camera Indicators */}
       {(simulado.is_hard_mode || simulado.requires_camera) && (
-        <div className="flex gap-3 mb-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+        <div className={cn("flex gap-3 mb-6", shouldAnimate && "animate-fade-in")}>
           {simulado.is_hard_mode && (
             <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-500/10 border border-red-500/30">
               <Shield className="h-4 w-4 text-red-400" />
@@ -127,9 +138,12 @@ export function SimuladoReadyScreen({
       )}
 
       {/* Dicas do Professor - Glass Card */}
-      <div className="w-full max-w-2xl mb-6 animate-fade-in" style={{ animationDelay: '0.25s' }}>
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500/10 via-violet-500/5 to-indigo-500/10 border border-indigo-500/30 p-6 backdrop-blur-sm">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />
+      <div className={cn("w-full max-w-2xl mb-6", shouldAnimate && "animate-fade-in")}>
+        <div className={cn(
+          "relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500/10 via-violet-500/5 to-indigo-500/10 border border-indigo-500/30 p-6",
+          shouldBlur && "backdrop-blur-sm"
+        )}>
+          {!isLowEnd && <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />}
           
           <div className="relative">
             <div className="flex items-center gap-3 mb-4">
@@ -161,7 +175,7 @@ export function SimuladoReadyScreen({
 
       {/* Hard Mode Rules */}
       {simulado.is_hard_mode && (
-        <div className="w-full max-w-2xl mb-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+        <div className={cn("w-full max-w-2xl mb-6", shouldAnimate && "animate-fade-in")}>
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-500/10 to-red-900/10 border border-red-500/30 p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center">
@@ -191,8 +205,11 @@ export function SimuladoReadyScreen({
       )}
 
       {/* Regras Gerais - Compact Glass Card */}
-      <div className="w-full max-w-2xl mb-8 animate-fade-in" style={{ animationDelay: '0.35s' }}>
-        <div className="rounded-2xl bg-card/60 backdrop-blur border border-border/50 p-6">
+      <div className={cn("w-full max-w-2xl mb-8", shouldAnimate && "animate-fade-in")}>
+        <div className={cn(
+          "rounded-2xl bg-card/60 border border-border/50 p-6",
+          shouldBlur && "backdrop-blur"
+        )}>
           <div className="flex items-center gap-3 mb-4">
             <ListChecks className="h-5 w-5 text-muted-foreground" />
             <p className="font-semibold">Regras do Simulado</p>
@@ -217,7 +234,7 @@ export function SimuladoReadyScreen({
       </div>
 
       {/* Epic Start Button */}
-      <div className="animate-fade-in" style={{ animationDelay: '0.4s' }}>
+      <div className={shouldAnimate ? "animate-fade-in" : ""}>
         <Button
           size="lg"
           onClick={onStart}
@@ -226,8 +243,9 @@ export function SimuladoReadyScreen({
             "relative min-w-[280px] h-14 text-lg font-bold overflow-hidden",
             "bg-gradient-to-r from-red-600 via-red-500 to-orange-500",
             "hover:from-red-500 hover:via-red-400 hover:to-orange-400",
-            "shadow-lg shadow-red-500/30 hover:shadow-red-500/50",
-            "transition-all duration-300 hover:scale-105"
+            !isLowEnd && "shadow-lg shadow-red-500/30 hover:shadow-red-500/50",
+            "transition-all duration-300",
+            shouldAnimate && "hover:scale-105"
           )}
         >
           {isLoading ? (
@@ -243,8 +261,8 @@ export function SimuladoReadyScreen({
             </>
           )}
           
-          {/* Shine effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+          {/* Shine effect - only on high-end */}
+          {!isLowEnd && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />}
         </Button>
       </div>
     </div>
@@ -255,22 +273,32 @@ function StatOrb({
   icon, 
   value, 
   label, 
-  gradient 
+  gradient,
+  isLowEnd = false,
+  shouldBlur = true
 }: { 
   icon: React.ReactNode; 
   value: string; 
   label: string;
   gradient: string;
+  isLowEnd?: boolean;
+  shouldBlur?: boolean;
 }) {
   return (
     <div className="group relative">
-      {/* Glow effect on hover */}
-      <div className={cn(
-        "absolute inset-0 rounded-2xl bg-gradient-to-r opacity-0 group-hover:opacity-20 blur-xl transition-opacity",
-        gradient
-      )} />
+      {/* Glow effect on hover - only on high-end */}
+      {!isLowEnd && (
+        <div className={cn(
+          "absolute inset-0 rounded-2xl bg-gradient-to-r opacity-0 group-hover:opacity-20 blur-xl transition-opacity",
+          gradient
+        )} />
+      )}
       
-      <div className="relative flex flex-col items-center gap-3 p-5 rounded-2xl bg-card/80 backdrop-blur border border-border/50 group-hover:border-primary/30 transition-all duration-300 group-hover:-translate-y-1">
+      <div className={cn(
+        "relative flex flex-col items-center gap-3 p-5 rounded-2xl bg-card/80 border border-border/50 group-hover:border-primary/30 transition-colors",
+        shouldBlur && "backdrop-blur",
+        !isLowEnd && "transition-all duration-300 group-hover:-translate-y-1"
+      )}>
         <div className={cn(
           "w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br text-white",
           gradient

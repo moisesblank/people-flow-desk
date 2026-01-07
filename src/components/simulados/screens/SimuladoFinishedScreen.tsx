@@ -1,6 +1,6 @@
 /**
  * 🎯 SIMULADOS — Tela FINISHED
- * Design: Year 2300 Cinematic
+ * Design: Year 2300 Cinematic + Performance Optimized
  * 
  * Estado: Simulado finalizado
  * Exibição: Score do SERVIDOR com visual épico
@@ -16,6 +16,7 @@ import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Simulado, SimuladoResult, formatTime } from "@/components/simulados/types";
 import { cn } from "@/lib/utils";
+import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 
 interface SimuladoFinishedScreenProps {
   simulado: Simulado;
@@ -36,6 +37,7 @@ export function SimuladoFinishedScreen({
   onReview,
   onExit,
 }: SimuladoFinishedScreenProps) {
+  const { shouldAnimate, shouldBlur, isLowEnd } = useConstitutionPerformance();
   const gabaritoDate = gabaritoReleasedAt ? new Date(gabaritoReleasedAt) : null;
   const isGabaritoAvailable = !gabaritoIn || gabaritoIn <= 0;
 
@@ -75,43 +77,49 @@ export function SimuladoFinishedScreen({
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-[70vh] p-8 overflow-hidden">
-      {/* Background celebration effects */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className={cn(
-          "absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[120px] animate-pulse",
-          result.passed ? "bg-emerald-500/15" : "bg-amber-500/15"
-        )} />
-        <div className={cn(
-          "absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-[100px] animate-pulse",
-          result.passed ? "bg-green-500/10" : "bg-orange-500/10"
-        )} style={{ animationDelay: '1s' }} />
-      </div>
+      {/* Background celebration effects - only on high-end */}
+      {!isLowEnd && (
+        <div className="absolute inset-0 pointer-events-none">
+          <div className={cn(
+            "absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-[120px] animate-pulse",
+            result.passed ? "bg-emerald-500/15" : "bg-amber-500/15"
+          )} />
+          <div className={cn(
+            "absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-[100px] animate-pulse",
+            result.passed ? "bg-green-500/10" : "bg-orange-500/10"
+          )} style={{ animationDelay: '1s' }} />
+        </div>
+      )}
 
       {/* Trophy Icon - Epic Presentation */}
-      <div className="relative mb-8 animate-fade-in">
-        {/* Outer celebration ring */}
-        <div className={cn(
-          "absolute -inset-8 rounded-full border-2 animate-[spin_10s_linear_infinite]",
-          result.passed ? "border-emerald-500/20" : "border-amber-500/20"
-        )}>
-          <Sparkles className={cn(
-            "absolute -top-2 left-1/2 -translate-x-1/2 h-4 w-4",
-            result.passed ? "text-emerald-400" : "text-amber-400"
-          )} />
-        </div>
+      <div className={cn("relative mb-8", shouldAnimate && "animate-fade-in")}>
+        {/* Outer celebration ring - only on high-end */}
+        {!isLowEnd && (
+          <div className={cn(
+            "absolute -inset-8 rounded-full border-2 animate-[spin_10s_linear_infinite]",
+            result.passed ? "border-emerald-500/20" : "border-amber-500/20"
+          )}>
+            <Sparkles className={cn(
+              "absolute -top-2 left-1/2 -translate-x-1/2 h-4 w-4",
+              result.passed ? "text-emerald-400" : "text-amber-400"
+            )} />
+          </div>
+        )}
         
         {/* Middle pulsing ring */}
         <div className={cn(
-          "absolute -inset-4 rounded-full border animate-pulse",
+          "absolute -inset-4 rounded-full border",
+          shouldAnimate && "animate-pulse",
           result.passed ? "border-emerald-500/30" : "border-amber-500/30"
         )} />
         
         {/* Core trophy container */}
         <div className={cn(
-          "relative w-36 h-36 rounded-full flex items-center justify-center backdrop-blur-sm border-2",
+          "relative w-36 h-36 rounded-full flex items-center justify-center border-2",
           "bg-gradient-to-br",
           performance.bg,
-          result.passed ? "border-emerald-500/50" : "border-amber-500/50"
+          result.passed ? "border-emerald-500/50" : "border-amber-500/50",
+          shouldBlur && "backdrop-blur-sm"
         )}>
           <PerformanceIcon className={cn(
             "h-16 w-16",
@@ -121,7 +129,10 @@ export function SimuladoFinishedScreen({
         
         {/* XP Badge - Only if scored */}
         {result.xpAwarded > 0 && result.isScoredForRanking && (
-          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-gradient-to-r from-primary via-violet-500 to-primary rounded-full text-white text-sm font-bold shadow-lg shadow-primary/40 flex items-center gap-2">
+          <div className={cn(
+            "absolute -bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-gradient-to-r from-primary via-violet-500 to-primary rounded-full text-white text-sm font-bold flex items-center gap-2",
+            !isLowEnd && "shadow-lg shadow-primary/40"
+          )}>
             <Zap className="h-4 w-4" />
             +{result.xpAwarded} XP
           </div>
@@ -130,28 +141,37 @@ export function SimuladoFinishedScreen({
 
       {/* Performance Label */}
       <h1 className={cn(
-        "text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r bg-clip-text text-transparent animate-fade-in",
-        performance.gradient
-      )} style={{ animationDelay: '0.1s' }}>
+        "text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r bg-clip-text text-transparent",
+        performance.gradient,
+        shouldAnimate && "animate-fade-in"
+      )}>
         {performance.label}
       </h1>
-      <p className="text-muted-foreground mb-2 animate-fade-in" style={{ animationDelay: '0.15s' }}>{simulado.title}</p>
+      <p className={cn("text-muted-foreground mb-2", shouldAnimate && "animate-fade-in")}>{simulado.title}</p>
 
       {/* Retake Badge */}
       {isRetake && (
-        <div className="flex items-center gap-2 text-sm text-amber-400 mb-6 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+        <div className={cn(
+          "flex items-center gap-2 text-sm text-amber-400 mb-6 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30",
+          shouldAnimate && "animate-fade-in"
+        )}>
           <Info className="h-4 w-4" />
           <span>Modo Prática — Não pontua no ranking</span>
         </div>
       )}
 
       {/* Epic Score Display */}
-      <div className="relative mb-8 animate-fade-in" style={{ animationDelay: '0.25s' }}>
+      <div className={cn("relative mb-8", shouldAnimate && "animate-fade-in")}>
+        {!isLowEnd && (
+          <div className={cn(
+            "absolute inset-0 rounded-3xl blur-2xl opacity-30",
+            result.passed ? "bg-emerald-500" : "bg-amber-500"
+          )} />
+        )}
         <div className={cn(
-          "absolute inset-0 rounded-3xl blur-2xl opacity-30",
-          result.passed ? "bg-emerald-500" : "bg-amber-500"
-        )} />
-        <div className="relative px-12 py-6 rounded-3xl bg-card/80 backdrop-blur border border-border/50">
+          "relative px-12 py-6 rounded-3xl bg-card/80 border border-border/50",
+          shouldBlur && "backdrop-blur"
+        )}>
           <div className={cn(
             "text-7xl md:text-8xl font-bold bg-gradient-to-b bg-clip-text text-transparent",
             result.passed ? "from-emerald-300 to-emerald-500" : "from-amber-300 to-amber-500"
@@ -165,29 +185,32 @@ export function SimuladoFinishedScreen({
       </div>
 
       {/* Stats Grid - Holographic Cards */}
-      <div className="grid grid-cols-3 gap-4 mb-8 w-full max-w-md animate-fade-in" style={{ animationDelay: '0.3s' }}>
+      <div className={cn("grid grid-cols-3 gap-4 mb-8 w-full max-w-md", shouldAnimate && "animate-fade-in")}>
         <StatCard
           icon={<CheckCircle2 className="h-6 w-6 text-emerald-400" />}
           value={result.correctAnswers}
           label="Corretas"
           color="emerald"
+          shouldBlur={shouldBlur}
         />
         <StatCard
           icon={<XCircle className="h-6 w-6 text-red-400" />}
           value={result.wrongAnswers}
           label="Erradas"
           color="red"
+          shouldBlur={shouldBlur}
         />
         <StatCard
           icon={<Minus className="h-6 w-6 text-muted-foreground" />}
           value={result.unanswered}
           label="Em Branco"
           color="muted"
+          shouldBlur={shouldBlur}
         />
       </div>
 
       {/* Additional Info */}
-      <div className="flex items-center gap-6 text-sm text-muted-foreground mb-8 animate-fade-in" style={{ animationDelay: '0.35s' }}>
+      <div className={cn("flex items-center gap-6 text-sm text-muted-foreground mb-8", shouldAnimate && "animate-fade-in")}>
         <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card/60 border border-border/50">
           <Clock className="h-4 w-4" />
           <span>{formatTime(result.timeSpentSeconds)}</span>
@@ -201,11 +224,12 @@ export function SimuladoFinishedScreen({
       {/* Passing Score Info */}
       {simulado.passing_score && (
         <div className={cn(
-          "flex items-center gap-3 px-6 py-3 rounded-xl mb-8 animate-fade-in",
+          "flex items-center gap-3 px-6 py-3 rounded-xl mb-8",
           result.passed 
             ? "bg-emerald-500/10 border border-emerald-500/30" 
-            : "bg-amber-500/10 border border-amber-500/30"
-        )} style={{ animationDelay: '0.4s' }}>
+            : "bg-amber-500/10 border border-amber-500/30",
+          shouldAnimate && "animate-fade-in"
+        )}>
           <Target className={cn("h-5 w-5", result.passed ? "text-emerald-400" : "text-amber-400")} />
           <span className={cn("text-sm", result.passed ? "text-emerald-400" : "text-amber-400")}>
             {result.passed 
@@ -218,7 +242,7 @@ export function SimuladoFinishedScreen({
 
       {/* Gabarito Countdown */}
       {gabaritoDate && gabaritoIn && gabaritoIn > 0 && (
-        <div className="mb-8 animate-fade-in" style={{ animationDelay: '0.45s' }}>
+        <div className={cn("mb-8", shouldAnimate && "animate-fade-in")}>
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/10 via-violet-500/10 to-primary/10 border border-primary/30 p-6 text-center">
             <div className="flex items-center justify-center gap-2 text-primary mb-2">
               <Calendar className="h-5 w-5" />
@@ -236,7 +260,10 @@ export function SimuladoFinishedScreen({
 
       {/* Gabarito Available Now */}
       {isGabaritoAvailable && (
-        <div className="mb-8 px-6 py-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 animate-fade-in" style={{ animationDelay: '0.45s' }}>
+        <div className={cn(
+          "mb-8 px-6 py-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30",
+          shouldAnimate && "animate-fade-in"
+        )}>
           <p className="text-emerald-400 font-medium flex items-center justify-center gap-2">
             <CheckCircle2 className="h-5 w-5" />
             Gabarito comentado disponível!
@@ -245,11 +272,14 @@ export function SimuladoFinishedScreen({
       )}
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.5s' }}>
+      <div className={cn("flex flex-col sm:flex-row gap-4", shouldAnimate && "animate-fade-in")}>
         {isGabaritoAvailable && onReview && (
           <Button 
             onClick={onReview} 
-            className="min-w-[200px] bg-gradient-to-r from-primary to-violet-500 hover:from-primary/90 hover:to-violet-500/90 shadow-lg shadow-primary/30"
+            className={cn(
+              "min-w-[200px] bg-gradient-to-r from-primary to-violet-500 hover:from-primary/90 hover:to-violet-500/90",
+              !isLowEnd && "shadow-lg shadow-primary/30"
+            )}
           >
             <Award className="h-5 w-5 mr-2" />
             Ver Gabarito Comentado
@@ -270,11 +300,13 @@ function StatCard({
   value,
   label,
   color,
+  shouldBlur = true,
 }: {
   icon: React.ReactNode;
   value: number;
   label: string;
   color: "emerald" | "red" | "muted";
+  shouldBlur?: boolean;
 }) {
   const colorClasses = {
     emerald: "border-emerald-500/30 hover:border-emerald-500/50",
@@ -284,8 +316,9 @@ function StatCard({
 
   return (
     <div className={cn(
-      "flex flex-col items-center gap-2 p-5 rounded-2xl bg-card/80 backdrop-blur border transition-colors",
-      colorClasses[color]
+      "flex flex-col items-center gap-2 p-5 rounded-2xl bg-card/80 border transition-colors",
+      colorClasses[color],
+      shouldBlur && "backdrop-blur"
     )}>
       {icon}
       <span className="text-3xl font-bold">{value}</span>
