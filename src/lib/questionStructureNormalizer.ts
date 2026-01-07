@@ -175,11 +175,23 @@ export function normalizeEnunciado(text: string): string {
     "$1\n"
   );
 
-  // 2c. Quebra de linha ANTES de alternativas (A) B) C) D) E)) no meio do texto
-  // Ex: "... incorreta. B) O processo..." -> "... incorreta.\nB) O processo..."
+  // 2c. REMOVER alternativas soltas (A) B) C) D) E)) do enunciado
+  // LEI PERMANENTE: Alternativas NÃO pertencem ao enunciado — ficam no campo options
+  // Ex: "... CH₃COOCH₃ a) b) c) d) e)." -> "... CH₃COOCH₃"
+  // Padrão 1: Sequência completa "a) b) c) d) e)" ou variações
   normalized = normalized.replace(
-    /(\S)\s+(?=([A-E])\s*[\)\.\-–—]\s+)/g,
-    "$1\n"
+    /\s*[aA]\s*[\)\.\-–—]?\s*[bB]\s*[\)\.\-–—]?\s*[cC]\s*[\)\.\-–—]?\s*[dD]\s*[\)\.\-–—]?\s*[eE]\s*[\)\.\-–—]?\.?\s*$/g,
+    ''
+  );
+  // Padrão 2: Apenas letras soltas no final "a) b) c) d) e)" com espaçamento
+  normalized = normalized.replace(
+    /\s+[aA]\)\s*[bB]\)\s*[cC]\)\s*[dD]\)\s*[eE]\)\.?\s*$/g,
+    ''
+  );
+  // Padrão 3: Alternativas em qualquer formato no meio ou fim
+  normalized = normalized.replace(
+    /\s*(?:[aA]\s*[\)\.\-–—]\s*){0,1}(?:[bB]\s*[\)\.\-–—]\s*){0,1}(?:[cC]\s*[\)\.\-–—]\s*){0,1}(?:[dD]\s*[\)\.\-–—]\s*){0,1}(?:[eE]\s*[\)\.\-–—]\s*)\.?\s*$/g,
+    ''
   );
 
   // 2d. Processar cada linha para garantir formatação correta de itens romanos
