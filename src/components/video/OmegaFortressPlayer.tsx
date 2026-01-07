@@ -13,7 +13,7 @@ import {
   ChevronRight, Crown, ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getPandaEmbedUrl } from "@/lib/video/panda";
+import { getPandaEmbedUrl, PANDA_LIBRARY_ID } from "@/lib/video/panda";
 import { useVideoFortress, VideoViolationType, ViolationAction } from "@/hooks/useVideoFortress";
 import { useAuth } from "@/hooks/useAuth";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
@@ -198,9 +198,21 @@ export const OmegaFortressPlayer = memo(({
       case "youtube":
         return `https://www.youtube.com/embed/${videoId}?${params}`;
       case "panda": {
-        // PATCH P0: se vier embed completo (Excel/legado), usar direto.
-        // Se vier UUID, gerar embed canônico.
-        if (/^https?:\/\//i.test(videoId)) return videoId;
+        // PATCH: aceitar embedUrl legado, mas normalizar para Library ID canônico
+        // (evita "This video encountered an error" quando o ID antigo não existe mais)
+        if (/^https?:\/\//i.test(videoId)) {
+          try {
+            const u = new URL(videoId);
+            // Se for embed do Panda (player-vz-*.tv.pandavideo.com.br), força host canônico
+            if (u.hostname.includes("tv.pandavideo.com.br") && u.hostname.startsWith("player-vz-")) {
+              u.hostname = `player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br`;
+              return u.toString();
+            }
+            return videoId;
+          } catch {
+            return videoId;
+          }
+        }
         return getPandaEmbedUrl(videoId);
       }
       case "vimeo":
