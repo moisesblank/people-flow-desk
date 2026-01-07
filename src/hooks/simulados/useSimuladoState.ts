@@ -108,13 +108,34 @@ export function useSimuladoState(options: UseSimuladoStateOptions) {
         if (questionsError) {
           console.error("[useSimuladoState] Error loading questions:", questionsError);
         } else if (questionsData) {
-          // Verificar se gabarito já foi liberado
+          // Verificar se gabarito já foi liberado OU se o aluno já finalizou o simulado
           const gabaritoAt = simData.results_released_at ? new Date(simData.results_released_at) : null;
-          const isGabaritoReleased = gabaritoAt ? new Date() >= gabaritoAt : false;
+          const isGabaritoReleasedByTime = gabaritoAt ? new Date() >= gabaritoAt : false;
+          
+          // Buscar tentativa do usuário para verificar se já finalizou
+          const { data: { user } } = await supabase.auth.getUser();
+          let hasCompletedAttempt = false;
+          
+          if (user) {
+            const { data: attemptCheck } = await supabase
+              .from("simulado_attempts")
+              .select("status")
+              .eq("simulado_id", simuladoId)
+              .eq("user_id", user.id)
+              .eq("status", "completed")
+              .limit(1)
+              .maybeSingle();
+            
+            hasCompletedAttempt = !!attemptCheck;
+          }
+          
+          // REGRA: Liberar resolução se gabarito liberado por tempo OU se aluno já finalizou
+          // Isso garante que após finalizar, o aluno SEMPRE veja a resolução (reflexo exato da entidade)
+          const shouldShowResolution = isGabaritoReleasedByTime || hasCompletedAttempt;
           
           // Ordenar conforme question_ids
           // TEMPORAL TRUTH RULE: Metadados (macro, micro, tema, subtema) SEMPRE visíveis
-          // Apenas correct_answer, explanation e video_url são condicionais ao gabarito
+          // correct_answer, explanation e video_url: condicionais ao gabarito OU finalização
           const orderedQuestions = simData.question_ids.map((id: string, index: number) => {
             const q = questionsData.find((q) => q.id === id);
             if (!q) return null;
@@ -140,12 +161,12 @@ export function useSimuladoState(options: UseSimuladoStateOptions) {
               points: q.points,
             };
             
-            // Se gabarito não liberado, omitir APENAS campos sensíveis de resolução
-            if (!isGabaritoReleased) {
+            // Se resolução não liberada (nem por tempo, nem por finalização), omitir campos sensíveis
+            if (!shouldShowResolution) {
               return baseFields;
             }
             
-            // Gabarito liberado: incluir campos de resolução
+            // Resolução liberada: incluir TODOS os campos da entidade (REFLEXO EXATO)
             return { 
               ...baseFields, 
               correct_answer: q.correct_answer,
