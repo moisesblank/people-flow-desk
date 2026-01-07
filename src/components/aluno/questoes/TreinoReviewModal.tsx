@@ -164,42 +164,74 @@ function VideoPlayer({ url }: { url: string }) {
 }
 
 /**
- * Componente de metadados da questão
+ * Componente de metadados COMPLETOS da questão
+ * TEMPORAL TRUTH RULE: Exibe TODOS os campos do banco, sem omissão
  */
 function QuestionMetadata({ question }: { question: Question }) {
-  const hasMeta = question.banca || question.ano || question.difficulty || question.macro || question.micro;
+  const hasMeta = question.banca || question.ano || question.difficulty || 
+                  question.macro || question.micro || question.tema || question.subtema;
   
   if (!hasMeta) return null;
+
+  // Configurações visuais para macros
+  const macroConfig: Record<string, { icon: string; class: string }> = {
+    'Química Geral': { icon: '⚗️', class: 'bg-amber-500/20 text-amber-400 border-amber-500/40' },
+    'Química Orgânica': { icon: '🧪', class: 'bg-purple-500/20 text-purple-400 border-purple-500/40' },
+    'Físico-Química': { icon: '📊', class: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40' },
+    'Química Ambiental': { icon: '🌍', class: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' },
+    'Bioquímica': { icon: '🧬', class: 'bg-pink-500/20 text-pink-400 border-pink-500/40' },
+  };
+
+  const macro = question.macro ? macroConfig[question.macro] || { icon: '⚗️', class: 'bg-amber-500/20 text-amber-400 border-amber-500/40' } : null;
   
   return (
-    <div className="flex flex-wrap items-center gap-2 mb-4">
-      {question.macro && (
-        <Badge variant="outline" className="text-xs bg-indigo-500/10 border-indigo-500/30 text-indigo-400">
-          {question.macro}
-        </Badge>
-      )}
-      {question.micro && (
-        <Badge variant="outline" className="text-xs bg-violet-500/10 border-violet-500/30 text-violet-400">
-          {question.micro}
-        </Badge>
-      )}
-      {question.banca && (
-        <Badge variant="outline" className="text-xs">
-          {question.banca}
-        </Badge>
-      )}
-      {question.ano && (
-        <Badge variant="outline" className="text-xs">
-          {question.ano}
-        </Badge>
-      )}
-      {question.difficulty && (
-        <Badge 
-          variant="outline" 
-          className={cn("text-xs", DIFFICULTY_COLORS[question.difficulty])}
-        >
-          {DIFFICULTY_LABELS[question.difficulty] || question.difficulty}
-        </Badge>
+    <div className="space-y-2 mb-4">
+      {/* LINHA 1: Difficulty | Banca | Ano | Macro */}
+      <div className="flex flex-wrap items-center gap-2">
+        {question.difficulty && (
+          <Badge 
+            variant="outline" 
+            className={cn("text-xs font-medium", DIFFICULTY_COLORS[question.difficulty])}
+          >
+            {DIFFICULTY_LABELS[question.difficulty] || question.difficulty}
+          </Badge>
+        )}
+        {question.banca && (
+          <Badge variant="outline" className="text-xs">
+            🏛 {question.banca}
+          </Badge>
+        )}
+        {question.ano && (
+          <Badge variant="outline" className="text-xs">
+            {question.ano}
+          </Badge>
+        )}
+        {question.macro && macro && (
+          <Badge variant="outline" className={cn("text-xs font-medium", macro.class)}>
+            {macro.icon} {question.macro}
+          </Badge>
+        )}
+      </div>
+      
+      {/* LINHA 2: Micro | Tema | Subtema (camadas transversais) */}
+      {(question.micro || question.tema || question.subtema) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {question.micro && (
+            <Badge className="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+              📚 Micro: {question.micro}
+            </Badge>
+          )}
+          {question.tema && (
+            <Badge className="text-xs bg-violet-500/20 text-violet-300 border border-violet-500/40">
+              🎯 Tema: {question.tema}
+            </Badge>
+          )}
+          {question.subtema && (
+            <Badge className="text-xs bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40">
+              🔹 Subtema: {question.subtema}
+            </Badge>
+          )}
+        </div>
       )}
     </div>
   );

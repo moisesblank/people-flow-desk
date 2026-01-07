@@ -98,10 +98,11 @@ export function useSimuladoState(options: UseSimuladoStateOptions) {
       // Carregar questões
       if (simData.question_ids && simData.question_ids.length > 0) {
         // Selecionar campos base + campos de gabarito (correct_answer, explanation, video)
+        // TEMPORAL TRUTH RULE: Incluir TODOS os campos da taxonomia (macro, micro, tema, subtema)
         // RLS e a lógica de exibição controlam quando mostrar gabarito
         const { data: questionsData, error: questionsError } = await supabase
           .from("quiz_questions")
-          .select("id, question_text, question_type, options, image_url, image_urls, difficulty, banca, ano, correct_answer, explanation, video_url, video_provider, has_video_resolution")
+          .select("id, question_text, question_type, options, image_url, image_urls, difficulty, banca, ano, correct_answer, explanation, video_url, video_provider, has_video_resolution, macro, micro, tema, subtema, tags, points")
           .in("id", simData.question_ids);
         
         if (questionsError) {
@@ -112,27 +113,47 @@ export function useSimuladoState(options: UseSimuladoStateOptions) {
           const isGabaritoReleased = gabaritoAt ? new Date() >= gabaritoAt : false;
           
           // Ordenar conforme question_ids
+          // TEMPORAL TRUTH RULE: Metadados (macro, micro, tema, subtema) SEMPRE visíveis
+          // Apenas correct_answer, explanation e video_url são condicionais ao gabarito
           const orderedQuestions = simData.question_ids.map((id: string, index: number) => {
             const q = questionsData.find((q) => q.id === id);
             if (!q) return null;
             
-            // Se gabarito não liberado, omitir campos sensíveis
+            // Campos SEMPRE visíveis (antes e após resolução)
+            const baseFields = { 
+              id: q.id,
+              question_text: q.question_text,
+              question_type: q.question_type,
+              options: q.options,
+              image_url: q.image_url,
+              image_urls: q.image_urls,
+              difficulty: q.difficulty,
+              banca: q.banca,
+              ano: q.ano,
+              order: index,
+              // TAXONOMIA COMPLETA (TEMPORAL TRUTH)
+              macro: q.macro,
+              micro: q.micro,
+              tema: q.tema,
+              subtema: q.subtema,
+              tags: q.tags,
+              points: q.points,
+            };
+            
+            // Se gabarito não liberado, omitir APENAS campos sensíveis de resolução
             if (!isGabaritoReleased) {
-              return { 
-                id: q.id,
-                question_text: q.question_text,
-                question_type: q.question_type,
-                options: q.options,
-                image_url: q.image_url,
-                image_urls: q.image_urls,
-                difficulty: q.difficulty,
-                banca: q.banca,
-                ano: q.ano,
-                order: index 
-              };
+              return baseFields;
             }
             
-            return { ...q, order: index };
+            // Gabarito liberado: incluir campos de resolução
+            return { 
+              ...baseFields, 
+              correct_answer: q.correct_answer,
+              explanation: q.explanation,
+              video_url: q.video_url,
+              video_provider: q.video_provider,
+              has_video_resolution: q.has_video_resolution,
+            };
           }).filter(Boolean) as SimuladoQuestion[];
           
           setQuestions(orderedQuestions);

@@ -116,6 +116,13 @@ export interface SimuladoQuestion {
   banca?: string;
   ano?: number;
   order: number;
+  // TEMPORAL TRUTH RULE: Campos de taxonomia completos
+  macro?: string | null;
+  micro?: string | null;
+  tema?: string | null;
+  subtema?: string | null;
+  tags?: string[] | null;
+  points?: number;
 }
 
 export interface SimuladoAnswer {
