@@ -400,7 +400,7 @@ export function SimuladoPlayer({
   // Diálogo de confirmação de saída durante RUNNING
   const NavigationConfirmDialog = (
     <AlertDialog open={showNavConfirmDialog} onOpenChange={setShowNavConfirmDialog}>
-      <AlertDialogContent useOriginalSize className="max-w-md">
+      <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle>Sair do Simulado?</AlertDialogTitle>
           <AlertDialogDescription>

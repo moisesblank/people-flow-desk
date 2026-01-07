@@ -95,7 +95,7 @@ export function SimuladoDisputeModal({
   if (isSuccess) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent useOriginalSize className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md">
           <div className="flex flex-col items-center justify-center py-8">
             <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Contestação Enviada!</h3>
@@ -110,7 +110,7 @@ export function SimuladoDisputeModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent useOriginalSize className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileQuestion className="h-5 w-5 text-primary" />
