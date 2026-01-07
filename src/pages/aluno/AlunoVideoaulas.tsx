@@ -1,7 +1,8 @@
 // ============================================
-// CENTRAL DO ALUNO - VIDEOAULAS
+// CENTRAL DO ALUNO - VIDEOAULAS v2300
 // Sincronizado em tempo real com /gestaofc/videoaulas
 // Suporta ?aula=UUID para abrir diretamente via QR Code
+// VIRTUALIZADO + PAGINADO (25 itens/página)
 // ============================================
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -18,11 +19,12 @@ import {
   ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight,
   Star, ArrowLeft
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { OmegaFortressPlayer } from "@/components/video/OmegaFortressPlayer";
 import { LessonTabs } from "@/components/player/LessonTabs";
 import { detectVideoProviderFromUrl, isPandaUrl } from "@/lib/video/detectVideoProvider";
+import { VirtualizedAlunoVideoaulaList } from "@/components/aluno/videoaulas/VirtualizedAlunoVideoaulaList";
 
 interface Lesson {
   id: string;
@@ -78,8 +80,8 @@ function useVideoaulasAluno() {
   });
 }
 
-// CONSTANTE DE PAGINAÇÃO
-const ITEMS_PER_PAGE = 100;
+// CONSTANTE DE PAGINAÇÃO v2300
+const ITEMS_PER_PAGE = 25;
 
 export default function AlunoVideoaulas() {
   const queryClient = useQueryClient();
@@ -404,84 +406,12 @@ export default function AlunoVideoaulas() {
         </div>
       )}
 
-      {/* Grid de Videoaulas (PAGINADO) */}
+      {/* Grid de Videoaulas (VIRTUALIZADO + PAGINADO) */}
       {!isLoading && paginatedLessons.length > 0 && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {paginatedLessons.map((lesson, index) => (
-            <motion.div
-              key={lesson.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: Math.min(index * 0.02, 0.5) }}
-            >
-              <Card 
-                className="relative overflow-hidden transition-all hover:shadow-lg group cursor-pointer"
-                onClick={() => openLesson(lesson)}
-              >
-                {/* Thumbnail */}
-                {lesson.thumbnail_url && (
-                  <div className="relative aspect-video bg-muted overflow-hidden">
-                    <img 
-                      src={lesson.thumbnail_url} 
-                      alt={lesson.title}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <PlayCircle className="w-12 h-12 text-white" />
-                    </div>
-                    {lesson.duration_minutes && (
-                      <Badge className="absolute bottom-2 right-2 bg-black/70">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {lesson.duration_minutes} min
-                      </Badge>
-                    )}
-                  </div>
-                )}
-                
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <PlayCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                      <CardTitle className="text-lg line-clamp-2">{lesson.title}</CardTitle>
-                    </div>
-                  </div>
-                  {lesson.module?.title && (
-                    <Badge variant="outline" className="w-fit">
-                      <BookOpen className="w-3 h-3 mr-1" />
-                      {lesson.module.title}
-                    </Badge>
-                  )}
-                  {lesson.description && (
-                    <CardDescription className="line-clamp-2">{lesson.description}</CardDescription>
-                  )}
-                </CardHeader>
-                
-                <CardContent className="space-y-4">
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                    {lesson.duration_minutes && (
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {lesson.duration_minutes} min
-                      </span>
-                    )}
-                    {lesson.views_count && lesson.views_count > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Star className="w-4 h-4" />
-                        {lesson.views_count} views
-                      </span>
-                    )}
-                  </div>
-
-                  <Button className="w-full" onClick={(e) => { e.stopPropagation(); openLesson(lesson); }}>
-                    Assistir aula
-                    <ChevronRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+        <VirtualizedAlunoVideoaulaList
+          lessons={paginatedLessons}
+          onOpenLesson={openLesson}
+        />
       )}
 
       {/* ============================================ */}
