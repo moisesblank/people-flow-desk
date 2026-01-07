@@ -13,6 +13,7 @@ import {
   ChevronRight, Crown, ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getPandaEmbedUrl } from "@/lib/video/panda";
 import { useVideoFortress, VideoViolationType, ViolationAction } from "@/hooks/useVideoFortress";
 import { useAuth } from "@/hooks/useAuth";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
@@ -79,11 +80,6 @@ const FORTRESS_YT_PARAMS = {
   origin: typeof window !== 'undefined' ? window.location.origin : '',
   cc_load_policy: "0",
 };
-
-// 🐼 Panda Video Library ID (fixo para a conta)
-// IMPORTANTE: Este ID é específico da conta e NÃO deriva do UUID do vídeo
-// ID correto extraído das URLs no banco: player-vz-7b4690a0-a6d.tv.pandavideo.com.br
-const PANDA_LIBRARY_ID = "7b4690a0-a6d";
 
 // ============================================
 // COMPONENTE PRINCIPAL
@@ -197,13 +193,12 @@ export const OmegaFortressPlayer = memo(({
       ...FORTRESS_YT_PARAMS,
       autoplay: autoplay ? "1" : "0",
     }).toString();
-    
+
     switch (type) {
       case "youtube":
         return `https://www.youtube.com/embed/${videoId}?${params}`;
       case "panda":
-        // 🐼 Usar Library ID fixo da conta, não derivar do UUID
-        return `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}`;
+        return getPandaEmbedUrl(videoId);
       case "vimeo":
         return `https://player.vimeo.com/video/${videoId}?dnt=1&title=0&byline=0&portrait=0`;
       default:

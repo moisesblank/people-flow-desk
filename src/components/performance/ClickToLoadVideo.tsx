@@ -7,6 +7,7 @@
 import React, { useState, useCallback, memo, useRef } from "react";
 import { Play, Loader2, AlertCircle, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getPandaEmbedUrl } from "@/lib/video/panda";
 import { getPerformanceConfig } from "@/lib/performance/performanceFlags";
 
 // ============================================
@@ -93,9 +94,7 @@ function generateEmbedUrl(props: Pick<ClickToLoadVideoProps, 'embedUrl' | 'youtu
   }
   
   if (props.pandaVideoId) {
-    // 🐼 Panda Video: Usar Library ID fixo da conta
-    const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
-    return `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${props.pandaVideoId}`;
+    return getPandaEmbedUrl(props.pandaVideoId);
   }
   
   return null;
