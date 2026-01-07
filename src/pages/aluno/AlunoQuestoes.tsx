@@ -40,6 +40,7 @@ import { VirtualizedStudentQuestionList } from "@/components/aluno/questoes/Virt
 import QuestionResolution from "@/components/shared/QuestionResolution";
 import { useTaxonomyForSelects } from "@/hooks/useQuestionTaxonomy";
 import { QuestionBadgesCompact } from "@/components/shared/QuestionMetadataBadges";
+import { TreinoReviewModal } from "@/components/aluno/questoes/TreinoReviewModal";
 
 // ============================================
 // BLOCK_03: DATA CONTRACT - TIPOS
@@ -403,7 +404,7 @@ interface RapidoTreinoModalProps {
   open: boolean;
   onClose: () => void;
   questions: Question[];
-  onComplete: (results: { correct: number; total: number }) => void;
+  onComplete: (results: { correct: number; total: number }, answersRecord: Record<string, { answer: string; isCorrect: boolean }>) => void;
 }
 
 function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTreinoModalProps) {
@@ -457,12 +458,17 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
   };
 
   const handleNext = () => {
+    // Atualizar answers com a resposta atual antes de calcular
+    const finalAnswers = {
+      ...answers,
+      ...(currentQuestion && selectedOption ? { [currentQuestion.id]: { answer: selectedOption, isCorrect: selectedOption === currentQuestion.correct_answer } } : {}),
+    };
+    
     if (currentIndex + 1 >= questions.length) {
-      // Sessão completa - BLOCK_11: Atualizar métricas
-      const correct = Object.values(answers).filter(a => a.isCorrect).length + 
-        (selectedOption === currentQuestion?.correct_answer ? 1 : 0);
+      // Sessão completa - BLOCK_11: Atualizar métricas e passar para revisão
+      const correct = Object.values(finalAnswers).filter(a => a.isCorrect).length;
       queryClient.invalidateQueries({ queryKey: ['student-question-attempts'] });
-      onComplete({ correct, total: questions.length });
+      onComplete({ correct, total: questions.length }, finalAnswers);
       return;
     }
     setCurrentIndex(prev => prev + 1);
@@ -646,6 +652,12 @@ export default function AlunoQuestoes() {
   // BLOCK_09: Rápido Treino state
   const [rapidoTreinoOpen, setRapidoTreinoOpen] = useState(false);
   const [rapidoTreinoQuestions, setRapidoTreinoQuestions] = useState<Question[]>([]);
+  
+  // BLOCK_12: Treino Review state (pós-treino com resoluções)
+  const [treinoReviewOpen, setTreinoReviewOpen] = useState(false);
+  const [treinoReviewQuestions, setTreinoReviewQuestions] = useState<Question[]>([]);
+  const [treinoReviewAnswers, setTreinoReviewAnswers] = useState<Record<string, { answer: string; isCorrect: boolean }>>({});
+  const [treinoReviewResults, setTreinoReviewResults] = useState({ correct: 0, total: 0 });
   
   // BLOCK_PAGINATION: Paginação server-side (ESCALA 5000+)
   const [currentPage, setCurrentPage] = useState(1);
@@ -856,12 +868,21 @@ export default function AlunoQuestoes() {
     setRapidoTreinoOpen(true);
   }, [filteredQuestions, attemptsByQuestion]);
 
-  // BLOCK_11: Callback de completar Rápido Treino
-  const handleRapidoTreinoComplete = useCallback((results: { correct: number; total: number }) => {
+  // BLOCK_11: Callback de completar Rápido Treino - Agora abre tela de revisão
+  const handleRapidoTreinoComplete = useCallback((results: { correct: number; total: number }, answersRecord: Record<string, { answer: string; isCorrect: boolean }>) => {
     setRapidoTreinoOpen(false);
+    
+    // Configurar dados para revisão educacional
+    setTreinoReviewQuestions(rapidoTreinoQuestions);
+    setTreinoReviewAnswers(answersRecord);
+    setTreinoReviewResults(results);
+    setTreinoReviewOpen(true);
+    
+    queryClient.invalidateQueries({ queryKey: ['student-question-attempts'] });
+    
     const percentage = Math.round((results.correct / results.total) * 100);
-    toast.success(`Treino concluído! ${results.correct}/${results.total} (${percentage}%)`);
-  }, []);
+    toast.success(`Treino concluído! ${results.correct}/${results.total} (${percentage}%) — Veja as resoluções abaixo.`);
+  }, [rapidoTreinoQuestions, queryClient]);
 
   // Handlers
   const handleOpenQuestion = (question: Question) => {
@@ -1242,6 +1263,15 @@ export default function AlunoQuestoes() {
         onClose={() => setRapidoTreinoOpen(false)}
         questions={rapidoTreinoQuestions}
         onComplete={handleRapidoTreinoComplete}
+      />
+
+      {/* BLOCK_12: Modal REVISÃO DO TREINO (Educacional) */}
+      <TreinoReviewModal
+        open={treinoReviewOpen}
+        onClose={() => setTreinoReviewOpen(false)}
+        questions={treinoReviewQuestions}
+        answers={treinoReviewAnswers}
+        results={treinoReviewResults}
       />
     </div>
   );
