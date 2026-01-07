@@ -164,26 +164,12 @@ const QuestionItem = memo(function QuestionItem({
             textSize="sm"
             compact={false}
             hideHeader={false}
-            maxImageHeight="max-h-48"
+            maxImageHeight="max-h-40"
             showImageLabel={false}
-            className="mb-3 line-clamp-8"
+            className="mb-2 line-clamp-6"
           />
-          
-          {/* Tags da Questão */}
-          {question.tags && question.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-2">
-              {question.tags.map((tag, idx) => (
-                <span 
-                  key={idx} 
-                  className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/50 text-accent-foreground border border-accent/30"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
 
-          {/* Badge de Modo */}
+          {/* Badge de Modo (Tags cinza) */}
           <QuestionModeBadge tags={question.tags} />
         </div>
 
