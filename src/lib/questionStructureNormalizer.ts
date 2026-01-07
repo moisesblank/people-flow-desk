@@ -139,6 +139,17 @@ export function normalizeEnunciado(text: string): string {
   
   let normalized = text;
   
+  // ═══════════════════════════════════════════════════════════════════════════
+  // 0. REMOVER PREFIXO "QUESTÃO" DO INÍCIO — LEI PERMANENTE v3.4
+  // ═══════════════════════════════════════════════════════════════════════════
+  // O prefixo "Questão" não faz parte do enunciado pedagógico
+  // Padrões: "Questão", "QUESTÃO", "Questão 1.", "Questão 01)", "QUESTÃO:" etc.
+  // ═══════════════════════════════════════════════════════════════════════════
+  normalized = normalized
+    .replace(/^\s*Quest[aã]o\s*\d*[\.\)\:\-–—]?\s*/gi, '')
+    .replace(/^\s*QUEST[AÃ]O\s*\d*[\.\)\:\-–—]?\s*/g, '')
+    .trim();
+  
   // 1. Remover padrões proibidos: "Analise as afirmativas I, II e III..."
   const forbiddenIntros = [
     /Analise\s+as?\s+afirmativas?\s+[IVX,\s]+(?:e\s+[IVX]+)?\.?\s*/gi,
