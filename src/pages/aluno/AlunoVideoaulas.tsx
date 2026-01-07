@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { 
+import {
   PlayCircle, Search, Clock, BookOpen,
   ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight,
   Star, ArrowLeft
@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { OmegaFortressPlayer } from "@/components/video/OmegaFortressPlayer";
 import { LessonTabs } from "@/components/player/LessonTabs";
+import { detectVideoProviderFromUrl, isPandaUrl } from "@/lib/video/detectVideoProvider";
 
 interface Lesson {
   id: string;
@@ -33,6 +34,7 @@ interface Lesson {
   panda_video_id: string | null;
   youtube_video_id: string | null;
   video_provider: string | null;
+  video_url?: string | null; // PATCH: suporte a embed/UUID no campo legado
   is_published: boolean;
   position: number;
   module: { id: string; title: string } | null;
@@ -121,33 +123,37 @@ export default function AlunoVideoaulas() {
   };
 
   // Determinar tipo de player
-  // LÓGICA: UUID em panda_video_id = Panda Video, senão = YouTube
+  // PATCH: detectar Panda também via video_url (embed vindo do Excel/legado)
   const getVideoType = (lesson: Lesson): "youtube" | "panda" => {
-    // 1. Prioridade: campo video_provider explícito
+    // 1) Fonte da verdade: campo explícito
     if (lesson.video_provider === 'panda') return "panda";
     if (lesson.video_provider === 'youtube') return "youtube";
-    
-    // 2. Fallback: Detectar pelo formato do ID
-    // UUID (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx) = Panda Video
+
+    // 2) Fallback: tentar identificar por URL (legado)
+    const providerFromUrl = detectVideoProviderFromUrl(lesson.video_url || null);
+    if (providerFromUrl === 'panda') return 'panda';
+
+    // 3) Fallback: UUID em panda_video_id (padrão atual)
     if (lesson.panda_video_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lesson.panda_video_id)) {
       return "panda";
     }
-    
-    // Tudo mais = YouTube
+
     return "youtube";
   };
 
-  // Obter ID do vídeo
+  // Obter ID/URL do vídeo
+  // PATCH: Panda aceita UUID OU embed URL completa (video_url)
   const getVideoId = (lesson: Lesson): string => {
     const type = getVideoType(lesson);
-    
+
     if (type === "panda") {
-      // Panda Video: usar UUID do panda_video_id
-      return lesson.panda_video_id || "";
+      if (lesson.panda_video_id) return lesson.panda_video_id;
+      if (lesson.video_url && (isPandaUrl(lesson.video_url) || lesson.video_url.startsWith('http'))) return lesson.video_url;
+      return lesson.video_url || "";
     }
-    
-    // YouTube: priorizar youtube_video_id, fallback para panda_video_id (dados legados)
-    return lesson.youtube_video_id || lesson.panda_video_id || "";
+
+    // YouTube: priorizar youtube_video_id, fallback legado
+    return lesson.youtube_video_id || lesson.panda_video_id || lesson.video_url || "";
   };
 
   // Realtime sync com debounce (5s para conteúdo de gestão - evita Thundering Herd)
