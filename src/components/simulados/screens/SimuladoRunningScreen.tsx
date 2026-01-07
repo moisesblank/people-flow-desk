@@ -216,22 +216,22 @@ export function SimuladoRunningScreen({
       )}>
         <div className="px-4 py-3">
           <div className="flex items-center gap-4">
-            {/* Exit Button */}
+            {/* Exit Button - Left */}
             {onExit && (
               <button 
                 onClick={onExit}
-                className="p-2 hover:bg-cyan-500/10 rounded-xl transition-all border border-transparent hover:border-cyan-500/30 group"
+                className="p-2 hover:bg-cyan-500/10 rounded-xl transition-all border border-transparent hover:border-cyan-500/30 group flex-shrink-0"
               >
                 <ArrowLeft className="h-5 w-5 text-zinc-400 group-hover:text-cyan-400 transition-colors" />
               </button>
             )}
             
-            {/* Title Section */}
-            <div className="flex-1">
+            {/* Title Section - CENTERED */}
+            <div className="flex-1 text-center">
               <h1 className="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-green-400 to-cyan-400 line-clamp-1">
                 {simulado.title}
               </h1>
-              <div className="flex items-center gap-3 text-xs text-zinc-500">
+              <div className="flex items-center justify-center gap-3 text-xs text-zinc-500">
                 <span className="flex items-center gap-1">
                   <Target className="h-3 w-3 text-cyan-400" />
                   Simulado Ativo
@@ -240,8 +240,8 @@ export function SimuladoRunningScreen({
               </div>
             </div>
             
-            {/* Hard Mode Indicators */}
-            <div className="flex items-center gap-3">
+            {/* Hard Mode Indicators - Right */}
+            <div className="flex items-center gap-3 flex-shrink-0">
               {simulado.is_hard_mode && simulado.requires_camera && (
                 <SimuladoCameraWidget
                   isActive={isCameraActive}
