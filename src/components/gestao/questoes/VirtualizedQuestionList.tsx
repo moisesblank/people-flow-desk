@@ -86,7 +86,7 @@ interface VirtualizedQuestionListProps {
 // CONSTANTES DE VIRTUALIZAÇÃO
 // ============================================
 
-const ITEM_HEIGHT = 260; // Altura compacta - enunciado mínimo + tags visíveis
+const ITEM_HEIGHT = 380; // Altura para enunciado mínimo + imagem íntegra + tags
 const OVERSCAN = 5; // Itens extras acima/abaixo da viewport
 const CONTAINER_HEIGHT = 'calc(100vh - 400px)'; // Altura do container scrollável
 
@@ -154,7 +154,7 @@ const QuestionItem = memo(function QuestionItem({
             )}
           </div>
 
-          {/* Enunciado MÍNIMO - apenas preview */}
+          {/* Enunciado MÍNIMO + Imagem ÍNTEGRA */}
           <QuestionEnunciado
             questionText={question.question_text}
             imageUrl={question.image_url}
@@ -164,9 +164,9 @@ const QuestionItem = memo(function QuestionItem({
             textSize="sm"
             compact={true}
             hideHeader={true}
-            maxImageHeight="max-h-16"
+            maxImageHeight="max-h-48"
             showImageLabel={false}
-            className="mb-2 line-clamp-2"
+            className="mb-2 line-clamp-3"
           />
 
           {/* Badge de Modo (Tags cinza) - SEMPRE VISÍVEL */}
