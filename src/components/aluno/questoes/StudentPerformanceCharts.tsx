@@ -51,7 +51,7 @@ interface ChartsProps {
 }
 
 // =====================================================
-// HUD Header para seções
+// HUD Header para seções - YEAR 2300 CINEMATIC
 // =====================================================
 const HUDHeader = memo(function HUDHeader({ 
   title, subtitle, icon: Icon, rightLabel
@@ -63,15 +63,18 @@ const HUDHeader = memo(function HUDHeader({
 }) {
   return (
     <div className="flex items-center gap-3 mb-4">
-      <div className="p-2 bg-primary/10 rounded-lg border border-primary/20">
-        <Icon className="w-4 h-4 text-primary" />
+      <div className="relative">
+        <div className="absolute inset-0 bg-primary/40 rounded-lg blur-md" />
+        <div className="relative p-2 bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg border border-primary/30 shadow-[0_0_15px_rgba(var(--primary),0.15)]">
+          <Icon className="w-4 h-4 text-primary" />
+        </div>
       </div>
       <div className="flex-1">
-        <h4 className="text-sm font-semibold">{title}</h4>
-        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+        <h4 className="text-sm font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">{title}</h4>
+        {subtitle && <p className="text-[10px] text-muted-foreground">{subtitle}</p>}
       </div>
       {rightLabel && (
-        <Badge variant="outline" className="text-[10px] bg-primary/5">
+        <Badge variant="outline" className="text-[10px] bg-primary/10 border-primary/30 text-primary font-medium">
           {rightLabel}
         </Badge>
       )}
@@ -80,20 +83,37 @@ const HUDHeader = memo(function HUDHeader({
 });
 
 // =====================================================
-// HoloCard Container
+// HoloCard Container - YEAR 2300 CINEMATIC
 // =====================================================
 const HoloCard = memo(function HoloCard({ 
-  children, className 
+  children, className, glowColor = "primary"
 }: { 
   children: React.ReactNode; 
-  className?: string 
+  className?: string;
+  glowColor?: "primary" | "emerald" | "cyan" | "rose";
 }) {
+  const glowClasses = {
+    primary: "from-primary/10 border-primary/25 shadow-[0_0_30px_rgba(var(--primary),0.1)]",
+    emerald: "from-emerald-500/10 border-emerald-500/25 shadow-[0_0_30px_rgba(16,185,129,0.1)]",
+    cyan: "from-cyan-500/10 border-cyan-500/25 shadow-[0_0_30px_rgba(6,182,212,0.1)]",
+    rose: "from-rose-500/10 border-rose-500/25 shadow-[0_0_30px_rgba(244,63,94,0.1)]",
+  };
+
   return (
     <div className={cn(
-      "rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm p-4",
+      "relative rounded-2xl border bg-gradient-to-b to-card/80 backdrop-blur-sm p-4 overflow-hidden",
+      glowClasses[glowColor],
       className
     )}>
-      {children}
+      {/* Scanline effect - subtle */}
+      <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,0,0,0.02)_50%)] bg-[length:100%_4px] pointer-events-none opacity-30" />
+      {/* Corner accents */}
+      <div className="absolute top-0 left-0 w-8 h-[2px] bg-gradient-to-r from-primary/50 to-transparent" />
+      <div className="absolute top-0 left-0 w-[2px] h-8 bg-gradient-to-b from-primary/50 to-transparent" />
+      <div className="absolute bottom-0 right-0 w-8 h-[2px] bg-gradient-to-l from-primary/50 to-transparent" />
+      <div className="absolute bottom-0 right-0 w-[2px] h-8 bg-gradient-to-t from-primary/50 to-transparent" />
+      {/* Content */}
+      <div className="relative">{children}</div>
     </div>
   );
 });
@@ -425,32 +445,47 @@ const Top10PerformanceChart = memo(function Top10PerformanceChart({
   }
 
   return (
-    <div className="rounded-xl border border-primary/20 bg-gradient-to-b from-primary/5 to-transparent overflow-hidden">
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30 bg-background/40">
-        <div className="p-1.5 bg-primary/10 rounded-lg border border-primary/20">
-          <Award className="w-4 h-4 text-primary" />
+    <div className="relative rounded-2xl border border-cyan-500/30 bg-gradient-to-b from-cyan-500/5 to-card/80 backdrop-blur-sm overflow-hidden shadow-[0_0_40px_rgba(6,182,212,0.08)]">
+      {/* Corner accents */}
+      <div className="absolute top-0 left-0 w-12 h-[2px] bg-gradient-to-r from-cyan-500/60 to-transparent" />
+      <div className="absolute top-0 left-0 w-[2px] h-12 bg-gradient-to-b from-cyan-500/60 to-transparent" />
+      <div className="absolute bottom-0 right-0 w-12 h-[2px] bg-gradient-to-l from-cyan-500/60 to-transparent" />
+      <div className="absolute bottom-0 right-0 w-[2px] h-12 bg-gradient-to-t from-cyan-500/60 to-transparent" />
+      
+      {/* Header */}
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-cyan-500/20 bg-cyan-500/5">
+        <div className="relative">
+          <div className="absolute inset-0 bg-cyan-500/40 rounded-lg blur-md" />
+          <div className="relative p-2 bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 rounded-lg border border-cyan-500/40">
+            <Award className="w-5 h-5 text-cyan-400" />
+          </div>
         </div>
-        <h4 className="text-sm font-semibold">Top 10 - Rendimento por Categoria</h4>
+        <div>
+          <h4 className="text-sm font-bold text-cyan-50">Top 10 - Rendimento por Categoria</h4>
+          <p className="text-[10px] text-cyan-400/70">Suas melhores áreas por taxa de acerto</p>
+        </div>
       </div>
-      <div className="p-4">
-        <ResponsiveContainer width="100%" height={top10.length * 32 + 30}>
+      
+      {/* Chart */}
+      <div className="p-5">
+        <ResponsiveContainer width="100%" height={top10.length * 34 + 40}>
           <BarChart 
             data={top10} 
             layout="vertical" 
-            margin={{ top: 10, right: 60, left: 5, bottom: 10 }}
+            margin={{ top: 10, right: 65, left: 5, bottom: 10 }}
           >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border)/0.3)" />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(6,182,212,0.1)" />
             <XAxis 
               type="number" 
               domain={[0, 100]} 
               tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
               tickFormatter={(v) => `${v}%`}
-              axisLine={{ stroke: 'hsl(var(--border)/0.5)' }}
+              axisLine={{ stroke: 'rgba(6,182,212,0.2)' }}
             />
             <YAxis 
               type="category" 
               dataKey="name" 
-              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+              tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
               width={130}
               axisLine={false}
               tickLine={false}
@@ -458,26 +493,32 @@ const Top10PerformanceChart = memo(function Top10PerformanceChart({
             <Tooltip 
               contentStyle={{ 
                 backgroundColor: 'hsl(var(--card))', 
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '8px',
+                border: '1px solid rgba(6,182,212,0.3)',
+                borderRadius: '12px',
                 fontSize: '12px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
               }}
               formatter={(value, _, props) => [`${Number(value).toFixed(2)}%`, `${props.payload.fullName} (${props.payload.total}Q)`]}
             />
             <Bar 
               dataKey="accuracy" 
-              fill="#3b82f6" 
-              radius={[0, 6, 6, 0]} 
+              fill="url(#barGradient)"
+              radius={[0, 8, 8, 0]} 
               isAnimationActive={!isLowEnd}
               label={{ 
                 position: 'right', 
                 formatter: (v: number) => `${v.toFixed(2)}%`,
                 fontSize: 11,
-                fill: 'hsl(var(--foreground))',
-                fontWeight: 500
+                fill: '#22d3ee',
+                fontWeight: 600
               }}
             />
+            <defs>
+              <linearGradient id="barGradient" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stopColor="#0ea5e9" />
+                <stop offset="100%" stopColor="#22d3ee" />
+              </linearGradient>
+            </defs>
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -510,48 +551,64 @@ const PerformanceTable = memo(function PerformanceTable({
   };
 
   return (
-    <div className="rounded-xl border border-border/40 bg-gradient-to-b from-background/80 to-card/50 overflow-hidden">
+    <div className="relative rounded-2xl border border-primary/25 bg-gradient-to-b from-primary/5 to-card/80 backdrop-blur-sm overflow-hidden shadow-[0_0_30px_rgba(var(--primary),0.05)]">
+      {/* Corner accents */}
+      <div className="absolute top-0 left-0 w-8 h-[2px] bg-gradient-to-r from-primary/50 to-transparent" />
+      <div className="absolute top-0 left-0 w-[2px] h-8 bg-gradient-to-b from-primary/50 to-transparent" />
+      <div className="absolute bottom-0 right-0 w-8 h-[2px] bg-gradient-to-l from-primary/30 to-transparent" />
+      <div className="absolute bottom-0 right-0 w-[2px] h-8 bg-gradient-to-t from-primary/30 to-transparent" />
+      
       {/* Header */}
-      <div className="bg-muted/30 px-4 py-2.5 border-b border-border/40">
+      <div className="bg-gradient-to-r from-primary/10 to-transparent px-4 py-3 border-b border-primary/20">
         <h4 className="font-bold text-sm">{title}</h4>
       </div>
       
       {/* Column Headers */}
-      <div className="grid grid-cols-[1fr_48px_48px_60px] gap-2 px-4 py-2 text-[11px] font-semibold text-muted-foreground border-b border-border/30 bg-muted/20">
+      <div className="grid grid-cols-[1fr_48px_48px_65px] gap-2 px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/30 bg-muted/10">
         <span>Área</span>
         <span className="text-center">Total</span>
         <span className="text-center">Erros</span>
-        <span className="text-right">%</span>
+        <span className="text-right">Acurácia</span>
       </div>
 
       {/* Data Rows */}
       <ScrollArea className="h-[320px]">
         <div>
           {displayData.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-xs">
-              Sem dados
+            <div className="text-center py-10 text-muted-foreground text-xs">
+              <div className="w-10 h-10 rounded-full bg-muted/20 flex items-center justify-center mx-auto mb-2">
+                <BarChart3 className="w-5 h-5 opacity-40" />
+              </div>
+              Sem dados disponíveis
             </div>
           ) : (
             displayData.map((item, idx) => (
               <div 
                 key={idx}
                 className={cn(
-                  "grid grid-cols-[1fr_48px_48px_60px] gap-2 px-4 py-2 text-xs items-center transition-colors",
-                  idx % 2 === 0 ? "bg-transparent" : "bg-muted/10"
+                  "grid grid-cols-[1fr_48px_48px_65px] gap-2 px-4 py-2.5 text-xs items-center transition-all hover:bg-primary/5",
+                  idx % 2 === 0 ? "bg-transparent" : "bg-white/[0.02]"
                 )}
               >
-                <span className="truncate font-medium text-foreground/95" title={item.name}>
+                <span className="truncate font-medium text-foreground/90" title={item.name}>
                   {item.name}
                 </span>
-                <span className="text-center px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-semibold text-[10px]">
-                  {item.total}
-                </span>
-                <span className="text-center px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 font-semibold text-[10px]">
-                  {item.errors}
-                </span>
-                <div className="flex items-center justify-end gap-1.5">
-                  <div className={cn("w-1 h-4 rounded-full", getAccuracyBg(item.accuracy))} />
-                  <span className={cn("font-bold text-[11px]", getAccuracyColor(item.accuracy))}>
+                <div className="flex justify-center">
+                  <span className="px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-400 font-bold text-[10px] border border-cyan-500/20 shadow-[0_0_8px_rgba(6,182,212,0.1)]">
+                    {item.total}
+                  </span>
+                </div>
+                <div className="flex justify-center">
+                  <span className="px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-400 font-bold text-[10px] border border-rose-500/20 shadow-[0_0_8px_rgba(244,63,94,0.1)]">
+                    {item.errors}
+                  </span>
+                </div>
+                <div className="flex items-center justify-end gap-2">
+                  <div className={cn(
+                    "w-1.5 h-5 rounded-full shadow-[0_0_6px_currentColor]",
+                    getAccuracyBg(item.accuracy)
+                  )} />
+                  <span className={cn("font-black text-[11px] tabular-nums", getAccuracyColor(item.accuracy))}>
                     {item.accuracy.toFixed(0)}%
                   </span>
                 </div>
@@ -560,7 +617,7 @@ const PerformanceTable = memo(function PerformanceTable({
           )}
         </div>
         {data.length > maxItems && (
-          <div className="text-center py-2 text-[10px] text-muted-foreground border-t border-border/20 bg-muted/10">
+          <div className="text-center py-3 text-[10px] text-primary/60 border-t border-border/20 bg-primary/5 font-medium">
             +{data.length - maxItems} itens adicionais
           </div>
         )}
