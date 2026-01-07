@@ -233,13 +233,17 @@ export function GuidedTour({ steps, isOpen, onComplete, onSkip }: GuidedTourProp
 }
 
 // Hook para gerenciar o tour
-// 🏛️ CONSTITUIÇÃO v10.4: Owner bypass + /gestaofc desabilitado por default
+// 🏛️ CONSTITUIÇÃO v10.4: Gestão staff bypass + autoOpen=false por default
 export function useTour(tourId: string, options?: { autoOpen?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const autoOpen = options?.autoOpen ?? false; // DEFAULT: NÃO abre automaticamente
 
   useEffect(() => {
-    // 🛡️ Owner bypass absoluto - nunca mostrar tour automático
+    // 🛡️ BYPASS: Qualquer usuário em /gestaofc é staff de gestão
+    // Staff de gestão não deve ver tours automáticos (já conhecem o sistema)
+    const isGestaoStaff = window.location.pathname.startsWith('/gestaofc');
+    
+    // 🛡️ Owner bypass absoluto
     const isOwner = (() => {
       try {
         const session = localStorage.getItem('sb-fyikfsasudgzsjmumdlw-auth-token');
@@ -251,8 +255,8 @@ export function useTour(tourId: string, options?: { autoOpen?: boolean }) {
       }
     })();
 
-    if (isOwner) {
-      // Marca como completo para owner nunca mais ver
+    if (isOwner || isGestaoStaff) {
+      // Marca como completo para staff nunca mais ver
       localStorage.setItem(`tour_${tourId}_completed`, "true");
       return;
     }
