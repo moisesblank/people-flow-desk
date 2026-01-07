@@ -24,6 +24,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { TaxonomyHierarchyTable } from "@/components/aluno/performance";
 
 // Lazy load de gráficos - só carrega quando visível
 const LazyCharts = lazy(() => import('./StudentPerformanceCharts'));
@@ -693,6 +694,13 @@ export function StudentPerformanceAnalytics() {
         <Eye className="w-4 h-4 mr-1.5" />
         {showCharts ? 'Ocultar Gráficos' : 'Ver Gráficos'}
       </Button>
+
+      {/* Tabela Hierárquica: MACRO → MICRO → TEMA (tudo expandido) */}
+      <TaxonomyHierarchyTable
+        data={taxonomyData?.array ?? []}
+        isLoading={isLoading}
+        className="mt-4"
+      />
 
       {/* Weak/Strong Areas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
