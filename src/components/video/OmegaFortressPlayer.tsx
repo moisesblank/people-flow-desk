@@ -246,6 +246,7 @@ export const OmegaFortressPlayer = memo(({
     const run = async () => {
       try {
         setIsLoading(true);
+        setPandaSignedSrc(null);
 
         // Preferir lessonId (faz check de acesso + logs + watermark no backend)
         if (lessonId) {
@@ -566,9 +567,10 @@ export const OmegaFortressPlayer = memo(({
             {type === "youtube" && <div className="player-container absolute inset-0" />}
             
             {/* PANDA: DRM via API exige URL assinada (token + expires) */}
-            {type === "panda" && (pandaSignedSrc || embedUrl) && (
+            {type === "panda" && pandaSignedSrc && (
               <iframe
-                src={pandaSignedSrc || embedUrl}
+                key={pandaSignedSrc}
+                src={pandaSignedSrc}
                 className="absolute inset-0 w-full h-full"
                 allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                 allowFullScreen
