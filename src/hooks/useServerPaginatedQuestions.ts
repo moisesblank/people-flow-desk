@@ -85,20 +85,22 @@ export function useServerPaginatedQuestions<T = any>(
         query = query.contains('tags', filters.tagsFilter);
       }
 
+      // PATCH: Filtros de taxonomia agora usam .eq() com labels exatos
+      // Os chamadores devem converter value→label antes de passar os filtros
       if (filters.macroFilter && filters.macroFilter !== 'all' && filters.macroFilter !== 'todas') {
         query = query.eq('macro', filters.macroFilter);
       }
 
       if (filters.microFilter && filters.microFilter !== 'all' && filters.microFilter !== 'todas') {
-        query = query.ilike('micro', `%${filters.microFilter.replace('...', '')}%`);
+        query = query.eq('micro', filters.microFilter);
       }
 
       if (filters.temaFilter && filters.temaFilter !== 'all' && filters.temaFilter !== 'todas') {
-        query = query.ilike('tema', `%${filters.temaFilter.replace('...', '')}%`);
+        query = query.eq('tema', filters.temaFilter);
       }
 
       if (filters.subtemaFilter && filters.subtemaFilter !== 'all' && filters.subtemaFilter !== 'todas') {
-        query = query.ilike('subtema', `%${filters.subtemaFilter.replace('...', '')}%`);
+        query = query.eq('subtema', filters.subtemaFilter);
       }
 
       if (filters.difficultyFilter && filters.difficultyFilter !== 'all' && filters.difficultyFilter !== 'todas') {
