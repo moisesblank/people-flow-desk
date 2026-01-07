@@ -1316,377 +1316,148 @@ export default function AlunoQuestoes() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
-          BLOCK_05: PROGRESS_STATUS - Estados de progresso (Year 2300)
+          BLOCK_05: PROGRESS_STATUS - Estados de progresso (Year 2300 Enhanced)
       ══════════════════════════════════════════════════════════════ */}
       <div className={cn(
-        "relative overflow-hidden rounded-xl border",
+        "relative overflow-hidden rounded-2xl border",
         isHighEnd 
-          ? "bg-gradient-to-br from-slate-900/60 via-background/40 to-slate-900/60 border-amber-500/20 backdrop-blur-md" 
+          ? "bg-gradient-to-br from-slate-900/80 via-background/60 to-slate-900/80 border-amber-500/30 backdrop-blur-xl shadow-2xl shadow-amber-500/5" 
           : "bg-card border-primary/20"
       )}>
-        {/* Efeitos de borda premium (high-end) - mesmos do Filters */}
+        {/* Efeitos de borda premium holográfica (high-end) */}
         {isHighEnd && (
           <>
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
-            <div className="absolute top-0 left-0 bottom-0 w-px bg-gradient-to-b from-transparent via-amber-500/20 to-transparent" />
-            <div className="absolute top-0 right-0 bottom-0 w-px bg-gradient-to-b from-transparent via-amber-500/20 to-transparent" />
+            {/* Glow superior */}
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
+            <div className="absolute top-0 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-transparent via-yellow-400/30 to-transparent blur-sm" />
+            {/* Glow inferior */}
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+            {/* Bordas laterais */}
+            <div className="absolute top-0 left-0 bottom-0 w-px bg-gradient-to-b from-amber-400/30 via-amber-500/20 to-transparent" />
+            <div className="absolute top-0 right-0 bottom-0 w-px bg-gradient-to-b from-amber-400/30 via-amber-500/20 to-transparent" />
+            {/* Corner accents */}
+            <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-amber-400/40 rounded-tl-2xl" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-amber-400/40 rounded-tr-2xl" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-amber-500/20 rounded-bl-2xl" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-amber-500/20 rounded-br-2xl" />
           </>
         )}
         
-        <div className="relative p-4">
+        <div className="relative p-5">
+          {/* Header Label */}
+          {isHighEnd && (
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              <span className="text-xs font-bold uppercase tracking-widest text-amber-400/80">Progresso do Treino</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-amber-500/30 to-transparent" />
+            </div>
+          )}
+          
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="w-full grid grid-cols-5 gap-2 bg-transparent h-auto p-0">
+            <TabsList className="w-full grid grid-cols-5 gap-3 bg-transparent h-auto p-0">
               {/* Disponíveis - Total do banco MODO_TREINO */}
               <TabsTrigger 
                 value="todas" 
                 className={cn(
-                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium",
+                  "group relative flex flex-col items-center justify-center gap-1.5 px-3 py-4 rounded-xl transition-all font-medium",
                   isHighEnd 
-                    ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/20 data-[state=active]:to-yellow-500/10 data-[state=active]:border data-[state=active]:border-amber-500/30 data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/10 hover:bg-amber-500/5" 
+                    ? "data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500/25 data-[state=active]:via-yellow-500/15 data-[state=active]:to-orange-500/10 data-[state=active]:border-2 data-[state=active]:border-amber-400/40 data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/20 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20" 
                     : "data-[state=active]:bg-primary/10"
                 )}
               >
-                <BookOpen className="h-4 w-4" />
-                <span className="hidden sm:inline">Disponíveis</span>
-                <Badge variant="secondary" className={cn(
-                  "ml-1",
-                  isHighEnd && activeTab === 'todas' && "bg-amber-500/20 text-amber-300 border-amber-500/30"
-                )}>{stats.total}</Badge>
+                {isHighEnd && activeTab === 'todas' && (
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-amber-400/10 to-transparent animate-pulse" />
+                )}
+                <BookOpen className={cn("h-5 w-5 transition-colors", activeTab === 'todas' ? "text-amber-400" : "text-muted-foreground group-hover:text-amber-400/70")} />
+                <span className={cn("text-xs font-semibold", activeTab === 'todas' ? "text-amber-300" : "text-muted-foreground")}>Disponíveis</span>
+                <span className={cn(
+                  "text-lg font-black tabular-nums",
+                  activeTab === 'todas' ? "text-amber-400" : "text-foreground"
+                )}>{stats.total.toLocaleString('pt-BR')}</span>
               </TabsTrigger>
+
               {/* Pendentes - Ainda não feitas */}
               <TabsTrigger 
                 value="pendentes" 
                 className={cn(
-                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium",
+                  "group relative flex flex-col items-center justify-center gap-1.5 px-3 py-4 rounded-xl transition-all font-medium",
                   isHighEnd 
-                    ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500/20 data-[state=active]:to-gray-500/10 data-[state=active]:border data-[state=active]:border-slate-400/30 hover:bg-slate-500/5" 
+                    ? "data-[state=active]:bg-gradient-to-br data-[state=active]:from-slate-500/25 data-[state=active]:via-gray-500/15 data-[state=active]:to-zinc-500/10 data-[state=active]:border-2 data-[state=active]:border-slate-400/40 data-[state=active]:shadow-lg hover:bg-slate-500/10 border border-transparent hover:border-slate-500/20" 
                     : "data-[state=active]:bg-primary/10"
                 )}
               >
-                <Clock className="h-4 w-4" />
-                <span className="hidden sm:inline">Pendentes</span>
-                <Badge variant="secondary" className={cn(
-                  "ml-1",
-                  isHighEnd && activeTab === 'pendentes' && "bg-slate-500/20 text-slate-300 border-slate-500/30"
-                )}>{stats.pendentes}</Badge>
+                <Clock className={cn("h-5 w-5 transition-colors", activeTab === 'pendentes' ? "text-slate-300" : "text-muted-foreground group-hover:text-slate-400")} />
+                <span className={cn("text-xs font-semibold", activeTab === 'pendentes' ? "text-slate-300" : "text-muted-foreground")}>Pendentes</span>
+                <span className={cn(
+                  "text-lg font-black tabular-nums",
+                  activeTab === 'pendentes' ? "text-slate-200" : "text-foreground"
+                )}>{stats.pendentes.toLocaleString('pt-BR')}</span>
               </TabsTrigger>
+
               {/* Resolvidas - Questões que o aluno fez no MODO_TREINO */}
               <TabsTrigger 
                 value="resolvidas" 
                 className={cn(
-                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium",
+                  "group relative flex flex-col items-center justify-center gap-1.5 px-3 py-4 rounded-xl transition-all font-medium",
                   isHighEnd 
-                    ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/10 data-[state=active]:border data-[state=active]:border-cyan-400/30 hover:bg-cyan-500/5" 
+                    ? "data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-500/25 data-[state=active]:via-blue-500/15 data-[state=active]:to-indigo-500/10 data-[state=active]:border-2 data-[state=active]:border-cyan-400/40 data-[state=active]:shadow-lg data-[state=active]:shadow-cyan-500/20 hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/20" 
                     : "data-[state=active]:bg-primary/10"
                 )}
               >
-                <CheckCircle2 className="h-4 w-4" />
-                <span className="hidden sm:inline">Resolvidas</span>
-                <Badge variant="secondary" className={cn(
-                  "ml-1",
-                  isHighEnd && activeTab === 'resolvidas' && "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
-                )}>{stats.resolvidas}</Badge>
+                {isHighEnd && activeTab === 'resolvidas' && (
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-cyan-400/10 to-transparent animate-pulse" />
+                )}
+                <CheckCircle2 className={cn("h-5 w-5 transition-colors", activeTab === 'resolvidas' ? "text-cyan-400" : "text-muted-foreground group-hover:text-cyan-400/70")} />
+                <span className={cn("text-xs font-semibold", activeTab === 'resolvidas' ? "text-cyan-300" : "text-muted-foreground")}>Resolvidas</span>
+                <span className={cn(
+                  "text-lg font-black tabular-nums",
+                  activeTab === 'resolvidas' ? "text-cyan-400" : "text-foreground"
+                )}>{stats.resolvidas.toLocaleString('pt-BR')}</span>
               </TabsTrigger>
+
               {/* Corretas - Acertos no MODO_TREINO (verde) */}
               <TabsTrigger 
                 value="acertos" 
                 className={cn(
-                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-green-500",
+                  "group relative flex flex-col items-center justify-center gap-1.5 px-3 py-4 rounded-xl transition-all font-medium",
                   isHighEnd 
-                    ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500/20 data-[state=active]:to-emerald-500/10 data-[state=active]:border data-[state=active]:border-green-400/30 hover:bg-green-500/5" 
+                    ? "data-[state=active]:bg-gradient-to-br data-[state=active]:from-green-500/25 data-[state=active]:via-emerald-500/15 data-[state=active]:to-teal-500/10 data-[state=active]:border-2 data-[state=active]:border-green-400/40 data-[state=active]:shadow-lg data-[state=active]:shadow-green-500/20 hover:bg-green-500/10 border border-transparent hover:border-green-500/20" 
                     : "data-[state=active]:bg-green-500/10"
                 )}
               >
-                <Star className="h-4 w-4 text-green-500" />
-                <span className="hidden sm:inline text-green-500">Corretas</span>
-                <Badge variant="secondary" className={cn(
-                  "ml-1 bg-green-500/20 text-green-400 border-green-500/30",
-                  isHighEnd && activeTab === 'acertos' && "bg-green-500/30 text-green-300"
-                )}>{stats.acertos}</Badge>
+                {isHighEnd && activeTab === 'acertos' && (
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-green-400/10 to-transparent animate-pulse" />
+                )}
+                <Star className={cn("h-5 w-5 transition-colors", activeTab === 'acertos' ? "text-green-400" : "text-green-500/60 group-hover:text-green-400")} />
+                <span className={cn("text-xs font-semibold", activeTab === 'acertos' ? "text-green-300" : "text-green-500/80")}>Corretas</span>
+                <span className={cn(
+                  "text-lg font-black tabular-nums",
+                  activeTab === 'acertos' ? "text-green-400" : "text-green-500"
+                )}>{stats.acertos.toLocaleString('pt-BR')}</span>
               </TabsTrigger>
+
               {/* Erradas - Erros no MODO_TREINO (vermelho) */}
               <TabsTrigger 
                 value="erros" 
                 className={cn(
-                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-red-500",
+                  "group relative flex flex-col items-center justify-center gap-1.5 px-3 py-4 rounded-xl transition-all font-medium",
                   isHighEnd 
-                    ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500/20 data-[state=active]:to-rose-500/10 data-[state=active]:border data-[state=active]:border-red-400/30 hover:bg-red-500/5" 
+                    ? "data-[state=active]:bg-gradient-to-br data-[state=active]:from-red-500/25 data-[state=active]:via-rose-500/15 data-[state=active]:to-pink-500/10 data-[state=active]:border-2 data-[state=active]:border-red-400/40 data-[state=active]:shadow-lg data-[state=active]:shadow-red-500/20 hover:bg-red-500/10 border border-transparent hover:border-red-500/20" 
                     : "data-[state=active]:bg-red-500/10"
                 )}
               >
-                <AlertCircle className="h-4 w-4 text-red-500" />
-                <span className="hidden sm:inline text-red-500">Erradas</span>
-                <Badge variant="secondary" className={cn(
-                  "ml-1 bg-red-500/20 text-red-400 border-red-500/30",
-                  isHighEnd && activeTab === 'erros' && "bg-red-500/30 text-red-300"
-                )}>{stats.erros}</Badge>
+                {isHighEnd && activeTab === 'erros' && (
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-red-400/10 to-transparent animate-pulse" />
+                )}
+                <AlertCircle className={cn("h-5 w-5 transition-colors", activeTab === 'erros' ? "text-red-400" : "text-red-500/60 group-hover:text-red-400")} />
+                <span className={cn("text-xs font-semibold", activeTab === 'erros' ? "text-red-300" : "text-red-500/80")}>Erradas</span>
+                <span className={cn(
+                  "text-lg font-black tabular-nums",
+                  activeTab === 'erros' ? "text-red-400" : "text-red-500"
+                )}>{stats.erros.toLocaleString('pt-BR')}</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════════════════════════
-          BLOCK_06 + BLOCK_07: FILTERS (Year 2300 Cinematic)
-      ══════════════════════════════════════════════════════════════ */}
-      <div className={cn(
-        "relative overflow-hidden rounded-xl border",
-        isHighEnd 
-          ? "bg-gradient-to-br from-slate-900/60 via-background/40 to-slate-900/60 border-amber-500/20 backdrop-blur-md" 
-          : "bg-card border-primary/20"
-      )}>
-        {/* Efeitos de borda premium (high-end) */}
-        {isHighEnd && (
-          <>
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
-            <div className="absolute top-0 left-0 bottom-0 w-px bg-gradient-to-b from-transparent via-amber-500/20 to-transparent" />
-            <div className="absolute top-0 right-0 bottom-0 w-px bg-gradient-to-b from-transparent via-amber-500/20 to-transparent" />
-          </>
-        )}
-        
-        <div className="relative p-4 space-y-4">
-          {/* BLOCK_06: ACADEMIC_FILTERS - Hierarquia com labels premium */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-1.5">
-              <Label className={cn(
-                "text-xs uppercase tracking-wider font-semibold",
-                isHighEnd ? "text-amber-400/80" : "text-muted-foreground"
-              )}>MACRO</Label>
-              <Select 
-                value={filterMacro} 
-                onValueChange={(v) => {
-                  setFilterMacro(v);
-                  setFilterMicro('todas');
-                  setFilterTema('todas');
-                  setFilterSubtema('todas');
-                }}
-              >
-                <SelectTrigger className={cn(
-                  isHighEnd && "border-amber-500/20 bg-slate-900/40 hover:border-amber-500/40 focus:border-amber-500/50 transition-colors"
-                )}>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todas">Todas</SelectItem>
-                  {macros.map(m => (
-                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className={cn(
-                "text-xs uppercase tracking-wider font-semibold",
-                isHighEnd ? "text-cyan-400/80" : "text-muted-foreground"
-              )}>MICRO</Label>
-              <Select 
-                value={filterMicro} 
-                onValueChange={(v) => {
-                  setFilterMicro(v);
-                  setFilterTema('todas');
-                  setFilterSubtema('todas');
-                }}
-                disabled={filterMacro === 'todas'}
-              >
-                <SelectTrigger className={cn(
-                  isHighEnd && "border-cyan-500/20 bg-slate-900/40 hover:border-cyan-500/40 focus:border-cyan-500/50 transition-colors"
-                )}>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todas">Todas</SelectItem>
-                  {getMicrosForSelect(filterMacro === 'todas' ? '' : filterMacro).map(m => (
-                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className={cn(
-                "text-xs uppercase tracking-wider font-semibold",
-                isHighEnd ? "text-purple-400/80" : "text-muted-foreground"
-              )}>TEMA</Label>
-              <Select 
-                value={filterTema} 
-                onValueChange={(v) => {
-                  setFilterTema(v);
-                  setFilterSubtema('todas');
-                }}
-                disabled={filterMicro === 'todas'}
-              >
-                <SelectTrigger className={cn(
-                  isHighEnd && "border-purple-500/20 bg-slate-900/40 hover:border-purple-500/40 focus:border-purple-500/50 transition-colors"
-                )}>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todas">Todas</SelectItem>
-                  {getTemasForSelect(filterMicro === 'todas' ? '' : filterMicro).map(t => (
-                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className={cn(
-                "text-xs uppercase tracking-wider font-semibold",
-                isHighEnd ? "text-pink-400/80" : "text-muted-foreground"
-              )}>SUBTEMA</Label>
-              <Select 
-                value={filterSubtema} 
-                onValueChange={setFilterSubtema}
-                disabled={filterTema === 'todas'}
-              >
-                <SelectTrigger className={cn(
-                  isHighEnd && "border-pink-500/20 bg-slate-900/40 hover:border-pink-500/40 focus:border-pink-500/50 transition-colors"
-                )}>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todas">Todas</SelectItem>
-                  {getSubtemasForSelect(filterTema === 'todas' ? '' : filterTema).map(s => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* BLOCK_07: OPERATIONAL_FILTERS + PRIMARY_ACTION */}
-          <div className={cn(
-            "flex flex-col md:flex-row gap-4 pt-4 border-t",
-            isHighEnd ? "border-amber-500/10" : "border-border/50"
-          )}>
-            {/* Search com efeito premium */}
-            <div className={cn(
-              "relative flex-1 group",
-              isHighEnd && "rounded-lg"
-            )}>
-              {isHighEnd && (
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 via-transparent to-yellow-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity blur-sm" />
-              )}
-              <div className="relative">
-                <Search className={cn(
-                  "absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4",
-                  isHighEnd ? "text-amber-400/60" : "text-muted-foreground"
-                )} />
-                <Input 
-                  placeholder="Buscar por palavras-chave..." 
-                  className={cn(
-                    "pl-10",
-                    isHighEnd && "border-amber-500/20 bg-slate-900/40 focus:border-amber-500/40 transition-colors"
-                  )}
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                />
-              </div>
-            </div>
-            
-            <Select value={anoFilter} onValueChange={setAnoFilter}>
-              <SelectTrigger className={cn(
-                "w-full md:w-[140px]",
-                isHighEnd && "border-slate-600/30 bg-slate-900/40 hover:border-slate-500/50 transition-colors"
-              )}>
-                <SelectValue placeholder="Ano" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Ano: Todos</SelectItem>
-                {uniqueAnos.map(ano => (
-                  <SelectItem key={ano} value={String(ano)}>{ano}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={banca} onValueChange={setBanca}>
-              <SelectTrigger className={cn(
-                "w-full md:w-[180px]",
-                isHighEnd && "border-slate-600/30 bg-slate-900/40 hover:border-slate-500/50 transition-colors"
-              )}>
-                <SelectValue placeholder="Banca" />
-              </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
-                <SelectItem value="todas">Todas as bancas</SelectItem>
-                {Object.entries(BANCAS_POR_CATEGORIA).map(([categoria, bancas]) => (
-                  <div key={categoria}>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
-                      {CATEGORIA_LABELS[categoria as keyof typeof CATEGORIA_LABELS]}
-                    </div>
-                    {bancas.map(b => (
-                      <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
-                    ))}
-                  </div>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={dificuldade} onValueChange={setDificuldade}>
-              <SelectTrigger className={cn(
-                "w-full md:w-[160px]",
-                isHighEnd && "border-slate-600/30 bg-slate-900/40 hover:border-slate-500/50 transition-colors"
-              )}>
-                <SelectValue placeholder="Dificuldade" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Dificuldade: Todas</SelectItem>
-                <SelectItem value="facil">🟢 Fácil</SelectItem>
-                <SelectItem value="medio">🟡 Médio</SelectItem>
-                <SelectItem value="dificil">🔴 Difícil</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={sortOrder} onValueChange={setSortOrder}>
-              <SelectTrigger className={cn(
-                "w-full md:w-[160px]",
-                isHighEnd && "border-slate-600/30 bg-slate-900/40 hover:border-slate-500/50 transition-colors"
-              )}>
-                <SelectValue placeholder="Ordenar" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">📅 Mais recentes</SelectItem>
-                <SelectItem value="oldest">📅 Mais antigas</SelectItem>
-                <SelectItem value="ano_desc">🗓️ Ano ↓</SelectItem>
-                <SelectItem value="difficulty_asc">📊 Fácil → Difícil</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* BLOCK_08: PRIMARY_ACTION - Botão Premium */}
-            <div className="relative group">
-              {isHighEnd && (
-                <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/40 via-yellow-500/30 to-orange-500/40 rounded-lg blur-lg opacity-60 group-hover:opacity-100 transition-opacity" />
-              )}
-              <Button 
-                onClick={handleStartRapidoTreino}
-                disabled={isLoadingTreino || totalCount === 0}
-                size="lg"
-                className={cn(
-                  "relative gap-2 font-black px-6 h-11",
-                  isHighEnd 
-                    ? "bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 hover:from-amber-400 hover:via-yellow-400 hover:to-orange-400 text-black shadow-xl shadow-amber-500/30 transition-all duration-200" 
-                    : "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black transition-colors duration-100"
-                )}
-              >
-                {isLoadingTreino ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Zap className={cn("w-5 h-5", isHighEnd && "drop-shadow-sm")} />
-                )}
-                <span className="text-base tracking-wide">CRIAR QUESTÕES</span>
-                <Badge className={cn(
-                  "ml-1 font-bold text-xs",
-                  isHighEnd 
-                    ? "bg-black/30 text-white border-0 shadow-inner" 
-                    : "bg-black/20 text-white border-0"
-                )}>
-                  {Math.min(totalCount, RAPIDO_TREINO_LIMIT)}
-                </Badge>
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
 
