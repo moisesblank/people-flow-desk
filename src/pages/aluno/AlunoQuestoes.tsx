@@ -1318,96 +1318,107 @@ export default function AlunoQuestoes() {
           BLOCK_05: PROGRESS_STATUS - Estados de progresso (Year 2300)
       ══════════════════════════════════════════════════════════════ */}
       <div className={cn(
-        "relative rounded-xl p-1.5 border",
+        "relative overflow-hidden rounded-xl border",
         isHighEnd 
-          ? "bg-gradient-to-r from-slate-900/80 via-background/60 to-slate-900/80 border-amber-500/20 backdrop-blur-sm" 
-          : "bg-card/80 border-border/50"
+          ? "bg-gradient-to-br from-slate-900/60 via-background/40 to-slate-900/60 border-amber-500/20 backdrop-blur-md" 
+          : "bg-card border-primary/20"
       )}>
-        {/* Borda luminosa top (high-end) */}
+        {/* Efeitos de borda premium (high-end) - mesmos do Filters */}
         {isHighEnd && (
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
+          <>
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
+            <div className="absolute top-0 left-0 bottom-0 w-px bg-gradient-to-b from-transparent via-amber-500/20 to-transparent" />
+            <div className="absolute top-0 right-0 bottom-0 w-px bg-gradient-to-b from-transparent via-amber-500/20 to-transparent" />
+          </>
         )}
         
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className={cn(
-            "grid w-full grid-cols-5 lg:w-auto lg:inline-flex gap-1 bg-transparent h-auto p-0",
-          )}>
-            <TabsTrigger 
-              value="todas" 
-              className={cn(
-                "gap-2 px-4 py-2.5 rounded-lg transition-all",
-                isHighEnd 
-                  ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/20 data-[state=active]:to-yellow-500/10 data-[state=active]:border data-[state=active]:border-amber-500/30 data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/10" 
-                  : "data-[state=active]:bg-primary/10"
-              )}
-            >
-              <BookOpen className="h-4 w-4" />
-              <span className="hidden sm:inline font-medium">Todas</span>
-              <Badge variant="secondary" className={cn(
-                "ml-1 hidden lg:inline-flex",
-                isHighEnd && "bg-amber-500/20 text-amber-300 border-amber-500/30"
-              )}>{stats.total}</Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="pendentes" 
-              className={cn(
-                "gap-2 px-4 py-2.5 rounded-lg transition-all",
-                isHighEnd 
-                  ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500/20 data-[state=active]:to-gray-500/10 data-[state=active]:border data-[state=active]:border-slate-400/30" 
-                  : "data-[state=active]:bg-primary/10"
-              )}
-            >
-              <Clock className="h-4 w-4" />
-              <span className="hidden sm:inline font-medium">Pendentes</span>
-              <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">{stats.pendentes}</Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="resolvidas" 
-              className={cn(
-                "gap-2 px-4 py-2.5 rounded-lg transition-all",
-                isHighEnd 
-                  ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/10 data-[state=active]:border data-[state=active]:border-cyan-400/30" 
-                  : "data-[state=active]:bg-primary/10"
-              )}
-            >
-              <CheckCircle2 className="h-4 w-4" />
-              <span className="hidden sm:inline font-medium">Resolvidas</span>
-              <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">{stats.resolvidas}</Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="acertos" 
-              className={cn(
-                "gap-2 px-4 py-2.5 rounded-lg transition-all",
-                isHighEnd 
-                  ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500/20 data-[state=active]:to-emerald-500/10 data-[state=active]:border data-[state=active]:border-green-400/30 text-green-500" 
-                  : "data-[state=active]:bg-green-500/10 text-green-600"
-              )}
-            >
-              <Star className="h-4 w-4" />
-              <span className="hidden sm:inline font-medium">Corretas</span>
-              <Badge variant="secondary" className={cn(
-                "ml-1 hidden lg:inline-flex",
-                isHighEnd && "bg-green-500/20 text-green-300 border-green-500/30"
-              )}>{stats.acertos}</Badge>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="erros" 
-              className={cn(
-                "gap-2 px-4 py-2.5 rounded-lg transition-all",
-                isHighEnd 
-                  ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500/20 data-[state=active]:to-rose-500/10 data-[state=active]:border data-[state=active]:border-red-400/30 text-red-500" 
-                  : "data-[state=active]:bg-red-500/10 text-red-600"
-              )}
-            >
-              <AlertCircle className="h-4 w-4" />
-              <span className="hidden sm:inline font-medium">Erradas</span>
-              <Badge variant="secondary" className={cn(
-                "ml-1 hidden lg:inline-flex",
-                isHighEnd && "bg-red-500/20 text-red-300 border-red-500/30"
-              )}>{stats.erros}</Badge>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="relative p-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="w-full grid grid-cols-5 gap-2 bg-transparent h-auto p-0">
+              <TabsTrigger 
+                value="todas" 
+                className={cn(
+                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium",
+                  isHighEnd 
+                    ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/20 data-[state=active]:to-yellow-500/10 data-[state=active]:border data-[state=active]:border-amber-500/30 data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/10 hover:bg-amber-500/5" 
+                    : "data-[state=active]:bg-primary/10"
+                )}
+              >
+                <BookOpen className="h-4 w-4" />
+                <span className="hidden sm:inline">Todas</span>
+                <Badge variant="secondary" className={cn(
+                  "ml-1",
+                  isHighEnd && activeTab === 'todas' && "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                )}>{stats.total}</Badge>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="pendentes" 
+                className={cn(
+                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium",
+                  isHighEnd 
+                    ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500/20 data-[state=active]:to-gray-500/10 data-[state=active]:border data-[state=active]:border-slate-400/30 hover:bg-slate-500/5" 
+                    : "data-[state=active]:bg-primary/10"
+                )}
+              >
+                <Clock className="h-4 w-4" />
+                <span className="hidden sm:inline">Pendentes</span>
+                <Badge variant="secondary" className={cn(
+                  "ml-1",
+                  isHighEnd && activeTab === 'pendentes' && "bg-slate-500/20 text-slate-300 border-slate-500/30"
+                )}>{stats.pendentes}</Badge>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="resolvidas" 
+                className={cn(
+                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium",
+                  isHighEnd 
+                    ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/10 data-[state=active]:border data-[state=active]:border-cyan-400/30 hover:bg-cyan-500/5" 
+                    : "data-[state=active]:bg-primary/10"
+                )}
+              >
+                <CheckCircle2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Resolvidas</span>
+                <Badge variant="secondary" className={cn(
+                  "ml-1",
+                  isHighEnd && activeTab === 'resolvidas' && "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
+                )}>{stats.resolvidas}</Badge>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="acertos" 
+                className={cn(
+                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium",
+                  isHighEnd 
+                    ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500/20 data-[state=active]:to-emerald-500/10 data-[state=active]:border data-[state=active]:border-green-400/30 text-green-500 hover:bg-green-500/5" 
+                    : "data-[state=active]:bg-green-500/10 text-green-600"
+                )}
+              >
+                <Star className="h-4 w-4" />
+                <span className="hidden sm:inline">Corretas</span>
+                <Badge variant="secondary" className={cn(
+                  "ml-1",
+                  isHighEnd && activeTab === 'acertos' && "bg-green-500/20 text-green-300 border-green-500/30"
+                )}>{stats.acertos}</Badge>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="erros" 
+                className={cn(
+                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium",
+                  isHighEnd 
+                    ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500/20 data-[state=active]:to-rose-500/10 data-[state=active]:border data-[state=active]:border-red-400/30 text-red-500 hover:bg-red-500/5" 
+                    : "data-[state=active]:bg-red-500/10 text-red-600"
+                )}
+              >
+                <AlertCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">Erradas</span>
+                <Badge variant="secondary" className={cn(
+                  "ml-1",
+                  isHighEnd && activeTab === 'erros' && "bg-red-500/20 text-red-300 border-red-500/30"
+                )}>{stats.erros}</Badge>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
