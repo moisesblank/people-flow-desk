@@ -712,9 +712,58 @@ function QuestionSummaryCard({
         </div>
       </div>
       
-      {/* Correct Answer Display */}
+      {/* ═══════════════════════════════════════════════════════════════════════
+          🎯 RESPOSTA DO ALUNO (SEMPRE VISÍVEL) — Registro Permanente
+          Constituição SYNAPSE Ω v10.4 | TEMPORAL TRUTH BINDING
+          ═══════════════════════════════════════════════════════════════════════ */}
+      
+      {/* Student's Answer - SEMPRE EXIBIDA (acerto ou erro) */}
+      {wasAnswered && studentAnswer && question.options && (
+        <div className={cn(
+          "flex items-center gap-3 p-3 rounded-lg border",
+          isCorrect 
+            ? "bg-cyan-500/10 border-cyan-500/30"
+            : "bg-red-500/10 border-red-500/30"
+        )}>
+          <span className={cn(
+            "flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold uppercase",
+            isCorrect 
+              ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/30"
+              : "bg-red-500/30 text-red-400"
+          )}>
+            {studentAnswer}
+          </span>
+          <QuestionTextField 
+            content={question.options[studentAnswer] || question.options[rawAnswer!] || ""} 
+            fieldType="alternativa"
+            className={cn(
+              "text-sm flex-1",
+              isCorrect ? "text-cyan-400" : "text-red-400/70 line-through"
+            )}
+          />
+          <div className="flex flex-col items-end gap-1">
+            <span className={cn(
+              "text-[10px] uppercase tracking-wider font-medium",
+              isCorrect ? "text-cyan-400" : "text-red-400/70"
+            )}>
+              Você marcou
+            </span>
+            {isCorrect && (
+              <CheckCircle2 className="h-4 w-4 text-cyan-400" />
+            )}
+            {!isCorrect && (
+              <XCircle className="h-4 w-4 text-red-400" />
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Correct Answer Display (Gabarito) */}
       {correctAnswer && question.options && (
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+        <div className={cn(
+          "flex items-center gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30",
+          wasAnswered ? "mt-2" : ""
+        )}>
           <span className="flex-shrink-0 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs font-bold uppercase shadow-lg shadow-emerald-500/30">
             {correctAnswer}
           </span>
@@ -723,22 +772,18 @@ function QuestionSummaryCard({
             fieldType="alternativa"
             className="text-sm text-emerald-400 flex-1"
           />
-          <span className="text-[10px] text-emerald-400/70 uppercase tracking-wider">Gabarito</span>
+          <span className="text-[10px] text-emerald-400/70 uppercase tracking-wider font-medium">Gabarito</span>
         </div>
       )}
       
-      {/* Student's Wrong Answer */}
-      {wasAnswered && !isCorrect && studentAnswer && question.options && (
-        <div className="flex items-center gap-3 mt-2 p-3 rounded-lg bg-red-500/5 border border-red-500/20">
-          <span className="flex-shrink-0 w-7 h-7 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xs font-bold uppercase">
-            {studentAnswer}
+      {/* Not Answered Indicator */}
+      {!wasAnswered && (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-500/10 border border-zinc-500/30 mt-2">
+          <span className="flex-shrink-0 w-7 h-7 rounded-full bg-zinc-500/30 text-zinc-400 flex items-center justify-center text-xs font-bold">
+            —
           </span>
-          <QuestionTextField 
-            content={question.options[studentAnswer] || question.options[rawAnswer!] || ""} 
-            fieldType="alternativa"
-            className="text-sm text-red-400/70 flex-1 line-through"
-          />
-          <span className="text-[10px] text-red-400/70 uppercase tracking-wider">Sua resposta</span>
+          <span className="text-sm text-zinc-400 flex-1 italic">Questão não respondida</span>
+          <span className="text-[10px] text-zinc-400/70 uppercase tracking-wider">Em branco</span>
         </div>
       )}
     </div>
