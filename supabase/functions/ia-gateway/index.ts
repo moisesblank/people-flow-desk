@@ -1,7 +1,7 @@
 // 🧠 TRAMON v8 - IA GATEWAY (O Tradutor Universal das IAs)
 // Propósito: Ponto único de entrada para comunicação com as 4 IAs
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
