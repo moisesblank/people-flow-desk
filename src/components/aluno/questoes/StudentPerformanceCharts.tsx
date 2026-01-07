@@ -642,6 +642,9 @@ const TablesSection = memo(function TablesSection({
   );
 });
 
+// Lazy load AI Tutor Widget
+import AITutorAlertWidget from './AITutorAlertWidget';
+
 // =====================================================
 // EXPORT PRINCIPAL
 // =====================================================
@@ -673,6 +676,13 @@ function StudentPerformanceCharts({ macros, micros, temas = [], isLowEnd = false
 
       {/* Linha 4: Tabelas lado a lado */}
       <TablesSection macros={macros} micros={micros} temas={temas} />
+
+      {/* Linha 5: AI Tutor Alert Widget - Ativa quando acurácia < 50% */}
+      <AITutorAlertWidget 
+        macros={macros} 
+        micros={micros} 
+        isLowEnd={isLowEnd}
+      />
     </div>
   );
 }
