@@ -18,6 +18,7 @@ import { useVideoFortress, VideoViolationType, ViolationAction } from "@/hooks/u
 import { useAuth } from "@/hooks/useAuth";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { useDeviceConstitution } from "@/hooks/useDeviceConstitution";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -122,6 +123,27 @@ export const OmegaFortressPlayer = memo(({
   const [violationWarning, setViolationWarning] = useState<string | null>(null);
   const [showSecurityInfo, setShowSecurityInfo] = useState(false);
 
+  // Panda DRM: src assinada (token + expires). Sem isso, o player do Panda falha quando DRM via API está ativo.
+  const [pandaSignedSrc, setPandaSignedSrc] = useState<string | null>(null);
+
+  const extractPandaVideoId = useCallback((raw: string): string => {
+    // Aceita UUID puro
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)) return raw;
+
+    // Aceita URL de embed do Panda (ou qualquer URL com query v=)
+    try {
+      const u = new URL(raw);
+      const v = u.searchParams.get('v');
+      if (v) return v;
+    } catch {
+      // ignore
+    }
+
+    // Fallback: regex simples
+    const m = raw.match(/[?&]v=([a-zA-Z0-9-]+)/);
+    return m?.[1] || raw;
+  }, []);
+
   // Hook de proteção FORTRESS
   const {
     session,
@@ -209,6 +231,58 @@ export const OmegaFortressPlayer = memo(({
         return "";
     }
   }, [type, videoId, autoplay]);
+
+  // Panda DRM: sempre buscar URL assinada quando for Panda e o player estiver ativo.
+  // Sem essa etapa, o embed sem token resulta em "This video encountered an error".
+  useEffect(() => {
+    if (type !== 'panda') {
+      setPandaSignedSrc(null);
+      return;
+    }
+
+    if (showThumbnail) return; // só quando o usuário iniciou o player
+
+    let cancelled = false;
+    const run = async () => {
+      try {
+        setIsLoading(true);
+
+        // Preferir lessonId (faz check de acesso + logs + watermark no backend)
+        if (lessonId) {
+          const { data, error } = await supabase.functions.invoke('get-panda-signed-url', {
+            body: { lessonId },
+          });
+          if (error) throw error;
+          if (!data?.signedUrl) throw new Error('signedUrl ausente');
+          if (!cancelled) setPandaSignedSrc(String(data.signedUrl));
+          return;
+        }
+
+        // Fallback: assinar por videoId
+        const vId = extractPandaVideoId(videoId);
+        const { data, error } = await supabase.functions.invoke('secure-video-url', {
+          body: { action: 'get_panda_url', videoId: vId },
+        });
+        if (error) throw error;
+        if (!data?.videoUrl) throw new Error('videoUrl ausente');
+        if (!cancelled) setPandaSignedSrc(String(data.videoUrl));
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : 'Erro ao obter URL DRM do Panda';
+        console.error('[OmegaFortressPlayer] Panda DRM URL error:', e);
+        toast.error('Erro ao carregar vídeo', { description: msg });
+        onError?.(msg);
+        if (!cancelled) setPandaSignedSrc(null);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [type, showThumbnail, lessonId, videoId, extractPandaVideoId, onError]);
 
   // ============================================
   // INICIALIZAÇÃO
@@ -491,10 +565,10 @@ export const OmegaFortressPlayer = memo(({
             {/* YouTube: JS API inicializa no container */}
             {type === "youtube" && <div className="player-container absolute inset-0" />}
             
-            {/* PANDA: Renderiza iframe direto com embed URL (não depende de session) */}
-            {type === "panda" && embedUrl && (
+            {/* PANDA: DRM via API exige URL assinada (token + expires) */}
+            {type === "panda" && (pandaSignedSrc || embedUrl) && (
               <iframe
-                src={embedUrl}
+                src={pandaSignedSrc || embedUrl}
                 className="absolute inset-0 w-full h-full"
                 allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                 allowFullScreen
