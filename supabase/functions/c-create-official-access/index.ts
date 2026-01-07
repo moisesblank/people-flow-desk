@@ -14,7 +14,7 @@
 // Email: Envia boas-vindas via Resend (NUNCA envia senha em texto)
 // ============================================
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import { createClient } from "npm:@supabase/supabase-js@2";
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { Resend } from 'https://esm.sh/resend@2.0.0';
 
