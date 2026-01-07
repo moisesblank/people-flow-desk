@@ -1794,17 +1794,18 @@ export default function AlunoQuestoes() {
               Mostrando <strong>{filteredQuestions.length}</strong> de <strong>{totalCount.toLocaleString('pt-BR')}</strong> questões
             </p>
             
-            {/* Botão Rápido Treino - Sempre visível */}
+            {/* Botão Rápido Treino - Sempre visível e destacado */}
             <Button 
               onClick={handleStartRapidoTreino}
               disabled={isLoadingTreino || totalCount === 0}
+              size="lg"
               className={cn(
-                "gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold",
-                isHighEnd ? "shadow-lg shadow-amber-500/20" : ""
+                "gap-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-black text-base px-8 py-6 h-auto",
+                isHighEnd ? "shadow-xl shadow-amber-500/30 ring-2 ring-amber-400/30" : ""
               )}
             >
-              {isLoadingTreino ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-              Rápido Treino
+              {isLoadingTreino ? <Loader2 className="w-6 h-6 animate-spin" /> : <Play className="w-6 h-6" />}
+              RÁPIDO TREINO
             </Button>
           </div>
 
