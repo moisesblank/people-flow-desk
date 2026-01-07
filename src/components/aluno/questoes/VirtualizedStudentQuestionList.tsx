@@ -278,9 +278,9 @@ export function VirtualizedStudentQuestionList({
   onResetAttempt,
   isResetting,
 }: VirtualizedStudentQuestionListProps) {
-  // Performance Tiering
+  // Performance Tiering - FORÇADO isHighEnd = true para garantir Year 2300 Design
   const perf = useConstitutionPerformance();
-  const isHighEnd = !perf.isLowEnd;
+  const isHighEnd = true; // Forçado: !perf.isLowEnd substituído por true
   
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
