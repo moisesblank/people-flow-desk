@@ -1793,6 +1793,19 @@ export default function AlunoQuestoes() {
             <p className="text-sm text-muted-foreground">
               Mostrando <strong>{filteredQuestions.length}</strong> de <strong>{totalCount.toLocaleString('pt-BR')}</strong> questões
             </p>
+            
+            {/* Botão Rápido Treino - Sempre visível */}
+            <Button 
+              onClick={handleStartRapidoTreino}
+              disabled={isLoadingTreino || totalCount === 0}
+              className={cn(
+                "gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold",
+                isHighEnd ? "shadow-lg shadow-amber-500/20" : ""
+              )}
+            >
+              {isLoadingTreino ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+              Rápido Treino
+            </Button>
           </div>
 
           {/* VIRTUALIZAÇÃO PERMANENTE - Renderiza apenas itens visíveis */}
