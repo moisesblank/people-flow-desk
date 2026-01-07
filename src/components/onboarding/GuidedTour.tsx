@@ -233,17 +233,39 @@ export function GuidedTour({ steps, isOpen, onComplete, onSkip }: GuidedTourProp
 }
 
 // Hook para gerenciar o tour
-export function useTour(tourId: string) {
+// 🏛️ CONSTITUIÇÃO v10.4: Owner bypass + /gestaofc desabilitado por default
+export function useTour(tourId: string, options?: { autoOpen?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
+  const autoOpen = options?.autoOpen ?? false; // DEFAULT: NÃO abre automaticamente
 
   useEffect(() => {
+    // 🛡️ Owner bypass absoluto - nunca mostrar tour automático
+    const isOwner = (() => {
+      try {
+        const session = localStorage.getItem('sb-fyikfsasudgzsjmumdlw-auth-token');
+        if (!session) return false;
+        const parsed = JSON.parse(session);
+        return parsed?.user?.email?.toLowerCase() === 'moisesblank@gmail.com';
+      } catch {
+        return false;
+      }
+    })();
+
+    if (isOwner) {
+      // Marca como completo para owner nunca mais ver
+      localStorage.setItem(`tour_${tourId}_completed`, "true");
+      return;
+    }
+
+    // Só abre automaticamente se autoOpen=true E não completou antes
+    if (!autoOpen) return;
+
     const hasSeenTour = localStorage.getItem(`tour_${tourId}_completed`);
     if (!hasSeenTour) {
-      // Atrasa um pouco para garantir que a página carregou
       const timer = setTimeout(() => setIsOpen(true), 1000);
       return () => clearTimeout(timer);
     }
-  }, [tourId]);
+  }, [tourId, autoOpen]);
 
   const completeTour = () => {
     setIsOpen(false);
