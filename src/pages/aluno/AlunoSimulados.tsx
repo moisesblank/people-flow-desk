@@ -3,22 +3,20 @@
  * Constituição SYNAPSE Ω v10.0
  * 
  * Design: Year 2300 Cinematic Experience
- * Integração COMPLETA com SimuladoPlayer e dados reais.
+ * ⚡ Performance-Optimized via useConstitutionPerformance
  */
 
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, memo, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Brain, Clock, Target, Trophy, Play, 
   Calendar, CheckCircle2, Lock, FileText, Zap,
-  Shield, Camera, AlertTriangle, Timer, Rocket,
-  Flame, TrendingUp, Star, Sparkles
+  Shield, Camera, Timer, Rocket,
+  Flame, TrendingUp, Star
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { LoadingState } from "@/components/LoadingState";
@@ -29,11 +27,22 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { calculatePercentage } from "@/components/simulados/types";
 import { CyberBackground } from "@/components/ui/cyber-background";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
+import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 import "@/styles/dashboard-2300.css";
 
 export default function AlunoSimulados() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [tab, setTab] = useState("disponiveis");
+  
+  // ⚡ Performance flags - LEI I
+  const { 
+    shouldAnimate, 
+    shouldBlur, 
+    shouldShowParticles, 
+    isLowEnd,
+    motionProps,
+    getBlurClass
+  } = useConstitutionPerformance();
   
   // Simulado ativo (do URL ou selecionado)
   const activeSimuladoId = searchParams.get("s");
@@ -43,14 +52,14 @@ export default function AlunoSimulados() {
   const { data: simuladosData, isLoading, refetch } = useSimuladosList();
 
   // Estatísticas calculadas
-  const stats = {
+  const stats = useMemo(() => ({
     disponíveis: simuladosData?.available.length || 0,
     realizados: simuladosData?.completed.length || 0,
     emBreve: simuladosData?.upcoming.length || 0,
     total: (simuladosData?.available.length || 0) + 
            (simuladosData?.completed.length || 0) + 
            (simuladosData?.upcoming.length || 0),
-  };
+  }), [simuladosData]);
 
   // Handlers
   const handleSelectSimulado = useCallback((id: string) => {
@@ -89,8 +98,8 @@ export default function AlunoSimulados() {
 
   return (
     <div className="relative min-h-screen">
-      {/* 🌌 Cinematic Background */}
-      <CyberBackground variant="grid" intensity="medium" />
+      {/* 🌌 Cinematic Background - Conditionally rendered */}
+      {shouldShowParticles && <CyberBackground variant="grid" intensity={isLowEnd ? "low" : "medium"} />}
       
       <div className="relative z-10 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
         
@@ -108,29 +117,25 @@ export default function AlunoSimulados() {
           ]}
         />
 
-        {/* ⚡ XP Banner - Holographic Style */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative overflow-hidden"
-        >
+        {/* ⚡ XP Banner - Performance-Optimized */}
+        <div className={cn(
+          "relative overflow-hidden rounded-xl",
+          shouldAnimate && "animate-fade-in"
+        )}>
           <div className="dashboard-hero-2300 p-6">
             <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-              {/* Icon Container */}
-              <motion.div 
-                className="relative"
-                animate={{ rotate: [0, 5, -5, 0] }}
-                transition={{ duration: 4, repeat: Infinity }}
-              >
+              {/* Icon Container - CSS animation instead of motion */}
+              <div className={cn(
+                "relative",
+                shouldAnimate && "animate-pulse-slow"
+              )}>
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 flex items-center justify-center shadow-[0_0_40px_hsl(45,100%,50%,0.4)]">
                   <Zap className="w-10 h-10 text-white" />
                 </div>
-                <motion.div 
-                  className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-amber-500/30 to-orange-500/30 blur-xl"
-                  animate={{ opacity: [0.5, 0.8, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-              </motion.div>
+                {shouldShowParticles && (
+                  <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-amber-500/30 to-orange-500/30 blur-xl animate-pulse" />
+                )}
+              </div>
 
               {/* Text Content */}
               <div className="flex-1 text-center md:text-left">
@@ -143,11 +148,8 @@ export default function AlunoSimulados() {
                 </p>
               </div>
 
-              {/* XP Badge */}
-              <motion.div 
-                className="flex flex-col items-center gap-2"
-                whileHover={{ scale: 1.05 }}
-              >
+              {/* XP Badge - Simplified */}
+              <div className="flex flex-col items-center gap-2 hover:scale-105 transition-transform">
                 <div className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-[0_0_30px_hsl(160,100%,50%,0.3)]">
                   <div className="flex items-center gap-2">
                     <Star className="w-5 h-5 text-white" />
@@ -155,17 +157,20 @@ export default function AlunoSimulados() {
                   </div>
                 </div>
                 <span className="text-xs text-cyan-200/60 uppercase tracking-wider">por questão</span>
-              </motion.div>
+              </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* 🗂️ Tabs Navigation - Futuristic */}
+        {/* 🗂️ Tabs Navigation - Performance-Optimized */}
         <Tabs value={tab} onValueChange={setTab} className="space-y-6">
-          <TabsList className="w-full p-1 bg-card/50 backdrop-blur-xl border border-border/50 rounded-xl grid grid-cols-3 h-auto">
+          <TabsList className={cn(
+            "w-full p-1 border border-border/50 rounded-xl grid grid-cols-3 h-auto",
+            getBlurClass("bg-card/50 backdrop-blur-xl", "bg-card/90")
+          )}>
             <TabsTrigger 
               value="disponiveis" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/20 data-[state=active]:to-cyan-500/20 data-[state=active]:border-emerald-500/50 data-[state=active]:text-emerald-400 rounded-lg py-3 px-4 border border-transparent transition-all"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/20 data-[state=active]:to-cyan-500/20 data-[state=active]:border-emerald-500/50 data-[state=active]:text-emerald-400 rounded-lg py-3 px-4 border border-transparent transition-colors"
             >
               <div className="flex items-center gap-2">
                 <Rocket className="h-4 w-4" />
@@ -175,7 +180,7 @@ export default function AlunoSimulados() {
             </TabsTrigger>
             <TabsTrigger 
               value="realizados"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:border-purple-500/50 data-[state=active]:text-purple-400 rounded-lg py-3 px-4 border border-transparent transition-all"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:border-purple-500/50 data-[state=active]:text-purple-400 rounded-lg py-3 px-4 border border-transparent transition-colors"
             >
               <div className="flex items-center gap-2">
                 <Trophy className="h-4 w-4" />
@@ -185,7 +190,7 @@ export default function AlunoSimulados() {
             </TabsTrigger>
             <TabsTrigger 
               value="embreve"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/20 data-[state=active]:to-orange-500/20 data-[state=active]:border-amber-500/50 data-[state=active]:text-amber-400 rounded-lg py-3 px-4 border border-transparent transition-all"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/20 data-[state=active]:to-orange-500/20 data-[state=active]:border-amber-500/50 data-[state=active]:text-amber-400 rounded-lg py-3 px-4 border border-transparent transition-colors"
             >
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
@@ -195,88 +200,89 @@ export default function AlunoSimulados() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Content Areas */}
-          <AnimatePresence mode="wait">
-            {/* Simulados Disponíveis */}
-            <TabsContent value="disponiveis" className="mt-0">
-              {simuladosData?.available.length === 0 ? (
-                <EmptyState 
-                  icon={Rocket}
-                  title="Nenhum simulado disponível"
-                  description="Novos simulados serão liberados em breve! Fique atento."
-                  accentColor="emerald"
-                />
-              ) : (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-                >
-                  {simuladosData?.available.map((simulado, index) => (
-                    <SimuladoCard
-                      key={simulado.id}
-                      simulado={simulado}
-                      onStart={() => handleSelectSimulado(simulado.id)}
-                      animationDelay={index * 0.1}
-                    />
-                  ))}
-                </motion.div>
-              )}
-            </TabsContent>
+          {/* Content Areas - Simplified animations */}
+          {/* Simulados Disponíveis */}
+          <TabsContent value="disponiveis" className="mt-0">
+            {simuladosData?.available.length === 0 ? (
+              <EmptyState 
+                icon={Rocket}
+                title="Nenhum simulado disponível"
+                description="Novos simulados serão liberados em breve! Fique atento."
+                accentColor="emerald"
+                shouldAnimate={shouldAnimate}
+              />
+            ) : (
+              <div className={cn(
+                "grid gap-6 md:grid-cols-2 lg:grid-cols-3",
+                shouldAnimate && "animate-fade-in"
+              )}>
+                {simuladosData?.available.map((simulado, index) => (
+                  <SimuladoCard
+                    key={simulado.id}
+                    simulado={simulado}
+                    onStart={() => handleSelectSimulado(simulado.id)}
+                    shouldAnimate={shouldAnimate}
+                    index={index}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
-            {/* Simulados Realizados */}
-            <TabsContent value="realizados" className="mt-0">
-              {simuladosData?.completed.length === 0 ? (
-                <EmptyState 
-                  icon={Trophy}
-                  title="Nenhum simulado realizado"
-                  description="Complete seu primeiro simulado e veja suas estatísticas aqui!"
-                  accentColor="purple"
-                />
-              ) : (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="grid gap-6 md:grid-cols-2"
-                >
-                  {simuladosData?.completed.map((simulado, index) => (
-                    <SimuladoCompletedCard
-                      key={simulado.id}
-                      simulado={simulado}
-                      onReview={() => handleSelectSimulado(simulado.id)}
-                      animationDelay={index * 0.1}
-                    />
-                  ))}
-                </motion.div>
-              )}
-            </TabsContent>
+          {/* Simulados Realizados */}
+          <TabsContent value="realizados" className="mt-0">
+            {simuladosData?.completed.length === 0 ? (
+              <EmptyState 
+                icon={Trophy}
+                title="Nenhum simulado realizado"
+                description="Complete seu primeiro simulado e veja suas estatísticas aqui!"
+                accentColor="purple"
+                shouldAnimate={shouldAnimate}
+              />
+            ) : (
+              <div className={cn(
+                "grid gap-6 md:grid-cols-2",
+                shouldAnimate && "animate-fade-in"
+              )}>
+                {simuladosData?.completed.map((simulado, index) => (
+                  <SimuladoCompletedCard
+                    key={simulado.id}
+                    simulado={simulado}
+                    onReview={() => handleSelectSimulado(simulado.id)}
+                    shouldAnimate={shouldAnimate}
+                    index={index}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
-            {/* Simulados Em Breve */}
-            <TabsContent value="embreve" className="mt-0">
-              {simuladosData?.upcoming.length === 0 ? (
-                <EmptyState 
-                  icon={Calendar}
-                  title="Nenhum simulado programado"
-                  description="Fique atento! Novos desafios serão anunciados em breve."
-                  accentColor="amber"
-                />
-              ) : (
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-                >
-                  {simuladosData?.upcoming.map((simulado, index) => (
-                    <SimuladoUpcomingCard
-                      key={simulado.id}
-                      simulado={simulado}
-                      animationDelay={index * 0.1}
-                    />
-                  ))}
-                </motion.div>
-              )}
-            </TabsContent>
-          </AnimatePresence>
+          {/* Simulados Em Breve */}
+          <TabsContent value="embreve" className="mt-0">
+            {simuladosData?.upcoming.length === 0 ? (
+              <EmptyState 
+                icon={Calendar}
+                title="Nenhum simulado programado"
+                description="Fique atento! Novos desafios serão anunciados em breve."
+                accentColor="amber"
+                shouldAnimate={shouldAnimate}
+              />
+            ) : (
+              <div className={cn(
+                "grid gap-6 md:grid-cols-2 lg:grid-cols-3",
+                shouldAnimate && "animate-fade-in"
+              )}>
+                {simuladosData?.upcoming.map((simulado, index) => (
+                  <SimuladoUpcomingCard
+                    key={simulado.id}
+                    simulado={simulado}
+                    shouldAnimate={shouldAnimate}
+                    index={index}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
       </div>
     </div>
@@ -284,26 +290,27 @@ export default function AlunoSimulados() {
 }
 
 // ============================================
-// 🃏 SIMULADO CARD - DISPONÍVEL
+// 🃏 SIMULADO CARD - DISPONÍVEL (Performance-Optimized)
 // ============================================
 
 interface SimuladoCardProps {
   simulado: SimuladoListItem;
   onStart: () => void;
-  animationDelay?: number;
+  shouldAnimate?: boolean;
+  index?: number;
 }
 
-const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, animationDelay = 0 }: SimuladoCardProps) {
+const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, shouldAnimate = true, index = 0 }: SimuladoCardProps) {
   const hasRunningAttempt = simulado.user_attempt?.status === "RUNNING";
   const isRetake = simulado.user_attempt && !simulado.user_attempt.is_scored_for_ranking;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: animationDelay, type: "spring", stiffness: 100 }}
-      whileHover={{ y: -8, transition: { duration: 0.3 } }}
-      className="group"
+    <div 
+      className={cn(
+        "group hover:-translate-y-2 transition-transform duration-300",
+        shouldAnimate && "animate-fade-in"
+      )}
+      style={shouldAnimate ? { animationDelay: `${index * 50}ms` } : undefined}
     >
       <div className="stat-orb-2300 h-full flex flex-col">
         {/* Glowing Top Border */}
@@ -391,21 +398,22 @@ const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, animationDe
           </Button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 });
 
 // ============================================
-// 🏆 SIMULADO COMPLETED CARD
+// 🏆 SIMULADO COMPLETED CARD (Performance-Optimized)
 // ============================================
 
 interface SimuladoCompletedCardProps {
   simulado: SimuladoListItem;
   onReview: () => void;
-  animationDelay?: number;
+  shouldAnimate?: boolean;
+  index?: number;
 }
 
-const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, onReview, animationDelay = 0 }: SimuladoCompletedCardProps) {
+const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, onReview, shouldAnimate = true, index = 0 }: SimuladoCompletedCardProps) {
   const attempt = simulado.user_attempt;
   const percentage = attempt 
     ? calculatePercentage(attempt.correct_answers, simulado.total_questions) 
@@ -416,12 +424,12 @@ const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, on
     : true;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: animationDelay, type: "spring", stiffness: 100 }}
-      whileHover={{ scale: 1.02, transition: { duration: 0.3 } }}
-      className="group"
+    <div 
+      className={cn(
+        "group hover:scale-[1.02] transition-transform duration-300",
+        shouldAnimate && "animate-fade-in"
+      )}
+      style={shouldAnimate ? { animationDelay: `${index * 50}ms` } : undefined}
     >
       <div className="stat-orb-2300 relative overflow-hidden">
         {/* Status Glow Line */}
@@ -485,7 +493,7 @@ const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, on
                   strokeWidth="8"
                   strokeLinecap="round"
                   strokeDasharray={`${percentage * 2.51} 251`}
-                  className="transition-all duration-1000"
+                  className="transition-all duration-500"
                 />
                 <defs>
                   <linearGradient id="successGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -513,7 +521,7 @@ const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, on
               onClick={onReview}
               disabled={!isGabaritoReleased}
               className={cn(
-                "border-purple-500/50 hover:bg-purple-500/10 hover:border-purple-500 transition-all",
+                "border-purple-500/50 hover:bg-purple-500/10 hover:border-purple-500 transition-colors",
                 !isGabaritoReleased && "opacity-50"
               )}
             >
@@ -523,33 +531,35 @@ const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, on
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 });
 
 // ============================================
-// 🔮 SIMULADO UPCOMING CARD
+// 🔮 SIMULADO UPCOMING CARD (Performance-Optimized)
 // ============================================
 
 interface SimuladoUpcomingCardProps {
   simulado: SimuladoListItem;
-  animationDelay?: number;
+  shouldAnimate?: boolean;
+  index?: number;
 }
 
-const SimuladoUpcomingCard = memo(function SimuladoUpcomingCard({ simulado, animationDelay = 0 }: SimuladoUpcomingCardProps) {
+const SimuladoUpcomingCard = memo(function SimuladoUpcomingCard({ simulado, shouldAnimate = true, index = 0 }: SimuladoUpcomingCardProps) {
   const startsAt = simulado.starts_at ? new Date(simulado.starts_at) : null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: animationDelay, type: "spring", stiffness: 100 }}
-      className="group opacity-80 hover:opacity-100 transition-opacity"
+    <div 
+      className={cn(
+        "group opacity-80 hover:opacity-100 transition-opacity",
+        shouldAnimate && "animate-fade-in"
+      )}
+      style={shouldAnimate ? { animationDelay: `${index * 50}ms` } : undefined}
     >
       <div className="stat-orb-2300 h-full flex flex-col relative">
         {/* Lock Overlay */}
-        <div className="absolute inset-0 bg-background/20 backdrop-blur-[1px] rounded-xl z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="p-4 rounded-2xl bg-card/80 backdrop-blur-xl border border-amber-500/30">
+        <div className="absolute inset-0 bg-background/20 rounded-xl z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="p-4 rounded-2xl bg-card/80 border border-amber-500/30">
             <Lock className="w-8 h-8 text-amber-500" />
           </div>
         </div>
@@ -608,12 +618,12 @@ const SimuladoUpcomingCard = memo(function SimuladoUpcomingCard({ simulado, anim
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 });
 
 // ============================================
-// 📭 EMPTY STATE
+// 📭 EMPTY STATE (Performance-Optimized)
 // ============================================
 
 interface EmptyStateProps {
@@ -621,9 +631,10 @@ interface EmptyStateProps {
   title: string;
   description: string;
   accentColor: "emerald" | "purple" | "amber";
+  shouldAnimate?: boolean;
 }
 
-const EmptyState = memo(function EmptyState({ icon: Icon, title, description, accentColor }: EmptyStateProps) {
+const EmptyState = memo(function EmptyState({ icon: Icon, title, description, accentColor, shouldAnimate = true }: EmptyStateProps) {
   const colorMap = {
     emerald: {
       iconBg: "bg-emerald-500/20",
@@ -645,22 +656,22 @@ const EmptyState = memo(function EmptyState({ icon: Icon, title, description, ac
   const config = colorMap[accentColor];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="text-center py-16"
-    >
+    <div className={cn(
+      "text-center py-16",
+      shouldAnimate && "animate-fade-in"
+    )}>
       <div className="stat-orb-2300 max-w-md mx-auto">
-        <motion.div 
-          className={cn("w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center", config.iconBg, config.glow)}
-          animate={{ y: [0, -8, 0] }}
-          transition={{ duration: 3, repeat: Infinity }}
-        >
+        <div className={cn(
+          "w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center",
+          config.iconBg, 
+          config.glow,
+          shouldAnimate && "animate-float"
+        )}>
           <Icon className={cn("w-10 h-10", config.iconColor)} />
-        </motion.div>
+        </div>
         <h3 className="text-xl font-bold text-foreground mb-2">{title}</h3>
         <p className="text-muted-foreground">{description}</p>
       </div>
-    </motion.div>
+    </div>
   );
 });
