@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, getBancaLabel } from "@/constants/bancas";
 import { formatBancaHeader } from "@/lib/bancaNormalizer";
 import QuestionEnunciado, { cleanQuestionText } from "@/components/shared/QuestionEnunciado";
+import { VirtualizedStudentQuestionList } from "@/components/aluno/questoes/VirtualizedStudentQuestionList";
 import QuestionResolution from "@/components/shared/QuestionResolution";
 import { useTaxonomyForSelects } from "@/hooks/useQuestionTaxonomy";
 import { QuestionBadgesCompact } from "@/components/shared/QuestionMetadataBadges";
@@ -1184,60 +1185,12 @@ export default function AlunoQuestoes() {
             </p>
           </div>
 
-          {filteredQuestions.map((questao) => {
-            const attempt = attemptsByQuestion.get(questao.id);
-            const hasAttempt = !!attempt;
-            const isCorrect = attempt?.is_correct;
-
-            return (
-              <Card 
-                key={questao.id}
-                className={cn(
-                  "transition-all hover:shadow-md cursor-pointer",
-                  hasAttempt && isCorrect && "border-l-4 border-l-green-500",
-                  hasAttempt && !isCorrect && "border-l-4 border-l-red-500"
-                )}
-                onClick={() => handleOpenQuestion(questao)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex flex-col gap-3">
-                    <QuestionBadgesCompact 
-                      question={questao}
-                      className="pb-2 border-b border-border/30"
-                    />
-                    
-                    <div className="flex items-start gap-4">
-                      <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <Badge variant="outline" className="gap-1">
-                            <Trophy className="h-3 w-3" />
-                            {questao.points} pts
-                          </Badge>
-                          {hasAttempt && (
-                            <Badge variant={isCorrect ? "default" : "destructive"}>
-                              {isCorrect ? (
-                                <><CheckCircle2 className="w-3 h-3 mr-1" /> Acertou</>
-                              ) : (
-                                <><XCircle className="w-3 h-3 mr-1" /> Errou</>
-                              )}
-                            </Badge>
-                          )}
-                          <Badge className="px-2 py-0.5 bg-purple-600 text-white border-0 text-xs font-medium">
-                            💪 Treino
-                          </Badge>
-                        </div>
-                        <p className="text-sm line-clamp-2">{cleanQuestionText(questao.question_text)}</p>
-                      </div>
-                      <Button variant={hasAttempt ? "outline" : "default"} size="sm">
-                        {hasAttempt ? "Revisar" : "Resolver"}
-                        <ChevronRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+          {/* VIRTUALIZAÇÃO PERMANENTE - Renderiza apenas itens visíveis */}
+          <VirtualizedStudentQuestionList
+            questions={filteredQuestions}
+            attemptsByQuestion={attemptsByQuestion}
+            onOpenQuestion={handleOpenQuestion}
+          />
 
           {/* PAGINAÇÃO SERVER-SIDE */}
           {totalPages > 1 && (
