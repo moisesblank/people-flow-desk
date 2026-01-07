@@ -1315,47 +1315,128 @@ export default function AlunoQuestoes() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
-          BLOCK_05: PROGRESS_STATUS - Estados de progresso
+          BLOCK_05: PROGRESS_STATUS - Estados de progresso (Year 2300)
       ══════════════════════════════════════════════════════════════ */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-flex">
-          <TabsTrigger value="todas" className="gap-2">
-            <BookOpen className="h-4 w-4" />
-            <span className="hidden sm:inline">Todas</span>
-            <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">{stats.total}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="pendentes" className="gap-2">
-            <Clock className="h-4 w-4" />
-            <span className="hidden sm:inline">Pendentes</span>
-            <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">{stats.pendentes}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="resolvidas" className="gap-2">
-            <CheckCircle2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Resolvidas</span>
-            <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">{stats.resolvidas}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="acertos" className="gap-2 text-green-600">
-            <Star className="h-4 w-4" />
-            <span className="hidden sm:inline">Corretas</span>
-            <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">{stats.acertos}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="erros" className="gap-2 text-red-600">
-            <AlertCircle className="h-4 w-4" />
-            <span className="hidden sm:inline">Erradas</span>
-            <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">{stats.erros}</Badge>
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+      <div className={cn(
+        "relative rounded-xl p-1.5 border",
+        isHighEnd 
+          ? "bg-gradient-to-r from-slate-900/80 via-background/60 to-slate-900/80 border-amber-500/20 backdrop-blur-sm" 
+          : "bg-card/80 border-border/50"
+      )}>
+        {/* Borda luminosa top (high-end) */}
+        {isHighEnd && (
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent" />
+        )}
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className={cn(
+            "grid w-full grid-cols-5 lg:w-auto lg:inline-flex gap-1 bg-transparent h-auto p-0",
+          )}>
+            <TabsTrigger 
+              value="todas" 
+              className={cn(
+                "gap-2 px-4 py-2.5 rounded-lg transition-all",
+                isHighEnd 
+                  ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/20 data-[state=active]:to-yellow-500/10 data-[state=active]:border data-[state=active]:border-amber-500/30 data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/10" 
+                  : "data-[state=active]:bg-primary/10"
+              )}
+            >
+              <BookOpen className="h-4 w-4" />
+              <span className="hidden sm:inline font-medium">Todas</span>
+              <Badge variant="secondary" className={cn(
+                "ml-1 hidden lg:inline-flex",
+                isHighEnd && "bg-amber-500/20 text-amber-300 border-amber-500/30"
+              )}>{stats.total}</Badge>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="pendentes" 
+              className={cn(
+                "gap-2 px-4 py-2.5 rounded-lg transition-all",
+                isHighEnd 
+                  ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500/20 data-[state=active]:to-gray-500/10 data-[state=active]:border data-[state=active]:border-slate-400/30" 
+                  : "data-[state=active]:bg-primary/10"
+              )}
+            >
+              <Clock className="h-4 w-4" />
+              <span className="hidden sm:inline font-medium">Pendentes</span>
+              <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">{stats.pendentes}</Badge>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="resolvidas" 
+              className={cn(
+                "gap-2 px-4 py-2.5 rounded-lg transition-all",
+                isHighEnd 
+                  ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500/20 data-[state=active]:to-blue-500/10 data-[state=active]:border data-[state=active]:border-cyan-400/30" 
+                  : "data-[state=active]:bg-primary/10"
+              )}
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              <span className="hidden sm:inline font-medium">Resolvidas</span>
+              <Badge variant="secondary" className="ml-1 hidden lg:inline-flex">{stats.resolvidas}</Badge>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="acertos" 
+              className={cn(
+                "gap-2 px-4 py-2.5 rounded-lg transition-all",
+                isHighEnd 
+                  ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500/20 data-[state=active]:to-emerald-500/10 data-[state=active]:border data-[state=active]:border-green-400/30 text-green-500" 
+                  : "data-[state=active]:bg-green-500/10 text-green-600"
+              )}
+            >
+              <Star className="h-4 w-4" />
+              <span className="hidden sm:inline font-medium">Corretas</span>
+              <Badge variant="secondary" className={cn(
+                "ml-1 hidden lg:inline-flex",
+                isHighEnd && "bg-green-500/20 text-green-300 border-green-500/30"
+              )}>{stats.acertos}</Badge>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="erros" 
+              className={cn(
+                "gap-2 px-4 py-2.5 rounded-lg transition-all",
+                isHighEnd 
+                  ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500/20 data-[state=active]:to-rose-500/10 data-[state=active]:border data-[state=active]:border-red-400/30 text-red-500" 
+                  : "data-[state=active]:bg-red-500/10 text-red-600"
+              )}
+            >
+              <AlertCircle className="h-4 w-4" />
+              <span className="hidden sm:inline font-medium">Erradas</span>
+              <Badge variant="secondary" className={cn(
+                "ml-1 hidden lg:inline-flex",
+                isHighEnd && "bg-red-500/20 text-red-300 border-red-500/30"
+              )}>{stats.erros}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
       {/* ══════════════════════════════════════════════════════════════
-          BLOCK_06 + BLOCK_07: FILTERS (Acadêmicos + Operacionais)
+          BLOCK_06 + BLOCK_07: FILTERS (Year 2300 Cinematic)
       ══════════════════════════════════════════════════════════════ */}
-      <Card className="border-primary/20">
-        <CardContent className="p-4 space-y-4">
-          {/* BLOCK_06: ACADEMIC_FILTERS - Hierarquia */}
+      <div className={cn(
+        "relative overflow-hidden rounded-xl border",
+        isHighEnd 
+          ? "bg-gradient-to-br from-slate-900/60 via-background/40 to-slate-900/60 border-amber-500/20 backdrop-blur-md" 
+          : "bg-card border-primary/20"
+      )}>
+        {/* Efeitos de borda premium (high-end) */}
+        {isHighEnd && (
+          <>
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
+            <div className="absolute top-0 left-0 bottom-0 w-px bg-gradient-to-b from-transparent via-amber-500/20 to-transparent" />
+            <div className="absolute top-0 right-0 bottom-0 w-px bg-gradient-to-b from-transparent via-amber-500/20 to-transparent" />
+          </>
+        )}
+        
+        <div className="relative p-4 space-y-4">
+          {/* BLOCK_06: ACADEMIC_FILTERS - Hierarquia com labels premium */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wide text-muted-foreground">MACRO</Label>
+              <Label className={cn(
+                "text-xs uppercase tracking-wider font-semibold",
+                isHighEnd ? "text-amber-400/80" : "text-muted-foreground"
+              )}>MACRO</Label>
               <Select 
                 value={filterMacro} 
                 onValueChange={(v) => {
@@ -1365,7 +1446,9 @@ export default function AlunoQuestoes() {
                   setFilterSubtema('todas');
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className={cn(
+                  isHighEnd && "border-amber-500/20 bg-slate-900/40 hover:border-amber-500/40 focus:border-amber-500/50 transition-colors"
+                )}>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -1378,7 +1461,10 @@ export default function AlunoQuestoes() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wide text-muted-foreground">MICRO</Label>
+              <Label className={cn(
+                "text-xs uppercase tracking-wider font-semibold",
+                isHighEnd ? "text-cyan-400/80" : "text-muted-foreground"
+              )}>MICRO</Label>
               <Select 
                 value={filterMicro} 
                 onValueChange={(v) => {
@@ -1388,7 +1474,9 @@ export default function AlunoQuestoes() {
                 }}
                 disabled={filterMacro === 'todas'}
               >
-                <SelectTrigger>
+                <SelectTrigger className={cn(
+                  isHighEnd && "border-cyan-500/20 bg-slate-900/40 hover:border-cyan-500/40 focus:border-cyan-500/50 transition-colors"
+                )}>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -1401,7 +1489,10 @@ export default function AlunoQuestoes() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wide text-muted-foreground">TEMA</Label>
+              <Label className={cn(
+                "text-xs uppercase tracking-wider font-semibold",
+                isHighEnd ? "text-purple-400/80" : "text-muted-foreground"
+              )}>TEMA</Label>
               <Select 
                 value={filterTema} 
                 onValueChange={(v) => {
@@ -1410,7 +1501,9 @@ export default function AlunoQuestoes() {
                 }}
                 disabled={filterMicro === 'todas'}
               >
-                <SelectTrigger>
+                <SelectTrigger className={cn(
+                  isHighEnd && "border-purple-500/20 bg-slate-900/40 hover:border-purple-500/40 focus:border-purple-500/50 transition-colors"
+                )}>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -1423,13 +1516,18 @@ export default function AlunoQuestoes() {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs uppercase tracking-wide text-muted-foreground">SUBTEMA</Label>
+              <Label className={cn(
+                "text-xs uppercase tracking-wider font-semibold",
+                isHighEnd ? "text-pink-400/80" : "text-muted-foreground"
+              )}>SUBTEMA</Label>
               <Select 
                 value={filterSubtema} 
                 onValueChange={setFilterSubtema}
                 disabled={filterTema === 'todas'}
               >
-                <SelectTrigger>
+                <SelectTrigger className={cn(
+                  isHighEnd && "border-pink-500/20 bg-slate-900/40 hover:border-pink-500/40 focus:border-pink-500/50 transition-colors"
+                )}>
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -1443,19 +1541,40 @@ export default function AlunoQuestoes() {
           </div>
 
           {/* BLOCK_07: OPERATIONAL_FILTERS + PRIMARY_ACTION */}
-          <div className="flex flex-col md:flex-row gap-4 pt-2 border-t border-border/50">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="Buscar por palavras-chave..." 
-                className="pl-10"
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-              />
+          <div className={cn(
+            "flex flex-col md:flex-row gap-4 pt-4 border-t",
+            isHighEnd ? "border-amber-500/10" : "border-border/50"
+          )}>
+            {/* Search com efeito premium */}
+            <div className={cn(
+              "relative flex-1 group",
+              isHighEnd && "rounded-lg"
+            )}>
+              {isHighEnd && (
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 via-transparent to-yellow-500/20 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity blur-sm" />
+              )}
+              <div className="relative">
+                <Search className={cn(
+                  "absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4",
+                  isHighEnd ? "text-amber-400/60" : "text-muted-foreground"
+                )} />
+                <Input 
+                  placeholder="Buscar por palavras-chave..." 
+                  className={cn(
+                    "pl-10",
+                    isHighEnd && "border-amber-500/20 bg-slate-900/40 focus:border-amber-500/40 transition-colors"
+                  )}
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                />
+              </div>
             </div>
             
             <Select value={anoFilter} onValueChange={setAnoFilter}>
-              <SelectTrigger className="w-full md:w-[140px]">
+              <SelectTrigger className={cn(
+                "w-full md:w-[140px]",
+                isHighEnd && "border-slate-600/30 bg-slate-900/40 hover:border-slate-500/50 transition-colors"
+              )}>
                 <SelectValue placeholder="Ano" />
               </SelectTrigger>
               <SelectContent>
@@ -1467,7 +1586,10 @@ export default function AlunoQuestoes() {
             </Select>
 
             <Select value={banca} onValueChange={setBanca}>
-              <SelectTrigger className="w-full md:w-[180px]">
+              <SelectTrigger className={cn(
+                "w-full md:w-[180px]",
+                isHighEnd && "border-slate-600/30 bg-slate-900/40 hover:border-slate-500/50 transition-colors"
+              )}>
                 <SelectValue placeholder="Banca" />
               </SelectTrigger>
               <SelectContent className="max-h-[300px]">
@@ -1486,7 +1608,10 @@ export default function AlunoQuestoes() {
             </Select>
 
             <Select value={dificuldade} onValueChange={setDificuldade}>
-              <SelectTrigger className="w-full md:w-[160px]">
+              <SelectTrigger className={cn(
+                "w-full md:w-[160px]",
+                isHighEnd && "border-slate-600/30 bg-slate-900/40 hover:border-slate-500/50 transition-colors"
+              )}>
                 <SelectValue placeholder="Dificuldade" />
               </SelectTrigger>
               <SelectContent>
@@ -1498,7 +1623,10 @@ export default function AlunoQuestoes() {
             </Select>
 
             <Select value={sortOrder} onValueChange={setSortOrder}>
-              <SelectTrigger className="w-full md:w-[160px]">
+              <SelectTrigger className={cn(
+                "w-full md:w-[160px]",
+                isHighEnd && "border-slate-600/30 bg-slate-900/40 hover:border-slate-500/50 transition-colors"
+              )}>
                 <SelectValue placeholder="Ordenar" />
               </SelectTrigger>
               <SelectContent>
@@ -1509,29 +1637,41 @@ export default function AlunoQuestoes() {
               </SelectContent>
             </Select>
 
-            {/* BLOCK_08: PRIMARY_ACTION - RÁPIDO TREINO (Performance Tiered) */}
-            <Button 
-              onClick={handleStartRapidoTreino}
-              disabled={isLoadingTreino || totalCount === 0}
-              size="lg"
-              className={cn(
-                "gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold px-5",
-                isHighEnd ? "shadow-lg shadow-amber-500/20 transition-all duration-200" : "transition-colors duration-100"
+            {/* BLOCK_08: PRIMARY_ACTION - Botão Premium */}
+            <div className="relative group">
+              {isHighEnd && (
+                <div className="absolute -inset-1 bg-gradient-to-r from-amber-500/40 via-yellow-500/30 to-orange-500/40 rounded-lg blur-lg opacity-60 group-hover:opacity-100 transition-opacity" />
               )}
-            >
-              {isLoadingTreino ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Zap className="w-5 h-5" />
-              )}
-              <span className="font-black">CRIAR QUESTÕES</span>
-              <Badge className="ml-1 bg-black/20 text-white border-0 font-bold">
-                {Math.min(totalCount, RAPIDO_TREINO_LIMIT)}
-              </Badge>
-            </Button>
+              <Button 
+                onClick={handleStartRapidoTreino}
+                disabled={isLoadingTreino || totalCount === 0}
+                size="lg"
+                className={cn(
+                  "relative gap-2 font-black px-6 h-11",
+                  isHighEnd 
+                    ? "bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 hover:from-amber-400 hover:via-yellow-400 hover:to-orange-400 text-black shadow-xl shadow-amber-500/30 transition-all duration-200" 
+                    : "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black transition-colors duration-100"
+                )}
+              >
+                {isLoadingTreino ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Zap className={cn("w-5 h-5", isHighEnd && "drop-shadow-sm")} />
+                )}
+                <span className="text-base tracking-wide">CRIAR QUESTÕES</span>
+                <Badge className={cn(
+                  "ml-1 font-bold text-xs",
+                  isHighEnd 
+                    ? "bg-black/30 text-white border-0 shadow-inner" 
+                    : "bg-black/20 text-white border-0"
+                )}>
+                  {Math.min(totalCount, RAPIDO_TREINO_LIMIT)}
+                </Badge>
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       {/* ══════════════════════════════════════════════════════════════
           BLOCK_09: ZERO STATE — Performance Tiered
