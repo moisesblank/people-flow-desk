@@ -541,6 +541,14 @@ const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, on
                 <span className="text-amber-400 font-semibold">{attempt?.score || 0} XP</span>
               </span>
             </div>
+            
+            {/* Data/Hora de Realização */}
+            {attempt?.finished_at && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2">
+                <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Realizado em: <span className="text-cyan-400 font-medium">{format(new Date(attempt.finished_at), "HH:mm dd/MM/yy", { locale: ptBR })}</span></span>
+              </div>
+            )}
           </div>
           
           {/* Score Circle */}
