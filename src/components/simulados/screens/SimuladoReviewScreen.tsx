@@ -122,6 +122,15 @@ function VideoPlayer({ url }: { url: string }) {
 }
 
 /**
+ * Converte índice numérico (0, 1, 2...) para letra (a, b, c...)
+ */
+function convertIndexToLetter(value: string | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  if (isNaN(Number(value))) return value.toLowerCase();
+  return String.fromCharCode(97 + Number(value));
+}
+
+/**
  * Componente de metadados COMPLETOS da questão
  * TEMPORAL TRUTH RULE: Exibe TODOS os campos do banco, sem omissão
  */
@@ -298,7 +307,10 @@ export function SimuladoReviewScreen({
   }
 
   // CÁLCULO LOCAL apenas para display - score real vem do servidor (result)
-  const isCorrect = currentAnswer?.selectedOption === currentQuestion.correct_answer;
+  // Converter índice numérico para letra para comparação correta
+  const studentAnswerLetter = convertIndexToLetter(currentAnswer?.selectedOption);
+  const correctAnswerLetter = currentQuestion.correct_answer?.toLowerCase();
+  const isCorrect = studentAnswerLetter === correctAnswerLetter;
   const wasAnswered = currentAnswer?.selectedOption !== null && currentAnswer?.selectedOption !== undefined;
 
   return (
@@ -350,7 +362,9 @@ export function SimuladoReviewScreen({
               {questions.map((q, i) => {
                 // BINDING: ans vinculado ao q.id específico
                 const ans = answers.get(q.id);
-                const correct = ans?.selectedOption === q.correct_answer;
+                const ansLetter = convertIndexToLetter(ans?.selectedOption);
+                const correctLetter = q.correct_answer?.toLowerCase();
+                const correct = ansLetter === correctLetter;
                 const answered = ans?.selectedOption !== null && ans?.selectedOption !== undefined;
                 
                 return (
@@ -407,8 +421,10 @@ export function SimuladoReviewScreen({
             {/* Alternativas */}
             <div className="space-y-3 mb-6">
               {Object.entries(currentQuestion.options || {}).map(([key, optionValue]) => {
-                const isSelected = currentAnswer?.selectedOption === key;
-                const isCorrectOption = currentQuestion.correct_answer === key;
+                // Converter chave do objeto para letra para comparação
+                const keyAsLetter = convertIndexToLetter(key);
+                const isSelected = studentAnswerLetter === keyAsLetter;
+                const isCorrectOption = correctAnswerLetter === keyAsLetter;
                 
                 // Extrair texto: pode ser string ou objeto {id, text}
                 const rawText: unknown =
