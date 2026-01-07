@@ -17,7 +17,6 @@ import {
   Archive,
   CheckCircle,
   Trash2,
-  Tag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -125,22 +124,22 @@ const QuestionItem = memo(function QuestionItem({
 
   return (
     <div
-      className="group relative rounded-lg border-l-4 border-l-primary/50 bg-card p-4 transition-all hover:shadow-lg border border-border/50 hover:border-border"
-      style={{ height: ITEM_HEIGHT - 12, overflow: 'hidden' }}
+      className="group relative rounded-lg border-l-4 border-l-primary/50 bg-card p-4 transition-all hover:shadow-lg border border-border/50 hover:border-border flex flex-col"
+      style={{ height: ITEM_HEIGHT - 12 }}
     >
       {/* Barra de Metadados */}
       <QuestionMetadataBadges
         question={question}
         variant="full"
         formatBancaHeader={formatBancaHeader}
-        className="mb-3 pb-3 border-b border-border/30"
+        className="mb-3 pb-3 border-b border-border/30 shrink-0"
       />
 
-      {/* Header Row */}
-      <div className="flex items-start justify-between gap-4">
+      {/* Conteúdo Principal - flexível */}
+      <div className="flex items-start justify-between gap-4 flex-1 min-h-0 overflow-hidden">
         {/* Left: ID + Enunciado */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="flex-1 min-w-0 flex flex-col h-full">
+          <div className="flex items-center gap-2 mb-2 shrink-0">
             <span className="font-mono text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded">
               #{String(globalIndex + 1).padStart(3, '0')}
             </span>
@@ -154,24 +153,21 @@ const QuestionItem = memo(function QuestionItem({
             )}
           </div>
 
-          {/* Enunciado MÍNIMO + Imagem ÍNTEGRA */}
-          <QuestionEnunciado
-            questionText={question.question_text}
-            imageUrl={question.image_url}
-            imageUrls={(question as any).image_urls}
-            banca={question.banca}
-            ano={question.ano}
-            textSize="sm"
-            compact={true}
-            hideHeader={true}
-            maxImageHeight="max-h-48"
-            showImageLabel={false}
-            className="mb-2 line-clamp-3"
-          />
-
-          {/* Badge de Modo (Tags cinza) - SEMPRE VISÍVEL */}
-          <div className="mt-auto pt-2">
-            <QuestionModeBadge tags={question.tags} />
+          {/* Enunciado - área flexível com overflow */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <QuestionEnunciado
+              questionText={question.question_text}
+              imageUrl={question.image_url}
+              imageUrls={(question as any).image_urls}
+              banca={question.banca}
+              ano={question.ano}
+              textSize="sm"
+              compact={true}
+              hideHeader={true}
+              maxImageHeight="max-h-32"
+              showImageLabel={false}
+              className="line-clamp-3"
+            />
           </div>
         </div>
 
@@ -242,27 +238,10 @@ const QuestionItem = memo(function QuestionItem({
         </div>
       </div>
 
-      {/* Footer: Tags */}
-      {question.tags && question.tags.length > 0 && (
-        <div className="mt-2 pt-2 border-t border-border/30 flex items-center gap-2">
-          <Tag className="h-3 w-3 text-muted-foreground" />
-          <div className="flex flex-wrap gap-1">
-            {question.tags.slice(0, 5).map((tag, i) => (
-              <span
-                key={i}
-                className="text-[10px] px-2 py-0.5 rounded-full bg-muted/80 text-muted-foreground border border-border/50"
-              >
-                {tag}
-              </span>
-            ))}
-            {question.tags.length > 5 && (
-              <span className="text-[10px] text-muted-foreground">
-                +{question.tags.length - 5} mais
-              </span>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Footer: Badge de Modo - SEMPRE VISÍVEL */}
+      <div className="mt-2 pt-2 border-t border-border/30 shrink-0">
+        <QuestionModeBadge tags={question.tags} />
+      </div>
     </div>
   );
 });
