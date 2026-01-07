@@ -674,10 +674,11 @@ export const OmegaFortressPlayer = memo(({
         </AnimatePresence>
 
         {/* Watermark Dinâmica - ULTRA */}
-        {showWatermark && watermarkData && !showThumbnail && (
+        {/* SEMPRE exibir watermark quando sessão existir, mesmo durante loading do player */}
+        {showWatermark && session?.watermark?.text && !showThumbnail && (
           <WatermarkOverlay 
-            text={watermarkData.text} 
-            mode={watermarkData.mode as 'moving' | 'static' | 'diagonal'} 
+            text={session.watermark.text} 
+            mode={(session.watermark.mode || 'moving') as 'moving' | 'static' | 'diagonal'} 
             isImmune={isImmune}
           />
         )}
