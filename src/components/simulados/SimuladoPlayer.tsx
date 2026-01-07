@@ -495,6 +495,8 @@ export function SimuladoPlayer({
           isRetake={isRetake}
           gabaritoReleasedAt={simulado.results_released_at}
           gabaritoIn={gabaritoIn || undefined}
+          questions={questions}
+          answers={answersMap}
           onReview={() => refresh()}
           onExit={handleExit}
         />

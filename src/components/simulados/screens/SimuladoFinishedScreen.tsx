@@ -4,6 +4,8 @@
  * 
  * Estado: Simulado finalizado
  * Exibição: Score do SERVIDOR com visual épico
+ * 
+ * v2.0: Exibe resumo das questões com resposta correta destacada
  */
 
 import React from "react";
@@ -14,9 +16,11 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
-import { Simulado, SimuladoResult, formatTime } from "@/components/simulados/types";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Simulado, SimuladoResult, SimuladoQuestion, SimuladoAnswer, formatTime } from "@/components/simulados/types";
 import { cn } from "@/lib/utils";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
+import QuestionTextField from "@/components/shared/QuestionTextField";
 
 interface SimuladoFinishedScreenProps {
   simulado: Simulado;
@@ -24,6 +28,8 @@ interface SimuladoFinishedScreenProps {
   isRetake: boolean;
   gabaritoReleasedAt?: string;
   gabaritoIn?: number;
+  questions?: SimuladoQuestion[];
+  answers?: Map<string, SimuladoAnswer>;
   onReview?: () => void;
   onExit?: () => void;
 }
@@ -34,6 +40,8 @@ export function SimuladoFinishedScreen({
   isRetake,
   gabaritoReleasedAt,
   gabaritoIn,
+  questions = [],
+  answers,
   onReview,
   onExit,
 }: SimuladoFinishedScreenProps) {
@@ -252,6 +260,98 @@ export function SimuladoFinishedScreen({
             </p>
           </div>
         ) : null}
+
+        {/* Questions Summary Grid - com resposta correta em verde */}
+        {questions.length > 0 && (
+          <div className={cn("space-y-2", shouldAnimate && "animate-fade-in")}>
+            <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+              Resumo das Questões — Gabarito Oficial
+            </h3>
+            <ScrollArea className="max-h-[300px]">
+              <div className="grid grid-cols-1 gap-2 pr-2">
+                {questions.map((question, index) => {
+                  const studentAnswer = answers?.get(question.id)?.selectedOption;
+                  const correctAnswer = question.correct_answer;
+                  const isCorrect = studentAnswer === correctAnswer;
+                  const wasAnswered = !!studentAnswer;
+                  
+                  return (
+                    <div 
+                      key={question.id}
+                      className={cn(
+                        "p-3 rounded-lg border transition-all",
+                        "bg-card/60",
+                        isCorrect 
+                          ? "border-emerald-500/50 bg-emerald-500/5" 
+                          : wasAnswered 
+                            ? "border-red-500/30 bg-red-500/5"
+                            : "border-border/50"
+                      )}
+                    >
+                      {/* Question Header */}
+                      <div className="flex items-start gap-2 mb-2">
+                        <span className={cn(
+                          "flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
+                          isCorrect 
+                            ? "bg-emerald-500/20 text-emerald-400"
+                            : wasAnswered
+                              ? "bg-red-500/20 text-red-400"
+                              : "bg-muted text-muted-foreground"
+                        )}>
+                          {index + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <QuestionTextField 
+                            content={question.question_text} 
+                            fieldType="enunciado"
+                            className="text-xs text-muted-foreground line-clamp-2"
+                          />
+                        </div>
+                        {isCorrect ? (
+                          <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                        ) : wasAnswered ? (
+                          <XCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                        ) : (
+                          <Minus className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        )}
+                      </div>
+                      
+                      {/* Correct Answer Display - Always Green */}
+                      {correctAnswer && question.options && (
+                        <div className="flex items-center gap-2 mt-2 p-2 rounded-md bg-emerald-500/10 border border-emerald-500/30">
+                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold uppercase">
+                            {correctAnswer}
+                          </span>
+                          <QuestionTextField 
+                            content={question.options[correctAnswer] || ""} 
+                            fieldType="alternativa"
+                            className="text-xs text-emerald-400 flex-1"
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Student's Wrong Answer */}
+                      {wasAnswered && !isCorrect && studentAnswer && question.options && (
+                        <div className="flex items-center gap-2 mt-1 p-2 rounded-md bg-red-500/5 border border-red-500/20">
+                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-[10px] font-bold uppercase">
+                            {studentAnswer}
+                          </span>
+                          <QuestionTextField 
+                            content={question.options[studentAnswer] || ""} 
+                            fieldType="alternativa"
+                            className="text-xs text-red-400/70 flex-1 line-through"
+                          />
+                          <span className="text-[10px] text-red-400">Sua resposta</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className={cn("flex flex-col sm:flex-row gap-3 pt-2", shouldAnimate && "animate-fade-in")}>
