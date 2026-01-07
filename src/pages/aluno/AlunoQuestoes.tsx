@@ -661,7 +661,7 @@ export default function AlunoQuestoes() {
   
   // BLOCK_PAGINATION: Paginação server-side (ESCALA 5000+)
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 50;
+  const ITEMS_PER_PAGE = 10;
   
   // BLOCK_04: PAGINAÇÃO SERVER-SIDE - Substituiu loop 45k
   const { data: questionsData, isLoading: questionsLoading } = useQuery({
