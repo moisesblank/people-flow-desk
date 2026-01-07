@@ -1394,24 +1394,24 @@ export default function AlunoQuestoes() {
                 )}>{stats.pendentes.toLocaleString('pt-BR')}</span>
               </TabsTrigger>
 
-              {/* Resolvidas - Questões que o aluno fez no MODO_TREINO */}
+              {/* Histórico - Questões que o aluno fez no MODO_TREINO */}
               <TabsTrigger 
                 value="resolvidas" 
                 className={cn(
                   "group relative flex flex-col items-center justify-center gap-1.5 px-3 py-4 rounded-xl transition-all font-medium",
                   isHighEnd 
-                    ? "data-[state=active]:bg-gradient-to-br data-[state=active]:from-cyan-500/25 data-[state=active]:via-blue-500/15 data-[state=active]:to-indigo-500/10 data-[state=active]:border-2 data-[state=active]:border-cyan-400/40 data-[state=active]:shadow-lg data-[state=active]:shadow-cyan-500/20 hover:bg-cyan-500/10 border border-transparent hover:border-cyan-500/20" 
+                    ? "data-[state=active]:bg-gradient-to-br data-[state=active]:from-amber-500/25 data-[state=active]:via-yellow-500/15 data-[state=active]:to-orange-500/10 data-[state=active]:border-2 data-[state=active]:border-amber-400/40 data-[state=active]:shadow-lg data-[state=active]:shadow-amber-500/20 hover:bg-amber-500/10 border border-transparent hover:border-amber-500/20" 
                     : "data-[state=active]:bg-primary/10"
                 )}
               >
                 {isHighEnd && activeTab === 'resolvidas' && (
-                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-cyan-400/10 to-transparent animate-pulse" />
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-amber-400/10 to-transparent animate-pulse" />
                 )}
-                <CheckCircle2 className={cn("h-5 w-5 transition-colors", activeTab === 'resolvidas' ? "text-cyan-400" : "text-muted-foreground group-hover:text-cyan-400/70")} />
-                <span className={cn("text-xs font-semibold", activeTab === 'resolvidas' ? "text-cyan-300" : "text-muted-foreground")}>Resolvidas</span>
+                <CheckCircle2 className={cn("h-5 w-5 transition-colors", activeTab === 'resolvidas' ? "text-amber-400" : "text-muted-foreground group-hover:text-amber-400/70")} />
+                <span className={cn("text-xs font-semibold", activeTab === 'resolvidas' ? "text-amber-300" : "text-muted-foreground")}>Histórico</span>
                 <span className={cn(
                   "text-lg font-black tabular-nums",
-                  activeTab === 'resolvidas' ? "text-cyan-400" : "text-foreground"
+                  activeTab === 'resolvidas' ? "text-amber-400" : "text-foreground"
                 )}>{stats.resolvidas.toLocaleString('pt-BR')}</span>
               </TabsTrigger>
 
