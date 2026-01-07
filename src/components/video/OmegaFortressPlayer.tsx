@@ -947,7 +947,7 @@ const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
     return (
       <div className="absolute inset-0 z-50 pointer-events-none select-none overflow-hidden">
         <div className="absolute bottom-4 right-4">
-          <span className="font-mono tracking-wider text-[10px] text-white/5 whitespace-nowrap">
+          <span className="font-mono tracking-wider text-sm sm:text-base text-white/20 whitespace-nowrap drop-shadow-md">
             {text}
           </span>
         </div>
@@ -962,7 +962,7 @@ const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
           className="absolute inset-0 flex items-center justify-center"
           style={{ transform: 'rotate(-30deg)' }}
         >
-          <span className="font-mono tracking-[0.3em] text-xs text-white/[0.03] whitespace-nowrap">
+          <span className="font-mono tracking-[0.3em] text-base sm:text-lg text-white/15 whitespace-nowrap drop-shadow-md">
             {text}
           </span>
         </div>
@@ -977,7 +977,7 @@ const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
       transition={{ duration: 4, ease: "easeInOut" }}
     >
       <div className="flex flex-col items-center gap-0.5">
-        <span className="font-mono tracking-[0.15em] text-[10px] sm:text-xs text-white/[0.07] whitespace-nowrap drop-shadow-sm">
+        <span className="font-mono tracking-[0.15em] text-sm sm:text-base text-white/25 whitespace-nowrap drop-shadow-md">
           {text}
         </span>
       </div>
