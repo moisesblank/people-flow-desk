@@ -1,638 +1,465 @@
 // =====================================================
-// StudentPerformanceAnalytics - Métricas de Desempenho do Aluno
-// Design: YEAR 2300 CINEMATIC HUD - Iron Man Style
-// Performance: Otimizado para 5000+ usuários
+// StudentPerformanceAnalytics v2.0 - YEAR 2300 HUD
+// Performance: Lazy Recharts + Performance Tiering
+// Funcionalidade: Dashboard diário com insights acionáveis
+// Limite: 20 itens por categoria
 // =====================================================
 
-import { useMemo, memo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo, memo, lazy, Suspense, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   useStudentTaxonomyPerformance, 
-  useStudentPerformanceStats 
-} from "@/hooks/student-performance";
-import { 
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, Legend, RadarChart, Radar, PolarGrid, 
-  PolarAngleAxis, PolarRadiusAxis, AreaChart, Area
-} from "recharts";
+  treeToArray,
+  type TaxonomyNode 
+} from "@/hooks/student-performance/useStudentTaxonomyPerformance";
+import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 import { 
   BarChart3, Target, TrendingUp, Award, Zap, BookOpen, 
-  FlaskConical, Activity, Sparkles, ChevronRight, Atom,
-  Brain, Beaker, Leaf, Dna
+  FlaskConical, Activity, Sparkles, ChevronDown, ChevronRight, Atom,
+  Brain, Beaker, Leaf, Dna, AlertTriangle, CheckCircle2, Clock,
+  Trophy, Flame, Eye, ChevronUp, Lightbulb, ArrowRight
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
-// Cores holográficas futuristas
-const HOLOGRAPHIC_COLORS = {
-  blue: "from-blue-500 via-cyan-400 to-blue-600",
-  emerald: "from-emerald-500 via-teal-400 to-emerald-600",
-  violet: "from-violet-500 via-purple-400 to-violet-600",
-  amber: "from-amber-500 via-orange-400 to-amber-600",
-  rose: "from-rose-500 via-pink-400 to-rose-600",
-  cyan: "from-cyan-500 via-sky-400 to-cyan-600",
-};
+// Lazy load de gráficos - só carrega quando visível
+const LazyCharts = lazy(() => import('./StudentPerformanceCharts'));
 
-const CHART_COLORS = [
-  "#06b6d4", // cyan
-  "#8b5cf6", // violet
-  "#10b981", // emerald
-  "#f59e0b", // amber
-  "#ec4899", // pink
-  "#3b82f6", // blue
-  "#ef4444", // red
-  "#6366f1", // indigo
-];
+// =====================================================
+// CONSTANTES
+// =====================================================
+const MAX_ITEMS_PER_CATEGORY = 20;
 
-const MACRO_ICONS: Record<string, typeof FlaskConical> = {
-  "Química Geral": Atom,
-  "Físico-Química": Zap,
-  "Química Orgânica": Beaker,
-  "Química Ambiental": Leaf,
-  "Bioquímica": Dna,
+const MACRO_CONFIG: Record<string, { icon: typeof FlaskConical; color: string; gradient: string }> = {
+  "Química Geral": { icon: Atom, color: "text-amber-400", gradient: "from-amber-500/20 to-amber-600/5" },
+  "Físico-Química": { icon: Zap, color: "text-cyan-400", gradient: "from-cyan-500/20 to-cyan-600/5" },
+  "Química Orgânica": { icon: Beaker, color: "text-purple-400", gradient: "from-purple-500/20 to-purple-600/5" },
+  "Química Ambiental": { icon: Leaf, color: "text-emerald-400", gradient: "from-emerald-500/20 to-emerald-600/5" },
+  "Bioquímica": { icon: Dna, color: "text-pink-400", gradient: "from-pink-500/20 to-pink-600/5" },
 };
 
 // =====================================================
-// Holographic Stat Orb - Estilo Iron Man HUD
+// TIPOS
 // =====================================================
-interface StatOrbProps {
-  label: string;
-  value: string | number;
-  subValue?: string;
-  icon: typeof BookOpen;
-  gradient: string;
-  delay?: number;
+interface ProcessedItem {
+  name: string;
+  total: number;
+  correct: number;
+  errors: number;
+  accuracy: number;
+  parentMacro?: string;
 }
 
-const StatOrb = memo(function StatOrb({ label, value, subValue, icon: Icon, gradient, delay = 0 }: StatOrbProps) {
+// =====================================================
+// HUD STAT CARD - Compacto e funcional
+// =====================================================
+const HUDStatCard = memo(function HUDStatCard({ 
+  label, value, subValue, icon: Icon, variant = 'default', compact = false 
+}: { 
+  label: string; 
+  value: string | number; 
+  subValue?: string; 
+  icon: typeof BookOpen; 
+  variant?: 'default' | 'success' | 'warning' | 'error';
+  compact?: boolean;
+}) {
+  const colors = {
+    default: "border-primary/30 bg-primary/5",
+    success: "border-emerald-500/30 bg-emerald-500/5",
+    warning: "border-amber-500/30 bg-amber-500/5",
+    error: "border-rose-500/30 bg-rose-500/5",
+  };
+  const iconColors = {
+    default: "text-primary",
+    success: "text-emerald-400",
+    warning: "text-amber-400",
+    error: "text-rose-400",
+  };
+
   return (
-    <div 
-      className="relative group animate-fade-in"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      {/* Glow backdrop */}
-      <div className={cn(
-        "absolute inset-0 rounded-2xl blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-500",
-        `bg-gradient-to-br ${gradient}`
-      )} />
-      
-      {/* Main orb */}
-      <div className={cn(
-        "relative overflow-hidden rounded-2xl p-4 sm:p-5",
-        "bg-gradient-to-br",
-        gradient,
-        "border border-white/20",
-        "shadow-[0_0_30px_rgba(0,0,0,0.3)]",
-        "backdrop-blur-xl"
-      )}>
-        {/* Holographic scan line */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-transparent opacity-50" />
-        
-        {/* Floating icon */}
-        <div className="absolute top-3 right-3 opacity-30">
-          <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
-        </div>
-        
-        {/* Arc reactor ring */}
-        <div className="absolute -bottom-8 -right-8 w-24 h-24 rounded-full border border-white/10 opacity-30" />
-        <div className="absolute -bottom-6 -right-6 w-20 h-20 rounded-full border border-white/20 opacity-20" />
-        
-        {/* Content */}
-        <div className="relative z-10">
-          <div className="text-3xl sm:text-4xl font-black text-white tracking-tight">
+    <div className={cn(
+      "relative rounded-xl border backdrop-blur-sm transition-all duration-300 hover:scale-[1.02]",
+      colors[variant],
+      compact ? "p-3" : "p-4"
+    )}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className={cn("font-black tracking-tight", compact ? "text-2xl" : "text-3xl")}>
             {typeof value === 'number' ? value.toLocaleString('pt-BR') : value}
           </div>
-          {subValue && (
-            <div className="text-xs text-white/70 mt-0.5">{subValue}</div>
-          )}
-          <div className="text-xs sm:text-sm font-medium text-white/90 mt-1.5 uppercase tracking-wider">
+          {subValue && <div className="text-xs text-muted-foreground mt-0.5">{subValue}</div>}
+          <div className="text-xs font-medium text-muted-foreground mt-1 uppercase tracking-wider truncate">
             {label}
           </div>
         </div>
-        
-        {/* Energy pulse */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-pulse" />
-      </div>
-    </div>
-  );
-});
-
-// =====================================================
-// HUD Section Header
-// =====================================================
-interface HUDHeaderProps {
-  title: string;
-  icon: typeof BarChart3;
-  subtitle?: string;
-}
-
-const HUDHeader = memo(function HUDHeader({ title, icon: Icon, subtitle }: HUDHeaderProps) {
-  return (
-    <div className="flex items-center gap-3 mb-4">
-      <div className="relative">
-        <div className="absolute inset-0 bg-primary/30 rounded-lg blur-md" />
-        <div className="relative p-2 bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg border border-primary/30">
-          <Icon className="w-5 h-5 text-primary" />
+        <div className={cn("p-2 rounded-lg bg-background/50", iconColors[variant])}>
+          <Icon className="w-5 h-5" />
         </div>
       </div>
-      <div>
-        <h3 className="text-base font-bold text-foreground tracking-tight">{title}</h3>
-        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
-      </div>
-      <div className="flex-1 h-px bg-gradient-to-r from-primary/30 via-primary/10 to-transparent ml-2" />
     </div>
   );
 });
 
 // =====================================================
-// Holographic Card Container
+// INSIGHT CARD - Dicas acionáveis para o aluno
 // =====================================================
-interface HoloCardProps {
-  children: React.ReactNode;
-  className?: string;
+const InsightCard = memo(function InsightCard({ 
+  type, title, description, action, onClick 
+}: { 
+  type: 'warning' | 'tip' | 'success';
+  title: string;
+  description: string;
+  action?: string;
+  onClick?: () => void;
+}) {
+  const config = {
+    warning: { icon: AlertTriangle, bg: "bg-amber-500/10 border-amber-500/30", iconColor: "text-amber-400" },
+    tip: { icon: Lightbulb, bg: "bg-blue-500/10 border-blue-500/30", iconColor: "text-blue-400" },
+    success: { icon: CheckCircle2, bg: "bg-emerald-500/10 border-emerald-500/30", iconColor: "text-emerald-400" },
+  };
+  const { icon: Icon, bg, iconColor } = config[type];
+
+  return (
+    <div className={cn("rounded-xl border p-3 flex items-start gap-3", bg)}>
+      <div className={cn("p-1.5 rounded-lg bg-background/50", iconColor)}>
+        <Icon className="w-4 h-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-semibold text-sm">{title}</div>
+        <div className="text-xs text-muted-foreground mt-0.5">{description}</div>
+        {action && onClick && (
+          <button 
+            onClick={onClick}
+            className="text-xs font-medium text-primary hover:underline mt-1.5 flex items-center gap-1"
+          >
+            {action} <ArrowRight className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+});
+
+// =====================================================
+// PROGRESS BAR COM GLOW
+// =====================================================
+const GlowProgress = memo(function GlowProgress({ value, variant = 'default' }: { value: number; variant?: 'success' | 'warning' | 'error' | 'default' }) {
+  const colors = {
+    success: "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]",
+    warning: "bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]",
+    error: "bg-rose-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]",
+    default: "bg-primary shadow-[0_0_10px_hsl(var(--primary)/0.5)]",
+  };
+  
+  const getVariant = () => {
+    if (value >= 70) return 'success';
+    if (value >= 50) return 'warning';
+    return 'error';
+  };
+  
+  const finalVariant = variant === 'default' ? getVariant() : variant;
+  
+  return (
+    <div className="relative h-2 bg-muted/30 rounded-full overflow-hidden">
+      <div 
+        className={cn("h-full rounded-full transition-all duration-500", colors[finalVariant])}
+        style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+      />
+    </div>
+  );
+});
+
+// =====================================================
+// MACRO CARD EXPANDÍVEL - UX PRINCIPAL
+// =====================================================
+interface MacroCardProps {
+  macro: ProcessedItem;
+  micros: ProcessedItem[];
+  temas: Map<string, ProcessedItem[]>;
+  isExpanded: boolean;
+  onToggle: () => void;
 }
 
-const HoloCard = memo(function HoloCard({ children, className }: HoloCardProps) {
+const MacroCard = memo(function MacroCard({ macro, micros, temas, isExpanded, onToggle }: MacroCardProps) {
+  const [expandedMicro, setExpandedMicro] = useState<string | null>(null);
+  const config = MACRO_CONFIG[macro.name] || { icon: FlaskConical, color: "text-primary", gradient: "from-primary/20 to-primary/5" };
+  const Icon = config.icon;
+
+  const displayMicros = micros.slice(0, MAX_ITEMS_PER_CATEGORY);
+  const hasMoreMicros = micros.length > MAX_ITEMS_PER_CATEGORY;
+
   return (
     <div className={cn(
-      "relative overflow-hidden rounded-2xl",
-      "bg-gradient-to-br from-card/80 via-card/60 to-card/40",
-      "backdrop-blur-xl border border-border/50",
-      "shadow-[0_8px_32px_rgba(0,0,0,0.2)]",
-      className
+      "rounded-2xl border overflow-hidden transition-all duration-300",
+      "bg-gradient-to-br backdrop-blur-sm",
+      config.gradient,
+      isExpanded ? "border-primary/40" : "border-border/50 hover:border-border"
     )}>
-      {/* Corner accents */}
-      <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-primary/40 rounded-tl-2xl" />
-      <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-primary/40 rounded-tr-2xl" />
-      <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-primary/40 rounded-bl-2xl" />
-      <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-primary/40 rounded-br-2xl" />
-      
-      {/* Content */}
-      <div className="relative z-10 p-4 sm:p-5">
-        {children}
+      {/* Header - Sempre visível */}
+      <button
+        onClick={onToggle}
+        className="w-full p-4 flex items-center gap-3 text-left hover:bg-white/5 transition-colors"
+      >
+        <div className={cn("p-2.5 rounded-xl bg-background/50 border border-border/30", config.color)}>
+          <Icon className="w-5 h-5" />
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="font-bold text-base truncate">{macro.name}</div>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="text-xs text-muted-foreground">{macro.total} questões</span>
+            <span className="text-xs text-emerald-400">{macro.correct} acertos</span>
+            <span className="text-xs text-rose-400">{macro.errors} erros</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="text-right hidden sm:block">
+            <div className={cn(
+              "text-xl font-black",
+              macro.accuracy >= 70 ? "text-emerald-400" : macro.accuracy >= 50 ? "text-amber-400" : "text-rose-400"
+            )}>
+              {macro.accuracy.toFixed(0)}%
+            </div>
+            <div className="text-[10px] text-muted-foreground uppercase">acurácia</div>
+          </div>
+          
+          <div className="w-16 hidden sm:block">
+            <GlowProgress value={macro.accuracy} />
+          </div>
+          
+          <ChevronDown className={cn(
+            "w-5 h-5 text-muted-foreground transition-transform duration-300",
+            isExpanded && "rotate-180"
+          )} />
+        </div>
+      </button>
+
+      {/* Mobile accuracy */}
+      <div className="px-4 pb-2 sm:hidden">
+        <div className="flex items-center gap-2">
+          <GlowProgress value={macro.accuracy} />
+          <span className={cn(
+            "text-sm font-bold",
+            macro.accuracy >= 70 ? "text-emerald-400" : macro.accuracy >= 50 ? "text-amber-400" : "text-rose-400"
+          )}>
+            {macro.accuracy.toFixed(0)}%
+          </span>
+        </div>
+      </div>
+
+      {/* Micros - Expandido */}
+      {isExpanded && displayMicros.length > 0 && (
+        <div className="border-t border-border/30 bg-background/30">
+          {displayMicros.map((micro, idx) => {
+            const microTemas = temas.get(micro.name) || [];
+            const displayTemas = microTemas.slice(0, MAX_ITEMS_PER_CATEGORY);
+            const hasMoreTemas = microTemas.length > MAX_ITEMS_PER_CATEGORY;
+            const isMicroExpanded = expandedMicro === micro.name;
+
+            return (
+              <div key={idx} className="border-b border-border/20 last:border-0">
+                {/* Micro Header */}
+                <button
+                  onClick={() => setExpandedMicro(isMicroExpanded ? null : micro.name)}
+                  className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-white/5 transition-colors"
+                >
+                  <div className="w-6 flex justify-center">
+                    {microTemas.length > 0 ? (
+                      <ChevronRight className={cn(
+                        "w-4 h-4 text-muted-foreground transition-transform",
+                        isMicroExpanded && "rotate-90"
+                      )} />
+                    ) : (
+                      <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/30" />
+                    )}
+                  </div>
+                  
+                  <span className="flex-1 text-sm font-medium truncate">{micro.name}</span>
+                  
+                  <div className="flex items-center gap-2 text-xs">
+                    <Badge variant="outline" className="bg-blue-500/10 border-blue-500/30 text-blue-400">
+                      {micro.total}
+                    </Badge>
+                    <Badge variant="outline" className={cn(
+                      micro.accuracy >= 70 ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" :
+                      micro.accuracy >= 50 ? "bg-amber-500/10 border-amber-500/30 text-amber-400" :
+                      "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                    )}>
+                      {micro.accuracy.toFixed(0)}%
+                    </Badge>
+                  </div>
+                </button>
+
+                {/* Temas */}
+                {isMicroExpanded && displayTemas.length > 0 && (
+                  <div className="bg-background/20 px-4 py-2 space-y-1">
+                    {displayTemas.map((tema, tIdx) => (
+                      <div key={tIdx} className="flex items-center gap-3 py-1.5 px-3 rounded-lg hover:bg-white/5">
+                        <div className="w-1 h-1 rounded-full bg-muted-foreground/50" />
+                        <span className="flex-1 text-xs text-muted-foreground truncate">{tema.name}</span>
+                        <div className="flex items-center gap-1.5 text-[10px]">
+                          <span className="text-muted-foreground">{tema.total}</span>
+                          <span className="text-muted-foreground/50">•</span>
+                          <span className={cn(
+                            tema.accuracy >= 70 ? "text-emerald-400" : 
+                            tema.accuracy >= 50 ? "text-amber-400" : "text-rose-400"
+                          )}>
+                            {tema.accuracy.toFixed(0)}%
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {hasMoreTemas && (
+                      <div className="text-[10px] text-muted-foreground text-center py-1">
+                        +{microTemas.length - MAX_ITEMS_PER_CATEGORY} temas adicionais
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          
+          {hasMoreMicros && (
+            <div className="text-xs text-muted-foreground text-center py-2 border-t border-border/20">
+              +{micros.length - MAX_ITEMS_PER_CATEGORY} micros adicionais
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+});
+
+// =====================================================
+// TOP WEAK AREAS - Áreas para focar
+// =====================================================
+const WeakAreasPanel = memo(function WeakAreasPanel({ items }: { items: ProcessedItem[] }) {
+  const weakAreas = items
+    .filter(item => item.total >= 3 && item.accuracy < 60)
+    .sort((a, b) => a.accuracy - b.accuracy)
+    .slice(0, 5);
+
+  if (weakAreas.length === 0) {
+    return (
+      <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-center">
+        <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
+        <div className="font-semibold text-emerald-400">Excelente!</div>
+        <div className="text-xs text-muted-foreground mt-1">
+          Nenhuma área crítica identificada
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-rose-500/30 bg-rose-500/5 p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <AlertTriangle className="w-4 h-4 text-rose-400" />
+        <span className="font-semibold text-sm">Áreas para Revisar</span>
+      </div>
+      <div className="space-y-2">
+        {weakAreas.map((area, idx) => (
+          <div key={idx} className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-medium truncate">{area.name}</div>
+              <div className="text-[10px] text-muted-foreground">
+                {area.errors} erros de {area.total}
+              </div>
+            </div>
+            <Badge variant="outline" className="bg-rose-500/10 border-rose-500/30 text-rose-400 text-[10px]">
+              {area.accuracy.toFixed(0)}%
+            </Badge>
+          </div>
+        ))}
       </div>
     </div>
   );
 });
 
 // =====================================================
-// Performance Table - Futuristic Design
+// TOP STRONG AREAS - Pontos fortes
 // =====================================================
-interface PerformanceTableProps {
-  title: string;
-  icon: typeof BarChart3;
-  data: Array<{
-    name: string;
-    total: number;
-    correct: number;
-    errors: number;
-    accuracy: number;
-  }>;
-  isLoading: boolean;
-  showMacroIcons?: boolean;
-}
+const StrongAreasPanel = memo(function StrongAreasPanel({ items }: { items: ProcessedItem[] }) {
+  const strongAreas = items
+    .filter(item => item.total >= 3 && item.accuracy >= 70)
+    .sort((a, b) => b.accuracy - a.accuracy)
+    .slice(0, 5);
 
-const PerformanceTable = memo(function PerformanceTable({ 
-  title, icon, data, isLoading, showMacroIcons = false 
-}: PerformanceTableProps) {
-  if (isLoading) {
+  if (strongAreas.length === 0) {
     return (
-      <HoloCard>
-        <Skeleton className="h-5 w-32 mb-4" />
-        {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full mb-2 rounded-lg" />
-        ))}
-      </HoloCard>
-    );
-  }
-
-  if (data.length === 0) {
-    return (
-      <HoloCard>
-        <HUDHeader title={title} icon={icon} />
-        <div className="text-center py-8 text-muted-foreground">
-          <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">Nenhum dado disponível</p>
+      <div className="rounded-xl border border-muted/30 bg-muted/5 p-4 text-center">
+        <Activity className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+        <div className="font-medium text-muted-foreground">Em progresso</div>
+        <div className="text-xs text-muted-foreground mt-1">
+          Continue praticando para identificar seus pontos fortes
         </div>
-      </HoloCard>
+      </div>
     );
   }
 
   return (
-    <HoloCard>
-      <HUDHeader title={title} icon={icon} subtitle={`${data.length} ${data.length === 1 ? 'item' : 'itens'}`} />
-      
-      {/* Header Row */}
-      <div className="grid grid-cols-[1fr_50px_50px_65px] gap-2 px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/30 bg-muted/20 rounded-t-lg">
-        <span>Área</span>
-        <span className="text-center">Total</span>
-        <span className="text-center">Erros</span>
-        <span className="text-right">%</span>
+    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <Trophy className="w-4 h-4 text-emerald-400" />
+        <span className="font-semibold text-sm">Seus Pontos Fortes</span>
       </div>
-      
-      {/* Data Rows */}
-      <div className="max-h-[280px] overflow-y-auto scrollbar-thin scrollbar-thumb-primary/20">
-        {data.map((row, i) => {
-          const MacroIcon = showMacroIcons ? MACRO_ICONS[row.name] || FlaskConical : null;
-          const accuracyColor = row.accuracy >= 70 
-            ? "text-emerald-400" 
-            : row.accuracy >= 50 
-              ? "text-amber-400" 
-              : "text-rose-400";
-          const accuracyBg = row.accuracy >= 70 
-            ? "bg-emerald-500" 
-            : row.accuracy >= 50 
-              ? "bg-amber-500" 
-              : "bg-rose-500";
-          
-          return (
-            <div
-              key={i}
-              className={cn(
-                "grid grid-cols-[1fr_50px_50px_65px] gap-2 px-3 py-3",
-                "border-b border-border/20 last:border-0",
-                "hover:bg-primary/5 transition-colors duration-200",
-                "group"
-              )}
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                {MacroIcon && (
-                  <MacroIcon className="w-4 h-4 text-primary flex-shrink-0" />
-                )}
-                <span className="truncate text-sm font-medium group-hover:text-primary transition-colors">
-                  {row.name}
-                </span>
-              </div>
-              <div className="flex items-center justify-center">
-                <span className="inline-flex items-center justify-center min-w-[28px] px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded text-xs font-bold">
-                  {row.total}
-                </span>
-              </div>
-              <div className="flex items-center justify-center">
-                <span className="inline-flex items-center justify-center min-w-[28px] px-1.5 py-0.5 bg-rose-500/20 text-rose-400 rounded text-xs font-bold">
-                  {row.errors}
-                </span>
-              </div>
-              <div className="flex items-center justify-end gap-1.5">
-                <span className={cn("font-bold text-sm", accuracyColor)}>
-                  {row.accuracy.toFixed(0)}%
-                </span>
-                <div className={cn("w-1.5 h-5 rounded-full", accuracyBg, "shadow-[0_0_6px_currentColor]")} />
+      <div className="space-y-2">
+        {strongAreas.map((area, idx) => (
+          <div key={idx} className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-medium truncate">{area.name}</div>
+              <div className="text-[10px] text-muted-foreground">
+                {area.correct} acertos de {area.total}
               </div>
             </div>
-          );
-        })}
-      </div>
-    </HoloCard>
-  );
-});
-
-// =====================================================
-// Radar Chart - Holographic Style
-// =====================================================
-interface RadarChartCardProps {
-  data: Array<{ name: string; accuracy: number; total: number }>;
-  isLoading: boolean;
-}
-
-const RadarChartCard = memo(function RadarChartCard({ data, isLoading }: RadarChartCardProps) {
-  if (isLoading) {
-    return (
-      <HoloCard>
-        <Skeleton className="h-5 w-48 mb-4" />
-        <Skeleton className="h-[250px] w-full rounded-lg" />
-      </HoloCard>
-    );
-  }
-
-  if (data.length === 0) {
-    return (
-      <HoloCard>
-        <HUDHeader title="Radar de Desempenho" icon={Activity} subtitle="Performance por Macro" />
-        <div className="text-center py-12 text-muted-foreground">
-          <Activity className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">Complete questões para ver seu radar</p>
-        </div>
-      </HoloCard>
-    );
-  }
-
-  const radarData = data.slice(0, 6).map(d => ({
-    subject: d.name.length > 12 ? d.name.slice(0, 12) + '...' : d.name,
-    A: d.accuracy,
-    fullMark: 100,
-  }));
-
-  return (
-    <HoloCard>
-      <HUDHeader title="Radar de Desempenho" icon={Activity} subtitle="Performance por Macro" />
-      <div className="relative">
-        <ResponsiveContainer width="100%" height={280}>
-          <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
-            <PolarGrid stroke="hsl(var(--border))" strokeOpacity={0.3} />
-            <PolarAngleAxis 
-              dataKey="subject" 
-              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-            />
-            <PolarRadiusAxis 
-              angle={30} 
-              domain={[0, 100]} 
-              tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
-            />
-            <Radar
-              name="Acurácia"
-              dataKey="A"
-              stroke="#06b6d4"
-              fill="#06b6d4"
-              fillOpacity={0.4}
-              strokeWidth={2}
-            />
-            <Tooltip
-              contentStyle={{ 
-                backgroundColor: 'hsl(var(--card))', 
-                border: '1px solid hsl(var(--border))',
-                borderRadius: '12px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-              }}
-              formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Acurácia']}
-            />
-          </RadarChart>
-        </ResponsiveContainer>
-      </div>
-    </HoloCard>
-  );
-});
-
-// =====================================================
-// Bar Chart - Holographic
-// =====================================================
-interface BarChartCardProps {
-  data: Array<{ name: string; total: number; correct: number }>;
-  isLoading: boolean;
-}
-
-const BarChartCard = memo(function BarChartCard({ data, isLoading }: BarChartCardProps) {
-  if (isLoading) {
-    return (
-      <HoloCard>
-        <Skeleton className="h-5 w-48 mb-4" />
-        <Skeleton className="h-[250px] w-full rounded-lg" />
-      </HoloCard>
-    );
-  }
-
-  if (data.length === 0) {
-    return (
-      <HoloCard>
-        <HUDHeader title="Total vs Acertos" icon={BarChart3} subtitle="Comparativo por Macro" />
-        <div className="text-center py-12 text-muted-foreground">
-          <BarChart3 className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">Nenhum dado disponível</p>
-        </div>
-      </HoloCard>
-    );
-  }
-
-  const chartData = data.slice(0, 5).map(d => ({
-    name: d.name.length > 10 ? d.name.slice(0, 10) + '...' : d.name,
-    Total: d.total,
-    Acertos: d.correct,
-  }));
-
-  return (
-    <HoloCard>
-      <HUDHeader title="Total vs Acertos" icon={BarChart3} subtitle="Comparativo por Macro" />
-      <ResponsiveContainer width="100%" height={260}>
-        <BarChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 50 }}>
-          <defs>
-            <linearGradient id="barGradientBlue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3b82f6" stopOpacity={1} />
-              <stop offset="100%" stopColor="#1d4ed8" stopOpacity={0.8} />
-            </linearGradient>
-            <linearGradient id="barGradientGreen" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10b981" stopOpacity={1} />
-              <stop offset="100%" stopColor="#059669" stopOpacity={0.8} />
-            </linearGradient>
-          </defs>
-          <XAxis 
-            dataKey="name" 
-            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-            angle={-35}
-            textAnchor="end"
-            interval={0}
-          />
-          <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: 'hsl(var(--card))', 
-              border: '1px solid hsl(var(--border))',
-              borderRadius: '12px',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-            }} 
-          />
-          <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
-          <Bar dataKey="Total" fill="url(#barGradientBlue)" radius={[6, 6, 0, 0]} />
-          <Bar dataKey="Acertos" fill="url(#barGradientGreen)" radius={[6, 6, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    </HoloCard>
-  );
-});
-
-// =====================================================
-// Pie Chart - Holographic Donut
-// =====================================================
-interface PieChartCardProps {
-  data: Array<{ name: string; errors: number }>;
-  isLoading: boolean;
-}
-
-const PieChartCard = memo(function PieChartCard({ data, isLoading }: PieChartCardProps) {
-  if (isLoading) {
-    return (
-      <HoloCard>
-        <Skeleton className="h-5 w-40 mb-4" />
-        <Skeleton className="h-[250px] w-full rounded-lg" />
-      </HoloCard>
-    );
-  }
-
-  const pieData = data
-    .filter(d => d.errors > 0)
-    .slice(0, 6)
-    .map(d => ({
-      name: d.name.length > 12 ? d.name.slice(0, 12) + '...' : d.name,
-      value: d.errors,
-    }));
-
-  if (pieData.length === 0) {
-    return (
-      <HoloCard>
-        <HUDHeader title="Distribuição de Erros" icon={Target} subtitle="Onde focar" />
-        <div className="text-center py-12">
-          <div className="relative w-20 h-20 mx-auto mb-4">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-500/30 to-emerald-600/10 animate-pulse" />
-            <div className="absolute inset-2 rounded-full bg-card flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-emerald-400" />
-            </div>
+            <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/30 text-emerald-400 text-[10px]">
+              {area.accuracy.toFixed(0)}%
+            </Badge>
           </div>
-          <p className="text-sm font-medium text-emerald-400">Nenhum erro registrado!</p>
-          <p className="text-xs text-muted-foreground mt-1">Continue assim 🎉</p>
-        </div>
-      </HoloCard>
-    );
-  }
-
-  return (
-    <HoloCard>
-      <HUDHeader title="Distribuição de Erros" icon={Target} subtitle="Onde focar" />
-      <ResponsiveContainer width="100%" height={260}>
-        <PieChart>
-          <defs>
-            {CHART_COLORS.map((color, i) => (
-              <linearGradient key={i} id={`pieGradient${i}`} x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor={color} stopOpacity={1} />
-                <stop offset="100%" stopColor={color} stopOpacity={0.6} />
-              </linearGradient>
-            ))}
-          </defs>
-          <Pie
-            data={pieData}
-            cx="50%"
-            cy="50%"
-            innerRadius={50}
-            outerRadius={85}
-            paddingAngle={3}
-            dataKey="value"
-            label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
-            labelLine={false}
-          >
-            {pieData.map((_, index) => (
-              <Cell 
-                key={`cell-${index}`} 
-                fill={`url(#pieGradient${index % CHART_COLORS.length})`}
-                stroke="hsl(var(--background))"
-                strokeWidth={2}
-              />
-            ))}
-          </Pie>
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: 'hsl(var(--card))', 
-              border: '1px solid hsl(var(--border))',
-              borderRadius: '12px',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-            }} 
-          />
-          <Legend 
-            wrapperStyle={{ fontSize: '10px' }}
-            formatter={(value) => <span className="text-muted-foreground text-xs">{value}</span>}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-    </HoloCard>
+        ))}
+      </div>
+    </div>
   );
 });
 
 // =====================================================
-// Area Chart - Evolution Trend
-// =====================================================
-interface TrendChartCardProps {
-  data: Array<{ name: string; accuracy: number }>;
-  isLoading: boolean;
-}
-
-const TrendChartCard = memo(function TrendChartCard({ data, isLoading }: TrendChartCardProps) {
-  if (isLoading) {
-    return (
-      <HoloCard className="col-span-full">
-        <Skeleton className="h-5 w-48 mb-4" />
-        <Skeleton className="h-[200px] w-full rounded-lg" />
-      </HoloCard>
-    );
-  }
-
-  if (data.length < 2) {
-    return (
-      <HoloCard className="col-span-full">
-        <HUDHeader title="Evolução do Rendimento" icon={TrendingUp} subtitle="Top 10 categorias" />
-        <div className="text-center py-8 text-muted-foreground">
-          <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-30" />
-          <p className="text-sm">Complete mais questões para ver a evolução</p>
-        </div>
-      </HoloCard>
-    );
-  }
-
-  const chartData = data.slice(0, 10).map((d, i) => ({
-    name: d.name.length > 15 ? d.name.slice(0, 15) + '...' : d.name,
-    Rendimento: d.accuracy,
-    index: i + 1,
-  }));
-
-  return (
-    <HoloCard className="col-span-full">
-      <HUDHeader title="Ranking de Rendimento" icon={TrendingUp} subtitle="Top 10 categorias por acurácia" />
-      <ResponsiveContainer width="100%" height={220}>
-        <AreaChart data={chartData} margin={{ top: 10, right: 20, left: -10, bottom: 50 }}>
-          <defs>
-            <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.6} />
-              <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.05} />
-            </linearGradient>
-          </defs>
-          <XAxis 
-            dataKey="name" 
-            tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
-            angle={-45}
-            textAnchor="end"
-            interval={0}
-          />
-          <YAxis 
-            domain={[0, 100]} 
-            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
-          />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: 'hsl(var(--card))', 
-              border: '1px solid hsl(var(--border))',
-              borderRadius: '12px',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-            }}
-            formatter={(value) => [`${Number(value).toFixed(1)}%`, 'Rendimento']}
-          />
-          <Area 
-            type="monotone" 
-            dataKey="Rendimento" 
-            stroke="#8b5cf6" 
-            strokeWidth={3}
-            fill="url(#areaGradient)" 
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </HoloCard>
-  );
-});
-
-// =====================================================
-// Componente Principal
+// COMPONENTE PRINCIPAL
 // =====================================================
 export function StudentPerformanceAnalytics() {
   const { user } = useAuth();
+  const perfConfig = useConstitutionPerformance();
   
-  const { data: taxonomyData, isLoading: taxonomyLoading } = useStudentTaxonomyPerformance(user?.id);
-  const { data: stats, isLoading: statsLoading } = useStudentPerformanceStats(user?.id);
+  const { data: taxonomyData, isLoading } = useStudentTaxonomyPerformance(user?.id);
 
-  const isLoading = taxonomyLoading || statsLoading;
+  const [expandedMacros, setExpandedMacros] = useState<Set<string>>(new Set());
+  const [showCharts, setShowCharts] = useState(false);
 
-  // Processar dados para tabelas e gráficos
+  const toggleMacro = useCallback((name: string) => {
+    setExpandedMacros(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) {
+        next.delete(name);
+      } else {
+        next.add(name);
+      }
+      return next;
+    });
+  }, []);
+
+  // Processar dados
   const processedData = useMemo(() => {
     if (!taxonomyData?.array) {
       return {
-        macroData: [],
-        microData: [],
-        temaData: [],
+        macros: [] as ProcessedItem[],
+        microsByMacro: new Map<string, ProcessedItem[]>(),
+        temasByMicro: new Map<string, ProcessedItem[]>(),
+        allMicros: [] as ProcessedItem[],
+        allTemas: [] as ProcessedItem[],
         totalQuestions: 0,
         totalCorrect: 0,
         totalErrors: 0,
@@ -640,19 +467,19 @@ export function StudentPerformanceAnalytics() {
       };
     }
 
-    const macroData: Array<{ name: string; total: number; correct: number; errors: number; accuracy: number }> = [];
-    const microData: Array<{ name: string; total: number; correct: number; errors: number; accuracy: number }> = [];
-    const temaData: Array<{ name: string; total: number; correct: number; errors: number; accuracy: number }> = [];
-
+    const macros: ProcessedItem[] = [];
+    const microsByMacro = new Map<string, ProcessedItem[]>();
+    const temasByMicro = new Map<string, ProcessedItem[]>();
+    const allMicros: ProcessedItem[] = [];
+    const allTemas: ProcessedItem[] = [];
     let totalQuestions = 0;
     let totalCorrect = 0;
 
-    // Processar hierarquia - TaxonomyNode tem: name, totalAttempts, correctAttempts, accuracyPercent, children (Map)
     taxonomyData.array.forEach((macro) => {
       totalQuestions += macro.totalAttempts;
       totalCorrect += macro.correctAttempts;
 
-      macroData.push({
+      macros.push({
         name: macro.name,
         total: macro.totalAttempts,
         correct: macro.correctAttempts,
@@ -660,164 +487,260 @@ export function StudentPerformanceAnalytics() {
         accuracy: macro.accuracyPercent,
       });
 
-      // Processar micros (children é um Map)
+      const macroMicros: ProcessedItem[] = [];
+      
       if (macro.children && macro.children.size > 0) {
         macro.children.forEach((micro) => {
-          microData.push({
+          const microItem: ProcessedItem = {
             name: micro.name,
             total: micro.totalAttempts,
             correct: micro.correctAttempts,
             errors: micro.totalAttempts - micro.correctAttempts,
             accuracy: micro.accuracyPercent,
-          });
+            parentMacro: macro.name,
+          };
+          macroMicros.push(microItem);
+          allMicros.push(microItem);
 
-          // Processar temas
+          const microTemas: ProcessedItem[] = [];
           if (micro.children && micro.children.size > 0) {
             micro.children.forEach((tema) => {
-              temaData.push({
+              const temaItem: ProcessedItem = {
                 name: tema.name,
                 total: tema.totalAttempts,
                 correct: tema.correctAttempts,
                 errors: tema.totalAttempts - tema.correctAttempts,
                 accuracy: tema.accuracyPercent,
-              });
+                parentMacro: macro.name,
+              };
+              microTemas.push(temaItem);
+              allTemas.push(temaItem);
             });
           }
+          temasByMicro.set(micro.name, microTemas.sort((a, b) => b.total - a.total));
         });
       }
+      
+      microsByMacro.set(macro.name, macroMicros.sort((a, b) => b.total - a.total));
     });
 
-    const totalErrors = totalQuestions - totalCorrect;
-    const overallAccuracy = totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0;
-
-    // Ordenar por rendimento (accuracy) decrescente
-    const sortedMicro = [...microData].sort((a, b) => b.accuracy - a.accuracy);
-    const sortedTema = [...temaData].sort((a, b) => b.accuracy - a.accuracy);
-
     return {
-      macroData,
-      microData: sortedMicro,
-      temaData: sortedTema,
+      macros: macros.sort((a, b) => b.total - a.total),
+      microsByMacro,
+      temasByMicro,
+      allMicros: allMicros.sort((a, b) => b.total - a.total),
+      allTemas: allTemas.sort((a, b) => b.total - a.total),
       totalQuestions,
       totalCorrect,
-      totalErrors,
-      overallAccuracy,
+      totalErrors: totalQuestions - totalCorrect,
+      overallAccuracy: totalQuestions > 0 ? (totalCorrect / totalQuestions) * 100 : 0,
     };
   }, [taxonomyData]);
 
-  // Usar stats se disponível, senão usar dados calculados
-  const displayStats = {
-    totalQuestions: stats?.totalQuestions ?? processedData.totalQuestions,
-    totalCorrect: stats?.totalCorrect ?? processedData.totalCorrect,
-    totalErrors: (stats?.totalQuestions ?? processedData.totalQuestions) - (stats?.totalCorrect ?? processedData.totalCorrect),
-    overallAccuracy: stats?.overallAccuracy ?? processedData.overallAccuracy,
-  };
+  // Insights inteligentes
+  const insights = useMemo(() => {
+    const result: Array<{ type: 'warning' | 'tip' | 'success'; title: string; description: string }> = [];
+    
+    if (processedData.totalQuestions === 0) {
+      result.push({
+        type: 'tip',
+        title: 'Comece a praticar!',
+        description: 'Responda questões para ver suas métricas de desempenho aqui.',
+      });
+      return result;
+    }
+
+    if (processedData.overallAccuracy >= 80) {
+      result.push({
+        type: 'success',
+        title: 'Desempenho Excelente!',
+        description: `Sua taxa de acerto de ${processedData.overallAccuracy.toFixed(0)}% está acima da média. Continue assim!`,
+      });
+    } else if (processedData.overallAccuracy < 50) {
+      result.push({
+        type: 'warning',
+        title: 'Atenção ao Desempenho',
+        description: 'Sua taxa está abaixo de 50%. Revise as áreas com mais erros.',
+      });
+    }
+
+    const worstArea = processedData.allMicros
+      .filter(m => m.total >= 5)
+      .sort((a, b) => a.accuracy - b.accuracy)[0];
+    
+    if (worstArea && worstArea.accuracy < 50) {
+      result.push({
+        type: 'tip',
+        title: `Foco em: ${worstArea.name}`,
+        description: `Esta área tem ${worstArea.accuracy.toFixed(0)}% de acerto. Considere revisar o conteúdo.`,
+      });
+    }
+
+    return result.slice(0, 2);
+  }, [processedData]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 pb-8">
+        <Skeleton className="h-20 w-full rounded-2xl" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        </div>
+        <Skeleton className="h-40 w-full rounded-2xl" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 pb-8">
-      {/* Section Header */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-transparent rounded-2xl blur-2xl" />
-        <div className="relative flex items-center gap-4 p-4 rounded-2xl border border-border/50 bg-card/30 backdrop-blur">
+    <div className="space-y-5 pb-8">
+      {/* Header HUD */}
+      <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl" />
+        <div className="relative flex items-center gap-4">
           <div className="relative">
             <div className="absolute inset-0 bg-primary/30 rounded-xl blur-lg animate-pulse" />
             <div className="relative p-3 bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl border border-primary/30">
-              <Brain className="w-7 h-7 text-primary" />
+              <Brain className="w-6 h-6 text-primary" />
             </div>
           </div>
           <div className="flex-1">
-            <h2 className="text-xl font-bold text-foreground tracking-tight">
-              Análise de Desempenho
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Métricas em tempo real • Atualiza automaticamente
+            <h2 className="text-lg font-bold tracking-tight">Análise de Desempenho</h2>
+            <p className="text-xs text-muted-foreground flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Atualização em tempo real • Limite de {MAX_ITEMS_PER_CATEGORY} itens por categoria
             </p>
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Sincronizado</span>
-          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => setShowCharts(!showCharts)}
+            className="hidden sm:flex"
+          >
+            <Eye className="w-4 h-4 mr-1.5" />
+            {showCharts ? 'Ocultar' : 'Ver'} Gráficos
+          </Button>
         </div>
       </div>
 
-      {/* Stats Orbs - 4 principais */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <StatOrb
-          label="Total de Questões"
-          value={displayStats.totalQuestions}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <HUDStatCard
+          label="Questões Feitas"
+          value={processedData.totalQuestions}
           icon={BookOpen}
-          gradient={HOLOGRAPHIC_COLORS.blue}
-          delay={0}
         />
-        <StatOrb
+        <HUDStatCard
           label="Acertos"
-          value={displayStats.totalCorrect}
-          subValue={displayStats.totalQuestions > 0 ? `de ${displayStats.totalQuestions}` : undefined}
+          value={processedData.totalCorrect}
+          subValue={`de ${processedData.totalQuestions}`}
           icon={Target}
-          gradient={HOLOGRAPHIC_COLORS.emerald}
-          delay={100}
+          variant="success"
         />
-        <StatOrb
+        <HUDStatCard
           label="Erros"
-          value={displayStats.totalErrors}
-          icon={TrendingUp}
-          gradient={HOLOGRAPHIC_COLORS.rose}
-          delay={200}
+          value={processedData.totalErrors}
+          icon={AlertTriangle}
+          variant="error"
         />
-        <StatOrb
+        <HUDStatCard
           label="Acurácia Geral"
-          value={`${displayStats.overallAccuracy.toFixed(1)}%`}
+          value={`${processedData.overallAccuracy.toFixed(1)}%`}
           icon={Award}
-          gradient={HOLOGRAPHIC_COLORS.violet}
-          delay={300}
+          variant={processedData.overallAccuracy >= 70 ? 'success' : processedData.overallAccuracy >= 50 ? 'warning' : 'error'}
         />
       </div>
 
-      {/* Charts Row 1: Radar + Bar */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <RadarChartCard 
-          data={processedData.macroData.map(d => ({ name: d.name, accuracy: d.accuracy, total: d.total }))} 
-          isLoading={isLoading} 
-        />
-        <BarChartCard 
-          data={processedData.macroData} 
-          isLoading={isLoading} 
-        />
+      {/* Insights */}
+      {insights.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {insights.map((insight, idx) => (
+            <InsightCard key={idx} {...insight} />
+          ))}
+        </div>
+      )}
+
+      {/* Charts - Lazy loaded */}
+      {showCharts && (
+        <Suspense fallback={
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Skeleton className="h-[280px] rounded-2xl" />
+            <Skeleton className="h-[280px] rounded-2xl" />
+          </div>
+        }>
+          <LazyCharts 
+            macros={processedData.macros} 
+            micros={processedData.allMicros.slice(0, MAX_ITEMS_PER_CATEGORY)}
+            isLowEnd={perfConfig.isLowEnd}
+          />
+        </Suspense>
+      )}
+
+      {/* Mobile Charts Toggle */}
+      <Button 
+        variant="outline" 
+        size="sm"
+        onClick={() => setShowCharts(!showCharts)}
+        className="w-full sm:hidden"
+      >
+        <Eye className="w-4 h-4 mr-1.5" />
+        {showCharts ? 'Ocultar Gráficos' : 'Ver Gráficos'}
+      </Button>
+
+      {/* Weak/Strong Areas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <WeakAreasPanel items={processedData.allMicros} />
+        <StrongAreasPanel items={processedData.allMicros} />
       </div>
 
-      {/* Charts Row 2: Pie + Trend */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <PieChartCard 
-          data={processedData.macroData.map(d => ({ name: d.name, errors: d.errors }))} 
-          isLoading={isLoading} 
-        />
-        <TrendChartCard 
-          data={processedData.microData.slice(0, 10).map(d => ({ name: d.name, accuracy: d.accuracy }))} 
-          isLoading={isLoading} 
-        />
-      </div>
+      {/* Macro Cards - Expandíveis */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-sm flex items-center gap-2">
+            <FlaskConical className="w-4 h-4 text-primary" />
+            Desempenho por Macro-Assunto
+          </h3>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => {
+              if (expandedMacros.size === processedData.macros.length) {
+                setExpandedMacros(new Set());
+              } else {
+                setExpandedMacros(new Set(processedData.macros.map(m => m.name)));
+              }
+            }}
+            className="text-xs"
+          >
+            {expandedMacros.size === processedData.macros.length ? (
+              <>
+                <ChevronUp className="w-3 h-3 mr-1" /> Recolher todos
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-3 h-3 mr-1" /> Expandir todos
+              </>
+            )}
+          </Button>
+        </div>
 
-      {/* Tables - 3 níveis */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <PerformanceTable
-          title="Por Macro"
-          icon={FlaskConical}
-          data={processedData.macroData}
-          isLoading={isLoading}
-          showMacroIcons
-        />
-        <PerformanceTable
-          title="Por Micro"
-          icon={Beaker}
-          data={processedData.microData}
-          isLoading={isLoading}
-        />
-        <PerformanceTable
-          title="Por Tema"
-          icon={BookOpen}
-          data={processedData.temaData}
-          isLoading={isLoading}
-        />
+        {processedData.macros.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Sparkles className="w-10 h-10 mx-auto mb-3 opacity-30" />
+            <p className="font-medium">Nenhum dado disponível</p>
+            <p className="text-sm mt-1">Complete questões para ver sua análise aqui</p>
+          </div>
+        ) : (
+          processedData.macros.map((macro) => (
+            <MacroCard
+              key={macro.name}
+              macro={macro}
+              micros={processedData.microsByMacro.get(macro.name) || []}
+              temas={processedData.temasByMicro}
+              isExpanded={expandedMacros.has(macro.name)}
+              onToggle={() => toggleMacro(macro.name)}
+            />
+          ))
+        )}
       </div>
     </div>
   );
