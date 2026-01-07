@@ -997,12 +997,22 @@ function SimuladosList() {
   const [detailsSimulado, setDetailsSimulado] = useState<Simulado | null>(null);
   const [confirmDeactivate, setConfirmDeactivate] = useState<Simulado | null>(null);
   
+  // Filtra e agrupa por modo (Hard primeiro, depois Normal)
   const filtered = useMemo(() => {
     if (!simulados) return [];
-    if (!search.trim()) return simulados;
-    return simulados.filter(s => 
-      s.title.toLowerCase().includes(search.toLowerCase())
-    );
+    let list = simulados;
+    
+    if (search.trim()) {
+      list = list.filter(s => 
+        s.title.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    
+    // Ordena: Hard Mode primeiro, depois Normal
+    return [...list].sort((a, b) => {
+      if (a.is_hard_mode === b.is_hard_mode) return 0;
+      return a.is_hard_mode ? -1 : 1;
+    });
   }, [simulados, search]);
   
   const getStatus = (sim: Simulado) => {
