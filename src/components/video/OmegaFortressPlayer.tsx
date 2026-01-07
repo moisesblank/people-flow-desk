@@ -487,7 +487,36 @@ export const OmegaFortressPlayer = memo(({
 
         {/* Video Player */}
         {!showThumbnail && (
-          <div className="player-container absolute inset-0" />
+          <>
+            {/* YouTube: JS API inicializa no container */}
+            {type === "youtube" && <div className="player-container absolute inset-0" />}
+            
+            {/* PANDA: Renderiza iframe direto com embed URL */}
+            {type === "panda" && session && (
+              <iframe
+                src={embedUrl}
+                className="absolute inset-0 w-full h-full"
+                allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                allowFullScreen
+                frameBorder="0"
+                onLoad={() => setIsLoading(false)}
+                title={title}
+              />
+            )}
+            
+            {/* Vimeo: iframe básico */}
+            {type === "vimeo" && session && (
+              <iframe
+                src={embedUrl}
+                className="absolute inset-0 w-full h-full"
+                allow="autoplay; fullscreen"
+                allowFullScreen
+                frameBorder="0"
+                onLoad={() => setIsLoading(false)}
+                title={title}
+              />
+            )}
+          </>
         )}
 
         {/* Loading / Error gate */}
