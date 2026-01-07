@@ -900,6 +900,21 @@ export default function AlunoQuestoes() {
   const [questionTypeFilter, setQuestionTypeFilter] = useState<'all' | 'multiple_choice' | 'discursive' | 'outros'>('all');
   const [estiloEnemFilter, setEstiloEnemFilter] = useState(false);
 
+  // BLOCK_07C: Verifica se ALGUM filtro acadêmico está ativo (obriga seleção)
+  const isAnyFilterActive = useMemo(() => {
+    return (
+      filterMacro !== 'todas' ||
+      filterMicro !== 'todas' ||
+      filterTema !== 'todas' ||
+      filterSubtema !== 'todas' ||
+      dificuldade !== 'todas' ||
+      banca !== 'todas' ||
+      anoFilter !== 'todas' ||
+      questionTypeFilter !== 'all' ||
+      estiloEnemFilter === true
+    );
+  }, [filterMacro, filterMicro, filterTema, filterSubtema, dificuldade, banca, anoFilter, questionTypeFilter, estiloEnemFilter]);
+
   // BLOCK_09: Rápido Treino state
   const [rapidoTreinoOpen, setRapidoTreinoOpen] = useState(false);
   const [rapidoTreinoQuestions, setRapidoTreinoQuestions] = useState<Question[]>([]);
@@ -1752,21 +1767,25 @@ export default function AlunoQuestoes() {
                 COMECE SEU TREINO!
               </h3>
               <p className="text-sm text-muted-foreground">
-                Use o <span className="font-bold text-amber-400">Criar Questões</span> para praticar {Math.min(totalCount, RAPIDO_TREINO_LIMIT)} questões.
+                {isAnyFilterActive 
+                  ? <>Use o <span className="font-bold text-amber-400">Criar Questões</span> para praticar {Math.min(totalCount, RAPIDO_TREINO_LIMIT)} questões.</>
+                  : <>Selecione um <span className="font-bold text-amber-400">filtro acima</span> para começar a criar questões.</>
+                }
               </p>
             </div>
             
             <Button 
               onClick={handleStartRapidoTreino}
-              disabled={isLoadingTreino || totalCount === 0}
+              disabled={isLoadingTreino || !isAnyFilterActive || totalCount === 0}
               size="lg"
               className={cn(
                 "gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-black px-6",
-                isHighEnd ? "shadow-lg shadow-amber-500/20" : ""
+                isHighEnd ? "shadow-lg shadow-amber-500/20" : "",
+                !isAnyFilterActive && "opacity-50 cursor-not-allowed"
               )}
             >
               {isLoadingTreino ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
-              INICIAR ({Math.min(totalCount, RAPIDO_TREINO_LIMIT)})
+              INICIAR ({isAnyFilterActive ? Math.min(totalCount, RAPIDO_TREINO_LIMIT) : 0})
             </Button>
           </div>
         </div>
@@ -1796,18 +1815,19 @@ export default function AlunoQuestoes() {
               Mostrando <strong>{filteredQuestions.length}</strong> de <strong>{totalCount.toLocaleString('pt-BR')}</strong> questões
             </p>
             
-            {/* Botão Rápido Treino - Sempre visível e destacado */}
+            {/* Botão Criar Questões - Só habilita com filtro selecionado */}
             <Button 
               onClick={handleStartRapidoTreino}
-              disabled={isLoadingTreino || totalCount === 0}
+              disabled={isLoadingTreino || !isAnyFilterActive || totalCount === 0}
               variant="2300"
               className={cn(
                 "gap-2 px-6 py-2.5 h-auto bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:via-yellow-300 hover:to-amber-400 text-black font-semibold tracking-wide",
-                isHighEnd ? "shadow-lg shadow-amber-500/25" : ""
+                isHighEnd ? "shadow-lg shadow-amber-500/25" : "",
+                !isAnyFilterActive && "opacity-50 cursor-not-allowed"
               )}
             >
               {isLoadingTreino ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5 fill-current" />}
-              Criar Questões ({Math.min(totalCount, RAPIDO_TREINO_LIMIT)})
+              Criar Questões ({isAnyFilterActive ? Math.min(totalCount, RAPIDO_TREINO_LIMIT) : 0})
             </Button>
           </div>
 
