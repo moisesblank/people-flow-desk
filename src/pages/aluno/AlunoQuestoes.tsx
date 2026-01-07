@@ -113,8 +113,8 @@ const DIFFICULTY_LABELS = {
   dificil: "Difícil",
 };
 
-// BLOCK_09: Limites do RÁPIDO TREINO
-const RAPIDO_TREINO_LIMIT = 30;
+// BLOCK_09: Limites do "Criar Questões"
+const RAPIDO_TREINO_LIMIT = 50;
 
 // ============================================
 // BLOCK_08: QUESTION STYLE - MODAL DE RESOLUÇÃO
