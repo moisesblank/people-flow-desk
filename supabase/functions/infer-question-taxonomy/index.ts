@@ -426,8 +426,9 @@ interface TaxonomyItem {
   label: string;
   value: string;
   level: string;
-  parent_value: string | null;
+  parent_id: string | null;
 }
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // FUNÇÃO: Buscar taxonomia canônica do banco de dados
@@ -472,14 +473,14 @@ async function fetchCanonicalTaxonomy(): Promise<{
 
   for (const macro of macros) {
     formatted += `\n🔹 MACRO: ${macro.label}\n`;
-    const macroMicros = micros.filter(m => m.parent_value === macro.value);
-    
+    const macroMicros = micros.filter(m => m.parent_id === macro.id);
+
     for (const micro of macroMicros) {
       formatted += `   ├── MICRO: ${micro.label}\n`;
-      const microTemas = temas.filter(t => t.parent_value === micro.value);
-      
+      const microTemas = temas.filter(t => t.parent_id === micro.id);
+
       for (const tema of microTemas) {
-        const temaSubtemas = subtemas.filter(s => s.parent_value === tema.value);
+        const temaSubtemas = subtemas.filter(s => s.parent_id === tema.id);
         if (temaSubtemas.length > 0) {
           formatted += `   │   ├── TEMA: ${tema.label}\n`;
           for (const subtema of temaSubtemas) {
@@ -491,6 +492,7 @@ async function fetchCanonicalTaxonomy(): Promise<{
       }
     }
   }
+
 
   console.log(`📚 Taxonomia carregada: ${macros.length} macros, ${micros.length} micros, ${temas.length} temas, ${subtemas.length} subtemas`);
 
