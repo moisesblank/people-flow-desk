@@ -700,56 +700,6 @@ export function StudentPerformanceAnalytics() {
         <StrongAreasPanel items={processedData.allMicros} />
       </div>
 
-      {/* Macro Cards - Expandíveis */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-sm flex items-center gap-2">
-            <FlaskConical className="w-4 h-4 text-primary" />
-            Desempenho por Macro-Assunto
-          </h3>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => {
-              if (expandedMacros.size === processedData.macros.length) {
-                setExpandedMacros(new Set());
-              } else {
-                setExpandedMacros(new Set(processedData.macros.map(m => m.name)));
-              }
-            }}
-            className="text-xs"
-          >
-            {expandedMacros.size === processedData.macros.length ? (
-              <>
-                <ChevronUp className="w-3 h-3 mr-1" /> Recolher todos
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-3 h-3 mr-1" /> Expandir todos
-              </>
-            )}
-          </Button>
-        </div>
-
-        {processedData.macros.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Sparkles className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="font-medium">Nenhum dado disponível</p>
-            <p className="text-sm mt-1">Complete questões para ver sua análise aqui</p>
-          </div>
-        ) : (
-          processedData.macros.map((macro) => (
-            <MacroCard
-              key={macro.name}
-              macro={macro}
-              micros={processedData.microsByMacro.get(macro.name) || []}
-              temas={processedData.temasByMicro}
-              isExpanded={expandedMacros.has(macro.name)}
-              onToggle={() => toggleMacro(macro.name)}
-            />
-          ))
-        )}
-      </div>
     </div>
   );
 }
