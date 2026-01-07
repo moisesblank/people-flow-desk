@@ -19,9 +19,12 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 // ============================================
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const PANDA_API_KEY = Deno.env.get("PANDA_API_KEY") || "";
 
-const SANCTUM_VERSION = "2.0-OMEGA";
+// P0 FIX: Usar PANDA_DRM_SECRET_KEY para geração de URLs assinadas (DRM via API ativado)
+const PANDA_DRM_SECRET_KEY = Deno.env.get("PANDA_DRM_SECRET_KEY") || "";
+const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
+
+const SANCTUM_VERSION = "2.0-OMEGA-DRM";
 const SESSION_TTL_MINUTES = 5;
 
 // P1-2 FIX: Roles imunes (sem 'funcionario' e 'employee' deprecated)
@@ -174,34 +177,49 @@ function getUserRole(headers: Headers): string | null {
 }
 
 // ============================================
-// PANDA VIDEO SIGNED URL
+// PANDA VIDEO SIGNED URL — DRM VIA API
+// Usa PANDA_DRM_SECRET_KEY para assinatura HMAC
 // ============================================
 async function generatePandaSignedUrl(
   videoId: string,
   watermarkText: string,
 ): Promise<string | null> {
-  // Se não tiver API key, retorna embed simples
-  if (!PANDA_API_KEY) {
-    console.warn("⚠️ PANDA_API_KEY não configurada, usando embed básico");
-    return `https://player-vz-d59d6cb7-b9c.tv.pandavideo.com.br/embed/?v=${videoId}`;
+  // P0 FIX: Se não tiver DRM secret, retorna null (NÃO usar embed básico com DRM ativado)
+  if (!PANDA_DRM_SECRET_KEY) {
+    console.error("❌ PANDA_DRM_SECRET_KEY não configurada - DRM ativado requer chave secreta");
+    return null;
   }
 
   try {
-    // Gerar signed URL via API do Panda
-    // Nota: A API real pode variar, ajuste conforme documentação
+    // Gerar signed URL via HMAC (DRM via API)
     const expiresAt = Math.floor(Date.now() / 1000) + (SESSION_TTL_MINUTES * 60);
 
-    // Por enquanto, retorna URL com parâmetros de segurança
-    const params = new URLSearchParams({
-      v: videoId,
-      autoplay: "0",
-      watermark: encodeURIComponent(watermarkText),
-      t: expiresAt.toString(),
-    });
+    // Criar hash HMAC-SHA256 usando DRM Secret Key
+    const encoder = new TextEncoder();
+    const data = encoder.encode(`${videoId}${expiresAt}`);
+    const keyData = encoder.encode(PANDA_DRM_SECRET_KEY);
+    
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    const signature = await crypto.subtle.sign('HMAC', cryptoKey, data);
+    const token = btoa(String.fromCharCode(...new Uint8Array(signature)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
 
-    return `https://player-vz-d59d6cb7-b9c.tv.pandavideo.com.br/embed/?${params.toString()}`;
+    // URL assinada do Panda Video com token DRM
+    const signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&token=${token}&expires=${expiresAt}`;
+    
+    console.log(`✅ [video-authorize-omega] URL DRM assinada gerada para ${videoId}`);
+    return signedUrl;
   } catch (error) {
-    console.error("❌ Erro ao gerar signed URL:", error);
+    console.error("❌ Erro ao gerar signed URL DRM:", error);
     return null;
   }
 }

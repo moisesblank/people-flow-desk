@@ -16,6 +16,8 @@ const SECRETS = {
   OPENAI_API_KEY: Deno.env.get('OPENAI_API_KEY'),
   STRIPE_SECRET_KEY: Deno.env.get('STRIPE_SECRET_KEY'),
   PANDA_API_KEY: Deno.env.get('PANDA_API_KEY'),
+  // P0 FIX: Adicionar PANDA_DRM_SECRET_KEY para DRM via API
+  PANDA_DRM_SECRET_KEY: Deno.env.get('PANDA_DRM_SECRET_KEY'),
   HOTMART_API_KEY: Deno.env.get('HOTMART_API_KEY'),
   YOUTUBE_API_KEY: Deno.env.get('YOUTUBE_API_KEY'),
   FACEBOOK_ACCESS_TOKEN: Deno.env.get('FACEBOOK_ACCESS_TOKEN'),
@@ -23,6 +25,8 @@ const SECRETS = {
   TIKTOK_ACCESS_TOKEN: Deno.env.get('TIKTOK_ACCESS_TOKEN'),
   WORDPRESS_API_KEY: Deno.env.get('WORDPRESS_API_KEY'),
 };
+
+const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
 
 serve(async (req) => {
   // LEI VI: CORS dinâmico via allowlist centralizado
@@ -119,29 +123,72 @@ serve(async (req) => {
     }
 
     // ============================================
-    // PROXY PARA PANDA VIDEO
+    // PROXY PARA PANDA VIDEO — COM SUPORTE A DRM
+    // P0 FIX: Usa PANDA_DRM_SECRET_KEY para geração de URLs assinadas
     // ============================================
     if (service === 'panda') {
-      if (!SECRETS.PANDA_API_KEY) {
+      // Para endpoints de API (metadados), usa PANDA_API_KEY
+      if (endpoint && !endpoint.startsWith('signed-url')) {
+        if (!SECRETS.PANDA_API_KEY) {
+          return new Response(
+            JSON.stringify({ error: 'Panda Video não configurado' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const pandaResponse = await fetch(`https://api-v2.pandavideo.com.br/${endpoint}`, {
+          method,
+          headers: {
+            'Authorization': SECRETS.PANDA_API_KEY,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          body: data ? JSON.stringify(data) : undefined,
+        });
+
+        const responseData = await pandaResponse.json();
         return new Response(
-          JSON.stringify({ error: 'Panda Video não configurado' }),
+          JSON.stringify(responseData),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Para geração de URL assinada (DRM), usa PANDA_DRM_SECRET_KEY
+      if (!SECRETS.PANDA_DRM_SECRET_KEY) {
+        return new Response(
+          JSON.stringify({ error: 'Panda DRM não configurado' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      const pandaResponse = await fetch(`https://api-v2.pandavideo.com.br/${endpoint}`, {
-        method,
-        headers: {
-          'Authorization': SECRETS.PANDA_API_KEY,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: data ? JSON.stringify(data) : undefined,
-      });
+      const videoId = data?.videoId;
+      if (!videoId) {
+        return new Response(
+          JSON.stringify({ error: 'videoId obrigatório para URL assinada' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
 
-      const responseData = await pandaResponse.json();
+      // Gerar URL assinada com HMAC
+      const expiresAt = Math.floor(Date.now() / 1000) + (15 * 60);
+      const encoder = new TextEncoder();
+      const signData = encoder.encode(`${videoId}${expiresAt}`);
+      const keyData = encoder.encode(SECRETS.PANDA_DRM_SECRET_KEY);
+      
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+      );
+      
+      const signature = await crypto.subtle.sign('HMAC', cryptoKey, signData);
+      const token = btoa(String.fromCharCode(...new Uint8Array(signature)))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+      const signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&token=${token}&expires=${expiresAt}`;
+      
+      console.log(`✅ [secure-api-proxy] URL DRM assinada gerada para ${videoId}`);
+      
       return new Response(
-        JSON.stringify(responseData),
+        JSON.stringify({ success: true, signedUrl, expiresAt, drmEnabled: true }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

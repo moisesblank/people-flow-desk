@@ -10,7 +10,10 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
 // Chaves do Panda Video (APENAS NO SERVIDOR - DOGMA IV)
+// P0 FIX: Usar PANDA_DRM_SECRET_KEY para DRM via API
 const PANDA_API_KEY = Deno.env.get('PANDA_API_KEY');
+const PANDA_DRM_SECRET_KEY = Deno.env.get('PANDA_DRM_SECRET_KEY');
+const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
 
 serve(async (req) => {
   // LEI VI: CORS dinâmico via allowlist centralizado
@@ -144,46 +147,56 @@ serve(async (req) => {
 
     // ============================================
     // AÇÃO: OBTER URL DO PANDA VIDEO (proxy seguro)
+    // P0 FIX: Usar PANDA_DRM_SECRET_KEY para geração de URLs assinadas
     // ============================================
     if (action === 'get_panda_url') {
-      if (!videoId || !PANDA_API_KEY) {
+      // P0 FIX: DRM via API requer a chave secreta, não apenas API key
+      if (!videoId || !PANDA_DRM_SECRET_KEY) {
+        console.error('[secure-video-url] PANDA_DRM_SECRET_KEY não configurada');
         return new Response(
-          JSON.stringify({ error: 'Configuração incompleta' }),
+          JSON.stringify({ error: 'Configuração DRM incompleta' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      // Chamar API do Panda Video para obter URL com DRM
       try {
-        const pandaResponse = await fetch(
-          `https://api-v2.pandavideo.com.br/videos/${videoId}`,
-          {
-            headers: {
-              'Authorization': PANDA_API_KEY,
-              'Accept': 'application/json'
-            }
-          }
+        // Gerar URL assinada usando HMAC com DRM Secret Key
+        const expiresAt = Math.floor(Date.now() / 1000) + (15 * 60); // 15 minutos
+        
+        const encoder = new TextEncoder();
+        const data = encoder.encode(`${videoId}${expiresAt}`);
+        const keyData = encoder.encode(PANDA_DRM_SECRET_KEY);
+        
+        const cryptoKey = await crypto.subtle.importKey(
+          'raw',
+          keyData,
+          { name: 'HMAC', hash: 'SHA-256' },
+          false,
+          ['sign']
         );
+        
+        const signature = await crypto.subtle.sign('HMAC', cryptoKey, data);
+        const token = btoa(String.fromCharCode(...new Uint8Array(signature)))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
 
-        if (!pandaResponse.ok) {
-          throw new Error('Erro ao acessar Panda Video API');
-        }
+        const signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&token=${token}&expires=${expiresAt}`;
+        
+        console.log(`✅ [secure-video-url] URL DRM assinada gerada para ${videoId}`);
 
-        const pandaData = await pandaResponse.json();
-
-        // Retornar URL com DRM habilitado
         return new Response(
           JSON.stringify({
             success: true,
-            videoUrl: pandaData.video_player || pandaData.embed_url,
+            videoUrl: signedUrl,
             drmEnabled: true
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       } catch (pandaError) {
-        console.error('❌ Erro Panda Video:', pandaError);
+        console.error('❌ Erro ao gerar URL DRM Panda:', pandaError);
         return new Response(
-          JSON.stringify({ error: 'Erro ao acessar vídeo' }),
+          JSON.stringify({ error: 'Erro ao gerar URL assinada' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
