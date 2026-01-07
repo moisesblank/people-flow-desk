@@ -1462,6 +1462,198 @@ export default function AlunoQuestoes() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
+          BLOCK_06: TAXONOMY_FILTERS — Filtros Hierárquicos (Year 2300)
+      ══════════════════════════════════════════════════════════════ */}
+      <div className={cn(
+        "relative overflow-hidden rounded-2xl border p-5",
+        isHighEnd 
+          ? "bg-gradient-to-br from-slate-900/80 via-background/60 to-slate-900/80 border-cyan-500/30 backdrop-blur-xl shadow-xl shadow-cyan-500/5" 
+          : "bg-card border-primary/20"
+      )}>
+        {/* Efeitos holográficos (high-end) */}
+        {isHighEnd && (
+          <>
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
+            <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-cyan-400/40 rounded-tl-2xl" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-cyan-400/40 rounded-tr-2xl" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-cyan-500/20 rounded-bl-2xl" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-cyan-500/20 rounded-br-2xl" />
+          </>
+        )}
+
+        <div className="relative space-y-4">
+          {/* Header Label */}
+          {isHighEnd && (
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="text-xs font-bold uppercase tracking-widest text-cyan-400/80">Filtros Acadêmicos</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-cyan-500/30 to-transparent" />
+            </div>
+          )}
+
+          {/* Grid de Filtros de Taxonomia */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {/* MACRO */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-purple-400 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-purple-500" />
+                MACRO
+              </Label>
+              <Select value={filterMacro} onValueChange={(v) => {
+                setFilterMacro(v);
+                setFilterMicro("todas");
+                setFilterTema("todas");
+                setFilterSubtema("todas");
+              }}>
+                <SelectTrigger className={cn(
+                  "h-10 text-sm",
+                  isHighEnd ? "bg-purple-500/10 border-purple-500/30 hover:border-purple-400/50" : ""
+                )}>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todos</SelectItem>
+                  {macros.map((m) => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* MICRO */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-blue-400 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                MICRO
+              </Label>
+              <Select value={filterMicro} onValueChange={(v) => {
+                setFilterMicro(v);
+                setFilterTema("todas");
+                setFilterSubtema("todas");
+              }} disabled={filterMacro === "todas"}>
+                <SelectTrigger className={cn(
+                  "h-10 text-sm",
+                  isHighEnd ? "bg-blue-500/10 border-blue-500/30 hover:border-blue-400/50" : "",
+                  filterMacro === "todas" && "opacity-50"
+                )}>
+                  <SelectValue placeholder="Selecione Macro" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todos</SelectItem>
+                  {getMicrosForSelect(filterMacro === 'todas' ? '' : filterMacro).map((m) => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* TEMA */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-teal-400 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-teal-500" />
+                TEMA
+              </Label>
+              <Select value={filterTema} onValueChange={(v) => {
+                setFilterTema(v);
+                setFilterSubtema("todas");
+              }} disabled={filterMicro === "todas"}>
+                <SelectTrigger className={cn(
+                  "h-10 text-sm",
+                  isHighEnd ? "bg-teal-500/10 border-teal-500/30 hover:border-teal-400/50" : "",
+                  filterMicro === "todas" && "opacity-50"
+                )}>
+                  <SelectValue placeholder="Selecione Micro" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todos</SelectItem>
+                  {getTemasForSelect(filterMicro === 'todas' ? '' : filterMicro).map((t) => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* SUBTEMA */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                SUBTEMA
+              </Label>
+              <Select value={filterSubtema} onValueChange={setFilterSubtema} disabled={filterTema === "todas"}>
+                <SelectTrigger className={cn(
+                  "h-10 text-sm",
+                  isHighEnd ? "bg-emerald-500/10 border-emerald-500/30 hover:border-emerald-400/50" : "",
+                  filterTema === "todas" && "opacity-50"
+                )}>
+                  <SelectValue placeholder="Selecione Tema" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todos</SelectItem>
+                  {getSubtemasForSelect(filterTema === 'todas' ? '' : filterTema).map((s) => (
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Linha de Filtros Operacionais */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-3 border-t border-border/30">
+            {/* Busca */}
+            <div className="md:col-span-2 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="pl-9 h-10 text-sm"
+              />
+            </div>
+
+            {/* Dificuldade */}
+            <Select value={dificuldade} onValueChange={setDificuldade}>
+              <SelectTrigger className="h-10 text-sm">
+                <SelectValue placeholder="Dificuldade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas</SelectItem>
+                <SelectItem value="facil">🟢 Fácil</SelectItem>
+                <SelectItem value="medio">🟡 Médio</SelectItem>
+                <SelectItem value="dificil">🔴 Difícil</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Ano */}
+            <Select value={anoFilter} onValueChange={setAnoFilter}>
+              <SelectTrigger className="h-10 text-sm">
+                <SelectValue placeholder="Ano" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todos anos</SelectItem>
+                {Array.from({ length: 15 }, (_, i) => 2024 - i).map(year => (
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Ordenação */}
+            <Select value={sortOrder} onValueChange={setSortOrder}>
+              <SelectTrigger className="h-10 text-sm">
+                <SelectValue placeholder="Ordenar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Mais recentes</SelectItem>
+                <SelectItem value="oldest">Mais antigas</SelectItem>
+                <SelectItem value="ano_desc">Ano (↓)</SelectItem>
+                <SelectItem value="difficulty_asc">Fácil → Difícil</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════
           BLOCK_09: ZERO STATE — Performance Tiered
       ══════════════════════════════════════════════════════════════ */}
       {isZeroState && (
