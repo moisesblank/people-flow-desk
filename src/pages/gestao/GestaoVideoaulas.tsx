@@ -185,7 +185,9 @@ export default function GestaoVideoaulas() {
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   
-  // (Paginação removida - agora usa virtualização)
+  // Paginação v2300 - 25 itens por página
+  const ITEMS_PER_PAGE = 25;
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Aniquilação Total state
   const [isAnnihilateOpen, setIsAnnihilateOpen] = useState(false);
@@ -395,7 +397,22 @@ export default function GestaoVideoaulas() {
     return matchesSearch && matchesProvider && matchesPublished;
   }) || [];
 
-  // (Paginação removida - virtualização cuida de tudo)
+  // Reset página quando filtros mudam
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterProvider, filterPublished]);
+
+  // Paginação v2300 - 25 itens por página
+  const totalPages = Math.ceil(filteredLessons.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedLessons = filteredLessons.slice(startIndex, endIndex);
+
+  // Funções de navegação
+  const goToFirstPage = () => setCurrentPage(1);
+  const goToPreviousPage = () => setCurrentPage(p => Math.max(1, p - 1));
+  const goToNextPage = () => setCurrentPage(p => Math.min(totalPages, p + 1));
+  const goToLastPage = () => setCurrentPage(totalPages);
 
   // Stats - usando RPC para contagem correta (sem limite de 1000)
   const stats = {
@@ -754,7 +771,35 @@ export default function GestaoVideoaulas() {
         </div>
       )}
 
-      {/* Content - VIRTUALIZADO */}
+      {/* Controles de Paginação - Topo */}
+      {!isLoading && filteredLessons.length > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-between p-3 bg-card rounded-lg border">
+          <p className="text-sm text-muted-foreground">
+            Exibindo <span className="font-semibold text-foreground">{startIndex + 1}</span> a{' '}
+            <span className="font-semibold text-foreground">{Math.min(endIndex, filteredLessons.length)}</span> de{' '}
+            <span className="font-semibold text-foreground">{filteredLessons.length.toLocaleString('pt-BR')}</span> aulas
+          </p>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" onClick={goToFirstPage} disabled={currentPage === 1} className="h-8 w-8">
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={goToPreviousPage} disabled={currentPage === 1} className="h-8 w-8">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm px-3 font-medium">
+              {currentPage} / {totalPages}
+            </span>
+            <Button variant="outline" size="icon" onClick={goToNextPage} disabled={currentPage === totalPages} className="h-8 w-8">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={goToLastPage} disabled={currentPage === totalPages} className="h-8 w-8">
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Content - PAGINADO + VIRTUALIZADO */}
       {isLoading ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
@@ -763,9 +808,9 @@ export default function GestaoVideoaulas() {
         </div>
       ) : (
         <VirtualizedVideoaulaList
-          lessons={filteredLessons}
+          lessons={paginatedLessons}
           viewMode={viewMode}
-          startIndex={0}
+          startIndex={startIndex}
           onEdit={setEditingLesson}
           onConfig={setConfigLesson}
           onPreview={setPreviewLesson}
@@ -774,15 +819,33 @@ export default function GestaoVideoaulas() {
         />
       )}
 
-      {/* Info de contagem (sem paginação - virtualização cuida do resto) */}
-      {!isLoading && filteredLessons.length > 0 && (
+      {/* Controles de Paginação - Rodapé */}
+      {!isLoading && filteredLessons.length > 0 && totalPages > 1 && (
         <div className="flex items-center justify-between p-3 bg-card rounded-lg border">
           <p className="text-sm text-muted-foreground">
-            Total: <span className="font-semibold text-foreground">{filteredLessons.length.toLocaleString('pt-BR')}</span> aulas
+            Página <span className="font-semibold text-foreground">{currentPage}</span> de{' '}
+            <span className="font-semibold text-foreground">{totalPages}</span>
             {filteredLessons.length !== stats.total && (
               <span className="ml-2">(filtradas de {stats.total.toLocaleString('pt-BR')} total)</span>
             )}
           </p>
+          <div className="flex items-center gap-1">
+            <Button variant="outline" size="icon" onClick={goToFirstPage} disabled={currentPage === 1} className="h-8 w-8">
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={goToPreviousPage} disabled={currentPage === 1} className="h-8 w-8">
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm px-3 font-medium">
+              {currentPage} / {totalPages}
+            </span>
+            <Button variant="outline" size="icon" onClick={goToNextPage} disabled={currentPage === totalPages} className="h-8 w-8">
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={goToLastPage} disabled={currentPage === totalPages} className="h-8 w-8">
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
 
