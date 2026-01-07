@@ -86,7 +86,7 @@ interface VirtualizedQuestionListProps {
 // CONSTANTES DE VIRTUALIZAÇÃO
 // ============================================
 
-const ITEM_HEIGHT = 320; // Altura estimada de cada card (px) - aumentado para 6 linhas de enunciado
+const ITEM_HEIGHT = 420; // Altura estimada de cada card (px) - aumentado para exibir até tags
 const OVERSCAN = 5; // Itens extras acima/abaixo da viewport
 const CONTAINER_HEIGHT = 'calc(100vh - 400px)'; // Altura do container scrollável
 
@@ -164,10 +164,24 @@ const QuestionItem = memo(function QuestionItem({
             textSize="sm"
             compact={false}
             hideHeader={false}
-            maxImageHeight="max-h-40"
+            maxImageHeight="max-h-48"
             showImageLabel={false}
-            className="mb-2 line-clamp-6"
+            className="mb-3 line-clamp-8"
           />
+          
+          {/* Tags da Questão */}
+          {question.tags && question.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {question.tags.map((tag, idx) => (
+                <span 
+                  key={idx} 
+                  className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/50 text-accent-foreground border border-accent/30"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Badge de Modo */}
           <QuestionModeBadge tags={question.tags} />
