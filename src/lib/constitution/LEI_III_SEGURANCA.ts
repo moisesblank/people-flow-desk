@@ -470,11 +470,20 @@ export async function generateSignedVideoUrl(
 
 /**
  * Art. 26° - Geração de Marca d'Água Dinâmica
+ * CPF COMPLETO exibido (cada usuário vê apenas o seu próprio)
  */
 export function generateWatermarkText(user: { nome?: string; cpf?: string; email?: string }): string {
   const parts = [];
   if (user.nome) parts.push(user.nome.substring(0, 20));
-  if (user.cpf) parts.push(maskCPF(user.cpf));
+  // CPF COMPLETO para watermark forense
+  if (user.cpf) {
+    const clean = user.cpf.replace(/\D/g, '');
+    if (clean.length === 11) {
+      parts.push(`${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6, 9)}-${clean.slice(9, 11)}`);
+    } else {
+      parts.push(user.cpf);
+    }
+  }
   if (user.email) parts.push(maskEmail(user.email));
   return parts.join(' | ') || 'PROTEGIDO';
 }

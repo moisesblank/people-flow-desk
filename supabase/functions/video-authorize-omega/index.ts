@@ -162,9 +162,12 @@ function generateSessionToken(): string {
   return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-function maskCPF(cpf?: string): string {
-  if (!cpf || cpf.length < 11) return "***.***.***-**";
-  return `***.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-**`;
+// CPF COMPLETO - Sem máscara (cada usuário vê apenas o seu próprio)
+function formatCPF(cpf?: string): string {
+  if (!cpf) return "";
+  const clean = cpf.replace(/\D/g, "");
+  if (clean.length !== 11) return cpf;
+  return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6, 9)}-${clean.slice(9, 11)}`;
 }
 
 function isAuthorizedDomain(origin?: string | null): boolean {
@@ -469,8 +472,8 @@ serve(async (req: Request) => {
     
     // Watermark text
     const userName = profile?.full_name || user.email?.split("@")[0] || "Usuário";
-    const cpfMasked = maskCPF(profile?.cpf);
-    const watermarkText = `${userName} • ${cpfMasked} • ${sessionCode}`;
+    const cpfFormatted = formatCPF(profile?.cpf);
+    const watermarkText = `${userName} • ${cpfFormatted} • ${sessionCode}`;
     const watermarkHash = sessionCode;
 
     // Fingerprint do dispositivo

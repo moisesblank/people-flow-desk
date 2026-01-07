@@ -41,14 +41,17 @@ interface ProtectedPDFViewerProps {
 // MARCA D'ÁGUA DINÂMICA PARA PDF
 // ============================================
 const PDFWatermark = memo(({ userData }: { userData: UserWatermarkData }) => {
-  const maskCPF = (cpf: string) => {
-    if (!cpf || cpf.length < 6) return cpf;
-    return `${cpf.slice(0, 3)}.***.***-${cpf.slice(-2)}`;
+  // CPF COMPLETO - Sem máscara (cada usuário vê apenas o seu próprio)
+  const formatCPF = (cpf: string) => {
+    if (!cpf) return "";
+    const clean = cpf.replace(/\D/g, "");
+    if (clean.length !== 11) return cpf;
+    return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6, 9)}-${clean.slice(9, 11)}`;
   };
 
   const watermarkText = [
     userData.nome || "",
-    userData.cpf ? maskCPF(userData.cpf) : "",
+    userData.cpf ? formatCPF(userData.cpf) : "",
     userData.email || "",
   ].filter(Boolean).join(" • ");
 

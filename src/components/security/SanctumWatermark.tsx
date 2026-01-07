@@ -77,12 +77,12 @@ const DEFAULT_CONFIG: WatermarkConfig = {
 // ============================================
 // UTILITÁRIOS
 // ============================================
-function maskCPF(cpf: string): string {
-  if (!cpf || cpf.length < 11) return "";
-  // Formato: ***.123.456-**
+// CPF COMPLETO - Sem máscara (cada usuário vê apenas o seu próprio)
+function formatCPF(cpf: string): string {
+  if (!cpf) return "";
   const clean = cpf.replace(/\D/g, "");
-  if (clean.length !== 11) return cpf.slice(0, 3) + "***";
-  return `***.${clean.slice(3, 6)}.${clean.slice(6, 9)}-**`;
+  if (clean.length !== 11) return cpf;
+  return `${clean.slice(0, 3)}.${clean.slice(3, 6)}.${clean.slice(6, 9)}-${clean.slice(9, 11)}`;
 }
 
 function generateShortHash(str: string): string {
