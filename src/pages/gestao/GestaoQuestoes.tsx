@@ -52,6 +52,7 @@ import {
 } from '@/components/gestao/questoes/QuestionImageUploader';
 import { QuestionImportDialog } from '@/components/gestao/questoes/QuestionImportDialog';
 import { QuestionImportHistory } from '@/components/gestao/questoes/QuestionImportHistory';
+import { VirtualizedQuestionList } from '@/components/gestao/questoes/VirtualizedQuestionList';
 import { Button } from '@/components/ui/button';
 import { TaxonomyManager } from '@/components/gestao/questoes/TaxonomyManager';
 import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
@@ -2901,160 +2902,20 @@ function GestaoQuestoes() {
               </div>
             ) : (
               <>
-                <div className="space-y-3">
-                {paginatedQuestions.map((question, index) => {
-                  const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
-                  return (
-                    <motion.div
-                      key={question.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.02 }}
-                      className="group relative rounded-lg border-l-4 border-l-primary/50 bg-card p-4 transition-all hover:shadow-lg border border-border/50 hover:border-border"
-                    >
-                    {/* ══════════════════════════════════════════════════════════════
-                        BARRA DE METADADOS COMPLETA — CONSTITUIÇÃO TRANSVERSAL v2.0
-                        Usa componente unificado: QuestionMetadataBadges
-                        Exibe: Dificuldade | Banca+Ano | Tipo | MACRO | MICRO | TEMA | SUBTEMA
-                    ══════════════════════════════════════════════════════════════ */}
-                      <QuestionMetadataBadges
-                        question={question}
-                        variant="full"
-                        formatBancaHeader={formatBancaHeader}
-                        className="mb-3 pb-3 border-b border-border/30"
-                      />
-
-                      {/* Header Row */}
-                      <div className="flex items-start justify-between gap-4">
-                        {/* Left: ID + Enunciado */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-mono text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded">
-                              #{String(globalIndex + 1).padStart(3, '0')}
-                            </span>
-                            {/* LABEL DE QUESTÃO REPETIDA COM NÚMERO DO GRUPO */}
-                            {isDuplicateQuestion(question.id) && (
-                              <span 
-                                className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/30"
-                                title={`Grupo ${getGroupNumber(question.id)} - ${getGroupMembers(question.id).length} questões idênticas`}
-                              >
-                                🔁 GRUPO {getGroupNumber(question.id)} ({getGroupMembers(question.id).length}x)
-                              </span>
-                            )}
-                          </div>
-                          
-                          {/* Enunciado com Imagem - Componente Universal (Gestão: imagem maior) */}
-                          {/* PADRÃO UNIFICADO: Header da banca + texto justificado para TODAS as questões */}
-                          <QuestionEnunciado
-                            questionText={question.question_text}
-                            imageUrl={question.image_url}
-                            imageUrls={(question as any).image_urls}
-                            banca={question.banca}
-                            ano={question.ano}
-                            textSize="sm"
-                            compact={false}
-                            hideHeader={false}
-                            maxImageHeight="max-h-64"
-                            showImageLabel={false}
-                            className="mb-3"
-                          />
-                          
-                          {/* Badges de Associação: QUESTION_DOMAIN (SIMULADO ou TREINO) */}
-                          <QuestionModeBadge tags={question.tags} />
-                        </div>
-                        
-                        {/* Right: Ações Rápidas - Sempre visíveis */}
-                        <div className="flex items-center gap-1 shrink-0">
-                          {/* AI LOG BUTTON - Visibilidade Global de Intervenções de IA */}
-                          <QuestionAILogButton
-                            questionId={question.id}
-                            summary={aiLogsSummaryMap?.get(question.id)}
-                            isLoading={isLoadingAILogs}
-                            variant="icon"
-                          />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-primary/20 hover:text-primary"
-                            onClick={() => navigate(`/gestaofc/questoes/${question.id}`)}
-                            title="Ver Detalhe"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hover:bg-blue-500/20 hover:text-blue-400"
-                            onClick={() => handleEdit(question)}
-                            title="Editar"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <DropdownMenu modal={false}>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8"
-                                title="Mais opções"
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" sideOffset={4}>
-                              <DropdownMenuItem onClick={() => handleDuplicate(question)}>
-                                <Copy className="h-4 w-4 mr-2" />
-                                Duplicar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleToggleActive(question.id, question.is_active)}>
-                                {question.is_active ? (
-                                  <>
-                                    <Archive className="h-4 w-4 mr-2" />
-                                    Desativar
-                                  </>
-                                ) : (
-                                  <>
-                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                    Ativar
-                                  </>
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                className="text-destructive"
-                                onClick={() => setDeleteConfirm(question.id)}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Excluir
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
-                      
-                      {/* Footer: Tags + Metadata */}
-                      {(question.tags && question.tags.length > 0) && (
-                        <div className="mt-3 pt-3 border-t border-border/30 flex items-center gap-2">
-                          <Tag className="h-3 w-3 text-muted-foreground" />
-                          <div className="flex flex-wrap gap-1">
-                            {question.tags.slice(0, 5).map((tag, i) => (
-                              <span 
-                                key={i} 
-                                className="text-[10px] px-2 py-0.5 rounded-full bg-muted/80 text-muted-foreground border border-border/50"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                            {question.tags.length > 5 && (
-                              <span className="text-[10px] text-muted-foreground">+{question.tags.length - 5} mais</span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </motion.div>
-                  );
-                })}
-                </div>
+                {/* 🚀 LISTA VIRTUALIZADA - Performance para 45k+ questões */}
+                <VirtualizedQuestionList
+                  questions={paginatedQuestions}
+                  startIndex={(currentPage - 1) * ITEMS_PER_PAGE}
+                  aiLogsSummaryMap={aiLogsSummaryMap}
+                  isLoadingAILogs={isLoadingAILogs}
+                  duplicateQuestionIds={duplicateQuestionIds}
+                  getGroupNumber={getGroupNumber}
+                  getGroupMembers={getGroupMembers}
+                  onEdit={handleEdit}
+                  onDuplicate={handleDuplicate}
+                  onToggleActive={handleToggleActive}
+                  onDelete={(id) => setDeleteConfirm(id)}
+                />
               
                 {/* PAGINATION CONTROLS */}
                 {totalPages > 1 && (
