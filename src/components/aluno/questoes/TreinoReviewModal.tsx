@@ -25,6 +25,7 @@ import { Progress } from "@/components/ui/progress";
 import QuestionEnunciado from "@/components/shared/QuestionEnunciado";
 import QuestionResolution from "@/components/shared/QuestionResolution";
 import { cn } from "@/lib/utils";
+import QuestionTextField from "@/components/shared/QuestionTextField";
 
 interface QuestionOption {
   id: string;
@@ -464,7 +465,7 @@ export function TreinoReviewModal({
                         >
                           {option.id.toUpperCase()}
                         </div>
-                        <p className="flex-1 pt-1">{optionText}</p>
+                        <QuestionTextField content={optionText} fieldType="alternativa" className="flex-1 pt-1" inline />
                         {isCorrectOption && (
                           <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
                         )}

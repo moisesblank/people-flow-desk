@@ -54,6 +54,7 @@ import {
 } from '@/components/ui/tooltip';
 import QuestionEnunciado, { getAllQuestionImages } from '@/components/shared/QuestionEnunciado';
 import QuestionResolution from '@/components/shared/QuestionResolution';
+import QuestionTextField from '@/components/shared/QuestionTextField';
 import QuestionAILogButton from '@/components/gestao/questoes/QuestionAILogButton';
 import ChemicalImageExtractorButton from '@/components/gestao/questoes/ChemicalImageExtractorButton';
 import { useQuestionAILogs } from '@/hooks/useQuestionAILogs';
@@ -526,7 +527,7 @@ function GestaoQuestaoDetalhe() {
                   >
                     {opt.id}
                   </span>
-                  <span className="flex-1">{(typeof opt.text === 'string' ? opt.text : ((opt.text as any)?.text ?? String(opt.text ?? ''))) || <em className="text-muted-foreground">vazio</em>}</span>
+                  <QuestionTextField content={opt.text} fieldType="alternativa" className="flex-1" emptyText="vazio" emptyAsItalic inline />
                   {opt.id === question.correct_answer && (
                     <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
                   )}

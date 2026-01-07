@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import QuestionEnunciado from "@/components/shared/QuestionEnunciado";
 import QuestionResolution from "@/components/shared/QuestionResolution";
+import QuestionTextField from "@/components/shared/QuestionTextField";
 import { 
   usePracticeQuestions, 
   usePracticeSession, 
@@ -321,7 +322,7 @@ function PracticeSession({
                             `}>
                               {String.fromCharCode(65 + idx)}
                             </div>
-                            <span className="flex-1">{typeof option.text === 'string' ? option.text : (option.text as any)?.text ?? String(option.text ?? '')}</span>
+                            <QuestionTextField content={option.text} fieldType="alternativa" className="flex-1" inline />
                             
                             {showResult && isCorrectOption && (
                               <CheckCircle2 className="h-5 w-5 text-green-500" />
