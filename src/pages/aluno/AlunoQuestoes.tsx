@@ -663,18 +663,36 @@ export default function AlunoQuestoes() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
   
+  // Reset página ao mudar filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterMacro, filterMicro, filterTema, filterSubtema, dificuldade, banca, anoFilter]);
+  
   // BLOCK_04: PAGINAÇÃO SERVER-SIDE - Substituiu loop 45k
   const { data: questionsData, isLoading: questionsLoading } = useQuery({
-    queryKey: ['student-questions', 'MODO_TREINO', currentPage, ITEMS_PER_PAGE],
+    queryKey: ['student-questions', 'MODO_TREINO', currentPage, ITEMS_PER_PAGE, filterMacro, filterMicro, filterTema, filterSubtema, dificuldade, banca, anoFilter],
     queryFn: async () => {
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
 
-      const { data, error, count } = await supabase
+      let query = supabase
         .from('quiz_questions')
         .select('*', { count: 'exact' })
         .contains('tags', ['MODO_TREINO'])
-        .eq('is_active', true)
+        .eq('is_active', true);
+
+      // Aplicar filtros server-side (ACADEMIC_FILTERS)
+      if (filterMacro !== 'todas') query = query.eq('macro', filterMacro);
+      if (filterMicro !== 'todas') query = query.eq('micro', filterMicro);
+      if (filterTema !== 'todas') query = query.eq('tema', filterTema);
+      if (filterSubtema !== 'todas') query = query.eq('subtema', filterSubtema);
+      
+      // Aplicar filtros operacionais
+      if (dificuldade !== 'todas') query = query.eq('difficulty', dificuldade);
+      if (banca !== 'todas') query = query.eq('banca', banca);
+      if (anoFilter !== 'todas') query = query.eq('ano', parseInt(anoFilter));
+
+      const { data, error, count } = await query
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -847,26 +865,62 @@ export default function AlunoQuestoes() {
     return filtered;
   }, [questions, activeTab, filterMacro, filterMicro, filterTema, filterSubtema, anoFilter, banca, dificuldade, busca, sortOrder, attemptsByQuestion]);
 
-  // BLOCK_09: Iniciar RÁPIDO TREINO
-  const handleStartRapidoTreino = useCallback(() => {
-    // Usar dataset filtrado, limitar a 30
-    const eligibleQuestions = filteredQuestions
-      .filter(q => !attemptsByQuestion.has(q.id)) // Preferir pendentes
-      .slice(0, RAPIDO_TREINO_LIMIT);
+  // BLOCK_09: Iniciar RÁPIDO TREINO - Busca SERVER-SIDE com filtros
+  const [isLoadingTreino, setIsLoadingTreino] = useState(false);
+  
+  const handleStartRapidoTreino = useCallback(async () => {
+    setIsLoadingTreino(true);
+    
+    try {
+      // Buscar até RAPIDO_TREINO_LIMIT questões aplicando TODOS os filtros server-side
+      let query = supabase
+        .from('quiz_questions')
+        .select('*')
+        .contains('tags', ['MODO_TREINO'])
+        .eq('is_active', true);
 
-    if (eligibleQuestions.length === 0) {
-      // Se todas resolvidas, usar qualquer uma
-      const anyQuestions = filteredQuestions.slice(0, RAPIDO_TREINO_LIMIT);
-      if (anyQuestions.length === 0) {
-        toast.error('Nenhuma questão disponível para treino');
+      // Aplicar filtros server-side (ACADEMIC_FILTERS)
+      if (filterMacro !== 'todas') query = query.eq('macro', filterMacro);
+      if (filterMicro !== 'todas') query = query.eq('micro', filterMicro);
+      if (filterTema !== 'todas') query = query.eq('tema', filterTema);
+      if (filterSubtema !== 'todas') query = query.eq('subtema', filterSubtema);
+      
+      // Aplicar filtros operacionais
+      if (dificuldade !== 'todas') query = query.eq('difficulty', dificuldade);
+      if (banca !== 'todas') query = query.eq('banca', banca);
+      if (anoFilter !== 'todas') query = query.eq('ano', parseInt(anoFilter));
+
+      const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .limit(RAPIDO_TREINO_LIMIT);
+
+      if (error) throw error;
+
+      const mapped = (data || []).map(q => ({
+        ...q,
+        options: Array.isArray(q.options) ? (q.options as unknown as QuestionOption[]) : [],
+        difficulty: (q.difficulty || 'medio') as "facil" | "medio" | "dificil",
+      })) as Question[];
+
+      if (mapped.length === 0) {
+        toast.error('Nenhuma questão disponível para treino com esses filtros');
         return;
       }
-      setRapidoTreinoQuestions(anyQuestions);
-    } else {
-      setRapidoTreinoQuestions(eligibleQuestions);
+
+      // Preferir questões pendentes (não respondidas)
+      const attemptedIds = new Set(attempts.map(a => a.question_id));
+      const pending = mapped.filter(q => !attemptedIds.has(q.id));
+      const questionsForTreino = pending.length > 0 ? pending : mapped;
+
+      setRapidoTreinoQuestions(questionsForTreino.slice(0, RAPIDO_TREINO_LIMIT));
+      setRapidoTreinoOpen(true);
+    } catch (err) {
+      console.error('Erro ao carregar questões para treino:', err);
+      toast.error('Erro ao carregar questões');
+    } finally {
+      setIsLoadingTreino(false);
     }
-    setRapidoTreinoOpen(true);
-  }, [filteredQuestions, attemptsByQuestion]);
+  }, [filterMacro, filterMicro, filterTema, filterSubtema, dificuldade, banca, anoFilter, attempts]);
 
   // BLOCK_11: Callback de completar Rápido Treino - Agora abre tela de revisão
   const handleRapidoTreinoComplete = useCallback((results: { correct: number; total: number }, answersRecord: Record<string, { answer: string; isCorrect: boolean }>) => {
@@ -1142,12 +1196,17 @@ export default function AlunoQuestoes() {
             {/* BLOCK_08: PRIMARY_ACTION - RÁPIDO TREINO */}
             <Button 
               onClick={handleStartRapidoTreino}
+              disabled={isLoadingTreino || totalCount === 0}
               className="gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold"
             >
-              <Zap className="w-4 h-4" />
+              {isLoadingTreino ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Zap className="w-4 h-4" />
+              )}
               Criar Questões
               <Badge variant="secondary" className="ml-1 bg-black/20 text-white">
-                {Math.min(filteredQuestions.length, RAPIDO_TREINO_LIMIT)}
+                {Math.min(totalCount, RAPIDO_TREINO_LIMIT)}
               </Badge>
             </Button>
           </div>
@@ -1166,15 +1225,16 @@ export default function AlunoQuestoes() {
             <div className="flex-1 text-center md:text-left">
               <h3 className="text-xl font-bold mb-2">Comece seu treino agora!</h3>
               <p className="text-muted-foreground">
-                Você ainda não resolveu nenhuma questão. Use o <strong>Rápido Treino</strong> para praticar {Math.min(filteredQuestions.length, RAPIDO_TREINO_LIMIT)} questões de uma vez!
+                Você ainda não resolveu nenhuma questão. Use o <strong>Rápido Treino</strong> para praticar {Math.min(totalCount, RAPIDO_TREINO_LIMIT)} questões de uma vez!
               </p>
             </div>
             <Button 
               onClick={handleStartRapidoTreino}
+              disabled={isLoadingTreino || totalCount === 0}
               size="lg"
               className="gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold"
             >
-              <Play className="w-5 h-5" />
+              {isLoadingTreino ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
               Iniciar Treino
             </Button>
           </CardContent>
