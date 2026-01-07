@@ -420,13 +420,13 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
             )}
           </motion.div>
         ) : (
-          /* Modo visualização */
+          /* Modo visualização - LEI SUPREMA: NUNCA expor VALUE, apenas LABEL */
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
             <div>
               <p className="text-muted-foreground text-xs mb-1">MACRO</p>
               {currentMacro ? (
                 <Badge variant="outline" className="border-amber-500/50 text-amber-500">
-                  {macros.find(m => m.value === currentMacro)?.label || currentMacro}
+                  {macros.find(m => m.value === currentMacro)?.label || 'Carregando...'}
                 </Badge>
               ) : (
                 <span className="text-muted-foreground italic">Não definido</span>
@@ -436,7 +436,8 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
               <p className="text-muted-foreground text-xs mb-1">MICRO</p>
               {currentMicro ? (
                 <Badge variant="outline" className="border-orange-500/50 text-orange-500">
-                  {currentMicro}
+                  {/* LEI SUPREMA: Buscar LABEL a partir do MACRO atual */}
+                  {(currentMacro ? getMicrosForSelect(currentMacro) : []).find(m => m.value === currentMicro)?.label || 'Carregando...'}
                 </Badge>
               ) : (
                 <span className="text-muted-foreground italic">Não definido</span>
@@ -446,7 +447,8 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
               <p className="text-muted-foreground text-xs mb-1">TEMA</p>
               {currentTema ? (
                 <Badge variant="outline" className="border-rose-500/50 text-rose-500">
-                  {currentTema}
+                  {/* LEI SUPREMA: Buscar LABEL do TEMA */}
+                  {getTemaLabel(currentTema)}
                 </Badge>
               ) : (
                 <span className="text-muted-foreground italic">Não definido</span>
@@ -456,7 +458,8 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
               <p className="text-muted-foreground text-xs mb-1">SUBTEMA</p>
               {currentSubtema ? (
                 <Badge variant="outline" className="border-purple-500/50 text-purple-500">
-                  {currentSubtema}
+                  {/* LEI SUPREMA: Buscar LABEL do SUBTEMA */}
+                  {getSubtemaLabel(currentSubtema)}
                 </Badge>
               ) : (
                 <span className="text-muted-foreground italic">Não definido</span>
