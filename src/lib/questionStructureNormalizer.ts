@@ -176,43 +176,106 @@ export function normalizeEnunciado(text: string): string {
   );
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // 2c. REMOVER ALTERNATIVAS SOLTAS DO ENUNCIADO — LEI PERMANENTE v1.0
+  // 2c. REMOVER ALTERNATIVAS SOLTAS DO ENUNCIADO — LEI PERMANENTE v1.1
   // ═══════════════════════════════════════════════════════════════════════════
   // Alternativas (A, B, C, D, E) NÃO pertencem ao enunciado — ficam no campo options
   // Esta regra aplica-se a TODA ENTIDADE QUESTÃO do sistema
+  // Cobre: a), a) b), a) b) c), a) b) c) d), a) b) c) d) e), c), d) e), etc.
   // ═══════════════════════════════════════════════════════════════════════════
   
-  // Padrão 1: Sequência completa no final do texto
+  // Padrão 1: Sequência completa no final do texto (5 alternativas)
   // Exemplos: "texto a) b) c) d) e)." ou "texto A) B) C) D) E)"
   normalized = normalized.replace(
     /\s*[aA]\s*[\)\.\-–—]\s*[bB]\s*[\)\.\-–—]\s*[cC]\s*[\)\.\-–—]\s*[dD]\s*[\)\.\-–—]\s*[eE]\s*[\)\.\-–—]?\.?\s*$/g,
     ''
   );
   
-  // Padrão 2: Sequência sem separadores (letras grudadas)
-  // Exemplos: "texto a)b)c)d)e)" ou "texto abcde)"
+  // Padrão 2: Sequência de 4 alternativas
+  // Exemplos: "texto a) b) c) d)" ou "texto b) c) d) e)"
   normalized = normalized.replace(
-    /\s*[aA]\)?[bB]\)?[cC]\)?[dD]\)?[eE]\)?\.?\s*$/g,
+    /\s*[aA]\s*[\)\.\-–—]\s*[bB]\s*[\)\.\-–—]\s*[cC]\s*[\)\.\-–—]\s*[dD]\s*[\)\.\-–—]?\.?\s*$/g,
+    ''
+  );
+  normalized = normalized.replace(
+    /\s*[bB]\s*[\)\.\-–—]\s*[cC]\s*[\)\.\-–—]\s*[dD]\s*[\)\.\-–—]\s*[eE]\s*[\)\.\-–—]?\.?\s*$/g,
     ''
   );
   
-  // Padrão 3: Alternativas parciais (pode faltar algumas letras)
-  // Exemplos: "texto a) b) c)" ou "texto d) e)"
+  // Padrão 3: Sequência de 3 alternativas
+  // Exemplos: "texto a) b) c)" ou "texto c) d) e)"
   normalized = normalized.replace(
-    /\s+(?:[aA]\s*[\)\.\-–—]\s*)?(?:[bB]\s*[\)\.\-–—]\s*)?(?:[cC]\s*[\)\.\-–—]\s*)?(?:[dD]\s*[\)\.\-–—]\s*)?[eE]\s*[\)\.\-–—]\.?\s*$/g,
+    /\s*[aA]\s*[\)\.\-–—]\s*[bB]\s*[\)\.\-–—]\s*[cC]\s*[\)\.\-–—]?\.?\s*$/g,
+    ''
+  );
+  normalized = normalized.replace(
+    /\s*[bB]\s*[\)\.\-–—]\s*[cC]\s*[\)\.\-–—]\s*[dD]\s*[\)\.\-–—]?\.?\s*$/g,
+    ''
+  );
+  normalized = normalized.replace(
+    /\s*[cC]\s*[\)\.\-–—]\s*[dD]\s*[\)\.\-–—]\s*[eE]\s*[\)\.\-–—]?\.?\s*$/g,
     ''
   );
   
-  // Padrão 4: Alternativas em linha separada
-  // Exemplo: linha contendo apenas "a) b) c) d) e)"
+  // Padrão 4: Sequência de 2 alternativas
+  // Exemplos: "texto a) b)" ou "texto d) e)"
+  normalized = normalized.replace(
+    /\s*[aA]\s*[\)\.\-–—]\s*[bB]\s*[\)\.\-–—]?\.?\s*$/g,
+    ''
+  );
+  normalized = normalized.replace(
+    /\s*[bB]\s*[\)\.\-–—]\s*[cC]\s*[\)\.\-–—]?\.?\s*$/g,
+    ''
+  );
+  normalized = normalized.replace(
+    /\s*[cC]\s*[\)\.\-–—]\s*[dD]\s*[\)\.\-–—]?\.?\s*$/g,
+    ''
+  );
+  normalized = normalized.replace(
+    /\s*[dD]\s*[\)\.\-–—]\s*[eE]\s*[\)\.\-–—]?\.?\s*$/g,
+    ''
+  );
+  
+  // Padrão 5: Alternativa individual isolada no final
+  // Exemplos: "texto a)" ou "texto c)" ou "texto e)."
+  normalized = normalized.replace(
+    /\s+[aA]\s*[\)\.\-–—]\.?\s*$/g,
+    ''
+  );
+  normalized = normalized.replace(
+    /\s+[bB]\s*[\)\.\-–—]\.?\s*$/g,
+    ''
+  );
+  normalized = normalized.replace(
+    /\s+[cC]\s*[\)\.\-–—]\.?\s*$/g,
+    ''
+  );
+  normalized = normalized.replace(
+    /\s+[dD]\s*[\)\.\-–—]\.?\s*$/g,
+    ''
+  );
+  normalized = normalized.replace(
+    /\s+[eE]\s*[\)\.\-–—]\.?\s*$/g,
+    ''
+  );
+  
+  // Padrão 6: Alternativas em linha separada (qualquer combinação)
+  // Remove linhas que contenham APENAS alternativas soltas
   normalized = normalized
     .split('\n')
-    .filter(line => !(/^\s*[aA]\s*[\)\.\-–—]?\s*[bB]\s*[\)\.\-–—]?\s*[cC]\s*[\)\.\-–—]?\s*[dD]\s*[\)\.\-–—]?\s*[eE]\s*[\)\.\-–—]?\.?\s*$/.test(line)))
-    .join('\n');
-  
-  // Padrão 5: Alternativas individuais soltas no final (última verificação)
-  // Remove qualquer "a)" ou "b)" etc. perdidos no final do texto
-  normalized = normalized.replace(/\s+[a-eA-E]\s*[\)\.\-–—]\s*$/g, '').trim();
+    .filter(line => {
+      const trimmed = line.trim();
+      // Linha vazia: manter
+      if (!trimmed) return true;
+      // Linha com APENAS alternativas soltas (a), b), etc.): remover
+      const onlyAlternatives = /^(?:[aA]\s*[\)\.\-–—]?\s*)?(?:[bB]\s*[\)\.\-–—]?\s*)?(?:[cC]\s*[\)\.\-–—]?\s*)?(?:[dD]\s*[\)\.\-–—]?\s*)?(?:[eE]\s*[\)\.\-–—]?\s*)?\.?\s*$/.test(trimmed);
+      // Se for APENAS alternativas e tiver pelo menos uma letra a-e, remover
+      if (onlyAlternatives && /[a-eA-E]/.test(trimmed) && trimmed.length < 20) {
+        return false;
+      }
+      return true;
+    })
+    .join('\n')
+    .trim();
 
   // 2d. Processar cada linha para garantir formatação correta de itens romanos
   const affirmativePattern = /^([IVX]+)\s*[\.\)\-–—]\s*/gm;
