@@ -1798,14 +1798,14 @@ export default function AlunoQuestoes() {
             <Button 
               onClick={handleStartRapidoTreino}
               disabled={isLoadingTreino || totalCount === 0}
-              size="lg"
+              variant="2300"
               className={cn(
-                "gap-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-black text-base px-8 py-6 h-auto",
-                isHighEnd ? "shadow-xl shadow-amber-500/30 ring-2 ring-amber-400/30" : ""
+                "gap-2 px-6 py-2.5 h-auto bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:via-yellow-300 hover:to-amber-400 text-black font-semibold tracking-wide",
+                isHighEnd ? "shadow-lg shadow-amber-500/25" : ""
               )}
             >
-              {isLoadingTreino ? <Loader2 className="w-6 h-6 animate-spin" /> : <Play className="w-6 h-6" />}
-              RÁPIDO TREINO
+              {isLoadingTreino ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5 fill-current" />}
+              Rápido Treino
             </Button>
           </div>
 
