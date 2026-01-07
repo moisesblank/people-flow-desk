@@ -270,11 +270,19 @@ export function SimuladoFinishedScreen({
             </h3>
             <ScrollArea className="max-h-[300px]">
               <div className="grid grid-cols-1 gap-2 pr-2">
-                {questions.map((question, index) => {
-                  const studentAnswer = answers?.get(question.id)?.selectedOption;
-                  const correctAnswer = question.correct_answer;
-                  const isCorrect = studentAnswer === correctAnswer;
-                  const wasAnswered = !!studentAnswer;
+        {questions.map((question, index) => {
+                  const rawStudentAnswer = answers?.get(question.id)?.selectedOption;
+                  const correctAnswer = question.correct_answer?.toLowerCase();
+                  
+                  // Converter índice numérico para letra (0 -> a, 1 -> b, etc.)
+                  const studentAnswerAsLetter = rawStudentAnswer !== undefined && rawStudentAnswer !== null
+                    ? (isNaN(Number(rawStudentAnswer)) 
+                        ? rawStudentAnswer.toLowerCase() // Já é letra
+                        : String.fromCharCode(97 + Number(rawStudentAnswer))) // Índice -> letra
+                    : null;
+                  
+                  const isCorrect = studentAnswerAsLetter === correctAnswer;
+                  const wasAnswered = !!rawStudentAnswer;
                   
                   return (
                     <div 
@@ -332,13 +340,13 @@ export function SimuladoFinishedScreen({
                       )}
                       
                       {/* Student's Wrong Answer */}
-                      {wasAnswered && !isCorrect && studentAnswer && question.options && (
+                      {wasAnswered && !isCorrect && studentAnswerAsLetter && question.options && (
                         <div className="flex items-center gap-2 mt-1 p-2 rounded-md bg-red-500/5 border border-red-500/20">
                           <span className="flex-shrink-0 w-5 h-5 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-[10px] font-bold uppercase">
-                            {studentAnswer}
+                            {studentAnswerAsLetter}
                           </span>
                           <QuestionTextField 
-                            content={question.options[studentAnswer] || ""} 
+                            content={question.options[studentAnswerAsLetter] || question.options[rawStudentAnswer!] || ""} 
                             fieldType="alternativa"
                             className="text-xs text-red-400/70 flex-1 line-through"
                           />
