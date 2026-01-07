@@ -1024,8 +1024,9 @@ export default function AlunoQuestoes() {
   });
 
   // BLOCK_04: HEADER_CONTEXT - Estatísticas
+  // PATCH: stats.total usa totalCount (banco inteiro), não questions.length (página atual)
   const stats = useMemo(() => {
-    const total = questions.length;
+    const total = totalCount; // ← Contagem REAL do banco de dados
     const questionsAttempted = new Set(attempts.map(a => a.question_id));
     const resolvidas = questionsAttempted.size;
     const acertos = attempts.filter(a => a.is_correct).length;
@@ -1034,7 +1035,7 @@ export default function AlunoQuestoes() {
     const pendentes = total - resolvidas;
     
     return { total, resolvidas, acertos, erros, taxaAcerto, pendentes };
-  }, [questions, attempts]);
+  }, [totalCount, attempts]);
 
   // Map de tentativas por questão
   const attemptsByQuestion = useMemo(() => {
