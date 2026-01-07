@@ -192,8 +192,16 @@ serve(async (req) => {
       console.warn('[get-panda-signed-url] Erro ao buscar perfil:', profileErr);
     }
 
-    // P0 FIX: Criar JWT para DRM via API do Panda Video
-    // OBRIGATÓRIO: drm_group_id + exp + string1/2/3 (watermark)
+    // ============================================
+    // PANDA DRM VIA API — URL ASSINADA
+    // IMPORTANTE: no codebase existem DOIS formatos de URL:
+    //  (A) token+expires (HMAC do Panda) — usado em secure-video-url e video-authorize-omega
+    //  (B) watermark JWT (drm_group_id + exp + string1/2/3) — depende de configuração da conta
+    // Para eliminar inconsistência e reduzir risco de "This video encountered an error",
+    // retornamos como CANÔNICO o formato (A) e ainda geramos o JWT (B) para auditoria.
+    // ============================================
+
+    // (B) JWT (mantido para auditoria/telemetria)
     const pandaDrmGroupId = Deno.env.get('PANDA_DRM_GROUP_ID');
     if (!pandaDrmGroupId) {
       console.error('[get-panda-signed-url] PANDA_DRM_GROUP_ID não configurado');
@@ -204,21 +212,41 @@ serve(async (req) => {
     }
 
     const jwtPayload = {
-      drm_group_id: pandaDrmGroupId, // UUID do grupo de DRM (OBRIGATÓRIO)
+      drm_group_id: pandaDrmGroupId,
       exp: expiresAt,
-      // Watermark dinâmica: nome, últimos 4 dígitos CPF, email
       string1: userName,
       string2: userCpf ? userCpf.replace(/\D/g, '').slice(-4) : '',
       string3: userEmail,
     };
-    
-    const jwtToken = await createJWT(jwtPayload, pandaDrmSecret);
-    
-    console.log(`[get-panda-signed-url] JWT gerado com drm_group_id=${pandaDrmGroupId}, exp=${expiresAt}`);
 
-    // URL do player oficial do Panda com token DRM
+    const jwtToken = await createJWT(jwtPayload, pandaDrmSecret);
+
+    // (A) Token HMAC (canônico)
+    const encoder = new TextEncoder();
+    const dataToSign = encoder.encode(`${videoId}${expiresAt}`);
+    const keyData = encoder.encode(pandaDrmSecret);
+
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+
+    const signature = await crypto.subtle.sign('HMAC', cryptoKey, dataToSign);
+    const pandaToken = toBase64Url(signature);
+
+    console.log(
+      `[get-panda-signed-url] Tokens gerados: token(hmac)=${pandaToken.slice(0, 10)}..., jwt(drm_group_id)=${pandaDrmGroupId}, exp=${expiresAt}`
+    );
+
+    // URL do player oficial do Panda com token DRM (canônico)
     const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
-    const signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&watermark=${jwtToken}`;
+    const signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&token=${encodeURIComponent(pandaToken)}&expires=${expiresAt}`;
+
+    // Mantém também a variante por watermark JWT (para debug)
+    const signedUrlWatermarkJwt = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&watermark=${encodeURIComponent(jwtToken)}`;
 
     console.log(`[get-panda-signed-url] URL gerada para aula ${lessonId}`);
 
@@ -256,12 +284,17 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         signedUrl,
+        // debug (não usar no client por padrão)
+        debug: {
+          signedUrlWatermarkJwt,
+          drmGroupId: pandaDrmGroupId,
+        },
         expiresAt,
         videoId,
         ttlSeconds,
-        watermark: watermarkData
+        watermark: watermarkData,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
