@@ -1145,7 +1145,7 @@ export default function AlunoQuestoes() {
               className="gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold"
             >
               <Zap className="w-4 h-4" />
-              Rápido Treino
+              Criar Questões
               <Badge variant="secondary" className="ml-1 bg-black/20 text-white">
                 {Math.min(filteredQuestions.length, RAPIDO_TREINO_LIMIT)}
               </Badge>
