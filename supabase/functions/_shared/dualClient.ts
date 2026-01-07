@@ -7,7 +7,7 @@
 // 2) supabaseAdmin (service_role) → tarefas privilegiadas (Storage, etc)
 // ============================================
 
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
 /**
  * Resultado da criação de dual clients

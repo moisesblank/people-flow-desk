@@ -652,6 +652,7 @@ export const getFortressPandaUrl = (videoId: string, autoplay = false): string =
   });
 
   return getPandaEmbedUrl(videoId, params);
+};
 
 /**
  * Configuração padrão para YouTube IFrame API
