@@ -520,8 +520,9 @@ export const OmegaFortressPlayer = memo(({
         )}
 
         {/* Loading / Error gate */}
+        {/* PATCH: Para Panda, não bloquear por sessionLoading pois o iframe tem sua própria proteção */}
         <AnimatePresence>
-          {(isLoading || sessionLoading) && !showThumbnail && !sessionError && (
+          {(isLoading || (type !== "panda" && sessionLoading)) && !showThumbnail && !sessionError && (
             <motion.div
               className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 gap-4"
               initial={{ opacity: 0 }}
