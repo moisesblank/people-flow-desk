@@ -713,6 +713,33 @@ function QuestionSummaryCard({
       </div>
       
       {/* ═══════════════════════════════════════════════════════════════════════
+          🏷️ TAXONOMIA: Macro | Micro | Nível
+          Constituição SYNAPSE Ω v10.4 | QUESTION IDENTITY
+          ═══════════════════════════════════════════════════════════════════════ */}
+      <div className="flex flex-wrap items-center gap-2 mb-3 pl-11">
+        {question.macro && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-purple-500/20 text-purple-400 border border-purple-500/30">
+            {question.macro}
+          </span>
+        )}
+        {question.micro && (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+            {question.micro}
+          </span>
+        )}
+        {question.difficulty && (
+          <span className={cn(
+            "inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border",
+            question.difficulty === 'facil' && "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+            question.difficulty === 'medio' && "bg-amber-500/20 text-amber-400 border-amber-500/30",
+            question.difficulty === 'dificil' && "bg-red-500/20 text-red-400 border-red-500/30"
+          )}>
+            {question.difficulty === 'facil' ? '🟢 Fácil' : question.difficulty === 'medio' ? '🟡 Médio' : '🔴 Difícil'}
+          </span>
+        )}
+      </div>
+      
+      {/* ═══════════════════════════════════════════════════════════════════════
           🎯 RESPOSTA DO ALUNO (SEMPRE VISÍVEL) — Registro Permanente
           Constituição SYNAPSE Ω v10.4 | TEMPORAL TRUTH BINDING
           ═══════════════════════════════════════════════════════════════════════ */}
