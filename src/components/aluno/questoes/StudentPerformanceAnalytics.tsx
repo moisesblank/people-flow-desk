@@ -436,8 +436,11 @@ export function StudentPerformanceAnalytics() {
   
   const { data: taxonomyData, isLoading } = useStudentTaxonomyPerformance(user?.id);
 
-  const [expandedMacros, setExpandedMacros] = useState<Set<string>>(new Set());
-  const [showCharts, setShowCharts] = useState(false);
+  // Inicializa com todos os macros expandidos
+  const [expandedMacros, setExpandedMacros] = useState<Set<string>>(() => 
+    new Set(["Química Geral", "Físico-Química", "Química Orgânica", "Química Ambiental", "Bioquímica"])
+  );
+  const [showCharts, setShowCharts] = useState(true); // Charts visíveis por padrão
 
   const toggleMacro = useCallback((name: string) => {
     setExpandedMacros(prev => {
