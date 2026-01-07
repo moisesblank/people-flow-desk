@@ -360,6 +360,7 @@ interface SimuladoCardProps {
 const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, shouldAnimate = true, index = 0 }: SimuladoCardProps) {
   const hasRunningAttempt = simulado.user_attempt?.status === "RUNNING";
   const isRetake = simulado.user_attempt && !simulado.user_attempt.is_scored_for_ranking;
+  const isHardMode = simulado.is_hard_mode;
 
   return (
     <div 
@@ -369,9 +370,15 @@ const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, shouldAnima
       )}
       style={shouldAnimate ? { animationDelay: `${index * 50}ms` } : undefined}
     >
-      <div className="stat-orb-2300 h-full flex flex-col">
-        {/* Glowing Top Border */}
-        <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent" />
+      <div className={cn(
+        "stat-orb-2300 h-full flex flex-col",
+        isHardMode && "border-red-500/30"
+      )}>
+        {/* Glowing Top Border - Conditioned by mode */}
+        <div className={cn(
+          "absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent to-transparent",
+          isHardMode ? "via-red-500/60" : "via-emerald-500/60"
+        )} />
         
         {/* Header Badges */}
         <div className="flex items-center gap-2 flex-wrap mb-4">
@@ -402,7 +409,10 @@ const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, shouldAnima
 
         {/* Title & Description */}
         <div className="flex-1">
-          <h3 className="text-lg font-bold text-foreground group-hover:text-emerald-400 transition-colors mb-2">
+          <h3 className={cn(
+            "text-lg font-bold text-foreground transition-colors mb-2",
+            isHardMode ? "group-hover:text-red-400" : "group-hover:text-emerald-400"
+          )}>
             {simulado.title}
           </h3>
           {simulado.description && (
@@ -447,7 +457,9 @@ const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, shouldAnima
               "ml-auto transition-all duration-300",
               hasRunningAttempt 
                 ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-[0_0_20px_hsl(45,100%,50%,0.3)]"
-                : "bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 shadow-[0_0_20px_hsl(160,100%,50%,0.3)]"
+                : isHardMode
+                  ? "bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 shadow-[0_0_20px_hsl(0,100%,50%,0.3)]"
+                  : "bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 shadow-[0_0_20px_hsl(160,100%,50%,0.3)]"
             )}
           >
             <Play className="w-4 h-4 mr-2" />
