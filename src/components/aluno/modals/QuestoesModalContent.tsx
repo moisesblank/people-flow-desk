@@ -66,6 +66,32 @@ export const QuestoesModalContent = memo(function QuestoesModalContent() {
   const queryClient = useQueryClient();
   const { macros, getMicrosForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
 
+  // ==========================================================
+  // PATCH: Compatibilidade Taxonomy(value) x Questões(label)
+  // Os Selects usam `value`, mas a tabela quiz_questions guarda labels.
+  // ==========================================================
+  const stripTaxLabel = useCallback((label?: string | null) => {
+    if (!label) return '';
+    return label.replace(/^[^\p{L}\p{N}]+/gu, '').trim();
+  }, []);
+
+  const getMacroLabelForDb = useCallback(
+    (macroValue: string) => {
+      const found = macros.find((m) => m.value === macroValue);
+      return stripTaxLabel(found?.label) || macroValue;
+    },
+    [macros, stripTaxLabel]
+  );
+
+  const getMicroLabelForDb = useCallback(
+    (macroValue: string, microValue: string) => {
+      const micros = getMicrosForSelect(macroValue === 'todas' ? '' : macroValue);
+      const found = micros.find((m) => m.value === microValue);
+      return stripTaxLabel(found?.label) || microValue;
+    },
+    [getMicrosForSelect, stripTaxLabel]
+  );
+
   // Filtros rápidos
   const [filterMacro, setFilterMacro] = useState("todas");
   const [filterMicro, setFilterMicro] = useState("todas");
@@ -125,20 +151,22 @@ export const QuestoesModalContent = memo(function QuestoesModalContent() {
     return { total, resolvidas, acertos, taxaAcerto };
   }, [questions, attempts]);
 
-  // Questões filtradas
+  // Questões filtradas (usando labels para compatibilidade com o banco)
   const filteredQuestions = useMemo(() => {
     let filtered = [...questions];
     if (filterMacro !== 'todas') {
-      filtered = filtered.filter(q => q.macro === filterMacro);
+      const macroLabel = getMacroLabelForDb(filterMacro);
+      filtered = filtered.filter(q => q.macro === macroLabel);
     }
     if (filterMicro !== 'todas') {
-      filtered = filtered.filter(q => q.micro === filterMicro);
+      const microLabel = getMicroLabelForDb(filterMacro, filterMicro);
+      filtered = filtered.filter(q => q.micro === microLabel);
     }
     if (filterDifficulty !== 'todas') {
       filtered = filtered.filter(q => q.difficulty === filterDifficulty);
     }
     return filtered;
-  }, [questions, filterMacro, filterMicro, filterDifficulty]);
+  }, [questions, filterMacro, filterMicro, filterDifficulty, getMacroLabelForDb, getMicroLabelForDb]);
 
   // Iniciar treino
   const handleStartTraining = useCallback(() => {
