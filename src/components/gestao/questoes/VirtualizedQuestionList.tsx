@@ -86,7 +86,7 @@ interface VirtualizedQuestionListProps {
 // CONSTANTES DE VIRTUALIZAÇÃO
 // ============================================
 
-const ITEM_HEIGHT = 420; // Altura estimada de cada card (px) - aumentado para exibir até tags
+const ITEM_HEIGHT = 260; // Altura compacta - enunciado mínimo + tags visíveis
 const OVERSCAN = 5; // Itens extras acima/abaixo da viewport
 const CONTAINER_HEIGHT = 'calc(100vh - 400px)'; // Altura do container scrollável
 
@@ -154,7 +154,7 @@ const QuestionItem = memo(function QuestionItem({
             )}
           </div>
 
-          {/* Enunciado com Imagem */}
+          {/* Enunciado MÍNIMO - apenas preview */}
           <QuestionEnunciado
             questionText={question.question_text}
             imageUrl={question.image_url}
@@ -162,15 +162,17 @@ const QuestionItem = memo(function QuestionItem({
             banca={question.banca}
             ano={question.ano}
             textSize="sm"
-            compact={false}
-            hideHeader={false}
-            maxImageHeight="max-h-40"
+            compact={true}
+            hideHeader={true}
+            maxImageHeight="max-h-16"
             showImageLabel={false}
-            className="mb-2 line-clamp-6"
+            className="mb-2 line-clamp-2"
           />
 
-          {/* Badge de Modo (Tags cinza) */}
-          <QuestionModeBadge tags={question.tags} />
+          {/* Badge de Modo (Tags cinza) - SEMPRE VISÍVEL */}
+          <div className="mt-auto pt-2">
+            <QuestionModeBadge tags={question.tags} />
+          </div>
         </div>
 
         {/* Right: Ações Rápidas */}
