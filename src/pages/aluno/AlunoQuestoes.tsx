@@ -1336,6 +1336,7 @@ export default function AlunoQuestoes() {
         <div className="relative p-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full grid grid-cols-5 gap-2 bg-transparent h-auto p-0">
+              {/* Disponíveis - Total do banco MODO_TREINO */}
               <TabsTrigger 
                 value="todas" 
                 className={cn(
@@ -1346,12 +1347,13 @@ export default function AlunoQuestoes() {
                 )}
               >
                 <BookOpen className="h-4 w-4" />
-                <span className="hidden sm:inline">Todas</span>
+                <span className="hidden sm:inline">Disponíveis</span>
                 <Badge variant="secondary" className={cn(
                   "ml-1",
                   isHighEnd && activeTab === 'todas' && "bg-amber-500/20 text-amber-300 border-amber-500/30"
                 )}>{stats.total}</Badge>
               </TabsTrigger>
+              {/* Pendentes - Ainda não feitas */}
               <TabsTrigger 
                 value="pendentes" 
                 className={cn(
@@ -1368,6 +1370,7 @@ export default function AlunoQuestoes() {
                   isHighEnd && activeTab === 'pendentes' && "bg-slate-500/20 text-slate-300 border-slate-500/30"
                 )}>{stats.pendentes}</Badge>
               </TabsTrigger>
+              {/* Resolvidas - Questões que o aluno fez no MODO_TREINO */}
               <TabsTrigger 
                 value="resolvidas" 
                 className={cn(
@@ -1384,36 +1387,38 @@ export default function AlunoQuestoes() {
                   isHighEnd && activeTab === 'resolvidas' && "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
                 )}>{stats.resolvidas}</Badge>
               </TabsTrigger>
+              {/* Corretas - Acertos no MODO_TREINO (verde) */}
               <TabsTrigger 
                 value="acertos" 
                 className={cn(
-                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium",
+                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-green-500",
                   isHighEnd 
-                    ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500/20 data-[state=active]:to-emerald-500/10 data-[state=active]:border data-[state=active]:border-green-400/30 text-green-500 hover:bg-green-500/5" 
-                    : "data-[state=active]:bg-green-500/10 text-green-600"
+                    ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500/20 data-[state=active]:to-emerald-500/10 data-[state=active]:border data-[state=active]:border-green-400/30 hover:bg-green-500/5" 
+                    : "data-[state=active]:bg-green-500/10"
                 )}
               >
-                <Star className="h-4 w-4" />
-                <span className="hidden sm:inline">Corretas</span>
+                <Star className="h-4 w-4 text-green-500" />
+                <span className="hidden sm:inline text-green-500">Corretas</span>
                 <Badge variant="secondary" className={cn(
-                  "ml-1",
-                  isHighEnd && activeTab === 'acertos' && "bg-green-500/20 text-green-300 border-green-500/30"
+                  "ml-1 bg-green-500/20 text-green-400 border-green-500/30",
+                  isHighEnd && activeTab === 'acertos' && "bg-green-500/30 text-green-300"
                 )}>{stats.acertos}</Badge>
               </TabsTrigger>
+              {/* Erradas - Erros no MODO_TREINO (vermelho) */}
               <TabsTrigger 
                 value="erros" 
                 className={cn(
-                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium",
+                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium text-red-500",
                   isHighEnd 
-                    ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500/20 data-[state=active]:to-rose-500/10 data-[state=active]:border data-[state=active]:border-red-400/30 text-red-500 hover:bg-red-500/5" 
-                    : "data-[state=active]:bg-red-500/10 text-red-600"
+                    ? "data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500/20 data-[state=active]:to-rose-500/10 data-[state=active]:border data-[state=active]:border-red-400/30 hover:bg-red-500/5" 
+                    : "data-[state=active]:bg-red-500/10"
                 )}
               >
-                <AlertCircle className="h-4 w-4" />
-                <span className="hidden sm:inline">Erradas</span>
+                <AlertCircle className="h-4 w-4 text-red-500" />
+                <span className="hidden sm:inline text-red-500">Erradas</span>
                 <Badge variant="secondary" className={cn(
-                  "ml-1",
-                  isHighEnd && activeTab === 'erros' && "bg-red-500/20 text-red-300 border-red-500/30"
+                  "ml-1 bg-red-500/20 text-red-400 border-red-500/30",
+                  isHighEnd && activeTab === 'erros' && "bg-red-500/30 text-red-300"
                 )}>{stats.erros}</Badge>
               </TabsTrigger>
             </TabsList>
