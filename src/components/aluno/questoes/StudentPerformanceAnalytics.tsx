@@ -665,14 +665,19 @@ export function StudentPerformanceAnalytics() {
       {/* Charts - Lazy loaded */}
       {showCharts && (
         <Suspense fallback={
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Skeleton className="h-[280px] rounded-2xl" />
-            <Skeleton className="h-[280px] rounded-2xl" />
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Skeleton className="h-[320px] rounded-2xl" />
+              <Skeleton className="h-[320px] rounded-2xl" />
+            </div>
+            <Skeleton className="h-[300px] rounded-2xl" />
+            <Skeleton className="h-[380px] rounded-2xl" />
           </div>
         }>
           <LazyCharts 
             macros={processedData.macros} 
             micros={processedData.allMicros.slice(0, MAX_ITEMS_PER_CATEGORY)}
+            temas={processedData.allTemas.slice(0, MAX_ITEMS_PER_CATEGORY)}
             isLowEnd={perfConfig.isLowEnd}
           />
         </Suspense>
