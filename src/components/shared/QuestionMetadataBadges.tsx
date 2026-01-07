@@ -139,10 +139,12 @@ export function QuestionMetadataBadges({
           </Badge>
         )}
         
-        {/* Tipo de Questão */}
-        <Badge className="text-sm px-4 py-1.5 bg-primary/80 text-primary-foreground border-0 font-semibold flex items-center gap-1">
-          ⭐ {getQuestionTypeLabel(question.question_type)}
-        </Badge>
+        {/* Tipo de Questão - só mostra se tiver tipo definido */}
+        {question.question_type && question.question_type !== 'outros' && (
+          <Badge className="text-sm px-4 py-1.5 bg-primary/80 text-primary-foreground border-0 font-semibold flex items-center gap-1">
+            ⭐ {getQuestionTypeLabel(question.question_type)}
+          </Badge>
+        )}
         
         {/* MACRO (Identidade Principal) */}
         <Badge className={cn("text-sm px-4 py-1.5 border-0 font-bold", macroConfig.badge)}>
