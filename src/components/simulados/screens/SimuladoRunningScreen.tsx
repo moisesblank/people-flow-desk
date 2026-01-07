@@ -88,7 +88,15 @@ export function SimuladoRunningScreen({
   isSaving,
   isFinishing,
 }: SimuladoRunningScreenProps) {
-  const { isLowEnd } = useConstitutionPerformance();
+  // 🏛️ CONSTITUIÇÃO - Performance Tiering completo
+  const { 
+    isLowEnd, 
+    shouldAnimate, 
+    shouldBlur, 
+    shouldShowShadows,
+    shouldShowGradients,
+    getBlurClass 
+  } = useConstitutionPerformance();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showFinishDialog, setShowFinishDialog] = useState(false);
   const [selectingOption, setSelectingOption] = useState<string | null>(null);
@@ -181,7 +189,7 @@ export function SimuladoRunningScreen({
   return (
     <div className="flex flex-col h-full bg-zinc-950 relative overflow-hidden">
       {/* === BACKGROUND EFFECTS === */}
-      {!isLowEnd && (
+      {!isLowEnd && shouldShowGradients && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {/* Ambient glow */}
           <div className="absolute top-0 left-1/4 w-[600px] h-[400px] bg-cyan-500/5 rounded-full blur-[150px]" />
@@ -202,7 +210,10 @@ export function SimuladoRunningScreen({
       )}
 
       {/* === HEADER HUD === */}
-      <div className="relative z-10 border-b border-cyan-500/20 bg-zinc-950/90 backdrop-blur-xl">
+      <div className={cn(
+        "relative z-10 border-b border-cyan-500/20 bg-zinc-950/90",
+        shouldBlur && "backdrop-blur-xl"
+      )}>
         <div className="px-4 py-3">
           <div className="flex items-center gap-4">
             {/* Exit Button */}
@@ -261,8 +272,8 @@ export function SimuladoRunningScreen({
         isTimeWarning && !isTimeCritical && "bg-gradient-to-r from-amber-950/60 via-amber-900/70 to-amber-950/60",
         !isTimeWarning && !isTimeCritical && "bg-gradient-to-r from-zinc-900/80 via-zinc-800/90 to-zinc-900/80"
       )}>
-        {/* Glow effect */}
-        {!isLowEnd && (
+        {/* Glow effect - only on high-end with gradients */}
+        {!isLowEnd && shouldShowGradients && (
           <div className={cn(
             "absolute inset-0 opacity-50",
             isTimeCritical && "bg-gradient-to-r from-transparent via-red-500/20 to-transparent animate-pulse",
@@ -270,17 +281,18 @@ export function SimuladoRunningScreen({
           )} />
         )}
         
-        {/* Timer Content */}
         <div className="relative flex items-center gap-4">
           <div className={cn(
             "w-10 h-10 rounded-xl flex items-center justify-center border transition-all",
-            isTimeCritical && "bg-red-500/30 border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.4)]",
+            isTimeCritical && "bg-red-500/30 border-red-500/50",
+            isTimeCritical && shouldShowShadows && "shadow-[0_0_20px_rgba(239,68,68,0.4)]",
             isTimeWarning && !isTimeCritical && "bg-amber-500/20 border-amber-500/40",
             !isTimeWarning && !isTimeCritical && "bg-cyan-500/10 border-cyan-500/30"
           )}>
             <Clock className={cn(
               "h-5 w-5 transition-colors",
-              isTimeCritical && "text-red-400 animate-pulse",
+              isTimeCritical && "text-red-400",
+              isTimeCritical && shouldAnimate && "animate-pulse",
               isTimeWarning && !isTimeCritical && "text-amber-400",
               !isTimeWarning && !isTimeCritical && "text-cyan-400"
             )} />
@@ -314,25 +326,34 @@ export function SimuladoRunningScreen({
 
       {/* === CONTEÚDO PRINCIPAL === */}
       <div className="flex-1 flex overflow-hidden p-4 gap-4 relative z-10">
-        {/* Coluna Principal - Questão */}
         <div className="flex-1 overflow-y-auto">
           <div className="relative">
-            {/* Card Glow Border */}
-            {!isLowEnd && (
+            {/* Card Glow Border - only on high-end with shadows */}
+            {!isLowEnd && shouldShowShadows && (
               <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-br from-cyan-500/30 via-green-500/20 to-purple-500/30 opacity-60 blur-sm" />
             )}
             
             {/* Main Card */}
-            <div className="relative rounded-2xl bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/60 overflow-hidden shadow-2xl">
+            <div className={cn(
+              "relative rounded-2xl bg-zinc-900/95 border border-zinc-800/60 overflow-hidden",
+              shouldBlur && "backdrop-blur-xl",
+              shouldShowShadows && "shadow-2xl"
+            )}>
               {/* Question Header HUD */}
-              <div className="px-6 py-4 border-b border-zinc-800/50 bg-gradient-to-r from-zinc-900/80 via-zinc-950 to-zinc-900/80">
+              <div className={cn(
+                "px-6 py-4 border-b border-zinc-800/50",
+                shouldShowGradients && "bg-gradient-to-r from-zinc-900/80 via-zinc-950 to-zinc-900/80"
+              )}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.4)]">
+                      <div className={cn(
+                        "w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center",
+                        shouldShowShadows && "shadow-[0_0_20px_rgba(34,197,94,0.4)]"
+                      )}>
                         <span className="text-xl font-black text-white">{currentIndex + 1}</span>
                       </div>
-                      {!isLowEnd && <div className="absolute inset-0 rounded-xl bg-green-400/30 blur-md" />}
+                      {!isLowEnd && shouldShowShadows && <div className="absolute inset-0 rounded-xl bg-green-400/30 blur-md" />}
                     </div>
                     <div>
                       <p className="text-xs uppercase tracking-widest text-green-400 font-bold">
@@ -397,13 +418,13 @@ export function SimuladoRunningScreen({
                           "relative w-full rounded-xl transition-all duration-300 flex items-center justify-between gap-3 group",
                           // Eliminada
                           isEliminated && "opacity-40",
-                          // Selecionada - Glow verde
-                          isSelected && !isEliminated && "shadow-[0_0_25px_rgba(34,197,94,0.3)]",
+                          // Selecionada - Glow verde (apenas se shadows ativo)
+                          isSelected && !isEliminated && shouldShowShadows && "shadow-[0_0_25px_rgba(34,197,94,0.3)]",
                           isSelecting && "opacity-50"
                         )}
                       >
-                        {/* Border glow para selecionada */}
-                        {isSelected && !isEliminated && !isLowEnd && (
+                        {/* Border glow para selecionada - apenas high-end com shadows */}
+                        {isSelected && !isEliminated && !isLowEnd && shouldShowShadows && (
                           <div className="absolute -inset-[1px] rounded-xl bg-gradient-to-r from-green-500/50 via-green-400/30 to-green-500/50 blur-sm" />
                         )}
                         
@@ -425,12 +446,14 @@ export function SimuladoRunningScreen({
                               isEliminated && "cursor-not-allowed"
                             )}
                           >
-                            {/* Letra Badge */}
                             <div
                               className={cn(
                                 "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-all font-black text-lg border",
                                 isSelected 
-                                  ? "bg-gradient-to-br from-green-500 to-green-600 text-white border-green-400/50 shadow-[0_0_15px_rgba(34,197,94,0.5)]" 
+                                  ? cn(
+                                      "bg-gradient-to-br from-green-500 to-green-600 text-white border-green-400/50",
+                                      shouldShowShadows && "shadow-[0_0_15px_rgba(34,197,94,0.5)]"
+                                    )
                                   : "bg-zinc-800 text-zinc-300 border-zinc-700/50 group-hover:border-cyan-500/40 group-hover:text-cyan-400",
                                 isEliminated && "bg-zinc-900 text-zinc-600 border-zinc-800"
                               )}
@@ -494,7 +517,10 @@ export function SimuladoRunningScreen({
                     <Button
                       onClick={goToNext}
                       disabled={currentIndex === questions.length - 1}
-                      className="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+                      className={cn(
+                        "bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400",
+                        shouldShowShadows && "shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+                      )}
                     >
                       Próxima
                       <ChevronRight className="h-4 w-4 ml-1" />
@@ -504,7 +530,10 @@ export function SimuladoRunningScreen({
                   <Button
                     onClick={() => setShowFinishDialog(true)}
                     disabled={isFinishing}
-                    className="bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 shadow-[0_0_15px_rgba(34,197,94,0.4)]"
+                    className={cn(
+                      "bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400",
+                      shouldShowShadows && "shadow-[0_0_15px_rgba(34,197,94,0.4)]"
+                    )}
                   >
                     <Flag className="h-4 w-4 mr-2" />
                     Finalizar Simulado
@@ -533,7 +562,7 @@ export function SimuladoRunningScreen({
       </div>
 
       {/* Navegação Mobile */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 border-t border-cyan-500/20 p-3 bg-zinc-950/95 backdrop-blur-xl z-20">
+      <div className={cn("lg:hidden fixed bottom-0 left-0 right-0 border-t border-cyan-500/20 p-3 bg-zinc-950/95 z-20", shouldBlur && "backdrop-blur-xl")}>
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
