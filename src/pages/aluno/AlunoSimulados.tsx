@@ -212,19 +212,76 @@ export default function AlunoSimulados() {
                 shouldAnimate={shouldAnimate}
               />
             ) : (
-              <div className={cn(
-                "grid gap-6 md:grid-cols-2 lg:grid-cols-3",
-                shouldAnimate && "animate-fade-in"
-              )}>
-                {simuladosData?.available.map((simulado, index) => (
-                  <SimuladoCard
-                    key={simulado.id}
-                    simulado={simulado}
-                    onStart={() => handleSelectSimulado(simulado.id)}
-                    shouldAnimate={shouldAnimate}
-                    index={index}
-                  />
-                ))}
+              <div className="space-y-8">
+                {/* Agrupa por modo: Hard primeiro, depois Normal */}
+                {(() => {
+                  const hardSimulados = simuladosData?.available.filter(s => s.is_hard_mode) || [];
+                  const normalSimulados = simuladosData?.available.filter(s => !s.is_hard_mode) || [];
+                  
+                  return (
+                    <>
+                      {/* Seção Hard Mode */}
+                      {hardSimulados.length > 0 && (
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-3 px-2">
+                            <div className="p-2 rounded-xl bg-gradient-to-br from-red-500/30 to-orange-500/30 border border-red-500/40">
+                              <Flame className="w-5 h-5 text-red-400" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold text-red-400">Hard Mode</h3>
+                              <p className="text-xs text-muted-foreground">{hardSimulados.length} simulado{hardSimulados.length > 1 ? 's' : ''} de alto desafio</p>
+                            </div>
+                          </div>
+                          <div className={cn(
+                            "grid gap-6 md:grid-cols-2 lg:grid-cols-3 p-4 rounded-2xl",
+                            "bg-gradient-to-br from-red-500/5 to-orange-500/5 border border-red-500/20",
+                            shouldAnimate && "animate-fade-in"
+                          )}>
+                            {hardSimulados.map((simulado, index) => (
+                              <SimuladoCard
+                                key={simulado.id}
+                                simulado={simulado}
+                                onStart={() => handleSelectSimulado(simulado.id)}
+                                shouldAnimate={shouldAnimate}
+                                index={index}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Seção Normal Mode */}
+                      {normalSimulados.length > 0 && (
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-3 px-2">
+                            <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/30 to-cyan-500/30 border border-emerald-500/40">
+                              <FileText className="w-5 h-5 text-emerald-400" />
+                            </div>
+                            <div>
+                              <h3 className="text-lg font-bold text-emerald-400">Modo Normal</h3>
+                              <p className="text-xs text-muted-foreground">{normalSimulados.length} simulado{normalSimulados.length > 1 ? 's' : ''} padrão</p>
+                            </div>
+                          </div>
+                          <div className={cn(
+                            "grid gap-6 md:grid-cols-2 lg:grid-cols-3 p-4 rounded-2xl",
+                            "bg-gradient-to-br from-emerald-500/5 to-cyan-500/5 border border-emerald-500/20",
+                            shouldAnimate && "animate-fade-in"
+                          )}>
+                            {normalSimulados.map((simulado, index) => (
+                              <SimuladoCard
+                                key={simulado.id}
+                                simulado={simulado}
+                                onStart={() => handleSelectSimulado(simulado.id)}
+                                shouldAnimate={shouldAnimate}
+                                index={index + hardSimulados.length}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
           </TabsContent>
