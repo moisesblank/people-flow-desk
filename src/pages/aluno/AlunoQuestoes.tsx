@@ -570,29 +570,50 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
               })}
             </RadioGroup>
 
-            {/* Resultado */}
+            {/* Resultado + Resolução Completa (OBRIGATÓRIO após responder) */}
             {showResult && (
-              <div className={cn(
-                "p-4 rounded-xl border-2",
-                selectedOption === currentQuestion.correct_answer
-                  ? "bg-green-500/10 border-green-500"
-                  : "bg-red-500/10 border-red-500"
-              )}>
-                <div className="flex items-center gap-3">
-                  {selectedOption === currentQuestion.correct_answer ? (
-                    <>
-                      <CheckCircle2 className="h-6 w-6 text-green-500" />
-                      <p className="font-bold text-green-600">Correto!</p>
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="h-6 w-6 text-red-500" />
-                      <p className="font-bold text-red-600">
-                        Incorreto. Resposta: {currentQuestion.correct_answer.toUpperCase()}
-                      </p>
-                    </>
-                  )}
+              <div className="space-y-4">
+                <div className={cn(
+                  "p-4 rounded-xl border-2",
+                  selectedOption === currentQuestion.correct_answer
+                    ? "bg-green-500/10 border-green-500"
+                    : "bg-red-500/10 border-red-500"
+                )}>
+                  <div className="flex items-center gap-3">
+                    {selectedOption === currentQuestion.correct_answer ? (
+                      <>
+                        <CheckCircle2 className="h-6 w-6 text-green-500" />
+                        <p className="font-bold text-green-600">Correto!</p>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-6 w-6 text-red-500" />
+                        <p className="font-bold text-red-600">
+                          Incorreto. Resposta: {currentQuestion.correct_answer.toUpperCase()}
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </div>
+
+                {/* Gabarito completo: Resolução Comentada + metadados (se houver) */}
+                {currentQuestion.explanation ? (
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+                    <QuestionResolution
+                      resolutionText={currentQuestion.explanation}
+                      banca={currentQuestion.banca}
+                      ano={currentQuestion.ano}
+                      difficulty={currentQuestion.difficulty}
+                      tema={currentQuestion.tema}
+                      macro={currentQuestion.macro}
+                      micro={currentQuestion.micro}
+                    />
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-xl border bg-muted/50 text-sm text-muted-foreground">
+                    Resolução comentada não disponível para esta questão.
+                  </div>
+                )}
               </div>
             )}
           </div>
