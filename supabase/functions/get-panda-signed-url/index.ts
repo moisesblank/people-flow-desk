@@ -241,14 +241,28 @@ serve(async (req) => {
       `[get-panda-signed-url] Tokens gerados: token(hmac)=${pandaToken.slice(0, 10)}..., jwt(drm_group_id)=${pandaDrmGroupId}, exp=${expiresAt}`
     );
 
-    // URL do player oficial do Panda com token DRM (canônico)
+    // URL do player oficial do Panda
     const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
-    const signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&token=${encodeURIComponent(pandaToken)}&expires=${expiresAt}`;
-
-    // Mantém também a variante por watermark JWT (para debug)
+    
+    // ============================================
+    // DESCOBERTA CRÍTICA: No site antigo (old.moisesmedeiros.com.br),
+    // o player funcionava SÓ COM O UUID, sem token/assinatura!
+    // Isso indica que a conta Panda usa PROTEÇÃO POR DOMÍNIO (whitelist),
+    // não necessariamente DRM via API com token obrigatório.
+    // 
+    // ESTRATÉGIA: Retornar URL SIMPLES (como site antigo) como canônica.
+    // Se o domínio pro.moisesmedeiros.com.br estiver na whitelist, funciona.
+    // ============================================
+    
+    // URL SIMPLES (como site antigo funcionava)
+    const signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}`;
+    
+    // Alternativas com tokens (para debug/fallback)
+    const signedUrlWithHmac = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&token=${encodeURIComponent(pandaToken)}&expires=${expiresAt}`;
     const signedUrlWatermarkJwt = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&watermark=${encodeURIComponent(jwtToken)}`;
 
-    console.log(`[get-panda-signed-url] URL gerada para aula ${lessonId}`);
+    console.log(`[get-panda-signed-url] URL SIMPLES gerada (como site antigo): ${signedUrl}`);
+    console.log(`[get-panda-signed-url] Alternativas: HMAC=${signedUrlWithHmac.slice(0,80)}..., JWT=${signedUrlWatermarkJwt.slice(0,80)}...`);
 
     // C064: Registrar acesso via função com detecção de anomalia
     try {
@@ -286,10 +300,12 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         signedUrl,
-        // debug (não usar no client por padrão)
+        // Alternativas para teste manual (debug)
         debug: {
+          signedUrlWithHmac,
           signedUrlWatermarkJwt,
           drmGroupId: pandaDrmGroupId,
+          nota: 'Se signedUrl não funcionar, teste signedUrlWithHmac ou signedUrlWatermarkJwt no navegador',
         },
         expiresAt,
         videoId,
