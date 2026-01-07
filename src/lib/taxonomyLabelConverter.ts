@@ -28,6 +28,12 @@ export interface TaxonomySelectItem {
 /**
  * Converte o value de um macro select para o label armazenado no banco
  */
+/**
+ * Converte o value de um macro select para o label armazenado no banco
+ * 
+ * LEI SUPREMA: NUNCA expor VALUE se LABEL não for encontrado.
+ * Retorna string vazia se não encontrar - o componente deve tratar esse caso.
+ */
 export function convertMacroValueToLabel(
   macroValue: string,
   macros: TaxonomySelectItem[]
@@ -36,11 +42,15 @@ export function convertMacroValueToLabel(
     return macroValue;
   }
   const found = macros.find(m => m.value === macroValue);
-  return stripTaxonomyEmoji(found?.label) || macroValue;
+  // PROIBIDO: fallback para macroValue (exposição de VALUE)
+  return stripTaxonomyEmoji(found?.label) || '';
 }
 
 /**
  * Converte o value de um micro select para o label armazenado no banco
+ * 
+ * LEI SUPREMA: NUNCA expor VALUE se LABEL não for encontrado.
+ * Retorna string vazia se não encontrar - o componente deve tratar esse caso.
  */
 export function convertMicroValueToLabel(
   microValue: string,
@@ -53,11 +63,17 @@ export function convertMicroValueToLabel(
   const effectiveMacro = macroValue === 'todas' || macroValue === 'all' ? '' : macroValue;
   const micros = getMicrosForSelect(effectiveMacro);
   const found = micros.find(m => m.value === microValue);
-  return stripTaxonomyEmoji(found?.label) || microValue;
+  // PROIBIDO: fallback para microValue (exposição de VALUE)
+  return stripTaxonomyEmoji(found?.label) || '';
 }
 
 /**
  * Converte o value de um tema select para o label armazenado no banco
+ */
+/**
+ * Converte o value de um tema select para o label armazenado no banco
+ * 
+ * LEI SUPREMA: NUNCA expor VALUE se LABEL não for encontrado.
  */
 export function convertTemaValueToLabel(
   temaValue: string,
@@ -70,11 +86,14 @@ export function convertTemaValueToLabel(
   const effectiveMicro = microValue === 'todas' || microValue === 'all' ? '' : microValue;
   const temas = getTemasForSelect(effectiveMicro);
   const found = temas.find(t => t.value === temaValue);
-  return stripTaxonomyEmoji(found?.label) || temaValue;
+  // PROIBIDO: fallback para temaValue (exposição de VALUE)
+  return stripTaxonomyEmoji(found?.label) || '';
 }
 
 /**
  * Converte o value de um subtema select para o label armazenado no banco
+ * 
+ * LEI SUPREMA: NUNCA expor VALUE se LABEL não for encontrado.
  */
 export function convertSubtemaValueToLabel(
   subtemaValue: string,
@@ -87,7 +106,8 @@ export function convertSubtemaValueToLabel(
   const effectiveTema = temaValue === 'todas' || temaValue === 'all' ? '' : temaValue;
   const subtemas = getSubtemasForSelect(effectiveTema);
   const found = subtemas.find(s => s.value === subtemaValue);
-  return stripTaxonomyEmoji(found?.label) || subtemaValue;
+  // PROIBIDO: fallback para subtemaValue (exposição de VALUE)
+  return stripTaxonomyEmoji(found?.label) || '';
 }
 
 /**

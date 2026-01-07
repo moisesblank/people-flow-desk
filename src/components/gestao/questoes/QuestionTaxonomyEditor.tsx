@@ -146,9 +146,9 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
     tema !== (currentTema || '') ||
     subtema !== (currentSubtema || '');
   
-  // Get label for display
-  const getTemaLabel = (value: string) => allTemas.find(t => t.value === value)?.label || value;
-  const getSubtemaLabel = (value: string) => allSubtemas.find(s => s.value === value)?.label || value;
+  // Get label for display - LEI SUPREMA: NUNCA expor VALUE
+  const getTemaLabel = (value: string) => allTemas.find(t => t.value === value)?.label || 'Carregando...';
+  const getSubtemaLabel = (value: string) => allSubtemas.find(s => s.value === value)?.label || 'Carregando...';
   
   return (
     <Card className={cn("border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-orange-500/5", className)}>
@@ -386,14 +386,16 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
                 <div className="flex items-center gap-1 flex-wrap text-sm">
                   {macro && (
                     <Badge variant="outline" className="border-amber-500/50 text-amber-500">
-                      {macros.find(m => m.value === macro)?.label || macro}
+                      {/* LEI SUPREMA: Só exibe LABEL, nunca VALUE */}
+                      {macros.find(m => m.value === macro)?.label || 'Carregando...'}
                     </Badge>
                   )}
                   {micro && (
                     <>
                       <ChevronRight className="h-3 w-3 text-muted-foreground" />
                       <Badge variant="outline" className="border-orange-500/50 text-orange-500">
-                        {microOptions.find(m => m.value === micro)?.label || micro}
+                        {/* LEI SUPREMA: Só exibe LABEL, nunca VALUE */}
+                        {microOptions.find(m => m.value === micro)?.label || 'Carregando...'}
                       </Badge>
                     </>
                   )}
