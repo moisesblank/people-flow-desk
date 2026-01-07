@@ -18087,35 +18087,20 @@ export type Database = {
         }
         Returns: string
       }
-      create_video_session:
-        | {
-            Args: {
-              p_course_id?: string
-              p_device_fingerprint?: string
-              p_ip_address?: unknown
-              p_lesson_id?: string
-              p_provider?: string
-              p_provider_video_id?: string
-              p_ttl_minutes?: number
-              p_user_agent?: string
-              p_user_id: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_course_id?: string
-              p_device_fingerprint?: string
-              p_ip_address?: string
-              p_lesson_id: string
-              p_provider?: string
-              p_provider_video_id?: string
-              p_ttl_minutes?: number
-              p_user_agent?: string
-              p_user_id: string
-            }
-            Returns: Json
-          }
+      create_video_session: {
+        Args: {
+          p_course_id: string
+          p_device_fingerprint?: string
+          p_ip_address?: string
+          p_lesson_id: string
+          p_provider: string
+          p_provider_video_id: string
+          p_ttl_minutes?: number
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       create_video_session_omega: {
         Args: {
           p_device_fingerprint?: string
