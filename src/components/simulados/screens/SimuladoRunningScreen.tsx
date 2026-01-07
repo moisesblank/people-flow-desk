@@ -6,7 +6,7 @@
  * Feature: Tesoura (Scissors) para eliminar alternativas
  */
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { 
   ChevronLeft, ChevronRight, Flag, AlertTriangle, ArrowLeft, Scissors
 } from "lucide-react";
@@ -35,6 +35,7 @@ import {
 import { SimuladoTimerBar } from "@/components/simulados/widgets/SimuladoTimerBar";
 import { SimuladoQuestionNavGrid } from "@/components/simulados/widgets/SimuladoQuestionNavGrid";
 import { cn } from "@/lib/utils";
+import { cleanQuestionText } from "@/components/shared/QuestionEnunciado";
 
 interface SimuladoRunningScreenProps {
   simulado: Simulado;
@@ -253,10 +254,10 @@ export function SimuladoRunningScreen({
                 PROF.MOISÉS MEDEIROS
               </p>
 
-              {/* Enunciado */}
+              {/* Enunciado — LEI PERMANENTE: usa cleanQuestionText */}
               <div className="prose prose-invert max-w-none mb-6">
                 <p className="text-base leading-relaxed text-foreground/90 whitespace-pre-wrap text-justify">
-                  {currentQuestion.question_text}
+                  {cleanQuestionText(currentQuestion.question_text)}
                 </p>
                 {currentQuestion.image_url && (
                   <img

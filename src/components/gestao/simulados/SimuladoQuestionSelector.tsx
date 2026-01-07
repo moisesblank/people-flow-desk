@@ -32,6 +32,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { cleanQuestionText } from "@/components/shared/QuestionEnunciado";
 import { 
   GripVertical, 
   CheckCircle2, 
@@ -154,7 +155,7 @@ function SortableItem({ question, index, onRemove }: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: question.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
 
-  const cleanText = question.question_text?.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() || "?";
+  const cleanText = cleanQuestionText(question.question_text || '') || "?";
 
   return (
     <div
@@ -210,7 +211,7 @@ interface QuestionCardProps {
 }
 
 function QuestionCard({ question, isSelected, onToggle, onPreview, usedInSimulados = [] }: QuestionCardProps) {
-  const cleanText = question.question_text?.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() || "Sem texto";
+  const cleanText = cleanQuestionText(question.question_text || '') || "Sem texto";
   const isUsedElsewhere = usedInSimulados.length > 0;
 
   return (
@@ -322,7 +323,7 @@ interface PreviewModalProps {
 function PreviewModal({ question, onClose, onAdd, isSelected }: PreviewModalProps) {
   if (!question) return null;
 
-  const cleanText = question.question_text?.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() || "Sem texto";
+  const cleanText = cleanQuestionText(question.question_text || '') || "Sem texto";
 
   return (
     <div 

@@ -31,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useTaxonomyForSelects } from "@/hooks/useQuestionTaxonomy";
 import { toast } from "sonner";
+import { cleanQuestionText } from "@/components/shared/QuestionEnunciado";
 
 // ============================================
 // TIPOS
@@ -236,7 +237,7 @@ export const QuestoesModalContent = memo(function QuestoesModalContent() {
         {/* Enunciado */}
         <Card className="bg-muted/50">
           <CardContent className="p-4">
-            <p className="text-sm whitespace-pre-wrap">{question.question_text.slice(0, 500)}...</p>
+            <p className="text-sm whitespace-pre-wrap">{cleanQuestionText(question.question_text).slice(0, 500)}...</p>
           </CardContent>
         </Card>
 
