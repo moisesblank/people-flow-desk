@@ -4,7 +4,7 @@
 // Com: Idempotência, Segurança, Logging em security_events
 // ============================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 import { getWebhookCorsHeaders } from "../_shared/corsConfig.ts";
 
 // CORS para webhooks externos (permissivo para servidores)
