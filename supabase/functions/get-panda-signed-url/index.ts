@@ -95,15 +95,17 @@ serve(async (req) => {
       );
     }
 
-    // Gerar URL assinada do Panda Video
-    const pandaApiKey = Deno.env.get('PANDA_API_KEY');
-    if (!pandaApiKey) {
-      console.error('[get-panda-signed-url] PANDA_API_KEY não configurada');
+    // Gerar URL assinada do Panda Video - USAR CHAVE SECRETA DO DRM
+    const pandaDrmSecret = Deno.env.get('PANDA_DRM_SECRET_KEY');
+    if (!pandaDrmSecret) {
+      console.error('[get-panda-signed-url] PANDA_DRM_SECRET_KEY não configurada');
       return new Response(
-        JSON.stringify({ error: 'Configuração do servidor incompleta' }),
+        JSON.stringify({ error: 'Configuração do servidor incompleta (DRM)' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log('[get-panda-signed-url] Usando DRM Secret Key para assinatura');
 
     // Extrair ID do vídeo (pode ser URL completa ou apenas o ID)
     let videoId = lesson.video_url;
@@ -135,7 +137,7 @@ serve(async (req) => {
     // Criar hash de segurança (HMAC)
     const encoder = new TextEncoder();
     const data = encoder.encode(`${videoId}${expiresAt}`);
-    const keyData = encoder.encode(pandaApiKey);
+    const keyData = encoder.encode(pandaDrmSecret);
     
     const cryptoKey = await crypto.subtle.importKey(
       'raw',
