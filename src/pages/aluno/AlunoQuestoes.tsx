@@ -1766,7 +1766,7 @@ export default function AlunoQuestoes() {
               )}
             >
               {isLoadingTreino ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
-              INICIAR
+              INICIAR ({Math.min(totalCount, RAPIDO_TREINO_LIMIT)})
             </Button>
           </div>
         </div>
@@ -1807,7 +1807,7 @@ export default function AlunoQuestoes() {
               )}
             >
               {isLoadingTreino ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5 fill-current" />}
-              Rápido Treino
+              Rápido Treino ({Math.min(totalCount, RAPIDO_TREINO_LIMIT)})
             </Button>
           </div>
 
