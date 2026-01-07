@@ -425,45 +425,63 @@ const Top10PerformanceChart = memo(function Top10PerformanceChart({
   }
 
   return (
-    <HoloCard className="col-span-1 lg:col-span-3">
-      <HUDHeader title="Top 10 - Rendimento por Categoria" icon={Award} />
-      <ResponsiveContainer width="100%" height={top10.length * 35 + 20}>
-        <BarChart 
-          data={top10} 
-          layout="vertical" 
-          margin={{ top: 5, right: 50, left: 10, bottom: 5 }}
-        >
-          <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} tickFormatter={(v) => `${v}%`} />
-          <YAxis 
-            type="category" 
-            dataKey="name" 
-            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-            width={140}
-          />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: 'hsl(var(--card))', 
-              border: '1px solid hsl(var(--border))',
-              borderRadius: '8px',
-              fontSize: '11px',
-            }}
-            formatter={(value, _, props) => [`${Number(value).toFixed(2)}%`, `${props.payload.fullName} (${props.payload.total} questões)`]}
-          />
-          <Bar 
-            dataKey="accuracy" 
-            fill="#3b82f6" 
-            radius={[0, 4, 4, 0]} 
-            isAnimationActive={!isLowEnd}
-            label={{ 
-              position: 'right', 
-              formatter: (v: number) => `${v.toFixed(2)}%`,
-              fontSize: 10,
-              fill: 'hsl(var(--foreground))'
-            }}
-          />
-        </BarChart>
-      </ResponsiveContainer>
-    </HoloCard>
+    <div className="rounded-xl border border-primary/20 bg-gradient-to-b from-primary/5 to-transparent overflow-hidden">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30 bg-background/40">
+        <div className="p-1.5 bg-primary/10 rounded-lg border border-primary/20">
+          <Award className="w-4 h-4 text-primary" />
+        </div>
+        <h4 className="text-sm font-semibold">Top 10 - Rendimento por Categoria</h4>
+      </div>
+      <div className="p-4">
+        <ResponsiveContainer width="100%" height={top10.length * 32 + 30}>
+          <BarChart 
+            data={top10} 
+            layout="vertical" 
+            margin={{ top: 10, right: 60, left: 5, bottom: 10 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border)/0.3)" />
+            <XAxis 
+              type="number" 
+              domain={[0, 100]} 
+              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} 
+              tickFormatter={(v) => `${v}%`}
+              axisLine={{ stroke: 'hsl(var(--border)/0.5)' }}
+            />
+            <YAxis 
+              type="category" 
+              dataKey="name" 
+              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+              width={130}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'hsl(var(--card))', 
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '8px',
+                fontSize: '12px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+              }}
+              formatter={(value, _, props) => [`${Number(value).toFixed(2)}%`, `${props.payload.fullName} (${props.payload.total}Q)`]}
+            />
+            <Bar 
+              dataKey="accuracy" 
+              fill="#3b82f6" 
+              radius={[0, 6, 6, 0]} 
+              isAnimationActive={!isLowEnd}
+              label={{ 
+                position: 'right', 
+                formatter: (v: number) => `${v.toFixed(2)}%`,
+                fontSize: 11,
+                fill: 'hsl(var(--foreground))',
+                fontWeight: 500
+              }}
+            />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   );
 });
 
@@ -492,23 +510,23 @@ const PerformanceTable = memo(function PerformanceTable({
   };
 
   return (
-    <div className="rounded-xl border border-border/50 bg-card/30 overflow-hidden">
+    <div className="rounded-xl border border-border/40 bg-gradient-to-b from-background/80 to-card/50 overflow-hidden">
       {/* Header */}
-      <div className="bg-background/50 px-3 py-2 border-b border-border/30">
-        <h4 className="font-semibold text-sm text-center">{title}</h4>
+      <div className="bg-muted/30 px-4 py-2.5 border-b border-border/40">
+        <h4 className="font-bold text-sm">{title}</h4>
       </div>
       
       {/* Column Headers */}
-      <div className="grid grid-cols-[1fr_50px_50px_55px] gap-1 px-3 py-2 text-[10px] font-medium text-muted-foreground border-b border-border/20 bg-background/30">
+      <div className="grid grid-cols-[1fr_48px_48px_60px] gap-2 px-4 py-2 text-[11px] font-semibold text-muted-foreground border-b border-border/30 bg-muted/20">
         <span>Área</span>
         <span className="text-center">Total</span>
         <span className="text-center">Erros</span>
-        <span className="text-center">%</span>
+        <span className="text-right">%</span>
       </div>
 
       {/* Data Rows */}
-      <ScrollArea className="h-[380px]">
-        <div className="divide-y divide-border/10">
+      <ScrollArea className="h-[320px]">
+        <div>
           {displayData.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground text-xs">
               Sem dados
@@ -517,20 +535,23 @@ const PerformanceTable = memo(function PerformanceTable({
             displayData.map((item, idx) => (
               <div 
                 key={idx}
-                className="grid grid-cols-[1fr_50px_50px_55px] gap-1 px-3 py-2 text-xs hover:bg-white/5 transition-colors items-center"
+                className={cn(
+                  "grid grid-cols-[1fr_48px_48px_60px] gap-2 px-4 py-2 text-xs items-center transition-colors",
+                  idx % 2 === 0 ? "bg-transparent" : "bg-muted/10"
+                )}
               >
-                <span className="truncate text-foreground/90" title={item.name}>
+                <span className="truncate font-medium text-foreground/95" title={item.name}>
                   {item.name}
                 </span>
-                <Badge variant="outline" className="justify-center text-[10px] py-0 bg-blue-500/10 border-blue-500/30 text-blue-400">
+                <span className="text-center px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-semibold text-[10px]">
                   {item.total}
-                </Badge>
-                <Badge variant="outline" className="justify-center text-[10px] py-0 bg-rose-500/10 border-rose-500/30 text-rose-400">
+                </span>
+                <span className="text-center px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 font-semibold text-[10px]">
                   {item.errors}
-                </Badge>
-                <div className="flex items-center gap-1">
-                  <div className={cn("w-1.5 h-4 rounded-full", getAccuracyBg(item.accuracy))} />
-                  <span className={cn("font-medium", getAccuracyColor(item.accuracy))}>
+                </span>
+                <div className="flex items-center justify-end gap-1.5">
+                  <div className={cn("w-1 h-4 rounded-full", getAccuracyBg(item.accuracy))} />
+                  <span className={cn("font-bold text-[11px]", getAccuracyColor(item.accuracy))}>
                     {item.accuracy.toFixed(0)}%
                   </span>
                 </div>
@@ -539,7 +560,7 @@ const PerformanceTable = memo(function PerformanceTable({
           )}
         </div>
         {data.length > maxItems && (
-          <div className="text-center py-2 text-[10px] text-muted-foreground border-t border-border/20">
+          <div className="text-center py-2 text-[10px] text-muted-foreground border-t border-border/20 bg-muted/10">
             +{data.length - maxItems} itens adicionais
           </div>
         )}
