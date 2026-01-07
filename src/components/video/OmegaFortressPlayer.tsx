@@ -197,8 +197,12 @@ export const OmegaFortressPlayer = memo(({
     switch (type) {
       case "youtube":
         return `https://www.youtube.com/embed/${videoId}?${params}`;
-      case "panda":
+      case "panda": {
+        // PATCH P0: se vier embed completo (Excel/legado), usar direto.
+        // Se vier UUID, gerar embed canônico.
+        if (/^https?:\/\//i.test(videoId)) return videoId;
         return getPandaEmbedUrl(videoId);
+      }
       case "vimeo":
         return `https://player.vimeo.com/video/${videoId}?dnt=1&title=0&byline=0&portrait=0`;
       default:
