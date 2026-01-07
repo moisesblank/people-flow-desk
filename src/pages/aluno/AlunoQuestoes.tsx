@@ -1678,16 +1678,16 @@ export default function AlunoQuestoes() {
               )}
             >
               <Sparkles className={cn("h-4 w-4", estiloEnemFilter && "animate-pulse")} />
-              ENEM
+              Estilo ENEM
             </Button>
 
             {/* Dificuldade */}
             <Select value={dificuldade} onValueChange={setDificuldade}>
               <SelectTrigger className="h-10 text-sm">
-                <SelectValue placeholder="Dificuldade" />
+                <SelectValue placeholder="Nível de Dificuldade" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todas</SelectItem>
+                <SelectItem value="todas">Nível de Dificuldade</SelectItem>
                 <SelectItem value="facil">🟢 Fácil</SelectItem>
                 <SelectItem value="medio">🟡 Médio</SelectItem>
                 <SelectItem value="dificil">🔴 Difícil</SelectItem>
