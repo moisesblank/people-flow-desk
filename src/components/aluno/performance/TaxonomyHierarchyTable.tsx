@@ -4,6 +4,7 @@
 // Acurácia %, Total, Erros - TUDO EXPANDIDO
 // =====================================================
 
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,12 +22,6 @@ function getAccuracyColor(accuracy: number): string {
   if (accuracy >= 70) return "text-emerald-500";
   if (accuracy >= 50) return "text-amber-500";
   return "text-rose-500";
-}
-
-function getAccuracyBgColor(accuracy: number): string {
-  if (accuracy >= 70) return "bg-emerald-500/20 border-emerald-500/30";
-  if (accuracy >= 50) return "bg-amber-500/20 border-amber-500/30";
-  return "bg-rose-500/20 border-rose-500/30";
 }
 
 // Componente de linha para cada nível
@@ -112,6 +107,65 @@ function TaxonomyRowDisplay({
   );
 }
 
+// Função para gerar todas as linhas flat
+function generateAllRows(data: TaxonomyNode[]): React.ReactNode[] {
+  const rows: React.ReactNode[] = [];
+  
+  const sortedMacros = [...data].sort((a, b) => b.totalAttempts - a.totalAttempts);
+  
+  for (const macro of sortedMacros) {
+    // MACRO (Nível 0)
+    rows.push(
+      <TaxonomyRowDisplay
+        key={`macro-${macro.name}`}
+        name={macro.name}
+        total={macro.totalAttempts}
+        correct={macro.correctAttempts}
+        accuracy={macro.accuracyPercent}
+        level={0}
+      />
+    );
+    
+    // MICROS (Nível 1)
+    const sortedMicros = Array.from(macro.children.values())
+      .filter(m => m.name && m.name.trim() !== '')
+      .sort((a, b) => b.totalAttempts - a.totalAttempts);
+    
+    for (const micro of sortedMicros) {
+      rows.push(
+        <TaxonomyRowDisplay
+          key={`micro-${macro.name}-${micro.name}`}
+          name={micro.name}
+          total={micro.totalAttempts}
+          correct={micro.correctAttempts}
+          accuracy={micro.accuracyPercent}
+          level={1}
+        />
+      );
+      
+      // TEMAS (Nível 2) - SE HOUVER
+      const sortedTemas = Array.from(micro.children.values())
+        .filter(t => t.name && t.name.trim() !== '')
+        .sort((a, b) => b.totalAttempts - a.totalAttempts);
+      
+      for (const tema of sortedTemas) {
+        rows.push(
+          <TaxonomyRowDisplay
+            key={`tema-${macro.name}-${micro.name}-${tema.name}`}
+            name={tema.name}
+            total={tema.totalAttempts}
+            correct={tema.correctAttempts}
+            accuracy={tema.accuracyPercent}
+            level={2}
+          />
+        );
+      }
+    }
+  }
+  
+  return rows;
+}
+
 export function TaxonomyHierarchyTable({ data, isLoading, className }: TaxonomyHierarchyTableProps) {
   if (isLoading) {
     return (
@@ -136,9 +190,6 @@ export function TaxonomyHierarchyTable({ data, isLoading, className }: TaxonomyH
     );
   }
 
-  // Ordenar macros por total de tentativas
-  const sortedMacros = [...data].sort((a, b) => b.totalAttempts - a.totalAttempts);
-
   return (
     <Card className={className}>
       <CardHeader className="pb-3">
@@ -156,60 +207,7 @@ export function TaxonomyHierarchyTable({ data, isLoading, className }: TaxonomyH
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedMacros.map((macro) => {
-                // Ordenar micros por total
-                const sortedMicros = Array.from(macro.children.values())
-                  .filter(m => m.name && m.name.trim() !== '')
-                  .sort((a, b) => b.totalAttempts - a.totalAttempts);
-                
-                return (
-                  <>
-                    {/* MACRO (Nível 0) */}
-                    <TaxonomyRowDisplay
-                      key={`macro-${macro.name}`}
-                      name={macro.name}
-                      total={macro.totalAttempts}
-                      correct={macro.correctAttempts}
-                      accuracy={macro.accuracyPercent}
-                      level={0}
-                    />
-                    
-                    {/* MICROS (Nível 1) */}
-                    {sortedMicros.map((micro) => {
-                      // Ordenar temas por total
-                      const sortedTemas = Array.from(micro.children.values())
-                        .filter(t => t.name && t.name.trim() !== '')
-                        .sort((a, b) => b.totalAttempts - a.totalAttempts);
-                      
-                      return (
-                        <>
-                          {/* MICRO */}
-                          <TaxonomyRowDisplay
-                            key={`micro-${macro.name}-${micro.name}`}
-                            name={micro.name}
-                            total={micro.totalAttempts}
-                            correct={micro.correctAttempts}
-                            accuracy={micro.accuracyPercent}
-                            level={1}
-                          />
-                          
-                          {/* TEMAS (Nível 2) - SE HOUVER */}
-                          {sortedTemas.map((tema) => (
-                            <TaxonomyRowDisplay
-                              key={`tema-${macro.name}-${micro.name}-${tema.name}`}
-                              name={tema.name}
-                              total={tema.totalAttempts}
-                              correct={tema.correctAttempts}
-                              accuracy={tema.accuracyPercent}
-                              level={2}
-                            />
-                          ))}
-                        </>
-                      );
-                    })}
-                  </>
-                );
-              })}
+              {generateAllRows(data)}
             </TableBody>
           </Table>
         </div>
