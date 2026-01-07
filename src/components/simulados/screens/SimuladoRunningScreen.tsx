@@ -263,7 +263,7 @@ export function SimuladoRunningScreen({
                   )}
                 </div>
                 <div className="text-left">
-                  <h1 className="font-bold text-base text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-green-400 to-cyan-400 line-clamp-1">
+                  <h1 className="font-bold text-xl text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-green-400 to-cyan-400 line-clamp-1">
                     {simulado.title}
                   </h1>
                   <div className="flex items-center gap-2 text-[10px] text-zinc-500 uppercase tracking-widest">
