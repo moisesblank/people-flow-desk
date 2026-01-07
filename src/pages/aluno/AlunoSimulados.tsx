@@ -81,7 +81,7 @@ export default function AlunoSimulados() {
   if (selectedSimuladoId) {
     return (
       <Dialog open={true} onOpenChange={(open) => !open && handleCloseSimulado()}>
-        <DialogContent className="max-w-7xl w-full h-[95vh] p-0 overflow-hidden">
+        <DialogContent useOriginalSize className="max-w-7xl w-full h-[90vh] p-0 overflow-hidden">
           <SimuladoPlayer
             simuladoId={selectedSimuladoId}
             onComplete={handleSimuladoComplete}
