@@ -113,8 +113,8 @@ export const CONSTITUTION_FINAL_QUESTION_COMPLETENESS = {
         ai_can_change: true,
       },
       ano: { 
-        required: true, 
-        fallback: new Date().getFullYear(),
+        required: false, // NOVA REGRA: Questões sem ano ficam SEM ANO (null)
+        fallback: null,  // NUNCA forçar ano
         ai_can_change: true,
       },
       explanation: { 
@@ -295,10 +295,8 @@ export function applyCompletenessFallbacks(question: any): any {
     camposInferidos.push('banca:fallback_autoral');
   }
   
-  if (!updated.ano || isNaN(updated.ano)) {
-    updated.ano = currentYear;
-    camposInferidos.push('ano:fallback_current_year');
-  }
+  // NOVA REGRA: Ano permanece null se não informado (NUNCA forçar ano)
+  // if (!updated.ano || isNaN(updated.ano)) { ... } - REMOVIDO
   
   if (!updated.explanation?.trim()) {
     updated.explanation = mapping.explanation.fallback as string;

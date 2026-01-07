@@ -208,7 +208,7 @@ const QuestionDialog = memo(function QuestionDialog({
     explanation: '',
     difficulty: 'medio' as 'facil' | 'medio' | 'dificil',
     banca: 'enem',
-    ano: new Date().getFullYear(),
+    ano: null as number | null, // NOVA REGRA: Questões sem ano ficam SEM ANO
     tags: [] as string[],
     points: 10,
     is_active: true,
@@ -250,7 +250,7 @@ const QuestionDialog = memo(function QuestionDialog({
         explanation: question.explanation || '',
         difficulty: (question.difficulty as 'facil' | 'medio' | 'dificil') || 'medio',
         banca: question.banca || 'enem',
-        ano: question.ano || new Date().getFullYear(),
+        ano: question.ano ?? null, // NOVA REGRA: Preservar null se não tiver ano
         tags: question.tags || [],
         points: question.points || 10,
         is_active: question.is_active ?? true,
@@ -290,7 +290,7 @@ const QuestionDialog = memo(function QuestionDialog({
         explanation: '',
         difficulty: 'medio',
         banca: 'enem',
-        ano: new Date().getFullYear(),
+        ano: null,
         tags: [],
         points: 10,
         is_active: true,
@@ -766,7 +766,7 @@ const QuestionDialog = memo(function QuestionDialog({
                 min={2000}
                 max={2030}
                 value={form.ano}
-                onChange={(e) => setForm(f => ({ ...f, ano: parseInt(e.target.value) || 2024 }))}
+                onChange={(e) => setForm(f => ({ ...f, ano: e.target.value ? parseInt(e.target.value) : null }))}
               />
             </div>
           </div>
