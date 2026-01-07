@@ -1752,7 +1752,7 @@ export default function AlunoQuestoes() {
                 COMECE SEU TREINO!
               </h3>
               <p className="text-sm text-muted-foreground">
-                Use o <span className="font-bold text-amber-400">Rápido Treino</span> para praticar {Math.min(totalCount, RAPIDO_TREINO_LIMIT)} questões.
+                Use o <span className="font-bold text-amber-400">Criar Questões</span> para praticar {Math.min(totalCount, RAPIDO_TREINO_LIMIT)} questões.
               </p>
             </div>
             
@@ -1807,7 +1807,7 @@ export default function AlunoQuestoes() {
               )}
             >
               {isLoadingTreino ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5 fill-current" />}
-              Rápido Treino ({Math.min(totalCount, RAPIDO_TREINO_LIMIT)})
+              Criar Questões ({Math.min(totalCount, RAPIDO_TREINO_LIMIT)})
             </Button>
           </div>
 
