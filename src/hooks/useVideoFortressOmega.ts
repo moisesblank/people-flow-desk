@@ -12,6 +12,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getPandaEmbedUrl } from "@/lib/video/panda";
 import { toast } from "sonner";
 
 // ============================================
@@ -537,9 +538,7 @@ export function useVideoFortressOmega() {
         });
         embedUrl = `https://www.youtube.com/embed/${options.providerVideoId}?${params}`;
       } else {
-        // Panda Video - usar Library ID fixo da conta
-        const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
-        embedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${options.providerVideoId}`;
+        embedUrl = getPandaEmbedUrl(options.providerVideoId);
       }
 
       const session: VideoSessionOmega = {

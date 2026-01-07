@@ -8,6 +8,7 @@ import { ReactNode, useEffect, useRef, useCallback, useState } from "react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Shield, Lock } from "lucide-react";
+import { getPandaEmbedUrl } from "@/lib/video/panda";
 
 interface UserWatermarkData {
   nome?: string;
@@ -650,10 +651,7 @@ export const getFortressPandaUrl = (videoId: string, autoplay = false): string =
     pip: "0",
   });
 
-  // 🐼 Panda Video: Usar Library ID fixo da conta
-  const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
-  return `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&${params.toString()}`;
-};
+  return getPandaEmbedUrl(videoId, params);
 
 /**
  * Configuração padrão para YouTube IFrame API
