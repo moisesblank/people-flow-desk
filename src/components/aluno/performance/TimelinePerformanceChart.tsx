@@ -6,8 +6,11 @@
 
 import { useMemo, useState, Suspense } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, TrendingUp, Zap, Activity, Target, Layers } from 'lucide-react';
+import { Calendar, TrendingUp, Zap, Activity, Target, Layers, CalendarRange } from 'lucide-react';
 import { format, startOfDay, eachDayOfInterval, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -114,8 +117,13 @@ export function TimelinePerformanceChart({
   isLoading = false,
   className 
 }: TimelinePerformanceChartProps) {
-  const [dateRange, setDateRange] = useState<'7d' | '14d' | '30d' | 'all'>('14d');
+  const [dateRange, setDateRange] = useState<'7d' | '14d' | '30d' | 'all' | 'custom'>('14d');
   const [groupBy, setGroupBy] = useState<'macro' | 'micro' | 'total'>('macro');
+  const [customDateRange, setCustomDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: subDays(new Date(), 14),
+    to: new Date(),
+  });
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   // Extrair micros únicos com suas informações
   const microInfoMap = useMemo(() => {
@@ -150,8 +158,12 @@ export function TimelinePerformanceChart({
 
     const now = new Date();
     let startDate: Date;
+    let endDate: Date = now;
     
-    if (dateRange === 'all') {
+    if (dateRange === 'custom' && customDateRange.from) {
+      startDate = customDateRange.from;
+      endDate = customDateRange.to || now;
+    } else if (dateRange === 'all') {
       const dates = validAttempts.map(a => new Date(a.created_at));
       startDate = new Date(Math.min(...dates.map(d => d.getTime())));
     } else {
@@ -159,7 +171,7 @@ export function TimelinePerformanceChart({
       startDate = subDays(now, days);
     }
 
-    const allDays = eachDayOfInterval({ start: startDate, end: now });
+    const allDays = eachDayOfInterval({ start: startDate, end: endDate });
     const dataByDay = new Map<string, DayData>();
     
     // Inicializar todos os dias com zeros
@@ -205,7 +217,7 @@ export function TimelinePerformanceChart({
     });
 
     return Array.from(dataByDay.values()).sort((a, b) => a.date.localeCompare(b.date));
-  }, [attempts, dateRange, microInfoMap]);
+  }, [attempts, dateRange, customDateRange, microInfoMap]);
 
   // Estatísticas resumidas
   const stats = useMemo(() => {
@@ -333,9 +345,9 @@ export function TimelinePerformanceChart({
             </div>
             
             {/* Filters */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Select value={dateRange} onValueChange={(v) => setDateRange(v as any)}>
-                <SelectTrigger className="h-7 text-xs w-[90px] bg-slate-800/70 border-white/10 hover:border-cyan-500/30 transition-colors">
+                <SelectTrigger className="h-7 text-xs w-[100px] bg-slate-800/70 border-white/10 hover:border-cyan-500/30 transition-colors">
                   <Calendar className="h-3 w-3 mr-1 text-muted-foreground" />
                   <SelectValue />
                 </SelectTrigger>
@@ -344,8 +356,60 @@ export function TimelinePerformanceChart({
                   <SelectItem value="14d">14 dias</SelectItem>
                   <SelectItem value="30d">30 dias</SelectItem>
                   <SelectItem value="all">Tudo</SelectItem>
+                  <SelectItem value="custom">Personalizado</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* Custom Date Range Picker */}
+              {dateRange === 'custom' && (
+                <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "h-7 text-xs bg-slate-800/70 border-white/10 hover:border-cyan-500/30 hover:bg-slate-700/70",
+                        "justify-start text-left font-normal"
+                      )}
+                    >
+                      <CalendarRange className="h-3 w-3 mr-1.5 text-cyan-400" />
+                      {customDateRange.from ? (
+                        customDateRange.to ? (
+                          <span className="text-white">
+                            {format(customDateRange.from, 'dd/MM', { locale: ptBR })} - {format(customDateRange.to, 'dd/MM', { locale: ptBR })}
+                          </span>
+                        ) : (
+                          format(customDateRange.from, 'dd/MM/yy', { locale: ptBR })
+                        )
+                      ) : (
+                        <span className="text-muted-foreground">Selecionar</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent 
+                    className="w-auto p-0 bg-slate-900 border-white/10" 
+                    align="start"
+                  >
+                    <div className="p-2 border-b border-white/10">
+                      <p className="text-xs font-medium text-muted-foreground">Selecione o intervalo</p>
+                    </div>
+                    <CalendarComponent
+                      mode="range"
+                      selected={{ from: customDateRange.from, to: customDateRange.to }}
+                      onSelect={(range) => {
+                        setCustomDateRange({ from: range?.from, to: range?.to });
+                        if (range?.from && range?.to) {
+                          setIsDatePickerOpen(false);
+                        }
+                      }}
+                      numberOfMonths={1}
+                      locale={ptBR}
+                      disabled={(date) => date > new Date()}
+                      className={cn("p-3 pointer-events-auto bg-slate-900")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              )}
 
               <Select value={groupBy} onValueChange={(v) => setGroupBy(v as any)}>
                 <SelectTrigger className="h-7 text-xs w-[110px] bg-slate-800/70 border-white/10 hover:border-purple-500/30 transition-colors">
