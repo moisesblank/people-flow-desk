@@ -142,7 +142,7 @@ export function SimuladoHardModeConsent({
           <Checkbox
             checked={acceptedRules}
             onCheckedChange={(checked) => setAcceptedRules(checked === true)}
-            className="mt-1 border-red-500/50 data-[state=checked]:bg-red-500"
+            className="mt-1 h-5 w-5 border-2 border-red-500/50 data-[state=checked]:bg-red-500 data-[state=checked]:text-white data-[state=checked]:border-red-500"
           />
           <span className="text-sm text-muted-foreground">
             Li e entendo as regras do Modo Hard. Aceito que minha tentativa pode ser <span className="text-red-400">invalidada permanentemente</span> caso eu viole qualquer uma das regras acima.
@@ -157,7 +157,7 @@ export function SimuladoHardModeConsent({
             <Checkbox
               checked={acceptedCamera}
               onCheckedChange={(checked) => setAcceptedCamera(checked === true)}
-              className="mt-1 border-red-500/50 data-[state=checked]:bg-red-500"
+              className="mt-1 h-5 w-5 border-2 border-red-500/50 data-[state=checked]:bg-red-500 data-[state=checked]:text-white data-[state=checked]:border-red-500"
             />
             <span className="text-sm text-muted-foreground">
               Autorizo o acesso à minha <span className="text-red-400">câmera</span> durante o simulado. Entendo que serve como deterrente e não será gravada.
