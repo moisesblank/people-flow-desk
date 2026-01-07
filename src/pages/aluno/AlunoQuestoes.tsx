@@ -855,7 +855,8 @@ export default function AlunoQuestoes() {
     (macroValue: string, microValue: string) => {
       const micros = getMicrosForSelect(macroValue === 'todas' ? '' : macroValue);
       const found = micros.find((m) => m.value === microValue);
-      return stripTaxLabel(found?.label) || microValue;
+      // LEI SUPREMA: NUNCA expor VALUE - retorna '' se não encontrar
+      return stripTaxLabel(found?.label) || '';
     },
     [getMicrosForSelect, stripTaxLabel]
   );
@@ -864,7 +865,8 @@ export default function AlunoQuestoes() {
     (microValue: string, temaValue: string) => {
       const temas = getTemasForSelect(microValue === 'todas' ? '' : microValue);
       const found = temas.find((t) => t.value === temaValue);
-      return stripTaxLabel(found?.label) || temaValue;
+      // LEI SUPREMA: NUNCA expor VALUE - retorna '' se não encontrar
+      return stripTaxLabel(found?.label) || '';
     },
     [getTemasForSelect, stripTaxLabel]
   );

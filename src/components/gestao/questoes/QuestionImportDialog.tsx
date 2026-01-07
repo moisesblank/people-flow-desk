@@ -746,6 +746,33 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     setSelectedSubtema('');
   }, [selectedTema]);
   
+  // ============================================
+  // LEI SUPREMA: Funções para converter VALUE → LABEL (NUNCA expor VALUE)
+  // ============================================
+  const getMacroLabel = useCallback((value: string): string => {
+    if (!value || value === '__AUTO_AI__' || value === '__TODOS__') return '';
+    const found = macros.find(m => m.value === value);
+    return found?.label || 'Carregando...';
+  }, [macros]);
+
+  const getMicroLabel = useCallback((value: string): string => {
+    if (!value || value === '__AUTO_AI__' || value === '__TODOS__') return '';
+    const found = filteredMicros.find(m => m.value === value);
+    return found?.label || 'Carregando...';
+  }, [filteredMicros]);
+
+  const getTemaLabel = useCallback((value: string): string => {
+    if (!value || value === '__AUTO_AI__' || value === '__TODOS__') return '';
+    const found = filteredTemas.find(t => t.value === value);
+    return found?.label || 'Carregando...';
+  }, [filteredTemas]);
+
+  const getSubtemaLabel = useCallback((value: string): string => {
+    if (!value || value === '__AUTO_AI__' || value === '__TODOS__') return '';
+    const found = filteredSubtemas.find(s => s.value === value);
+    return found?.label || 'Carregando...';
+  }, [filteredSubtemas]);
+  
   // Hook para registrar intervenções de IA
   const { logInterventions } = useLogQuestionAIIntervention();
 
@@ -2354,8 +2381,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                               <Badge variant="secondary" className={cn("gap-1", selectedMacro === '__AUTO_AI__' && "bg-primary/20 text-primary border-primary/30")}>
                                 {selectedMacro === '__AUTO_AI__' ? (
                                   <><Sparkles className="h-3 w-3" /> Macro: Automático (IA)</>
+                                ) : selectedMacro === '__TODOS__' ? (
+                                  <>🎯 TODOS ({macros.length} macros)</>
                                 ) : (
-                                  <>🎯 {selectedMacro}</>
+                                  <>🎯 {getMacroLabel(selectedMacro)}</>
                                 )}
                               </Badge>
                             )}
@@ -2363,8 +2392,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                               <Badge variant="secondary" className={cn("gap-1", selectedMicro === '__AUTO_AI__' && "bg-primary/20 text-primary border-primary/30")}>
                                 {selectedMicro === '__AUTO_AI__' ? (
                                   <><Sparkles className="h-3 w-3" /> Micro: Automático (IA)</>
+                                ) : selectedMicro === '__TODOS__' ? (
+                                  <>📚 TODOS ({filteredMicros.length} micros)</>
                                 ) : (
-                                  <>📚 {selectedMicro}</>
+                                  <>📚 {getMicroLabel(selectedMicro)}</>
                                 )}
                               </Badge>
                             )}
@@ -2372,8 +2403,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                               <Badge variant="secondary" className={cn("gap-1", selectedTema === '__AUTO_AI__' && "bg-primary/20 text-primary border-primary/30")}>
                                 {selectedTema === '__AUTO_AI__' ? (
                                   <><Sparkles className="h-3 w-3" /> Tema: Automático (IA)</>
+                                ) : selectedTema === '__TODOS__' ? (
+                                  <>📖 TODOS ({filteredTemas.length} temas)</>
                                 ) : (
-                                  <>📖 {selectedTema}</>
+                                  <>📖 {getTemaLabel(selectedTema)}</>
                                 )}
                               </Badge>
                             )}
@@ -2381,8 +2414,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                               <Badge variant="secondary" className={cn("gap-1", selectedSubtema === '__AUTO_AI__' && "bg-primary/20 text-primary border-primary/30")}>
                                 {selectedSubtema === '__AUTO_AI__' ? (
                                   <><Sparkles className="h-3 w-3" /> Subtema: Automático (IA)</>
+                                ) : selectedSubtema === '__TODOS__' ? (
+                                  <>🔖 TODOS ({filteredSubtemas.length} subtemas)</>
                                 ) : (
-                                  <>🔖 {selectedSubtema}</>
+                                  <>🔖 {getSubtemaLabel(selectedSubtema)}</>
                                 )}
                               </Badge>
                             )}

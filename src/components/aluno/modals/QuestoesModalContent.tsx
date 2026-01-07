@@ -78,7 +78,8 @@ export const QuestoesModalContent = memo(function QuestoesModalContent() {
   const getMacroLabelForDb = useCallback(
     (macroValue: string) => {
       const found = macros.find((m) => m.value === macroValue);
-      return stripTaxLabel(found?.label) || macroValue;
+      // LEI SUPREMA: NUNCA expor VALUE
+      return stripTaxLabel(found?.label) || '';
     },
     [macros, stripTaxLabel]
   );
@@ -87,7 +88,8 @@ export const QuestoesModalContent = memo(function QuestoesModalContent() {
     (macroValue: string, microValue: string) => {
       const micros = getMicrosForSelect(macroValue === 'todas' ? '' : macroValue);
       const found = micros.find((m) => m.value === microValue);
-      return stripTaxLabel(found?.label) || microValue;
+      // LEI SUPREMA: NUNCA expor VALUE
+      return stripTaxLabel(found?.label) || '';
     },
     [getMicrosForSelect, stripTaxLabel]
   );
