@@ -14,6 +14,7 @@ import {
   treeToArray,
   type TaxonomyNode 
 } from "@/hooks/student-performance/useStudentTaxonomyPerformance";
+import { useTimelinePerformance } from "@/hooks/student-performance/useTimelinePerformance";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 import { 
   BarChart3, Target, TrendingUp, Award, Zap, BookOpen, 
@@ -24,7 +25,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TaxonomyHierarchyTable } from "@/components/aluno/performance";
+import { TaxonomyHierarchyTable, TimelinePerformanceChart } from "@/components/aluno/performance";
 
 // Lazy load de gráficos - só carrega quando visível
 const LazyCharts = lazy(() => import('./StudentPerformanceCharts'));
@@ -436,6 +437,7 @@ export function StudentPerformanceAnalytics() {
   const perfConfig = useConstitutionPerformance();
   
   const { data: taxonomyData, isLoading } = useStudentTaxonomyPerformance(user?.id);
+  const { data: timelineData, isLoading: timelineLoading } = useTimelinePerformance(user?.id);
 
   // Inicializa com todos os macros expandidos
   const [expandedMacros, setExpandedMacros] = useState<Set<string>>(() => 
@@ -707,6 +709,13 @@ export function StudentPerformanceAnalytics() {
         <WeakAreasPanel items={processedData.allMicros} />
         <StrongAreasPanel items={processedData.allMicros} />
       </div>
+
+      {/* Timeline Performance Chart - Evolução temporal por Macro/Micro */}
+      <TimelinePerformanceChart 
+        attempts={timelineData ?? []}
+        isLoading={timelineLoading}
+        className="mt-4"
+      />
 
     </div>
   );
