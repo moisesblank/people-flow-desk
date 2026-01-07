@@ -27,7 +27,7 @@ import {
   Clock, Trophy, BookOpen, Loader2,
   ArrowLeft, ArrowRight, RotateCcw,
   Lightbulb, AlertCircle, Star, Play,
-  TrendingUp, BarChart3, Filter
+  TrendingUp, BarChart3, Filter, Sparkles
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -893,6 +893,10 @@ export default function AlunoQuestoes() {
   // BLOCK_07: Filtros operacionais
   const [anoFilter, setAnoFilter] = useState("todas");
   const [sortOrder, setSortOrder] = useState("newest");
+  
+  // BLOCK_07B: Filtros ESTILO DA QUESTÃO e ESTILO ENEM
+  const [questionTypeFilter, setQuestionTypeFilter] = useState<'all' | 'multiple_choice' | 'discursive' | 'outros'>('all');
+  const [estiloEnemFilter, setEstiloEnemFilter] = useState(false);
 
   // BLOCK_09: Rápido Treino state
   const [rapidoTreinoOpen, setRapidoTreinoOpen] = useState(false);
@@ -911,11 +915,11 @@ export default function AlunoQuestoes() {
   // Reset página ao mudar filtros
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterMacro, filterMicro, filterTema, filterSubtema, dificuldade, banca, anoFilter]);
+  }, [filterMacro, filterMicro, filterTema, filterSubtema, dificuldade, banca, anoFilter, questionTypeFilter, estiloEnemFilter]);
   
   // BLOCK_04: PAGINAÇÃO SERVER-SIDE - Substituiu loop 45k
   const { data: questionsData, isLoading: questionsLoading } = useQuery({
-    queryKey: ['student-questions', 'MODO_TREINO', currentPage, ITEMS_PER_PAGE, filterMacro, filterMicro, filterTema, filterSubtema, dificuldade, banca, anoFilter],
+    queryKey: ['student-questions', 'MODO_TREINO', currentPage, ITEMS_PER_PAGE, filterMacro, filterMicro, filterTema, filterSubtema, dificuldade, banca, anoFilter, questionTypeFilter, estiloEnemFilter],
     queryFn: async () => {
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
@@ -944,6 +948,11 @@ export default function AlunoQuestoes() {
       if (dificuldade !== 'todas') query = query.eq('difficulty', dificuldade);
       if (banca !== 'todas') query = query.eq('banca', banca);
       if (anoFilter !== 'todas') query = query.eq('ano', parseInt(anoFilter));
+      
+      // BLOCK_07B: Filtro ESTILO DA QUESTÃO (question_type)
+      if (questionTypeFilter !== 'all') {
+        query = query.eq('question_type', questionTypeFilter);
+      }
 
       const { data, error, count } = await query
         .order('created_at', { ascending: false })
@@ -1093,8 +1102,32 @@ export default function AlunoQuestoes() {
     if (dificuldade !== 'todas') {
       filtered = filtered.filter(q => q.difficulty === dificuldade);
     }
+    
+    // BLOCK_07B: Filtro ESTILO DA QUESTÃO (question_type) - client side fallback
+    if (questionTypeFilter !== 'all') {
+      filtered = filtered.filter(q => q.question_type === questionTypeFilter);
+    }
+    
+    // BLOCK_07B: Filtro ESTILO ENEM - heurística igual à gestão
+    if (estiloEnemFilter) {
+      filtered = filtered.filter(q => {
+        const qAny = q as any;
+        // Verifica flag explícita
+        if (qAny.is_estilo_enem === true) return true;
+        // Verifica características ENEM (heurística)
+        if (qAny.tem_situacao_problema === true) return true;
+        if (qAny.tem_texto_base === true) return true;
+        if (qAny.tipo_estrutura === 'situacao_problema') return true;
+        if (qAny.tipo_estrutura === 'interpretacao_texto') return true;
+        if (qAny.tipo_estrutura === 'analise_dados') return true;
+        if (qAny.demanda_cognitiva === 'alta' || qAny.demanda_cognitiva === 'muito_alta') return true;
+        if (qAny.habilidades_enem?.length > 0) return true;
+        // Heurística por tamanho do enunciado (>500 chars = provavelmente contextualizada)
+        if (q.question_text && q.question_text.length > 500) return true;
+        return false;
+      });
+    }
 
-    // Busca por palavras-chave
     if (busca.trim()) {
       const term = busca.toLowerCase();
       filtered = filtered.filter(q => 
@@ -1121,7 +1154,7 @@ export default function AlunoQuestoes() {
     }
 
     return filtered;
-  }, [questions, activeTab, filterMacro, filterMicro, filterTema, filterSubtema, anoFilter, banca, dificuldade, busca, sortOrder, attemptsByQuestion]);
+  }, [questions, activeTab, filterMacro, filterMicro, filterTema, filterSubtema, anoFilter, banca, dificuldade, busca, sortOrder, attemptsByQuestion, questionTypeFilter, estiloEnemFilter]);
 
   // BLOCK_09: Iniciar RÁPIDO TREINO - Busca SERVER-SIDE com filtros
   const [isLoadingTreino, setIsLoadingTreino] = useState(false);
@@ -1599,9 +1632,9 @@ export default function AlunoQuestoes() {
           </div>
 
           {/* Linha de Filtros Operacionais */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-3 border-t border-border/30">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 pt-3 border-t border-border/30">
             {/* Busca */}
-            <div className="md:col-span-2 relative">
+            <div className="col-span-2 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar..."
@@ -1610,6 +1643,43 @@ export default function AlunoQuestoes() {
                 className="pl-9 h-10 text-sm"
               />
             </div>
+
+            {/* ESTILO DA QUESTÃO */}
+            <Select value={questionTypeFilter} onValueChange={(v) => setQuestionTypeFilter(v as 'all' | 'multiple_choice' | 'discursive' | 'outros')}>
+              <SelectTrigger className={cn(
+                "h-10 text-sm",
+                isHighEnd ? "bg-indigo-500/10 border-indigo-500/30 hover:border-indigo-400/50" : ""
+              )}>
+                <SelectValue placeholder="Estilo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">📋 Estilo: Todos</SelectItem>
+                <SelectItem value="multiple_choice">✅ Múltipla Escolha</SelectItem>
+                <SelectItem value="discursive">✍️ Discursiva</SelectItem>
+                <SelectItem value="outros">🔢 Outros (V/F, Soma)</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* ESTILO ENEM - Toggle Button */}
+            <Button
+              type="button"
+              variant={estiloEnemFilter ? "default" : "outline"}
+              size="sm"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setEstiloEnemFilter(prev => !prev);
+              }}
+              className={cn(
+                "h-10 gap-2 font-semibold transition-all cursor-pointer",
+                estiloEnemFilter 
+                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 shadow-lg shadow-blue-500/30" 
+                  : "border-blue-500/50 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400 hover:border-blue-500"
+              )}
+            >
+              <Sparkles className={cn("h-4 w-4", estiloEnemFilter && "animate-pulse")} />
+              ENEM
+            </Button>
 
             {/* Dificuldade */}
             <Select value={dificuldade} onValueChange={setDificuldade}>
