@@ -1356,7 +1356,7 @@ export default function AlunoQuestoes() {
       <div className={cn(
         "relative overflow-hidden rounded-2xl border",
         isHighEnd 
-          ? "bg-gradient-to-br from-slate-900/80 via-background/60 to-slate-900/80 border-amber-500/30 backdrop-blur-xl shadow-2xl shadow-amber-500/5" 
+          ? "bg-gradient-to-br from-amber-950/30 via-background/60 to-yellow-950/20 border-amber-500/30 backdrop-blur-xl shadow-2xl shadow-amber-500/5" 
           : "bg-card border-primary/20"
       )}>
         {/* Efeitos de borda premium holográfica (high-end) */}
