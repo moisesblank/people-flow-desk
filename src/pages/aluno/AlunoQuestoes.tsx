@@ -1333,6 +1333,25 @@ export default function AlunoQuestoes() {
                 </span>
                 <span>{stats.total.toLocaleString('pt-BR')} questões</span>
               </p>
+              
+              {/* Instruções do Modo Treino */}
+              <div className="mt-3 space-y-1 text-xs">
+                <p className="font-bold text-amber-400/90">Instruções:</p>
+                <ul className="space-y-0.5 text-muted-foreground/80 pl-3">
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-amber-500/70">•</span>
+                    <span>Poderão ser filtradas até 20 questões pela forma desejada.</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-amber-500/70">•</span>
+                    <span>Aproveite sem moderação.</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-amber-500/70">•</span>
+                    <span>Poderá consultar histórico e refazer, mas não contará para a pontuação.</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
 
