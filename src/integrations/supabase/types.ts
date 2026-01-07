@@ -15126,6 +15126,7 @@ export type Database = {
           heartbeat_count: number | null
           id: string
           ip: unknown
+          ip_address: string | null
           last_heartbeat_at: string
           lesson_id: string | null
           max_position_seconds: number | null
@@ -15157,6 +15158,7 @@ export type Database = {
           heartbeat_count?: number | null
           id?: string
           ip?: unknown
+          ip_address?: string | null
           last_heartbeat_at?: string
           lesson_id?: string | null
           max_position_seconds?: number | null
@@ -15188,6 +15190,7 @@ export type Database = {
           heartbeat_count?: number | null
           id?: string
           ip?: unknown
+          ip_address?: string | null
           last_heartbeat_at?: string
           lesson_id?: string | null
           max_position_seconds?: number | null
