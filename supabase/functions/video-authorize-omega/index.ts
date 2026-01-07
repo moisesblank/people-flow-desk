@@ -183,7 +183,7 @@ async function generatePandaSignedUrl(
   // Se não tiver API key, retorna embed simples
   if (!PANDA_API_KEY) {
     console.warn("⚠️ PANDA_API_KEY não configurada, usando embed básico");
-    return `https://player-vz-7b4690a0-a6d.tv.pandavideo.com.br/embed/?v=${videoId}`;
+    return `https://player-vz-d59d6cb7-b9c.tv.pandavideo.com.br/embed/?v=${videoId}`;
   }
 
   try {
@@ -199,7 +199,7 @@ async function generatePandaSignedUrl(
       t: expiresAt.toString(),
     });
 
-    return `https://player-vz-7b4690a0-a6d.tv.pandavideo.com.br/embed/?${params.toString()}`;
+    return `https://player-vz-d59d6cb7-b9c.tv.pandavideo.com.br/embed/?${params.toString()}`;
   } catch (error) {
     console.error("❌ Erro ao gerar signed URL:", error);
     return null;
