@@ -117,12 +117,13 @@ export function useSimuladoState(options: UseSimuladoStateOptions) {
           let hasCompletedAttempt = false;
           
           if (user) {
+            // ATENÇÃO: O status no banco é "FINISHED" (maiúsculo), não "completed"
             const { data: attemptCheck } = await supabase
               .from("simulado_attempts")
               .select("status")
               .eq("simulado_id", simuladoId)
               .eq("user_id", user.id)
-              .eq("status", "completed")
+              .in("status", ["FINISHED", "completed", "finished"])
               .limit(1)
               .maybeSingle();
             
