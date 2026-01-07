@@ -1083,12 +1083,13 @@ export default function Alunos() {
               </div>
             </div>
             
-            {/* Table */}
+            {/* Table — VIRTUALIZAÇÃO PERMANENTE */}
             <VirtualTable
               items={students}
               rowHeight={64}
-              containerHeight={600}
+              containerHeight="calc(100vh - 520px)"
               emptyMessage={isLoading ? "Carregando..." : debouncedSearch ? "Nenhum aluno encontrado" : "Nenhum aluno cadastrado"}
+              forceVirtualization={true}
               renderHeader={() => (
                 <table className="w-full">
                   <thead className="bg-blue-500/10">
