@@ -480,137 +480,260 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden flex flex-col">
-        <DialogHeader className="pb-3 border-b">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500">
-                <Zap className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <DialogTitle className="text-lg font-bold">
-                  Rápido Treino
-                </DialogTitle>
-                <DialogDescription>
-                  Questão {currentIndex + 1} de {questions.length}
-                </DialogDescription>
-              </div>
-            </div>
-            <Badge variant="outline" className="text-lg px-4 py-2">
-              {Math.round(progress)}%
-            </Badge>
-          </div>
-          <Progress value={progress} className="h-2 mt-3" />
-        </DialogHeader>
-
-        <ScrollArea className="flex-1 px-1">
-          <div className="space-y-6 py-4">
-            {/* Metadata badges */}
-            <QuestionBadgesCompact question={currentQuestion} />
-
-            {/* Enunciado */}
-            <div className="bg-muted/50 rounded-xl p-4 border">
-              <QuestionEnunciado
-                questionText={currentQuestion.question_text}
-                imageUrl={currentQuestion.image_url}
-                imageUrls={currentQuestion.image_urls}
-                banca={currentQuestion.banca}
-                ano={currentQuestion.ano}
-                textSize="sm"
-              />
-            </div>
-
-            {/* Alternativas */}
-            <RadioGroup
-              value={selectedOption || ""}
-              onValueChange={setSelectedOption}
-              disabled={showResult}
-              className="space-y-2"
-            >
-              {(currentQuestion.options || []).map((option) => {
-                const isSelected = selectedOption === option.id;
-                const isCorrectOption = option.id === currentQuestion.correct_answer;
-                
-                let optionClass = "border-muted-foreground/30 hover:border-primary/50";
-                if (showResult) {
-                  if (isCorrectOption) {
-                    optionClass = "border-green-500 bg-green-500/10";
-                  } else if (isSelected && !isCorrectOption) {
-                    optionClass = "border-red-500 bg-red-500/10";
-                  }
-                } else if (isSelected) {
-                  optionClass = "border-primary bg-primary/10";
-                }
-
-                return (
-                  <div
-                    key={option.id}
-                    className={cn(
-                      "flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all",
-                      optionClass,
-                      showResult && "cursor-not-allowed"
-                    )}
-                    onClick={() => !showResult && setSelectedOption(option.id)}
-                  >
-                    <RadioGroupItem value={option.id} id={`rapid-${option.id}`} />
-                    <Label
-                      htmlFor={`rapid-${option.id}`}
-                      className={cn(
-                        "w-8 h-8 flex items-center justify-center rounded-full border-2 font-bold text-sm",
-                        isSelected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"
-                      )}
-                    >
-                      {option.id.toUpperCase()}
-                    </Label>
-                    <p className="flex-1 text-sm">{typeof option.text === 'string' ? option.text : (option.text as any)?.text ?? String(option.text ?? '')}</p>
-                    {showResult && isCorrectOption && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-                    {showResult && isSelected && !isCorrectOption && <XCircle className="h-5 w-5 text-red-500" />}
+      <DialogContent className="max-w-5xl max-h-[98vh] overflow-hidden flex flex-col p-0 bg-gradient-to-br from-background via-background to-amber-950/10 border-amber-500/20">
+        {/* ═══════════════════════════════════════════════════════════
+            HEADER ÉPICO — Year 2300 Cinematic Design
+        ═══════════════════════════════════════════════════════════ */}
+        <div className="relative overflow-hidden">
+          {/* Background com efeito aurora */}
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-600/20 via-yellow-500/10 to-orange-600/20" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
+          
+          {/* Linhas de energia animadas */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent" />
+          
+          <DialogHeader className="relative z-10 p-6 pb-4">
+            <div className="flex items-center justify-between gap-4">
+              {/* Título com ícone holográfico */}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-2xl blur-lg opacity-60 animate-pulse" />
+                  <div className="relative p-3 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-lg shadow-amber-500/25">
+                    <Zap className="h-7 w-7 text-white drop-shadow-lg" />
                   </div>
-                );
-              })}
-            </RadioGroup>
-
-            {/* Resultado + Resolução Completa (OBRIGATÓRIO após responder) */}
-            {showResult && (
-              <div className="space-y-4">
-                <div className={cn(
-                  "p-4 rounded-xl border-2",
-                  selectedOption === currentQuestion.correct_answer
-                    ? "bg-green-500/10 border-green-500"
-                    : "bg-red-500/10 border-red-500"
-                )}>
-                  <div className="flex items-center gap-3">
-                    {selectedOption === currentQuestion.correct_answer ? (
-                      <>
-                        <CheckCircle2 className="h-6 w-6 text-green-500" />
-                        <p className="font-bold text-green-600">Correto!</p>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-6 w-6 text-red-500" />
-                        <p className="font-bold text-red-600">
-                          Incorreto. Resposta: {currentQuestion.correct_answer.toUpperCase()}
-                        </p>
-                      </>
+                </div>
+                <div>
+                  <DialogTitle className="text-2xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 bg-clip-text text-transparent">
+                    RÁPIDO TREINO
+                  </DialogTitle>
+                  <DialogDescription className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold">
+                      <Brain className="h-3 w-3" />
+                      Questão {currentIndex + 1} de {questions.length}
+                    </span>
+                    <span className="text-muted-foreground/50">•</span>
+                    <span className="text-xs text-muted-foreground/70">Modo Treino (0 XP)</span>
+                  </DialogDescription>
+                </div>
+              </div>
+              
+              {/* Progress Orb estilo HUD */}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-amber-500/20 blur-md" />
+                  <div className="relative flex items-center justify-center w-16 h-16 rounded-full border-2 border-amber-500/50 bg-background/80 backdrop-blur-sm">
+                    <span className="text-xl font-black text-amber-400">{Math.round(progress)}%</span>
+                  </div>
+                  {/* Anel de progresso */}
+                  <svg className="absolute inset-0 w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                    <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" strokeWidth="3" className="text-muted/20" />
+                    <circle 
+                      cx="32" cy="32" r="28" fill="none" stroke="url(#progressGradient)" strokeWidth="3"
+                      strokeDasharray={`${progress * 1.76} 176`}
+                      strokeLinecap="round"
+                      className="transition-all duration-500"
+                    />
+                    <defs>
+                      <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#f59e0b" />
+                        <stop offset="100%" stopColor="#eab308" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            
+            {/* Barra de progresso premium */}
+            <div className="mt-4 relative">
+              <div className="h-2 rounded-full bg-muted/30 overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-500 rounded-full transition-all duration-500 shadow-lg shadow-amber-500/30"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              {/* Indicadores de questões */}
+              <div className="flex justify-between mt-2">
+                {questions.slice(0, Math.min(questions.length, 10)).map((_, i) => (
+                  <div 
+                    key={i}
+                    className={cn(
+                      "w-2 h-2 rounded-full transition-all duration-300",
+                      i < currentIndex ? "bg-amber-500" :
+                      i === currentIndex ? "bg-yellow-400 shadow-lg shadow-yellow-400/50" :
+                      "bg-muted/30"
                     )}
+                  />
+                ))}
+                {questions.length > 10 && (
+                  <span className="text-xs text-muted-foreground">+{questions.length - 10}</span>
+                )}
+              </div>
+            </div>
+          </DialogHeader>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════
+            CONTEÚDO PRINCIPAL — Card Flutuante Premium
+        ═══════════════════════════════════════════════════════════ */}
+        <ScrollArea className="flex-1 px-6">
+          <div className="py-6 space-y-6">
+            {/* Metadata em HUD style */}
+            <div className="flex flex-wrap items-center gap-2">
+              <QuestionBadgesCompact question={currentQuestion} />
+            </div>
+
+            {/* Card do Enunciado com borda holográfica */}
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/30 via-yellow-500/20 to-orange-500/30 rounded-2xl blur opacity-60 group-hover:opacity-100 transition-opacity" />
+              <div className="relative bg-card/95 backdrop-blur-sm rounded-2xl p-6 border border-amber-500/20">
+                <QuestionEnunciado
+                  questionText={currentQuestion.question_text}
+                  imageUrl={currentQuestion.image_url}
+                  imageUrls={currentQuestion.image_urls}
+                  banca={currentQuestion.banca}
+                  ano={currentQuestion.ano}
+                  textSize="base"
+                />
+              </div>
+            </div>
+
+            {/* Alternativas Premium */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-3">
+                <Target className="h-4 w-4 text-amber-500" />
+                <span>Selecione a alternativa correta:</span>
+              </div>
+              
+              <RadioGroup
+                value={selectedOption || ""}
+                onValueChange={setSelectedOption}
+                disabled={showResult}
+                className="space-y-3"
+              >
+                {(currentQuestion.options || []).map((option, idx) => {
+                  const isSelected = selectedOption === option.id;
+                  const isCorrectOption = option.id === currentQuestion.correct_answer;
+                  
+                  return (
+                    <div
+                      key={option.id}
+                      className={cn(
+                        "group relative flex items-start gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all duration-300",
+                        !showResult && !isSelected && "border-border/50 hover:border-amber-500/50 hover:bg-amber-500/5",
+                        !showResult && isSelected && "border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/10",
+                        showResult && isCorrectOption && "border-green-500 bg-green-500/10",
+                        showResult && isSelected && !isCorrectOption && "border-red-500 bg-red-500/10",
+                        showResult && !isCorrectOption && !isSelected && "opacity-50",
+                        showResult && "cursor-not-allowed"
+                      )}
+                      onClick={() => !showResult && setSelectedOption(option.id)}
+                      style={{ animationDelay: `${idx * 50}ms` }}
+                    >
+                      <RadioGroupItem value={option.id} id={`rapid-${option.id}`} className="sr-only" />
+                      
+                      {/* Círculo da letra com efeito */}
+                      <div className={cn(
+                        "relative flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg transition-all duration-300",
+                        !showResult && !isSelected && "bg-muted/50 text-muted-foreground group-hover:bg-amber-500/20 group-hover:text-amber-500",
+                        !showResult && isSelected && "bg-amber-500 text-white shadow-lg shadow-amber-500/30",
+                        showResult && isCorrectOption && "bg-green-500 text-white",
+                        showResult && isSelected && !isCorrectOption && "bg-red-500 text-white"
+                      )}>
+                        {option.id.toUpperCase()}
+                        {showResult && isCorrectOption && (
+                          <div className="absolute -top-1 -right-1">
+                            <CheckCircle2 className="h-4 w-4 text-green-400 fill-green-500" />
+                          </div>
+                        )}
+                        {showResult && isSelected && !isCorrectOption && (
+                          <div className="absolute -top-1 -right-1">
+                            <XCircle className="h-4 w-4 text-red-400 fill-red-500" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Texto da alternativa */}
+                      <p className="flex-1 pt-2 text-sm leading-relaxed">
+                        {typeof option.text === 'string' ? option.text : (option.text as any)?.text ?? String(option.text ?? '')}
+                      </p>
+                    </div>
+                  );
+                })}
+              </RadioGroup>
+            </div>
+
+            {/* ═══════════════════════════════════════════════════════════
+                RESULTADO + RESOLUÇÃO COMPLETA
+            ═══════════════════════════════════════════════════════════ */}
+            {showResult && (
+              <div className="space-y-6 animate-fade-in">
+                {/* Banner de Resultado Épico */}
+                <div className={cn(
+                  "relative overflow-hidden rounded-2xl p-6",
+                  selectedOption === currentQuestion.correct_answer
+                    ? "bg-gradient-to-br from-green-500/20 via-emerald-500/10 to-teal-500/20 border border-green-500/30"
+                    : "bg-gradient-to-br from-red-500/20 via-rose-500/10 to-pink-500/20 border border-red-500/30"
+                )}>
+                  {/* Glow effect */}
+                  <div className={cn(
+                    "absolute inset-0 blur-3xl opacity-30",
+                    selectedOption === currentQuestion.correct_answer ? "bg-green-500" : "bg-red-500"
+                  )} />
+                  
+                  <div className="relative flex items-center gap-4">
+                    <div className={cn(
+                      "p-3 rounded-xl",
+                      selectedOption === currentQuestion.correct_answer 
+                        ? "bg-green-500/20" 
+                        : "bg-red-500/20"
+                    )}>
+                      {selectedOption === currentQuestion.correct_answer ? (
+                        <CheckCircle2 className="h-8 w-8 text-green-400" />
+                      ) : (
+                        <XCircle className="h-8 w-8 text-red-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className={cn(
+                        "text-xl font-bold",
+                        selectedOption === currentQuestion.correct_answer ? "text-green-400" : "text-red-400"
+                      )}>
+                        {selectedOption === currentQuestion.correct_answer ? "Excelente! Resposta Correta!" : "Ops! Resposta Incorreta"}
+                      </p>
+                      {selectedOption !== currentQuestion.correct_answer && (
+                        <p className="text-sm text-muted-foreground mt-1">
+                          A resposta correta era: <span className="font-bold text-green-400">{currentQuestion.correct_answer.toUpperCase()}</span>
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Gabarito completo: Resolução Comentada + metadados (se houver) */}
+                {/* Resolução Comentada Premium */}
                 {currentQuestion.explanation ? (
-                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
-                    <QuestionResolution
-                      resolutionText={currentQuestion.explanation}
-                      banca={currentQuestion.banca}
-                      ano={currentQuestion.ano}
-                      difficulty={currentQuestion.difficulty}
-                      tema={currentQuestion.tema}
-                      macro={currentQuestion.macro}
-                      micro={currentQuestion.micro}
-                    />
+                  <div className="relative">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 rounded-2xl blur opacity-60" />
+                    <div className="relative bg-card/95 backdrop-blur-sm rounded-2xl p-6 border border-emerald-500/20">
+                      <div className="flex items-center gap-2 mb-4 text-emerald-400">
+                        <BookOpen className="h-5 w-5" />
+                        <span className="font-bold text-lg">Resolução Comentada</span>
+                      </div>
+                      <QuestionResolution
+                        resolutionText={currentQuestion.explanation}
+                        banca={currentQuestion.banca}
+                        ano={currentQuestion.ano}
+                        difficulty={currentQuestion.difficulty}
+                        tema={currentQuestion.tema}
+                        macro={currentQuestion.macro}
+                        micro={currentQuestion.micro}
+                      />
+                    </div>
                   </div>
                 ) : (
-                  <div className="p-4 rounded-xl border bg-muted/50 text-sm text-muted-foreground">
+                  <div className="p-5 rounded-xl border border-muted/50 bg-muted/20 text-sm text-muted-foreground flex items-center gap-3">
+                    <AlertCircle className="h-5 w-5 text-muted-foreground/50" />
                     Resolução comentada não disponível para esta questão.
                   </div>
                 )}
@@ -619,23 +742,46 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
           </div>
         </ScrollArea>
 
-        <DialogFooter className="pt-4 border-t">
+        {/* ═══════════════════════════════════════════════════════════
+            FOOTER PREMIUM — Botões de Ação
+        ═══════════════════════════════════════════════════════════ */}
+        <div className="relative border-t border-amber-500/20 p-6 bg-gradient-to-r from-amber-950/20 via-background to-yellow-950/20">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+          
           {!showResult ? (
             <Button 
               onClick={handleSubmitAnswer}
               disabled={!selectedOption || isSubmitting}
-              className="w-full"
+              size="lg"
+              className="w-full h-14 text-lg font-bold bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 hover:from-amber-600 hover:via-yellow-600 hover:to-orange-600 text-black shadow-lg shadow-amber-500/25 transition-all duration-300 disabled:opacity-50"
             >
-              {isSubmitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-              Confirmar
+              {isSubmitting ? (
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-5 w-5 mr-2" />
+              )}
+              CONFIRMAR RESPOSTA
             </Button>
           ) : (
-            <Button onClick={handleNext} className="w-full">
-              {currentIndex + 1 >= questions.length ? 'Finalizar' : 'Próxima'}
-              <ArrowRight className="h-4 w-4 ml-2" />
+            <Button 
+              onClick={handleNext} 
+              size="lg"
+              className="w-full h-14 text-lg font-bold bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 hover:from-amber-600 hover:via-yellow-600 hover:to-orange-600 text-black shadow-lg shadow-amber-500/25 transition-all duration-300"
+            >
+              {currentIndex + 1 >= questions.length ? (
+                <>
+                  <Trophy className="h-5 w-5 mr-2" />
+                  FINALIZAR TREINO
+                </>
+              ) : (
+                <>
+                  PRÓXIMA QUESTÃO
+                  <ArrowRight className="h-5 w-5 ml-2" />
+                </>
+              )}
             </Button>
           )}
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -1072,48 +1218,70 @@ export default function AlunoQuestoes() {
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
       {/* ══════════════════════════════════════════════════════════════
-          BLOCK_04: HEADER_CONTEXT - Orientar o usuário
+          BLOCK_04: HEADER_CONTEXT — Design Year 2300 Cinematic
       ══════════════════════════════════════════════════════════════ */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <Card className="md:col-span-2 bg-gradient-to-r from-primary/10 to-purple-500/10 border-primary/20">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-primary/20">
-                <Brain className="w-8 h-8 text-primary" />
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-950/30 via-background to-yellow-950/20 border border-amber-500/20 p-6">
+        {/* Background effects */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent" />
+        
+        <div className="relative grid md:grid-cols-4 gap-6 items-center">
+          {/* Título com ícone holográfico */}
+          <div className="md:col-span-2 flex items-center gap-4">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-2xl blur-lg opacity-50 animate-pulse" />
+              <div className="relative p-4 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-lg shadow-amber-500/25">
+                <Brain className="w-10 h-10 text-white drop-shadow-lg" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-3xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 bg-clip-text text-transparent">
+                BANCO DE QUESTÕES
+              </h1>
+              <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-semibold">
+                  💪 Modo Treino
+                </span>
+                <span className="text-muted-foreground/50">•</span>
+                <span>{stats.total.toLocaleString('pt-BR')} questões disponíveis</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Stats Orbs estilo HUD */}
+          <div className="relative group">
+            <div className="absolute inset-0 bg-green-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative flex items-center gap-4 p-4 rounded-2xl bg-card/50 backdrop-blur-sm border border-green-500/20">
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-500/20 rounded-xl blur" />
+                <div className="relative p-3 rounded-xl bg-green-500/20">
+                  <CheckCircle2 className="w-6 h-6 text-green-400" />
+                </div>
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Banco de Questões</h1>
-                <p className="text-muted-foreground">
-                  {stats.total} questões • Modo Treino (0 XP)
-                </p>
+                <p className="text-3xl font-black text-green-400">{stats.resolvidas}</p>
+                <p className="text-xs text-muted-foreground">Resolvidas</p>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-500/20">
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
+          <div className="relative group">
+            <div className="absolute inset-0 bg-amber-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative flex items-center gap-4 p-4 rounded-2xl bg-card/50 backdrop-blur-sm border border-amber-500/20">
+              <div className="relative">
+                <div className="absolute inset-0 bg-amber-500/20 rounded-xl blur" />
+                <div className="relative p-3 rounded-xl bg-amber-500/20">
+                  <TrendingUp className="w-6 h-6 text-amber-400" />
+                </div>
+              </div>
+              <div>
+                <p className="text-3xl font-black text-amber-400">{stats.taxaAcerto}%</p>
+                <p className="text-xs text-muted-foreground">Taxa de Acerto</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.resolvidas}</p>
-              <p className="text-xs text-muted-foreground">Resolvidas</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-amber-500/20">
-              <TrendingUp className="w-5 h-5 text-amber-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.taxaAcerto}%</p>
-              <p className="text-xs text-muted-foreground">Taxa de acerto</p>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
@@ -1311,52 +1479,71 @@ export default function AlunoQuestoes() {
               </SelectContent>
             </Select>
 
-            {/* BLOCK_08: PRIMARY_ACTION - RÁPIDO TREINO */}
-            <Button 
-              onClick={handleStartRapidoTreino}
-              disabled={isLoadingTreino || totalCount === 0}
-              className="gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold"
-            >
-              {isLoadingTreino ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Zap className="w-4 h-4" />
-              )}
-              Criar Questões
-              <Badge variant="secondary" className="ml-1 bg-black/20 text-white">
-                {Math.min(totalCount, RAPIDO_TREINO_LIMIT)}
-              </Badge>
-            </Button>
+            {/* BLOCK_08: PRIMARY_ACTION - RÁPIDO TREINO (Premium Button) */}
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 rounded-xl blur opacity-30 group-hover:opacity-60 transition-opacity" />
+              <Button 
+                onClick={handleStartRapidoTreino}
+                disabled={isLoadingTreino || totalCount === 0}
+                size="lg"
+                className="relative gap-2 bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 hover:from-amber-600 hover:via-yellow-600 hover:to-orange-600 text-black font-bold px-6 shadow-lg shadow-amber-500/25 transition-all duration-300"
+              >
+                {isLoadingTreino ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Zap className="w-5 h-5" />
+                )}
+                <span className="font-black">CRIAR QUESTÕES</span>
+                <Badge className="ml-1 bg-black/20 text-white border-0 font-bold">
+                  {Math.min(totalCount, RAPIDO_TREINO_LIMIT)}
+                </Badge>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* ══════════════════════════════════════════════════════════════
-          BLOCK_09: ZERO STATE - Guiar para Rápido Treino
+          BLOCK_09: ZERO STATE — Guiar para Rápido Treino (Premium)
       ══════════════════════════════════════════════════════════════ */}
       {isZeroState && (
-        <Card className="border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-yellow-500/10">
-          <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6">
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-500">
-              <Zap className="w-10 h-10 text-white" />
+        <div className="relative overflow-hidden rounded-2xl">
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-600/20 via-yellow-500/15 to-orange-600/20" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent" />
+          
+          <div className="relative p-8 flex flex-col md:flex-row items-center gap-8">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-3xl blur-xl opacity-50 animate-pulse" />
+              <div className="relative p-5 rounded-3xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-2xl shadow-amber-500/30">
+                <Zap className="w-14 h-14 text-white drop-shadow-lg" />
+              </div>
             </div>
+            
             <div className="flex-1 text-center md:text-left">
-              <h3 className="text-xl font-bold mb-2">Comece seu treino agora!</h3>
-              <p className="text-muted-foreground">
-                Você ainda não resolveu nenhuma questão. Use o <strong>Rápido Treino</strong> para praticar {Math.min(totalCount, RAPIDO_TREINO_LIMIT)} questões de uma vez!
+              <h3 className="text-2xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 bg-clip-text text-transparent mb-2">
+                COMECE SEU TREINO AGORA!
+              </h3>
+              <p className="text-muted-foreground max-w-md">
+                Você ainda não resolveu nenhuma questão. Use o <span className="font-bold text-amber-400">Rápido Treino</span> para praticar {Math.min(totalCount, RAPIDO_TREINO_LIMIT)} questões de uma vez!
               </p>
             </div>
-            <Button 
-              onClick={handleStartRapidoTreino}
-              disabled={isLoadingTreino || totalCount === 0}
-              size="lg"
-              className="gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold"
-            >
-              {isLoadingTreino ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
-              Iniciar Treino
-            </Button>
-          </CardContent>
-        </Card>
+            
+            <div className="relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 rounded-xl blur opacity-40 group-hover:opacity-70 transition-opacity" />
+              <Button 
+                onClick={handleStartRapidoTreino}
+                disabled={isLoadingTreino || totalCount === 0}
+                size="lg"
+                className="relative gap-3 bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 hover:from-amber-600 hover:via-yellow-600 hover:to-orange-600 text-black font-black text-lg px-8 py-6 shadow-xl shadow-amber-500/30 transition-all duration-300"
+              >
+                {isLoadingTreino ? <Loader2 className="w-6 h-6 animate-spin" /> : <Play className="w-6 h-6" />}
+                INICIAR TREINO
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ══════════════════════════════════════════════════════════════
