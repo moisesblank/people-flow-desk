@@ -24,7 +24,7 @@ const ComunidadePPS = memo(function ComunidadePPS() {
   const presentations = [
     { 
       id: 1, 
-      title: 'Introdução à Química Orgânica', 
+      title: 'Introdução à orgânica',
       slides: 45,
       downloads: 1234,
       views: 5678,

@@ -962,7 +962,7 @@ function LessonFormModal({ open, onClose, lesson, modules, areas, onSubmit, isLo
               id="title"
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="Ex: Introdução à Química Orgânica"
+              placeholder="Ex: Introdução à orgânica"
             />
           </div>
 

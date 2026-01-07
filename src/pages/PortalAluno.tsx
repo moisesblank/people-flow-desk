@@ -100,8 +100,8 @@ export default function PortalAluno() {
       id: "4",
       title: "Módulo 4 - Química Orgânica",
       lessons: [
-        { id: "4-1", title: "Introdução à Química Orgânica", duration: "25:00", isCompleted: false, isLocked: true },
-        { id: "4-2", title: "Hidrocarbonetos", duration: "45:00", isCompleted: false, isLocked: true },
+        { id: "4-1", title: "Introdução à orgânica", duration: "30:00", isCompleted: false, isLocked: true },
+        { id: "4-2", title: "Nomenclatura Orgânica", duration: "40:00", isCompleted: false, isLocked: true },
         { id: "4-3", title: "Funções Orgânicas", duration: "50:00", isCompleted: false, isLocked: true },
         { id: "4-4", title: "Isomeria", duration: "40:00", isCompleted: false, isLocked: true },
         { id: "4-5", title: "Reações Orgânicas", duration: "55:00", isCompleted: false, isLocked: true },
