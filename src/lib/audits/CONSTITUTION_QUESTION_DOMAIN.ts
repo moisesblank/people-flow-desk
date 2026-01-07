@@ -165,10 +165,10 @@ export const QUESTION_DOMAIN_CONSTITUTION = {
       description: 'Tabela de taxonomia hierárquica para classificação de questões',
       columns: {
         id: { type: 'UUID', required: true, protected: true },
+        parent_id: { type: 'UUID', required: false, protected: true },
         label: { type: 'TEXT', required: true, protected: true },
         value: { type: 'TEXT', required: true, protected: true },
         level: { type: 'TEXT', required: true, protected: true, values: ['macro', 'micro', 'tema', 'subtema'] },
-        parent_value: { type: 'TEXT', required: false, protected: true },
         position: { type: 'INTEGER', required: true, protected: true },
         is_active: { type: 'BOOLEAN', required: true, protected: true },
         created_at: { type: 'TIMESTAMPTZ', required: true, protected: true },
