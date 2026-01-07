@@ -41,6 +41,7 @@ import QuestionResolution from "@/components/shared/QuestionResolution";
 import { useTaxonomyForSelects } from "@/hooks/useQuestionTaxonomy";
 import { QuestionBadgesCompact } from "@/components/shared/QuestionMetadataBadges";
 import { TreinoReviewModal } from "@/components/aluno/questoes/TreinoReviewModal";
+import { StudentPerformanceAnalytics } from "@/components/aluno/questoes/StudentPerformanceAnalytics";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 
 // ============================================
@@ -1919,6 +1920,9 @@ export default function AlunoQuestoes() {
         answers={treinoReviewAnswers}
         results={treinoReviewResults}
       />
+
+      {/* BLOCK_13: SEÇÃO DE MÉTRICAS E ANÁLISE POR ÁREAS */}
+      <StudentPerformanceAnalytics />
     </div>
   );
 }
