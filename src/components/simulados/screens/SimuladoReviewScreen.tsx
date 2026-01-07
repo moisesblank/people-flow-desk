@@ -26,6 +26,7 @@ import {
 } from "@/components/simulados/types";
 import QuestionEnunciado from "@/components/shared/QuestionEnunciado";
 import QuestionResolution from "@/components/shared/QuestionResolution";
+import QuestionTextField from "@/components/shared/QuestionTextField";
 import { cn } from "@/lib/utils";
 
 interface SimuladoReviewScreenProps {
@@ -440,7 +441,7 @@ export function SimuladoReviewScreen({
                       >
                         {key}
                       </div>
-                      <p className="flex-1 pt-1">{optionText}</p>
+                      <QuestionTextField content={optionText} fieldType="alternativa" className="flex-1 pt-1" />
                       {isCorrectOption && (
                         <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
                       )}

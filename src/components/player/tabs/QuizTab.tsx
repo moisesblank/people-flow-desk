@@ -25,6 +25,7 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
 import QuestionResolution from '@/components/shared/QuestionResolution';
+import QuestionTextField from '@/components/shared/QuestionTextField';
 
 interface QuizTabProps {
   lessonId: string;
@@ -275,7 +276,7 @@ function QuizTab({ lessonId }: QuizTabProps) {
                        showWrong ? <XCircle className="h-4 w-4" /> :
                        String.fromCharCode(65 + idx)}
                     </span>
-                    <span className="flex-1">{optionText}</span>
+                    <QuestionTextField content={optionText} fieldType="alternativa" className="flex-1" inline />
                   </div>
                   {optionImageUrl && (
                     <img 

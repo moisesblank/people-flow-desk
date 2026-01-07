@@ -33,6 +33,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanQuestionText } from "@/components/shared/QuestionEnunciado";
+import QuestionTextField from "@/components/shared/QuestionTextField";
 import { 
   GripVertical, 
   CheckCircle2, 
@@ -270,9 +271,14 @@ function QuestionCard({ question, isSelected, onToggle, onPreview, usedInSimulad
 
       {/* Content */}
       <div className="pl-2">
-        <p className="text-xs leading-relaxed line-clamp-2 mb-2 text-foreground/90">
-          {cleanText.substring(0, 150)}...
-        </p>
+        <QuestionTextField 
+          content={question.question_text}
+          fieldType="enunciado"
+          textSize="xs"
+          compact
+          lineClamp={2}
+          className="text-foreground/90 leading-relaxed mb-2"
+        />
 
         <div className="flex flex-wrap gap-1">
           {isUsedElsewhere && (
@@ -351,9 +357,12 @@ function PreviewModal({ question, onClose, onAdd, isSelected }: PreviewModalProp
           </Button>
         </div>
 
-        <div className="prose prose-sm dark:prose-invert max-w-none">
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{cleanText}</p>
-        </div>
+        <QuestionTextField 
+          content={question.question_text}
+          fieldType="enunciado"
+          textSize="sm"
+          className="leading-relaxed"
+        />
 
         {question.macro && (
           <div className="flex gap-2 pt-2 border-t">
