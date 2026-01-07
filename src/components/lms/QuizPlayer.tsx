@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import QuestionEnunciado, { cleanQuestionText } from '@/components/shared/QuestionEnunciado';
 import QuestionResolution from '@/components/shared/QuestionResolution';
+import QuestionTextField from '@/components/shared/QuestionTextField';
 import { predictSuccessRate, getSuccessRateColor } from '@/lib/questionSuccessPredictor';
 import type { Quiz, QuizQuestion, QuizAttempt } from '@/hooks/useQuiz';
 
@@ -204,7 +205,7 @@ export function QuizPlayer({ quiz, questions, onSubmit, isSubmitting }: QuizPlay
                       >
                         <div className="flex items-center gap-3">
                           <RadioGroupItem value={option.id} id={option.id} />
-                          <span className="flex-1">{typeof option.text === 'string' ? option.text : (option.text as any)?.text ?? String(option.text ?? '')}</span>
+                          <QuestionTextField content={option.text} fieldType="alternativa" className="flex-1" inline />
                         </div>
                         {option.image_url && (
                           <img 

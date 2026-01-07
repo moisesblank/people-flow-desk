@@ -2677,3 +2677,58 @@
 .course-card-glow:hover::before {
   opacity: 1;
 }
+
+/* ╔══════════════════════════════════════════════════════════════════════════════╗
+   ║ 📝 QUESTION TEXT FIELD — CSS Global Rules (LEI PERMANENTE)                   ║
+   ╠══════════════════════════════════════════════════════════════════════════════╣
+   ║ Padronização visual para TODOS os campos de texto de questão                 ║
+   ║ Garante renderização consistente como PLAIN TEXT                             ║
+   ╚══════════════════════════════════════════════════════════════════════════════╝ */
+
+.question-text-field {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-word;
+  font-family: inherit;
+  line-height: 1.6;
+}
+
+/* Alternativas de questão */
+.question-alternative {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
+}
+
+/* Enunciado de questão */
+.question-enunciado {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  text-align: justify;
+  hyphens: auto;
+  font-family: inherit;
+}
+
+/* Resolução de questão */
+.question-resolution {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
+  line-height: 1.7;
+}
+
+/* Tabelas markdown (|) aparecem como texto literal */
+.question-text-field table,
+.question-alternative table,
+.question-enunciado table,
+.question-resolution table {
+  display: inline; /* Não renderiza como tabela HTML */
+}
+
+/* Separadores markdown (---) aparecem como texto literal */
+.question-text-field hr,
+.question-alternative hr,
+.question-enunciado hr,
+.question-resolution hr {
+  display: inline; /* Não renderiza como linha horizontal */
+}

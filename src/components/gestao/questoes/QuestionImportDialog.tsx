@@ -83,6 +83,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import QuestionTextField from '@/components/shared/QuestionTextField';
 import * as XLSX from 'xlsx';
 import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, findBancaByValue } from '@/constants/bancas';
 import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
@@ -3168,7 +3169,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                                     )}
                                   >
                                     <span className="font-bold uppercase">{opt.id})</span>{' '}
-                                    {(typeof opt.text === 'string' ? opt.text : ((opt.text as any)?.text ?? String(opt.text ?? ''))) || <span className="text-muted-foreground italic">vazio</span>}
+                                    <QuestionTextField content={opt.text} fieldType="alternativa" emptyText="vazio" emptyAsItalic inline />
                                   </div>
                                 ))}
                               </div>

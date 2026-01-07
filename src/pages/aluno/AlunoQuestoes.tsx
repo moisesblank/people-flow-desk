@@ -33,6 +33,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import QuestionTextField from "@/components/shared/QuestionTextField";
 import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, getBancaLabel } from "@/constants/bancas";
 import { formatBancaHeader } from "@/lib/bancaNormalizer";
 import QuestionEnunciado, { cleanQuestionText } from "@/components/shared/QuestionEnunciado";
@@ -287,7 +288,7 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                           >
                             {option.id.toUpperCase()}
                           </Label>
-                          <p className="flex-1 text-sm">{typeof option.text === 'string' ? option.text : (option.text as any)?.text ?? String(option.text ?? '')}</p>
+                          <QuestionTextField content={option.text} fieldType="alternativa" textSize="sm" className="flex-1" inline />
                           {hasAnswered && isCorrectOption && (
                             <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
                           )}
@@ -666,9 +667,12 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
                       </div>
                       
                       {/* Texto da alternativa */}
-                      <p className="flex-1 pt-1.5 text-sm leading-relaxed">
-                        {typeof option.text === 'string' ? option.text : (option.text as any)?.text ?? String(option.text ?? '')}
-                      </p>
+                      <QuestionTextField 
+                        content={option.text} 
+                        fieldType="alternativa" 
+                        textSize="sm" 
+                        className="flex-1 pt-1.5 leading-relaxed"
+                      />
                     </div>
                   );
                 })}
