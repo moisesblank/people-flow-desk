@@ -7,7 +7,7 @@
 import { useMemo, useState, Suspense } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar, TrendingUp, Zap, Activity, Target } from 'lucide-react';
+import { Calendar, TrendingUp, Zap, Activity, Target, Layers } from 'lucide-react';
 import { format, startOfDay, eachDayOfInterval, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -16,13 +16,32 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 
-// Cores para os 5 macros (ordem canônica) - HSL based
-const MACRO_COLORS: Record<string, { color: string; glow: string }> = {
-  'Química Geral': { color: 'hsl(38, 92%, 50%)', glow: 'hsl(38, 92%, 50%)' },
-  'Físico-Química': { color: 'hsl(187, 85%, 53%)', glow: 'hsl(187, 85%, 53%)' },
-  'Química Orgânica': { color: 'hsl(271, 91%, 65%)', glow: 'hsl(271, 91%, 65%)' },
-  'Química Ambiental': { color: 'hsl(142, 71%, 45%)', glow: 'hsl(142, 71%, 45%)' },
-  'Bioquímica': { color: 'hsl(330, 81%, 60%)', glow: 'hsl(330, 81%, 60%)' },
+// Cores base para os 5 macros (ordem canônica) - HSL based
+const MACRO_COLORS: Record<string, { hue: number; sat: number; light: number }> = {
+  'Química Geral': { hue: 38, sat: 92, light: 50 },
+  'Físico-Química': { hue: 187, sat: 85, light: 53 },
+  'Química Orgânica': { hue: 271, sat: 91, light: 65 },
+  'Química Ambiental': { hue: 142, sat: 71, light: 45 },
+  'Bioquímica': { hue: 330, sat: 81, light: 60 },
+};
+
+// Gerar cor HSL a partir dos valores base
+const hsl = (h: number, s: number, l: number) => `hsl(${h}, ${s}%, ${l}%)`;
+
+// Gerar cor de Micro baseada no Macro pai (variação de lightness)
+const getMicroColor = (macroName: string, microIndex: number): string => {
+  const macro = MACRO_COLORS[macroName];
+  if (!macro) return 'hsl(215, 20%, 50%)';
+  
+  // Variar lightness de +15 a -15 baseado no índice
+  const lightVariation = (microIndex % 5) * 6 - 12;
+  const newLight = Math.max(30, Math.min(80, macro.light + lightVariation));
+  
+  // Pequena variação no hue também para mais distinção
+  const hueVariation = (microIndex % 3) * 5 - 5;
+  const newHue = (macro.hue + hueVariation + 360) % 360;
+  
+  return hsl(newHue, macro.sat, newLight);
 };
 
 interface AttemptWithTaxonomy {
@@ -44,6 +63,12 @@ interface DayData {
   dateLabel: string;
   total: number;
   [key: string]: string | number;
+}
+
+interface MicroInfo {
+  name: string;
+  macro: string;
+  color: string;
 }
 
 // Stat Orb Component
@@ -90,7 +115,31 @@ export function TimelinePerformanceChart({
   className 
 }: TimelinePerformanceChartProps) {
   const [dateRange, setDateRange] = useState<'7d' | '14d' | '30d' | 'all'>('14d');
-  const [groupBy, setGroupBy] = useState<'macro' | 'total'>('macro');
+  const [groupBy, setGroupBy] = useState<'macro' | 'micro' | 'total'>('macro');
+
+  // Extrair micros únicos com suas informações
+  const microInfoMap = useMemo(() => {
+    const map = new Map<string, MicroInfo>();
+    const microIndexByMacro = new Map<string, number>();
+    
+    attempts.forEach(a => {
+      if (a.micro && a.macro) {
+        if (!map.has(a.micro)) {
+          const macroKey = a.macro;
+          const currentIndex = microIndexByMacro.get(macroKey) || 0;
+          microIndexByMacro.set(macroKey, currentIndex + 1);
+          
+          map.set(a.micro, {
+            name: a.micro,
+            macro: a.macro,
+            color: getMicroColor(a.macro, currentIndex),
+          });
+        }
+      }
+    });
+    
+    return map;
+  }, [attempts]);
 
   // Processar dados para o gráfico
   const chartData = useMemo(() => {
@@ -113,35 +162,50 @@ export function TimelinePerformanceChart({
     const allDays = eachDayOfInterval({ start: startDate, end: now });
     const dataByDay = new Map<string, DayData>();
     
+    // Inicializar todos os dias com zeros
     allDays.forEach(day => {
       const dayKey = format(day, 'yyyy-MM-dd');
-      dataByDay.set(dayKey, {
+      const dayData: DayData = {
         date: dayKey,
         dateLabel: format(day, 'dd/MM', { locale: ptBR }),
         total: 0,
-        'Química Geral': 0,
-        'Físico-Química': 0,
-        'Química Orgânica': 0,
-        'Química Ambiental': 0,
-        'Bioquímica': 0,
+      };
+      
+      // Adicionar campos para macros
+      Object.keys(MACRO_COLORS).forEach(macro => {
+        dayData[macro] = 0;
       });
+      
+      // Adicionar campos para micros
+      microInfoMap.forEach((info, microName) => {
+        dayData[microName] = 0;
+      });
+      
+      dataByDay.set(dayKey, dayData);
     });
 
+    // Preencher com dados reais
     validAttempts.forEach(attempt => {
       const dayKey = format(startOfDay(new Date(attempt.created_at)), 'yyyy-MM-dd');
       const dayData = dataByDay.get(dayKey);
       
       if (dayData) {
         dayData.total += 1;
+        
         const macro = attempt.macro || 'Sem Macro';
         if (macro in MACRO_COLORS) {
           (dayData[macro] as number) += 1;
+        }
+        
+        const micro = attempt.micro;
+        if (micro && microInfoMap.has(micro)) {
+          (dayData[micro] as number) += 1;
         }
       }
     });
 
     return Array.from(dataByDay.values()).sort((a, b) => a.date.localeCompare(b.date));
-  }, [attempts, dateRange]);
+  }, [attempts, dateRange, microInfoMap]);
 
   // Estatísticas resumidas
   const stats = useMemo(() => {
@@ -218,6 +282,23 @@ export function TimelinePerformanceChart({
     );
   }
 
+  // Preparar legendItems baseado no modo
+  const legendItems = useMemo(() => {
+    if (groupBy === 'macro') {
+      return Object.entries(MACRO_COLORS).map(([name, { hue, sat, light }]) => ({
+        name,
+        color: hsl(hue, sat, light),
+      }));
+    } else if (groupBy === 'micro') {
+      return Array.from(microInfoMap.values()).map(info => ({
+        name: info.name,
+        color: info.color,
+        macro: info.macro,
+      }));
+    }
+    return [];
+  }, [groupBy, microInfoMap]);
+
   return (
     <div className={cn("relative rounded-xl overflow-hidden group", className)}>
       {/* Background Effects */}
@@ -267,11 +348,13 @@ export function TimelinePerformanceChart({
               </Select>
 
               <Select value={groupBy} onValueChange={(v) => setGroupBy(v as any)}>
-                <SelectTrigger className="h-7 text-xs w-[100px] bg-slate-800/70 border-white/10 hover:border-purple-500/30 transition-colors">
+                <SelectTrigger className="h-7 text-xs w-[110px] bg-slate-800/70 border-white/10 hover:border-purple-500/30 transition-colors">
+                  <Layers className="h-3 w-3 mr-1 text-muted-foreground" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-900 border-white/10">
                   <SelectItem value="macro">Por Macro</SelectItem>
+                  <SelectItem value="micro">Por Micro</SelectItem>
                   <SelectItem value="total">Total</SelectItem>
                 </SelectContent>
               </Select>
@@ -293,21 +376,40 @@ export function TimelinePerformanceChart({
             <ChartContent 
               chartData={chartData} 
               groupBy={groupBy}
+              microInfoMap={microInfoMap}
             />
           </Suspense>
           
           {/* Legend */}
-          {groupBy === 'macro' && (
-            <div className="flex flex-wrap justify-center gap-3 mt-3 pt-3 border-t border-white/5">
-              {Object.entries(MACRO_COLORS).map(([macro, { color }]) => (
-                <div key={macro} className="flex items-center gap-1.5">
-                  <div 
-                    className="w-2 h-2 rounded-full ring-1 ring-white/10"
-                    style={{ backgroundColor: color }}
-                  />
-                  <span className="text-[10px] text-muted-foreground/70">{macro}</span>
+          {groupBy !== 'total' && legendItems.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-white/5">
+              {groupBy === 'macro' ? (
+                <div className="flex flex-wrap justify-center gap-3">
+                  {legendItems.map(item => (
+                    <div key={item.name} className="flex items-center gap-1.5">
+                      <div 
+                        className="w-2 h-2 rounded-full ring-1 ring-white/10"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-[10px] text-muted-foreground/70">{item.name}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-[100px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
+                  {legendItems.map((item: any) => (
+                    <div key={item.name} className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-800/30">
+                      <div 
+                        className="w-2 h-2 rounded-full ring-1 ring-white/10 flex-shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-[9px] text-muted-foreground/70 truncate" title={`${item.name} (${item.macro})`}>
+                        {item.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -317,13 +419,24 @@ export function TimelinePerformanceChart({
 }
 
 // Separated Chart Content for better organization
-function ChartContent({ chartData, groupBy }: { chartData: DayData[]; groupBy: 'macro' | 'total' }) {
+function ChartContent({ 
+  chartData, 
+  groupBy,
+  microInfoMap 
+}: { 
+  chartData: DayData[]; 
+  groupBy: 'macro' | 'micro' | 'total';
+  microInfoMap: Map<string, MicroInfo>;
+}) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || payload.length === 0) return null;
     const total = payload.reduce((sum: number, item: any) => sum + (item.value || 0), 0);
 
+    // Filtrar apenas itens com valor > 0
+    const activePayload = payload.filter((item: any) => item.value > 0);
+
     return (
-      <div className="bg-slate-900/95 backdrop-blur-md border border-cyan-500/20 rounded-lg p-3 shadow-2xl shadow-cyan-500/10">
+      <div className="bg-slate-900/95 backdrop-blur-md border border-cyan-500/20 rounded-lg p-3 shadow-2xl shadow-cyan-500/10 max-w-[280px]">
         <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
           <Calendar className="h-3 w-3 text-cyan-400" />
           <span className="text-xs text-slate-300">{label}</span>
@@ -331,31 +444,50 @@ function ChartContent({ chartData, groupBy }: { chartData: DayData[]; groupBy: '
         <p className="text-sm font-bold text-white mb-2">
           {total} {total === 1 ? 'questão' : 'questões'}
         </p>
-        <div className="space-y-1">
-          {payload.map((item: any) => (
-            item.value > 0 && (
-              <div key={item.dataKey} className="flex items-center gap-2 text-[10px]">
-                <div 
-                  className="w-1.5 h-1.5 rounded-full" 
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="text-slate-400 flex-1">{item.dataKey}</span>
-                <span className="text-white font-medium">{item.value}</span>
-              </div>
-            )
+        <div className="space-y-1 max-h-[150px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/10">
+          {activePayload.slice(0, 10).map((item: any) => (
+            <div key={item.dataKey} className="flex items-center gap-2 text-[10px]">
+              <div 
+                className="w-1.5 h-1.5 rounded-full flex-shrink-0" 
+                style={{ backgroundColor: item.color }}
+              />
+              <span className="text-slate-400 flex-1 truncate">{item.dataKey}</span>
+              <span className="text-white font-medium">{item.value}</span>
+            </div>
           ))}
+          {activePayload.length > 10 && (
+            <div className="text-[9px] text-muted-foreground/50 text-center pt-1">
+              +{activePayload.length - 10} mais...
+            </div>
+          )}
         </div>
       </div>
     );
   };
+
+  // Construir lista de áreas baseado no modo
+  const areas = useMemo(() => {
+    if (groupBy === 'macro') {
+      return Object.entries(MACRO_COLORS).map(([name, { hue, sat, light }]) => ({
+        key: name,
+        color: hsl(hue, sat, light),
+      }));
+    } else if (groupBy === 'micro') {
+      return Array.from(microInfoMap.entries()).map(([name, info]) => ({
+        key: name,
+        color: info.color,
+      }));
+    }
+    return [];
+  }, [groupBy, microInfoMap]);
 
   return (
     <div className="h-[220px] w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
           <defs>
-            {Object.entries(MACRO_COLORS).map(([macro, { color }]) => (
-              <linearGradient key={macro} id={`grad-${macro.replace(/\s/g, '')}`} x1="0" y1="0" x2="0" y2="1">
+            {areas.map(({ key, color }) => (
+              <linearGradient key={key} id={`grad-${key.replace(/\s/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor={color} stopOpacity={0.4}/>
                 <stop offset="100%" stopColor={color} stopOpacity={0.02}/>
               </linearGradient>
@@ -389,19 +521,7 @@ function ChartContent({ chartData, groupBy }: { chartData: DayData[]; groupBy: '
           
           <Tooltip content={<CustomTooltip />} />
           
-          {groupBy === 'macro' ? (
-            Object.entries(MACRO_COLORS).map(([macro, { color }]) => (
-              <Area
-                key={macro}
-                type="monotone"
-                dataKey={macro}
-                stackId="1"
-                stroke={color}
-                fill={`url(#grad-${macro.replace(/\s/g, '')})`}
-                strokeWidth={1.5}
-              />
-            ))
-          ) : (
+          {groupBy === 'total' ? (
             <Area
               type="monotone"
               dataKey="total"
@@ -409,6 +529,18 @@ function ChartContent({ chartData, groupBy }: { chartData: DayData[]; groupBy: '
               fill="url(#grad-total)"
               strokeWidth={2}
             />
+          ) : (
+            areas.map(({ key, color }) => (
+              <Area
+                key={key}
+                type="monotone"
+                dataKey={key}
+                stackId="1"
+                stroke={color}
+                fill={`url(#grad-${key.replace(/\s/g, '-')})`}
+                strokeWidth={1.5}
+              />
+            ))
           )}
         </AreaChart>
       </ResponsiveContainer>
