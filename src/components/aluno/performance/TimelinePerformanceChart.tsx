@@ -252,6 +252,23 @@ export function TimelinePerformanceChart({
     };
   }, [attempts]);
 
+  // Preparar legendItems baseado no modo - ANTES de qualquer early return
+  const legendItems = useMemo(() => {
+    if (groupBy === 'macro') {
+      return Object.entries(MACRO_COLORS).map(([name, { hue, sat, light }]) => ({
+        name,
+        color: hsl(hue, sat, light),
+      }));
+    } else if (groupBy === 'micro') {
+      return Array.from(microInfoMap.values()).map(info => ({
+        name: info.name,
+        color: info.color,
+        macro: info.macro,
+      }));
+    }
+    return [];
+  }, [groupBy, microInfoMap]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -294,22 +311,6 @@ export function TimelinePerformanceChart({
     );
   }
 
-  // Preparar legendItems baseado no modo
-  const legendItems = useMemo(() => {
-    if (groupBy === 'macro') {
-      return Object.entries(MACRO_COLORS).map(([name, { hue, sat, light }]) => ({
-        name,
-        color: hsl(hue, sat, light),
-      }));
-    } else if (groupBy === 'micro') {
-      return Array.from(microInfoMap.values()).map(info => ({
-        name: info.name,
-        color: info.color,
-        macro: info.macro,
-      }));
-    }
-    return [];
-  }, [groupBy, microInfoMap]);
 
   return (
     <div className={cn("relative rounded-xl overflow-hidden group", className)}>
