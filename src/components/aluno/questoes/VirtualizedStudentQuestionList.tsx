@@ -9,10 +9,11 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trophy, CheckCircle2, XCircle, ChevronRight, RotateCcw, Loader2, Sparkles } from 'lucide-react';
+import { Trophy, CheckCircle2, XCircle, ChevronRight, RotateCcw, Loader2, Sparkles, Calendar } from 'lucide-react';
 import { QuestionBadgesCompact } from '@/components/shared/QuestionMetadataBadges';
 import { cleanQuestionText } from '@/components/shared/QuestionEnunciado';
 import { useConstitutionPerformance } from '@/hooks/useConstitutionPerformance';
+import { format } from 'date-fns';
 
 // Configuração de virtualização
 const ITEM_HEIGHT = 180; // Altura ligeiramente aumentada para o novo design
@@ -49,6 +50,7 @@ interface Question {
 interface AttemptData {
   is_correct: boolean;
   selected_answer: string;
+  created_at?: string; // Data da primeira conclusão (first_completed_at)
 }
 
 interface VirtualizedStudentQuestionListProps {
@@ -199,6 +201,14 @@ const QuestionItem = memo(function QuestionItem({
                 )}>
                   {cleanQuestionText(question.question_text)}
                 </p>
+                
+                {/* Data de primeira conclusão (discreta) */}
+                {attempt?.created_at && (
+                  <div className="flex items-center gap-1 mt-1 text-[10px] text-muted-foreground/60">
+                    <Calendar className="h-2.5 w-2.5" />
+                    <span>Resolvida em {format(new Date(attempt.created_at), 'dd/MM/yy')}</span>
+                  </div>
+                )}
               </div>
               
               {/* Botões de ação */}
