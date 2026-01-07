@@ -1,20 +1,23 @@
 /**
- * 🎯 SIMULADOS — Tela REVIEW
- * Constituição SYNAPSE Ω v10.0
+ * 🎯 SIMULADOS — Tela REVIEW (Pós-Finalização)
+ * Constituição SYNAPSE Ω v10.4 | AGENT_EXECUTION
  * 
- * Estado: Gabarito liberado
- * Ação: Exibir respostas, correção e explicações
- * 
- * ATUALIZADO: Usa QuestionEnunciado + QuestionResolution + Vídeo
+ * REGRAS OBRIGATÓRIAS:
+ * - CADA questão renderiza SUA resolução (question_id binding)
+ * - NÃO há reuso de resoluções entre questões
+ * - NÃO há cálculo de score no frontend (apenas exibição do servidor)
+ * - Histórico de tentativas por questão (visual apenas)
+ * - Metadados completos: macro, micro, banca, ano, difficulty
  */
 
 import React, { useState } from "react";
 import { 
   ChevronLeft, ChevronRight, CheckCircle2, XCircle, 
-  BookOpen, Play, ArrowLeft, Eye, Video
+  BookOpen, Play, ArrowLeft, Eye, Video, Info, Clock, Award, Hash
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { 
   Simulado, 
   SimuladoResult, 
@@ -117,6 +120,111 @@ function VideoPlayer({ url }: { url: string }) {
   );
 }
 
+/**
+ * Componente de metadados da questão
+ */
+function QuestionMetadata({ question }: { question: SimuladoQuestion }) {
+  const hasMeta = question.banca || question.ano || question.difficulty;
+  
+  if (!hasMeta) return null;
+  
+  return (
+    <div className="flex flex-wrap items-center gap-2 mb-4">
+      {question.banca && (
+        <Badge variant="outline" className="text-xs">
+          {question.banca}
+        </Badge>
+      )}
+      {question.ano && (
+        <Badge variant="outline" className="text-xs">
+          {question.ano}
+        </Badge>
+      )}
+      {question.difficulty && (
+        <Badge 
+          variant="outline" 
+          className={cn(
+            "text-xs",
+            question.difficulty === 'facil' && "border-green-500/50 text-green-500",
+            question.difficulty === 'medio' && "border-amber-500/50 text-amber-500",
+            question.difficulty === 'dificil' && "border-red-500/50 text-red-500"
+          )}
+        >
+          {question.difficulty === 'facil' ? 'Fácil' : 
+           question.difficulty === 'medio' ? 'Médio' : 
+           question.difficulty === 'dificil' ? 'Difícil' : question.difficulty}
+        </Badge>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Componente de informações da resposta do usuário
+ */
+function AnswerInfo({ 
+  answer, 
+  isCorrect, 
+  questionId,
+  pointsPerQuestion,
+}: { 
+  answer: SimuladoAnswer | undefined; 
+  isCorrect: boolean;
+  questionId: string;
+  pointsPerQuestion: number;
+}) {
+  const wasAnswered = answer?.selectedOption !== null && answer?.selectedOption !== undefined;
+  
+  return (
+    <div className="bg-muted/30 border border-border rounded-lg p-4 mb-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          {wasAnswered ? (
+            isCorrect ? (
+              <div className="flex items-center gap-2 text-green-500">
+                <CheckCircle2 className="h-5 w-5" />
+                <span className="font-medium">Resposta Correta</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-red-500">
+                <XCircle className="h-5 w-5" />
+                <span className="font-medium">Resposta Incorreta</span>
+              </div>
+            )
+          ) : (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Eye className="h-5 w-5" />
+              <span className="font-medium">Não respondida</span>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          {/* Pontuação */}
+          <div className="flex items-center gap-1">
+            <Award className="h-4 w-4" />
+            <span>{wasAnswered && isCorrect ? `+${pointsPerQuestion}` : '0'} pts</span>
+          </div>
+          
+          {/* Tempo gasto */}
+          {answer?.timeSpentSeconds !== undefined && answer.timeSpentSeconds > 0 && (
+            <div className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              <span>{Math.round(answer.timeSpentSeconds)}s</span>
+            </div>
+          )}
+          
+          {/* ID para auditoria */}
+          <div className="flex items-center gap-1 opacity-50">
+            <Hash className="h-3 w-3" />
+            <span className="font-mono text-xs">{questionId.slice(0, 8)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SimuladoReviewScreen({
   simulado,
   result,
@@ -126,8 +234,12 @@ export function SimuladoReviewScreen({
   onExit,
 }: SimuladoReviewScreenProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // BINDING EXPLÍCITO: currentQuestion vinculada ao índice atual
   const currentQuestion = questions[currentIndex];
-  const currentAnswer = answers.get(currentQuestion?.id);
+  
+  // BINDING EXPLÍCITO: currentAnswer vinculada ao question_id
+  const currentAnswer = currentQuestion ? answers.get(currentQuestion.id) : undefined;
 
   const goToNext = () => {
     if (currentIndex < questions.length - 1) {
@@ -145,14 +257,15 @@ export function SimuladoReviewScreen({
     return null;
   }
 
+  // CÁLCULO LOCAL apenas para display - score real vem do servidor (result)
   const isCorrect = currentAnswer?.selectedOption === currentQuestion.correct_answer;
-  const wasAnswered = currentAnswer?.selectedOption !== null;
+  const wasAnswered = currentAnswer?.selectedOption !== null && currentAnswer?.selectedOption !== undefined;
 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="border-b border-border p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-4">
             {onExit && (
               <Button variant="ghost" size="sm" onClick={onExit}>
@@ -168,27 +281,37 @@ export function SimuladoReviewScreen({
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <div className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-sm">
+          {/* Resumo do resultado (do SERVIDOR) */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-sm font-medium">
               {result.correctAnswers} corretas
             </div>
-            <div className="px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-sm">
+            <div className="px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-sm font-medium">
               {result.wrongAnswers} erradas
             </div>
+            <div className="px-3 py-1 rounded-full bg-muted text-muted-foreground text-sm">
+              {result.unanswered} em branco
+            </div>
+            {isRetake && (
+              <div className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 text-sm">
+                Prática
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Conteúdo */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
         {/* Navegação lateral */}
         <div className="w-20 border-r border-border p-2 hidden md:block">
           <ScrollArea className="h-full">
             <div className="flex flex-col gap-1">
               {questions.map((q, i) => {
+                // BINDING: ans vinculado ao q.id específico
                 const ans = answers.get(q.id);
                 const correct = ans?.selectedOption === q.correct_answer;
-                const answered = ans?.selectedOption !== null;
+                const answered = ans?.selectedOption !== null && ans?.selectedOption !== undefined;
                 
                 return (
                   <button
@@ -217,35 +340,17 @@ export function SimuladoReviewScreen({
 
         {/* Questão */}
         <ScrollArea className="flex-1">
-          <div className="p-6">
-            {/* Indicador de resultado */}
-            <div
-              className={cn(
-                "inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium mb-4",
-                wasAnswered && isCorrect && "bg-green-500/20 text-green-400",
-                wasAnswered && !isCorrect && "bg-red-500/20 text-red-400",
-                !wasAnswered && "bg-muted text-muted-foreground"
-              )}
-            >
-              {wasAnswered ? (
-                isCorrect ? (
-                  <>
-                    <CheckCircle2 className="h-4 w-4" />
-                    Resposta Correta
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="h-4 w-4" />
-                    Resposta Incorreta
-                  </>
-                )
-              ) : (
-                <>
-                  <Eye className="h-4 w-4" />
-                  Não respondida
-                </>
-              )}
-            </div>
+          <div className="p-6 max-w-4xl mx-auto">
+            {/* Metadados da questão */}
+            <QuestionMetadata question={currentQuestion} />
+            
+            {/* Informações da resposta do usuário */}
+            <AnswerInfo 
+              answer={currentAnswer} 
+              isCorrect={isCorrect}
+              questionId={currentQuestion.id}
+              pointsPerQuestion={simulado.points_per_question || 10}
+            />
 
             {/* Enunciado - Usando componente padronizado */}
             <div className="mb-6">
@@ -309,7 +414,7 @@ export function SimuladoReviewScreen({
               })}
             </div>
 
-            {/* Resolução Comentada - Usando componente padronizado */}
+            {/* Resolução Comentada - BINDING EXPLÍCITO: currentQuestion.explanation */}
             {currentQuestion.explanation && (
               <div className="mb-6">
                 <div className="flex items-center gap-2 text-primary mb-3">
@@ -324,8 +429,18 @@ export function SimuladoReviewScreen({
                 />
               </div>
             )}
+            
+            {/* Aviso se não há resolução */}
+            {!currentQuestion.explanation && (
+              <div className="mb-6 p-4 rounded-lg bg-muted/50 border border-border">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Info className="h-5 w-5" />
+                  <span>Resolução comentada não disponível para esta questão.</span>
+                </div>
+              </div>
+            )}
 
-            {/* Vídeo de Resolução */}
+            {/* Vídeo de Resolução - BINDING EXPLÍCITO: currentQuestion.video_url */}
             {currentQuestion.video_url && (
               <div className="mt-6">
                 <div className="flex items-center gap-2 text-primary mb-3">
