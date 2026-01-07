@@ -261,7 +261,11 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
                 alt={`Imagem ${idx + 1} da questão`}
                 className={cn(
                   "rounded-lg border border-border/50 object-contain",
-                  compact ? "max-h-48 w-full" : `min-h-[300px] ${maxImageHeight}`,
+                  compact
+                    ? maxImageHeight === 'max-h-[900px]'
+                      ? 'w-full h-auto max-h-48'
+                      : `w-full h-auto ${maxImageHeight}`
+                    : `min-h-[300px] ${maxImageHeight}`,
                   !compact && "mx-auto max-w-full"
                 )}
                 loading="lazy"

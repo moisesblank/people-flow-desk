@@ -85,7 +85,7 @@ interface VirtualizedQuestionListProps {
 // CONSTANTES DE VIRTUALIZAÇÃO
 // ============================================
 
-const ITEM_HEIGHT = 380; // Altura para enunciado mínimo + imagem íntegra + tags
+const ITEM_HEIGHT = 560; // Altura para enunciado mínimo + imagem íntegra (sem corte) + modo visível
 const OVERSCAN = 5; // Itens extras acima/abaixo da viewport
 const CONTAINER_HEIGHT = 'calc(100vh - 400px)'; // Altura do container scrollável
 
@@ -136,7 +136,7 @@ const QuestionItem = memo(function QuestionItem({
       />
 
       {/* Conteúdo Principal - flexível */}
-      <div className="flex items-start justify-between gap-4 flex-1 min-h-0 overflow-hidden">
+      <div className="flex items-start justify-between gap-4 flex-1 min-h-0">
         {/* Left: ID + Enunciado */}
         <div className="flex-1 min-w-0 flex flex-col h-full">
           <div className="flex items-center gap-2 mb-2 shrink-0">
@@ -153,8 +153,8 @@ const QuestionItem = memo(function QuestionItem({
             )}
           </div>
 
-          {/* Enunciado - área flexível com overflow */}
-          <div className="flex-1 min-h-0 overflow-hidden">
+          {/* Enunciado - sem overflow hidden para não cortar imagens */}
+          <div className="flex-1 min-h-0">
             <QuestionEnunciado
               questionText={question.question_text}
               imageUrl={question.image_url}
@@ -164,7 +164,7 @@ const QuestionItem = memo(function QuestionItem({
               textSize="sm"
               compact={true}
               hideHeader={true}
-              maxImageHeight="max-h-32"
+              maxImageHeight="max-h-72"
               showImageLabel={false}
               className="line-clamp-3"
             />
