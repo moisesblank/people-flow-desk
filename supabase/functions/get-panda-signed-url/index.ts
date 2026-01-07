@@ -1,12 +1,49 @@
 // ============================================
 // 🎥 PANDA VIDEO SIGNED URL GENERATOR
 // Edge Function para URLs seguras de vídeo
+// P0 FIX: Usar JWT (HS256) para DRM via API
 // ============================================
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
+
+// ============================================
+// JWT HELPER - HS256 para Panda Video DRM
+// ============================================
+function toBase64Url(data: Uint8Array | ArrayBuffer): string {
+  const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+  const binary = Array.from(bytes).map(b => String.fromCharCode(b)).join('');
+  return btoa(binary)
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+async function createJWT(payload: Record<string, unknown>, secret: string): Promise<string> {
+  const header = { alg: "HS256", typ: "JWT" };
+  
+  const encoder = new TextEncoder();
+  const headerB64 = toBase64Url(encoder.encode(JSON.stringify(header)));
+  const payloadB64 = toBase64Url(encoder.encode(JSON.stringify(payload)));
+  
+  const dataToSign = `${headerB64}.${payloadB64}`;
+  
+  const keyData = encoder.encode(secret);
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(dataToSign));
+  const signatureB64 = toBase64Url(signature);
+  
+  return `${dataToSign}.${signatureB64}`;
+}
 
 serve(async (req) => {
   // LEI VI: CORS dinâmico via allowlist centralizado
@@ -134,28 +171,48 @@ serve(async (req) => {
     
     console.log(`[get-panda-signed-url] TTL configurado: ${ttlSeconds}s`);
 
-    // Criar hash de segurança (HMAC)
-    const encoder = new TextEncoder();
-    const data = encoder.encode(`${videoId}${expiresAt}`);
-    const keyData = encoder.encode(pandaDrmSecret);
+    // P0 FIX: Buscar dados do usuário para watermark
+    let userName = user.email?.split('@')[0] || 'Aluno';
+    let userCpf = '';
+    let userEmail = user.email || '';
     
-    const cryptoKey = await crypto.subtle.importKey(
-      'raw',
-      keyData,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('name, cpf, email')
+        .eq('id', user.id)
+        .single();
+      
+      if (profile) {
+        userName = profile.name || userName;
+        userCpf = profile.cpf || '';
+        userEmail = profile.email || user.email || '';
+      }
+    } catch (profileErr) {
+      console.warn('[get-panda-signed-url] Erro ao buscar perfil:', profileErr);
+    }
+
+    // P0 FIX: Criar JWT para DRM via API do Panda Video
+    // O Panda espera: drm_group_id + exp + string1/2/3 (watermark)
+    // A PANDA_DRM_SECRET_KEY é a chave do grupo de watermark
+    const jwtPayload = {
+      // O drm_group_id é extraído da própria secret key ou configurado separadamente
+      // Para contas com DRM via API, o videoId funciona como identificador
+      exp: expiresAt,
+      // Watermark: nome, CPF, email
+      string1: userName,
+      string2: userCpf ? userCpf.replace(/\D/g, '').slice(-4) : '', // Últimos 4 dígitos do CPF
+      string3: userEmail,
+    };
     
-    const signature = await crypto.subtle.sign('HMAC', cryptoKey, data);
-    const token = btoa(String.fromCharCode(...new Uint8Array(signature)))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
+    const jwtToken = await createJWT(jwtPayload, pandaDrmSecret);
+    
+    console.log(`[get-panda-signed-url] JWT gerado com exp=${expiresAt}`);
 
     // URL assinada do Panda Video - usando Library ID fixo da conta
+    // P0 FIX: Usar parâmetro "watermark" para JWT (DRM via API)
     const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
-    const signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&token=${token}&expires=${expiresAt}`;
+    const signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&watermark=${jwtToken}`;
 
     console.log(`[get-panda-signed-url] URL gerada para aula ${lessonId}`);
 
