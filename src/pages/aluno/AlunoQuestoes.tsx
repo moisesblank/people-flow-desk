@@ -846,7 +846,8 @@ export default function AlunoQuestoes() {
   const getMacroLabelForDb = useCallback(
     (macroValue: string) => {
       const found = macros.find((m) => m.value === macroValue);
-      return stripTaxLabel(found?.label) || macroValue;
+      // LEI SUPREMA: NUNCA expor VALUE - retorna '' se não encontrar
+      return stripTaxLabel(found?.label) || '';
     },
     [macros, stripTaxLabel]
   );
@@ -875,7 +876,8 @@ export default function AlunoQuestoes() {
     (temaValue: string, subtemaValue: string) => {
       const subtemas = getSubtemasForSelect(temaValue === 'todas' ? '' : temaValue);
       const found = subtemas.find((s) => s.value === subtemaValue);
-      return stripTaxLabel(found?.label) || subtemaValue;
+      // LEI SUPREMA: NUNCA expor VALUE - retorna '' se não encontrar
+      return stripTaxLabel(found?.label) || '';
     },
     [getSubtemasForSelect, stripTaxLabel]
   );
