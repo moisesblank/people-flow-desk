@@ -1779,8 +1779,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         const banca = q.banca || 'Autoral';
         if (!q.banca) camposInferidos.push('banca:fallback_autoral');
         
-        const ano = q.ano || currentYear;
-        if (!q.ano) camposInferidos.push('ano:fallback_current_year');
+        // NOVA REGRA: Questões sem ano ficam SEM ANO (null) - NUNCA forçar ano
+        const ano = q.ano || null;
         
         const explanation = q.explanation || 'Resolução comentada não disponível. Consulte o material de apoio.';
         if (!q.explanation) camposInferidos.push('explanation:fallback_default');
@@ -1794,7 +1794,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           explanation: explanation,           // OBRIGATÓRIO
           difficulty: difficulty,             // OBRIGATÓRIO
           banca: banca,                       // OBRIGATÓRIO
-          ano: ano,                           // OBRIGATÓRIO
+          ano: ano,                           // OPCIONAL: null se não informado
           macro: macro,                       // OBRIGATÓRIO (identidade)
           micro: micro,                       // OBRIGATÓRIO
           tema: tema,                         // OBRIGATÓRIO

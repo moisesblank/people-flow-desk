@@ -102,8 +102,8 @@ function normalizeBanca(input: string | null | undefined, year?: number | string
   const sanitizedYear = sanitizeYear(year);
   
   if (!input || input.trim() === '') {
-    const finalYear = sanitizedYear || currentYear;
-    return `AUTORAL (${finalYear})`;
+    // NOVA REGRA: Não forçar ano - retorna AUTORAL sem ano se não informado
+    return sanitizedYear ? `AUTORAL (${sanitizedYear})` : 'AUTORAL';
   }
 
   const originalInput = input.trim();
@@ -411,7 +411,7 @@ interface AgentResult {
   subtema: string;
   difficulty: string;
   banca: string;
-  ano: number;
+  ano: number | null; // NOVA REGRA: Questões sem ano ficam SEM ANO (null)
   explanation: string;
   nivel_cognitivo: string;
   confidence: number;
@@ -948,8 +948,8 @@ Sempre responda com JSON válido.`
             tema: result.tema || hint?.canonical?.tema || 'Cálculos',
             subtema: result.subtema || hint?.canonical?.subtema || '',
             difficulty: result.difficulty || 'médio',
-            banca: normalizeBanca(result.banca, result.ano || currentYear),
-            ano: result.ano || currentYear,
+            banca: normalizeBanca(result.banca, result.ano || null),
+            ano: result.ano || null, // NOVA REGRA: Questões sem ano ficam SEM ANO (null)
             explanation: result.explanation || q.explanation || 'Resolução comentada não disponível.',
             nivel_cognitivo: result.nivel_cognitivo || q.suggested_nivel_cognitivo || 'APLICAR',
             confidence: result.confidence || 0.7,
@@ -967,8 +967,8 @@ Sempre responda com JSON válido.`
             tema: hint?.canonical?.tema || 'Cálculos',
             subtema: hint?.canonical?.subtema || '',
             difficulty: 'médio',
-            banca: normalizeBanca('Autoral', currentYear),
-            ano: currentYear,
+            banca: normalizeBanca('Autoral', null), // Sem ano forçado
+            ano: null, // NOVA REGRA: Questões sem ano ficam SEM ANO (null)
             explanation: q.explanation || 'Resolução comentada não disponível.',
             nivel_cognitivo: q.suggested_nivel_cognitivo || 'APLICAR',
             confidence: 0.5,

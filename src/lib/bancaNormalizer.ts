@@ -280,8 +280,9 @@ export function normalizeBanca(
   const currentYear = new Date().getFullYear();
   
   if (!input || input.trim() === '') {
-    const finalYear = sanitizedYear || currentYear;
-    return `AUTORAL (${finalYear})`;
+    // NOVA REGRA: Questões sem ano ficam SEM ANO - não forçar currentYear
+    const finalYear = sanitizedYear;
+    return finalYear ? `AUTORAL (${finalYear})` : 'AUTORAL';
   }
 
   const originalInput = input.trim();
@@ -320,19 +321,19 @@ export function normalizeBanca(
   const upperInput = originalInput.toUpperCase();
   for (const prefix of INVALID_PREFIXES) {
     if (upperInput.includes(prefix.toUpperCase())) {
-      // É uma questão autoral do professor
-      const extractedYear = extractYearFromText(originalInput) || sanitizedYear || currentYear;
-      return `AUTORAL (${extractedYear})`;
+      // É uma questão autoral do professor - NOVA REGRA: não forçar ano
+      const extractedYear = extractYearFromText(originalInput) || sanitizedYear;
+      return extractedYear ? `AUTORAL (${extractedYear})` : 'AUTORAL';
     }
   }
   
   // Outros casos - limpa e normaliza para maiúsculas
   let normalizedBoard = removeInvalidPrefixes(originalInput).toUpperCase();
   
-  // Se ficou vazio após limpeza, é autoral
+  // Se ficou vazio após limpeza, é autoral - NOVA REGRA: não forçar ano
   if (!normalizedBoard || normalizedBoard.trim() === '') {
-    const finalYear = sanitizedYear || currentYear;
-    return `AUTORAL (${finalYear})`;
+    const finalYear = sanitizedYear;
+    return finalYear ? `AUTORAL (${finalYear})` : 'AUTORAL';
   }
   
   // Extrai ou adiciona ano (já sanitizado)
