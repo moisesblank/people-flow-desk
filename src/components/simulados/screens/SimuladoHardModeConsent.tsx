@@ -1,6 +1,6 @@
 /**
  * 🎯 SIMULADOS — Tela de Consentimento (Modo Hard)
- * Design: Year 2300 Cinematic
+ * Design: Year 2300 Cinematic + Performance Optimized
  * 
  * OBRIGATÓRIO antes de iniciar Modo Hard.
  * Estilo: Warning épico com visual de alerta crítico.
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Simulado } from "@/components/simulados/types";
 import { cn } from "@/lib/utils";
+import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 
 interface SimuladoHardModeConsentProps {
   simulado: Simulado;
@@ -29,6 +30,7 @@ export function SimuladoHardModeConsent({
   onDecline,
   isLoading = false,
 }: SimuladoHardModeConsentProps) {
+  const { shouldAnimate, shouldBlur, isLowEnd } = useConstitutionPerformance();
   const [acceptedRules, setAcceptedRules] = useState(false);
   const [acceptedCamera, setAcceptedCamera] = useState(!simulado.requires_camera);
 
@@ -36,46 +38,61 @@ export function SimuladoHardModeConsent({
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-[70vh] p-8 overflow-hidden">
-      {/* Background danger effects */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-orange-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '0.5s' }} />
-      </div>
+      {/* Background danger effects - only on high-end */}
+      {!isLowEnd && (
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-orange-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '0.5s' }} />
+        </div>
+      )}
 
       {/* Warning Icon - Epic Animation */}
-      <div className="relative mb-10 animate-fade-in">
-        {/* Pulsing danger rings */}
-        <div className="absolute -inset-8 rounded-full border-2 border-red-500/20 animate-ping" style={{ animationDuration: '2s' }} />
-        <div className="absolute -inset-4 rounded-full border border-red-500/30 animate-pulse" />
+      <div className={cn("relative mb-10", shouldAnimate && "animate-fade-in")}>
+        {/* Pulsing danger rings - only on high-end */}
+        {!isLowEnd && (
+          <>
+            <div className="absolute -inset-8 rounded-full border-2 border-red-500/20 animate-ping" style={{ animationDuration: '2s' }} />
+            <div className="absolute -inset-4 rounded-full border border-red-500/30 animate-pulse" />
+          </>
+        )}
         
         {/* Core shield */}
-        <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-red-500/20 via-red-600/10 to-orange-500/20 flex items-center justify-center backdrop-blur-sm border-2 border-red-500/50">
+        <div className={cn(
+          "relative w-28 h-28 rounded-full bg-gradient-to-br from-red-500/20 via-red-600/10 to-orange-500/20 flex items-center justify-center border-2 border-red-500/50",
+          shouldBlur && "backdrop-blur-sm"
+        )}>
           <Shield className="h-14 w-14 text-red-500" />
           
-          {/* Inner danger glow */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-t from-red-500/20 to-transparent animate-pulse" />
+          {/* Inner danger glow - only on high-end */}
+          {!isLowEnd && <div className="absolute inset-0 rounded-full bg-gradient-to-t from-red-500/20 to-transparent animate-pulse" />}
         </div>
         
         {/* Badge */}
-        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-gradient-to-r from-red-600 to-red-500 rounded-full text-white text-sm font-bold shadow-lg shadow-red-500/50 flex items-center gap-2">
+        <div className={cn(
+          "absolute -bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-gradient-to-r from-red-600 to-red-500 rounded-full text-white text-sm font-bold flex items-center gap-2",
+          !isLowEnd && "shadow-lg shadow-red-500/50"
+        )}>
           <Lock className="h-4 w-4" />
           MODO HARD
         </div>
       </div>
 
       {/* Title */}
-      <h1 className="text-3xl md:text-4xl font-bold mb-3 text-center bg-gradient-to-r from-red-400 via-orange-400 to-red-400 bg-clip-text text-transparent animate-fade-in" style={{ animationDelay: '0.1s' }}>
+      <h1 className={cn(
+        "text-3xl md:text-4xl font-bold mb-3 text-center bg-gradient-to-r from-red-400 via-orange-400 to-red-400 bg-clip-text text-transparent",
+        shouldAnimate && "animate-fade-in"
+      )}>
         Consentimento Obrigatório
       </h1>
-      <p className="text-muted-foreground mb-10 text-center max-w-md animate-fade-in" style={{ animationDelay: '0.15s' }}>
+      <p className={cn("text-muted-foreground mb-10 text-center max-w-md", shouldAnimate && "animate-fade-in")}>
         Este simulado utiliza o <span className="text-red-400 font-medium">Modo Hard</span> com regras especiais de monitoramento.
       </p>
 
       {/* Rules Card - Danger Style */}
-      <div className="w-full max-w-lg mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+      <div className={cn("w-full max-w-lg mb-8", shouldAnimate && "animate-fade-in")}>
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-500/10 via-card to-orange-500/10 border border-red-500/30 p-6">
-          {/* Animated border effect */}
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-red-500/0 via-red-500/10 to-red-500/0 animate-pulse" />
+          {/* Animated border effect - only on high-end */}
+          {!isLowEnd && <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-red-500/0 via-red-500/10 to-red-500/0 animate-pulse" />}
           
           <div className="relative">
             <div className="flex items-center gap-3 mb-6">
@@ -117,8 +134,11 @@ export function SimuladoHardModeConsent({
       </div>
 
       {/* Consent Checkboxes - Glass Style */}
-      <div className="w-full max-w-lg space-y-4 mb-10 animate-fade-in" style={{ animationDelay: '0.25s' }}>
-        <label className="flex items-start gap-4 p-4 rounded-xl bg-card/60 backdrop-blur border border-border/50 cursor-pointer hover:border-red-500/30 transition-colors">
+      <div className={cn("w-full max-w-lg space-y-4 mb-10", shouldAnimate && "animate-fade-in")}>
+        <label className={cn(
+          "flex items-start gap-4 p-4 rounded-xl bg-card/60 border border-border/50 cursor-pointer hover:border-red-500/30 transition-colors",
+          shouldBlur && "backdrop-blur"
+        )}>
           <Checkbox
             checked={acceptedRules}
             onCheckedChange={(checked) => setAcceptedRules(checked === true)}
@@ -130,7 +150,10 @@ export function SimuladoHardModeConsent({
         </label>
 
         {simulado.requires_camera && (
-          <label className="flex items-start gap-4 p-4 rounded-xl bg-card/60 backdrop-blur border border-border/50 cursor-pointer hover:border-red-500/30 transition-colors">
+          <label className={cn(
+            "flex items-start gap-4 p-4 rounded-xl bg-card/60 border border-border/50 cursor-pointer hover:border-red-500/30 transition-colors",
+            shouldBlur && "backdrop-blur"
+          )}>
             <Checkbox
               checked={acceptedCamera}
               onCheckedChange={(checked) => setAcceptedCamera(checked === true)}
@@ -144,7 +167,7 @@ export function SimuladoHardModeConsent({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+      <div className={cn("flex flex-col sm:flex-row gap-4", shouldAnimate && "animate-fade-in")}>
         <Button
           variant="outline"
           onClick={onDecline}
@@ -161,7 +184,7 @@ export function SimuladoHardModeConsent({
             "min-w-[220px] relative overflow-hidden",
             "bg-gradient-to-r from-red-600 via-red-500 to-orange-500",
             "hover:from-red-500 hover:via-red-400 hover:to-orange-400",
-            "shadow-lg shadow-red-500/30 hover:shadow-red-500/50",
+            !isLowEnd && "shadow-lg shadow-red-500/30 hover:shadow-red-500/50",
             "disabled:opacity-50 disabled:shadow-none"
           )}
         >
@@ -181,7 +204,7 @@ export function SimuladoHardModeConsent({
       </div>
 
       {/* Pro Tip */}
-      <div className="mt-10 px-6 py-3 rounded-full bg-amber-500/10 border border-amber-500/30 animate-fade-in" style={{ animationDelay: '0.35s' }}>
+      <div className={cn("mt-10 px-6 py-3 rounded-full bg-amber-500/10 border border-amber-500/30", shouldAnimate && "animate-fade-in")}>
         <p className="text-xs text-amber-400 flex items-center gap-2">
           <Zap className="h-4 w-4" />
           Dica: Feche outras abas e notificações antes de iniciar

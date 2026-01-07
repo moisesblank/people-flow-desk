@@ -1,6 +1,6 @@
 /**
  * 🎯 SIMULADOS — Tela INVALIDATED
- * Design: Year 2300 Cinematic
+ * Design: Year 2300 Cinematic + Performance Optimized
  * 
  * Estado: Tentativa invalidada (Hard Mode)
  * Visual: Danger/Warning épico
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { SimuladoAttempt, Simulado } from "@/components/simulados/types";
 import { SimuladoDisputeModal } from "./SimuladoDisputeModal";
 import { cn } from "@/lib/utils";
+import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 
 interface SimuladoInvalidatedScreenProps {
   simulado: Simulado;
@@ -31,6 +32,7 @@ export function SimuladoInvalidatedScreen({
   onExit,
   canRetry = true,
 }: SimuladoInvalidatedScreenProps) {
+  const { shouldAnimate, shouldBlur, isLowEnd } = useConstitutionPerformance();
   const [showDispute, setShowDispute] = useState(false);
   const reason = attempt.invalidation_reason || "UNKNOWN";
   const reasonInfo = getReasonInfo(reason);
@@ -38,44 +40,56 @@ export function SimuladoInvalidatedScreen({
 
   return (
     <div className="relative flex flex-col items-center justify-center min-h-[70vh] text-center p-8 overflow-hidden">
-      {/* Background danger effects */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-orange-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '0.5s' }} />
-        
-        {/* Scan lines effect */}
-        <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(239,68,68,0.03)_2px,rgba(239,68,68,0.03)_4px)]" />
-      </div>
+      {/* Background danger effects - only on high-end */}
+      {!isLowEnd && (
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-orange-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '0.5s' }} />
+          
+          {/* Scan lines effect */}
+          <div className="absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(239,68,68,0.03)_2px,rgba(239,68,68,0.03)_4px)]" />
+        </div>
+      )}
 
       {/* Danger Icon - Epic Animation */}
-      <div className="relative mb-10 animate-fade-in">
-        {/* Outer danger ring */}
-        <div className="absolute -inset-8 rounded-full border-2 border-red-500/30 animate-ping" style={{ animationDuration: '2s' }} />
-        <div className="absolute -inset-6 rounded-full border border-red-500/20 animate-pulse" />
+      <div className={cn("relative mb-10", shouldAnimate && "animate-fade-in")}>
+        {/* Outer danger ring - only on high-end */}
+        {!isLowEnd && (
+          <>
+            <div className="absolute -inset-8 rounded-full border-2 border-red-500/30 animate-ping" style={{ animationDuration: '2s' }} />
+            <div className="absolute -inset-6 rounded-full border border-red-500/20 animate-pulse" />
+          </>
+        )}
         <div className="absolute -inset-4 rounded-full border border-red-500/30" />
         
         {/* Core danger orb */}
-        <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-red-500/20 via-red-600/10 to-orange-500/20 flex items-center justify-center backdrop-blur-sm border-2 border-red-500/50">
+        <div className={cn(
+          "relative w-32 h-32 rounded-full bg-gradient-to-br from-red-500/20 via-red-600/10 to-orange-500/20 flex items-center justify-center border-2 border-red-500/50",
+          shouldBlur && "backdrop-blur-sm"
+        )}>
           <XCircle className="h-16 w-16 text-red-500" />
           
-          {/* Danger pulse */}
-          <div className="absolute inset-0 rounded-full bg-red-500/10 animate-ping" style={{ animationDuration: '1.5s' }} />
+          {/* Danger pulse - only on high-end */}
+          {!isLowEnd && <div className="absolute inset-0 rounded-full bg-red-500/10 animate-ping" style={{ animationDuration: '1.5s' }} />}
         </div>
       </div>
 
       {/* Title */}
-      <h1 className="text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-red-400 via-orange-400 to-red-400 bg-clip-text text-transparent animate-fade-in" style={{ animationDelay: '0.1s' }}>
+      <h1 className={cn(
+        "text-3xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-red-400 via-orange-400 to-red-400 bg-clip-text text-transparent",
+        shouldAnimate && "animate-fade-in"
+      )}>
         Tentativa Invalidada
       </h1>
-      <p className="text-muted-foreground mb-8 max-w-md animate-fade-in" style={{ animationDelay: '0.15s' }}>
+      <p className={cn("text-muted-foreground mb-8 max-w-md", shouldAnimate && "animate-fade-in")}>
         {simulado.title}
       </p>
 
       {/* Reason Card - Danger Style */}
-      <div className="w-full max-w-lg mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+      <div className={cn("w-full max-w-lg mb-8", shouldAnimate && "animate-fade-in")}>
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-500/10 via-card to-red-900/10 border border-red-500/40 p-6">
-          {/* Animated danger border */}
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-red-500/0 via-red-500/10 to-red-500/0 animate-pulse" />
+          {/* Animated danger border - only on high-end */}
+          {!isLowEnd && <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-red-500/0 via-red-500/10 to-red-500/0 animate-pulse" />}
           
           <div className="relative flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center shrink-0">
@@ -90,8 +104,11 @@ export function SimuladoInvalidatedScreen({
       </div>
 
       {/* Attempt Details - Glass Card */}
-      <div className="w-full max-w-lg mb-8 animate-fade-in" style={{ animationDelay: '0.25s' }}>
-        <div className="rounded-2xl bg-card/60 backdrop-blur border border-border/50 p-6">
+      <div className={cn("w-full max-w-lg mb-8", shouldAnimate && "animate-fade-in")}>
+        <div className={cn(
+          "rounded-2xl bg-card/60 border border-border/50 p-6",
+          shouldBlur && "backdrop-blur"
+        )}>
           <p className="text-sm text-muted-foreground mb-4 flex items-center justify-center gap-2">
             <Shield className="h-4 w-4" />
             Detalhes da Tentativa
@@ -110,7 +127,7 @@ export function SimuladoInvalidatedScreen({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-8 animate-fade-in" style={{ animationDelay: '0.3s' }}>
+      <div className={cn("flex flex-col sm:flex-row gap-4 mb-8", shouldAnimate && "animate-fade-in")}>
         {canRetry && onRetry && (
           <Button 
             onClick={onRetry} 
@@ -123,7 +140,10 @@ export function SimuladoInvalidatedScreen({
         )}
         <Button 
           onClick={() => setShowDispute(true)} 
-          className="min-w-[140px] bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 shadow-lg shadow-red-500/30"
+          className={cn(
+            "min-w-[140px] bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400",
+            !isLowEnd && "shadow-lg shadow-red-500/30"
+          )}
         >
           <FileQuestion className="h-4 w-4 mr-2" />
           Contestar
@@ -137,7 +157,7 @@ export function SimuladoInvalidatedScreen({
       </div>
 
       {/* Support Link */}
-      <div className="mb-8 animate-fade-in" style={{ animationDelay: '0.35s' }}>
+      <div className={cn("mb-8", shouldAnimate && "animate-fade-in")}>
         <p className="text-xs text-muted-foreground mb-2">Precisa de ajuda?</p>
         <a
           href={`mailto:${supportEmail}?subject=Contestação Simulado: ${simulado.title}`}
@@ -151,20 +171,23 @@ export function SimuladoInvalidatedScreen({
 
       {/* Retry Notice */}
       {canRetry && (
-        <p className="text-xs text-muted-foreground max-w-md animate-fade-in" style={{ animationDelay: '0.4s' }}>
+        <p className={cn("text-xs text-muted-foreground max-w-md", shouldAnimate && "animate-fade-in")}>
           <Zap className="h-3 w-3 inline mr-1" />
           Novas tentativas não contarão para o ranking, mas você pode praticar à vontade.
         </p>
       )}
 
       {/* FAQ Section */}
-      <div className="mt-10 w-full max-w-lg text-left animate-fade-in" style={{ animationDelay: '0.45s' }}>
+      <div className={cn("mt-10 w-full max-w-lg text-left", shouldAnimate && "animate-fade-in")}>
         <h3 className="text-sm font-semibold mb-4 flex items-center gap-2 text-muted-foreground">
           <FileQuestion className="h-4 w-4" />
           Perguntas Frequentes
         </h3>
         <div className="space-y-3">
-          <details className="group rounded-xl bg-card/60 backdrop-blur border border-border/50 overflow-hidden">
+          <details className={cn(
+            "group rounded-xl bg-card/60 border border-border/50 overflow-hidden",
+            shouldBlur && "backdrop-blur"
+          )}>
             <summary className="cursor-pointer p-4 font-medium text-sm flex items-center justify-between hover:bg-muted/30 transition-colors">
               Por que minha tentativa foi invalidada?
               <span className="text-muted-foreground group-open:rotate-180 transition-transform">▼</span>
@@ -176,7 +199,10 @@ export function SimuladoInvalidatedScreen({
             </p>
           </details>
 
-          <details className="group rounded-xl bg-card/60 backdrop-blur border border-border/50 overflow-hidden">
+          <details className={cn(
+            "group rounded-xl bg-card/60 border border-border/50 overflow-hidden",
+            shouldBlur && "backdrop-blur"
+          )}>
             <summary className="cursor-pointer p-4 font-medium text-sm flex items-center justify-between hover:bg-muted/30 transition-colors">
               Como funciona a contestação?
               <span className="text-muted-foreground group-open:rotate-180 transition-transform">▼</span>
