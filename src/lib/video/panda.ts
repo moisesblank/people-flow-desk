@@ -3,7 +3,7 @@
 // Fonte única de verdade para Library ID e geração de embed URLs
 // ============================================
 
-export const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
+export const PANDA_LIBRARY_ID = "c3e3c21e-7ce";
 
 export type PandaEmbedParams = URLSearchParams | Record<string, string | number | boolean | null | undefined>;
 
