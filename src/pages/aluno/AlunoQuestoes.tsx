@@ -630,6 +630,55 @@ export default function AlunoQuestoes() {
   
   // BLOCK_06: Taxonomy compartilhada
   const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
+
+  // ==========================================================
+  // PATCH: Compatibilidade Taxonomy(value) x Questões(label)
+  // - Os Selects usam `value` (normalizado)
+  // - A tabela `quiz_questions` guarda `macro/micro/tema/subtema` como texto humano (label)
+  // Portanto, sempre que filtrarmos no banco OU no client, convertemos value → label.
+  // ==========================================================
+
+  const stripTaxLabel = useCallback((label?: string | null) => {
+    if (!label) return '';
+    // remove prefixos tipo "🧪 " e espaços extras
+    return label.replace(/^[^\p{L}\p{N}]+/gu, '').trim();
+  }, []);
+
+  const getMacroLabelForDb = useCallback(
+    (macroValue: string) => {
+      const found = macros.find((m) => m.value === macroValue);
+      return stripTaxLabel(found?.label) || macroValue;
+    },
+    [macros, stripTaxLabel]
+  );
+
+  const getMicroLabelForDb = useCallback(
+    (macroValue: string, microValue: string) => {
+      const micros = getMicrosForSelect(macroValue === 'todas' ? '' : macroValue);
+      const found = micros.find((m) => m.value === microValue);
+      return stripTaxLabel(found?.label) || microValue;
+    },
+    [getMicrosForSelect, stripTaxLabel]
+  );
+
+  const getTemaLabelForDb = useCallback(
+    (microValue: string, temaValue: string) => {
+      const temas = getTemasForSelect(microValue === 'todas' ? '' : microValue);
+      const found = temas.find((t) => t.value === temaValue);
+      return stripTaxLabel(found?.label) || temaValue;
+    },
+    [getTemasForSelect, stripTaxLabel]
+  );
+
+  const getSubtemaLabelForDb = useCallback(
+    (temaValue: string, subtemaValue: string) => {
+      const subtemas = getSubtemasForSelect(temaValue === 'todas' ? '' : temaValue);
+      const found = subtemas.find((s) => s.value === subtemaValue);
+      return stripTaxLabel(found?.label) || subtemaValue;
+    },
+    [getSubtemasForSelect, stripTaxLabel]
+  );
+
   
   // State
   const [busca, setBusca] = useState("");
@@ -682,10 +731,18 @@ export default function AlunoQuestoes() {
         .eq('is_active', true);
 
       // Aplicar filtros server-side (ACADEMIC_FILTERS)
-      if (filterMacro !== 'todas') query = query.eq('macro', filterMacro);
-      if (filterMicro !== 'todas') query = query.eq('micro', filterMicro);
-      if (filterTema !== 'todas') query = query.eq('tema', filterTema);
-      if (filterSubtema !== 'todas') query = query.eq('subtema', filterSubtema);
+      if (filterMacro !== 'todas') {
+        query = query.eq('macro', getMacroLabelForDb(filterMacro));
+      }
+      if (filterMicro !== 'todas') {
+        query = query.eq('micro', getMicroLabelForDb(filterMacro, filterMicro));
+      }
+      if (filterTema !== 'todas') {
+        query = query.eq('tema', getTemaLabelForDb(filterMicro, filterTema));
+      }
+      if (filterSubtema !== 'todas') {
+        query = query.eq('subtema', getSubtemaLabelForDb(filterTema, filterSubtema));
+      }
       
       // Aplicar filtros operacionais
       if (dificuldade !== 'todas') query = query.eq('difficulty', dificuldade);
@@ -813,16 +870,20 @@ export default function AlunoQuestoes() {
 
     // BLOCK_06: ACADEMIC_FILTERS (cascata)
     if (filterMacro !== 'todas') {
-      filtered = filtered.filter(q => q.macro === filterMacro);
+      const macroLabel = getMacroLabelForDb(filterMacro);
+      filtered = filtered.filter(q => q.macro === macroLabel);
     }
     if (filterMicro !== 'todas') {
-      filtered = filtered.filter(q => q.micro === filterMicro);
+      const microLabel = getMicroLabelForDb(filterMacro, filterMicro);
+      filtered = filtered.filter(q => q.micro === microLabel);
     }
     if (filterTema !== 'todas') {
-      filtered = filtered.filter(q => q.tema === filterTema);
+      const temaLabel = getTemaLabelForDb(filterMicro, filterTema);
+      filtered = filtered.filter(q => q.tema === temaLabel);
     }
     if (filterSubtema !== 'todas') {
-      filtered = filtered.filter(q => q.subtema === filterSubtema);
+      const subtemaLabel = getSubtemaLabelForDb(filterTema, filterSubtema);
+      filtered = filtered.filter(q => q.subtema === subtemaLabel);
     }
 
     // BLOCK_07: OPERATIONAL_FILTERS
@@ -880,10 +941,18 @@ export default function AlunoQuestoes() {
         .eq('is_active', true);
 
       // Aplicar filtros server-side (ACADEMIC_FILTERS)
-      if (filterMacro !== 'todas') query = query.eq('macro', filterMacro);
-      if (filterMicro !== 'todas') query = query.eq('micro', filterMicro);
-      if (filterTema !== 'todas') query = query.eq('tema', filterTema);
-      if (filterSubtema !== 'todas') query = query.eq('subtema', filterSubtema);
+      if (filterMacro !== 'todas') {
+        query = query.eq('macro', getMacroLabelForDb(filterMacro));
+      }
+      if (filterMicro !== 'todas') {
+        query = query.eq('micro', getMicroLabelForDb(filterMacro, filterMicro));
+      }
+      if (filterTema !== 'todas') {
+        query = query.eq('tema', getTemaLabelForDb(filterMicro, filterTema));
+      }
+      if (filterSubtema !== 'todas') {
+        query = query.eq('subtema', getSubtemaLabelForDb(filterTema, filterSubtema));
+      }
       
       // Aplicar filtros operacionais
       if (dificuldade !== 'todas') query = query.eq('difficulty', dificuldade);
