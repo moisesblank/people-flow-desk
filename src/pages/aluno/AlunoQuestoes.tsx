@@ -1068,10 +1068,23 @@ export default function AlunoQuestoes() {
     return { total, resolvidas, acertos, erros, taxaAcerto, pendentes };
   }, [totalCount, attempts]);
 
-  // Map de tentativas por questão
+  // Map de tentativas por questão (guarda a PRIMEIRA tentativa - menor created_at)
   const attemptsByQuestion = useMemo(() => {
     const map = new Map<string, QuestionAttempt>();
-    attempts.forEach(a => map.set(a.question_id, a));
+    
+    // Agrupa todas tentativas por question_id e pega a mais antiga (primeira)
+    attempts.forEach(a => {
+      const existing = map.get(a.question_id);
+      if (!existing) {
+        map.set(a.question_id, a);
+      } else if (a.created_at && existing.created_at) {
+        // Mantém a tentativa com created_at mais antigo
+        if (new Date(a.created_at) < new Date(existing.created_at)) {
+          map.set(a.question_id, a);
+        }
+      }
+    });
+    
     return map;
   }, [attempts]);
 
