@@ -607,13 +607,19 @@ export const OmegaFortressPlayer = memo(({
         )}
 
         {/* Escudos de Proteção - Invisíveis */}
-        <div className="absolute top-0 left-0 right-0 h-[60px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
-        <div className="absolute bottom-0 left-0 right-0 h-[70px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
-        <div className="absolute top-0 bottom-0 left-0 w-[80px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
-        <div className="absolute top-0 bottom-0 right-0 w-[80px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+        {/* PATCH: Panda precisa receber clique direto no iframe para dar play */}
+        {type !== "panda" && (
+          <>
+            <div className="absolute top-0 left-0 right-0 h-[60px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+            <div className="absolute bottom-0 left-0 right-0 h-[70px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+            <div className="absolute top-0 bottom-0 left-0 w-[80px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+            <div className="absolute top-0 bottom-0 right-0 w-[80px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+          </>
+        )}
 
         {/* Custom Controls */}
-        {!showThumbnail && (
+        {/* PATCH: não renderizar overlays de controle por cima do Panda */}
+        {type !== "panda" && !showThumbnail && (
           <AnimatePresence>
             {showControls && (
               <motion.div
@@ -667,12 +673,16 @@ export const OmegaFortressPlayer = memo(({
                       <div className="space-y-1 text-[10px] text-white/70">
                         <div className="flex justify-between gap-4">
                           <span>Nível de Risco:</span>
-                          <span className={cn("font-medium", {
-                            'text-green-400': riskLevel === 'low',
-                            'text-yellow-400': riskLevel === 'medium',
-                            'text-orange-400': riskLevel === 'high',
-                            'text-red-400': riskLevel === 'critical',
-                          })}>{riskLevel.toUpperCase()}</span>
+                          <span
+                            className={cn("font-medium", {
+                              'text-green-400': riskLevel === 'low',
+                              'text-yellow-400': riskLevel === 'medium',
+                              'text-orange-400': riskLevel === 'high',
+                              'text-red-400': riskLevel === 'critical',
+                            })}
+                          >
+                            {riskLevel.toUpperCase()}
+                          </span>
                         </div>
                         <div className="flex justify-between gap-4">
                           <span>Heartbeats:</span>
@@ -715,8 +725,8 @@ export const OmegaFortressPlayer = memo(({
                 {/* Bottom controls */}
                 <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center justify-between pointer-events-auto">
                   <div className="flex items-center gap-2">
-                    <button 
-                      onClick={handlePlayPause} 
+                    <button
+                      onClick={handlePlayPause}
                       className="p-2 rounded-lg hover:bg-white/20 transition-colors"
                     >
                       {isPlaying ? (
@@ -725,8 +735,8 @@ export const OmegaFortressPlayer = memo(({
                         <Play className="w-5 h-5 text-white" />
                       )}
                     </button>
-                    <button 
-                      onClick={handleMuteToggle} 
+                    <button
+                      onClick={handleMuteToggle}
                       className="p-2 rounded-lg hover:bg-white/20 transition-colors"
                     >
                       {isMuted ? (
@@ -754,14 +764,16 @@ export const OmegaFortressPlayer = memo(({
                             key={speed.value}
                             onClick={() => handleSpeedChange(speed.value)}
                             className={cn(
-                              "text-white hover:bg-white/10", 
+                              "text-white hover:bg-white/10",
                               currentSpeed === speed.value && "bg-primary/20 text-primary"
                             )}
                           >
-                            <ChevronRight className={cn(
-                              "w-3 h-3 mr-2 opacity-0",
-                              currentSpeed === speed.value && "opacity-100"
-                            )} />
+                            <ChevronRight
+                              className={cn(
+                                "w-3 h-3 mr-2 opacity-0",
+                                currentSpeed === speed.value && "opacity-100"
+                              )}
+                            />
                             {speed.label}
                           </DropdownMenuItem>
                         ))}
@@ -775,22 +787,24 @@ export const OmegaFortressPlayer = memo(({
                             key={quality.value}
                             onClick={() => handleQualityChange(quality.value)}
                             className={cn(
-                              "text-white hover:bg-white/10", 
+                              "text-white hover:bg-white/10",
                               currentQuality === quality.value && "bg-primary/20 text-primary"
                             )}
                           >
-                            <ChevronRight className={cn(
-                              "w-3 h-3 mr-2 opacity-0",
-                              currentQuality === quality.value && "opacity-100"
-                            )} />
+                            <ChevronRight
+                              className={cn(
+                                "w-3 h-3 mr-2 opacity-0",
+                                currentQuality === quality.value && "opacity-100"
+                              )}
+                            />
                             {quality.label}
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
                     </DropdownMenu>
 
-                    <button 
-                      onClick={handleFullscreen} 
+                    <button
+                      onClick={handleFullscreen}
                       className="p-2 rounded-lg hover:bg-white/20 transition-colors"
                     >
                       <Maximize className="w-5 h-5 text-white" />
@@ -801,6 +815,7 @@ export const OmegaFortressPlayer = memo(({
             )}
           </AnimatePresence>
         )}
+
       </div>
 
       {/* CSS de proteção */}
