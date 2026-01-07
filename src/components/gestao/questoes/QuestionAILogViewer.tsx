@@ -47,6 +47,7 @@ import {
   AIInterventionType,
   downloadLogsAsTxt,
 } from '@/hooks/useQuestionAILogs';
+import { cleanQuestionText } from '@/components/shared/QuestionEnunciado';
 import {
   normalizeBeforeValue,
   normalizeAfterValue,
@@ -308,7 +309,7 @@ const QuestionAILogViewer = memo(function QuestionAILogViewer({ questionId, isOp
         .single();
       
       if (data?.question_text) {
-        setEnunciadoSnippet(extractEnunciadoSnippet(data.question_text, 300));
+        setEnunciadoSnippet(extractEnunciadoSnippet(cleanQuestionText(data.question_text), 300));
       }
     };
     

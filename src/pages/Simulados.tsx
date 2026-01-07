@@ -24,6 +24,7 @@ import { AnimatedAtom, ChemistryTip } from '@/components/chemistry/ChemistryVisu
 import { LoadingState } from '@/components/LoadingState';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { cleanQuestionText } from '@/components/shared/QuestionEnunciado';
 
 export default function Simulados() {
   const navigate = useNavigate();
@@ -272,7 +273,7 @@ export default function Simulados() {
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm line-clamp-2">{q.question_text?.substring(0, 150)}...</p>
+                              <p className="text-sm line-clamp-2">{cleanQuestionText(q.question_text || '').substring(0, 150)}...</p>
                               <div className="flex items-center gap-2 mt-2">
                                 <Badge className={cn(
                                   "text-xs",
