@@ -219,12 +219,17 @@ export default function SameTypeReplacementGate() {
     setOtpError(null);
     
     try {
-      // Enviar código 2FA via edge function existente
+      // 🔐 P0 FIX: Enviar código 2FA com email E userId (ambos obrigatórios)
+      if (!user?.id || !user?.email) {
+        throw new Error('Usuário não autenticado');
+      }
+      
       const { data, error: sendError } = await supabase.functions.invoke('send-2fa-code', {
         body: {
-          userId: user?.id,
-          channel: 'email', // Default para email
-          action: 'device_replacement',
+          userId: user.id,
+          email: user.email,
+          userName: user.user_metadata?.name || user.email.split('@')[0],
+          channel: 'email',
         },
       });
 
@@ -242,7 +247,7 @@ export default function SameTypeReplacementGate() {
     } finally {
       setIs2FALoading(false);
     }
-  }, [user?.id, setStep]);
+  }, [user, setStep]);
 
   // Handler: Usuário clicou NÃO - cancelar e sair
   const handleNo = useCallback(async () => {
@@ -265,6 +270,12 @@ export default function SameTypeReplacementGate() {
       return;
     }
 
+    // 🔐 P0 FIX: Validar user ANTES de enviar
+    if (!user?.id) {
+      setOtpError('Sessão expirada. Faça login novamente.');
+      return;
+    }
+
     setIs2FALoading(true);
     setOtpError(null);
 
@@ -272,7 +283,7 @@ export default function SameTypeReplacementGate() {
       // Verificar código via edge function existente
       const { data, error: verifyError } = await supabase.functions.invoke('verify-2fa-code', {
         body: {
-          userId: user?.id,
+          userId: user.id,
           code: otpCode,
         },
       });
@@ -290,7 +301,7 @@ export default function SameTypeReplacementGate() {
     } finally {
       setIs2FALoading(false);
     }
-  }, [otpCode, user?.id, set2FAVerified]);
+  }, [otpCode, user, set2FAVerified]);
 
   // Handler: Executar a substituição do dispositivo
   const executeReplacement = useCallback(async () => {
