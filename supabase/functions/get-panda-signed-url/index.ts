@@ -193,24 +193,30 @@ serve(async (req) => {
     }
 
     // P0 FIX: Criar JWT para DRM via API do Panda Video
-    // O Panda espera: drm_group_id + exp + string1/2/3 (watermark)
-    // A PANDA_DRM_SECRET_KEY é a chave do grupo de watermark
+    // OBRIGATÓRIO: drm_group_id + exp + string1/2/3 (watermark)
+    const pandaDrmGroupId = Deno.env.get('PANDA_DRM_GROUP_ID');
+    if (!pandaDrmGroupId) {
+      console.error('[get-panda-signed-url] PANDA_DRM_GROUP_ID não configurado');
+      return new Response(
+        JSON.stringify({ error: 'Configuração do servidor incompleta (DRM Group ID)' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const jwtPayload = {
-      // O drm_group_id é extraído da própria secret key ou configurado separadamente
-      // Para contas com DRM via API, o videoId funciona como identificador
+      drm_group_id: pandaDrmGroupId, // UUID do grupo de DRM (OBRIGATÓRIO)
       exp: expiresAt,
-      // Watermark: nome, CPF, email
+      // Watermark dinâmica: nome, últimos 4 dígitos CPF, email
       string1: userName,
-      string2: userCpf ? userCpf.replace(/\D/g, '').slice(-4) : '', // Últimos 4 dígitos do CPF
+      string2: userCpf ? userCpf.replace(/\D/g, '').slice(-4) : '',
       string3: userEmail,
     };
     
     const jwtToken = await createJWT(jwtPayload, pandaDrmSecret);
     
-    console.log(`[get-panda-signed-url] JWT gerado com exp=${expiresAt}`);
+    console.log(`[get-panda-signed-url] JWT gerado com drm_group_id=${pandaDrmGroupId}, exp=${expiresAt}`);
 
-    // URL assinada do Panda Video - usando Library ID fixo da conta
-    // P0 FIX: Usar parâmetro "watermark" para JWT (DRM via API)
+    // URL do player oficial do Panda com token DRM
     const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
     const signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&watermark=${jwtToken}`;
 
