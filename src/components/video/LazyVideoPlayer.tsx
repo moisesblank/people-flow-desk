@@ -79,8 +79,8 @@ export const LazyVideoPlayer = memo(function LazyVideoPlayer({
       case "youtube":
         return `https://www.youtube.com/embed/${videoId}?${YT_PARAMS}`;
       case "panda":
-        // 🐼 Panda Video: usar Library ID canônico da conta
-        const PANDA_LIBRARY_ID = "7b4690a0-a6d";
+        // 🐼 Panda Video: Usar Library ID fixo da conta
+        const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
         return `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}`;
       case "vimeo":
         return `https://player.vimeo.com/video/${videoId}?autoplay=1&dnt=1`;
