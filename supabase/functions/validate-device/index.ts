@@ -4,7 +4,7 @@
 // Calcula risk_score baseado em múltiplos fatores
 // ============================================
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
