@@ -491,8 +491,8 @@ export const OmegaFortressPlayer = memo(({
             {/* YouTube: JS API inicializa no container */}
             {type === "youtube" && <div className="player-container absolute inset-0" />}
             
-            {/* PANDA: Renderiza iframe direto com embed URL */}
-            {type === "panda" && session && (
+            {/* PANDA: Renderiza iframe direto com embed URL (não depende de session) */}
+            {type === "panda" && embedUrl && (
               <iframe
                 src={embedUrl}
                 className="absolute inset-0 w-full h-full"
