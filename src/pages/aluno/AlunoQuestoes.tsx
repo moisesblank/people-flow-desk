@@ -41,6 +41,7 @@ import QuestionResolution from "@/components/shared/QuestionResolution";
 import { useTaxonomyForSelects } from "@/hooks/useQuestionTaxonomy";
 import { QuestionBadgesCompact } from "@/components/shared/QuestionMetadataBadges";
 import { TreinoReviewModal } from "@/components/aluno/questoes/TreinoReviewModal";
+import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 
 // ============================================
 // BLOCK_03: DATA CONTRACT - TIPOS
@@ -415,6 +416,10 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // ⚡ PERFORMANCE TIERING — Adapta visual ao dispositivo
+  const perf = useConstitutionPerformance();
+  const isHighEnd = !perf.isLowEnd;
 
   const currentQuestion = questions[currentIndex];
   const progress = ((currentIndex + (showResult ? 1 : 0)) / questions.length) * 100;
@@ -480,114 +485,119 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[98vh] overflow-hidden flex flex-col p-0 bg-gradient-to-br from-background via-background to-amber-950/10 border-amber-500/20">
+      <DialogContent className={cn(
+        "max-w-5xl max-h-[98vh] overflow-hidden flex flex-col p-0 border-amber-500/20",
+        isHighEnd ? "bg-gradient-to-br from-background via-background to-amber-950/10" : "bg-background"
+      )}>
         {/* ═══════════════════════════════════════════════════════════
-            HEADER ÉPICO — Year 2300 Cinematic Design
+            HEADER — Performance Tiered (blur/animate-pulse apenas em high-end)
         ═══════════════════════════════════════════════════════════ */}
         <div className="relative overflow-hidden">
-          {/* Background com efeito aurora */}
+          {/* Background: gradientes leves sempre, efeitos pesados condicionais */}
           <div className="absolute inset-0 bg-gradient-to-r from-amber-600/20 via-yellow-500/10 to-orange-600/20" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
+          {isHighEnd && (
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
+          )}
           
-          {/* Linhas de energia animadas */}
+          {/* Linhas decorativas (sem animação) */}
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent" />
           
-          <DialogHeader className="relative z-10 p-6 pb-4">
+          <DialogHeader className="relative z-10 p-5 pb-3">
             <div className="flex items-center justify-between gap-4">
-              {/* Título com ícone holográfico */}
-              <div className="flex items-center gap-4">
+              {/* Título com ícone (animate-pulse só em high-end) */}
+              <div className="flex items-center gap-3">
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-2xl blur-lg opacity-60 animate-pulse" />
-                  <div className="relative p-3 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-lg shadow-amber-500/25">
-                    <Zap className="h-7 w-7 text-white drop-shadow-lg" />
+                  {isHighEnd && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl blur-lg opacity-50 animate-pulse" />
+                  )}
+                  <div className="relative p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-lg shadow-amber-500/20">
+                    <Zap className="h-6 w-6 text-white" />
                   </div>
                 </div>
                 <div>
-                  <DialogTitle className="text-2xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 bg-clip-text text-transparent">
+                  <DialogTitle className="text-xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 bg-clip-text text-transparent">
                     RÁPIDO TREINO
                   </DialogTitle>
-                  <DialogDescription className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold">
+                  <DialogDescription className="text-sm text-muted-foreground flex items-center gap-2 mt-0.5">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-semibold">
                       <Brain className="h-3 w-3" />
-                      Questão {currentIndex + 1} de {questions.length}
+                      {currentIndex + 1}/{questions.length}
                     </span>
-                    <span className="text-muted-foreground/50">•</span>
-                    <span className="text-xs text-muted-foreground/70">Modo Treino (0 XP)</span>
+                    <span className="text-xs text-muted-foreground/60">0 XP</span>
                   </DialogDescription>
                 </div>
               </div>
               
-              {/* Progress Orb estilo HUD */}
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-full bg-amber-500/20 blur-md" />
-                  <div className="relative flex items-center justify-center w-16 h-16 rounded-full border-2 border-amber-500/50 bg-background/80 backdrop-blur-sm">
-                    <span className="text-xl font-black text-amber-400">{Math.round(progress)}%</span>
-                  </div>
-                  {/* Anel de progresso */}
-                  <svg className="absolute inset-0 w-16 h-16 -rotate-90" viewBox="0 0 64 64">
-                    <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" strokeWidth="3" className="text-muted/20" />
-                    <circle 
-                      cx="32" cy="32" r="28" fill="none" stroke="url(#progressGradient)" strokeWidth="3"
-                      strokeDasharray={`${progress * 1.76} 176`}
-                      strokeLinecap="round"
-                      className="transition-all duration-500"
-                    />
-                    <defs>
-                      <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#f59e0b" />
-                        <stop offset="100%" stopColor="#eab308" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
+              {/* Progress Orb simplificado (SVG apenas em high-end) */}
+              <div className="flex items-center gap-3">
+                <div className="relative flex items-center justify-center w-14 h-14 rounded-full border-2 border-amber-500/50 bg-background/80">
+                  <span className="text-lg font-black text-amber-400">{Math.round(progress)}%</span>
+                  {isHighEnd && (
+                    <svg className="absolute inset-0 w-14 h-14 -rotate-90" viewBox="0 0 56 56">
+                      <circle cx="28" cy="28" r="24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-muted/20" />
+                      <circle 
+                        cx="28" cy="28" r="24" fill="none" stroke="#f59e0b" strokeWidth="2.5"
+                        strokeDasharray={`${progress * 1.51} 151`}
+                        strokeLinecap="round"
+                        className="transition-all duration-300"
+                      />
+                    </svg>
+                  )}
                 </div>
               </div>
             </div>
             
-            {/* Barra de progresso premium */}
-            <div className="mt-4 relative">
-              <div className="h-2 rounded-full bg-muted/30 overflow-hidden">
+            {/* Barra de progresso (simplificada, shadow condicional) */}
+            <div className="mt-3">
+              <div className="h-1.5 rounded-full bg-muted/30 overflow-hidden">
                 <div 
-                  className="h-full bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-500 rounded-full transition-all duration-500 shadow-lg shadow-amber-500/30"
+                  className={cn(
+                    "h-full bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full transition-all duration-300",
+                    isHighEnd && "shadow-lg shadow-amber-500/20"
+                  )}
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              {/* Indicadores de questões */}
-              <div className="flex justify-between mt-2">
-                {questions.slice(0, Math.min(questions.length, 10)).map((_, i) => (
-                  <div 
-                    key={i}
-                    className={cn(
-                      "w-2 h-2 rounded-full transition-all duration-300",
-                      i < currentIndex ? "bg-amber-500" :
-                      i === currentIndex ? "bg-yellow-400 shadow-lg shadow-yellow-400/50" :
-                      "bg-muted/30"
-                    )}
-                  />
-                ))}
-                {questions.length > 10 && (
-                  <span className="text-xs text-muted-foreground">+{questions.length - 10}</span>
-                )}
-              </div>
+              {/* Indicadores só em high-end */}
+              {isHighEnd && questions.length <= 15 && (
+                <div className="flex justify-between mt-1.5">
+                  {questions.map((_, i) => (
+                    <div 
+                      key={i}
+                      className={cn(
+                        "w-1.5 h-1.5 rounded-full",
+                        i < currentIndex ? "bg-amber-500" :
+                        i === currentIndex ? "bg-yellow-400" :
+                        "bg-muted/30"
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </DialogHeader>
         </div>
 
         {/* ═══════════════════════════════════════════════════════════
-            CONTEÚDO PRINCIPAL — Card Flutuante Premium
+            CONTEÚDO PRINCIPAL — Performance Optimized
         ═══════════════════════════════════════════════════════════ */}
-        <ScrollArea className="flex-1 px-6">
-          <div className="py-6 space-y-6">
-            {/* Metadata em HUD style */}
-            <div className="flex flex-wrap items-center gap-2">
+        <ScrollArea className="flex-1 px-5">
+          <div className="py-4 space-y-4">
+            {/* Metadata compacto */}
+            <div className="flex flex-wrap items-center gap-1.5">
               <QuestionBadgesCompact question={currentQuestion} />
             </div>
 
-            {/* Card do Enunciado com borda holográfica */}
-            <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/30 via-yellow-500/20 to-orange-500/30 rounded-2xl blur opacity-60 group-hover:opacity-100 transition-opacity" />
-              <div className="relative bg-card/95 backdrop-blur-sm rounded-2xl p-6 border border-amber-500/20">
+            {/* Card do Enunciado (borda gradient apenas em high-end) */}
+            <div className="relative">
+              {isHighEnd && (
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/20 via-yellow-500/15 to-orange-500/20 rounded-xl blur opacity-50" />
+              )}
+              <div className={cn(
+                "relative bg-card/95 rounded-xl p-5 border border-amber-500/15",
+                isHighEnd && "backdrop-blur-sm"
+              )}>
                 <QuestionEnunciado
                   questionText={currentQuestion.question_text}
                   imageUrl={currentQuestion.image_url}
@@ -599,9 +609,9 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
               </div>
             </div>
 
-            {/* Alternativas Premium */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-3">
+            {/* Alternativas — Otimizadas (transições menores em low-end) */}
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground mb-2">
                 <Target className="h-4 w-4 text-amber-500" />
                 <span>Selecione a alternativa correta:</span>
               </div>
@@ -610,9 +620,9 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
                 value={selectedOption || ""}
                 onValueChange={setSelectedOption}
                 disabled={showResult}
-                className="space-y-3"
+                className="space-y-2"
               >
-                {(currentQuestion.options || []).map((option, idx) => {
+                {(currentQuestion.options || []).map((option) => {
                   const isSelected = selectedOption === option.id;
                   const isCorrectOption = option.id === currentQuestion.correct_answer;
                   
@@ -620,42 +630,41 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
                     <div
                       key={option.id}
                       className={cn(
-                        "group relative flex items-start gap-4 p-5 rounded-xl border-2 cursor-pointer transition-all duration-300",
+                        "flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer",
+                        isHighEnd ? "transition-all duration-200" : "transition-colors duration-100",
                         !showResult && !isSelected && "border-border/50 hover:border-amber-500/50 hover:bg-amber-500/5",
-                        !showResult && isSelected && "border-amber-500 bg-amber-500/10 shadow-lg shadow-amber-500/10",
+                        !showResult && isSelected && "border-amber-500 bg-amber-500/10",
+                        isHighEnd && !showResult && isSelected && "shadow-md shadow-amber-500/10",
                         showResult && isCorrectOption && "border-green-500 bg-green-500/10",
                         showResult && isSelected && !isCorrectOption && "border-red-500 bg-red-500/10",
                         showResult && !isCorrectOption && !isSelected && "opacity-50",
                         showResult && "cursor-not-allowed"
                       )}
                       onClick={() => !showResult && setSelectedOption(option.id)}
-                      style={{ animationDelay: `${idx * 50}ms` }}
                     >
                       <RadioGroupItem value={option.id} id={`rapid-${option.id}`} className="sr-only" />
                       
-                      {/* Círculo da letra com efeito */}
+                      {/* Círculo da letra */}
                       <div className={cn(
-                        "relative flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg transition-all duration-300",
-                        !showResult && !isSelected && "bg-muted/50 text-muted-foreground group-hover:bg-amber-500/20 group-hover:text-amber-500",
-                        !showResult && isSelected && "bg-amber-500 text-white shadow-lg shadow-amber-500/30",
+                        "relative flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center font-bold text-base",
+                        isHighEnd ? "transition-all duration-200" : "transition-colors duration-100",
+                        !showResult && !isSelected && "bg-muted/50 text-muted-foreground",
+                        !showResult && isSelected && "bg-amber-500 text-white",
+                        isHighEnd && !showResult && isSelected && "shadow-md shadow-amber-500/20",
                         showResult && isCorrectOption && "bg-green-500 text-white",
                         showResult && isSelected && !isCorrectOption && "bg-red-500 text-white"
                       )}>
                         {option.id.toUpperCase()}
                         {showResult && isCorrectOption && (
-                          <div className="absolute -top-1 -right-1">
-                            <CheckCircle2 className="h-4 w-4 text-green-400 fill-green-500" />
-                          </div>
+                          <CheckCircle2 className="absolute -top-1 -right-1 h-4 w-4 text-green-400 fill-green-500" />
                         )}
                         {showResult && isSelected && !isCorrectOption && (
-                          <div className="absolute -top-1 -right-1">
-                            <XCircle className="h-4 w-4 text-red-400 fill-red-500" />
-                          </div>
+                          <XCircle className="absolute -top-1 -right-1 h-4 w-4 text-red-400 fill-red-500" />
                         )}
                       </div>
                       
                       {/* Texto da alternativa */}
-                      <p className="flex-1 pt-2 text-sm leading-relaxed">
+                      <p className="flex-1 pt-1.5 text-sm leading-relaxed">
                         {typeof option.text === 'string' ? option.text : (option.text as any)?.text ?? String(option.text ?? '')}
                       </p>
                     </div>
@@ -665,60 +674,65 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
             </div>
 
             {/* ═══════════════════════════════════════════════════════════
-                RESULTADO + RESOLUÇÃO COMPLETA
+                RESULTADO + RESOLUÇÃO — Performance Tiered
             ═══════════════════════════════════════════════════════════ */}
             {showResult && (
-              <div className="space-y-6 animate-fade-in">
-                {/* Banner de Resultado Épico */}
+              <div className="space-y-4 animate-fade-in">
+                {/* Banner de Resultado */}
                 <div className={cn(
-                  "relative overflow-hidden rounded-2xl p-6",
+                  "relative overflow-hidden rounded-xl p-5",
                   selectedOption === currentQuestion.correct_answer
-                    ? "bg-gradient-to-br from-green-500/20 via-emerald-500/10 to-teal-500/20 border border-green-500/30"
-                    : "bg-gradient-to-br from-red-500/20 via-rose-500/10 to-pink-500/20 border border-red-500/30"
+                    ? "bg-gradient-to-r from-green-500/15 to-emerald-500/10 border border-green-500/30"
+                    : "bg-gradient-to-r from-red-500/15 to-rose-500/10 border border-red-500/30"
                 )}>
-                  {/* Glow effect */}
-                  <div className={cn(
-                    "absolute inset-0 blur-3xl opacity-30",
-                    selectedOption === currentQuestion.correct_answer ? "bg-green-500" : "bg-red-500"
-                  )} />
-                  
-                  <div className="relative flex items-center gap-4">
+                  {/* Glow só em high-end */}
+                  {isHighEnd && (
                     <div className={cn(
-                      "p-3 rounded-xl",
-                      selectedOption === currentQuestion.correct_answer 
-                        ? "bg-green-500/20" 
-                        : "bg-red-500/20"
+                      "absolute inset-0 blur-2xl opacity-20",
+                      selectedOption === currentQuestion.correct_answer ? "bg-green-500" : "bg-red-500"
+                    )} />
+                  )}
+                  
+                  <div className="relative flex items-center gap-3">
+                    <div className={cn(
+                      "p-2.5 rounded-lg",
+                      selectedOption === currentQuestion.correct_answer ? "bg-green-500/20" : "bg-red-500/20"
                     )}>
                       {selectedOption === currentQuestion.correct_answer ? (
-                        <CheckCircle2 className="h-8 w-8 text-green-400" />
+                        <CheckCircle2 className="h-7 w-7 text-green-400" />
                       ) : (
-                        <XCircle className="h-8 w-8 text-red-400" />
+                        <XCircle className="h-7 w-7 text-red-400" />
                       )}
                     </div>
                     <div>
                       <p className={cn(
-                        "text-xl font-bold",
+                        "text-lg font-bold",
                         selectedOption === currentQuestion.correct_answer ? "text-green-400" : "text-red-400"
                       )}>
-                        {selectedOption === currentQuestion.correct_answer ? "Excelente! Resposta Correta!" : "Ops! Resposta Incorreta"}
+                        {selectedOption === currentQuestion.correct_answer ? "Excelente! Resposta Correta!" : "Resposta Incorreta"}
                       </p>
                       {selectedOption !== currentQuestion.correct_answer && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          A resposta correta era: <span className="font-bold text-green-400">{currentQuestion.correct_answer.toUpperCase()}</span>
+                        <p className="text-sm text-muted-foreground">
+                          Correta: <span className="font-bold text-green-400">{currentQuestion.correct_answer.toUpperCase()}</span>
                         </p>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Resolução Comentada Premium */}
+                {/* Resolução Comentada */}
                 {currentQuestion.explanation ? (
                   <div className="relative">
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 via-teal-500/20 to-cyan-500/20 rounded-2xl blur opacity-60" />
-                    <div className="relative bg-card/95 backdrop-blur-sm rounded-2xl p-6 border border-emerald-500/20">
-                      <div className="flex items-center gap-2 mb-4 text-emerald-400">
-                        <BookOpen className="h-5 w-5" />
-                        <span className="font-bold text-lg">Resolução Comentada</span>
+                    {isHighEnd && (
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/15 to-teal-500/15 rounded-xl blur opacity-50" />
+                    )}
+                    <div className={cn(
+                      "relative bg-card/95 rounded-xl p-5 border border-emerald-500/20",
+                      isHighEnd && "backdrop-blur-sm"
+                    )}>
+                      <div className="flex items-center gap-2 mb-3 text-emerald-400">
+                        <BookOpen className="h-4 w-4" />
+                        <span className="font-bold">Resolução Comentada</span>
                       </div>
                       <QuestionResolution
                         resolutionText={currentQuestion.explanation}
@@ -732,9 +746,9 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
                     </div>
                   </div>
                 ) : (
-                  <div className="p-5 rounded-xl border border-muted/50 bg-muted/20 text-sm text-muted-foreground flex items-center gap-3">
-                    <AlertCircle className="h-5 w-5 text-muted-foreground/50" />
-                    Resolução comentada não disponível para esta questão.
+                  <div className="p-4 rounded-lg border border-muted/50 bg-muted/20 text-sm text-muted-foreground flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-muted-foreground/50" />
+                    Resolução não disponível.
                   </div>
                 )}
               </div>
@@ -743,39 +757,50 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
         </ScrollArea>
 
         {/* ═══════════════════════════════════════════════════════════
-            FOOTER PREMIUM — Botões de Ação
+            FOOTER — Compacto e Performático
         ═══════════════════════════════════════════════════════════ */}
-        <div className="relative border-t border-amber-500/20 p-6 bg-gradient-to-r from-amber-950/20 via-background to-yellow-950/20">
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent" />
+        <div className={cn(
+          "relative border-t border-amber-500/20 p-4",
+          isHighEnd ? "bg-gradient-to-r from-amber-950/15 via-background to-yellow-950/15" : "bg-background"
+        )}>
+          {isHighEnd && (
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
+          )}
           
           {!showResult ? (
             <Button 
               onClick={handleSubmitAnswer}
               disabled={!selectedOption || isSubmitting}
               size="lg"
-              className="w-full h-14 text-lg font-bold bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 hover:from-amber-600 hover:via-yellow-600 hover:to-orange-600 text-black shadow-lg shadow-amber-500/25 transition-all duration-300 disabled:opacity-50"
+              className={cn(
+                "w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black disabled:opacity-50",
+                isHighEnd ? "shadow-lg shadow-amber-500/20 transition-all duration-200" : "transition-colors duration-100"
+              )}
             >
               {isSubmitting ? (
                 <Loader2 className="h-5 w-5 mr-2 animate-spin" />
               ) : (
                 <CheckCircle2 className="h-5 w-5 mr-2" />
               )}
-              CONFIRMAR RESPOSTA
+              CONFIRMAR
             </Button>
           ) : (
             <Button 
               onClick={handleNext} 
               size="lg"
-              className="w-full h-14 text-lg font-bold bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 hover:from-amber-600 hover:via-yellow-600 hover:to-orange-600 text-black shadow-lg shadow-amber-500/25 transition-all duration-300"
+              className={cn(
+                "w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black",
+                isHighEnd ? "shadow-lg shadow-amber-500/20 transition-all duration-200" : "transition-colors duration-100"
+              )}
             >
               {currentIndex + 1 >= questions.length ? (
                 <>
                   <Trophy className="h-5 w-5 mr-2" />
-                  FINALIZAR TREINO
+                  FINALIZAR
                 </>
               ) : (
                 <>
-                  PRÓXIMA QUESTÃO
+                  PRÓXIMA
                   <ArrowRight className="h-5 w-5 ml-2" />
                 </>
               )}
@@ -794,6 +819,10 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
 export default function AlunoQuestoes() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  
+  // ⚡ PERFORMANCE TIERING — Adapta visual ao dispositivo
+  const perf = useConstitutionPerformance();
+  const isHighEnd = !perf.isLowEnd;
   
   // BLOCK_06: Taxonomy compartilhada
   const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
@@ -1218,67 +1247,68 @@ export default function AlunoQuestoes() {
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
       {/* ══════════════════════════════════════════════════════════════
-          BLOCK_04: HEADER_CONTEXT — Design Year 2300 Cinematic
+          BLOCK_04: HEADER — Performance Tiered
       ══════════════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-950/30 via-background to-yellow-950/20 border border-amber-500/20 p-6">
-        {/* Background effects */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent" />
+      <div className={cn(
+        "relative overflow-hidden rounded-xl border border-amber-500/20 p-5",
+        isHighEnd ? "bg-gradient-to-br from-amber-950/30 via-background to-yellow-950/20" : "bg-card"
+      )}>
+        {/* Background effects só em high-end */}
+        {isHighEnd && (
+          <>
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+          </>
+        )}
         
-        <div className="relative grid md:grid-cols-4 gap-6 items-center">
-          {/* Título com ícone holográfico */}
-          <div className="md:col-span-2 flex items-center gap-4">
+        <div className="relative grid md:grid-cols-4 gap-4 items-center">
+          {/* Título */}
+          <div className="md:col-span-2 flex items-center gap-3">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-2xl blur-lg opacity-50 animate-pulse" />
-              <div className="relative p-4 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-lg shadow-amber-500/25">
-                <Brain className="w-10 h-10 text-white drop-shadow-lg" />
+              {isHighEnd && (
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl blur-lg opacity-40 animate-pulse" />
+              )}
+              <div className="relative p-3 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-lg shadow-amber-500/20">
+                <Brain className="w-8 h-8 text-white" />
               </div>
             </div>
             <div>
-              <h1 className="text-3xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 bg-clip-text text-transparent">
                 BANCO DE QUESTÕES
               </h1>
-              <p className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-semibold">
-                  💪 Modo Treino
+                  💪 Treino
                 </span>
-                <span className="text-muted-foreground/50">•</span>
-                <span>{stats.total.toLocaleString('pt-BR')} questões disponíveis</span>
+                <span>{stats.total.toLocaleString('pt-BR')} questões</span>
               </p>
             </div>
           </div>
 
-          {/* Stats Orbs estilo HUD */}
-          <div className="relative group">
-            <div className="absolute inset-0 bg-green-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative flex items-center gap-4 p-4 rounded-2xl bg-card/50 backdrop-blur-sm border border-green-500/20">
-              <div className="relative">
-                <div className="absolute inset-0 bg-green-500/20 rounded-xl blur" />
-                <div className="relative p-3 rounded-xl bg-green-500/20">
-                  <CheckCircle2 className="w-6 h-6 text-green-400" />
-                </div>
-              </div>
-              <div>
-                <p className="text-3xl font-black text-green-400">{stats.resolvidas}</p>
-                <p className="text-xs text-muted-foreground">Resolvidas</p>
-              </div>
+          {/* Stats Cards simplificados */}
+          <div className={cn(
+            "flex items-center gap-3 p-3 rounded-xl border border-green-500/20",
+            isHighEnd ? "bg-card/50 backdrop-blur-sm" : "bg-card"
+          )}>
+            <div className="p-2 rounded-lg bg-green-500/20">
+              <CheckCircle2 className="w-5 h-5 text-green-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-black text-green-400">{stats.resolvidas}</p>
+              <p className="text-xs text-muted-foreground">Resolvidas</p>
             </div>
           </div>
 
-          <div className="relative group">
-            <div className="absolute inset-0 bg-amber-500/10 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative flex items-center gap-4 p-4 rounded-2xl bg-card/50 backdrop-blur-sm border border-amber-500/20">
-              <div className="relative">
-                <div className="absolute inset-0 bg-amber-500/20 rounded-xl blur" />
-                <div className="relative p-3 rounded-xl bg-amber-500/20">
-                  <TrendingUp className="w-6 h-6 text-amber-400" />
-                </div>
-              </div>
-              <div>
-                <p className="text-3xl font-black text-amber-400">{stats.taxaAcerto}%</p>
-                <p className="text-xs text-muted-foreground">Taxa de Acerto</p>
-              </div>
+          <div className={cn(
+            "flex items-center gap-3 p-3 rounded-xl border border-amber-500/20",
+            isHighEnd ? "bg-card/50 backdrop-blur-sm" : "bg-card"
+          )}>
+            <div className="p-2 rounded-lg bg-amber-500/20">
+              <TrendingUp className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-black text-amber-400">{stats.taxaAcerto}%</p>
+              <p className="text-xs text-muted-foreground">Acerto</p>
             </div>
           </div>
         </div>
@@ -1479,69 +1509,73 @@ export default function AlunoQuestoes() {
               </SelectContent>
             </Select>
 
-            {/* BLOCK_08: PRIMARY_ACTION - RÁPIDO TREINO (Premium Button) */}
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 rounded-xl blur opacity-30 group-hover:opacity-60 transition-opacity" />
-              <Button 
-                onClick={handleStartRapidoTreino}
-                disabled={isLoadingTreino || totalCount === 0}
-                size="lg"
-                className="relative gap-2 bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 hover:from-amber-600 hover:via-yellow-600 hover:to-orange-600 text-black font-bold px-6 shadow-lg shadow-amber-500/25 transition-all duration-300"
-              >
-                {isLoadingTreino ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Zap className="w-5 h-5" />
-                )}
-                <span className="font-black">CRIAR QUESTÕES</span>
-                <Badge className="ml-1 bg-black/20 text-white border-0 font-bold">
-                  {Math.min(totalCount, RAPIDO_TREINO_LIMIT)}
-                </Badge>
-              </Button>
-            </div>
+            {/* BLOCK_08: PRIMARY_ACTION - RÁPIDO TREINO (Performance Tiered) */}
+            <Button 
+              onClick={handleStartRapidoTreino}
+              disabled={isLoadingTreino || totalCount === 0}
+              size="lg"
+              className={cn(
+                "gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold px-5",
+                isHighEnd ? "shadow-lg shadow-amber-500/20 transition-all duration-200" : "transition-colors duration-100"
+              )}
+            >
+              {isLoadingTreino ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Zap className="w-5 h-5" />
+              )}
+              <span className="font-black">CRIAR QUESTÕES</span>
+              <Badge className="ml-1 bg-black/20 text-white border-0 font-bold">
+                {Math.min(totalCount, RAPIDO_TREINO_LIMIT)}
+              </Badge>
+            </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* ══════════════════════════════════════════════════════════════
-          BLOCK_09: ZERO STATE — Guiar para Rápido Treino (Premium)
+          BLOCK_09: ZERO STATE — Performance Tiered
       ══════════════════════════════════════════════════════════════ */}
       {isZeroState && (
-        <div className="relative overflow-hidden rounded-2xl">
-          <div className="absolute inset-0 bg-gradient-to-r from-amber-600/20 via-yellow-500/15 to-orange-600/20" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
-          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent" />
+        <div className={cn(
+          "relative overflow-hidden rounded-xl p-6",
+          isHighEnd ? "bg-gradient-to-r from-amber-600/15 to-yellow-500/10" : "bg-card border border-amber-500/20"
+        )}>
+          {isHighEnd && (
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/40 to-transparent" />
+          )}
           
-          <div className="relative p-8 flex flex-col md:flex-row items-center gap-8">
+          <div className="relative flex flex-col md:flex-row items-center gap-6">
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-3xl blur-xl opacity-50 animate-pulse" />
-              <div className="relative p-5 rounded-3xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-2xl shadow-amber-500/30">
-                <Zap className="w-14 h-14 text-white drop-shadow-lg" />
+              {isHighEnd && (
+                <div className="absolute inset-0 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-2xl blur-lg opacity-40 animate-pulse" />
+              )}
+              <div className="relative p-4 rounded-2xl bg-gradient-to-br from-amber-500 to-yellow-600 shadow-lg shadow-amber-500/20">
+                <Zap className="w-10 h-10 text-white" />
               </div>
             </div>
             
             <div className="flex-1 text-center md:text-left">
-              <h3 className="text-2xl font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-orange-400 bg-clip-text text-transparent mb-2">
-                COMECE SEU TREINO AGORA!
+              <h3 className="text-xl font-black bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent mb-1">
+                COMECE SEU TREINO!
               </h3>
-              <p className="text-muted-foreground max-w-md">
-                Você ainda não resolveu nenhuma questão. Use o <span className="font-bold text-amber-400">Rápido Treino</span> para praticar {Math.min(totalCount, RAPIDO_TREINO_LIMIT)} questões de uma vez!
+              <p className="text-sm text-muted-foreground">
+                Use o <span className="font-bold text-amber-400">Rápido Treino</span> para praticar {Math.min(totalCount, RAPIDO_TREINO_LIMIT)} questões.
               </p>
             </div>
             
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 rounded-xl blur opacity-40 group-hover:opacity-70 transition-opacity" />
-              <Button 
-                onClick={handleStartRapidoTreino}
-                disabled={isLoadingTreino || totalCount === 0}
-                size="lg"
-                className="relative gap-3 bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 hover:from-amber-600 hover:via-yellow-600 hover:to-orange-600 text-black font-black text-lg px-8 py-6 shadow-xl shadow-amber-500/30 transition-all duration-300"
-              >
-                {isLoadingTreino ? <Loader2 className="w-6 h-6 animate-spin" /> : <Play className="w-6 h-6" />}
-                INICIAR TREINO
-              </Button>
-            </div>
+            <Button 
+              onClick={handleStartRapidoTreino}
+              disabled={isLoadingTreino || totalCount === 0}
+              size="lg"
+              className={cn(
+                "gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-black px-6",
+                isHighEnd ? "shadow-lg shadow-amber-500/20" : ""
+              )}
+            >
+              {isLoadingTreino ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
+              INICIAR
+            </Button>
           </div>
         </div>
       )}
