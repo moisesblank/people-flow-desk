@@ -36,6 +36,7 @@ import { SimuladoTimerBar } from "@/components/simulados/widgets/SimuladoTimerBa
 import { SimuladoQuestionNavGrid } from "@/components/simulados/widgets/SimuladoQuestionNavGrid";
 import { cn } from "@/lib/utils";
 import { cleanQuestionText } from "@/components/shared/QuestionEnunciado";
+import QuestionTextField from "@/components/shared/QuestionTextField";
 
 interface SimuladoRunningScreenProps {
   simulado: Simulado;
@@ -254,11 +255,14 @@ export function SimuladoRunningScreen({
                 PROF.MOISÉS MEDEIROS
               </p>
 
-              {/* Enunciado — LEI PERMANENTE: usa cleanQuestionText */}
+              {/* Enunciado — LEI PERMANENTE v2.4: QuestionTextField com formatação química */}
               <div className="prose prose-invert max-w-none mb-6">
-                <p className="text-base leading-relaxed text-foreground/90 whitespace-pre-wrap text-justify">
-                  {cleanQuestionText(currentQuestion.question_text)}
-                </p>
+                <QuestionTextField
+                  content={currentQuestion.question_text}
+                  fieldType="enunciado"
+                  className="text-base leading-relaxed text-foreground/90"
+                  justify
+                />
                 {currentQuestion.image_url && (
                   <img
                     src={currentQuestion.image_url}
@@ -323,13 +327,16 @@ export function SimuladoRunningScreen({
                           {letterLabel}
                         </div>
                         
-                        {/* Texto da alternativa */}
-                        <span className={cn(
-                          "text-foreground/90 flex-1",
-                          isEliminated && "line-through"
-                        )}>
-                          {optionText}
-                        </span>
+                        {/* Texto da alternativa — LEI PERMANENTE v2.4: QuestionTextField */}
+                        <QuestionTextField
+                          content={optionText}
+                          fieldType="alternativa"
+                          className={cn(
+                            "text-foreground/90 flex-1",
+                            isEliminated && "line-through"
+                          )}
+                          inline
+                        />
                       </button>
                       
                       {/* Botão Tesoura (Eliminar) - NÃO aparece se estiver selecionada */}
