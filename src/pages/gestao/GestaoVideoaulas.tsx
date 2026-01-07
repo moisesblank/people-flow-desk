@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
+
 import { 
   Video, Plus, Search, Filter, Play, Pause, Edit2, Trash2, 
   Eye, EyeOff, Clock, BookOpen, Upload, Youtube, Tv,
@@ -39,6 +39,7 @@ import { LegacyQRImportDialog } from "@/components/gestao/videoaulas/LegacyQRImp
 import { BulkOrganizationImportDialog } from "@/components/gestao/videoaulas/BulkOrganizationImportDialog";
 import { VideoLinkImportDialog } from "@/components/gestao/videoaulas/VideoLinkImportDialog";
 import { LessonFullConfigDialog } from "@/components/gestao/videoaulas/LessonFullConfigDialog";
+import { VirtualizedVideoaulaList } from "@/components/gestao/videoaulas/VirtualizedVideoaulaList";
 
 type VideoProvider = 'panda' | 'youtube' | 'vimeo' | 'upload';
 
@@ -184,9 +185,7 @@ export default function GestaoVideoaulas() {
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   
-  // Paginação (100 por página)
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 100;
+  // (Paginação removida - agora usa virtualização)
   
   // Aniquilação Total state
   const [isAnnihilateOpen, setIsAnnihilateOpen] = useState(false);
@@ -396,16 +395,7 @@ export default function GestaoVideoaulas() {
     return matchesSearch && matchesProvider && matchesPublished;
   }) || [];
 
-  // Paginação client-side (100 por página)
-  const totalPages = Math.ceil(filteredLessons.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedLessons = filteredLessons.slice(startIndex, endIndex);
-  
-  // Reset página ao mudar filtros
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, filterProvider, filterPublished]);
+  // (Paginação removida - virtualização cuida de tudo)
 
   // Stats - usando RPC para contagem correta (sem limite de 1000)
   const stats = {
@@ -752,361 +742,47 @@ export default function GestaoVideoaulas() {
         </Button>
       </div>
 
-      {/* Pagination Info + Controls (Top) */}
+      {/* Info header - virtualização cuida da navegação */}
       {!isLoading && filteredLessons.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-card rounded-lg border">
-          <div className="text-sm text-muted-foreground">
-            Exibindo <span className="font-semibold text-foreground">{startIndex + 1}</span> - <span className="font-semibold text-foreground">{Math.min(endIndex, filteredLessons.length)}</span> de <span className="font-semibold text-foreground">{filteredLessons.length}</span> aulas
+        <div className="flex items-center justify-between p-3 bg-card rounded-lg border">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-semibold text-foreground">{filteredLessons.length.toLocaleString('pt-BR')}</span> aulas encontradas
             {filteredLessons.length !== stats.total && (
-              <span className="ml-2">(filtradas de {stats.total} total)</span>
+              <span className="ml-2">(de {stats.total.toLocaleString('pt-BR')} total)</span>
             )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-            >
-              <ChevronsLeft className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <span className="px-3 py-1 text-sm font-medium bg-primary/10 rounded">
-              Página {currentPage} de {totalPages || 1}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage >= totalPages}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage >= totalPages}
-            >
-              <ChevronsRight className="w-4 h-4" />
-            </Button>
-          </div>
+          </p>
         </div>
       )}
 
-      {/* Content */}
+      {/* Content - VIRTUALIZADO */}
       {isLoading ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-64 rounded-lg" />
           ))}
         </div>
-      ) : viewMode === 'grid' ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <AnimatePresence mode="wait">
-            {paginatedLessons.map((lesson, index) => (
-              <motion.div
-                key={lesson.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ delay: index * 0.03 }}
-              >
-                <Card className={`overflow-hidden transition-all hover:shadow-lg ${
-                  !lesson.is_published ? 'opacity-70 border-dashed' : ''
-                }`}>
-                  {/* Thumbnail - CLICÁVEL para abrir modal de vídeo */}
-                  <div 
-                    className="relative h-40 bg-gradient-to-br from-primary/20 to-primary/5 cursor-pointer group"
-                    onClick={() => setPreviewLesson(lesson)}
-                  >
-                    {lesson.thumbnail_url ? (
-                      <img 
-                        src={lesson.thumbnail_url} 
-                        alt={lesson.title}
-                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        {getProviderIcon(lesson.video_provider)}
-                        <Video className="w-12 h-12 text-muted-foreground/30" />
-                      </div>
-                    )}
-                    
-                    {/* Play Button Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-all">
-                      <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transform scale-75 group-hover:scale-100 transition-all shadow-lg">
-                        <Play className="w-6 h-6 text-primary-foreground ml-1" />
-                      </div>
-                    </div>
-                    
-                    {/* Provider Badge */}
-                    <div className="absolute top-2 left-2 z-10">
-                      {getProviderBadge(lesson.video_provider)}
-                    </div>
-                    {/* Status Badge */}
-                    <div className="absolute top-2 right-2 z-10">
-                      {lesson.is_published ? (
-                        <Badge className="bg-green-500/90">
-                          <Eye className="w-3 h-3 mr-1" />
-                          Publicada
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">
-                          <EyeOff className="w-3 h-3 mr-1" />
-                          Rascunho
-                        </Badge>
-                      )}
-                    </div>
-                    {/* Duration */}
-                    {lesson.duration_minutes && (
-                      <div className="absolute bottom-2 right-2 z-10">
-                        <Badge variant="secondary" className="bg-black/70 text-white">
-                          <Clock className="w-3 h-3 mr-1" />
-                          {lesson.duration_minutes}min
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
-
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg line-clamp-1">{lesson.title}</CardTitle>
-                    <CardDescription className="line-clamp-2">
-                      {lesson.description || "Sem descrição"}
-                    </CardDescription>
-                  </CardHeader>
-
-                  <CardContent className="space-y-3">
-                    {/* Meta */}
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        {lesson.views_count || 0}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <BookOpen className="w-3 h-3" />
-                        {lesson.module?.title || "Sem módulo"}
-                      </span>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => setEditingLesson(lesson)}
-                      >
-                        <Edit2 className="w-3 h-3 mr-1" />
-                        Editar
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={lesson.is_published ? "secondary" : "default"}
-                        onClick={() => togglePublishMutation.mutate({ 
-                          id: lesson.id, 
-                          is_published: !lesson.is_published 
-                        })}
-                      >
-                        {lesson.is_published ? (
-                          <EyeOff className="w-3 h-3" />
-                        ) : (
-                          <Eye className="w-3 h-3" />
-                        )}
-                      </Button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button size="sm" variant="ghost">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onClick={async () => {
-                            // Para Panda Video, gerar URL assinada
-                            if (lesson.video_provider === 'panda' && lesson.panda_video_id) {
-                              toast.loading("Gerando URL segura...", { id: "panda-url" });
-                              try {
-                                const { data, error } = await supabase.functions.invoke('get-panda-signed-url', {
-                                  body: { lessonId: lesson.id }
-                                });
-                                if (error) throw error;
-                                if (data?.signedUrl) {
-                                  window.open(data.signedUrl, '_blank');
-                                  toast.success("Vídeo aberto!", { id: "panda-url" });
-                                } else {
-                                  throw new Error("URL não gerada");
-                                }
-                              } catch (err) {
-                                console.error('[Abrir vídeo] Erro:', err);
-                                toast.error("Erro ao gerar URL do vídeo", { id: "panda-url" });
-                              }
-                            } else if (lesson.video_provider === 'youtube' && lesson.youtube_video_id) {
-                              window.open(`https://www.youtube.com/watch?v=${lesson.youtube_video_id}`, '_blank');
-                            } else if (lesson.video_url) {
-                              window.open(lesson.video_url, '_blank');
-                            } else {
-                              toast.error("Nenhuma URL de vídeo disponível");
-                            }
-                          }}>
-                            <ExternalLink className="w-4 h-4 mr-2" />
-                            Abrir vídeo
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            navigator.clipboard.writeText(lesson.id);
-                            toast.success("ID copiado!");
-                          }}>
-                            <Copy className="w-4 h-4 mr-2" />
-                            Copiar ID
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setConfigLesson(lesson)}>
-                            <Settings2 className="w-4 h-4 mr-2" />
-                            Configurar Aula
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem 
-                            className="text-destructive"
-                            onClick={() => {
-                              if (confirm("Excluir esta videoaula?")) {
-                                deleteMutation.mutate(lesson.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
       ) : (
-        <Card>
-          <ScrollArea className="h-[600px]">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">#</TableHead>
-                  <TableHead>Título</TableHead>
-                  <TableHead>Provider</TableHead>
-                  <TableHead>Módulo</TableHead>
-                  <TableHead>Duração</TableHead>
-                  <TableHead>Views</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedLessons.map((lesson, index) => (
-                  <TableRow key={lesson.id} className="group">
-                    <TableCell>{startIndex + index + 1}</TableCell>
-                    <TableCell 
-                      className="font-medium max-w-[200px] truncate cursor-pointer hover:text-primary transition-colors"
-                      onClick={() => setPreviewLesson(lesson)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Play className="w-3 h-3 text-primary" />
-                        </div>
-                        <span className="truncate">{lesson.title}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getProviderBadge(lesson.video_provider)}</TableCell>
-                    <TableCell>{lesson.module?.title || "-"}</TableCell>
-                    <TableCell>{lesson.duration_minutes ? `${lesson.duration_minutes}min` : "-"}</TableCell>
-                    <TableCell>{lesson.views_count || 0}</TableCell>
-                    <TableCell>
-                      <Switch
-                        checked={lesson.is_published}
-                        onCheckedChange={(checked) => 
-                          togglePublishMutation.mutate({ id: lesson.id, is_published: checked })
-                        }
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button size="sm" variant="ghost" onClick={() => setPreviewLesson(lesson)} title="Assistir vídeo">
-                        <Play className="w-4 h-4 text-primary" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setEditingLesson(lesson)} title="Editar">
-                        <Edit2 className="w-4 h-4" />
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setConfigLesson(lesson)} title="Configurar">
-                        <Settings2 className="w-4 h-4 text-amber-500" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="text-destructive"
-                        onClick={() => {
-                          if (confirm("Excluir?")) deleteMutation.mutate(lesson.id);
-                        }}
-                        title="Excluir"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
-        </Card>
+        <VirtualizedVideoaulaList
+          lessons={filteredLessons}
+          viewMode={viewMode}
+          startIndex={0}
+          onEdit={setEditingLesson}
+          onConfig={setConfigLesson}
+          onPreview={setPreviewLesson}
+          onDelete={(id) => deleteMutation.mutate(id)}
+          onTogglePublish={(id, is_published) => togglePublishMutation.mutate({ id, is_published })}
+        />
       )}
 
-      {/* Pagination Controls (Bottom) */}
-      {!isLoading && filteredLessons.length > ITEMS_PER_PAGE && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-card rounded-lg border">
-          <div className="text-sm text-muted-foreground">
-            Exibindo <span className="font-semibold text-foreground">{startIndex + 1}</span> - <span className="font-semibold text-foreground">{Math.min(endIndex, filteredLessons.length)}</span> de <span className="font-semibold text-foreground">{filteredLessons.length}</span> aulas
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-            >
-              <ChevronsLeft className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <span className="px-3 py-1 text-sm font-medium bg-primary/10 rounded">
-              Página {currentPage} de {totalPages || 1}
-            </span>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage >= totalPages}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage >= totalPages}
-            >
-              <ChevronsRight className="w-4 h-4" />
-            </Button>
-          </div>
+      {/* Info de contagem (sem paginação - virtualização cuida do resto) */}
+      {!isLoading && filteredLessons.length > 0 && (
+        <div className="flex items-center justify-between p-3 bg-card rounded-lg border">
+          <p className="text-sm text-muted-foreground">
+            Total: <span className="font-semibold text-foreground">{filteredLessons.length.toLocaleString('pt-BR')}</span> aulas
+            {filteredLessons.length !== stats.total && (
+              <span className="ml-2">(filtradas de {stats.total.toLocaleString('pt-BR')} total)</span>
+            )}
+          </p>
         </div>
       )}
 
