@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trophy, CheckCircle2, XCircle, ChevronRight } from 'lucide-react';
+import { Trophy, CheckCircle2, XCircle, ChevronRight, RotateCcw, Loader2 } from 'lucide-react';
 import { QuestionBadgesCompact } from '@/components/shared/QuestionMetadataBadges';
 import { cleanQuestionText } from '@/components/shared/QuestionEnunciado';
 
@@ -54,6 +54,8 @@ interface VirtualizedStudentQuestionListProps {
   questions: Question[];
   attemptsByQuestion: Map<string, AttemptData>;
   onOpenQuestion: (question: Question) => void;
+  onResetAttempt?: (questionId: string) => Promise<void>;
+  isResetting?: string | null; // questionId being reset
 }
 
 // Item individual memoizado
@@ -61,13 +63,24 @@ const QuestionItem = memo(function QuestionItem({
   question,
   attempt,
   onOpen,
+  onReset,
+  isResetting,
 }: {
   question: Question;
   attempt: AttemptData | undefined;
   onOpen: (q: Question) => void;
+  onReset?: (questionId: string) => void;
+  isResetting?: boolean;
 }) {
   const hasAttempt = !!attempt;
   const isCorrect = attempt?.is_correct;
+
+  const handleReset = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onReset) {
+      onReset(question.id);
+    }
+  };
 
   return (
     <Card 
@@ -107,10 +120,28 @@ const QuestionItem = memo(function QuestionItem({
               </div>
               <p className="text-sm line-clamp-2">{cleanQuestionText(question.question_text)}</p>
             </div>
-            <Button variant={hasAttempt ? "outline" : "default"} size="sm">
-              {hasAttempt ? "Revisar" : "Resolver"}
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button variant={hasAttempt ? "outline" : "default"} size="sm">
+                {hasAttempt ? "Revisar" : "Resolver"}
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
+              {hasAttempt && onReset && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-xs text-muted-foreground hover:text-primary"
+                  onClick={handleReset}
+                  disabled={isResetting}
+                >
+                  {isResetting ? (
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                  ) : (
+                    <RotateCcw className="w-3 h-3 mr-1" />
+                  )}
+                  Tentar do Zero
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
@@ -122,6 +153,8 @@ export function VirtualizedStudentQuestionList({
   questions,
   attemptsByQuestion,
   onOpenQuestion,
+  onResetAttempt,
+  isResetting,
 }: VirtualizedStudentQuestionListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
@@ -197,6 +230,8 @@ export function VirtualizedStudentQuestionList({
                 question={question}
                 attempt={attemptsByQuestion.get(question.id)}
                 onOpen={onOpenQuestion}
+                onReset={onResetAttempt ? (id) => onResetAttempt(id) : undefined}
+                isResetting={isResetting === question.id}
               />
             </div>
           ))}

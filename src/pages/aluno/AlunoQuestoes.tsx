@@ -1007,6 +1007,34 @@ export default function AlunoQuestoes() {
     toast.success(`Treino concluído! ${results.correct}/${results.total} (${percentage}%) — Veja as resoluções abaixo.`);
   }, [rapidoTreinoQuestions, queryClient]);
 
+  // Handler: Reset de tentativa (Tentar Novamente do Zero)
+  const [resettingQuestionId, setResettingQuestionId] = useState<string | null>(null);
+  
+  const handleResetAttempt = useCallback(async (questionId: string) => {
+    if (!user?.id) return;
+    
+    setResettingQuestionId(questionId);
+    try {
+      // Deletar TODAS as tentativas do usuário para esta questão
+      const { error } = await supabase
+        .from('question_attempts')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('question_id', questionId);
+      
+      if (error) throw error;
+      
+      // Atualizar cache local
+      queryClient.invalidateQueries({ queryKey: ['student-question-attempts'] });
+      toast.success('Tentativa removida! Você pode resolver novamente.');
+    } catch (err) {
+      console.error('Erro ao resetar tentativa:', err);
+      toast.error('Erro ao resetar tentativa');
+    } finally {
+      setResettingQuestionId(null);
+    }
+  }, [user?.id, queryClient]);
+
   // Handlers
   const handleOpenQuestion = (question: Question) => {
     setSelectedQuestion(question);
@@ -1340,6 +1368,8 @@ export default function AlunoQuestoes() {
             questions={filteredQuestions}
             attemptsByQuestion={attemptsByQuestion}
             onOpenQuestion={handleOpenQuestion}
+            onResetAttempt={handleResetAttempt}
+            isResetting={resettingQuestionId}
           />
 
           {/* PAGINAÇÃO SERVER-SIDE */}
