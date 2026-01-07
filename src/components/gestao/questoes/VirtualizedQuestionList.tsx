@@ -86,7 +86,7 @@ interface VirtualizedQuestionListProps {
 // CONSTANTES DE VIRTUALIZAÇÃO
 // ============================================
 
-const ITEM_HEIGHT = 280; // Altura estimada de cada card (px)
+const ITEM_HEIGHT = 320; // Altura estimada de cada card (px) - aumentado para 6 linhas de enunciado
 const OVERSCAN = 5; // Itens extras acima/abaixo da viewport
 const CONTAINER_HEIGHT = 'calc(100vh - 400px)'; // Altura do container scrollável
 
@@ -166,7 +166,7 @@ const QuestionItem = memo(function QuestionItem({
             hideHeader={false}
             maxImageHeight="max-h-40"
             showImageLabel={false}
-            className="mb-2 line-clamp-4"
+            className="mb-2 line-clamp-6"
           />
 
           {/* Badge de Modo */}
