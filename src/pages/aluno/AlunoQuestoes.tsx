@@ -419,7 +419,8 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
   
   // ⚡ PERFORMANCE TIERING — Adapta visual ao dispositivo
   const perf = useConstitutionPerformance();
-  const isHighEnd = !perf.isLowEnd;
+  // 🔒 FORÇAR DESIGN 2300 PREMIUM SEMPRE (Year 2300 Cinematic Standard)
+  const isHighEnd = true;
 
   const currentQuestion = questions[currentIndex];
   const progress = ((currentIndex + (showResult ? 1 : 0)) / questions.length) * 100;
@@ -822,7 +823,8 @@ export default function AlunoQuestoes() {
   
   // ⚡ PERFORMANCE TIERING — Adapta visual ao dispositivo
   const perf = useConstitutionPerformance();
-  const isHighEnd = !perf.isLowEnd;
+  // 🔒 FORÇAR DESIGN 2300 PREMIUM SEMPRE (Year 2300 Cinematic Standard)
+  const isHighEnd = true;
   
   // BLOCK_06: Taxonomy compartilhada
   const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
