@@ -134,8 +134,33 @@ interface WeekProgress {
 }
 
 // ============================================
-// COMPONENTE: Player de Vídeo com proteção
+// COMPONENTE: Player de Vídeo com OVERLAY OBRIGATÓRIO
 // ============================================
+import { OmegaFortressPlayer } from "@/components/video/OmegaFortressPlayer";
+
+/**
+ * Detecta o tipo de vídeo pela URL
+ */
+function getVideoType(url: string): 'panda' | 'youtube' | 'vimeo' {
+  if (url.includes('pandavideo') || url.includes('player-vz')) return 'panda';
+  if (url.includes('vimeo')) return 'vimeo';
+  return 'youtube';
+}
+
+/**
+ * Extrai Video ID de URLs
+ */
+function getVideoId(url: string): string {
+  // YouTube
+  if (url.includes('youtube') || url.includes('youtu.be')) {
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^?&]+)/);
+    if (match) return match[1];
+  }
+  
+  // Panda e Vimeo: retornar URL inteira
+  return url;
+}
+
 function VideoPlayer({
   lesson,
   onComplete,
@@ -143,110 +168,56 @@ function VideoPlayer({
   lesson: PlanningLesson;
   onComplete: () => void;
 }) {
-  const [isPlaying, setIsPlaying] = useState(false);
+  if (!lesson.video_url) {
+    return (
+      <div className="relative aspect-video bg-black rounded-2xl overflow-hidden flex items-center justify-center">
+        <p className="text-muted-foreground">Vídeo em breve</p>
+      </div>
+    );
+  }
 
-  // Generate embed URL based on provider
-  const getEmbedUrl = () => {
-    if (!lesson.video_url) return null;
-    
-    // YouTube
-    if (lesson.video_url.includes("youtube") || lesson.video_url.includes("youtu.be")) {
-      const videoId = lesson.video_url.includes("youtu.be")
-        ? lesson.video_url.split("/").pop()?.split("?")[0]
-        : new URLSearchParams(new URL(lesson.video_url).search).get("v");
-      return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0`;
-    }
-    
-    // Panda
-    if (lesson.video_url.includes("panda") || lesson.video_url.includes("player.pandavideo")) {
-      return lesson.video_url;
-    }
-    
-    // Vimeo
-    if (lesson.video_url.includes("vimeo")) {
-      const videoId = lesson.video_url.split("/").pop();
-      return `https://player.vimeo.com/video/${videoId}`;
-    }
-    
-    return lesson.video_url;
-  };
-
-  const embedUrl = getEmbedUrl();
+  const videoType = getVideoType(lesson.video_url);
+  const videoId = getVideoId(lesson.video_url);
 
   return (
-    <div className="relative aspect-video bg-black rounded-2xl overflow-hidden group">
+    <div className="relative aspect-video rounded-2xl overflow-hidden group">
       {/* 🌟 HOLOGRAPHIC BORDER FRAME */}
-      <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-br from-primary via-holo-purple/50 to-holo-cyan/50 opacity-60 blur-sm group-hover:opacity-80 transition-opacity duration-500" />
-      <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-br from-primary/80 via-holo-purple/30 to-holo-cyan/40" />
+      <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-br from-primary via-holo-purple/50 to-holo-cyan/50 opacity-60 blur-sm group-hover:opacity-80 transition-opacity duration-500 z-0" />
+      <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-br from-primary/80 via-holo-purple/30 to-holo-cyan/40 z-0" />
       
-      {/* Inner container */}
-      <div className="relative w-full h-full rounded-2xl overflow-hidden bg-black">
+      {/* Inner container with OmegaFortressPlayer */}
+      <div className="relative w-full h-full rounded-2xl overflow-hidden bg-black z-10">
         {/* Corner accents */}
-        <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-primary/60 rounded-tl-2xl" />
-        <div className="absolute top-0 right-0 w-16 h-16 border-r-2 border-t-2 border-holo-cyan/60 rounded-tr-2xl" />
-        <div className="absolute bottom-0 left-0 w-16 h-16 border-l-2 border-b-2 border-holo-purple/60 rounded-bl-2xl" />
-        <div className="absolute bottom-0 right-0 w-16 h-16 border-r-2 border-b-2 border-primary/60 rounded-br-2xl" />
+        <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-primary/60 rounded-tl-2xl z-20 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-16 h-16 border-r-2 border-t-2 border-holo-cyan/60 rounded-tr-2xl z-20 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-16 h-16 border-l-2 border-b-2 border-holo-purple/60 rounded-bl-2xl z-20 pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-16 h-16 border-r-2 border-b-2 border-primary/60 rounded-br-2xl z-20 pointer-events-none" />
         
-        {/* Video label - DESIGNER 2300 */}
-        <div className="absolute top-4 left-4 z-10 bg-gradient-to-r from-black/90 via-black/80 to-transparent backdrop-blur-xl px-4 py-2.5 rounded-xl border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+        {/* Video label overlay */}
+        <div className="absolute top-4 left-4 z-30 bg-gradient-to-r from-black/90 via-black/80 to-transparent backdrop-blur-xl px-4 py-2.5 rounded-xl border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-none">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_hsl(var(--primary))]" />
-            <span className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-medium">AULA AO VIVO</span>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-medium">AULA</span>
           </div>
           <p className="text-sm font-bold text-white mt-0.5 drop-shadow-lg">{lesson.description || "Conceitos"}</p>
         </div>
 
         {/* XP Badge */}
-        <div className="absolute top-4 right-4 z-10 flex items-center gap-2 bg-gradient-to-r from-warning/20 to-warning/10 backdrop-blur-xl px-3 py-1.5 rounded-full border border-warning/30 shadow-[0_0_15px_hsl(var(--warning)/0.3)]">
+        <div className="absolute top-4 right-4 z-30 flex items-center gap-2 bg-gradient-to-r from-warning/20 to-warning/10 backdrop-blur-xl px-3 py-1.5 rounded-full border border-warning/30 shadow-[0_0_15px_hsl(var(--warning)/0.3)] pointer-events-none">
           <Star className="h-3.5 w-3.5 text-warning fill-warning" />
           <span className="text-xs font-bold text-warning">+{lesson.xp_reward || 50} XP</span>
         </div>
 
-        {embedUrl && isPlaying ? (
-          <iframe
-            src={embedUrl}
-            className="absolute inset-0 w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title={lesson.title}
-          />
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-background via-card to-background">
-            {/* Animated rings */}
-            <div className="absolute w-48 h-48 rounded-full border border-primary/20 animate-ping" style={{ animationDuration: '3s' }} />
-            <div className="absolute w-40 h-40 rounded-full border border-holo-purple/30 animate-ping" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }} />
-            <div className="absolute w-32 h-32 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-            
-            {/* Play Button - HOLOGRAPHIC */}
-            <button
-              onClick={() => setIsPlaying(true)}
-              className="relative z-10 w-28 h-28 rounded-full bg-gradient-to-br from-primary via-primary/90 to-holo-purple/80 text-white flex items-center justify-center shadow-[0_0_60px_hsl(var(--primary)/0.5),0_0_100px_hsl(var(--primary)/0.2)] hover:shadow-[0_0_80px_hsl(var(--primary)/0.7),0_0_120px_hsl(var(--primary)/0.3)] transition-all duration-500 border-2 border-white/30 hover:scale-110 active:scale-95 group/btn"
-            >
-              <div className="absolute inset-0 rounded-full bg-gradient-to-t from-transparent to-white/20" />
-              <Play className="h-14 w-14 ml-1 drop-shadow-lg relative z-10" fill="currentColor" />
-            </button>
-            
-            <p className="relative z-10 mt-6 text-sm font-medium text-muted-foreground">
-              {!lesson.video_url ? 'Vídeo em breve' : 'Clique para iniciar'}
-            </p>
-          </div>
-        )}
-
-        {/* Bottom HUD bar */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black via-black/90 to-transparent flex items-end pb-4 px-4">
-          <div className="w-full space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-white/60 flex items-center gap-2">
-                <Clock className="h-3 w-3" />
-                {lesson.duration_minutes || 0}:00
-              </span>
-              <span className="text-white/40">HD 1080p</span>
-            </div>
-            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden backdrop-blur-sm">
-              <div className="h-full w-0 bg-gradient-to-r from-primary via-holo-purple to-holo-cyan rounded-full transition-all shadow-[0_0_10px_hsl(var(--primary))]" />
-            </div>
-          </div>
-        </div>
+        {/* 🔒 OMEGA FORTRESS PLAYER com Overlay */}
+        <OmegaFortressPlayer
+          videoId={videoId}
+          type={videoType}
+          title={lesson.title}
+          showSecurityBadge={false}
+          showWatermark
+          autoplay={false}
+          onComplete={onComplete}
+        />
       </div>
     </div>
   );
