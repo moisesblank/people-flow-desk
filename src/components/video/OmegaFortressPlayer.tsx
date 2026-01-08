@@ -114,6 +114,9 @@ export const OmegaFortressPlayer = memo(({
   
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
+  
+  // 🛡️ YOUTUBE HOTFIX v10.0 - Single-Call Guard para evitar chamadas múltiplas
+  const sessionStartedRef = useRef(false);
 
   // Estados
   const [isPlaying, setIsPlaying] = useState(false);
@@ -294,16 +297,40 @@ export const OmegaFortressPlayer = memo(({
   }, [type, showThumbnail, lessonId, videoId, extractPandaVideoId, onError]);
 
   // ============================================
-  // INICIALIZAÇÃO
+  // INICIALIZAÇÃO - 🛡️ YOUTUBE HOTFIX v10.0
+  // Single-Call Guard: Previne chamadas múltiplas de startSession
   // ============================================
   useEffect(() => {
+    // 🔒 Guard: só executa UMA VEZ por montagem do componente
+    if (sessionStartedRef.current) {
+      console.log('[OmegaFortress] ⏸️ startSession já foi chamado, ignorando...');
+      return;
+    }
+    
     if (user && !session && !sessionLoading) {
-      // Patch: se falhar, paramos o loading para mostrar erro + retry
+      // 🔐 Trava ANTES de chamar - previne race conditions
+      sessionStartedRef.current = true;
+      console.log('[OmegaFortress] 🚀 Iniciando sessão (chamada única)...');
+      
       startSession().then((ok) => {
-        if (!ok) setIsLoading(false);
+        if (!ok) {
+          setIsLoading(false);
+          // Se falhar, permite retry manual (mas não automático)
+          console.log('[OmegaFortress] ❌ Sessão falhou, retry manual disponível');
+        } else {
+          console.log('[OmegaFortress] ✅ Sessão criada com sucesso!');
+        }
+      }).catch((err) => {
+        console.error('[OmegaFortress] ❌ Erro ao criar sessão:', err);
+        setIsLoading(false);
       });
     }
   }, [user, session, sessionLoading, startSession]);
+  
+  // Reset do guard quando videoId muda (novo vídeo = nova sessão permitida)
+  useEffect(() => {
+    sessionStartedRef.current = false;
+  }, [videoId]);
 
   // YouTube IFrame API
   useEffect(() => {
