@@ -13,7 +13,7 @@ import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 // P0 FIX: Usar PANDA_DRM_SECRET_KEY para DRM via API
 const PANDA_API_KEY = Deno.env.get('PANDA_API_KEY');
 const PANDA_DRM_SECRET_KEY = Deno.env.get('PANDA_DRM_SECRET_KEY');
-const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
+const PANDA_LIBRARY_ID = "c3e3c21e-7ce";
 
 serve(async (req) => {
   // LEI VI: CORS dinâmico via allowlist centralizado
