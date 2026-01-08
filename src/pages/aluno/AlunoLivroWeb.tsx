@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { WebBookLibrary, WebBookViewer } from '@/components/books';
 import { BookOpen, Sparkles } from 'lucide-react';
 import { FuturisticCategoryFilter } from '@/components/books/FuturisticCategoryFilter';
-import { SecurityBlackoutOverlay } from '@/components/security/SecurityBlackoutOverlay';
+// SecurityBlackoutOverlay REMOVIDO - Agora integrado globalmente no App.tsx (v1.1)
 
 // ============================================
 // COMPONENTE PRINCIPAL
@@ -43,8 +43,7 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
 
   return (
     <>
-      {/* 🚨 BLACKOUT ANTI-PIRATARIA v1.0 - Overlay de bloqueio */}
-      <SecurityBlackoutOverlay />
+      {/* 🚨 BLACKOUT ANTI-PIRATARIA v1.1 - GLOBAL (App.tsx) */}
       
       <div className="min-h-screen bg-background">
         <AnimatePresence mode="wait">

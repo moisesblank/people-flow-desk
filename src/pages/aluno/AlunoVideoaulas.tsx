@@ -26,7 +26,7 @@ import { OmegaFortressPlayer } from "@/components/video/OmegaFortressPlayer";
 import { LessonTabs } from "@/components/player/LessonTabs";
 import { detectVideoProviderFromUrl, isPandaUrl } from "@/lib/video/detectVideoProvider";
 import { VirtualizedAlunoVideoaulaList } from "@/components/aluno/videoaulas/VirtualizedAlunoVideoaulaList";
-import { SecurityBlackoutOverlay } from "@/components/security/SecurityBlackoutOverlay";
+// SecurityBlackoutOverlay REMOVIDO - Agora integrado globalmente no App.tsx (v1.1)
 
 interface Lesson {
   id: string;
@@ -213,8 +213,7 @@ export default function AlunoVideoaulas() {
 
   return (
     <>
-      {/* 🚨 BLACKOUT ANTI-PIRATARIA v1.0 - Overlay de bloqueio */}
-      <SecurityBlackoutOverlay />
+      {/* 🚨 BLACKOUT ANTI-PIRATARIA v1.1 - GLOBAL (App.tsx) */}
       
       <div className="container mx-auto p-4 md:p-6 space-y-6">
         {/* ============================================ */}
