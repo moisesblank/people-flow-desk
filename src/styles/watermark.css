@@ -18,13 +18,14 @@
   position: absolute;
   inset: -40%;
   transform: rotate(-25deg);
-  font-size: clamp(11px, 2.1vw, 38px); /* 🔒 Reduzido 25% adicional */
+  font-size: clamp(8px, 1.5vw, 27px); /* 🔒 Reduzido 30% adicional */
   line-height: 2.0;
   white-space: pre;
   letter-spacing: 0.1em;
   font-family: "SF Mono", "Fira Code", "Consolas", monospace;
-  font-weight: 700;
-  color: currentColor;
+  font-weight: 600;
+  color: hsl(0 0% 50% / 0.6); /* 🎨 Cor neutra cinza */
+  filter: blur(0.5px); /* 🌫️ Blur sutil para suavizar bordas */
 }
 
 /* Dark mode adjustment */
@@ -41,7 +42,7 @@
   }
   
   .ena-watermark-inner {
-    font-size: clamp(8px, 1.7vw, 19px); /* 🔒 Reduzido 25% adicional mobile */
+    font-size: clamp(6px, 1.2vw, 13px); /* 🔒 Reduzido 30% adicional mobile */
     line-height: 1.8;
   }
 }
