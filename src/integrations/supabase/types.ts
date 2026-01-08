@@ -19156,6 +19156,16 @@ export type Database = {
       register_video_violation:
         | {
             Args: {
+              p_device_fingerprint?: string
+              p_metadata?: Json
+              p_session_id: string
+              p_threat_score?: number
+              p_violation_type: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
               p_details?: Json
               p_ip_address?: string
               p_key_pressed?: string
