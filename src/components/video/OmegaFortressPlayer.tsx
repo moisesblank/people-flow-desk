@@ -49,22 +49,26 @@ export interface OmegaFortressPlayerProps {
   onError?: (error: string) => void;
 }
 
-// Velocidades e qualidades
+// Velocidades e qualidades (v7.0 - PLAYER-CONTROLS)
+// 🎯 Velocidades: 0.25x até 2x conforme especificado
 const PLAYBACK_SPEEDS = [
+  { label: "0.25x", value: 0.25 },
   { label: "0.5x", value: 0.5 },
   { label: "0.75x", value: 0.75 },
   { label: "Normal", value: 1 },
   { label: "1.25x", value: 1.25 },
   { label: "1.5x", value: 1.5 },
+  { label: "1.75x", value: 1.75 },
   { label: "2x", value: 2 },
 ];
 
+// 🎯 Qualidades: Mínimo 720p (480p removido para proteção de conteúdo)
 const VIDEO_QUALITIES = [
-  { label: "Auto", value: "auto" },
+  { label: "Auto (1080p)", value: "auto" },
   { label: "4K", value: "hd2160" },
   { label: "1080p HD", value: "hd1080" },
   { label: "720p", value: "hd720" },
-  { label: "480p", value: "large" },
+  // 480p removido conforme especificação - qualidade mínima é 720p
 ];
 
 // Parâmetros FORTRESS para YouTube
