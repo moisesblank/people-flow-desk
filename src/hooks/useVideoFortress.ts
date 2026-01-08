@@ -166,92 +166,134 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
   }, [riskScore, isImmune]);
 
   // ============================================
-  // CRIAR SESSÃO
+  // CRIAR SESSÃO (v12.0 - com lock + retry para 23505)
   // ============================================
+  const isCreatingSessionRef = useRef(false);
+  
   const startSession = useCallback(async (): Promise<boolean> => {
+    // 🛡️ v12.0 LOCK: Evitar chamadas duplicadas
+    if (sessionTokenRef.current && session) {
+      console.log('[VideoFortress] ⚠️ Sessão já existe, ignorando chamada duplicada');
+      return true;
+    }
+    
+    if (isCreatingSessionRef.current) {
+      console.log('[VideoFortress] ⚠️ Já criando sessão, ignorando chamada paralela');
+      return false;
+    }
+    
     if (!user?.id || !videoId) {
       setError('Usuário não autenticado ou videoId não fornecido');
       return false;
     }
 
+    isCreatingSessionRef.current = true;
     setIsLoading(true);
     setError(null);
+
+    const MAX_ATTEMPTS = 3;
+    let attempts = 0;
 
     try {
       const deviceFingerprint = await generateDeviceFingerprint();
       
-      const { data, error: rpcError } = await supabase.rpc('create_video_session', {
-        p_user_id: user.id,
-        p_lesson_id: lessonId || null,
-        p_course_id: courseId || null,
-        p_provider: provider,
-        p_provider_video_id: videoId,
-        p_device_fingerprint: deviceFingerprint,
-        p_ttl_minutes: ttlMinutes,
-      });
+      // 🛡️ v12.0 RETRY LOOP: Tratamento de erro 23505 (duplicate key)
+      while (attempts < MAX_ATTEMPTS) {
+        attempts++;
+        
+        const { data, error: rpcError } = await supabase.rpc('create_video_session', {
+          p_user_id: user.id,
+          p_lesson_id: lessonId || null,
+          p_course_id: courseId || null,
+          p_provider: provider,
+          p_provider_video_id: videoId,
+          p_device_fingerprint: deviceFingerprint,
+          p_ttl_minutes: ttlMinutes,
+        });
 
-      if (rpcError) throw rpcError;
-      
-      const result = data as Record<string, any>;
-      
-      // 🛡️ v11.0 FIX: A função SQL retorna diretamente os dados, não um objeto {success: boolean}
-      // Verificar se os dados esperados existem
-      if (!result || !result.session_id) {
-        // Verificar se é um erro conhecido
-        if (result?.error === 'USER_BANNED') {
-          toast.error('🚫 Acesso bloqueado', {
-            description: 'Você foi banido por violações de segurança.',
-          });
-          setError('USER_BANNED');
-          return false;
+        // 🛡️ v12.0: Verificar se é erro de duplicate key (23505)
+        if (rpcError) {
+          const errorCode = (rpcError as any)?.code;
+          const errorMessage = rpcError.message || '';
+          
+          if (errorCode === '23505' || errorMessage.includes('duplicate key') || errorMessage.includes('unique constraint')) {
+            console.log(`[VideoFortress] ⚠️ Token duplicado (tentativa ${attempts}/${MAX_ATTEMPTS}), retentando...`);
+            
+            if (attempts >= MAX_ATTEMPTS) {
+              throw new Error('Falha ao criar sessão após múltiplas tentativas (token duplicado)');
+            }
+            
+            // Aguardar um pouco antes de retentar (backoff exponencial)
+            await new Promise(resolve => setTimeout(resolve, 100 * attempts));
+            continue;
+          }
+          
+          throw rpcError;
         }
-        throw new Error(result?.error || 'Resposta inválida do servidor');
+        
+        const result = data as Record<string, any>;
+        
+        // 🛡️ v11.0 FIX: A função SQL retorna diretamente os dados, não um objeto {success: boolean}
+        if (!result || !result.session_id) {
+          if (result?.error === 'USER_BANNED') {
+            toast.error('🚫 Acesso bloqueado', {
+              description: 'Você foi banido por violações de segurança.',
+            });
+            setError('USER_BANNED');
+            return false;
+          }
+          throw new Error(result?.error || 'Resposta inválida do servidor');
+        }
+
+        // 🛡️ v11.0 FIX: A função SQL retorna watermark_text, não um objeto watermark
+        const newSession: VideoSession = {
+          sessionId: result.session_id,
+          sessionCode: result.session_code,
+          sessionToken: result.session_token,
+          expiresAt: result.expires_at,
+          watermark: {
+            text: result.watermark_text || '',
+            hash: result.watermark_hash || result.session_code,
+            mode: isImmune ? 'static' : 'moving',
+          },
+          revokedPrevious: result.revoked_previous || 0,
+          riskLevel: 'low',
+        };
+
+        setSession(newSession);
+        sessionTokenRef.current = newSession.sessionToken;
+        sessionStartRef.current = Date.now();
+
+        // Notificar sobre sessões revogadas
+        if (newSession.revokedPrevious > 0) {
+          toast.info(`📱 ${newSession.revokedPrevious} sessão(ões) anterior(es) encerrada(s)`);
+        }
+
+        // Iniciar heartbeat
+        if (enableHeartbeat) {
+          startHeartbeat();
+        }
+
+        // Iniciar proteções (se não for imune)
+        if (enableViolationDetection && !isImmune) {
+          cleanupRef.current = startViolationDetection();
+        }
+
+        console.log('[VideoFortress] ✅ Sessão criada:', newSession.sessionCode);
+        return true;
       }
-
-      // 🛡️ v11.0 FIX: A função SQL retorna watermark_text, não um objeto watermark
-      const newSession: VideoSession = {
-        sessionId: result.session_id,
-        sessionCode: result.session_code,
-        sessionToken: result.session_token,
-        expiresAt: result.expires_at,
-        watermark: {
-          text: result.watermark_text || '',
-          hash: result.watermark_hash || result.session_code,
-          mode: isImmune ? 'static' : 'moving',
-        },
-        revokedPrevious: result.revoked_previous || 0,
-        riskLevel: 'low',
-      };
-
-      setSession(newSession);
-      sessionTokenRef.current = newSession.sessionToken;
-      sessionStartRef.current = Date.now();
-
-      // Notificar sobre sessões revogadas
-      if (newSession.revokedPrevious > 0) {
-        toast.info(`📱 ${newSession.revokedPrevious} sessão(ões) anterior(es) encerrada(s)`);
-      }
-
-      // Iniciar heartbeat
-      if (enableHeartbeat) {
-        startHeartbeat();
-      }
-
-      // Iniciar proteções (se não for imune)
-      if (enableViolationDetection && !isImmune) {
-        cleanupRef.current = startViolationDetection();
-      }
-
-      console.log('[VideoFortress] ✅ Sessão criada:', newSession.sessionCode);
-      return true;
+      
+      // Se chegou aqui, esgotou tentativas
+      throw new Error('Falha ao criar sessão após múltiplas tentativas');
     } catch (err: any) {
       console.error('[VideoFortress] ❌ Erro ao criar sessão:', err);
       setError(err.message);
       return false;
     } finally {
+      isCreatingSessionRef.current = false;
       setIsLoading(false);
     }
-  }, [user, videoId, lessonId, courseId, provider, ttlMinutes, enableHeartbeat, enableViolationDetection, isImmune]);
+  }, [user, videoId, lessonId, courseId, provider, ttlMinutes, enableHeartbeat, enableViolationDetection, isImmune, session]);
 
   // ============================================
   // HEARTBEAT - Manter sessão viva

@@ -105,13 +105,13 @@ serve(async (req) => {
     try {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('name, cpf, email')
+        .select('nome, cpf, email')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
       if (profile) {
         watermarkData = {
-          name: profile.name || user.email?.split('@')[0] || 'Aluno',
+          name: profile.nome || user.email?.split('@')[0] || 'Aluno',
           cpf_last4: profile.cpf ? profile.cpf.replace(/\D/g, '').slice(-4) : '',
           email: profile.email || user.email || '',
         };
