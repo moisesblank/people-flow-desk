@@ -192,22 +192,23 @@ function SortableModuleItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "rounded-xl border transition-all duration-200",
+        "rounded-xl border transition-all duration-200 group",
         isDragging 
-          ? "opacity-50 scale-[1.02] shadow-2xl shadow-purple-500/30 z-50" 
+          ? "opacity-50 scale-[1.02] shadow-2xl shadow-purple-500/30 z-50 bg-purple-900/50" 
           : "bg-card/80 border-border/50 hover:border-purple-500/50"
       )}
     >
       {/* Module Header */}
       <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-purple-500/10 to-pink-500/5 rounded-t-xl border-b border-border/30">
-        {/* Drag Handle */}
-        <button
+        {/* Drag Handle - ÁREA GRANDE PARA ARRASTAR */}
+        <div
           {...attributes}
           {...listeners}
-          className="p-1.5 rounded-lg hover:bg-purple-500/20 cursor-grab active:cursor-grabbing transition-colors"
+          className="p-2 -m-1 rounded-lg hover:bg-purple-500/20 cursor-grab active:cursor-grabbing transition-colors touch-none select-none"
+          title="Segure e arraste para reordenar"
         >
-          <GripVertical className="h-4 w-4 text-purple-400" />
-        </button>
+          <GripVertical className="h-5 w-5 text-purple-400" />
+        </div>
 
         {/* Expand Toggle */}
         <button
@@ -361,14 +362,15 @@ function SortableLessonItem({
           : "bg-muted/30 hover:bg-muted/50 border border-transparent hover:border-cyan-500/30"
       )}
     >
-      {/* Drag Handle */}
-      <button
+      {/* Drag Handle - ÁREA GRANDE PARA ARRASTAR */}
+      <div
         {...attributes}
         {...listeners}
-        className="p-1 rounded hover:bg-cyan-500/20 cursor-grab active:cursor-grabbing"
+        className="p-1.5 -m-0.5 rounded hover:bg-cyan-500/20 cursor-grab active:cursor-grabbing touch-none select-none"
+        title="Segure e arraste para reordenar"
       >
-        <GripVertical className="h-3 w-3 text-cyan-400" />
-      </button>
+        <GripVertical className="h-4 w-4 text-cyan-400" />
+      </div>
 
       {/* Play Icon */}
       <PlayCircle className="h-4 w-4 text-cyan-400 shrink-0" />
@@ -496,9 +498,15 @@ export function CourseMasterMode({ isOpen, onClose, initialCourseId }: CourseMas
     }
   }, [localModules]);
 
-  // DnD Sensors
+  // DnD Sensors - configurado para funcionar melhor com scroll
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { 
+      activationConstraint: { 
+        distance: 8, // Um pouco maior para evitar ativação acidental
+        delay: 100,  // Pequeno delay para diferenciar de clicks
+        tolerance: 5
+      } 
+    }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
