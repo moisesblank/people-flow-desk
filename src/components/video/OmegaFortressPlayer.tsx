@@ -682,22 +682,25 @@ export const OmegaFortressPlayer = memo(({
 
   // 🎯 PART 2: Progress tracking aprimorado com atualização em tempo real
   // YouTube: via API polling (getCurrentTime/getDuration)
+  // FIX: não depender de playerRef no array de deps (ref não dispara re-render).
+  // Mantém um intervalo que “espera” o player ficar pronto e então atualiza currentTime/duration.
   useEffect(() => {
     if (type !== 'youtube') return;
-    if (!playerRef.current) return;
+    if (showThumbnail) return;
+    if (!session) return;
 
-    // Atualiza o tempo e duração em intervalo mais frequente para a barra de progresso
-    const progressInterval = setInterval(() => {
-      if (playerRef.current?.getCurrentTime && playerRef.current?.getDuration) {
-        const current = Number(playerRef.current.getCurrentTime?.() ?? 0) || 0;
-        const dur = Number(playerRef.current.getDuration?.() ?? 0) || 0;
+    const progressInterval = window.setInterval(() => {
+      const p = playerRef.current;
+      if (p?.getCurrentTime && p?.getDuration) {
+        const current = Number(p.getCurrentTime?.() ?? 0) || 0;
+        const dur = Number(p.getDuration?.() ?? 0) || 0;
         setCurrentTime(current);
-        setDuration(dur);
+        if (dur > 0) setDuration(dur);
       }
     }, 250); // 4x por segundo para barra suave
 
-    return () => clearInterval(progressInterval);
-  }, [type, showThumbnail, isPlaying]);
+    return () => window.clearInterval(progressInterval);
+  }, [type, showThumbnail, session]);
 
   // 🔥 P0 FIX: Definir duration estimada quando capítulos carregarem (Panda não envia duration!)
   useEffect(() => {
