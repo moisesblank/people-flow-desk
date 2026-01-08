@@ -1,6 +1,7 @@
 /* ============================================
- * 🌌 WATERMARK CSS — ANO 2300
- * Marca d'água dinâmica para conteúdo protegido
+ * 🌫️ WATERMARK CSS — PHANTOM MODE v2.0
+ * Marca d'água ultra-discreta para proteção forense
+ * Quase invisível, mas rastreável em caso de vazamento
  * ============================================ */
 
 .ena-watermark {
@@ -8,48 +9,63 @@
   inset: 0;
   z-index: 999999;
   pointer-events: none;
-  opacity: 0.28;
+  opacity: 0.12;
   transform: translateZ(0);
   will-change: opacity;
   contain: layout style;
+  mix-blend-mode: soft-light; /* 🎨 Blend suave com conteúdo */
 }
 
 .ena-watermark-inner {
   position: absolute;
   inset: -40%;
-  transform: rotate(-25deg);
-  font-size: clamp(4px, 0.75vw, 14px); /* 🔒 Reduzido 50% adicional */
-  line-height: 2.0;
+  transform: rotate(-18deg); /* 📐 Ângulo mais sutil */
+  font-size: clamp(3px, 0.5vw, 10px); /* 🔒 Micro-texto */
+  line-height: 2.5;
   white-space: pre;
-  letter-spacing: 0.1em;
-  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
-  font-weight: 600;
-  color: hsl(0 0% 50% / 0.6); /* 🎨 Cor neutra cinza */
-  filter: blur(0.5px); /* 🌫️ Blur sutil para suavizar bordas */
+  letter-spacing: 0.15em;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-weight: 300; /* 🪶 Ultra-light */
+  color: hsl(0 0% 45% / 0.4); /* 🎨 Cinza neutro suave */
+  filter: blur(0.8px); /* 🌫️ Blur mais pronunciado */
+  text-rendering: optimizeSpeed;
 }
 
-/* Dark mode adjustment */
+/* ═══════════════════════════════════════════
+   🌙 DARK MODE
+   ═══════════════════════════════════════════ */
 @media (prefers-color-scheme: dark) {
   .ena-watermark {
-    opacity: 0.08;
-  }
-}
-
-/* Mobile adjustment */
-@media (max-width: 768px) {
-  .ena-watermark {
-    opacity: 0.22;
+    opacity: 0.06;
+    mix-blend-mode: overlay;
   }
   
   .ena-watermark-inner {
-    font-size: clamp(3px, 0.6vw, 7px); /* 🔒 Reduzido 50% adicional mobile */
-    line-height: 1.8;
+    color: hsl(0 0% 60% / 0.3);
   }
 }
 
-/* Reduced motion */
+/* ═══════════════════════════════════════════
+   📱 MOBILE
+   ═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .ena-watermark {
+    opacity: 0.08;
+  }
+  
+  .ena-watermark-inner {
+    font-size: clamp(2px, 0.4vw, 6px);
+    line-height: 2.2;
+    filter: blur(0.6px);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   ♿ ACESSIBILIDADE
+   ═══════════════════════════════════════════ */
 @media (prefers-reduced-motion: reduce) {
   .ena-watermark {
     animation: none;
+    transition: none;
   }
 }
