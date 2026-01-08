@@ -128,6 +128,7 @@ export const OmegaFortressPlayer = memo(({
   
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
+  const pandaIframeRef = useRef<HTMLIFrameElement>(null); // 🎯 Ref para iframe Panda (postMessage)
   
   // 🛡️ YOUTUBE HOTFIX v10.0 - Single-Call Guard para evitar chamadas múltiplas
   const sessionStartedRef = useRef(false);
@@ -381,15 +382,30 @@ export const OmegaFortressPlayer = memo(({
     }
   }
 
-  // Função para pular para capítulo
+  // 🎯 Função para pular para capítulo - suporta YouTube API e Panda postMessage
   const seekToChapter = useCallback((seconds: number) => {
-    if (playerRef.current) {
+    console.log('[CHAPTERS] Seek para:', seconds, 'segundos | Tipo:', type);
+    
+    if (type === 'panda' && pandaIframeRef.current?.contentWindow) {
+      // 🐼 PANDA VIDEO: usar postMessage API
+      // Documentação: https://pandavideo.readme.io/reference/send-events
+      pandaIframeRef.current.contentWindow.postMessage({ type: 'seek', parameter: seconds }, '*');
+      console.log('[CHAPTERS] ✅ postMessage seek enviado para Panda');
+    } else if (type === 'youtube' && playerRef.current?.seekTo) {
+      // ▶️ YOUTUBE: usar seekTo da API
+      playerRef.current.seekTo(seconds, true);
+      console.log('[CHAPTERS] ✅ seekTo executado no YouTube');
+    } else if (playerRef.current) {
+      // 🔄 FALLBACK: tentar currentTime diretamente
       playerRef.current.currentTime = seconds;
       if (playerRef.current.paused) {
         playerRef.current.play();
       }
+      console.log('[CHAPTERS] ⚠️ Fallback currentTime usado');
+    } else {
+      console.warn('[CHAPTERS] ❌ Nenhum player disponível para seek');
     }
-  }, []);
+  }, [type]);
 
   // URLs
   const thumbnailUrl = useMemo(() => {
@@ -964,6 +980,7 @@ export const OmegaFortressPlayer = memo(({
             {/* PANDA: DRM via API exige URL assinada (token + expires) */}
             {type === "panda" && pandaSignedSrc && (
               <iframe
+                ref={pandaIframeRef}
                 key={pandaSignedSrc}
                 src={pandaSignedSrc}
                 className="absolute inset-0 w-full h-full"
