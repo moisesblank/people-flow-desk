@@ -45,10 +45,8 @@ export const WatermarkOverlay = memo(function WatermarkOverlay({
     return `${name.toUpperCase()} • CPF: ${cpfExample} • ${id} • ${timestamp}`;
   }, [user, tick]);
 
-  // Owner bypass - no watermark for owner
-  if (role === "owner") {
-    return null;
-  }
+  // ⚠️ OWNER PARTICIPARÁ DE TODAS AS REGRAS - Sem bypass para watermark
+  // Removido: if (role === "owner") return null;
 
   // Generate grid of watermarks
   const watermarkGrid = useMemo(() => {

@@ -176,9 +176,10 @@ export const OmegaFortressPlayer = memo(({
     courseId,
     provider: type,
     enableHeartbeat: true,
-    enableViolationDetection: !isImmuneUser,
-    enableAntiDevTools: !isImmuneUser,
-    enableAntiScreenshot: !isImmuneUser,
+    // ⚠️ OWNER PARTICIPARÁ DE TODAS AS REGRAS - Sem bypass para proteções
+    enableViolationDetection: true,
+    enableAntiDevTools: true,
+    enableAntiScreenshot: true,
     onSessionRevoked: () => {
       setIsPlaying(false);
       setViolationWarning('Sessão encerrada em outro dispositivo');
@@ -610,14 +611,7 @@ export const OmegaFortressPlayer = memo(({
 
             {/* Title + Badge Owner/Admin */}
             <div className="absolute bottom-0 left-0 right-0 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                {isImmune && (
-                  <div className="flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full">
-                    <Crown className="w-3 h-3 text-white" />
-                    <span className="text-[10px] font-bold text-white uppercase">Acesso Master</span>
-                  </div>
-                )}
-              </div>
+              {/* ⚠️ OWNER PARTICIPARÁ DE TODAS AS REGRAS - Badge Master removido */}
               <h3 className="text-white font-semibold text-sm md:text-base truncate drop-shadow-lg">
                 {title}
               </h3>
