@@ -12,6 +12,9 @@ import {
   Maximize, Shield, Lock, AlertTriangle, Eye, Zap,
   ChevronRight, ShieldCheck
 } from "lucide-react";
+
+// 🆕 DISCLAIMER: Imagem local do aviso legal
+import disclaimerImage from "@/assets/disclaimer_nobotao.png";
 import { cn } from "@/lib/utils";
 import { getPandaEmbedUrl } from "@/lib/video/panda";
 import { useVideoFortress, VideoViolationType, ViolationAction } from "@/hooks/useVideoFortress";
@@ -630,10 +633,10 @@ export const OmegaFortressPlayer = memo(({
               transition={{ duration: 0.3 }}
             >
               <div className="relative w-full h-full flex items-center justify-center p-4">
-                {/* Imagem do Disclaimer */}
+                {/* Imagem do Disclaimer - Asset local */}
                 <img
-                  src="https://drive.google.com/uc?export=download&id=1U9_p3j1_8dgF-M6fJ2jsMFfzundg3Sbb"
-                  alt="Aviso Legal - Conteúdo Protegido"
+                  src={disclaimerImage}
+                  alt="Aviso Legal - Uso Restrito e Rastreável"
                   className="max-w-full max-h-full object-contain"
                 />
                 
