@@ -33,6 +33,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// Importar componentes de capítulos
+import { ChapterMarkers } from './ChapterMarkers';
+import { ChapterSidebar } from './ChapterSidebar';
+import { useVideoChapters } from '@/hooks/useVideoChapters';
+
 // ============================================
 // TIPOS
 // ============================================
@@ -151,6 +156,9 @@ export const OmegaFortressPlayer = memo(({
   // 🎯 QUALITY ENFORCEMENT: Estado para erro de qualidade mínima (720p)
   const [qualityError, setQualityError] = useState<string | null>(null);
   
+  // Estado para sidebar de capítulos
+  const [chapterSidebarOpen, setChapterSidebarOpen] = useState(false);
+  
   // 🔥 PART 3: SEGURANÇA MÁXIMA - Overlay de violação com tela preta
   const [securityViolation, setSecurityViolation] = useState<{
     active: boolean;
@@ -159,6 +167,16 @@ export const OmegaFortressPlayer = memo(({
 
   // Panda DRM: src assinada (token + expires). Sem isso, o player do Panda falha quando DRM via API está ativo.
   const [pandaSignedSrc, setPandaSignedSrc] = useState<string | null>(null);
+
+  // Hook para buscar capítulos (apenas Panda Video 2025)
+  const { 
+    chapters, 
+    hasChapters, 
+    is2025Course 
+  } = useVideoChapters(
+    type === 'panda' ? videoId : null,
+    title
+  );
 
   const extractPandaVideoId = useCallback((raw: string): string => {
     // Aceita UUID puro
@@ -362,6 +380,16 @@ export const OmegaFortressPlayer = memo(({
       setTimeout(() => setViolationWarning(null), 5000);
     }
   }
+
+  // Função para pular para capítulo
+  const seekToChapter = useCallback((seconds: number) => {
+    if (playerRef.current) {
+      playerRef.current.currentTime = seconds;
+      if (playerRef.current.paused) {
+        playerRef.current.play();
+      }
+    }
+  }, []);
 
   // URLs
   const thumbnailUrl = useMemo(() => {
@@ -1424,6 +1452,28 @@ export const OmegaFortressPlayer = memo(({
           </AnimatePresence>
         )}
 
+        {/* Panda Video: Progress bar com marcadores de capítulos */}
+        {type === 'panda' && hasChapters && !showThumbnail && (
+          <div className="absolute bottom-4 left-4 right-4 z-30 pointer-events-auto">
+            <div 
+              className="relative h-2 bg-white/20 rounded-full cursor-pointer group/progress"
+            >
+              {/* Progress atual */}
+              <div 
+                className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-100"
+                style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+              />
+              {/* Marcadores de capítulos */}
+              <ChapterMarkers
+                chapters={chapters}
+                duration={duration}
+                currentTime={currentTime}
+                onChapterClick={seekToChapter}
+              />
+            </div>
+          </div>
+        )}
+
       </div>
 
       {/* CSS de proteção */}
@@ -1439,6 +1489,17 @@ export const OmegaFortressPlayer = memo(({
           .player-container { display: none !important; }
         }
       `}</style>
+
+      {/* Sidebar de capítulos (apenas Panda Video 2025) */}
+      {type === 'panda' && hasChapters && (
+        <ChapterSidebar
+          chapters={chapters}
+          currentTime={currentTime}
+          onChapterClick={seekToChapter}
+          isOpen={chapterSidebarOpen}
+          onToggle={() => setChapterSidebarOpen(!chapterSidebarOpen)}
+        />
+      )}
     </div>
   );
 });
