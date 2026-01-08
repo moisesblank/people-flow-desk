@@ -13,8 +13,8 @@ import {
   ChevronRight, ShieldCheck
 } from "lucide-react";
 
-// 🆕 DISCLAIMER: Imagem local do aviso legal
-import disclaimerImage from "@/assets/disclaimer_nobotao.png";
+// 🆕 DISCLAIMER: Imagem de fallback local (usada se não tiver overlay configurado)
+import disclaimerImageFallback from "@/assets/disclaimer_nobotao.png";
 import { cn } from "@/lib/utils";
 import { getPandaEmbedUrl } from "@/lib/video/panda";
 import { useVideoFortress, VideoViolationType, ViolationAction } from "@/hooks/useVideoFortress";
@@ -23,6 +23,7 @@ import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { useDeviceConstitution } from "@/hooks/useDeviceConstitution";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useVideoOverlay } from "@/components/gestao/videoaulas/VideoOverlayConfigDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -111,6 +112,11 @@ export const OmegaFortressPlayer = memo(({
   const { user } = useAuth();
   const { isOwner, isAdmin, isBeta, roleLabel, isFuncionarioOrAbove } = useRolePermissions();
   const { isMobile, isTouch } = useDeviceConstitution();
+  
+  // 🆕 OVERLAY: Busca URL da imagem configurada pelo admin
+  const { data: overlayImageUrl } = useVideoOverlay();
+  // Imagem final: usa do banco se existir, senão fallback local
+  const disclaimerImage = overlayImageUrl || disclaimerImageFallback;
   
   // Verificar imunidade
   const isImmuneUser = isOwner || isAdmin || isFuncionarioOrAbove;
