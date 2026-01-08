@@ -2,6 +2,7 @@
 // 📚 LIVROS DO MOISA - Página do Aluno
 // Biblioteca e Leitor de Livros Web
 // Visual Futurístico Ano 2300
+// 🚨 BLACKOUT ANTI-PIRATARIA v1.0 INTEGRADO
 // ============================================
 
 import { memo, useState, useCallback, useEffect } from 'react';
@@ -10,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { WebBookLibrary, WebBookViewer } from '@/components/books';
 import { BookOpen, Sparkles } from 'lucide-react';
 import { FuturisticCategoryFilter } from '@/components/books/FuturisticCategoryFilter';
+import { SecurityBlackoutOverlay } from '@/components/security/SecurityBlackoutOverlay';
 
 // ============================================
 // COMPONENTE PRINCIPAL
@@ -40,8 +42,12 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      <AnimatePresence mode="wait">
+    <>
+      {/* 🚨 BLACKOUT ANTI-PIRATARIA v1.0 - Overlay de bloqueio */}
+      <SecurityBlackoutOverlay />
+      
+      <div className="min-h-screen bg-background">
+        <AnimatePresence mode="wait">
         {selectedBookId ? (
           // Leitor
           <motion.div
@@ -107,8 +113,9 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
             />
           </motion.div>
         )}
-      </AnimatePresence>
-    </div>
+        </AnimatePresence>
+      </div>
+    </>
   );
 });
 
