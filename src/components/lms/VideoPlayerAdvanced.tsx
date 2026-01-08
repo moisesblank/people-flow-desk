@@ -1,6 +1,7 @@
 // ============================================
 // MOISÉS MEDEIROS v9.0 - VIDEO PLAYER AVANÇADO
 // FORTALEZA DIGITAL - Player com proteção total
+// 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
 // ============================================
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -37,6 +38,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { FortressPlayerWrapper } from "@/components/video/FortressPlayerWrapper";
+import { VideoDisclaimer, useVideoDisclaimer } from "@/components/video/VideoDisclaimer";
 
 // Interface para capítulos/timestamps
 export interface VideoChapter {
@@ -81,6 +83,10 @@ export function VideoPlayerAdvanced({
 }: VideoPlayerAdvancedProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
+  const { showDisclaimer, disclaimerCompleted, startDisclaimer, handleDisclaimerComplete } = useVideoDisclaimer();
+  
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
@@ -271,13 +277,25 @@ export function VideoPlayerAdvanced({
     <div className="space-y-4" ref={containerRef}>
       {/* Video Container - FORTALEZA DIGITAL */}
       <FortressPlayerWrapper className="relative rounded-2xl overflow-hidden bg-black group" showSecurityBadge>
+        {/* 🔒 DISCLAIMER OVERLAY - OBRIGATÓRIO EM TODOS OS VÍDEOS */}
+        <VideoDisclaimer 
+          isVisible={showDisclaimer} 
+          onComplete={handleDisclaimerComplete} 
+        />
+        
         <video
           ref={videoRef}
           src={src}
           className="w-full aspect-video"
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
-          onClick={togglePlay}
+          onClick={() => {
+            if (!disclaimerCompleted) {
+              startDisclaimer();
+              return;
+            }
+            togglePlay();
+          }}
           playsInline
         />
 

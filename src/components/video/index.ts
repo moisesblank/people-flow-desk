@@ -3,7 +3,17 @@
 // Todos os componentes de proteção de vídeo
 // Sistema unificado para 5000+ usuários simultâneos
 // SANCTUM 2.0 OMEGA
+// 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
 // ============================================
+
+// ============================================
+// 🔒 VIDEO DISCLAIMER (OBRIGATÓRIO EM TODOS OS PLAYERS)
+// Aviso legal de 3 segundos - VERDADE ABSOLUTA
+// ============================================
+export { 
+  VideoDisclaimer,
+  useVideoDisclaimer,
+} from "./VideoDisclaimer";
 
 // ============================================
 // 🚀 OMEGA FORTRESS PLAYER (RECOMENDADO)

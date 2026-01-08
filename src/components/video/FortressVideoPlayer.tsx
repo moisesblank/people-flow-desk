@@ -3,6 +3,7 @@
 // Player de vídeo FORTALEZA com proteção máxima
 // Suporta YouTube e Panda Video via embed/URL
 // Controles: APENAS Play/Pause + Engrenagem (velocidade/qualidade)
+// 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
 // ============================================
 
 import { useState, useRef, useEffect, useCallback, memo } from "react";
@@ -32,6 +33,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { VideoDisclaimer, useVideoDisclaimer } from "@/components/video/VideoDisclaimer";
 
 // ============================================
 // TIPOS E INTERFACES
@@ -120,6 +122,9 @@ export const FortressVideoPlayer = memo(({
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
+  const { showDisclaimer, disclaimerCompleted, startDisclaimer, handleDisclaimerComplete } = useVideoDisclaimer();
 
   // Estados
   const [isPlaying, setIsPlaying] = useState(false);
@@ -249,6 +254,10 @@ export const FortressVideoPlayer = memo(({
   // ============================================
   const handlePlayPause = useCallback(() => {
     if (showThumbnail) {
+      // 🔒 DISCLAIMER: Exibir aviso legal por 3 segundos antes de iniciar
+      if (startDisclaimer()) {
+        return; // Aguardar disclaimer completar
+      }
       setShowThumbnail(false);
       setIsLoading(true);
       return;
@@ -270,7 +279,14 @@ export const FortressVideoPlayer = memo(({
       );
       setIsPlaying(!isPlaying);
     }
-  }, [showThumbnail, isPlaying]);
+  }, [showThumbnail, isPlaying, startDisclaimer]);
+
+  // Callback quando disclaimer completar
+  const onDisclaimerComplete = useCallback(() => {
+    handleDisclaimerComplete();
+    setShowThumbnail(false);
+    setIsLoading(true);
+  }, [handleDisclaimerComplete]);
 
   const handleSpeedChange = useCallback((speed: number) => {
     setCurrentSpeed(speed);
@@ -347,8 +363,14 @@ export const FortressVideoPlayer = memo(({
         showWatermark={showWatermark}
         userData={userData}
       >
+        {/* 🔒 DISCLAIMER OVERLAY - OBRIGATÓRIO EM TODOS OS VÍDEOS */}
+        <VideoDisclaimer 
+          isVisible={showDisclaimer} 
+          onComplete={onDisclaimerComplete} 
+        />
+        
         {/* Thumbnail State */}
-        {showThumbnail && thumbnailUrl && (
+        {showThumbnail && !showDisclaimer && thumbnailUrl && (
           <div 
             className="absolute inset-0 cursor-pointer z-10"
             onClick={handlePlayPause}

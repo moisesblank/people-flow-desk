@@ -2,6 +2,7 @@
 // LAZY VIDEO PLAYER 2300
 // Click-to-load: NO iframe/video before click
 // Performance-first, accessible, mobile-optimized
+// 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
 // ============================================
 
 import { memo, useState, useCallback, useRef } from "react";
@@ -10,6 +11,7 @@ import { Play, Loader2, Volume2, VolumeX, Maximize, AlertCircle } from "lucide-r
 import { cn } from "@/lib/utils";
 import { useFuturisticUI } from "@/hooks/useFuturisticUI";
 import { Button } from "@/components/ui/button";
+import { VideoDisclaimer, useVideoDisclaimer } from "@/components/video/VideoDisclaimer";
 
 // ============================================
 // TYPES
@@ -64,6 +66,9 @@ export const LazyVideoPlayer = memo(function LazyVideoPlayer({
   const ui = useFuturisticUI();
   const containerRef = useRef<HTMLDivElement>(null);
   
+  // 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
+  const { showDisclaimer, disclaimerCompleted, startDisclaimer, handleDisclaimerComplete } = useVideoDisclaimer();
+  
   // States
   const [isActivated, setIsActivated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -88,12 +93,25 @@ export const LazyVideoPlayer = memo(function LazyVideoPlayer({
     }
   }, [videoId, type]);
   
-  // Handle play button click
+  // Handle play button click - COM DISCLAIMER OBRIGATÓRIO
   const handlePlay = useCallback(() => {
+    // 🔒 DISCLAIMER: Exibir aviso legal por 3 segundos antes de iniciar
+    if (startDisclaimer()) {
+      return; // Aguardar disclaimer completar
+    }
+    
     setIsLoading(true);
     setIsActivated(true);
     onPlay?.();
-  }, [onPlay]);
+  }, [onPlay, startDisclaimer]);
+  
+  // Callback quando disclaimer completar
+  const onDisclaimerComplete = useCallback(() => {
+    handleDisclaimerComplete();
+    setIsLoading(true);
+    setIsActivated(true);
+    onPlay?.();
+  }, [handleDisclaimerComplete, onPlay]);
   
   // Handle iframe load
   const handleIframeLoad = useCallback(() => {
@@ -125,8 +143,14 @@ export const LazyVideoPlayer = memo(function LazyVideoPlayer({
       role="region"
       aria-label={`Video player: ${title}`}
     >
+      {/* 🔒 DISCLAIMER OVERLAY - OBRIGATÓRIO EM TODOS OS VÍDEOS */}
+      <VideoDisclaimer 
+        isVisible={showDisclaimer} 
+        onComplete={onDisclaimerComplete} 
+      />
+      
       {/* State: Not activated - Show poster + play button */}
-      {!isActivated && (
+      {!isActivated && !showDisclaimer && (
         <>
           {/* Poster image (lazy loaded) */}
           {posterUrl && (
