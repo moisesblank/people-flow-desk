@@ -1483,11 +1483,17 @@ export const OmegaFortressPlayer = memo(({
           </AnimatePresence>
         )}
 
-        {/* Panda Video: Progress bar com marcadores de capítulos */}
+        {/* Panda Video: Progress bar com marcadores de capítulos - ACIMA da barra nativa */}
         {type === 'panda' && hasChapters && !showThumbnail && (
-          <div className="absolute bottom-4 left-4 right-4 z-30 pointer-events-auto">
+          <div className="absolute bottom-14 left-4 right-4 z-40 pointer-events-auto">
+            {/* Label indicativo */}
+            <div className="text-xs text-white/70 mb-1 font-medium flex items-center gap-2">
+              <span className="w-3 h-0.5 bg-purple-400 rounded-full" />
+              Capítulos da Aula
+              <span className="text-white/50">• Clique para navegar</span>
+            </div>
             <div 
-              className="relative h-3 bg-white/20 rounded-full cursor-pointer group/progress hover:h-4 transition-all"
+              className="relative h-4 bg-white/20 rounded-full cursor-pointer group/progress hover:h-5 transition-all backdrop-blur-sm border border-white/10"
               onClick={(e) => {
                 // Calcular posição do clique na barra e converter para segundos
                 const rect = e.currentTarget.getBoundingClientRect();
@@ -1506,7 +1512,7 @@ export const OmegaFortressPlayer = memo(({
             >
               {/* Progress atual */}
               <div 
-                className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-100 pointer-events-none"
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all duration-100 pointer-events-none"
                 style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
               />
               {/* Marcadores de capítulos */}
