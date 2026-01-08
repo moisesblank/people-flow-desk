@@ -470,7 +470,8 @@ export const OmegaFortressPlayer = memo(({
   const handlePlayPause = useCallback(() => {
     if (showThumbnail) {
       // 🆕 DISCLAIMER: Exibir aviso legal por 3 segundos antes de iniciar
-      if (!disclaimerCompleted && !isImmuneUser) {
+      // ⚠️ OWNER PARTICIPARÁ DE TODAS AS REGRAS - Sem bypass para disclaimer
+      if (!disclaimerCompleted) {
         setShowDisclaimer(true);
         setTimeout(() => {
           setShowDisclaimer(false);
@@ -494,7 +495,7 @@ export const OmegaFortressPlayer = memo(({
       }
       setIsPlaying(!isPlaying);
     }
-  }, [showThumbnail, isPlaying, disclaimerCompleted, isImmuneUser]);
+  }, [showThumbnail, isPlaying, disclaimerCompleted]);
 
   const pauseVideo = useCallback(() => {
     if (playerRef.current?.pauseVideo) {
