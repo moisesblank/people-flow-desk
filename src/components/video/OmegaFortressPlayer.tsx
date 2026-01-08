@@ -1614,6 +1614,17 @@ export const OmegaFortressPlayer = memo(({
           </div>
         )}
 
+        {/* Sidebar de capítulos - DENTRO do container para funcionar em fullscreen */}
+        {type === 'panda' && hasChapters && (
+          <ChapterSidebar
+            chapters={chapters}
+            currentTime={currentTime}
+            onChapterClick={seekToChapter}
+            isOpen={chapterSidebarOpen}
+            onToggle={() => setChapterSidebarOpen(!chapterSidebarOpen)}
+          />
+        )}
+
       </div>
 
       {/* CSS de proteção */}
@@ -1629,17 +1640,6 @@ export const OmegaFortressPlayer = memo(({
           .player-container { display: none !important; }
         }
       `}</style>
-
-      {/* Sidebar de capítulos (apenas Panda Video 2025) */}
-      {type === 'panda' && hasChapters && (
-        <ChapterSidebar
-          chapters={chapters}
-          currentTime={currentTime}
-          onChapterClick={seekToChapter}
-          isOpen={chapterSidebarOpen}
-          onToggle={() => setChapterSidebarOpen(!chapterSidebarOpen)}
-        />
-      )}
     </div>
   );
 });
