@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Play, Pause, Settings, Loader2, Volume2, VolumeX, 
   Maximize, Shield, Lock, AlertTriangle, Eye, Zap,
-  ChevronRight, Crown, ShieldCheck
+  ChevronRight, ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPandaEmbedUrl } from "@/lib/video/panda";
@@ -821,7 +821,8 @@ export const OmegaFortressPlayer = memo(({
                         <span className="text-[10px] text-white/70 font-mono">{session.sessionCode}</span>
                       </div>
                     )}
-                    {showRiskIndicator && !isImmune && (
+                    {/* ⚠️ OWNER PARTICIPARÁ DE TODAS AS REGRAS - Indicador de risco para todos */}
+                    {showRiskIndicator && (
                       <div className={cn("w-2 h-2 rounded-full animate-pulse", riskColors)} />
                     )}
                   </div>
@@ -863,12 +864,7 @@ export const OmegaFortressPlayer = memo(({
                           <span>Violações Bloqueadas:</span>
                           <span className="text-white">{protectionStats.violationsBlocked}</span>
                         </div>
-                        {isImmune && (
-                          <div className="mt-2 pt-2 border-t border-white/10 text-amber-400">
-                            <Crown className="w-3 h-3 inline mr-1" />
-                            SANCTUM: Imunidade Ativa
-                          </div>
-                        )}
+                        {/* ⚠️ OWNER PARTICIPARÁ DE TODAS AS REGRAS - Indicador de imunidade removido */}
                       </div>
                     </motion.div>
                   )}
