@@ -1346,9 +1346,12 @@ export const OmegaFortressPlayer = memo(({
                         {PLAYBACK_SPEEDS.map((speed) => (
                           <DropdownMenuItem
                             key={speed.value}
-                            onClick={() => handleSpeedChange(speed.value)}
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              handleSpeedChange(speed.value);
+                            }}
                             className={cn(
-                              "text-white hover:bg-white/10",
+                              "text-white hover:bg-white/10 cursor-pointer",
                               currentSpeed === speed.value && "bg-primary/20 text-primary"
                             )}
                           >
@@ -1369,9 +1372,12 @@ export const OmegaFortressPlayer = memo(({
                         {VIDEO_QUALITIES.map((quality) => (
                           <DropdownMenuItem
                             key={quality.value}
-                            onClick={() => handleQualityChange(quality.value)}
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              handleQualityChange(quality.value);
+                            }}
                             className={cn(
-                              "text-white hover:bg-white/10",
+                              "text-white hover:bg-white/10 cursor-pointer",
                               currentQuality === quality.value && "bg-primary/20 text-primary"
                             )}
                           >
