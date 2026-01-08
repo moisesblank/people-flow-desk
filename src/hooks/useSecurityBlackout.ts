@@ -1,7 +1,7 @@
 // ============================================
-// 🚨 BLACKOUT ANTI-PIRATARIA v1.0
+// 🚨 BLACKOUT ANTI-PIRATARIA v1.2
 // Hook de controle de detecções e punições
-// Rota alvo: /alunos/videoaulas
+// PROTEÇÃO GLOBAL + DETECÇÃO DE GRAVAÇÃO + BLUR PATTERN
 // ============================================
 
 import { useEffect, useCallback, useRef } from "react";
@@ -9,19 +9,20 @@ import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSecurityBlackoutStore, ViolationType } from "@/stores/securityBlackoutStore";
+import { useRecordingDetection } from "@/hooks/useRecordingDetection";
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
-// 🚨 v1.1: PROTEÇÃO GLOBAL - Aplica em TODO o sistema
+// 🚨 v1.2: PROTEÇÃO GLOBAL - Aplica em TODO o sistema
 
 interface UseSecurityBlackoutOptions {
   enabled?: boolean;
+  isVideoPlaying?: boolean; // v1.2: Para ativar detecção de gravação
 }
 
 export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
-  const { enabled = true } = options;
+  const { enabled = true, isVideoPlaying = false } = options;
   const location = useLocation();
   const isOwnerRef = useRef(false);
-  const lastBlurTimeRef = useRef(0);
   const detectionActiveRef = useRef(false);
   
   const {
@@ -32,11 +33,15 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
     lastViolationType,
     watermarkBoostEndTime,
     registerViolation,
+    registerBlur,
     checkAndClearExpiredBlocks,
     resetAll,
   } = useSecurityBlackoutStore();
 
-  // 🚨 v1.1: PROTEÇÃO GLOBAL - Sempre ativo (exceto rotas públicas)
+  // v1.2: Detecção de gravação (APIs + extensões + PiP)
+  const { isRecordingDetected, detectionReason, triggerRecordingBlock } = useRecordingDetection(isVideoPlaying);
+
+  // 🚨 v1.2: PROTEÇÃO GLOBAL - Sempre ativo (exceto rotas públicas)
   const PUBLIC_ROUTES = ["/auth", "/termos", "/privacidade", "/", "/site"];
   const isPublicRoute = PUBLIC_ROUTES.some(route => location.pathname === route);
   const isTargetRoute = !isPublicRoute; // Protege TUDO exceto rotas públicas
@@ -87,23 +92,26 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
   // ═══════════════════════════════════════════════════════════
   // REGISTRAR VIOLAÇÃO COM LOG NO BACKEND
   // ═══════════════════════════════════════════════════════════
-  const handleViolation = useCallback(async (type: ViolationType) => {
+  const handleViolation = useCallback(async (type: ViolationType, details?: string) => {
     // Owner é imune
     if (isOwnerRef.current) return;
     
-    // 🚨 v1.1: Só ignora rotas públicas
+    // 🚨 v1.2: Só ignora rotas públicas
     const PUBLIC_ROUTES = ["/auth", "/termos", "/privacidade", "/", "/site"];
     if (PUBLIC_ROUTES.some(route => location.pathname === route)) return;
     
     // Registrar no store
-    registerViolation(type, location.pathname);
+    registerViolation(type, location.pathname, details);
     
-    // Mostrar toast de warning
-    if (type === "devtools" || type === "window_blur" || type === "screen_capture") {
+    // Mostrar toast de warning baseado no tipo
+    if (type === "devtools" || type === "screen_capture" || type === "recording_api" || 
+        type === "recording_extension" || type === "picture_in_picture" || type === "suspicious_blur") {
       toast.error("🚨 ACESSO BLOQUEADO", {
-        description: "Tentativa de captura detectada. Seu acesso foi registrado.",
+        description: "Tentativa de captura/gravação detectada. Seu acesso foi registrado.",
         duration: 5000,
       });
+    } else if (type === "window_blur") {
+      // v1.2: Blur único não mostra toast (apenas padrão suspeito)
     } else if (type === "printscreen" || type === "screenshot") {
       const count = printScreenCount + 1;
       if (count === 1) {
@@ -127,7 +135,7 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
       // Buscar perfil para nome
       const { data: profile } = await supabase
         .from("profiles")
-        .select("nome")
+        .select("nome, cpf")
         .eq("id", user.id)
         .single();
 
@@ -137,10 +145,12 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
         details: {
           event_type: "SECURITY_VIOLATION",
           violation_type: type,
+          violation_details: details,
           is_violation: true,
           user_email: user.email,
           user_name: profile?.nome || user.user_metadata?.name,
-          event_description: `Blackout Anti-Pirataria: ${type} detectado em ${location.pathname}`,
+          user_cpf: profile?.cpf,
+          event_description: `Blackout Anti-Pirataria v1.2: ${type} detectado em ${location.pathname}`,
           route: location.pathname,
           timestamp: new Date().toISOString(),
           print_screen_count: printScreenCount + 1,
@@ -167,7 +177,7 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
       
       if ((widthCheck || heightCheck) && !detectionActiveRef.current) {
         detectionActiveRef.current = true;
-        handleViolation("devtools");
+        handleViolation("devtools", "dimension_check");
       }
     };
     
@@ -178,7 +188,7 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
   }, [enabled, isTargetRoute, handleViolation]);
 
   // ═══════════════════════════════════════════════════════════
-  // DETECÇÃO DE WINDOW BLUR (possível screen capture)
+  // v1.2: DETECÇÃO DE BLUR PATTERN (5+ blurs em <3s = suspeito)
   // ═══════════════════════════════════════════════════════════
   useEffect(() => {
     if (!enabled || !isTargetRoute || isOwnerRef.current) return;
@@ -186,18 +196,18 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
     const handleBlur = () => {
       if (isOwnerRef.current) return;
       
-      const now = Date.now();
-      // Debounce de 5 segundos para evitar falsos positivos
-      if (now - lastBlurTimeRef.current < 5000) return;
-      lastBlurTimeRef.current = now;
+      // Registrar blur e verificar padrão
+      const isSuspicious = registerBlur();
       
-      // Window blur durante videoaulas = suspeito
-      handleViolation("window_blur");
+      if (isSuspicious) {
+        // Padrão suspeito detectado! 5+ blurs em <3s
+        handleViolation("suspicious_blur", "5+_blurs_in_3s");
+      }
     };
     
     window.addEventListener("blur", handleBlur);
     return () => window.removeEventListener("blur", handleBlur);
-  }, [enabled, isTargetRoute, handleViolation]);
+  }, [enabled, isTargetRoute, handleViolation, registerBlur]);
 
   // ═══════════════════════════════════════════════════════════
   // DETECÇÃO DE PRINT SCREEN (via keydown)
@@ -217,7 +227,7 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
       if (PRINT_SCREEN_KEYS.includes(key)) {
         e.preventDefault();
         e.stopPropagation();
-        handleViolation("printscreen");
+        handleViolation("printscreen", "key_detected");
         
         // Limpar clipboard
         if (navigator.clipboard?.writeText) {
@@ -230,7 +240,7 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
       if ((key === "s" || key === "S") && e.shiftKey && (e.metaKey || e.getModifierState?.("Meta"))) {
         e.preventDefault();
         e.stopPropagation();
-        handleViolation("screenshot");
+        handleViolation("screenshot", "snipping_tool");
         return;
       }
       
@@ -238,7 +248,7 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
       if (e.metaKey && e.shiftKey && ["3", "4", "5", "6"].includes(key)) {
         e.preventDefault();
         e.stopPropagation();
-        handleViolation("screenshot");
+        handleViolation("screenshot", "mac_screenshot");
         return;
       }
       
@@ -246,7 +256,7 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
       if (key === "F12") {
         e.preventDefault();
         e.stopPropagation();
-        handleViolation("devtools");
+        handleViolation("devtools", "f12_key");
         return;
       }
       
@@ -254,7 +264,7 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
       if (e.ctrlKey && e.shiftKey && ["I", "i", "J", "j", "C", "c"].includes(key)) {
         e.preventDefault();
         e.stopPropagation();
-        handleViolation("devtools");
+        handleViolation("devtools", "ctrl_shift_shortcut");
         return;
       }
       
@@ -262,7 +272,7 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
       if (e.metaKey && e.altKey && ["I", "i", "J", "j", "C", "c"].includes(key)) {
         e.preventDefault();
         e.stopPropagation();
-        handleViolation("devtools");
+        handleViolation("devtools", "cmd_option_shortcut");
         return;
       }
     };
@@ -271,15 +281,42 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
     return () => document.removeEventListener("keydown", handleKeyDown, { capture: true });
   }, [enabled, isTargetRoute, handleViolation]);
 
+  // ═══════════════════════════════════════════════════════════
+  // v1.2: SINCRONIZAR DETECÇÃO DE GRAVAÇÃO COM STORE
+  // ═══════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (isRecordingDetected && detectionReason) {
+      // Determinar tipo de violação
+      let violationType: ViolationType = "recording_api";
+      
+      if (detectionReason.includes("extension")) {
+        violationType = "recording_extension";
+      } else if (detectionReason.includes("picture_in_picture")) {
+        violationType = "picture_in_picture";
+      } else if (detectionReason.includes("MediaRecorder")) {
+        violationType = "recording_api";
+      }
+      
+      // Registrar no store (isso ativa o bloqueio permanente)
+      registerViolation(violationType, location.pathname, detectionReason);
+    }
+  }, [isRecordingDetected, detectionReason, registerViolation, location.pathname]);
+
   return {
-    isBlocked: isTargetRoute ? isBlocked : false,
-    blockType,
+    // Estado de bloqueio (combinado: store + detecção de gravação)
+    isBlocked: isTargetRoute ? (isBlocked || isRecordingDetected) : false,
+    blockType: isRecordingDetected ? "permanent" : blockType,
     blockEndTime,
     lastViolationType,
     watermarkBoostActive: watermarkBoostEndTime ? Date.now() < watermarkBoostEndTime : false,
     isOwner: isOwnerRef.current,
     isTargetRoute,
+    // v1.2: Detecção de gravação
+    isRecordingDetected,
+    recordingReason: detectionReason,
+    // Actions
     triggerViolation: handleViolation,
+    triggerRecordingBlock,
     resetAll, // Para owner/debug
   };
 }

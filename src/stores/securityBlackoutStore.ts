@@ -1,7 +1,7 @@
 // ============================================
-// 🚨 BLACKOUT ANTI-PIRATARIA v1.0
+// 🚨 BLACKOUT ANTI-PIRATARIA v1.2
 // Store Zustand para persistência de violações
-// Rota alvo: /alunos/videoaulas
+// PROTEÇÃO GLOBAL + DETECÇÃO DE GRAVAÇÃO
 // ============================================
 
 import { create } from "zustand";
@@ -13,7 +13,12 @@ export type ViolationType =
   | "screenshot" 
   | "screen_capture" 
   | "window_blur"
-  | "copy";
+  | "copy"
+  // v1.2: Novos tipos de violação
+  | "recording_api"          // getDisplayMedia/MediaRecorder
+  | "recording_extension"    // Loom, Vidyard, etc.
+  | "picture_in_picture"     // PiP detectado
+  | "suspicious_blur";       // Padrão suspeito de blur (5+ em <3s)
 
 export type BlockType = "permanent" | "temporary" | null;
 
@@ -21,6 +26,7 @@ interface ViolationRecord {
   type: ViolationType;
   timestamp: number;
   url: string;
+  details?: string; // v1.2: Detalhes adicionais
 }
 
 interface SecurityBlackoutState {
@@ -32,6 +38,8 @@ interface SecurityBlackoutState {
   // Contadores progressivos
   printScreenCount: number;
   copyCount: number;
+  blurCount: number;              // v1.2: Contador de blurs rápidos
+  lastBlurTimestamp: number;      // v1.2: Timestamp do último blur
   
   // Histórico
   lastViolationType: ViolationType | null;
@@ -41,17 +49,30 @@ interface SecurityBlackoutState {
   watermarkBoostEndTime: number | null;
   
   // Actions
-  registerViolation: (type: ViolationType, url: string) => void;
+  registerViolation: (type: ViolationType, url: string, details?: string) => void;
   clearTemporaryBlock: () => void;
   resetAll: () => void; // Para owner/debug
   checkAndClearExpiredBlocks: () => void;
+  registerBlur: () => boolean; // v1.2: Retorna true se padrão suspeito detectado
 }
 
-// Violações SEVERAS = bloqueio permanente IMEDIATO
-const SEVERE_VIOLATIONS: ViolationType[] = ["devtools", "window_blur", "screen_capture"];
+// v1.2: Violações SEVERAS = bloqueio permanente IMEDIATO
+// REMOVIDO window_blur - agora usa padrão suspeito (5+ em <3s)
+const SEVERE_VIOLATIONS: ViolationType[] = [
+  "devtools", 
+  "screen_capture",
+  "recording_api",           // API de gravação
+  "recording_extension",     // Extensão de gravação
+  "picture_in_picture",      // PiP
+  "suspicious_blur",         // 5+ blurs rápidos
+];
 
 // Violações LEVES = punição progressiva
-const MINOR_VIOLATIONS: ViolationType[] = ["printscreen", "screenshot", "copy"];
+const MINOR_VIOLATIONS: ViolationType[] = ["printscreen", "screenshot", "copy", "window_blur"];
+
+// v1.2: Constantes para detecção de blur pattern
+const BLUR_PATTERN_THRESHOLD = 5;     // 5 blurs rápidos = suspeito
+const BLUR_PATTERN_WINDOW_MS = 3000;  // Em menos de 3 segundos
 
 export const useSecurityBlackoutStore = create<SecurityBlackoutState>()(
   persist(
@@ -62,16 +83,51 @@ export const useSecurityBlackoutStore = create<SecurityBlackoutState>()(
       blockEndTime: null,
       printScreenCount: 0,
       copyCount: 0,
+      blurCount: 0,           // v1.2
+      lastBlurTimestamp: 0,   // v1.2
       lastViolationType: null,
       violations: [],
       watermarkBoostEndTime: null,
 
-      registerViolation: (type: ViolationType, url: string) => {
+      // v1.2: Registrar blur e verificar padrão suspeito
+      registerBlur: (): boolean => {
+        const state = get();
+        const now = Date.now();
+        
+        // Se o último blur foi há menos de 3 segundos, incrementar contador
+        if (now - state.lastBlurTimestamp < BLUR_PATTERN_WINDOW_MS) {
+          const newCount = state.blurCount + 1;
+          
+          if (newCount >= BLUR_PATTERN_THRESHOLD) {
+            // Padrão suspeito detectado! Reset contador e retornar true
+            set({
+              blurCount: 0,
+              lastBlurTimestamp: now,
+            });
+            return true; // Padrão suspeito!
+          }
+          
+          set({
+            blurCount: newCount,
+            lastBlurTimestamp: now,
+          });
+        } else {
+          // Reset contador - começar nova janela
+          set({
+            blurCount: 1,
+            lastBlurTimestamp: now,
+          });
+        }
+        
+        return false; // Sem padrão suspeito
+      },
+
+      registerViolation: (type: ViolationType, url: string, details?: string) => {
         const state = get();
         const now = Date.now();
         
         // Registrar violação no histórico
-        const newViolation: ViolationRecord = { type, timestamp: now, url };
+        const newViolation: ViolationRecord = { type, timestamp: now, url, details };
         const updatedViolations = [...state.violations, newViolation].slice(-50); // Manter últimas 50
         
         // ═══════════════════════════════════════════════════════════
@@ -149,6 +205,15 @@ export const useSecurityBlackoutStore = create<SecurityBlackoutState>()(
           }
           return;
         }
+
+        // v1.2: window_blur agora é leve (não bloqueia imediatamente)
+        if (type === "window_blur") {
+          set({
+            lastViolationType: type,
+            violations: updatedViolations,
+          });
+          return;
+        }
         
         // Fallback: registrar qualquer outra violação
         set({
@@ -194,6 +259,8 @@ export const useSecurityBlackoutStore = create<SecurityBlackoutState>()(
           blockEndTime: null,
           printScreenCount: 0,
           copyCount: 0,
+          blurCount: 0,           // v1.2
+          lastBlurTimestamp: 0,   // v1.2
           lastViolationType: null,
           violations: [],
           watermarkBoostEndTime: null,
@@ -201,7 +268,7 @@ export const useSecurityBlackoutStore = create<SecurityBlackoutState>()(
       },
     }),
     {
-      name: "security-blackout-v1",
+      name: "security-blackout-v1.2", // v1.2: Nova versão do storage
       // Persistir apenas campos críticos
       partialize: (state) => ({
         isBlocked: state.isBlocked,
@@ -209,6 +276,8 @@ export const useSecurityBlackoutStore = create<SecurityBlackoutState>()(
         blockEndTime: state.blockEndTime,
         printScreenCount: state.printScreenCount,
         copyCount: state.copyCount,
+        blurCount: state.blurCount,           // v1.2
+        lastBlurTimestamp: state.lastBlurTimestamp, // v1.2
         violations: state.violations,
       }),
     }
