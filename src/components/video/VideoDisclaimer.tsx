@@ -6,7 +6,8 @@
 
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import disclaimerImage from "@/assets/disclaimer_nobotao.png";
+import disclaimerImageFallback from "@/assets/disclaimer_nobotao.png";
+import { useVideoOverlay } from "@/components/gestao/videoaulas/VideoOverlayConfigDialog";
 
 // Duração obrigatória do disclaimer em milissegundos
 const DISCLAIMER_DURATION_MS = 3000;
@@ -34,6 +35,10 @@ export function VideoDisclaimer({
   onComplete, 
   duration = DISCLAIMER_DURATION_MS 
 }: VideoDisclaimerProps) {
+  // 🆕 OVERLAY DINÂMICO: Busca URL configurada pelo admin, fallback para local
+  const { data: overlayImageUrl } = useVideoOverlay();
+  const disclaimerImage = overlayImageUrl || disclaimerImageFallback;
+
   return (
     <AnimatePresence>
       {isVisible && (
@@ -45,7 +50,7 @@ export function VideoDisclaimer({
           transition={{ duration: 0.3 }}
         >
           <div className="relative w-full h-full flex items-center justify-center p-4">
-            {/* Imagem do Disclaimer - Asset local obrigatório */}
+            {/* Imagem do Disclaimer - Dinâmica ou fallback local */}
             <img
               src={disclaimerImage}
               alt="Aviso Legal - Uso Restrito e Rastreável"
