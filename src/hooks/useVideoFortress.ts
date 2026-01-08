@@ -194,24 +194,29 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
       
       const result = data as Record<string, any>;
       
-      if (!result.success) {
-        if (result.error === 'USER_BANNED') {
+      // 🛡️ v11.0 FIX: A função SQL retorna diretamente os dados, não um objeto {success: boolean}
+      // Verificar se os dados esperados existem
+      if (!result || !result.session_id) {
+        // Verificar se é um erro conhecido
+        if (result?.error === 'USER_BANNED') {
           toast.error('🚫 Acesso bloqueado', {
             description: 'Você foi banido por violações de segurança.',
           });
           setError('USER_BANNED');
           return false;
         }
-        throw new Error(result.error || 'Erro ao criar sessão');
+        throw new Error(result?.error || 'Resposta inválida do servidor');
       }
 
+      // 🛡️ v11.0 FIX: A função SQL retorna watermark_text, não um objeto watermark
       const newSession: VideoSession = {
         sessionId: result.session_id,
         sessionCode: result.session_code,
         sessionToken: result.session_token,
         expiresAt: result.expires_at,
         watermark: {
-          ...result.watermark,
+          text: result.watermark_text || '',
+          hash: result.watermark_hash || result.session_code,
           mode: isImmune ? 'static' : 'moving',
         },
         revokedPrevious: result.revoked_previous || 0,
