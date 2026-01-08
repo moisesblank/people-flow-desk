@@ -1,20 +1,18 @@
 // ============================================
-// 🌌 WATERMARK OVERLAY — MARCA D'ÁGUA DINÂMICA
-// ANO 2300 — Proteção visual de conteúdo
-// Aparece/Desaparece em intervalos variáveis
+// 🌫️ WATERMARK OVERLAY — PHANTOM MODE v2.0
+// Marca d'água ultra-discreta para proteção forense
+// Quase invisível ao olho, rastreável em vazamentos
 // ============================================
 
-import React, { useEffect, useMemo, useState, memo, useCallback } from "react";
+import React, { useEffect, useMemo, useState, memo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
-function bucket20s() {
-  return Math.floor(Date.now() / 20000);
-}
+// 🕐 Bucket de 20 segundos para atualização
+const bucket20s = () => Math.floor(Date.now() / 20000);
 
-// 🎲 Gera tempo aleatório dentro de um range
-function randomTime(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+// 🎲 Tempo aleatório no range
+const randomTime = (min: number, max: number) => 
+  Math.floor(Math.random() * (max - min + 1)) + min;
 
 interface WatermarkOverlayProps {
   className?: string;
@@ -23,7 +21,7 @@ interface WatermarkOverlayProps {
 
 export const WatermarkOverlay = memo(function WatermarkOverlay({
   className = "",
-  opacity = 0.00175, // 🔒 Opacidade fantasma (-30% de 0.0025)
+  opacity = 0.001, // 🌫️ Opacidade fantasma
 }: WatermarkOverlayProps) {
   const { user, role } = useAuth();
   const [tick, setTick] = useState(bucket20s());
@@ -82,10 +80,10 @@ export const WatermarkOverlay = memo(function WatermarkOverlay({
   // ⚠️ OWNER PARTICIPARÁ DE TODAS AS REGRAS - Sem bypass para watermark
   // Removido: if (role === "owner") return null;
 
-  // Generate grid of watermarks
+  // 🎨 Grid reduzido (6x3 = 18 marcas) para menor poluição visual
   const watermarkGrid = useMemo(() => {
-    const rows = 8;
-    const cols = 4;
+    const rows = 6;
+    const cols = 3;
     const items = [];
     
     for (let i = 0; i < rows * cols; i++) {
@@ -97,9 +95,9 @@ export const WatermarkOverlay = memo(function WatermarkOverlay({
           className="sanctum-watermark-cell"
           style={{
             position: "absolute",
-            top: `${(row / rows) * 100 + 5}%`,
-            left: `${(col / cols) * 100 + 5}%`,
-            transform: "rotate(-25deg)",
+            top: `${(row / rows) * 100 + 8}%`,
+            left: `${(col / cols) * 100 + 10}%`,
+            transform: "rotate(-18deg)",
             whiteSpace: "nowrap",
           }}
         >
