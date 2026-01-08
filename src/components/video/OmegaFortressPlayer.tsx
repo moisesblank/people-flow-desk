@@ -384,26 +384,43 @@ export const OmegaFortressPlayer = memo(({
 
   // 🎯 Função para pular para capítulo - suporta YouTube API e Panda postMessage
   const seekToChapter = useCallback((seconds: number) => {
-    console.log('[CHAPTERS] Seek para:', seconds, 'segundos | Tipo:', type);
+    console.log('[OMEGA] 🎯 Seek solicitado para:', seconds, 'segundos | Provider:', type);
     
     if (type === 'panda' && pandaIframeRef.current?.contentWindow) {
       // 🐼 PANDA VIDEO: usar postMessage API
       // Documentação: https://pandavideo.readme.io/reference/send-events
-      pandaIframeRef.current.contentWindow.postMessage({ type: 'seek', parameter: seconds }, '*');
-      console.log('[CHAPTERS] ✅ postMessage seek enviado para Panda');
+      // CORREÇÃO: O comando correto é 'setCurrentTime', não 'seek'
+      const pandaWindow = pandaIframeRef.current.contentWindow;
+      
+      // Enviar comando de seek para o Panda Video
+      pandaWindow.postMessage({ 
+        type: 'setCurrentTime', 
+        currentTime: seconds 
+      }, '*');
+      
+      console.log('[OMEGA] ✅ postMessage setCurrentTime enviado para Panda:', seconds);
+      
+      // Garantir que o vídeo continue reproduzindo após o seek
+      setTimeout(() => {
+        pandaWindow.postMessage({ type: 'play' }, '*');
+        console.log('[OMEGA] ✅ Comando play enviado após seek');
+      }, 100);
+      
     } else if (type === 'youtube' && playerRef.current?.seekTo) {
       // ▶️ YOUTUBE: usar seekTo da API
       playerRef.current.seekTo(seconds, true);
-      console.log('[CHAPTERS] ✅ seekTo executado no YouTube');
+      console.log('[OMEGA] ✅ seekTo executado no YouTube:', seconds);
+      
     } else if (playerRef.current) {
       // 🔄 FALLBACK: tentar currentTime diretamente
       playerRef.current.currentTime = seconds;
       if (playerRef.current.paused) {
         playerRef.current.play();
       }
-      console.log('[CHAPTERS] ⚠️ Fallback currentTime usado');
+      console.log('[OMEGA] ⚠️ Fallback currentTime usado:', seconds);
+      
     } else {
-      console.warn('[CHAPTERS] ❌ Nenhum player disponível para seek');
+      console.warn('[OMEGA] ❌ Nenhum player disponível para seek');
     }
   }, [type]);
 
