@@ -619,23 +619,32 @@ export const OmegaFortressPlayer = memo(({
       {/* Aspect Ratio Container */}
       <div className="aspect-video relative">
         
-        {/* Thumbnail State */}
-        {showThumbnail && thumbnailUrl && (
+        {/* 🆕 THUMBNAIL STATE - AGORA FUNCIONA MESMO SEM THUMBNAIL (PANDA) */}
+        {/* O disclaimer deve aparecer SEMPRE, independente de ter thumbnail */}
+        {showThumbnail && (
           <div className="absolute inset-0 cursor-pointer z-10" onClick={handlePlayPause}>
-            {!imageLoaded && (
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black animate-pulse" />
+            {/* Background: Thumbnail se existir, senão gradiente */}
+            {thumbnailUrl ? (
+              <>
+                {!imageLoaded && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black animate-pulse" />
+                )}
+                <img
+                  src={thumbnailUrl}
+                  alt={title}
+                  loading="lazy"
+                  decoding="async"
+                  onLoad={() => setImageLoaded(true)}
+                  className={cn(
+                    "w-full h-full object-cover transition-opacity duration-500",
+                    imageLoaded ? "opacity-100" : "opacity-0"
+                  )}
+                />
+              </>
+            ) : (
+              /* Fallback para Panda/Vimeo sem thumbnail */
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-primary/10 to-black" />
             )}
-            <img
-              src={thumbnailUrl}
-              alt={title}
-              loading="lazy"
-              decoding="async"
-              onLoad={() => setImageLoaded(true)}
-              className={cn(
-                "w-full h-full object-cover transition-opacity duration-500",
-                imageLoaded ? "opacity-100" : "opacity-0"
-              )}
-            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/60" />
             
             {/* Play Button - Design 2300 */}
@@ -659,9 +668,8 @@ export const OmegaFortressPlayer = memo(({
               </motion.button>
             </div>
 
-            {/* Title + Badge Owner/Admin */}
+            {/* Title */}
             <div className="absolute bottom-0 left-0 right-0 p-4">
-              {/* ⚠️ OWNER PARTICIPARÁ DE TODAS AS REGRAS - Badge Master removido */}
               <h3 className="text-white font-semibold text-sm md:text-base truncate drop-shadow-lg">
                 {title}
               </h3>
