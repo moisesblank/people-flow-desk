@@ -254,7 +254,7 @@ export default function AlunoVideoaulas() {
                     lessonId={selectedLesson.id}
                     showSecurityBadge
                     showWatermark
-                    autoplay
+                    autoplay={false} // 🔒 Disclaimer obrigatório: só iniciar após interação explícita
                   />
                 </div>
 
