@@ -139,40 +139,45 @@ export const ChapterSidebar: React.FC<ChapterSidebarProps> = ({
                 key={`chapter-${index}`}
                 data-chapter-index={index}
                 onClick={() => handleChapterClick(chapter)}
-                className={`w-full text-left p-3 rounded-lg mb-2 transition-all duration-200
-                           flex items-start gap-3 group cursor-pointer
+                className={`w-full text-left p-3 rounded-lg mb-2 transition-all duration-300
+                           flex items-start gap-3 group cursor-pointer relative overflow-hidden
                            ${isActive 
-                             ? 'bg-gradient-to-r from-purple-600/40 to-blue-600/40 border border-purple-400/50' 
+                             ? 'bg-gradient-to-r from-purple-600/50 to-blue-600/50 border-2 border-purple-400/70 shadow-lg shadow-purple-500/20' 
                              : isPast 
-                               ? 'bg-gray-800/50 hover:bg-gray-700/50' 
-                               : 'bg-gray-800/30 hover:bg-gray-700/50'
+                               ? 'bg-gray-800/50 hover:bg-gray-700/60 border border-transparent hover:border-purple-500/30' 
+                               : 'bg-gray-800/30 hover:bg-gray-700/60 border border-transparent hover:border-purple-500/30'
                            }`}
               >
+                {/* Glow effect para item ativo */}
+                {isActive && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 animate-pulse pointer-events-none" />
+                )}
+                
                 {/* Indicador de tempo */}
-                <div className={`flex-shrink-0 px-2 py-1 rounded text-xs font-mono
+                <div className={`flex-shrink-0 px-2.5 py-1.5 rounded text-xs font-mono font-bold transition-all duration-300 z-10
                                ${isActive 
-                                 ? 'bg-purple-500 text-white' 
-                                 : 'bg-gray-700 text-gray-300'}`}>
+                                 ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-md shadow-purple-500/30' 
+                                 : 'bg-gray-700/80 text-gray-300 group-hover:bg-purple-600/50 group-hover:text-white'}`}>
                   {chapter.time || formatTime(chapter.seconds)}
                 </div>
                 
                 {/* Título */}
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium truncate
-                               ${isActive ? 'text-white' : 'text-gray-300'}`}>
+                <div className="flex-1 min-w-0 z-10">
+                  <p className={`text-sm font-medium truncate transition-colors duration-300
+                               ${isActive ? 'text-white font-semibold' : 'text-gray-300 group-hover:text-white'}`}>
                     {chapter.title}
                   </p>
                   {isActive && (
-                    <p className="text-xs text-purple-400 mt-1 flex items-center gap-1">
-                      <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" />
+                    <p className="text-xs text-purple-300 mt-1 flex items-center gap-1.5">
+                      <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse shadow-sm shadow-purple-400" />
                       Reproduzindo agora
                     </p>
                   )}
                 </div>
 
                 {/* Seta */}
-                <ChevronRight className={`w-4 h-4 flex-shrink-0 transition-transform
-                                        ${isActive ? 'text-purple-400' : 'text-gray-500'}
+                <ChevronRight className={`w-4 h-4 flex-shrink-0 transition-all duration-300 z-10
+                                        ${isActive ? 'text-purple-300 translate-x-1' : 'text-gray-500 group-hover:text-purple-400'}
                                         group-hover:translate-x-1`} />
               </button>
             );
