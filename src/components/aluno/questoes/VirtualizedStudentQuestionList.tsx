@@ -211,63 +211,85 @@ const QuestionItem = memo(function QuestionItem({
                 )}
               </div>
               
-              {/* Botões de ação */}
+              {/* Botões de ação — Year 2300 Cinematic HUD */}
               <div className="flex flex-col gap-2 flex-shrink-0">
-                {/* Botão Revisar/Resolver */}
+                {/* Botão Revisar/Resolver — Holographic Design */}
                 <div className="relative group/btn">
-                  {isHighEnd && !hasAttempt && (
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500/30 to-yellow-500/30 rounded-md blur opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                  {/* Glow externo pulsante */}
+                  {isHighEnd && (
+                    <div className={cn(
+                      "absolute -inset-1 rounded-lg blur-md opacity-0 group-hover/btn:opacity-100 transition-all duration-300",
+                      hasAttempt 
+                        ? "bg-gradient-to-r from-cyan-500/40 via-blue-500/40 to-cyan-500/40"
+                        : "bg-gradient-to-r from-amber-500/50 via-yellow-400/50 to-amber-500/50 animate-pulse"
+                    )} />
+                  )}
+                  {/* Borda holográfica */}
+                  {isHighEnd && (
+                    <div className={cn(
+                      "absolute -inset-px rounded-lg opacity-60 group-hover/btn:opacity-100 transition-opacity",
+                      hasAttempt 
+                        ? "bg-gradient-to-r from-cyan-500/30 via-transparent to-cyan-500/30"
+                        : "bg-gradient-to-r from-amber-400/40 via-yellow-300/40 to-amber-400/40"
+                    )} />
                   )}
                   <Button 
                     variant={hasAttempt ? "outline" : "default"}
                     size="sm"
                     className={cn(
-                      "relative font-semibold min-w-[100px]",
+                      "relative font-bold min-w-[120px] tracking-wide uppercase text-xs",
                       hasAttempt 
                         ? isHighEnd 
-                          ? "border-slate-600/50 bg-slate-800/50 hover:bg-slate-700/50 hover:border-amber-500/30 text-slate-200 transition-all" 
+                          ? "border-cyan-500/40 bg-gradient-to-r from-slate-900/90 via-cyan-950/50 to-slate-900/90 hover:from-cyan-950/60 hover:via-cyan-900/40 hover:to-cyan-950/60 hover:border-cyan-400/60 text-cyan-300 hover:text-cyan-200 shadow-lg shadow-cyan-500/10 hover:shadow-cyan-500/30 transition-all duration-300" 
                           : ""
                         : isHighEnd 
-                          ? "bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black shadow-lg shadow-amber-500/20 transition-all" 
+                          ? "bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:via-yellow-300 hover:to-amber-400 text-black font-black shadow-xl shadow-amber-500/40 hover:shadow-amber-400/60 transition-all duration-300 hover:scale-105" 
                           : "bg-primary hover:bg-primary/90"
                     )}
                   >
                     {hasAttempt ? (
                       <>
+                        <Sparkles className="w-3 h-3 mr-1.5 animate-pulse" />
                         Revisar
-                        <ChevronRight className="w-4 h-4 ml-1" />
+                        <ChevronRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
                       </>
                     ) : (
                       <>
-                        {isHighEnd && <Sparkles className="w-3 h-3 mr-1" />}
+                        <Sparkles className="w-3 h-3 mr-1.5" />
                         Resolver
-                        <ChevronRight className="w-4 h-4 ml-1" />
+                        <ChevronRight className="w-4 h-4 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
                       </>
                     )}
                   </Button>
                 </div>
                 
-                {/* Botão Tentar do Zero */}
+                {/* Botão Tentar do Zero — Holographic Reset */}
                 {hasAttempt && onReset && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className={cn(
-                      "text-xs h-8",
-                      isHighEnd 
-                        ? "text-slate-400 hover:text-amber-400 hover:bg-amber-500/10 transition-colors" 
-                        : "text-muted-foreground hover:text-primary"
+                  <div className="relative group/reset">
+                    {/* Glow sutil no hover */}
+                    {isHighEnd && (
+                      <div className="absolute -inset-0.5 rounded-md bg-gradient-to-r from-rose-500/20 via-orange-500/20 to-rose-500/20 blur opacity-0 group-hover/reset:opacity-100 transition-opacity duration-300" />
                     )}
-                    onClick={handleReset}
-                    disabled={isResetting}
-                  >
-                    {isResetting ? (
-                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                    ) : (
-                      <RotateCcw className="w-3 h-3 mr-1" />
-                    )}
-                    Tentar do Zero
-                  </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className={cn(
+                        "relative text-xs h-8 font-semibold tracking-wide",
+                        isHighEnd 
+                          ? "text-slate-400 hover:text-orange-300 bg-slate-900/40 hover:bg-gradient-to-r hover:from-orange-500/10 hover:via-rose-500/10 hover:to-orange-500/10 border border-transparent hover:border-orange-500/30 transition-all duration-300" 
+                          : "text-muted-foreground hover:text-primary"
+                      )}
+                      onClick={handleReset}
+                      disabled={isResetting}
+                    >
+                      {isResetting ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin text-orange-400" />
+                      ) : (
+                        <RotateCcw className="w-3.5 h-3.5 mr-1.5 group-hover/reset:rotate-[-180deg] transition-transform duration-500" />
+                      )}
+                      Tentar do Zero
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
