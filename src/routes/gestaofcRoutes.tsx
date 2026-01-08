@@ -81,6 +81,7 @@ const SiteProgramador = lazy(() => import("@/pages/SiteProgramador"));
 const CentralDiagnostico = lazy(() => import("@/pages/CentralDiagnostico"));
 const VidaPessoal = lazy(() => import("@/pages/VidaPessoal"));
 const Pessoal = lazy(() => import("@/pages/Pessoal"));
+const ResetSegurancaUsuario = lazy(() => import("@/pages/gestao/ResetSegurancaUsuario"));
 
 // Empresas
 const ArquivosEmpresariais = lazy(() => import("@/pages/empresas/ArquivosEmpresariais"));
@@ -93,6 +94,7 @@ export const gestaofcRoutes = (
     <Route path="/gestaofc" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
     <Route path="/gestaofc/dashboard" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
     <Route path="/gestaofc/dashboard-executivo" element={<ProtectedPage><DashboardExecutivo /></ProtectedPage>} />
+    <Route path="/gestaofc/reset-seguranca" element={<ProtectedPage><ResetSegurancaUsuario /></ProtectedPage>} />
     <Route path="/gestaofc/tarefas" element={<ProtectedPage><Tarefas /></ProtectedPage>} />
     <Route path="/gestaofc/funcionarios" element={<ProtectedPage><Funcionarios /></ProtectedPage>} />
     <Route path="/gestaofc/calendario" element={<ProtectedPage><Calendario /></ProtectedPage>} />

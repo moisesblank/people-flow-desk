@@ -16,6 +16,7 @@ export const SYSTEM_AREAS = [
   // ===== DASHBOARD & PRINCIPAL =====
   "dashboard",
   "dashboard-executivo",
+  "reset-seguranca",
   "tarefas",
   "integracoes",
   "calendario",

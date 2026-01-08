@@ -29,6 +29,7 @@ import {
   Brain,
   Link2,
   Shield,
+  ShieldOff,
   PlayCircle,
   Megaphone,
   Rocket,
@@ -135,6 +136,7 @@ const gestaoMenuGroups: MenuGroup[] = [
     items: [
       { title: "Central de Comando", url: "/gestaofc", icon: Brain, area: "dashboard" },
       { title: "Dashboard Executivo", url: "/gestaofc/dashboard-executivo", icon: Gauge, area: "dashboard-executivo" },
+      { title: "Reset Segurança", url: "/gestaofc/reset-seguranca", icon: ShieldOff, area: "reset-seguranca", badge: "OWNER" },
       { title: "Tarefas", url: "/gestaofc/tarefas", icon: ClipboardCheck, area: "tarefas" },
       { title: "Integrações", url: "/gestaofc/integracoes", icon: Link2, area: "integracoes" },
       { title: "Calendário", url: "/gestaofc/calendario", icon: Calendar, area: "calendario" },
