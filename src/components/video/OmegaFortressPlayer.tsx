@@ -169,14 +169,15 @@ export const OmegaFortressPlayer = memo(({
   // Panda DRM: src assinada (token + expires). Sem isso, o player do Panda falha quando DRM via API está ativo.
   const [pandaSignedSrc, setPandaSignedSrc] = useState<string | null>(null);
 
-  // Hook para buscar capítulos (apenas Panda Video 2025)
+  // Hook para buscar capítulos (Panda Video e YouTube)
   const { 
     chapters, 
     hasChapters, 
     is2025Course 
   } = useVideoChapters(
-    type === 'panda' ? videoId : null,
-    title
+    videoId,
+    title,
+    type === 'youtube' ? 'youtube' : 'panda'
   );
 
   // 🔥 P0 FIX: Calcular duration estimada a partir dos capítulos
