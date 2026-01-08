@@ -1581,7 +1581,7 @@ export const OmegaFortressPlayer = memo(({
               <span className="text-white/50">• Clique para navegar</span>
             </div>
             <div 
-              className="relative h-3 bg-white/20 rounded-full cursor-pointer group/progress hover:h-4 transition-all backdrop-blur-sm border border-white/10"
+              className="relative h-2.5 bg-white/20 rounded-full cursor-pointer group/progress hover:h-3 transition-all backdrop-blur-sm border border-white/10"
               onClick={(e) => {
                 // Calcular posição do clique na barra e converter para segundos
                 const rect = e.currentTarget.getBoundingClientRect();
