@@ -1058,93 +1058,136 @@ export default function GestaoCursos() {
               left: 0,
               transform: 'none'
             }}>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Layers className="h-5 w-5 text-purple-500" />
+            <DialogHeader className="border-b border-border/30 pb-4">
+              <DialogTitle className="flex items-center gap-3 text-2xl">
+                <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-500/30">
+                  <Layers className="h-6 w-6 text-purple-400" />
+                </div>
                 {editingModule ? 'Editar Módulo' : 'Novo Módulo'}
               </DialogTitle>
-              <DialogDescription>
-                {selectedCourse?.title}
+              <DialogDescription className="text-base">
+                Curso: <span className="text-foreground font-medium">{selectedCourse?.title}</span>
               </DialogDescription>
             </DialogHeader>
             
-            <div className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="module-title">Título *</Label>
-                <Input
-                  id="module-title"
-                  value={moduleForm.title}
-                  onChange={(e) => setModuleForm(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="Ex: Módulo 1 - Introdução"
-                  className="bg-background/50"
-                />
-              </div>
+            {/* Layout 2 colunas: Preview | Formulário */}
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-8 py-6 overflow-y-auto">
               
-              <div className="space-y-2">
-                <Label htmlFor="module-description">Descrição</Label>
-                <Textarea
-                  id="module-description"
-                  value={moduleForm.description}
-                  onChange={(e) => setModuleForm(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Descreva o módulo..."
-                  rows={3}
-                  className="bg-background/50"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="module-thumbnail" className="flex items-center gap-2">
-                  Imagem do Módulo *
-                  <Badge variant="outline" className="text-xs font-normal border-purple-500/30 text-purple-400">752 × 940 px</Badge>
-                </Label>
-                <Input
-                  id="module-thumbnail"
-                  value={moduleForm.thumbnail_url}
-                  onChange={(e) => setModuleForm(prev => ({ ...prev, thumbnail_url: e.target.value }))}
-                  placeholder="/images/modules/meu-modulo.jpg"
-                  className={cn("bg-background/50", !moduleForm.thumbnail_url && "border-destructive")}
-                />
-                {!moduleForm.thumbnail_url && (
-                  <p className="text-xs text-destructive flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" />
-                    Imagem obrigatória (752×940 px) - Módulo não pode ser criado sem imagem
-                  </p>
-                )}
-                {moduleForm.thumbnail_url && (
-                  <div className="relative w-[150px] h-[188px] rounded-lg overflow-hidden border border-green-500/30 bg-muted">
+              {/* Coluna Esquerda - Preview da Imagem */}
+              <div className="flex flex-col items-center gap-4 p-6 rounded-xl bg-muted/30 border border-border/30">
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Preview da Imagem</h3>
+                
+                {moduleForm.thumbnail_url ? (
+                  <div className="relative w-full max-w-[280px] aspect-[752/940] rounded-xl overflow-hidden border-2 border-green-500/50 shadow-lg shadow-green-500/10">
                     <img 
                       src={moduleForm.thumbnail_url} 
-                      alt="Preview" 
+                      alt="Preview do Módulo" 
                       className="w-full h-full object-cover"
-                      onError={(e) => e.currentTarget.style.display = 'none'}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
                     />
-                    <Badge className="absolute bottom-1 right-1 text-[10px] bg-green-600">
+                    <Badge className="absolute bottom-2 right-2 bg-green-600 shadow-lg">
                       <Check className="h-3 w-3 mr-1" />
-                      752×940
+                      752×940 px
                     </Badge>
                   </div>
+                ) : (
+                  <div className="w-full max-w-[280px] aspect-[752/940] rounded-xl border-2 border-dashed border-destructive/50 bg-destructive/5 flex flex-col items-center justify-center gap-3 p-4">
+                    <AlertTriangle className="h-12 w-12 text-destructive/60" />
+                    <p className="text-sm text-destructive text-center font-medium">
+                      Imagem Obrigatória
+                    </p>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Dimensões: 752 × 940 px
+                    </p>
+                  </div>
                 )}
+                
+                <div className="w-full space-y-2 mt-2">
+                  <Label htmlFor="module-thumbnail" className="text-sm font-medium">
+                    URL da Imagem *
+                  </Label>
+                  <Input
+                    id="module-thumbnail"
+                    value={moduleForm.thumbnail_url}
+                    onChange={(e) => setModuleForm(prev => ({ ...prev, thumbnail_url: e.target.value }))}
+                    placeholder="/images/modules/meu-modulo.jpg"
+                    className={cn(
+                      "bg-background/50 text-sm",
+                      !moduleForm.thumbnail_url && "border-destructive focus:ring-destructive"
+                    )}
+                  />
+                </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              {/* Coluna Direita - Formulário */}
+              <div className="flex flex-col gap-6">
+                
+                {/* Título */}
                 <div className="space-y-2">
-                  <Label htmlFor="module-position">Posição</Label>
+                  <Label htmlFor="module-title" className="text-base font-medium">
+                    Título do Módulo *
+                  </Label>
                   <Input
-                    id="module-position"
-                    type="number"
-                    value={moduleForm.position}
-                    onChange={(e) => setModuleForm(prev => ({ ...prev, position: parseInt(e.target.value) || 0 }))}
-                    className="bg-background/50"
+                    id="module-title"
+                    value={moduleForm.title}
+                    onChange={(e) => setModuleForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Ex: Módulo 1 - Introdução à Química"
+                    className="bg-background/50 h-12 text-base"
                   />
                 </div>
-                <div className="flex items-center gap-2 pt-7">
-                  <Switch
-                    id="module-active"
-                    checked={moduleForm.is_published}
-                    onCheckedChange={(v) => setModuleForm(prev => ({ ...prev, is_published: v }))}
+                
+                {/* Descrição */}
+                <div className="space-y-2">
+                  <Label htmlFor="module-description" className="text-base font-medium">
+                    Descrição
+                  </Label>
+                  <Textarea
+                    id="module-description"
+                    value={moduleForm.description}
+                    onChange={(e) => setModuleForm(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Descreva o conteúdo deste módulo..."
+                    rows={5}
+                    className="bg-background/50 text-base resize-none"
                   />
-                  <Label htmlFor="module-active" className="cursor-pointer">Ativo</Label>
                 </div>
+                
+                {/* Posição e Status */}
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="module-position" className="text-base font-medium">
+                      Posição / Ordem
+                    </Label>
+                    <Input
+                      id="module-position"
+                      type="number"
+                      value={moduleForm.position}
+                      onChange={(e) => setModuleForm(prev => ({ ...prev, position: parseInt(e.target.value) || 0 }))}
+                      className="bg-background/50 h-12 text-base"
+                    />
+                    <p className="text-xs text-muted-foreground">Define a ordem de exibição</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-base font-medium">Status</Label>
+                    <div className="flex items-center gap-3 h-12 px-4 rounded-lg border border-border/50 bg-background/50">
+                      <Switch
+                        id="module-active"
+                        checked={moduleForm.is_published}
+                        onCheckedChange={(v) => setModuleForm(prev => ({ ...prev, is_published: v }))}
+                      />
+                      <Label htmlFor="module-active" className="cursor-pointer text-base">
+                        {moduleForm.is_published ? (
+                          <span className="text-green-400">Ativo (Publicado)</span>
+                        ) : (
+                          <span className="text-muted-foreground">Inativo (Rascunho)</span>
+                        )}
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+                
               </div>
             </div>
             
