@@ -3,6 +3,7 @@
 // Sincronizado em tempo real com /gestaofc/videoaulas
 // Suporta ?aula=UUID para abrir diretamente via QR Code
 // VIRTUALIZADO + PAGINADO (25 itens/página)
+// 🚨 BLACKOUT ANTI-PIRATARIA v1.0 INTEGRADO
 // ============================================
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -25,6 +26,7 @@ import { OmegaFortressPlayer } from "@/components/video/OmegaFortressPlayer";
 import { LessonTabs } from "@/components/player/LessonTabs";
 import { detectVideoProviderFromUrl, isPandaUrl } from "@/lib/video/detectVideoProvider";
 import { VirtualizedAlunoVideoaulaList } from "@/components/aluno/videoaulas/VirtualizedAlunoVideoaulaList";
+import { SecurityBlackoutOverlay } from "@/components/security/SecurityBlackoutOverlay";
 
 interface Lesson {
   id: string;
@@ -210,8 +212,12 @@ export default function AlunoVideoaulas() {
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-6">
-      {/* ============================================ */}
+    <>
+      {/* 🚨 BLACKOUT ANTI-PIRATARIA v1.0 - Overlay de bloqueio */}
+      <SecurityBlackoutOverlay />
+      
+      <div className="container mx-auto p-4 md:p-6 space-y-6">
+        {/* ============================================ */}
       {/* MODAL DO PLAYER - Aberto via ?aula=UUID    */}
       {/* ============================================ */}
       <AnimatePresence>
@@ -469,6 +475,7 @@ export default function AlunoVideoaulas() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
