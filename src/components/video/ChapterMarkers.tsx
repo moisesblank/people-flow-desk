@@ -47,13 +47,13 @@ export const ChapterMarkers: React.FC<ChapterMarkersProps> = ({
         return (
           <div
             key={index}
-            className="chapter-marker pointer-events-auto cursor-pointer group"
+            className="chapter-marker pointer-events-auto cursor-pointer group/marker"
             style={{
               position: 'absolute',
               left: `${position}%`,
               top: '-2px',
               bottom: '-2px',
-              width: '4px',
+              width: '12px',
               transform: 'translateX(-50%)',
               zIndex: 15
             }}
@@ -64,10 +64,10 @@ export const ChapterMarkers: React.FC<ChapterMarkersProps> = ({
           >
             {/* Linha do marcador - mais visível */}
             <div 
-              className={`w-full h-full rounded-sm transition-all duration-300 ${
+              className={`absolute left-1/2 -translate-x-1/2 w-1 h-full rounded-sm transition-all duration-300 ${
                 isActive 
                   ? 'bg-gradient-to-b from-yellow-300 to-yellow-500 shadow-lg shadow-yellow-400/60 scale-x-150' 
-                  : 'bg-white/80 group-hover:bg-purple-400 group-hover:scale-x-150'
+                  : 'bg-white/80 group-hover/marker:bg-purple-400 group-hover/marker:scale-x-150'
               }`}
             />
             
@@ -76,13 +76,14 @@ export const ChapterMarkers: React.FC<ChapterMarkersProps> = ({
               className={`absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full transition-all duration-300 ${
                 isActive 
                   ? 'bg-yellow-400 shadow-md shadow-yellow-400/50' 
-                  : 'bg-white/70 group-hover:bg-purple-400 group-hover:scale-125'
+                  : 'bg-white/70 group-hover/marker:bg-purple-400 group-hover/marker:scale-125'
               }`}
             />
             
-            {/* Tooltip com título do capítulo */}
+            {/* Tooltip com título do capítulo - APENAS no hover do marcador específico */}
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 
-                          opacity-0 group-hover:opacity-100 transition-all duration-200 scale-95 group-hover:scale-100
+                          invisible opacity-0 group-hover/marker:visible group-hover/marker:opacity-100 
+                          transition-all duration-200 scale-95 group-hover/marker:scale-100
                           bg-gray-900/95 backdrop-blur-sm text-white text-xs px-3 py-2 rounded-lg 
                           pointer-events-none z-50 min-w-[120px] max-w-[220px] shadow-xl border border-purple-500/30">
               <div className="font-bold text-purple-300">{chapter.time}</div>
