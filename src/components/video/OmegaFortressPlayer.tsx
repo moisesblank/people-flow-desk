@@ -389,16 +389,13 @@ export const OmegaFortressPlayer = memo(({
     if (type === 'panda' && pandaIframeRef.current?.contentWindow) {
       // 🐼 PANDA VIDEO: usar postMessage API
       // Documentação: https://pandavideo.readme.io/reference/send-events
-      // CORREÇÃO: O comando correto é 'setCurrentTime', não 'seek'
+      // ✅ Seek correto: { type: 'currentTime', parameter: <segundos> }
       const pandaWindow = pandaIframeRef.current.contentWindow;
-      
-      // Enviar comando de seek para o Panda Video
-      pandaWindow.postMessage({ 
-        type: 'setCurrentTime', 
-        currentTime: seconds 
-      }, '*');
-      
-      console.log('[OMEGA] ✅ postMessage setCurrentTime enviado para Panda:', seconds);
+
+      pandaWindow.postMessage({ type: 'currentTime', parameter: seconds }, '*');
+
+      console.log('[OMEGA] ✅ postMessage currentTime enviado para Panda:', seconds);
+
       
       // Garantir que o vídeo continue reproduzindo após o seek
       setTimeout(() => {
