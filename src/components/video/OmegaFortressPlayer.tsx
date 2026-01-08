@@ -538,10 +538,15 @@ export const OmegaFortressPlayer = memo(({
         playerVars: { ...FORTRESS_YT_PARAMS, controls: 0, autoplay: autoplay ? 1 : 0 },
         events: {
           onReady: (e: any) => {
+            // 🔥 FIX v15.0: Salvar a referência REAL do player (e.target) para que
+            // setPlaybackRate funcione corretamente nos controles customizados
+            const player = e.target;
+            playerRef.current = player; // CRÍTICO: sobrescrever com player funcional
+            console.log('[OmegaFortress] 🎬 Player YouTube pronto, ref atualizada');
+            
             setIsLoading(false);
             
             // 🎯 QUALITY ENFORCEMENT v14.0: Forçar 1080p com fallback para 720p
-            const player = e.target;
             const availableQualities = player.getAvailableQualityLevels?.() || [];
             console.log('[OmegaFortress] Qualidades disponíveis:', availableQualities);
             
@@ -701,28 +706,35 @@ export const OmegaFortressPlayer = memo(({
 
   const handleSpeedChange = useCallback((speed: number) => {
     console.log('[OmegaFortress] 🎚️ Alterando velocidade para:', speed);
+    console.log('[OmegaFortress] playerRef.current:', playerRef.current);
+    console.log('[OmegaFortress] setPlaybackRate disponível?', typeof playerRef.current?.setPlaybackRate);
+    
     setCurrentSpeed(speed);
     
     // YouTube IFrame API - setPlaybackRate
     if (playerRef.current) {
       try {
-        // Método 1: API direta do YouTube Player
+        // Método 1: API direta do YouTube Player (e.target do onReady)
         if (typeof playerRef.current.setPlaybackRate === 'function') {
           playerRef.current.setPlaybackRate(speed);
-          console.log('[OmegaFortress] ✅ Velocidade aplicada via setPlaybackRate');
+          console.log('[OmegaFortress] ✅ Velocidade YouTube alterada:', speed);
         } 
-        // Método 2: Fallback - tentar via getIframe() se disponível
+        // Método 2: Fallback - tentar via getIframe() + postMessage
         else if (typeof playerRef.current.getIframe === 'function') {
           const iframe = playerRef.current.getIframe();
           if (iframe?.contentWindow) {
-            // Tentar comando via postMessage
             iframe.contentWindow.postMessage(JSON.stringify({
               event: 'command',
               func: 'setPlaybackRate',
               args: [speed]
             }), '*');
-            console.log('[OmegaFortress] ✅ Velocidade aplicada via postMessage');
+            console.log('[OmegaFortress] ✅ Velocidade aplicada via postMessage:', speed);
           }
+        }
+        // Método 3: playbackRate nativo (para Panda/video element)
+        else if (typeof playerRef.current.playbackRate === 'number') {
+          playerRef.current.playbackRate = speed;
+          console.log('[OmegaFortress] ✅ Velocidade Panda alterada:', speed);
         }
       } catch (err) {
         console.error('[OmegaFortress] ❌ Erro ao mudar velocidade:', err);
