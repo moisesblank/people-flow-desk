@@ -15097,6 +15097,7 @@ export type Database = {
           lesson_title: string
           panda_video_id: string
           updated_at: string | null
+          youtube_video_id: string | null
         }
         Insert: {
           aula_number?: number | null
@@ -15107,6 +15108,7 @@ export type Database = {
           lesson_title: string
           panda_video_id: string
           updated_at?: string | null
+          youtube_video_id?: string | null
         }
         Update: {
           aula_number?: number | null
@@ -15117,6 +15119,7 @@ export type Database = {
           lesson_title?: string
           panda_video_id?: string
           updated_at?: string | null
+          youtube_video_id?: string | null
         }
         Relationships: []
       }

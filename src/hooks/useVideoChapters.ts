@@ -7,7 +7,13 @@ interface Chapter {
   title: string;
 }
 
-export const useVideoChapters = (videoId: string | null, lessonTitle: string | null) => {
+type VideoType = 'panda' | 'youtube';
+
+export const useVideoChapters = (
+  videoId: string | null, 
+  lessonTitle: string | null,
+  videoType: VideoType = 'panda'
+) => {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,11 +37,13 @@ export const useVideoChapters = (videoId: string | null, lessonTitle: string | n
     setError(null);
 
     try {
-      // Busca diretamente pelo panda_video_id - sem filtrar por título
+      // Busca pelo video_id - suporta Panda e YouTube
+      const columnName = videoType === 'youtube' ? 'youtube_video_id' : 'panda_video_id';
+      
       const { data, error: fetchError } = await supabase
         .from('video_chapters')
         .select('*')
-        .eq('panda_video_id', videoId)
+        .eq(columnName, videoId)
         .maybeSingle();
 
       if (fetchError) {
@@ -75,7 +83,7 @@ export const useVideoChapters = (videoId: string | null, lessonTitle: string | n
     } finally {
       setLoading(false);
     }
-  }, [videoId, lessonTitle, checkIf2025CourseByTitle]);
+  }, [videoId, lessonTitle, videoType, checkIf2025CourseByTitle]);
 
   useEffect(() => {
     fetchChapters();
