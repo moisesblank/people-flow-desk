@@ -1343,11 +1343,16 @@ export const OmegaFortressPlayer = memo(({
         )}
 
         {/* 🛡️ Escudos de Proteção - Invisíveis (z-20 para ficar ABAIXO dos controles z-30) */}
-        {/* PATCH: Escudos protegem contra interação com iframe nativo, mas controles custom ficam acima */}
+        {/* PATCH: Escudos protegem bordas mas LIBERAM timeline central para cliques */}
         {type !== "panda" && !showControls && (
           <>
+            {/* Escudo superior */}
             <div className="absolute top-0 left-0 right-0 h-[60px] z-20 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
-            <div className="absolute bottom-0 left-0 right-0 h-[70px] z-20 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+            {/* Escudo inferior ESQUERDO - bloqueia logo YouTube */}
+            <div className="absolute bottom-0 left-0 h-[50px] w-[120px] z-20 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+            {/* Escudo inferior DIREITO - bloqueia config/fullscreen */}
+            <div className="absolute bottom-0 right-0 h-[50px] w-[200px] z-20 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+            {/* Escudos laterais */}
             <div className="absolute top-0 bottom-0 left-0 w-[80px] z-20 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
             <div className="absolute top-0 bottom-0 right-0 w-[80px] z-20 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
           </>
