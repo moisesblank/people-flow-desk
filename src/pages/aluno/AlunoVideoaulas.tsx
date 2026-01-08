@@ -178,11 +178,14 @@ export default function AlunoVideoaulas() {
     };
   }, [debouncedInvalidate]);
 
-  // Filtrar lições por busca
+  // Filtrar lições por busca - inclui título, descrição e embed ID (panda/youtube)
   const filteredLessons = useMemo(() => {
+    const searchLower = busca.toLowerCase().trim();
     return lessons?.filter(l => 
-      l.title.toLowerCase().includes(busca.toLowerCase()) ||
-      l.description?.toLowerCase().includes(busca.toLowerCase())
+      l.title.toLowerCase().includes(searchLower) ||
+      l.description?.toLowerCase().includes(searchLower) ||
+      l.panda_video_id?.toLowerCase().includes(searchLower) ||
+      l.youtube_video_id?.toLowerCase().includes(searchLower)
     ) || [];
   }, [lessons, busca]);
 
