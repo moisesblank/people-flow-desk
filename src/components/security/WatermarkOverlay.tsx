@@ -35,20 +35,20 @@ export const WatermarkOverlay = memo(function WatermarkOverlay({
     return () => clearInterval(id);
   }, []);
 
-  // 🎭 Ciclo de aparição/desaparição em tempos variáveis
+  // 🎭 Ciclo de aparição/desaparição (60% visível / 40% invisível)
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     
     const scheduleNext = () => {
       if (isVisible) {
-        // Visível por 5-30 segundos
-        const visibleTime = randomTime(5, 30) * 1000;
+        // ✅ Visível por 9-21 segundos (~60% do ciclo)
+        const visibleTime = randomTime(9, 21) * 1000;
         timeoutId = setTimeout(() => {
           setIsVisible(false);
         }, visibleTime);
       } else {
-        // Invisível por 2-5 segundos
-        const hiddenTime = randomTime(2, 5) * 1000;
+        // ⬛ Invisível por 6-14 segundos (~40% do ciclo)
+        const hiddenTime = randomTime(6, 14) * 1000;
         timeoutId = setTimeout(() => {
           setIsVisible(true);
         }, hiddenTime);
