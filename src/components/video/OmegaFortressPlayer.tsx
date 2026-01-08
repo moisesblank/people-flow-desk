@@ -147,6 +147,9 @@ export const OmegaFortressPlayer = memo(({
   const [disclaimerCompleted, setDisclaimerCompleted] = useState(false);
   const [violationWarning, setViolationWarning] = useState<string | null>(null);
   const [showSecurityInfo, setShowSecurityInfo] = useState(false);
+  
+  // 🎯 QUALITY ENFORCEMENT: Estado para erro de qualidade mínima (720p)
+  const [qualityError, setQualityError] = useState<string | null>(null);
 
   // Panda DRM: src assinada (token + expires). Sem isso, o player do Panda falha quando DRM via API está ativo.
   const [pandaSignedSrc, setPandaSignedSrc] = useState<string | null>(null);
@@ -405,9 +408,38 @@ export const OmegaFortressPlayer = memo(({
         events: {
           onReady: (e: any) => {
             setIsLoading(false);
-            e.target.setPlaybackQuality(currentQuality);
+            
+            // 🎯 QUALITY ENFORCEMENT v14.0: Forçar 1080p com fallback para 720p
+            const player = e.target;
+            const availableQualities = player.getAvailableQualityLevels?.() || [];
+            console.log('[OmegaFortress] Qualidades disponíveis:', availableQualities);
+            
+            // Verificar se tem pelo menos 720p disponível
+            const has1080p = availableQualities.includes('hd1080');
+            const has720p = availableQualities.includes('hd720');
+            const hasMinimumQuality = has1080p || has720p;
+            
+            if (!hasMinimumQuality && availableQualities.length > 0) {
+              // Qualidade mínima não disponível - bloquear reprodução
+              console.warn('[OmegaFortress] ⚠️ Qualidade mínima (720p) não disponível!');
+              player.pauseVideo?.();
+              setQualityError('Este vídeo não está disponível na qualidade mínima exigida (720p). Por favor, tente novamente mais tarde ou entre em contato com o suporte.');
+              return;
+            }
+            
+            // Forçar melhor qualidade disponível (1080p > 720p)
+            if (has1080p) {
+              player.setPlaybackQuality('hd1080');
+              setCurrentQuality('hd1080');
+              console.log('[OmegaFortress] ✅ Qualidade forçada: 1080p');
+            } else if (has720p) {
+              player.setPlaybackQuality('hd720');
+              setCurrentQuality('hd720');
+              console.log('[OmegaFortress] ✅ Qualidade forçada: 720p (fallback)');
+            }
+            
             if (autoplay) {
-              e.target.playVideo();
+              player.playVideo();
               setIsPlaying(true);
             }
           },
@@ -831,7 +863,55 @@ export const OmegaFortressPlayer = memo(({
           )}
         </AnimatePresence>
 
-        {/* Watermark Dinâmica - ULTRA */}
+        {/* 🎯 QUALITY ERROR OVERLAY v14.0: Erro quando qualidade mínima (720p) não está disponível */}
+        <AnimatePresence>
+          {qualityError && !showThumbnail && (
+            <motion.div
+              className="absolute inset-0 flex flex-col items-center justify-center bg-black/95 z-50 gap-4 p-6 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center">
+                <AlertTriangle className="w-8 h-8 text-destructive" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <h3 className="text-white font-semibold text-lg">Qualidade Insuficiente</h3>
+                <p className="text-sm text-white/70 max-w-md">
+                  {qualityError}
+                </p>
+              </div>
+              <div className="flex items-center gap-3 mt-2">
+                <button
+                  className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+                  onClick={() => {
+                    setQualityError(null);
+                    setShowThumbnail(true);
+                    setIsLoading(false);
+                  }}
+                >
+                  Voltar
+                </button>
+                <button
+                  className="px-4 py-2 rounded-lg bg-white/10 text-white text-sm hover:bg-white/20 transition-colors"
+                  onClick={() => {
+                    setQualityError(null);
+                    setIsLoading(true);
+                    // Recarregar o player
+                    if (playerRef.current?.destroy) {
+                      playerRef.current.destroy();
+                      playerRef.current = null;
+                    }
+                    setShowThumbnail(false);
+                  }}
+                >
+                  Tentar Novamente
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* SEMPRE exibir watermark quando sessão existir, mesmo durante loading do player */}
         {showWatermark && session?.watermark?.text && !showThumbnail && (
           <WatermarkOverlay 
