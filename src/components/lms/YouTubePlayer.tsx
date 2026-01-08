@@ -2,6 +2,7 @@
 // YOUTUBE EMBEDDED PLAYER v2.1
 // Player de vídeo YouTube com capítulos e controles
 // COM PROTEÇÃO ANTI-COMPARTILHAMENTO + 1080p AUTO
+// 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
 // ============================================
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -35,6 +36,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { FortressPlayerWrapper, FORTRESS_PLAYER_VARS } from "@/components/video";
+import { VideoDisclaimer, useVideoDisclaimer } from "@/components/video/VideoDisclaimer";
 
 // Interface para capítulos/timestamps
 export interface VideoChapter {
@@ -83,6 +85,11 @@ export function YouTubePlayer({
 }: YouTubePlayerProps) {
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
+  const { showDisclaimer, disclaimerCompleted, startDisclaimer, handleDisclaimerComplete } = useVideoDisclaimer();
+  const [disclaimerShown, setDisclaimerShown] = useState(false);
+  
   const [isReady, setIsReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -92,6 +99,14 @@ export function YouTubePlayer({
   const [showNoteInput, setShowNoteInput] = useState(false);
   const [currentChapter, setCurrentChapter] = useState<VideoChapter | null>(null);
   const [showChaptersList, setShowChaptersList] = useState(true);
+  
+  // 🔒 Mostrar disclaimer ao montar (antes do primeiro play)
+  useEffect(() => {
+    if (videoId && !disclaimerShown && !disclaimerCompleted) {
+      startDisclaimer();
+      setDisclaimerShown(true);
+    }
+  }, [videoId, disclaimerShown, disclaimerCompleted, startDisclaimer]);
 
   // Carregar YouTube IFrame API
   useEffect(() => {
@@ -262,6 +277,12 @@ export function YouTubePlayer({
     <div className="space-y-4">
       {/* Video Container COM PROTEÇÃO */}
       <FortressPlayerWrapper className="relative rounded-2xl overflow-hidden bg-black" showSecurityBadge>
+        {/* 🔒 DISCLAIMER OVERLAY - OBRIGATÓRIO EM TODOS OS VÍDEOS */}
+        <VideoDisclaimer 
+          isVisible={showDisclaimer} 
+          onComplete={handleDisclaimerComplete} 
+        />
+        
         {/* YouTube Player Container */}
         <div 
           ref={containerRef} 
