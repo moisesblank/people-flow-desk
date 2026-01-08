@@ -1095,26 +1095,36 @@ interface WatermarkProps {
 const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
   const [position, setPosition] = useState({ x: 10, y: 15 });
 
-  // 🔒 WATERMARK PERMANENTE: Alternância dinâmica contínua durante TODO o vídeo
-  // Intervalo de 15 segundos para movimento suave mas constante
+  // 🔒 WATERMARK PERMANENTE: Movimento ALEATÓRIO com intervalos VARIÁVEIS
+  // Intervalos: 3s → 4s → 5s → 3s... (ciclo aleatório)
+  // Posições: Completamente aleatórias dentro da área segura do vídeo
   useEffect(() => {
     if (mode === 'static') return;
 
-    // 12 posições para cobertura completa da tela
-    const positions = [
-      { x: 8, y: 12 },   { x: 72, y: 18 },  { x: 25, y: 45 },
-      { x: 68, y: 52 },  { x: 12, y: 78 },  { x: 78, y: 82 },
-      { x: 42, y: 32 },  { x: 58, y: 68 },  { x: 18, y: 58 },
-      { x: 82, y: 38 },  { x: 35, y: 88 },  { x: 52, y: 22 },
-    ];
-    let index = 0;
+    // Função para gerar posição aleatória (evita bordas extremas)
+    const getRandomPosition = () => ({
+      x: Math.floor(Math.random() * 70) + 10, // 10% a 80% da largura
+      y: Math.floor(Math.random() * 70) + 10, // 10% a 80% da altura
+    });
 
-    const interval = setInterval(() => {
-      index = (index + 1) % positions.length;
-      setPosition(positions[index]);
-    }, 15000); // 15 segundos - movimento suave durante vídeo inteiro
+    // Array de intervalos em segundos (3, 4, 5) - cicla aleatoriamente
+    const intervals = [3000, 4000, 5000];
+    let timeoutId: NodeJS.Timeout;
 
-    return () => clearInterval(interval);
+    const moveWatermark = () => {
+      // Posição aleatória
+      setPosition(getRandomPosition());
+      
+      // Próximo intervalo aleatório (3, 4 ou 5 segundos)
+      const nextInterval = intervals[Math.floor(Math.random() * intervals.length)];
+      timeoutId = setTimeout(moveWatermark, nextInterval);
+    };
+
+    // Inicia o ciclo com intervalo aleatório
+    const initialInterval = intervals[Math.floor(Math.random() * intervals.length)];
+    timeoutId = setTimeout(moveWatermark, initialInterval);
+
+    return () => clearTimeout(timeoutId);
   }, [mode]);
 
   // 🎨 MODO STATIC: +20% nitidez (de /20 para /30)
