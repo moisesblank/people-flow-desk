@@ -42,6 +42,8 @@ interface SimuladoReviewScreenProps {
   onExit?: () => void;
 }
 
+import { OmegaFortressPlayer } from "@/components/video/OmegaFortressPlayer";
+
 /**
  * Detecta o tipo de vídeo pela URL
  */
@@ -53,18 +55,27 @@ function getVideoType(url: string): 'panda' | 'youtube' | 'vimeo' | 'unknown' {
 }
 
 /**
- * Extrai YouTube Video ID
+ * Extrai Video ID universal
  */
-function getYouTubeId(url: string): string | null {
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^?&]+)/);
-  return match ? match[1] : null;
+function getVideoId(url: string): string {
+  const type = getVideoType(url);
+  
+  if (type === 'youtube') {
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^?&]+)/);
+    return match ? match[1] : url;
+  }
+  
+  // Panda e Vimeo: retornar URL inteira para o player processar
+  return url;
 }
 
 /**
- * Componente de vídeo universal com HUD styling
+ * 🔒 Componente de vídeo com OVERLAY OBRIGATÓRIO
+ * Usa OmegaFortressPlayer para garantir disclaimer em todos os vídeos
  */
 function VideoPlayer({ url, isLowEnd }: { url: string; isLowEnd: boolean }) {
   const type = getVideoType(url);
+  const videoId = getVideoId(url);
   
   const containerClass = cn(
     "aspect-video rounded-xl overflow-hidden relative",
@@ -76,65 +87,18 @@ function VideoPlayer({ url, isLowEnd }: { url: string; isLowEnd: boolean }) {
     !isLowEnd && "border border-purple-500/50"
   );
   
-  if (type === 'youtube') {
-    const videoId = getYouTubeId(url);
-    if (!videoId) return null;
-    
-    return (
-      <div className={containerClass}>
-        <div className={borderClass} />
-        <iframe
-          src={`https://www.youtube.com/embed/${videoId}`}
-          className="w-full h-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          title="Vídeo de Resolução"
-        />
-      </div>
-    );
-  }
-  
-  if (type === 'panda') {
-    return (
-      <div className={containerClass}>
-        <div className={borderClass} />
-        <iframe
-          src={url}
-          className="w-full h-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          title="Vídeo de Resolução"
-        />
-      </div>
-    );
-  }
-  
-  if (type === 'vimeo') {
-    return (
-      <div className={containerClass}>
-        <div className={borderClass} />
-        <iframe
-          src={url.replace('vimeo.com', 'player.vimeo.com/video')}
-          className="w-full h-full"
-          allow="autoplay; fullscreen; picture-in-picture"
-          allowFullScreen
-          title="Vídeo de Resolução"
-        />
-      </div>
-    );
-  }
-  
-  // Fallback: link direto
   return (
-    <a 
-      href={url} 
-      target="_blank" 
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
-    >
-      <Play className="h-4 w-4" />
-      Assistir Vídeo de Resolução
-    </a>
+    <div className={containerClass}>
+      <div className={borderClass} />
+      <OmegaFortressPlayer
+        videoId={videoId}
+        type={type === 'unknown' ? 'youtube' : type}
+        title="Vídeo de Resolução"
+        showSecurityBadge={false}
+        showWatermark
+        autoplay={false}
+      />
+    </div>
   );
 }
 
