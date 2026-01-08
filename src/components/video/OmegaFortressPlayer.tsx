@@ -841,14 +841,14 @@ export const OmegaFortressPlayer = memo(({
           />
         )}
 
-        {/* Escudos de Proteção - Invisíveis */}
-        {/* PATCH: Panda precisa receber clique direto no iframe para dar play */}
-        {type !== "panda" && (
+        {/* 🛡️ Escudos de Proteção - Invisíveis (z-20 para ficar ABAIXO dos controles z-30) */}
+        {/* PATCH: Escudos protegem contra interação com iframe nativo, mas controles custom ficam acima */}
+        {type !== "panda" && !showControls && (
           <>
-            <div className="absolute top-0 left-0 right-0 h-[60px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
-            <div className="absolute bottom-0 left-0 right-0 h-[70px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
-            <div className="absolute top-0 bottom-0 left-0 w-[80px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
-            <div className="absolute top-0 bottom-0 right-0 w-[80px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+            <div className="absolute top-0 left-0 right-0 h-[60px] z-20 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+            <div className="absolute bottom-0 left-0 right-0 h-[70px] z-20 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+            <div className="absolute top-0 bottom-0 left-0 w-[80px] z-20 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+            <div className="absolute top-0 bottom-0 right-0 w-[80px] z-20 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
           </>
         )}
 
