@@ -574,10 +574,12 @@ export const OmegaFortressPlayer = memo(({
               console.log('[OmegaFortress] ✅ Qualidade forçada: 720p (fallback)');
             }
             
-            if (autoplay) {
-              player.playVideo();
-              setIsPlaying(true);
-            }
+            // 🎬 AUTOPLAY AUTOMÁTICO após disclaimer/load
+            // Sempre iniciar vídeo automaticamente quando o player estiver pronto
+            // (o disclaimer de 3s já foi mostrado antes de chegar aqui)
+            console.log('[OmegaFortress] 🎬 Iniciando vídeo automaticamente após disclaimer');
+            player.playVideo();
+            setIsPlaying(true);
           },
           onStateChange: (e: any) => {
             switch (e.data) {
@@ -678,6 +680,10 @@ export const OmegaFortressPlayer = memo(({
           setDisclaimerCompleted(true);
           setShowThumbnail(false);
           setIsLoading(true);
+          
+          // 🎬 AUTOPLAY após disclaimer: Aguardar player carregar e iniciar automaticamente
+          // O autoplay acontece no onReady do YouTube ou após Panda DRM ser resolvido
+          console.log('[OmegaFortress] ✅ Disclaimer concluído - autoplay será ativado');
         }, 3000); // 3 segundos de disclaimer
         return;
       }
