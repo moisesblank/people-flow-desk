@@ -1,5 +1,5 @@
-import React, { useMemo, useRef, useEffect } from 'react';
-import { Clock, ChevronRight, List } from 'lucide-react';
+import React, { useMemo, useRef, useEffect, useCallback } from 'react';
+import { Clock, ChevronRight, List, X } from 'lucide-react';
 
 interface Chapter {
   time: string;
@@ -15,6 +15,24 @@ interface ChapterSidebarProps {
   onToggle: () => void;
 }
 
+// Função segura para formatar tempo (evita RangeError com valores negativos)
+const formatTime = (seconds: number): string => {
+  // Proteção contra valores negativos ou inválidos
+  if (seconds === null || seconds === undefined || seconds < 0 || isNaN(seconds)) {
+    return '0:00';
+  }
+  
+  const totalSeconds = Math.floor(Math.abs(seconds));
+  const hrs = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+  
+  if (hrs > 0) {
+    return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
 export const ChapterSidebar: React.FC<ChapterSidebarProps> = ({
   chapters,
   currentTime,
@@ -25,17 +43,21 @@ export const ChapterSidebar: React.FC<ChapterSidebarProps> = ({
   const listRef = useRef<HTMLDivElement>(null);
   
   const sortedChapters = useMemo(() => 
-    [...chapters].sort((a, b) => a.seconds - b.seconds),
+    [...(chapters || [])].sort((a, b) => (a.seconds || 0) - (b.seconds || 0)),
     [chapters]
   );
 
   const currentChapterIndex = useMemo(() => {
+    if (!sortedChapters || sortedChapters.length === 0) return -1;
+    const safeCurrentTime = Math.max(0, currentTime || 0);
+    
     for (let i = sortedChapters.length - 1; i >= 0; i--) {
-      if (currentTime >= sortedChapters[i].seconds) {
+      const chapterSeconds = sortedChapters[i]?.seconds || 0;
+      if (safeCurrentTime >= chapterSeconds) {
         return i;
       }
     }
-    return -1;
+    return 0;
   }, [sortedChapters, currentTime]);
 
   // Auto-scroll para o capítulo atual
@@ -48,7 +70,20 @@ export const ChapterSidebar: React.FC<ChapterSidebarProps> = ({
     }
   }, [currentChapterIndex]);
 
-  if (!chapters.length) return null;
+  // Handler seguro para clique no capítulo
+  const handleChapterClick = useCallback((chapter: Chapter) => {
+    const seconds = chapter?.seconds || 0;
+    console.log('[CHAPTERS] ✅ Clicou no capítulo:', chapter?.title);
+    console.log('[CHAPTERS] ✅ Pulando para:', seconds, 'segundos');
+    
+    if (typeof onChapterClick === 'function') {
+      onChapterClick(seconds);
+    } else {
+      console.error('[CHAPTERS] ❌ onChapterClick não é uma função!');
+    }
+  }, [onChapterClick]);
+
+  if (!chapters || chapters.length === 0) return null;
 
   return (
     <>
@@ -61,6 +96,7 @@ export const ChapterSidebar: React.FC<ChapterSidebarProps> = ({
                    text-white p-3 rounded-full shadow-lg
                    transition-all duration-300 hover:scale-110"
         title={isOpen ? 'Fechar capítulos' : 'Abrir capítulos'}
+        aria-label={isOpen ? 'Fechar capítulos' : 'Abrir capítulos'}
       >
         <List className="w-5 h-5" />
       </button>
@@ -73,14 +109,23 @@ export const ChapterSidebar: React.FC<ChapterSidebarProps> = ({
                    ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         {/* Header */}
-        <div className="p-4 border-b border-purple-500/30 bg-gradient-to-r from-purple-900/50 to-blue-900/50">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <Clock className="w-5 h-5 text-purple-400" />
-            Capítulos da Aula
-          </h3>
-          <p className="text-sm text-gray-400 mt-1">
-            {chapters.length} seções disponíveis
-          </p>
+        <div className="p-4 border-b border-purple-500/30 bg-gradient-to-r from-purple-900/50 to-blue-900/50 flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Clock className="w-5 h-5 text-purple-400" />
+              Capítulos da Aula
+            </h3>
+            <p className="text-sm text-gray-400 mt-1">
+              {chapters?.length || 0} seções disponíveis
+            </p>
+          </div>
+          <button
+            onClick={onToggle}
+            className="p-1 hover:bg-white/10 rounded-full transition-colors"
+            aria-label="Fechar capítulos"
+          >
+            <X className="w-5 h-5 text-gray-400 hover:text-white" />
+          </button>
         </div>
 
         {/* Lista de capítulos */}
@@ -91,11 +136,11 @@ export const ChapterSidebar: React.FC<ChapterSidebarProps> = ({
             
             return (
               <button
-                key={index}
+                key={`chapter-${index}`}
                 data-chapter-index={index}
-                onClick={() => onChapterClick(chapter.seconds)}
+                onClick={() => handleChapterClick(chapter)}
                 className={`w-full text-left p-3 rounded-lg mb-2 transition-all duration-200
-                           flex items-start gap-3 group
+                           flex items-start gap-3 group cursor-pointer
                            ${isActive 
                              ? 'bg-gradient-to-r from-purple-600/40 to-blue-600/40 border border-purple-400/50' 
                              : isPast 
@@ -108,7 +153,7 @@ export const ChapterSidebar: React.FC<ChapterSidebarProps> = ({
                                ${isActive 
                                  ? 'bg-purple-500 text-white' 
                                  : 'bg-gray-700 text-gray-300'}`}>
-                  {chapter.time}
+                  {chapter.time || formatTime(chapter.seconds)}
                 </div>
                 
                 {/* Título */}
