@@ -1490,11 +1490,26 @@ export const OmegaFortressPlayer = memo(({
         {type === 'panda' && hasChapters && !showThumbnail && (
           <div className="absolute bottom-4 left-4 right-4 z-30 pointer-events-auto">
             <div 
-              className="relative h-2 bg-white/20 rounded-full cursor-pointer group/progress"
+              className="relative h-3 bg-white/20 rounded-full cursor-pointer group/progress hover:h-4 transition-all"
+              onClick={(e) => {
+                // Calcular posição do clique na barra e converter para segundos
+                const rect = e.currentTarget.getBoundingClientRect();
+                const clickX = e.clientX - rect.left;
+                const percentage = clickX / rect.width;
+                const targetSeconds = Math.floor(percentage * duration);
+                
+                console.log('[OMEGA] 🎯 Clique na barra de progresso:', {
+                  percentage: `${(percentage * 100).toFixed(1)}%`,
+                  targetSeconds,
+                  duration
+                });
+                
+                seekToChapter(targetSeconds);
+              }}
             >
               {/* Progress atual */}
               <div 
-                className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-100"
+                className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-100 pointer-events-none"
                 style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
               />
               {/* Marcadores de capítulos */}
