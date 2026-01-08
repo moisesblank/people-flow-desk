@@ -1043,10 +1043,21 @@ export default function GestaoCursos() {
           </DialogContent>
         </Dialog>
         
-        {/* Module Dialog - Maximizado conforme LEI_MODAIS_REDIMENSIONAVEIS v3.0 */}
+        {/* Module Dialog - TELA MÁXIMA (Owner Request) */}
         <Dialog open={moduleDialog} onOpenChange={setModuleDialog}>
-          <DialogContent className="bg-card/95 backdrop-blur-sm border-border/50 w-[98vw] max-w-[98vw] h-[98vh] max-h-[98vh] overflow-y-auto"
-            style={{ width: '98vw', maxWidth: '98vw', height: '98vh', maxHeight: '98vh' }}>
+          <DialogContent 
+            className="bg-card/95 backdrop-blur-sm border-border/50 overflow-y-auto p-6"
+            style={{ 
+              width: '100vw', 
+              maxWidth: '100vw', 
+              height: '100vh', 
+              maxHeight: '100vh',
+              borderRadius: 0,
+              margin: 0,
+              top: 0,
+              left: 0,
+              transform: 'none'
+            }}>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-purple-500" />
