@@ -1659,7 +1659,7 @@ export const OmegaFortressPlayer = memo(({
 OmegaFortressPlayer.displayName = "OmegaFortressPlayer";
 
 // ============================================
-// WATERMARK COMPONENT - ULTRA
+// WATERMARK COMPONENT - ULTRA COM INTERMITÊNCIA
 // ============================================
 interface WatermarkProps {
   text: string;
@@ -1667,8 +1667,42 @@ interface WatermarkProps {
   isImmune?: boolean;
 }
 
+// 🎲 Gera tempo aleatório dentro de um range
+function randomTime(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
   const [position, setPosition] = useState({ x: 10, y: 15 });
+  
+  // 🔄 Estado de visibilidade intermitente
+  const [isVisible, setIsVisible] = useState(true);
+
+  // 🎭 Ciclo de aparição/desaparição em tempos variáveis
+  // Visível: 5-30 segundos | Invisível: 2-5 segundos
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    const scheduleNext = () => {
+      if (isVisible) {
+        // Visível por 5-30 segundos
+        const visibleTime = randomTime(5, 30) * 1000;
+        timeoutId = setTimeout(() => {
+          setIsVisible(false);
+        }, visibleTime);
+      } else {
+        // Invisível por 2-5 segundos
+        const hiddenTime = randomTime(2, 5) * 1000;
+        timeoutId = setTimeout(() => {
+          setIsVisible(true);
+        }, hiddenTime);
+      }
+    };
+    
+    scheduleNext();
+    
+    return () => clearTimeout(timeoutId);
+  }, [isVisible]);
 
   // 🔒 WATERMARK PERMANENTE: Movimento ALEATÓRIO com intervalos VARIÁVEIS
   // Intervalos: 3s → 4s → 5s → 3s... (ciclo aleatório)
@@ -1702,15 +1736,23 @@ const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
     return () => clearTimeout(timeoutId);
   }, [mode]);
 
-  // 🎨 MODO STATIC: +20% nitidez (de /20 para /30)
+  // 🚫 Se invisível, não renderiza
+  if (!isVisible) {
+    return null;
+  }
+
+  // 🎨 MODO STATIC: +20% nitidez, opacidade reduzida 35% (0.30 → 0.195 ≈ 0.06 equivalente)
   if (mode === 'static') {
     return (
-      <div className="absolute inset-0 z-50 pointer-events-none select-none overflow-hidden">
+      <div 
+        className="absolute inset-0 z-50 pointer-events-none select-none overflow-hidden"
+        style={{ transition: 'opacity 0.5s ease-in-out' }}
+      >
         <div className="absolute bottom-4 right-4">
           <span 
             className="font-mono tracking-wider text-sm sm:text-base whitespace-nowrap"
             style={{ 
-              color: 'rgba(255, 255, 255, 0.30)', // +20% nitidez (era 0.20)
+              color: 'rgba(255, 255, 255, 0.20)', // Reduzido 35% (era 0.30)
               textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 0, 0, 0.3)'
             }}
           >
@@ -1721,10 +1763,13 @@ const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
     );
   }
 
-  // 🎨 MODO DIAGONAL: +20% nitidez (de /15 para /22)
+  // 🎨 MODO DIAGONAL: +20% nitidez, opacidade reduzida 35% (0.22 → 0.14)
   if (mode === 'diagonal') {
     return (
-      <div className="absolute inset-0 z-50 pointer-events-none select-none overflow-hidden">
+      <div 
+        className="absolute inset-0 z-50 pointer-events-none select-none overflow-hidden"
+        style={{ transition: 'opacity 0.5s ease-in-out' }}
+      >
         <div 
           className="absolute inset-0 flex items-center justify-center"
           style={{ transform: 'rotate(-30deg)' }}
@@ -1732,7 +1777,7 @@ const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
           <span 
             className="font-mono tracking-[0.3em] text-base sm:text-lg whitespace-nowrap"
             style={{ 
-              color: 'rgba(255, 255, 255, 0.22)', // +20% nitidez (era 0.15)
+              color: 'rgba(255, 255, 255, 0.14)', // Reduzido 35% (era 0.22)
               textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 0, 0, 0.3)'
             }}
           >
@@ -1743,19 +1788,20 @@ const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
     );
   }
 
-  // 🎨 MODO MOVING (PADRÃO): +20% nitidez (de /25 para /35)
-  // Permanece visível durante TODO o vídeo com alternância dinâmica
+  // 🎨 MODO MOVING (PADRÃO): opacidade reduzida 35% (0.35 → 0.23)
+  // Aparece/desaparece em tempos variáveis + movimento dinâmico
   return (
     <motion.div
       className="absolute z-50 pointer-events-none select-none"
       animate={{ left: `${position.x}%`, top: `${position.y}%` }}
       transition={{ duration: 5, ease: "easeInOut" }} // Transição suave de 5s
+      style={{ transition: 'opacity 0.5s ease-in-out' }}
     >
       <div className="flex flex-col items-center gap-0.5">
         <span 
           className="font-mono tracking-[0.15em] text-sm sm:text-base whitespace-nowrap"
           style={{ 
-            color: 'rgba(255, 255, 255, 0.35)', // +20% nitidez (era 0.25)
+            color: 'rgba(255, 255, 255, 0.23)', // Reduzido 35% (era 0.35)
             textShadow: '0 2px 4px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 0, 0, 0.4)'
           }}
         >
