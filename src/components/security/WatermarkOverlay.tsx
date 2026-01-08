@@ -1,13 +1,19 @@
 // ============================================
 // 🌌 WATERMARK OVERLAY — MARCA D'ÁGUA DINÂMICA
 // ANO 2300 — Proteção visual de conteúdo
+// Aparece/Desaparece em intervalos variáveis
 // ============================================
 
-import React, { useEffect, useMemo, useState, memo } from "react";
+import React, { useEffect, useMemo, useState, memo, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 function bucket20s() {
   return Math.floor(Date.now() / 20000);
+}
+
+// 🎲 Gera tempo aleatório dentro de um range
+function randomTime(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 interface WatermarkOverlayProps {
@@ -21,12 +27,40 @@ export const WatermarkOverlay = memo(function WatermarkOverlay({
 }: WatermarkOverlayProps) {
   const { user, role } = useAuth();
   const [tick, setTick] = useState(bucket20s());
+  
+  // 🔄 Estado de visibilidade intermitente
+  const [isVisible, setIsVisible] = useState(true);
 
-  // Update every 20 seconds for dynamic watermark
+  // Update every 20 seconds for dynamic watermark position
   useEffect(() => {
     const id = setInterval(() => setTick(bucket20s()), 20000);
     return () => clearInterval(id);
   }, []);
+
+  // 🎭 Ciclo de aparição/desaparição em tempos variáveis
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    const scheduleNext = () => {
+      if (isVisible) {
+        // Visível por 5-30 segundos
+        const visibleTime = randomTime(5, 30) * 1000;
+        timeoutId = setTimeout(() => {
+          setIsVisible(false);
+        }, visibleTime);
+      } else {
+        // Invisível por 2-5 segundos
+        const hiddenTime = randomTime(2, 5) * 1000;
+        timeoutId = setTimeout(() => {
+          setIsVisible(true);
+        }, hiddenTime);
+      }
+    };
+    
+    scheduleNext();
+    
+    return () => clearTimeout(timeoutId);
+  }, [isVisible]);
 
   const watermarkText = useMemo(() => {
     const name = user?.email?.split("@")[0] || "ALUNO";
@@ -77,6 +111,11 @@ export const WatermarkOverlay = memo(function WatermarkOverlay({
     return items;
   }, [watermarkText]);
 
+  // 🚫 Se invisível, não renderiza
+  if (!isVisible) {
+    return null;
+  }
+
   return (
     <div
       className={`sanctum-watermark-container ena-watermark ${className}`}
@@ -89,6 +128,8 @@ export const WatermarkOverlay = memo(function WatermarkOverlay({
         WebkitTapHighlightColor: "transparent",
         touchAction: "none",
         pointerEvents: "none",
+        // 🎬 Transição suave ao aparecer
+        transition: "opacity 0.5s ease-in-out",
       } as React.CSSProperties}
       aria-hidden="true"
       data-sanctum-protected="true"
