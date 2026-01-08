@@ -40,6 +40,7 @@ import { BulkOrganizationImportDialog } from "@/components/gestao/videoaulas/Bul
 import { VideoLinkImportDialog } from "@/components/gestao/videoaulas/VideoLinkImportDialog";
 import { LessonFullConfigDialog } from "@/components/gestao/videoaulas/LessonFullConfigDialog";
 import { VirtualizedVideoaulaList } from "@/components/gestao/videoaulas/VirtualizedVideoaulaList";
+import { VideoOverlayConfigDialog } from "@/components/gestao/videoaulas/VideoOverlayConfigDialog";
 
 type VideoProvider = 'panda' | 'youtube' | 'vimeo' | 'upload';
 
@@ -200,6 +201,9 @@ export default function GestaoVideoaulas() {
   
   // 🎛️ Modal de configuração completa
   const [configLesson, setConfigLesson] = useState<Lesson | null>(null);
+  
+  // 🆕 OVERLAY: Modal de configuração do disclaimer
+  const [isOverlayConfigOpen, setIsOverlayConfigOpen] = useState(false);
 
   const { data: lessons, isLoading, refetch } = useVideoaulas();
   const { data: statsData, refetch: refetchStats } = useVideoaulasStats();
@@ -494,6 +498,15 @@ export default function GestaoVideoaulas() {
             <Zap className="w-3 h-3 mr-1" />
             Realtime Ativo
           </Badge>
+          {/* 🆕 BOTÃO OVERLAY - Configura a imagem de disclaimer */}
+          <Button 
+            variant="outline" 
+            className="bg-amber-600 hover:bg-amber-700 text-white border-amber-600 hover:border-amber-700"
+            onClick={() => setIsOverlayConfigOpen(true)}
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            OVERLAY
+          </Button>
           <Button 
             variant="outline" 
             className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
@@ -520,6 +533,12 @@ export default function GestaoVideoaulas() {
           </Button>
         </div>
       </div>
+
+      {/* 🆕 OVERLAY CONFIG DIALOG */}
+      <VideoOverlayConfigDialog 
+        open={isOverlayConfigOpen} 
+        onClose={() => setIsOverlayConfigOpen(false)} 
+      />
 
       <VideoLinkImportDialog open={isVideoLinkImportOpen} onOpenChange={setIsVideoLinkImportOpen} />
 
