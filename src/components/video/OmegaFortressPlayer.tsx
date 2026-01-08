@@ -700,8 +700,36 @@ export const OmegaFortressPlayer = memo(({
   }, []);
 
   const handleSpeedChange = useCallback((speed: number) => {
+    console.log('[OmegaFortress] 🎚️ Alterando velocidade para:', speed);
     setCurrentSpeed(speed);
-    playerRef.current?.setPlaybackRate?.(speed);
+    
+    // YouTube IFrame API - setPlaybackRate
+    if (playerRef.current) {
+      try {
+        // Método 1: API direta do YouTube Player
+        if (typeof playerRef.current.setPlaybackRate === 'function') {
+          playerRef.current.setPlaybackRate(speed);
+          console.log('[OmegaFortress] ✅ Velocidade aplicada via setPlaybackRate');
+        } 
+        // Método 2: Fallback - tentar via getIframe() se disponível
+        else if (typeof playerRef.current.getIframe === 'function') {
+          const iframe = playerRef.current.getIframe();
+          if (iframe?.contentWindow) {
+            // Tentar comando via postMessage
+            iframe.contentWindow.postMessage(JSON.stringify({
+              event: 'command',
+              func: 'setPlaybackRate',
+              args: [speed]
+            }), '*');
+            console.log('[OmegaFortress] ✅ Velocidade aplicada via postMessage');
+          }
+        }
+      } catch (err) {
+        console.error('[OmegaFortress] ❌ Erro ao mudar velocidade:', err);
+      }
+    } else {
+      console.warn('[OmegaFortress] ⚠️ Player não inicializado, velocidade salva no estado');
+    }
   }, []);
 
   const handleQualityChange = useCallback((quality: string) => {
