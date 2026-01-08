@@ -27,7 +27,7 @@ interface VideoOverlayConfigDialogProps {
   onClose: () => void;
 }
 
-const SETTING_KEY = "video_disclaimer_overlay_url";
+const SETTING_KEY = "video_overlay_url";
 const BUCKET_NAME = "materiais";
 
 // Hook para buscar a URL do overlay
