@@ -86,11 +86,11 @@ export const ChapterSidebar: React.FC<ChapterSidebarProps> = ({
   if (!chapters || chapters.length === 0) return null;
 
   return (
-    <div className="absolute inset-0 z-[55] pointer-events-none">
-      {/* Botão toggle (não muda layout do vídeo) */}
+    <>
+      {/* Botão toggle - fixed para não afetar layout */}
       <button
         onClick={onToggle}
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-[60] pointer-events-auto
+        className="fixed right-4 top-1/2 -translate-y-1/2 z-[9999]
                    bg-gradient-to-r from-purple-600 to-blue-600 
                    hover:from-purple-500 hover:to-blue-500
                    text-white p-3 rounded-full shadow-lg
@@ -101,10 +101,10 @@ export const ChapterSidebar: React.FC<ChapterSidebarProps> = ({
         <List className="w-5 h-5" />
       </button>
 
-      {/* Sidebar */}
+      {/* Sidebar - fixed overlay */}
       <div 
-        className={`absolute right-0 top-0 h-full w-80 bg-gray-900/95 backdrop-blur-md
-                   border-l border-purple-500/30 shadow-2xl pointer-events-auto
+        className={`fixed right-0 top-0 h-full w-80 bg-gray-900/95 backdrop-blur-md
+                   border-l border-purple-500/30 shadow-2xl z-[9998]
                    transform transition-transform duration-300 ease-in-out
                    ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
@@ -185,14 +185,14 @@ export const ChapterSidebar: React.FC<ChapterSidebarProps> = ({
         </div>
       </div>
 
-      {/* Overlay quando aberto - absoluto dentro do container */}
+      {/* Overlay quando aberto */}
       {isOpen && (
         <div 
-          className="absolute inset-0 bg-black/30 z-[50] pointer-events-auto"
+          className="fixed inset-0 bg-black/30 z-[9997]"
           onClick={onToggle}
         />
       )}
-    </div>
+    </>
   );
 };
 
