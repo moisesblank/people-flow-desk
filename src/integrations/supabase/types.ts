@@ -15087,6 +15087,39 @@ export type Database = {
           },
         ]
       }
+      video_chapters: {
+        Row: {
+          aula_number: number | null
+          chapters: Json
+          created_at: string | null
+          id: string
+          is_2025_course: boolean | null
+          lesson_title: string
+          panda_video_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          aula_number?: number | null
+          chapters?: Json
+          created_at?: string | null
+          id?: string
+          is_2025_course?: boolean | null
+          lesson_title: string
+          panda_video_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          aula_number?: number | null
+          chapters?: Json
+          created_at?: string | null
+          id?: string
+          is_2025_course?: boolean | null
+          lesson_title?: string
+          panda_video_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       video_domain_whitelist: {
         Row: {
           created_at: string
