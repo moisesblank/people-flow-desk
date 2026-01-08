@@ -240,9 +240,6 @@ export default function AlunoVideoaulas() {
                       )}
                     </div>
                   </div>
-                  <Badge variant="outline" className="hidden sm:flex">
-                    {getVideoType(selectedLesson) === 'panda' ? '🐼 Panda' : '▶️ YouTube'}
-                  </Badge>
                 </div>
               </DialogHeader>
               
@@ -255,7 +252,7 @@ export default function AlunoVideoaulas() {
                     title={selectedLesson.title}
                     thumbnail={selectedLesson.thumbnail_url || undefined}
                     lessonId={selectedLesson.id}
-                    showSecurityBadge
+                    showSecurityBadge={false}
                     showWatermark
                     autoplay={false} // 🔒 Disclaimer obrigatório: só iniciar após interação explícita
                   />
