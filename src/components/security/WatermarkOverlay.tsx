@@ -23,7 +23,7 @@ interface WatermarkOverlayProps {
 
 export const WatermarkOverlay = memo(function WatermarkOverlay({
   className = "",
-  opacity = 0.09, // 🔒 Reduzido 35% (era 0.14)
+  opacity = 0.06, // 🔒 Reduzido 35% novamente (era 0.09)
 }: WatermarkOverlayProps) {
   const { user, role } = useAuth();
   const [tick, setTick] = useState(bucket20s());
