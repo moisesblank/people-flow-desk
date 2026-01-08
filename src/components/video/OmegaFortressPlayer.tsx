@@ -1090,7 +1090,18 @@ export const OmegaFortressPlayer = memo(({
                 allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                 allowFullScreen
                 frameBorder="0"
-                onLoad={() => setIsLoading(false)}
+                onLoad={() => {
+                  setIsLoading(false);
+                  // 🎬 AUTOPLAY PANDA: Enviar comando play após iframe carregar
+                  // Aguarda 500ms para o player interno inicializar completamente
+                  setTimeout(() => {
+                    if (pandaIframeRef.current?.contentWindow) {
+                      console.log('[OmegaFortress] 🐼 Enviando comando play para Panda após load');
+                      pandaIframeRef.current.contentWindow.postMessage({ type: 'play' }, '*');
+                      setIsPlaying(true);
+                    }
+                  }, 500);
+                }}
                 title={title}
               />
             )}
