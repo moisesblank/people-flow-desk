@@ -390,10 +390,14 @@ export default function GestaoVideoaulas() {
     }
   });
 
-  // Filtros
+  // Filtros - inclui busca por título, descrição e embed ID (panda/youtube)
   const filteredLessons = lessons?.filter(lesson => {
-    const matchesSearch = lesson.title.toLowerCase().includes(search.toLowerCase()) ||
-                          lesson.description?.toLowerCase().includes(search.toLowerCase());
+    const searchLower = search.toLowerCase().trim();
+    const matchesSearch = 
+      lesson.title.toLowerCase().includes(searchLower) ||
+      lesson.description?.toLowerCase().includes(searchLower) ||
+      lesson.panda_video_id?.toLowerCase().includes(searchLower) ||
+      lesson.youtube_video_id?.toLowerCase().includes(searchLower);
     const matchesProvider = filterProvider === 'all' || lesson.video_provider === filterProvider;
     const matchesPublished = filterPublished === 'all' || 
                              (filterPublished === 'published' && lesson.is_published) ||
