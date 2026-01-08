@@ -1,3 +1,8 @@
+// ============================================
+// 🔒 YOUTUBE LIVE PLAYER
+// DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
+// ============================================
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -11,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useYouTubeLivePlayer } from '@/hooks/useYouTubeLive';
 import { cn } from '@/lib/utils';
-import { FortressPlayerWrapper, getFortressYouTubeUrl } from "@/components/video";
+import { FortressPlayerWrapper, getFortressYouTubeUrl, VideoDisclaimer, useVideoDisclaimer } from "@/components/video";
 
 interface YouTubeLivePlayerProps {
   videoId?: string;
@@ -45,6 +50,15 @@ export const YouTubeLivePlayer: React.FC<YouTubeLivePlayerProps> = ({
   const [showChatPanel, setShowChatPanel] = useState(showChat);
   const [isMuted, setIsMuted] = useState(false);
   const [isActivated, setIsActivated] = useState(!clickToLoad); // NEW: Click-to-load state
+  
+  // 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
+  const { 
+    showDisclaimer, 
+    disclaimerCompleted, 
+    startDisclaimer, 
+    handleDisclaimerComplete,
+    resetDisclaimer 
+  } = useVideoDisclaimer();
 
   // Atualizar contador de viewers
   useEffect(() => {
@@ -169,8 +183,14 @@ export const YouTubeLivePlayer: React.FC<YouTubeLivePlayerProps> = ({
           "relative bg-black",
           showChatPanel ? "lg:flex-1" : "w-full"
         )}>
+          {/* 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA */}
+          <VideoDisclaimer 
+            isVisible={showDisclaimer} 
+            onComplete={handleDisclaimerComplete} 
+          />
+
           {/* Click-to-load: Show poster until activated */}
-          {!isActivated ? (
+          {!isActivated || !disclaimerCompleted ? (
             <div className="aspect-video relative bg-gradient-to-br from-ai-surface to-background">
               {/* YouTube thumbnail - Otimizado */}
               <div className="absolute inset-0 w-full h-full">
@@ -187,7 +207,14 @@ export const YouTubeLivePlayer: React.FC<YouTubeLivePlayerProps> = ({
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
               {/* Play button */}
               <button
-                onClick={() => setIsActivated(true)}
+                onClick={() => {
+                  if (startDisclaimer()) {
+                    // Disclaimer started, wait for completion
+                  } else {
+                    // Disclaimer already completed, activate video
+                    setIsActivated(true);
+                  }
+                }}
                 className="absolute inset-0 flex items-center justify-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-holo-cyan"
                 aria-label={`Assistir live: ${title}`}
               >

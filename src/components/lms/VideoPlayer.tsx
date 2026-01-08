@@ -2,6 +2,7 @@
 // MOISÉS MEDEIROS v8.0 - VIDEO PLAYER LMS
 // FORTALEZA DIGITAL - Player com proteção total
 // LEI I: Animações governadas por prefers-reduced-motion
+// 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
 // ============================================
 
 import { useState, useRef, useCallback, useMemo } from "react";
@@ -19,6 +20,7 @@ import {
   SkipForward,
   Clock
 } from "lucide-react";
+import { VideoDisclaimer, useVideoDisclaimer } from "@/components/video/VideoDisclaimer";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +68,14 @@ export function VideoPlayer({
   const [newNote, setNewNote] = useState("");
   const [showNoteInput, setShowNoteInput] = useState(false);
   
+  // 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
+  const { 
+    showDisclaimer, 
+    disclaimerCompleted, 
+    startDisclaimer, 
+    handleDisclaimerComplete 
+  } = useVideoDisclaimer();
+  
   // Animações condicionais (LEI I - Artigo 20)
   const animationProps = useMemo(() => 
     reducedMotion ? {} : { whileHover: { scale: 1.1 }, whileTap: { scale: 0.95 } }
@@ -78,6 +88,12 @@ export function VideoPlayer({
   };
 
   const togglePlay = useCallback(() => {
+    // 🔒 DISCLAIMER OBRIGATÓRIO - Exibir antes de reproduzir
+    if (!disclaimerCompleted) {
+      startDisclaimer();
+      return;
+    }
+    
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
@@ -86,7 +102,7 @@ export function VideoPlayer({
       }
       setIsPlaying(!isPlaying);
     }
-  }, [isPlaying]);
+  }, [isPlaying, disclaimerCompleted, startDisclaimer]);
 
   const handleTimeUpdate = () => {
     if (videoRef.current) {
@@ -189,6 +205,12 @@ export function VideoPlayer({
     <div className="space-y-4">
       {/* Video Container */}
       <FortressPlayerWrapper className="relative rounded-2xl overflow-hidden bg-black group" showSecurityBadge>
+        {/* 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA */}
+        <VideoDisclaimer 
+          isVisible={showDisclaimer} 
+          onComplete={handleDisclaimerComplete} 
+        />
+        
         <video
           ref={videoRef}
           src={src}
