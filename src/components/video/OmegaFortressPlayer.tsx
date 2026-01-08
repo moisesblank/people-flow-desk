@@ -131,6 +131,11 @@ export const OmegaFortressPlayer = memo(({
   const [showControls, setShowControls] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
   
+  // 🎯 PART 2: Estados para barra de progresso
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const progressBarRef = useRef<HTMLDivElement>(null);
+  
   // 🆕 DISCLAIMER OVERLAY - Exibe aviso legal por 3 segundos antes do vídeo
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [disclaimerCompleted, setDisclaimerCompleted] = useState(false);
@@ -429,14 +434,31 @@ export const OmegaFortressPlayer = memo(({
     };
   }, [videoId, type, showThumbnail, autoplay, session, onComplete, endSession, currentQuality, onError]);
 
-  // Progress tracking
+  // 🎯 PART 2: Progress tracking aprimorado com atualização em tempo real
+  useEffect(() => {
+    if (!playerRef.current) return;
+
+    // Atualiza o tempo e duração em intervalo mais frequente para a barra de progresso
+    const progressInterval = setInterval(() => {
+      if (playerRef.current?.getCurrentTime && playerRef.current?.getDuration) {
+        const current = playerRef.current.getCurrentTime() || 0;
+        const dur = playerRef.current.getDuration() || 1;
+        setCurrentTime(current);
+        setDuration(dur);
+      }
+    }, 250); // 4x por segundo para barra suave
+
+    return () => clearInterval(progressInterval);
+  }, [showThumbnail, isPlaying]);
+
+  // Heartbeat e callback de progresso (menos frequente)
   useEffect(() => {
     if (!isPlaying || !playerRef.current) return;
 
     const interval = setInterval(() => {
       const current = playerRef.current?.getCurrentTime?.() || 0;
-      const duration = playerRef.current?.getDuration?.() || 1;
-      const progress = (current / duration) * 100;
+      const dur = playerRef.current?.getDuration?.() || 1;
+      const progress = (current / dur) * 100;
       onProgress?.(progress);
       sendHeartbeat(Math.floor(current));
     }, 10000);
@@ -531,6 +553,31 @@ export const OmegaFortressPlayer = memo(({
       if (document.fullscreenElement) document.exitFullscreen();
       else containerRef.current.requestFullscreen();
     }
+  }, []);
+
+  // 🎯 PART 2: Seek - permite clicar na barra de progresso
+  const handleSeek = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressBarRef.current || !playerRef.current?.seekTo || duration <= 0) return;
+    
+    const rect = progressBarRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+    const seekTime = percentage * duration;
+    
+    playerRef.current.seekTo(seekTime, true);
+    setCurrentTime(seekTime);
+  }, [duration]);
+
+  // 🎯 PART 2: Formatar tempo (mm:ss ou hh:mm:ss)
+  const formatTime = useCallback((seconds: number): string => {
+    if (!seconds || !isFinite(seconds)) return "0:00";
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    if (h > 0) {
+      return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+    return `${m}:${s.toString().padStart(2, '0')}`;
   }, []);
 
   // ============================================
@@ -890,7 +937,32 @@ export const OmegaFortressPlayer = memo(({
                 </div>
 
                 {/* Bottom gradient */}
-                <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/90 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/90 to-transparent" />
+
+                {/* 🎯 PART 2: Progress Bar - Barra de progresso clicável */}
+                <div className="absolute bottom-14 left-0 right-0 px-3 pointer-events-auto">
+                  <div 
+                    ref={progressBarRef}
+                    className="relative h-1 bg-white/20 rounded-full cursor-pointer group/progress"
+                    onClick={handleSeek}
+                  >
+                    {/* Buffer (opcional, visual apenas) */}
+                    <div 
+                      className="absolute inset-y-0 left-0 bg-white/30 rounded-full"
+                      style={{ width: `${duration > 0 ? Math.min((currentTime / duration) * 100 + 10, 100) : 0}%` }}
+                    />
+                    {/* Progress atual */}
+                    <div 
+                      className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-100"
+                      style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                    />
+                    {/* Handle (bolinha) */}
+                    <div 
+                      className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity"
+                      style={{ left: `calc(${duration > 0 ? (currentTime / duration) * 100 : 0}% - 6px)` }}
+                    />
+                  </div>
+                </div>
 
                 {/* Bottom controls */}
                 <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center justify-between pointer-events-auto">
@@ -915,6 +987,10 @@ export const OmegaFortressPlayer = memo(({
                         <Volume2 className="w-5 h-5 text-white" />
                       )}
                     </button>
+                    {/* 🎯 PART 2: Tempo atual / Duração */}
+                    <span className="text-white/80 text-xs font-mono ml-1">
+                      {formatTime(currentTime)} / {formatTime(duration)}
+                    </span>
                   </div>
 
                   <div className="flex items-center gap-2">
