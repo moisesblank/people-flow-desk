@@ -179,6 +179,16 @@ export const OmegaFortressPlayer = memo(({
     title
   );
 
+  // 🔥 P0 FIX: Calcular duration estimada a partir dos capítulos
+  // Panda Video NÃO envia duration no evento panda_timeupdate, apenas currentTime
+  // Solução: usar o timestamp do último capítulo + margem de 30 minutos
+  const estimatedDurationFromChapters = useMemo(() => {
+    if (!chapters || chapters.length === 0) return 0;
+    const lastChapterTime = Math.max(...chapters.map(c => c.seconds));
+    // Adicionar 30 minutos (1800 segundos) como margem após o último capítulo
+    return lastChapterTime + 1800;
+  }, [chapters]);
+
   const extractPandaVideoId = useCallback((raw: string): string => {
     // Aceita UUID puro
     if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)) return raw;
@@ -688,6 +698,15 @@ export const OmegaFortressPlayer = memo(({
     return () => clearInterval(progressInterval);
   }, [type, showThumbnail, isPlaying]);
 
+  // 🔥 P0 FIX: Definir duration estimada quando capítulos carregarem (Panda não envia duration!)
+  useEffect(() => {
+    if (type !== 'panda') return;
+    if (estimatedDurationFromChapters > 0 && duration === 0) {
+      console.log('[OMEGA][PANDA] ⏱️ Usando duration estimada dos capítulos:', estimatedDurationFromChapters);
+      setDuration(estimatedDurationFromChapters);
+    }
+  }, [type, estimatedDurationFromChapters, duration]);
+
   // Panda: via postMessage events (panda_timeupdate / panda_info)
   useEffect(() => {
     if (type !== 'panda') return;
@@ -709,20 +728,34 @@ export const OmegaFortressPlayer = memo(({
       const msg = data?.message;
       if (typeof msg !== 'string' || !msg.startsWith('panda_')) return;
 
-      // 🎯 Atualizar tempo e duração quando disponíveis
+      // 🎯 Atualizar currentTime sempre
       const maybeCurrent = Number(data?.currentTime);
-      const maybeDuration = Number(data?.duration);
-
       if (Number.isFinite(maybeCurrent) && maybeCurrent >= 0) {
         setCurrentTime(maybeCurrent);
-      }
-      if (Number.isFinite(maybeDuration) && maybeDuration > 0) {
-        setDuration(maybeDuration);
+        
+        // 🔥 P0 FIX: Se currentTime ultrapassa duration, ajustar dinamicamente
+        // Isso garante que a barra nunca ultrapasse 100%
+        setDuration(prev => {
+          if (maybeCurrent > prev - 60) {
+            // Se estiver a menos de 1 minuto do "fim estimado", expandir
+            const newDuration = maybeCurrent + 600; // +10 min de margem
+            console.log('[OMEGA][PANDA] 📏 Ajustando duration:', prev, '→', newDuration);
+            return newDuration;
+          }
+          return prev;
+        });
       }
 
-      // Debug (mantém evidência em campo)
-      if (msg === 'panda_timeupdate' && (Number.isFinite(maybeCurrent) || Number.isFinite(maybeDuration))) {
-        console.debug('[OMEGA][PANDA] timeupdate', { currentTime: maybeCurrent, duration: maybeDuration });
+      // Se Panda enviar duration real (alguns eventos podem ter), usar
+      const maybeDuration = Number(data?.duration);
+      if (Number.isFinite(maybeDuration) && maybeDuration > 0) {
+        setDuration(maybeDuration);
+        console.log('[OMEGA][PANDA] ✅ Duration real recebida:', maybeDuration);
+      }
+
+      // Debug
+      if (msg === 'panda_timeupdate') {
+        console.debug('[OMEGA][PANDA] timeupdate', { currentTime: maybeCurrent, duration: maybeDuration || 'N/A' });
       }
       if (msg === 'panda_error') {
         console.warn('[OMEGA][PANDA] erro do player', data);
