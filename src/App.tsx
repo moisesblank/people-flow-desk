@@ -23,6 +23,8 @@ import { P0AliveBeacon } from "@/components/debug/P0AliveBeacon";
 // LegacyDomainBlocker REMOVIDO - domínio gestao.* descontinuado
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
+// 🚨 BLACKOUT ANTI-PIRATARIA v1.1 - PROTEÇÃO GLOBAL
+import { SecurityBlackoutOverlay } from "@/components/security/SecurityBlackoutOverlay";
 
 // ⚡ PROVIDERS CONSOLIDADOS
 import { AppProviders } from "@/contexts/AppProviders";
@@ -119,6 +121,9 @@ const AppContent = memo(() => {
 
   return (
     <>
+      {/* 🚨 BLACKOUT ANTI-PIRATARIA v1.1 - GLOBAL */}
+      <SecurityBlackoutOverlay />
+      
       <SessionGuard>
         <DeviceGuard>
           <DeviceMFAGuard>

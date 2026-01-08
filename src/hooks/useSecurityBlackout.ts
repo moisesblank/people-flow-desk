@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSecurityBlackoutStore, ViolationType } from "@/stores/securityBlackoutStore";
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
-const TARGET_PATHS = ["/alunos/videoaulas", "/alunos/livro-web"];
+// 🚨 v1.1: PROTEÇÃO GLOBAL - Aplica em TODO o sistema
 
 interface UseSecurityBlackoutOptions {
   enabled?: boolean;
@@ -36,8 +36,10 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
     resetAll,
   } = useSecurityBlackoutStore();
 
-  // Verificar se estamos em uma rota alvo
-  const isTargetRoute = TARGET_PATHS.some(path => location.pathname.startsWith(path));
+  // 🚨 v1.1: PROTEÇÃO GLOBAL - Sempre ativo (exceto rotas públicas)
+  const PUBLIC_ROUTES = ["/auth", "/termos", "/privacidade", "/", "/site"];
+  const isPublicRoute = PUBLIC_ROUTES.some(route => location.pathname === route);
+  const isTargetRoute = !isPublicRoute; // Protege TUDO exceto rotas públicas
 
   // ═══════════════════════════════════════════════════════════
   // VERIFICAR SE É OWNER
@@ -89,8 +91,9 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
     // Owner é imune
     if (isOwnerRef.current) return;
     
-    // Só atua nas rotas alvo
-    if (!TARGET_PATHS.some(path => location.pathname.startsWith(path))) return;
+    // 🚨 v1.1: Só ignora rotas públicas
+    const PUBLIC_ROUTES = ["/auth", "/termos", "/privacidade", "/", "/site"];
+    if (PUBLIC_ROUTES.some(route => location.pathname === route)) return;
     
     // Registrar no store
     registerViolation(type, location.pathname);
