@@ -462,11 +462,31 @@ export const FortressPlayerWrapper = ({
         }}
       />
 
-      {/* ESCUDO INFERIOR COMPLETO - Bloqueia controles do YT/Panda */}
+      {/* ESCUDO INFERIOR ESQUERDO - Bloqueia logo YouTube mas libera timeline central */}
       <div
-        className="absolute bottom-0 left-0 right-0 z-50 cursor-default"
+        className="absolute bottom-0 left-0 z-50 cursor-default"
         style={{
-          height: "70px",
+          height: "50px",
+          width: "120px",
+          background: "transparent",
+          pointerEvents: "auto",
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      />
+
+      {/* ESCUDO INFERIOR DIREITO - Bloqueia config/fullscreen do YouTube mas libera timeline central */}
+      <div
+        className="absolute bottom-0 right-0 z-50 cursor-default"
+        style={{
+          height: "50px",
+          width: "200px",
           background: "transparent",
           pointerEvents: "auto",
         }}
