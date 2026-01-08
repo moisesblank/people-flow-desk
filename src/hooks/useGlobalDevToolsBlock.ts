@@ -12,9 +12,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // ═══════════════════════════════════════════════════════════
-// 🔧 MASTER KILL SWITCH - DESATIVA TODA PROTEÇÃO DE DEVTOOLS
+// 🔧 MASTER KILL SWITCH - PROTEÇÃO DE DEVTOOLS
 // ═══════════════════════════════════════════════════════════
-const DEVTOOLS_PROTECTION_ENABLED = false;
+// 🔥 v14.0-PART-3: ATIVADO por ordem MODO AGENTE (2026-01-08)
+const DEVTOOLS_PROTECTION_ENABLED = true;
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
 

@@ -150,6 +150,12 @@ export const OmegaFortressPlayer = memo(({
   
   // 🎯 QUALITY ENFORCEMENT: Estado para erro de qualidade mínima (720p)
   const [qualityError, setQualityError] = useState<string | null>(null);
+  
+  // 🔥 PART 3: SEGURANÇA MÁXIMA - Overlay de violação com tela preta
+  const [securityViolation, setSecurityViolation] = useState<{
+    active: boolean;
+    message: string;
+  }>({ active: false, message: '' });
 
   // Panda DRM: src assinada (token + expires). Sem isso, o player do Panda falha quando DRM via API está ativo.
   const [pandaSignedSrc, setPandaSignedSrc] = useState<string | null>(null);
@@ -219,6 +225,131 @@ export const OmegaFortressPlayer = memo(({
       setIsLoading(false);
     }
   }, [sessionError]);
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // 🔥 PART 3: SEGURANÇA MÁXIMA - Detecção de violações e overlay de tela preta
+  // ═══════════════════════════════════════════════════════════════════════════════
+  
+  // Função para mostrar overlay de violação (pausa vídeo + tela preta)
+  const showSecurityViolationOverlay = useCallback((message: string) => {
+    // Owner bypass para não travar testes
+    if (isImmuneUser) {
+      console.log('[OmegaFortress] 🛡️ Owner/Admin bypass - violação detectada mas não bloqueada:', message);
+      return;
+    }
+    
+    // Pausar o vídeo
+    pauseVideo();
+    setIsPlaying(false);
+    
+    // Mostrar overlay de violação
+    setSecurityViolation({ active: true, message });
+    
+    // Reportar violação para o backend (usando tipo válido)
+    reportViolation('keyboard_shortcut', 10);
+    
+    // Auto-hide após 5 segundos
+    setTimeout(() => {
+      setSecurityViolation({ active: false, message: '' });
+    }, 5000);
+  }, [isImmuneUser, reportViolation]);
+  
+  // Detecção de teclas de segurança (F12, PrintScreen, Ctrl+Shift+I, etc.)
+  useEffect(() => {
+    if (!session || showThumbnail) return; // Só ativa quando vídeo está tocando
+    
+    const handleSecurityKeydown = (e: KeyboardEvent) => {
+      // Owner bypass
+      if (isImmuneUser) return;
+      
+      const key = e.key?.toUpperCase() || '';
+      
+      // F12 (DevTools)
+      if (key === 'F12') {
+        e.preventDefault();
+        e.stopPropagation();
+        showSecurityViolationOverlay('Ferramentas de desenvolvedor detectadas');
+        return;
+      }
+      
+      // PrintScreen (todas as variações)
+      if (['PRINTSCREEN', 'PRTSC', 'PRTSCN', 'PRINT', 'SNAPSHOT'].includes(key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        showSecurityViolationOverlay('Captura de tela detectada');
+        return;
+      }
+      
+      // Ctrl+Shift+I/J/C (DevTools)
+      if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        showSecurityViolationOverlay('Ferramentas de desenvolvedor detectadas');
+        return;
+      }
+      
+      // Ctrl+P (Print)
+      if (e.ctrlKey && key === 'P') {
+        e.preventDefault();
+        e.stopPropagation();
+        showSecurityViolationOverlay('Impressão bloqueada');
+        return;
+      }
+      
+      // Ctrl+S (Save)
+      if (e.ctrlKey && key === 'S') {
+        e.preventDefault();
+        e.stopPropagation();
+        showSecurityViolationOverlay('Download bloqueado');
+        return;
+      }
+      
+      // Windows+Shift+S (Snipping Tool)
+      if (e.shiftKey && (e.metaKey || e.getModifierState?.('Meta')) && key === 'S') {
+        e.preventDefault();
+        e.stopPropagation();
+        showSecurityViolationOverlay('Ferramenta de captura detectada');
+        return;
+      }
+      
+      // Mac: Cmd+Shift+3/4/5 (Screenshots)
+      if (e.metaKey && e.shiftKey && ['3', '4', '5'].includes(key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        showSecurityViolationOverlay('Captura de tela detectada');
+        return;
+      }
+    };
+    
+    // Detecção de clique direito
+    const handleContextMenu = (e: MouseEvent) => {
+      if (isImmuneUser) return;
+      e.preventDefault();
+      showSecurityViolationOverlay('Menu de contexto bloqueado');
+    };
+    
+    // Detecção de perda de foco (Snipping Tool, Alt+Tab, etc.)
+    const handleWindowBlur = () => {
+      if (isImmuneUser) return;
+      if (!isPlaying) return; // Só pausa se estiver tocando
+      
+      // Pausar vídeo quando perde foco
+      pauseVideo();
+      setIsPlaying(false);
+      showSecurityViolationOverlay('Janela perdeu foco - possível tentativa de captura');
+    };
+    
+    // Adicionar listeners
+    document.addEventListener('keydown', handleSecurityKeydown, { capture: true });
+    containerRef.current?.addEventListener('contextmenu', handleContextMenu);
+    window.addEventListener('blur', handleWindowBlur);
+    
+    return () => {
+      document.removeEventListener('keydown', handleSecurityKeydown, { capture: true });
+      containerRef.current?.removeEventListener('contextmenu', handleContextMenu);
+      window.removeEventListener('blur', handleWindowBlur);
+    };
+  }, [session, showThumbnail, isImmuneUser, isPlaying, showSecurityViolationOverlay]);
 
   // Handler de violações
   function handleViolation(violationType: VideoViolationType, action: ViolationAction) {
@@ -863,6 +994,86 @@ export const OmegaFortressPlayer = memo(({
           )}
         </AnimatePresence>
 
+        {/* 🔥 PART 3: SECURITY VIOLATION OVERLAY - Tela preta com aviso de violação */}
+        <AnimatePresence>
+          {securityViolation.active && (
+            <motion.div
+              className="absolute inset-0 flex flex-col items-center justify-center bg-black z-[100] gap-6 p-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {/* Ícone de alerta grande e vermelho */}
+              <motion.div
+                className="w-24 h-24 rounded-full bg-red-600/20 flex items-center justify-center ring-4 ring-red-500/30"
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+              >
+                <AlertTriangle className="w-12 h-12 text-red-500 animate-pulse" />
+              </motion.div>
+              
+              {/* Título */}
+              <motion.h2
+                className="text-3xl font-bold text-red-500 tracking-wider"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                ATENÇÃO
+              </motion.h2>
+              
+              {/* Mensagem de violação */}
+              <motion.div
+                className="text-center max-w-md"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                <p className="text-xl text-white font-semibold mb-2">
+                  VIOLAÇÃO DE DIREITO AUTORAL
+                </p>
+                <p className="text-white/80">
+                  É proibido o que você está fazendo.
+                </p>
+                <p className="text-sm text-white/50 mt-4">
+                  {securityViolation.message}
+                </p>
+              </motion.div>
+              
+              {/* Contador de fechamento */}
+              <motion.div
+                className="flex flex-col items-center gap-2 mt-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                <div className="w-48 h-1 bg-white/20 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-red-500"
+                    initial={{ width: "0%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 5, ease: "linear" }}
+                  />
+                </div>
+                <span className="text-white/40 text-xs">Esta mensagem fechará automaticamente</span>
+              </motion.div>
+              
+              {/* Badge de segurança */}
+              <motion.div
+                className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-red-900/50 px-4 py-2 rounded-full"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.6 }}
+              >
+                <Shield className="w-4 h-4 text-red-400" />
+                <span className="text-xs text-red-300 font-medium">Esta atividade foi registrada</span>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* 🎯 QUALITY ERROR OVERLAY v14.0: Erro quando qualidade mínima (720p) não está disponível */}
         <AnimatePresence>
           {qualityError && !showThumbnail && (
@@ -919,6 +1130,11 @@ export const OmegaFortressPlayer = memo(({
             mode={(session.watermark.mode || 'moving') as 'moving' | 'static' | 'diagonal'} 
             isImmune={isImmune}
           />
+        )}
+
+        {/* 🔥 PART 3: ANTI-RECORDING OVERLAY - Camada anti-gravação (imperceptível para humanos, visível para gravadores) */}
+        {!showThumbnail && !isImmuneUser && (
+          <div className="anti-recording-overlay" aria-hidden="true" />
         )}
 
         {/* 🛡️ Escudos de Proteção - Invisíveis (z-20 para ficar ABAIXO dos controles z-30) */}
