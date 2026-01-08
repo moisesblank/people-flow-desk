@@ -670,36 +670,90 @@ export const OmegaFortressPlayer = memo(({
   }, [videoId, type, showThumbnail, autoplay, session, onComplete, endSession, currentQuality, onError]);
 
   // 🎯 PART 2: Progress tracking aprimorado com atualização em tempo real
+  // YouTube: via API polling (getCurrentTime/getDuration)
   useEffect(() => {
+    if (type !== 'youtube') return;
     if (!playerRef.current) return;
 
     // Atualiza o tempo e duração em intervalo mais frequente para a barra de progresso
     const progressInterval = setInterval(() => {
       if (playerRef.current?.getCurrentTime && playerRef.current?.getDuration) {
-        const current = playerRef.current.getCurrentTime() || 0;
-        const dur = playerRef.current.getDuration() || 1;
+        const current = Number(playerRef.current.getCurrentTime?.() ?? 0) || 0;
+        const dur = Number(playerRef.current.getDuration?.() ?? 0) || 0;
         setCurrentTime(current);
         setDuration(dur);
       }
     }, 250); // 4x por segundo para barra suave
 
     return () => clearInterval(progressInterval);
-  }, [showThumbnail, isPlaying]);
+  }, [type, showThumbnail, isPlaying]);
+
+  // Panda: via postMessage events (panda_timeupdate / panda_info)
+  useEffect(() => {
+    if (type !== 'panda') return;
+    if (showThumbnail) return;
+
+    const handlePandaMessage = (event: MessageEvent) => {
+      // Aceitar apenas mensagens do Panda
+      const origin = String(event.origin || '');
+      if (!origin.includes('pandavideo')) return;
+
+      let data: any = event.data;
+      try {
+        // Alguns ambientes enviam JSON stringificado
+        if (typeof data === 'string') data = JSON.parse(data);
+      } catch {
+        // ignore parse errors
+      }
+
+      const msg = data?.message;
+      if (typeof msg !== 'string' || !msg.startsWith('panda_')) return;
+
+      // 🎯 Atualizar tempo e duração quando disponíveis
+      const maybeCurrent = Number(data?.currentTime);
+      const maybeDuration = Number(data?.duration);
+
+      if (Number.isFinite(maybeCurrent) && maybeCurrent >= 0) {
+        setCurrentTime(maybeCurrent);
+      }
+      if (Number.isFinite(maybeDuration) && maybeDuration > 0) {
+        setDuration(maybeDuration);
+      }
+
+      // Debug (mantém evidência em campo)
+      if (msg === 'panda_timeupdate' && (Number.isFinite(maybeCurrent) || Number.isFinite(maybeDuration))) {
+        console.debug('[OMEGA][PANDA] timeupdate', { currentTime: maybeCurrent, duration: maybeDuration });
+      }
+      if (msg === 'panda_error') {
+        console.warn('[OMEGA][PANDA] erro do player', data);
+      }
+    };
+
+    window.addEventListener('message', handlePandaMessage);
+    return () => window.removeEventListener('message', handlePandaMessage);
+  }, [type, showThumbnail]);
 
   // Heartbeat e callback de progresso (menos frequente)
   useEffect(() => {
-    if (!isPlaying || !playerRef.current) return;
+    if (!isPlaying) return;
 
     const interval = setInterval(() => {
-      const current = playerRef.current?.getCurrentTime?.() || 0;
-      const dur = playerRef.current?.getDuration?.() || 1;
-      const progress = (current / dur) * 100;
+      // YouTube usa API; Panda usa state (alimentado por postMessage)
+      const current = type === 'youtube'
+        ? (Number(playerRef.current?.getCurrentTime?.() ?? 0) || 0)
+        : currentTime;
+      const dur = type === 'youtube'
+        ? (Number(playerRef.current?.getDuration?.() ?? 0) || 0)
+        : duration;
+
+      const safeDur = dur > 0 ? dur : 1;
+      const progress = (current / safeDur) * 100;
       onProgress?.(progress);
       sendHeartbeat(Math.floor(current));
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [isPlaying, onProgress, sendHeartbeat]);
+  }, [type, isPlaying, currentTime, duration, onProgress, sendHeartbeat]);
 
   // Auto-hide controls
   useEffect(() => {
