@@ -1338,7 +1338,7 @@ export const OmegaFortressPlayer = memo(({
                           <Settings className="w-5 h-5 text-white" />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-black/95 border-white/10 backdrop-blur-md">
+                      <DropdownMenuContent align="end" className="z-[100000] bg-black/95 border-white/10 backdrop-blur-md">
                         <DropdownMenuLabel className="text-white/70 text-xs">
                           <Zap className="w-3 h-3 inline mr-1" />
                           Velocidade
