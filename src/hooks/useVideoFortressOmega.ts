@@ -507,19 +507,20 @@ export function useVideoFortressOmega() {
         throw new Error(error.message);
       }
 
-      // Cast para o tipo correto
+      // 🛡️ v11.0 FIX: A função SQL retorna diretamente os dados, não um objeto {success: boolean}
       const responseData = data as {
-        success: boolean;
         session_id?: string;
         session_code?: string;
         session_token?: string;
         expires_at?: string;
-        watermark?: { text?: string; hash?: string };
+        watermark_text?: string;
+        watermark_hash?: string;
         error?: string;
       };
 
-      if (!responseData.success || !responseData.session_id) {
-        throw new Error(responseData.error || "Falha ao criar sessão de vídeo");
+      // 🛡️ v11.0 FIX: Verificar session_id em vez de success
+      if (!responseData || !responseData.session_id) {
+        throw new Error(responseData?.error || "Falha ao criar sessão de vídeo");
       }
 
       // Construir URL do embed baseado no provider
@@ -547,9 +548,10 @@ export function useVideoFortressOmega() {
         sessionToken: responseData.session_token || '',
         embedUrl,
         expiresAt: responseData.expires_at || new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+        // 🛡️ v11.0 FIX: A função SQL retorna watermark_text, não um objeto watermark
         watermark: {
-          text: responseData.watermark?.text || `${user.email?.split('@')[0] || 'user'}`,
-          hash: responseData.watermark?.hash || fingerprint.slice(0, 8),
+          text: responseData.watermark_text || `${user.email?.split('@')[0] || 'user'}`,
+          hash: responseData.watermark_hash || fingerprint.slice(0, 8),
           mode: "moving",
         },
         provider: options.provider || "panda",
