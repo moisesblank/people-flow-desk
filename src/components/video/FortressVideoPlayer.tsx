@@ -216,6 +216,11 @@ export const FortressVideoPlayer = memo(({
   }, [videoId, autoplay]);
 
   const handlePlayerReady = useCallback((event: any) => {
+    // 🔥 FIX v15.0: Salvar a referência REAL do player (event.target) para que
+    // setPlaybackRate e outras APIs funcionem corretamente nos controles customizados
+    playerRef.current = event.target; // CRÍTICO: sobrescrever com player funcional
+    console.log('[FortressVideoPlayer] 🎬 Player YouTube pronto, ref atualizada');
+    
     setIsReady(true);
     setIsLoading(false);
     

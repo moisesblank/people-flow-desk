@@ -165,6 +165,11 @@ export function YouTubePlayer({
   };
 
   const handlePlayerReady = (event: any) => {
+    // 🔥 FIX v15.0: Salvar a referência REAL do player (event.target) para que
+    // setPlaybackRate e outras APIs funcionem corretamente
+    playerRef.current = event.target; // CRÍTICO: sobrescrever com player funcional
+    console.log('[YouTubePlayer] 🎬 Player YouTube pronto, ref atualizada');
+    
     setIsReady(true);
     setDuration(event.target.getDuration());
     
