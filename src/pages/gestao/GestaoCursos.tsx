@@ -1043,9 +1043,10 @@ export default function GestaoCursos() {
           </DialogContent>
         </Dialog>
         
-        {/* Module Dialog */}
+        {/* Module Dialog - Maximizado conforme LEI_MODAIS_REDIMENSIONAVEIS v3.0 */}
         <Dialog open={moduleDialog} onOpenChange={setModuleDialog}>
-          <DialogContent className="bg-card/95 backdrop-blur-sm border-border/50">
+          <DialogContent className="bg-card/95 backdrop-blur-sm border-border/50 w-[98vw] max-w-[98vw] h-[98vh] max-h-[98vh] overflow-y-auto"
+            style={{ width: '98vw', maxWidth: '98vw', height: '98vh', maxHeight: '98vh' }}>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Layers className="h-5 w-5 text-purple-500" />
