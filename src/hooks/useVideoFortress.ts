@@ -458,49 +458,88 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
   }, [isImmune, onViolation, onRiskLevelChange, handleSessionEnd]);
 
   // ============================================
-  // DETECÇÃO DE VIOLAÇÕES - ULTRA
+  // DETECÇÃO DE VIOLAÇÕES - ULTRA v1.3
+  // Atualizado para Confirmação Cruzada
   // ============================================
   const startViolationDetection = useCallback(() => {
     const cleanupFns: (() => void)[] = [];
 
-    // 1. DevTools Detection (múltiplos métodos)
+    // 1. DevTools Detection (v1.3: Confirmação Cruzada)
     if (enableAntiDevTools) {
-      // Método 1: Diferença de dimensões
-      const checkDevTools = () => {
-        const threshold = 160;
+      // v1.3: Flag para rastrear sinal de dimensões
+      let dimensionSignalActive = false;
+      let dimensionSignalTimestamp = 0;
+      const DIMENSION_SIGNAL_WINDOW = 10000; // 10 segundos
+      
+      // Método 1: Diferença de dimensões — SINAL FRACO (não bloqueia sozinho)
+      const checkDevToolsDimensions = () => {
+        // v1.3: Threshold dinâmico baseado em DPI
+        const baseThreshold = 160;
+        const dpr = window.devicePixelRatio || 1;
+        const threshold = dpr > 1 ? baseThreshold * Math.min(dpr, 2) : baseThreshold;
+        
         const widthDiff = window.outerWidth - window.innerWidth > threshold;
         const heightDiff = window.outerHeight - window.innerHeight > threshold;
         
         if (widthDiff || heightDiff) {
-          reportViolation('devtools_open', 3, { method: 'dimension' });
+          // v1.3: Apenas registrar sinal fraco, NÃO bloquear
+          dimensionSignalActive = true;
+          dimensionSignalTimestamp = Date.now();
+          console.log(`[VideoFortress v1.3] Sinal de dimensões registrado (DPR: ${dpr.toFixed(2)})`);
+          // NÃO chama reportViolation aqui — apenas loga para auditoria
+        } else {
+          // Limpar sinal se dimensões voltaram ao normal
+          if (dimensionSignalActive && (Date.now() - dimensionSignalTimestamp) > DIMENSION_SIGNAL_WINDOW) {
+            dimensionSignalActive = false;
+          }
         }
       };
 
-      // Método 2: Debugger detection - DESATIVADO
-      // O statement "debugger" pausa a execução e bloqueia player de vídeo
-      // Mantendo apenas detecção por dimensões (não bloqueia)
-      const checkDebugger = () => {
-        // Desativado: debugger statement causava bloqueio do player
-      };
-
-      // Método 3: Console.log timing
-      const checkConsole = () => {
+      // Método 2: Console object timing — SINAL FORTE
+      // Só dispara bloqueio se houver confirmação cruzada (dimensões + console)
+      const checkConsoleWithConfirmation = () => {
+        let consoleTriggered = false;
+        
         const element = new Image();
         Object.defineProperty(element, 'id', {
           get: function() {
-            reportViolation('devtools_open', 2, { method: 'console_object' });
+            consoleTriggered = true;
             return 'devtools-check';
           }
         });
+        
+        // Este console.log aciona o getter se DevTools estiver aberto
         console.log('%c', element as any);
+        
+        if (consoleTriggered) {
+          // v1.3: Só bloqueia se houver sinal de dimensões ativo (confirmação cruzada)
+          if (dimensionSignalActive && (Date.now() - dimensionSignalTimestamp) < DIMENSION_SIGNAL_WINDOW) {
+            reportViolation('devtools_open', 5, { 
+              method: 'cross_confirmed_console', 
+              dimensionSignalAge: Date.now() - dimensionSignalTimestamp 
+            });
+          } else {
+            // Console sem dimensões = possível falso positivo, só logar
+            console.log('[VideoFortress v1.3] Console trigger sem sinal de dimensões — ignorando');
+          }
+        }
       };
 
+      // Verificação principal a cada 3 segundos
       const devToolsInterval = setInterval(() => {
-        checkDevTools();
-        // checkConsole(); // Comentado pois pode causar spam
+        checkDevToolsDimensions();
+        // Console check a cada 9 segundos (3x menos frequente)
       }, 3000);
+      
+      // Console check separado (menos frequente para evitar spam)
+      const consoleInterval = setInterval(() => {
+        checkConsoleWithConfirmation();
+      }, 9000);
 
-      cleanupFns.push(() => clearInterval(devToolsInterval));
+      cleanupFns.push(() => {
+        clearInterval(devToolsInterval);
+        clearInterval(consoleInterval);
+      });
     }
 
     // 2. Keyboard Shortcuts Blocking

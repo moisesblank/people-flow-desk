@@ -1,7 +1,8 @@
 // ============================================
-// 🚨 BLACKOUT ANTI-PIRATARIA v1.2
+// 🚨 BLACKOUT ANTI-PIRATARIA v1.3
 // Hook de controle de detecções e punições
-// PROTEÇÃO GLOBAL + DETECÇÃO DE GRAVAÇÃO + BLUR PATTERN
+// PROTEÇÃO GLOBAL + CONFIRMAÇÃO CRUZADA
+// FIX: Elimina falsos positivos de zoom/DPI
 // ============================================
 
 import { useEffect, useCallback, useRef } from "react";
@@ -36,6 +37,9 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
     registerBlur,
     checkAndClearExpiredBlocks,
     resetAll,
+    // v1.3: Confirmação cruzada
+    registerDimensionSignal,
+    hasDimensionSignal,
   } = useSecurityBlackoutStore();
 
   // v1.2: Detecção de gravação (APIs + extensões + PiP)
@@ -103,9 +107,16 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
     // Registrar no store
     registerViolation(type, location.pathname, details);
     
+    // v1.3: Sinal fraco (dimensões) NÃO mostra toast nem bloqueia
+    if (type === "devtools_dimension") {
+      console.log("[SecurityBlackout v1.3] Sinal de dimensões registrado (aguardando confirmação)");
+      return;
+    }
+    
     // Mostrar toast de warning baseado no tipo
-    if (type === "devtools" || type === "screen_capture" || type === "recording_api" || 
-        type === "recording_extension" || type === "picture_in_picture" || type === "suspicious_blur") {
+    if (type === "devtools" || type === "devtools_confirmed" || type === "screen_capture" || 
+        type === "recording_api" || type === "recording_extension" || 
+        type === "picture_in_picture" || type === "suspicious_blur") {
       toast.error("🚨 ACESSO BLOQUEADO", {
         description: "Tentativa de captura/gravação detectada. Seu acesso foi registrado.",
         duration: 5000,
@@ -163,29 +174,73 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
   }, [location.pathname, printScreenCount, registerViolation, isBlocked, blockType]);
 
   // ═══════════════════════════════════════════════════════════
-  // DETECÇÃO DE DEVTOOLS (via dimensões)
+  // v1.3: DETECÇÃO DE DEVTOOLS (via dimensões) — SINAL FRACO
+  // NÃO bloqueia sozinho, apenas registra para confirmação cruzada
   // ═══════════════════════════════════════════════════════════
   useEffect(() => {
     if (!enabled || !isTargetRoute || isOwnerRef.current) return;
     
-    const detectDevTools = () => {
+    const detectDevToolsDimensions = () => {
       if (isOwnerRef.current) return;
       
-      const threshold = 160;
+      // v1.3: Threshold aumentado e considera devicePixelRatio
+      const baseThreshold = 160;
+      const dpr = window.devicePixelRatio || 1;
+      // Se DPI alto (zoom ou escala), aumentar threshold proporcionalmente
+      const threshold = dpr > 1 ? baseThreshold * Math.min(dpr, 2) : baseThreshold;
+      
       const widthCheck = window.outerWidth - window.innerWidth > threshold;
       const heightCheck = window.outerHeight - window.innerHeight > threshold;
       
       if ((widthCheck || heightCheck) && !detectionActiveRef.current) {
-        detectionActiveRef.current = true;
-        handleViolation("devtools", "dimension_check");
+        // v1.3: Registrar apenas como SINAL FRACO (não bloqueia)
+        registerDimensionSignal();
+        handleViolation("devtools_dimension", `dimension_check_dpr_${dpr.toFixed(2)}`);
+        // NÃO ativa detectionActiveRef para permitir novas verificações
       }
     };
     
-    // Verificar a cada 2 segundos
-    const interval = setInterval(detectDevTools, 2000);
+    // Verificar a cada 3 segundos (reduzido de 2s para menos false positives)
+    const interval = setInterval(detectDevToolsDimensions, 3000);
     
     return () => clearInterval(interval);
-  }, [enabled, isTargetRoute, handleViolation]);
+  }, [enabled, isTargetRoute, handleViolation, registerDimensionSignal]);
+
+  // ═══════════════════════════════════════════════════════════
+  // v1.3: DETECÇÃO DE DEVTOOLS (via console timing) — SINAL FORTE
+  // Este método é mais preciso e confirma a presença de DevTools
+  // ═══════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (!enabled || !isTargetRoute || isOwnerRef.current) return;
+    
+    const detectDevToolsConsole = () => {
+      if (isOwnerRef.current) return;
+      
+      // Técnica de timing: debugger statement causa delay significativo quando DevTools aberto
+      const start = performance.now();
+      // eslint-disable-next-line no-debugger
+      debugger; // Este statement será ignorado se DevTools não estiver aberto
+      const duration = performance.now() - start;
+      
+      // Se demorou mais de 100ms, DevTools provavelmente está aberto com breakpoints
+      if (duration > 100 && !detectionActiveRef.current) {
+        detectionActiveRef.current = true;
+        
+        // v1.3: Se há sinal de dimensões ativo, é confirmação cruzada
+        if (hasDimensionSignal()) {
+          handleViolation("devtools_confirmed", `cross_confirmed_timing_${duration.toFixed(0)}ms`);
+        } else {
+          // Console timing sozinho também é sinal forte
+          handleViolation("devtools_confirmed", `timing_${duration.toFixed(0)}ms`);
+        }
+      }
+    };
+    
+    // Verificar a cada 5 segundos (menos frequente para não impactar performance)
+    const interval = setInterval(detectDevToolsConsole, 5000);
+    
+    return () => clearInterval(interval);
+  }, [enabled, isTargetRoute, handleViolation, hasDimensionSignal]);
 
   // ═══════════════════════════════════════════════════════════
   // v1.2: DETECÇÃO DE BLUR PATTERN (5+ blurs em <3s = suspeito)
