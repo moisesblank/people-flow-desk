@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSecurityBlackoutStore, ViolationType } from "@/stores/securityBlackoutStore";
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
-const TARGET_PATH = "/alunos/videoaulas";
+const TARGET_PATHS = ["/alunos/videoaulas", "/alunos/livro-web"];
 
 interface UseSecurityBlackoutOptions {
   enabled?: boolean;
@@ -36,8 +36,8 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
     resetAll,
   } = useSecurityBlackoutStore();
 
-  // Verificar se estamos na rota alvo
-  const isTargetRoute = location.pathname.startsWith(TARGET_PATH);
+  // Verificar se estamos em uma rota alvo
+  const isTargetRoute = TARGET_PATHS.some(path => location.pathname.startsWith(path));
 
   // ═══════════════════════════════════════════════════════════
   // VERIFICAR SE É OWNER
@@ -89,8 +89,8 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
     // Owner é imune
     if (isOwnerRef.current) return;
     
-    // Só atua na rota alvo
-    if (!location.pathname.startsWith(TARGET_PATH)) return;
+    // Só atua nas rotas alvo
+    if (!TARGET_PATHS.some(path => location.pathname.startsWith(path))) return;
     
     // Registrar no store
     registerViolation(type, location.pathname);
