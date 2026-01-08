@@ -120,6 +120,10 @@ export const OmegaFortressPlayer = memo(({
   const [isMuted, setIsMuted] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
+  
+  // 🆕 DISCLAIMER OVERLAY - Exibe aviso legal por 3 segundos antes do vídeo
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [disclaimerCompleted, setDisclaimerCompleted] = useState(false);
   const [violationWarning, setViolationWarning] = useState<string | null>(null);
   const [showSecurityInfo, setShowSecurityInfo] = useState(false);
 
@@ -417,6 +421,18 @@ export const OmegaFortressPlayer = memo(({
   // ============================================
   const handlePlayPause = useCallback(() => {
     if (showThumbnail) {
+      // 🆕 DISCLAIMER: Exibir aviso legal por 3 segundos antes de iniciar
+      if (!disclaimerCompleted && !isImmuneUser) {
+        setShowDisclaimer(true);
+        setTimeout(() => {
+          setShowDisclaimer(false);
+          setDisclaimerCompleted(true);
+          setShowThumbnail(false);
+          setIsLoading(true);
+        }, 3000); // 3 segundos de disclaimer
+        return;
+      }
+      
       setShowThumbnail(false);
       setIsLoading(true);
       return;
@@ -430,7 +446,7 @@ export const OmegaFortressPlayer = memo(({
       }
       setIsPlaying(!isPlaying);
     }
-  }, [showThumbnail, isPlaying]);
+  }, [showThumbnail, isPlaying, disclaimerCompleted, isImmuneUser]);
 
   const pauseVideo = useCallback(() => {
     if (playerRef.current?.pauseVideo) {
@@ -559,6 +575,41 @@ export const OmegaFortressPlayer = memo(({
             </div>
           </div>
         )}
+
+        {/* 🆕 DISCLAIMER OVERLAY - Aviso Legal 3 segundos */}
+        <AnimatePresence>
+          {showDisclaimer && (
+            <motion.div
+              className="absolute inset-0 z-50 flex items-center justify-center bg-black"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="relative w-full h-full flex items-center justify-center p-4">
+                {/* Imagem do Disclaimer */}
+                <img
+                  src="https://drive.google.com/uc?export=download&id=1U9_p3j1_8dgF-M6fJ2jsMFfzundg3Sbb"
+                  alt="Aviso Legal - Conteúdo Protegido"
+                  className="max-w-full max-h-full object-contain"
+                />
+                
+                {/* Contador visual */}
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2">
+                  <div className="w-48 h-1 bg-white/20 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-primary"
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: 3, ease: "linear" }}
+                    />
+                  </div>
+                  <span className="text-white/60 text-xs">Iniciando...</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Video Player */}
         {!showThumbnail && (
