@@ -2,13 +2,15 @@
 // 🏛️ CONSTITUIÇÃO SYNAPSE - ClickToLoadVideo
 // Player lazy nível NASA - Zero download antes do clique
 // LEI I Art. 7-9: Otimização de mídia
+// 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
 // ============================================
 
-import React, { useState, useCallback, memo, useRef } from "react";
+import React, { useState, useCallback, memo, useRef, useEffect } from "react";
 import { Play, Loader2, AlertCircle, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getPandaEmbedUrl } from "@/lib/video/panda";
 import { getPerformanceConfig } from "@/lib/performance/performanceFlags";
+import { VideoDisclaimer, useVideoDisclaimer } from "@/components/video/VideoDisclaimer";
 
 // ============================================
 // TIPOS
@@ -136,6 +138,14 @@ export const ClickToLoadVideo = memo(function ClickToLoadVideo({
   
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
+  const { 
+    showDisclaimer, 
+    disclaimerCompleted, 
+    startDisclaimer, 
+    handleDisclaimerComplete 
+  } = useVideoDisclaimer();
+
   // Config de performance
   const config = getPerformanceConfig();
   const shouldAnimate = config.enableMotion;
@@ -146,10 +156,16 @@ export const ClickToLoadVideo = memo(function ClickToLoadVideo({
   const finalPoster = poster || PLACEHOLDER_SVG;
 
   // ============================================
-  // HANDLER DE CLIQUE
+  // HANDLER DE CLIQUE - COM DISCLAIMER OBRIGATÓRIO
   // ============================================
   const handleClick = useCallback(() => {
     if (isLoaded || isLoading) return;
+    
+    // 🔒 DISCLAIMER OBRIGATÓRIO - Inicia disclaimer primeiro
+    if (!disclaimerCompleted) {
+      startDisclaimer();
+      return;
+    }
     
     setIsLoading(true);
     setHasError(false);
@@ -161,7 +177,21 @@ export const ClickToLoadVideo = memo(function ClickToLoadVideo({
       onPlay?.();
       onLoad?.();
     });
-  }, [isLoaded, isLoading, onPlay, onLoad]);
+  }, [isLoaded, isLoading, onPlay, onLoad, disclaimerCompleted, startDisclaimer]);
+
+  // 🔒 Quando disclaimer completar, carrega o vídeo
+  useEffect(() => {
+    if (disclaimerCompleted && !isLoaded && !isLoading) {
+      setIsLoading(true);
+      setHasError(false);
+      requestAnimationFrame(() => {
+        setIsLoaded(true);
+        setIsLoading(false);
+        onPlay?.();
+        onLoad?.();
+      });
+    }
+  }, [disclaimerCompleted, isLoaded, isLoading, onPlay, onLoad]);
 
   const handleRetry = useCallback(() => {
     setHasError(false);
@@ -199,6 +229,12 @@ export const ClickToLoadVideo = memo(function ClickToLoadVideo({
           }
         }}
       >
+        {/* 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA */}
+        <VideoDisclaimer 
+          isVisible={showDisclaimer} 
+          onComplete={handleDisclaimerComplete} 
+        />
+
         {/* Poster/Thumbnail */}
         <img
           src={finalPoster}
