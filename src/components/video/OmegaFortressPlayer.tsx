@@ -388,21 +388,22 @@ export const OmegaFortressPlayer = memo(({
     
     if (type === 'panda' && pandaIframeRef.current?.contentWindow) {
       // 🐼 PANDA VIDEO: usar postMessage API
-      // Documentação: https://pandavideo.readme.io/reference/send-events
-      // ✅ Seek correto: { type: 'currentTime', parameter: <segundos> }
+      // Observação: há variações na API; enviamos ambos eventos (seek + currentTime) por compatibilidade.
       const pandaWindow = pandaIframeRef.current.contentWindow;
 
+      // 1) Evento canônico (compatibilidade com players atuais)
+      pandaWindow.postMessage({ type: 'seek', parameter: seconds }, '*');
+      // 2) Fallback legado (alguns embeds aceitam currentTime)
       pandaWindow.postMessage({ type: 'currentTime', parameter: seconds }, '*');
 
-      console.log('[OMEGA] ✅ postMessage currentTime enviado para Panda:', seconds);
+      console.log('[OMEGA] ✅ postMessage seek/currentTime enviado para Panda:', seconds);
 
-      
       // Garantir que o vídeo continue reproduzindo após o seek
       setTimeout(() => {
         pandaWindow.postMessage({ type: 'play' }, '*');
         console.log('[OMEGA] ✅ Comando play enviado após seek');
       }, 100);
-      
+
     } else if (type === 'youtube' && playerRef.current?.seekTo) {
       // ▶️ YOUTUBE: usar seekTo da API
       playerRef.current.seekTo(seconds, true);
