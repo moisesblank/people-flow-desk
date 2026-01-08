@@ -297,25 +297,44 @@ export const OmegaFortressPlayer = memo(({
   }, [type, showThumbnail, lessonId, videoId, extractPandaVideoId, onError]);
 
   // ============================================
-  // INICIALIZAÇÃO - 🛡️ YOUTUBE HOTFIX v10.0
-  // Single-Call Guard: Previne chamadas múltiplas de startSession
+  // INICIALIZAÇÃO - 🛡️ YOUTUBE HOTFIX v10.1 FINAL
+  // CORREÇÃO DEFINITIVA: Usar ref estável para startSession
+  // O problema era: startSession nas dependências + reset do guard
   // ============================================
+  
+  // Ref estável para startSession (não causa re-render)
+  const startSessionRef = useRef(startSession);
+  startSessionRef.current = startSession;
+  
+  // Ref para o videoId anterior (detectar mudança real)
+  const prevVideoIdRef = useRef<string | null>(null);
+  
   useEffect(() => {
-    // 🔒 Guard: só executa UMA VEZ por montagem do componente
+    // Detectar se é um NOVO vídeo (reset legítimo do guard)
+    const isNewVideo = prevVideoIdRef.current !== null && prevVideoIdRef.current !== videoId;
+    
+    if (isNewVideo) {
+      console.log('[OmegaFortress] 🔄 Novo vídeo detectado, resetando guard');
+      sessionStartedRef.current = false;
+    }
+    
+    prevVideoIdRef.current = videoId;
+    
+    // 🔒 Guard: só executa UMA VEZ por vídeo
     if (sessionStartedRef.current) {
-      console.log('[OmegaFortress] ⏸️ startSession já foi chamado, ignorando...');
+      console.log('[OmegaFortress] ⏸️ startSession já foi chamado para este vídeo, ignorando...');
       return;
     }
     
     if (user && !session && !sessionLoading) {
-      // 🔐 Trava ANTES de chamar - previne race conditions
+      // 🔐 Trava IMEDIATAMENTE - antes de qualquer await
       sessionStartedRef.current = true;
-      console.log('[OmegaFortress] 🚀 Iniciando sessão (chamada única)...');
+      console.log('[OmegaFortress] 🚀 Iniciando sessão (chamada única garantida)...');
       
-      startSession().then((ok) => {
+      // Usar ref estável para evitar dependência de startSession
+      startSessionRef.current().then((ok) => {
         if (!ok) {
           setIsLoading(false);
-          // Se falhar, permite retry manual (mas não automático)
           console.log('[OmegaFortress] ❌ Sessão falhou, retry manual disponível');
         } else {
           console.log('[OmegaFortress] ✅ Sessão criada com sucesso!');
@@ -325,12 +344,10 @@ export const OmegaFortressPlayer = memo(({
         setIsLoading(false);
       });
     }
-  }, [user, session, sessionLoading, startSession]);
-  
-  // Reset do guard quando videoId muda (novo vídeo = nova sessão permitida)
-  useEffect(() => {
-    sessionStartedRef.current = false;
-  }, [videoId]);
+    // ⚠️ CRÍTICO: NÃO incluir startSession nas dependências!
+    // Usamos startSessionRef para ter versão estável
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, session, sessionLoading, videoId]);
 
   // YouTube IFrame API
   useEffect(() => {
