@@ -14,7 +14,7 @@ import {
   Layers, ChevronRight, ChevronDown, Eye, EyeOff, 
   Save, X, FolderOpen, PlayCircle, Clock, Users,
   MoreHorizontal, Copy, ArrowUpDown, Grip, Check, AlertTriangle,
-  Sparkles, Zap
+  Sparkles, Zap, Wand2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +34,7 @@ import { cn } from '@/lib/utils';
 import { CyberBackground } from '@/components/ui/cyber-background';
 import { FuturisticPageHeader } from '@/components/ui/futuristic-page-header';
 import { ModulosGlobalManager } from '@/components/gestao/cursos/ModulosGlobalManager';
+import { CourseMasterMode } from '@/components/gestao/cursos/CourseMasterMode';
 
 // ============================================
 // TIPOS (baseados no schema real do banco)
@@ -295,6 +296,7 @@ export default function GestaoCursos() {
   // Dialogs
   const [courseDialog, setCourseDialog] = useState(false);
   const [moduleDialog, setModuleDialog] = useState(false);
+  const [masterModeOpen, setMasterModeOpen] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{ type: 'course' | 'module'; id: string; name: string } | null>(null);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [editingModule, setEditingModule] = useState<Module | null>(null);
@@ -546,6 +548,12 @@ export default function GestaoCursos() {
   // RENDER — DESIGN 2300 CINEMATIC
   // ============================================
   return (
+    <>
+    <CourseMasterMode 
+      isOpen={masterModeOpen} 
+      onClose={() => setMasterModeOpen(false)}
+      initialCourseId={selectedCourse?.id}
+    />
     <div className="relative min-h-screen">
       {/* Cyber Background */}
       <CyberBackground variant="grid" className="opacity-30" />
@@ -559,13 +567,23 @@ export default function GestaoCursos() {
           accentColor="primary"
           action={
             activeTab === 'cursos' ? (
-              <Button 
-                onClick={() => { setEditingCourse(null); resetCourseForm(); setCourseDialog(true); }} 
-                className="gap-2 bg-primary/90 hover:bg-primary shadow-lg shadow-primary/25"
-              >
-                <Plus className="h-4 w-4" />
-                Novo Curso
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={() => setMasterModeOpen(true)} 
+                  variant="outline"
+                  className="gap-2 border-purple-500/50 text-purple-400 hover:bg-purple-500/10"
+                >
+                  <Wand2 className="h-4 w-4" />
+                  MODO MASTER
+                </Button>
+                <Button 
+                  onClick={() => { setEditingCourse(null); resetCourseForm(); setCourseDialog(true); }} 
+                  className="gap-2 bg-primary/90 hover:bg-primary shadow-lg shadow-primary/25"
+                >
+                  <Plus className="h-4 w-4" />
+                  Novo Curso
+                </Button>
+              </div>
             ) : null
           }
         />
@@ -1264,6 +1282,7 @@ export default function GestaoCursos() {
         </Dialog>
       </div>
     </div>
+    </>
   );
 }
 
