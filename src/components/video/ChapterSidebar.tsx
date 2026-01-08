@@ -87,10 +87,10 @@ export const ChapterSidebar: React.FC<ChapterSidebarProps> = ({
 
   return (
     <>
-      {/* Botão toggle */}
+      {/* Botão toggle - posição absoluta dentro do container do player */}
       <button
         onClick={onToggle}
-        className="fixed right-4 top-1/2 -translate-y-1/2 z-50 
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-[60]
                    bg-gradient-to-r from-purple-600 to-blue-600 
                    hover:from-purple-500 hover:to-blue-500
                    text-white p-3 rounded-full shadow-lg
@@ -101,10 +101,10 @@ export const ChapterSidebar: React.FC<ChapterSidebarProps> = ({
         <List className="w-5 h-5" />
       </button>
 
-      {/* Sidebar */}
+      {/* Sidebar - overlay absoluto que NÃO afeta o layout do vídeo */}
       <div 
-        className={`fixed right-0 top-0 h-full w-80 bg-gray-900/95 backdrop-blur-md
-                   border-l border-purple-500/30 shadow-2xl z-40
+        className={`absolute right-0 top-0 h-full w-80 bg-gray-900/95 backdrop-blur-md
+                   border-l border-purple-500/30 shadow-2xl z-[55] pointer-events-auto
                    transform transition-transform duration-300 ease-in-out
                    ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
@@ -185,10 +185,10 @@ export const ChapterSidebar: React.FC<ChapterSidebarProps> = ({
         </div>
       </div>
 
-      {/* Overlay quando aberto */}
+      {/* Overlay quando aberto - absoluto dentro do container */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/30 z-30"
+          className="absolute inset-0 bg-black/30 z-[50] pointer-events-auto"
           onClick={onToggle}
         />
       )}
