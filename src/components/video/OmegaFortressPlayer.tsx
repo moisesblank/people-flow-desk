@@ -1095,29 +1095,40 @@ interface WatermarkProps {
 const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
   const [position, setPosition] = useState({ x: 10, y: 15 });
 
+  // 🔒 WATERMARK PERMANENTE: Alternância dinâmica contínua durante TODO o vídeo
+  // Intervalo de 15 segundos para movimento suave mas constante
   useEffect(() => {
     if (mode === 'static') return;
 
+    // 12 posições para cobertura completa da tela
     const positions = [
-      { x: 10, y: 15 }, { x: 70, y: 20 }, { x: 20, y: 50 },
-      { x: 65, y: 55 }, { x: 15, y: 80 }, { x: 75, y: 85 },
-      { x: 40, y: 35 }, { x: 55, y: 70 },
+      { x: 8, y: 12 },   { x: 72, y: 18 },  { x: 25, y: 45 },
+      { x: 68, y: 52 },  { x: 12, y: 78 },  { x: 78, y: 82 },
+      { x: 42, y: 32 },  { x: 58, y: 68 },  { x: 18, y: 58 },
+      { x: 82, y: 38 },  { x: 35, y: 88 },  { x: 52, y: 22 },
     ];
     let index = 0;
 
     const interval = setInterval(() => {
       index = (index + 1) % positions.length;
       setPosition(positions[index]);
-    }, 12000); // 12 segundos
+    }, 15000); // 15 segundos - movimento suave durante vídeo inteiro
 
     return () => clearInterval(interval);
   }, [mode]);
 
+  // 🎨 MODO STATIC: +20% nitidez (de /20 para /30)
   if (mode === 'static') {
     return (
       <div className="absolute inset-0 z-50 pointer-events-none select-none overflow-hidden">
         <div className="absolute bottom-4 right-4">
-          <span className="font-mono tracking-wider text-sm sm:text-base text-white/20 whitespace-nowrap drop-shadow-md">
+          <span 
+            className="font-mono tracking-wider text-sm sm:text-base whitespace-nowrap"
+            style={{ 
+              color: 'rgba(255, 255, 255, 0.30)', // +20% nitidez (era 0.20)
+              textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 0, 0, 0.3)'
+            }}
+          >
             {text}
           </span>
         </div>
@@ -1125,6 +1136,7 @@ const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
     );
   }
 
+  // 🎨 MODO DIAGONAL: +20% nitidez (de /15 para /22)
   if (mode === 'diagonal') {
     return (
       <div className="absolute inset-0 z-50 pointer-events-none select-none overflow-hidden">
@@ -1132,7 +1144,13 @@ const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
           className="absolute inset-0 flex items-center justify-center"
           style={{ transform: 'rotate(-30deg)' }}
         >
-          <span className="font-mono tracking-[0.3em] text-base sm:text-lg text-white/15 whitespace-nowrap drop-shadow-md">
+          <span 
+            className="font-mono tracking-[0.3em] text-base sm:text-lg whitespace-nowrap"
+            style={{ 
+              color: 'rgba(255, 255, 255, 0.22)', // +20% nitidez (era 0.15)
+              textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 0, 0, 0.3)'
+            }}
+          >
             {text}
           </span>
         </div>
@@ -1140,14 +1158,22 @@ const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
     );
   }
 
+  // 🎨 MODO MOVING (PADRÃO): +20% nitidez (de /25 para /35)
+  // Permanece visível durante TODO o vídeo com alternância dinâmica
   return (
     <motion.div
       className="absolute z-50 pointer-events-none select-none"
       animate={{ left: `${position.x}%`, top: `${position.y}%` }}
-      transition={{ duration: 4, ease: "easeInOut" }}
+      transition={{ duration: 5, ease: "easeInOut" }} // Transição suave de 5s
     >
       <div className="flex flex-col items-center gap-0.5">
-        <span className="font-mono tracking-[0.15em] text-sm sm:text-base text-white/25 whitespace-nowrap drop-shadow-md">
+        <span 
+          className="font-mono tracking-[0.15em] text-sm sm:text-base whitespace-nowrap"
+          style={{ 
+            color: 'rgba(255, 255, 255, 0.35)', // +20% nitidez (era 0.25)
+            textShadow: '0 2px 4px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 0, 0, 0.4)'
+          }}
+        >
           {text}
         </span>
       </div>
