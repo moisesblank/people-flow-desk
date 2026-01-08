@@ -26,7 +26,7 @@ const SECRETS = {
   WORDPRESS_API_KEY: Deno.env.get('WORDPRESS_API_KEY'),
 };
 
-const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
+const PANDA_LIBRARY_ID = "c3e3c21e-7ce";
 
 serve(async (req) => {
   // LEI VI: CORS dinâmico via allowlist centralizado
