@@ -992,6 +992,7 @@ export default function GestaoCursos() {
                               onDelete={() => setDeleteDialog({ type: 'module', id: module.id, name: module.title })}
                               onToggleActive={() => updateModule.mutate({ id: module.id, is_published: !module.is_published })}
                               onImageUpdate={(moduleId, imageUrl) => updateModule.mutate({ id: moduleId, thumbnail_url: imageUrl })}
+                              onPositionUpdate={(moduleId, newPosition) => updateModule.mutate({ id: moduleId, position: newPosition })}
                             />
                           ))}
                         </div>
@@ -1378,6 +1379,7 @@ interface SortableModuleItemProps {
   onDelete: () => void;
   onToggleActive: () => void;
   onImageUpdate: (moduleId: string, imageUrl: string) => void;
+  onPositionUpdate: (moduleId: string, newPosition: number) => void;
 }
 
 function SortableModuleItem(props: SortableModuleItemProps) {
@@ -1416,15 +1418,23 @@ interface ModuleItemProps {
   onDelete: () => void;
   onToggleActive: () => void;
   onImageUpdate: (moduleId: string, imageUrl: string) => void;
+  onPositionUpdate: (moduleId: string, newPosition: number) => void;
   dragListeners?: any;
   dragAttributes?: any;
 }
 
-function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onToggleActive, onImageUpdate, dragListeners, dragAttributes }: ModuleItemProps) {
+function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onToggleActive, onImageUpdate, onPositionUpdate, dragListeners, dragAttributes }: ModuleItemProps) {
   const { data: lessons } = useLessons(isExpanded ? module.id : undefined);
   const [isUploading, setIsUploading] = useState(false);
+  const [positionInput, setPositionInput] = useState(String(module.position));
+  const [isSavingPosition, setIsSavingPosition] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  
+  // Sincronizar posição quando mudar externamente (ex: drag)
+  useEffect(() => {
+    setPositionInput(String(module.position));
+  }, [module.position]);
   
   const handleFileUpload = async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -1459,6 +1469,22 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+  
+  const handlePositionChange = async () => {
+    const newPos = parseInt(positionInput);
+    if (isNaN(newPos) || newPos < 0) {
+      setPositionInput(String(module.position));
+      return;
+    }
+    if (newPos === module.position) return;
+    
+    setIsSavingPosition(true);
+    try {
+      onPositionUpdate(module.id, newPos);
+    } finally {
+      setIsSavingPosition(false);
     }
   };
   
@@ -1508,7 +1534,7 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
             <div 
               className="relative w-[60px] h-[75px] rounded-lg overflow-hidden border border-green-500/30 bg-muted shrink-0 shadow-lg cursor-pointer hover:opacity-80 transition-opacity group"
               onClick={() => fileInputRef.current?.click()}
-              title="Clique para trocar a imagem"
+              title="Clique para trocar a imagem (752×940px)"
             >
               <img 
                 src={module.thumbnail_url} 
@@ -1542,11 +1568,26 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
             </div>
           )}
           
+          {/* INPUT DE POSIÇÃO INLINE — Editável em tempo real */}
+          <div className="flex flex-col items-center shrink-0">
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wider mb-0.5">Pos</span>
+            <Input
+              type="number"
+              min={0}
+              value={positionInput}
+              onChange={(e) => setPositionInput(e.target.value)}
+              onBlur={handlePositionChange}
+              onKeyDown={(e) => e.key === 'Enter' && handlePositionChange()}
+              className={cn(
+                "w-12 h-7 text-center text-xs font-mono p-0 border-purple-500/30 bg-purple-500/10 focus:ring-purple-500/50",
+                isSavingPosition && "opacity-50"
+              )}
+              disabled={isSavingPosition}
+            />
+          </div>
+          
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className="text-xs shrink-0 border-purple-500/30 text-purple-400">
-                #{module.position + 1}
-              </Badge>
               <h4 className="font-medium truncate">{module.title}</h4>
               {!module.is_published && (
                 <Badge variant="secondary" className="text-xs bg-muted/50">Inativo</Badge>
