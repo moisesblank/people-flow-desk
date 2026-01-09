@@ -633,7 +633,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
         {/* === MODULE THUMBNAIL — PREMIUM COVER === */}
         <div className={cn(
           "relative shrink-0 rounded-lg overflow-hidden",
-          "w-32 h-44 md:w-44 md:h-60 lg:w-48 lg:h-64",
+          "w-40 h-56 md:w-52 md:h-72 lg:w-60 lg:h-80",
           "bg-gradient-to-br from-purple-900/50 to-slate-900",
           "shadow-2xl shadow-black/60 border border-purple-500/30",
           !isLowEnd && "transition-transform duration-300",
@@ -899,7 +899,7 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
         "relative flex-shrink-0 cursor-pointer group/card",
-        "w-[144px] sm:w-[160px] md:w-[176px]",
+        "w-[120px] sm:w-[136px] md:w-[152px]",
         "rounded-xl overflow-hidden",
         "transition-all duration-300",
         !isLowEnd && isHovered && "scale-[1.05] z-20"
@@ -961,7 +961,7 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
           
           {/* Main Icon Container */}
           <div className={cn(
-            "relative w-16 h-16 rounded-xl flex items-center justify-center",
+            "relative w-12 h-12 rounded-lg flex items-center justify-center",
             "transition-all duration-300",
             isHovered 
               ? "bg-green-500 shadow-[0_0_30px_rgba(34,197,94,0.6)]"
@@ -977,12 +977,12 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
             
             {hasVideo ? (
               <Play className={cn(
-                "h-7 w-7 ml-0.5 transition-all duration-300",
+                "h-5 w-5 ml-0.5 transition-all duration-300",
                 isHovered ? "text-black scale-110" : "text-green-400"
               )} fill={isHovered ? "currentColor" : "none"} />
             ) : (
               <Video className={cn(
-                "h-6 w-6 transition-colors duration-300",
+                "h-5 w-5 transition-colors duration-300",
                 isHovered ? "text-black" : "text-green-500/60"
               )} />
             )}
