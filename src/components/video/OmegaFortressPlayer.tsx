@@ -114,6 +114,13 @@ export const OmegaFortressPlayer = memo(({
   onProgress,
   onError,
 }: OmegaFortressPlayerProps) => {
+  // ============================================
+  // 🛡️ VALIDAÇÃO P0: videoId OBRIGATÓRIO
+  // Se videoId for vazio/undefined/null, exibir fallback
+  // Evita erros "embed/undefined" no Panda/YouTube
+  // ============================================
+  const isValidVideoId = Boolean(videoId && videoId.trim() !== '' && videoId !== 'undefined' && videoId !== 'null');
+  
   const { user } = useAuth();
   const { isOwner, isAdmin, isBeta, roleLabel, isFuncionarioOrAbove } = useRolePermissions();
   const { isMobile, isTouch } = useDeviceConstitution();
@@ -964,6 +971,39 @@ export const OmegaFortressPlayer = memo(({
       default: return 'bg-green-500';
     }
   }, [riskLevel]);
+
+  // ============================================
+  // 🛡️ P0 FALLBACK: VideoId inválido - NÃO renderizar player
+  // Evita erros "embed/undefined" no Panda/YouTube
+  // ============================================
+  if (!isValidVideoId) {
+    return (
+      <div
+        className={cn(
+          "relative bg-black rounded-xl overflow-hidden",
+          "ring-1 ring-white/10 flex items-center justify-center",
+          className
+        )}
+      >
+        <div className="aspect-video w-full flex flex-col items-center justify-center gap-4 text-center p-8">
+          <div className="w-20 h-20 rounded-full bg-muted/20 flex items-center justify-center">
+            <AlertTriangle className="w-10 h-10 text-yellow-500/80" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-lg font-semibold text-white/90">Vídeo não disponível</h3>
+            <p className="text-sm text-white/60 max-w-md">
+              Esta aula ainda não possui um vídeo vinculado ou o identificador do vídeo é inválido.
+            </p>
+          </div>
+          {lessonId && (
+            <p className="text-xs text-white/40 font-mono">
+              Lesson ID: {lessonId}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // ============================================
   // RENDER
