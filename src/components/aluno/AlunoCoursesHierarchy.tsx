@@ -675,6 +675,16 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
+  // 🛡️ HOOKS RULE FIX: useMemo MUST be called unconditionally (before any returns)
+  const lessonRows = useMemo(() => {
+    if (!lessons || lessons.length === 0) return [];
+    const totalRows = Math.ceil(lessons.length / 8);
+    return Array.from({ length: totalRows }, (_, rowIndex) => ({
+      rowIndex,
+      totalRows,
+    }));
+  }, [lessons]);
+
   const updateScrollButtons = useCallback(() => {
     if (!scrollRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
@@ -960,21 +970,18 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
             </div>
           ) : lessons && lessons.length > 0 ? (
             <div className="py-6 space-y-6">
-              {/* Split lessons into rows of 8 - Memoized row generation */}
-              {useMemo(() => {
-                const totalRows = Math.ceil(lessons.length / 8);
-                return Array.from({ length: totalRows }, (_, rowIndex) => (
-                  <LazyVideoRow
-                    key={`row-${rowIndex}`}
-                    lessons={lessons}
-                    rowIndex={rowIndex}
-                    totalRows={totalRows}
-                    onPlayLesson={onPlayLesson}
-                    isLowEnd={isLowEnd}
-                    scrollRef={rowIndex === 0 ? scrollRef : undefined}
-                  />
-                ));
-              }, [lessons, onPlayLesson, isLowEnd])}
+              {/* Split lessons into rows of 8 - using pre-calculated lessonRows */}
+              {lessonRows.map(({ rowIndex, totalRows }) => (
+                <LazyVideoRow
+                  key={`row-${rowIndex}`}
+                  lessons={lessons}
+                  rowIndex={rowIndex}
+                  totalRows={totalRows}
+                  onPlayLesson={onPlayLesson}
+                  isLowEnd={isLowEnd}
+                  scrollRef={rowIndex === 0 ? scrollRef : undefined}
+                />
+              ))}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-slate-500">
