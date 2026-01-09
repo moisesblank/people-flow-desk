@@ -92,13 +92,41 @@ serve(async (req) => {
     }
 
     // ============================================
-    // URL SIMPLES — IGUAL AO SITE ANTIGO
-    // Proteção é feita pelo Panda verificando domínio de origem
-    // Domínios na whitelist: pro.moisesmedeiros.com.br, *.lovableproject.com
+    // ✅ DRM URL (HMAC) — quando DRM está ativo
+    // Se a chave não estiver configurada, cai no modo simples (whitelist)
     // ============================================
-    const signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}`;
+    const PANDA_DRM_SECRET_KEY = Deno.env.get('PANDA_DRM_SECRET_KEY');
 
-    console.log(`[get-panda-signed-url] URL SIMPLES: ${signedUrl}`);
+    let signedUrl: string;
+
+    if (PANDA_DRM_SECRET_KEY) {
+      const expiresAt = Math.floor(Date.now() / 1000) + (15 * 60); // 15 minutos
+
+      const encoder = new TextEncoder();
+      const data = encoder.encode(`${videoId}${expiresAt}`);
+      const keyData = encoder.encode(PANDA_DRM_SECRET_KEY);
+
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        keyData,
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
+      );
+
+      const signature = await crypto.subtle.sign('HMAC', cryptoKey, data);
+      const token = btoa(String.fromCharCode(...new Uint8Array(signature)))
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+
+      signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&token=${token}&expires=${expiresAt}`;
+      console.log(`[get-panda-signed-url] URL DRM (HMAC): ${signedUrl}`);
+    } else {
+      // Modo simples — legado (whitelist por domínio)
+      signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}`;
+      console.log(`[get-panda-signed-url] URL SIMPLES: ${signedUrl}`);
+    }
 
     // Buscar dados para watermark (opcional, para exibição no frontend)
     let watermarkData = null;
