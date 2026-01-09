@@ -190,73 +190,121 @@ function useLMSRealtime() {
 }
 
 // ============================================
-// HUD STAT ORB
+// 🎯 HUD STAT ORB — YEAR 2300 CINEMATIC DESIGN
+// Orbes flutuantes com glow holográfico intenso
 // ============================================
 function HudStatOrb({ 
   icon, 
   value, 
   label, 
-  color 
+  color,
+  glowColor
 }: { 
   icon: React.ReactNode; 
   value: number; 
   label: string; 
   color: string;
+  glowColor?: string;
 }) {
   return (
     <div className={cn(
-      "relative p-4 rounded-2xl border backdrop-blur-xl transition-all duration-500",
-      "bg-gradient-to-br hover:scale-[1.02]",
+      "group relative p-5 md:p-6 rounded-2xl border-2 backdrop-blur-xl transition-all duration-500",
+      "bg-gradient-to-br hover:scale-[1.03] hover:shadow-2xl",
+      "cursor-default select-none",
       color
     )}>
-      <div className="absolute inset-0 rounded-2xl opacity-50 blur-xl -z-10" 
-           style={{ background: `linear-gradient(135deg, currentColor, transparent)` }} />
+      {/* Outer glow ring */}
+      <div className={cn(
+        "absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-40 blur-xl transition-opacity duration-500 -z-10",
+        glowColor || "bg-primary"
+      )} />
       
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-xl bg-background/20 backdrop-blur-sm">
-          {icon}
+      {/* Animated corner accents */}
+      <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-current opacity-50 rounded-tl-xl" />
+      <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-current opacity-50 rounded-tr-xl" />
+      <div className="absolute bottom-0 left-0 w-4 h-4 border-l-2 border-b-2 border-current opacity-50 rounded-bl-xl" />
+      <div className="absolute bottom-0 right-0 w-4 h-4 border-r-2 border-b-2 border-current opacity-50 rounded-br-xl" />
+      
+      <div className="flex items-center gap-4">
+        {/* Icon container with pulse */}
+        <div className="relative">
+          <div className="absolute inset-0 rounded-xl bg-current opacity-20 blur-md animate-pulse" />
+          <div className="relative p-3 rounded-xl bg-background/30 backdrop-blur-sm border border-current/30 shadow-inner">
+            {icon}
+          </div>
         </div>
+        
+        {/* Value and label */}
         <div>
-          <p className="text-2xl font-bold tracking-tight">{value.toLocaleString()}</p>
-          <p className="text-xs opacity-70 uppercase tracking-wider">{label}</p>
+          <p className="text-3xl md:text-4xl font-black tracking-tight tabular-nums">
+            {value.toLocaleString()}
+          </p>
+          <p className="text-xs md:text-sm font-semibold uppercase tracking-widest opacity-80">{label}</p>
         </div>
+      </div>
+      
+      {/* Subtle scan line effect */}
+      <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none opacity-10">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent animate-[scan_3s_ease-in-out_infinite]" />
       </div>
     </div>
   );
 }
 
 // ============================================
-// LEGENDA VISUAL
+// 🎨 LEGENDA VISUAL — YEAR 2300 CINEMATIC
+// Barra de navegação hierárquica com glow
 // ============================================
 function HierarchyLegend() {
   return (
-    <div className="flex flex-wrap items-center gap-2 p-3 rounded-xl bg-gradient-to-r from-purple-500/5 via-cyan-500/5 to-pink-500/5 border border-border/30">
-      <span className="text-xs text-muted-foreground mr-2">📚 Navegue:</span>
-      <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
-        <GraduationCap className="h-3 w-3 mr-1" />
-        Curso
-      </Badge>
-      <ChevronRight className="h-3 w-3 text-muted-foreground" />
-      <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30">
-        <FolderOpen className="h-3 w-3 mr-1" />
-        Subcategoria
-      </Badge>
-      <ChevronRight className="h-3 w-3 text-muted-foreground" />
-      <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30">
-        <Layers className="h-3 w-3 mr-1" />
-        Módulo
-      </Badge>
-      <ChevronRight className="h-3 w-3 text-muted-foreground" />
-      <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
-        <PlayCircle className="h-3 w-3 mr-1" />
-        Aulas
-      </Badge>
+    <div className="relative p-4 rounded-2xl bg-gradient-to-r from-purple-500/10 via-cyan-500/10 to-green-500/10 border-2 border-border/40 backdrop-blur-xl overflow-hidden">
+      {/* Background glow orbs */}
+      <div className="absolute top-0 left-1/4 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -z-10" />
+      <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl -z-10" />
+      
+      <div className="flex flex-wrap items-center gap-3 justify-center">
+        <span className="text-sm font-bold text-foreground/80 mr-2 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-purple-400 animate-pulse" />
+          NAVEGAÇÃO:
+        </span>
+        
+        {/* Curso */}
+        <Badge className="px-4 py-2 text-sm bg-purple-500/30 text-purple-200 border-2 border-purple-500/50 shadow-lg shadow-purple-500/20 hover:scale-105 transition-transform">
+          <GraduationCap className="h-4 w-4 mr-2" />
+          Curso
+        </Badge>
+        
+        <ChevronRight className="h-5 w-5 text-purple-400" />
+        
+        {/* Subcategoria */}
+        <Badge className="px-4 py-2 text-sm bg-amber-500/30 text-amber-200 border-2 border-amber-500/50 shadow-lg shadow-amber-500/20 hover:scale-105 transition-transform">
+          <FolderOpen className="h-4 w-4 mr-2" />
+          Subcategoria
+        </Badge>
+        
+        <ChevronRight className="h-5 w-5 text-amber-400" />
+        
+        {/* Módulo */}
+        <Badge className="px-4 py-2 text-sm bg-cyan-500/30 text-cyan-200 border-2 border-cyan-500/50 shadow-lg shadow-cyan-500/20 hover:scale-105 transition-transform">
+          <Layers className="h-4 w-4 mr-2" />
+          Módulo
+        </Badge>
+        
+        <ChevronRight className="h-5 w-5 text-cyan-400" />
+        
+        {/* Aulas */}
+        <Badge className="px-4 py-2 text-sm bg-green-500/30 text-green-200 border-2 border-green-500/50 shadow-lg shadow-green-500/20 hover:scale-105 transition-transform">
+          <PlayCircle className="h-4 w-4 mr-2" />
+          Aulas
+        </Badge>
+      </div>
     </div>
   );
 }
 
 // ============================================
-// COURSE SECTION
+// 📚 COURSE SECTION — YEAR 2300 CINEMATIC CARD
+// Card de curso com design holográfico premium
 // ============================================
 function CourseSection({ 
   course, 
@@ -279,52 +327,73 @@ function CourseSection({
 
   return (
     <Card className={cn(
-      "overflow-hidden transition-all duration-300 animate-fade-in",
-      "bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-xl",
-      "border-purple-500/20 hover:border-purple-500/40",
-      "shadow-lg shadow-purple-500/5"
+      "group/card relative overflow-hidden transition-all duration-500 animate-fade-in",
+      "bg-gradient-to-br from-card via-card/95 to-purple-950/20 backdrop-blur-2xl",
+      "border-2 border-purple-500/30 hover:border-purple-400/60",
+      "shadow-2xl shadow-purple-500/10 hover:shadow-purple-500/20",
+      "rounded-3xl"
     )}>
+      {/* Holographic corner accents */}
+      <div className="absolute top-0 left-0 w-20 h-20 border-l-4 border-t-4 border-purple-500/40 rounded-tl-3xl pointer-events-none" />
+      <div className="absolute top-0 right-0 w-20 h-20 border-r-4 border-t-4 border-pink-500/40 rounded-tr-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-20 h-20 border-l-4 border-b-4 border-purple-500/40 rounded-bl-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-20 h-20 border-r-4 border-b-4 border-pink-500/40 rounded-br-3xl pointer-events-none" />
+      
+      {/* Background glow on hover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 via-transparent to-pink-500/0 group-hover/card:from-purple-500/5 group-hover/card:to-pink-500/5 transition-all duration-500 pointer-events-none" />
+      
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer bg-gradient-to-r from-purple-500/10 via-transparent to-pink-500/10 border-b border-border/30 hover:from-purple-500/15 hover:to-pink-500/15 transition-all">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+          <CardHeader className="cursor-pointer relative z-10 py-6 px-6 bg-gradient-to-r from-purple-500/15 via-purple-500/5 to-pink-500/15 border-b-2 border-purple-500/20 hover:from-purple-500/25 hover:to-pink-500/25 transition-all duration-300">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-5">
+                {/* Animated icon orb */}
                 <div className="relative">
-                  <div className="absolute inset-0 bg-purple-500/20 rounded-xl blur-xl animate-pulse" />
-                  <div className="relative p-3 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30">
-                    <GraduationCap className="h-6 w-6 text-purple-400" />
+                  <div className="absolute inset-0 bg-purple-500/30 rounded-2xl blur-2xl animate-pulse" />
+                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-purple-500/30 to-pink-500/30 border-2 border-purple-500/50 shadow-xl shadow-purple-500/20">
+                    <GraduationCap className="h-8 w-8 text-purple-300" />
                   </div>
                 </div>
                 
-                <div>
-                  <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <div className="space-y-2">
+                  <CardTitle className="text-2xl md:text-3xl font-black flex items-center gap-3 flex-wrap">
                     {course?.title || 'Sem Curso'}
-                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30 text-xs">
-                      <Eye className="h-3 w-3 mr-1" />
-                      Disponível
+                    <Badge className="px-3 py-1 text-sm bg-green-500/30 text-green-300 border-2 border-green-500/50 shadow-lg shadow-green-500/20">
+                      <Eye className="h-4 w-4 mr-1" />
+                      ATIVO
                     </Badge>
                   </CardTitle>
-                  <CardDescription className="mt-1 flex items-center gap-3 text-sm">
-                    <span className="flex items-center gap-1">
-                      <Layers className="h-3.5 w-3.5 text-cyan-400" />
-                      <strong className="text-foreground">{totalModules}</strong> módulos
-                    </span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="flex items-center gap-1">
-                      <FolderOpen className="h-3.5 w-3.5 text-amber-400" />
-                      <strong className="text-foreground">{totalSubcats}</strong> subcategorias
-                    </span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="flex items-center gap-1">
-                      <PlayCircle className="h-3.5 w-3.5 text-green-400" />
-                      <strong className="text-foreground">{totalLessons}</strong> aulas
-                    </span>
-                  </CardDescription>
+                  
+                  {/* Stats row */}
+                  <div className="flex items-center gap-4 flex-wrap">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-cyan-500/20 border border-cyan-500/30">
+                      <Layers className="h-4 w-4 text-cyan-400" />
+                      <span className="text-lg font-bold text-cyan-300">{totalModules}</span>
+                      <span className="text-xs text-cyan-400/80 uppercase tracking-wide">módulos</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-500/30">
+                      <FolderOpen className="h-4 w-4 text-amber-400" />
+                      <span className="text-lg font-bold text-amber-300">{totalSubcats}</span>
+                      <span className="text-xs text-amber-400/80 uppercase tracking-wide">subcategorias</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-green-500/20 border border-green-500/30">
+                      <PlayCircle className="h-4 w-4 text-green-400" />
+                      <span className="text-lg font-bold text-green-300">{totalLessons}</span>
+                      <span className="text-xs text-green-400/80 uppercase tracking-wide">aulas</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {/* Toggle button */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-12 w-12 rounded-xl border-2 border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/30 hover:border-purple-400/50 transition-all"
+              >
+                {isOpen ? <ChevronUp className="h-6 w-6 text-purple-300" /> : <ChevronDown className="h-6 w-6 text-purple-300" />}
               </Button>
             </div>
           </CardHeader>
@@ -332,8 +401,8 @@ function CourseSection({
 
         <CollapsibleContent>
           <CardContent className="p-0">
-            <ScrollArea className="h-auto max-h-[600px]">
-              <div className="p-4 space-y-4">
+            <ScrollArea className="h-auto max-h-[700px]">
+              <div className="p-5 space-y-5">
                 {subcategoryGroups.map(({ subcategory, modules: groupModules }) => (
                   <SubcategorySection
                     key={subcategory || 'default'}
@@ -351,10 +420,10 @@ function CourseSection({
       </Collapsible>
     </Card>
   );
-}
 
 // ============================================
-// SUBCATEGORY SECTION
+// 📂 SUBCATEGORY SECTION — YEAR 2300 CINEMATIC
+// Agrupador visual com design holográfico
 // ============================================
 function SubcategorySection({
   subcategory,
@@ -373,30 +442,40 @@ function SubcategorySection({
   const totalLessons = modules.reduce((a, m) => a + (m._count?.lessons || 0), 0);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
-          <div className="flex items-center gap-3 px-3 py-2 rounded-xl cursor-pointer bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 hover:border-amber-500/40 transition-all">
-            <div className="p-1.5 rounded-lg bg-amber-500/20">
-              <FolderOpen className="h-4 w-4 text-amber-400" />
+          <div className="group flex items-center gap-4 px-4 py-3 rounded-2xl cursor-pointer bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-2 border-amber-500/30 hover:border-amber-400/60 hover:shadow-lg hover:shadow-amber-500/10 transition-all duration-300">
+            {/* Icon with glow */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-amber-500/30 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative p-2.5 rounded-xl bg-amber-500/30 border border-amber-500/40">
+                <FolderOpen className="h-5 w-5 text-amber-300" />
+              </div>
             </div>
-            <span className="font-semibold text-amber-300 flex-1">
+            
+            <span className="font-bold text-lg text-amber-200 flex-1">
               {subcategory || '📁 Geral'}
             </span>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs border-amber-500/30 text-amber-400 bg-amber-500/10">
-                {modules.length} módulo{modules.length !== 1 ? 's' : ''}
+            
+            <div className="flex items-center gap-3">
+              <Badge className="px-3 py-1.5 text-sm bg-amber-500/25 text-amber-200 border-2 border-amber-500/40 shadow-md">
+                <Layers className="h-4 w-4 mr-1" />
+                {modules.length}
               </Badge>
-              <Badge variant="outline" className="text-xs border-green-500/30 text-green-400 bg-green-500/10">
-                {totalLessons} aula{totalLessons !== 1 ? 's' : ''}
+              <Badge className="px-3 py-1.5 text-sm bg-green-500/25 text-green-200 border-2 border-green-500/40 shadow-md">
+                <PlayCircle className="h-4 w-4 mr-1" />
+                {totalLessons}
               </Badge>
-              {isOpen ? <ChevronUp className="h-4 w-4 text-amber-400" /> : <ChevronDown className="h-4 w-4 text-amber-400" />}
+              <div className="p-1 rounded-lg bg-amber-500/20">
+                {isOpen ? <ChevronUp className="h-5 w-5 text-amber-300" /> : <ChevronDown className="h-5 w-5 text-amber-300" />}
+              </div>
             </div>
           </div>
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="pl-4 mt-2 space-y-2 border-l-2 border-amber-500/20">
+          <div className="pl-6 mt-3 space-y-3 border-l-4 border-amber-500/30 ml-4">
             {modules.map((module, idx) => (
               <ModuleCard
                 key={module.id}
@@ -583,7 +662,7 @@ function LessonItem({
 // ============================================
 // MAIN COMPONENT
 // ============================================
-export function AlunoCoursesHierarchy() {
+function AlunoCoursesHierarchy() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();

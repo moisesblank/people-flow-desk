@@ -9,7 +9,7 @@ import { memo } from 'react';
 import { GraduationCap } from 'lucide-react';
 import { CyberBackground } from '@/components/ui/cyber-background';
 import { FuturisticPageHeader } from '@/components/ui/futuristic-page-header';
-import { AlunoCoursesHierarchy } from '@/components/aluno/AlunoCoursesHierarchy';
+import AlunoCoursesHierarchy from '@/components/aluno/AlunoCoursesHierarchy';
 
 // ============================================
 // 🏛️ MAIN COMPONENT - Year 2300 Experience
