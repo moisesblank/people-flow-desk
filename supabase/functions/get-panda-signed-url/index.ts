@@ -91,52 +91,15 @@ serve(async (req) => {
       );
     }
 
-    // ============================================
-    // ✅ DRM URL (HMAC) — quando DRM está ativo
-    // Se a chave não estiver configurada, cai no modo simples (whitelist)
-    // ============================================
-    const PANDA_DRM_SECRET_KEY = Deno.env.get('PANDA_DRM_SECRET_KEY');
-
-    let signedUrl: string;
-
-    if (PANDA_DRM_SECRET_KEY) {
-      const expiresAt = Math.floor(Date.now() / 1000) + (15 * 60); // 15 minutos
-
-      const encoder = new TextEncoder();
-      const data = encoder.encode(`${videoId}${expiresAt}`);
-      const keyData = encoder.encode(PANDA_DRM_SECRET_KEY);
-
-      const cryptoKey = await crypto.subtle.importKey(
-        'raw',
-        keyData,
-        { name: 'HMAC', hash: 'SHA-256' },
-        false,
-        ['sign']
-      );
-
-      const signature = await crypto.subtle.sign('HMAC', cryptoKey, data);
-      const token = btoa(String.fromCharCode(...new Uint8Array(signature)))
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
-
-      signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&token=${token}&expires=${expiresAt}`;
-      console.log(`[get-panda-signed-url] URL DRM (HMAC): ${signedUrl}`);
-    } else {
-      // Modo simples — legado (whitelist por domínio)
-      signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}`;
-      console.log(`[get-panda-signed-url] URL SIMPLES: ${signedUrl}`);
-    }
-
-    // Buscar dados para watermark (opcional, para exibição no frontend)
-    let watermarkData = null;
+    // Buscar dados para watermark (opcional, para exibição no frontend e para o JWT do DRM)
+    let watermarkData: null | { name: string; cpf_last4: string; email: string } = null;
     try {
       const { data: profile } = await supabase
         .from('profiles')
         .select('nome, cpf, email')
         .eq('id', user.id)
         .maybeSingle();
-      
+
       if (profile) {
         watermarkData = {
           name: profile.nome || user.email?.split('@')[0] || 'Aluno',
@@ -146,6 +109,50 @@ serve(async (req) => {
       }
     } catch (e) {
       console.warn('[get-panda-signed-url] Erro ao buscar watermark:', e);
+    }
+
+    // ============================================
+    // ✅ DRM (Panda) — Token JWT via parâmetro `watermark`
+    // Quando DRM está ativo no Panda, o player espera um JWT assinado
+    // contendo `drm_group_id` e `exp`.
+    // Se as variáveis não estiverem configuradas, cai no modo simples (whitelist).
+    // ============================================
+
+    const PANDA_DRM_SECRET_KEY = Deno.env.get('PANDA_DRM_SECRET_KEY');
+    const PANDA_DRM_GROUP_ID = Deno.env.get('PANDA_DRM_GROUP_ID');
+
+    let signedUrl: string;
+
+    if (PANDA_DRM_SECRET_KEY && PANDA_DRM_GROUP_ID) {
+      // JWT exp em segundos
+      const expiresAt = Math.floor(Date.now() / 1000) + (15 * 60); // 15 minutos
+
+      // Import dinâmico para evitar custo quando DRM não está configurado
+      const { SignJWT } = await import('npm:jose@5.2.4');
+
+      // Identificador forense (vai embutido no watermark do Panda)
+      // Mantemos curto para evitar problemas de tamanho.
+      const forensicIdBase = watermarkData?.cpf_last4
+        ? `${watermarkData.name} • CPF****${watermarkData.cpf_last4}`
+        : (watermarkData?.name || user.email?.split('@')[0] || 'Aluno');
+
+      const jwt = await new SignJWT({
+        drm_group_id: PANDA_DRM_GROUP_ID,
+        // campos auxiliares aceitos pela Panda para composição do watermark
+        string1: forensicIdBase,
+        string2: watermarkData?.email || user.email || '',
+      })
+        .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+        .setExpirationTime(expiresAt)
+        .sign(new TextEncoder().encode(PANDA_DRM_SECRET_KEY));
+
+      // O Panda espera o token no parâmetro `watermark`
+      signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}&watermark=${encodeURIComponent(jwt)}`;
+      console.log(`[get-panda-signed-url] URL DRM (JWT): ${signedUrl}`);
+    } else {
+      // Modo simples — legado (whitelist por domínio)
+      signedUrl = `https://player-vz-${PANDA_LIBRARY_ID}.tv.pandavideo.com.br/embed/?v=${videoId}`;
+      console.log(`[get-panda-signed-url] URL SIMPLES: ${signedUrl}`);
     }
 
     // Log de acesso (opcional)
