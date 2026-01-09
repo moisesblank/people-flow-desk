@@ -575,7 +575,7 @@ const LazyVideoRow = memo(function LazyVideoRow({
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
-  const rowLessons = useMemo(() => lessons.slice(rowIndex * 8, (rowIndex + 1) * 8), [lessons, rowIndex]);
+  const rowLessons = useMemo(() => lessons.slice(rowIndex * 7, (rowIndex + 1) * 7), [lessons, rowIndex]);
   const rowNumber = rowIndex + 1;
 
   // Lazy load row via IntersectionObserver
@@ -607,7 +607,7 @@ const LazyVideoRow = memo(function LazyVideoRow({
           </span>
           <div className="flex-1 h-px bg-gradient-to-r from-slate-700/50 to-transparent" />
           <span className="text-xs text-slate-600 font-medium">
-            {rowIndex * 8 + 1}–{Math.min((rowIndex + 1) * 8, lessons.length)} de {lessons.length}
+            {rowIndex * 7 + 1}–{Math.min((rowIndex + 1) * 7, lessons.length)} de {lessons.length}
           </span>
         </div>
       )}
@@ -678,7 +678,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
   // 🛡️ HOOKS RULE FIX: useMemo MUST be called unconditionally (before any returns)
   const lessonRows = useMemo(() => {
     if (!lessons || lessons.length === 0) return [];
-    const totalRows = Math.ceil(lessons.length / 8);
+    const totalRows = Math.ceil(lessons.length / 7);
     return Array.from({ length: totalRows }, (_, rowIndex) => ({
       rowIndex,
       totalRows,
@@ -970,7 +970,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
             </div>
           ) : lessons && lessons.length > 0 ? (
             <div className="py-6 space-y-6">
-              {/* Split lessons into rows of 8 - using pre-calculated lessonRows */}
+              {/* Split lessons into rows of 7 - using pre-calculated lessonRows */}
               {lessonRows.map(({ rowIndex, totalRows }) => (
                 <LazyVideoRow
                   key={`row-${rowIndex}`}
