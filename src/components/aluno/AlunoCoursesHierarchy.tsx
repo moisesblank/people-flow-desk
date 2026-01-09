@@ -633,7 +633,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
         {/* === MODULE THUMBNAIL — PREMIUM COVER === */}
         <div className={cn(
           "relative shrink-0 rounded-lg overflow-hidden",
-          "w-24 h-32 md:w-32 md:h-44 lg:w-36 lg:h-48",
+          "w-32 h-44 md:w-44 md:h-60 lg:w-48 lg:h-64",
           "bg-gradient-to-br from-purple-900/50 to-slate-900",
           "shadow-2xl shadow-black/60 border border-purple-500/30",
           !isLowEnd && "transition-transform duration-300",
@@ -899,7 +899,7 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
         "relative flex-shrink-0 cursor-pointer group/card",
-        "w-[180px] sm:w-[200px] md:w-[220px]",
+        "w-[144px] sm:w-[160px] md:w-[176px]",
         "rounded-xl overflow-hidden",
         "transition-all duration-300",
         !isLowEnd && isHovered && "scale-[1.05] z-20"
@@ -950,7 +950,7 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
         </div>
         
         {/* === CENTER SECTION — Icon + Play === */}
-        <div className="relative flex items-center justify-center py-6 px-4">
+        <div className="relative flex items-center justify-center py-4 px-3">
           {/* Background Glow Effect */}
           <div className={cn(
             "absolute inset-0 transition-all duration-500",
@@ -961,7 +961,7 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
           
           {/* Main Icon Container */}
           <div className={cn(
-            "relative w-20 h-20 rounded-xl flex items-center justify-center",
+            "relative w-16 h-16 rounded-xl flex items-center justify-center",
             "transition-all duration-300",
             isHovered 
               ? "bg-green-500 shadow-[0_0_30px_rgba(34,197,94,0.6)]"
@@ -977,12 +977,12 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
             
             {hasVideo ? (
               <Play className={cn(
-                "h-9 w-9 ml-1 transition-all duration-300",
+                "h-7 w-7 ml-0.5 transition-all duration-300",
                 isHovered ? "text-black scale-110" : "text-green-400"
               )} fill={isHovered ? "currentColor" : "none"} />
             ) : (
               <Video className={cn(
-                "h-8 w-8 transition-colors duration-300",
+                "h-6 w-6 transition-colors duration-300",
                 isHovered ? "text-black" : "text-green-500/60"
               )} />
             )}
