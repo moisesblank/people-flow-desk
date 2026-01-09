@@ -21,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import { Chronolock } from '@/components/ui/chronolock';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
 import { OmegaFortressPlayer } from '@/components/video/OmegaFortressPlayer';
 import { LessonTabs } from '@/components/player/LessonTabs';
@@ -509,7 +510,10 @@ function ModuleCard({
 }) {
   const { data: lessons, isLoading } = useModuleLessons(isExpanded ? module.id : null);
 
-  return (
+  // 🔒 CHRONOLOCK: Módulos bloqueados temporalmente
+  const isChronolocked = module.title?.toLowerCase().includes('resolução provas enem 2025');
+
+  const cardContent = (
     <div className={cn(
       "rounded-xl border transition-all duration-300",
       "bg-gradient-to-br from-cyan-500/5 to-blue-500/5",
@@ -594,6 +598,21 @@ function ModuleCard({
       </Collapsible>
     </div>
   );
+
+  // 🔒 Retorna com ou sem Chronolock
+  if (isChronolocked) {
+    return (
+      <Chronolock 
+        message="LIBERADO APENAS DIA 31/01" 
+        subtitle="Este conteúdo estará disponível em breve"
+        variant="warning"
+      >
+        {cardContent}
+      </Chronolock>
+    );
+  }
+
+  return cardContent;
 }
 
 // ============================================
