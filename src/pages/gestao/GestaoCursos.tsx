@@ -6,7 +6,7 @@
 // 🔄 REALTIME: Sincronização entre múltiplos admins
 // ============================================
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -14,8 +14,27 @@ import {
   Layers, ChevronRight, ChevronDown, Eye, EyeOff, 
   Save, X, FolderOpen, PlayCircle, Clock, Users,
   MoreHorizontal, Copy, ArrowUpDown, Grip, Check, AlertTriangle,
-  Sparkles, Zap, Wand2, Upload
+  Sparkles, Zap, Wand2, Upload, GripVertical
 } from 'lucide-react';
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragStartEvent,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -470,6 +489,75 @@ export default function GestaoCursos() {
     }
   });
   
+  // ============================================
+  // DRAG & DROP — Reordenação de módulos
+  // ============================================
+  const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
+  
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+  
+  const moduleIds = useMemo(() => modules?.map(m => m.id) || [], [modules]);
+  
+  const activeModule = useMemo(() => {
+    if (!activeModuleId || !modules) return null;
+    return modules.find(m => m.id === activeModuleId) || null;
+  }, [activeModuleId, modules]);
+  
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveModuleId(event.active.id as string);
+  };
+  
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveModuleId(null);
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id || !modules) return;
+    
+    const oldIndex = modules.findIndex(m => m.id === active.id);
+    const newIndex = modules.findIndex(m => m.id === over.id);
+    
+    if (oldIndex === -1 || newIndex === -1) return;
+    
+    // Reordenar localmente para feedback imediato
+    const reorderedModules = arrayMove(modules, oldIndex, newIndex);
+    
+    // Atualizar posições no banco
+    try {
+      const updates = reorderedModules.map((mod, idx) => ({
+        id: mod.id,
+        position: idx
+      }));
+      
+      // Batch update - atualiza todos os módulos afetados
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('modules')
+          .update({ position: update.position })
+          .eq('id', update.id);
+        if (error) throw error;
+      }
+      
+      // Invalidar cache para refletir nova ordem
+      queryClient.invalidateQueries({ queryKey: ['gestao-modules', selectedCourse?.id] });
+      toast({ title: '✅ Ordem atualizada!' });
+    } catch (error: any) {
+      toast({ 
+        title: '❌ Erro ao reordenar', 
+        description: error.message, 
+        variant: 'destructive' 
+      });
+      // Refetch para restaurar ordem original
+      queryClient.invalidateQueries({ queryKey: ['gestao-modules', selectedCourse?.id] });
+    }
+  };
+  
   // Helpers
   const resetCourseForm = () => {
     setCourseForm({
@@ -882,21 +970,47 @@ export default function GestaoCursos() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="p-3 space-y-2">
-                      {modules?.map((module, index) => (
-                        <ModuleItem 
-                          key={module.id}
-                          module={module}
-                          index={index}
-                          isExpanded={expandedModules.has(module.id)}
-                          onToggle={() => toggleModuleExpand(module.id)}
-                          onEdit={() => openEditModule(module)}
-                          onDelete={() => setDeleteDialog({ type: 'module', id: module.id, name: module.title })}
-                          onToggleActive={() => updateModule.mutate({ id: module.id, is_published: !module.is_published })}
-                          onImageUpdate={(moduleId, imageUrl) => updateModule.mutate({ id: moduleId, thumbnail_url: imageUrl })}
-                        />
-                      ))}
-                    </div>
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragStart={handleDragStart}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <SortableContext
+                        items={moduleIds}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="p-3 space-y-2">
+                          {modules?.map((module, index) => (
+                            <SortableModuleItem 
+                              key={module.id}
+                              module={module}
+                              index={index}
+                              isExpanded={expandedModules.has(module.id)}
+                              onToggle={() => toggleModuleExpand(module.id)}
+                              onEdit={() => openEditModule(module)}
+                              onDelete={() => setDeleteDialog({ type: 'module', id: module.id, name: module.title })}
+                              onToggleActive={() => updateModule.mutate({ id: module.id, is_published: !module.is_published })}
+                              onImageUpdate={(moduleId, imageUrl) => updateModule.mutate({ id: moduleId, thumbnail_url: imageUrl })}
+                            />
+                          ))}
+                        </div>
+                      </SortableContext>
+                      
+                      <DragOverlay>
+                        {activeModule && (
+                          <div className="rounded-xl border bg-card/95 backdrop-blur-sm border-purple-500/50 shadow-2xl shadow-purple-500/25 p-3 opacity-90">
+                            <div className="flex items-center gap-3">
+                              <GripVertical className="h-5 w-5 text-purple-400" />
+                              <Badge variant="outline" className="text-xs border-purple-500/30 text-purple-400">
+                                #{activeModule.position + 1}
+                              </Badge>
+                              <span className="font-medium">{activeModule.title}</span>
+                            </div>
+                          </div>
+                        )}
+                      </DragOverlay>
+                    </DndContext>
                   )}
                 </ScrollArea>
               </CardContent>
@@ -1253,6 +1367,44 @@ export default function GestaoCursos() {
 }
 
 // ============================================
+// SORTABLE MODULE ITEM — DRAG & DROP
+// ============================================
+interface SortableModuleItemProps {
+  module: Module;
+  index: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onToggleActive: () => void;
+  onImageUpdate: (moduleId: string, imageUrl: string) => void;
+}
+
+function SortableModuleItem(props: SortableModuleItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: props.module.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <ModuleItem {...props} dragListeners={listeners} dragAttributes={attributes} />
+    </div>
+  );
+}
+
+// ============================================
 // COMPONENTE DE MÓDULO — CSS-ONLY ANIMATIONS
 // ============================================
 interface ModuleItemProps {
@@ -1264,9 +1416,11 @@ interface ModuleItemProps {
   onDelete: () => void;
   onToggleActive: () => void;
   onImageUpdate: (moduleId: string, imageUrl: string) => void;
+  dragListeners?: any;
+  dragAttributes?: any;
 }
 
-function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onToggleActive, onImageUpdate }: ModuleItemProps) {
+function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onToggleActive, onImageUpdate, dragListeners, dragAttributes }: ModuleItemProps) {
   const { data: lessons } = useLessons(isExpanded ? module.id : undefined);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1329,7 +1483,17 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
       />
       
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
-        <div className="flex items-center gap-3 p-3">
+        <div className="flex items-center gap-2 p-3">
+          {/* DRAG HANDLE — Arraste aqui para reordenar */}
+          <div 
+            {...dragListeners} 
+            {...dragAttributes}
+            className="cursor-grab active:cursor-grabbing p-1.5 rounded-lg hover:bg-purple-500/20 transition-colors shrink-0 touch-none"
+            title="Arraste para reordenar"
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground hover:text-purple-400 transition-colors" />
+          </div>
+          
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 hover:bg-purple-500/10">
               <ChevronRight className={cn(
