@@ -474,17 +474,27 @@ function SubcategorySection({
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="pl-6 mt-3 space-y-3 border-l-4 border-amber-500/30 ml-4">
-            {modules.map((module, idx) => (
-              <ModuleCard
-                key={module.id}
-                module={module}
-                index={idx}
-                isExpanded={expandedModules.has(module.id)}
-                onToggle={() => onToggleModule(module.id)}
-                onPlayLesson={onPlayLesson}
-              />
-            ))}
+          {/* 📦 GRID PREMIUM DE MÓDULOS — Capas grandes e organizadas */}
+          <div className="mt-4 px-2">
+            {/* Header do grid com contagem */}
+            <div className="flex items-center gap-3 mb-4 text-sm text-muted-foreground">
+              <Layers className="h-4 w-4 text-cyan-400" />
+              <span><strong className="text-cyan-400">{modules.length}</strong> módulos nesta subcategoria</span>
+            </div>
+            
+            {/* Grid responsivo de módulos - capas grandes e visíveis */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {modules.map((module, idx) => (
+                <ModuleCard
+                  key={module.id}
+                  module={module}
+                  index={idx}
+                  isExpanded={expandedModules.has(module.id)}
+                  onToggle={() => onToggleModule(module.id)}
+                  onPlayLesson={onPlayLesson}
+                />
+              ))}
+            </div>
           </div>
         </CollapsibleContent>
       </Collapsible>
@@ -493,9 +503,12 @@ function SubcategorySection({
 }
 
 // ============================================
-// MODULE CARD
+// 📦 MODULE CARD — YEAR 2300 PREMIUM VISUAL
+// Card de módulo com CAPA GRANDE e impacto visual
+// Segue o mesmo padrão premium aplicado às LessonCards
+// PERFORMANCE: Lazy loading de imagens + renderização progressiva
 // ============================================
-function ModuleCard({ 
+const ModuleCard = memo(function ModuleCard({ 
   module, 
   index, 
   isExpanded, 
@@ -509,109 +522,172 @@ function ModuleCard({
   onPlayLesson: (lesson: Lesson) => void;
 }) {
   const { data: lessons, isLoading } = useModuleLessons(isExpanded ? module.id : null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // 🚀 PERFORMANCE: IntersectionObserver para lazy loading inteligente
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            setIsInView(true);
+            observer.disconnect();
+          }
+        });
+      },
+      { rootMargin: '300px', threshold: 0 }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
 
   // 🔒 CHRONOLOCK: Módulos bloqueados temporalmente
   const isChronolocked = module.title?.toLowerCase().includes('resolução provas enem 2025');
+  const hasValidThumbnail = module.thumbnail_url && !imageError;
+  const lessonCount = module._count?.lessons || 0;
 
   const cardContent = (
-    <div className={cn(
-      "rounded-xl border transition-all duration-300",
-      "bg-gradient-to-br from-cyan-500/5 to-blue-500/5",
-      isExpanded ? "border-cyan-500/40 shadow-lg shadow-cyan-500/10" : "border-cyan-500/20",
-      "hover:border-cyan-500/50"
-    )}>
-      <Collapsible open={isExpanded} onOpenChange={onToggle}>
-        <div className="flex items-center gap-3 p-3">
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 hover:bg-cyan-500/20">
-              <ChevronRight className={cn("h-4 w-4 text-cyan-400 transition-transform", isExpanded && "rotate-90")} />
-            </Button>
-          </CollapsibleTrigger>
-
-          {/* Thumbnail */}
-          {module.thumbnail_url ? (
-            <div className="relative w-12 h-14 rounded-lg overflow-hidden border border-cyan-500/30 bg-muted shrink-0">
-              <img src={module.thumbnail_url} alt={module.title} className="w-full h-full object-cover" />
+    <div 
+      ref={cardRef}
+      className={cn(
+        "group relative flex flex-col cursor-pointer",
+        "rounded-2xl overflow-hidden",
+        "bg-gradient-to-br from-card via-card to-cyan-950/20",
+        "border-2 transition-all duration-300",
+        isExpanded 
+          ? "border-cyan-400/60 shadow-2xl shadow-cyan-500/30" 
+          : "border-cyan-500/20 hover:border-cyan-400/50",
+        "hover:shadow-xl hover:shadow-cyan-500/20",
+        "min-h-[320px]"
+      )}
+    >
+      {/* 🖼️ THUMBNAIL HERO — Grande e visível (proporção 3:4 para módulos) */}
+      <div className="relative aspect-[3/4] w-full overflow-hidden bg-gradient-to-br from-cyan-900/30 to-blue-900/30">
+        {/* Skeleton placeholder enquanto não está em view */}
+        {!isInView && (
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-800/20 to-blue-800/20 animate-pulse" />
+        )}
+        
+        {/* Imagem com lazy loading */}
+        {isInView && hasValidThumbnail && (
+          <img
+            src={module.thumbnail_url!}
+            alt={module.title}
+            className={cn(
+              "absolute inset-0 w-full h-full object-cover transition-all duration-500",
+              imageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-105"
+            )}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageError(true)}
+            loading="lazy"
+          />
+        )}
+        
+        {/* Fallback elegante quando não há capa */}
+        {(!hasValidThumbnail || !isInView) && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-cyan-900/50 to-blue-900/50">
+            <div className="p-6 rounded-3xl bg-cyan-500/20 backdrop-blur-sm border border-cyan-500/30 mb-4">
+              <Layers className="h-16 w-16 text-cyan-400" />
             </div>
+            <span className="text-cyan-400/70 text-sm font-medium">Módulo</span>
+          </div>
+        )}
+        
+        {/* Overlay gradiente para legibilidade */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+        
+        {/* Badge de posição no canto superior esquerdo */}
+        <div className="absolute top-3 left-3 z-10">
+          <Badge className="px-3 py-1.5 bg-cyan-500/90 text-white border-0 shadow-lg text-sm font-bold">
+            #{module.position + 1}
+          </Badge>
+        </div>
+        
+        {/* Contagem de aulas no canto superior direito */}
+        <div className="absolute top-3 right-3 z-10">
+          <Badge className="px-3 py-1.5 bg-green-500/90 text-white border-0 shadow-lg text-sm font-bold flex items-center gap-1.5">
+            <PlayCircle className="h-4 w-4" />
+            {lessonCount} {lessonCount === 1 ? 'aula' : 'aulas'}
+          </Badge>
+        </div>
+        
+        {/* Indicador de expansão */}
+        <div className="absolute bottom-3 right-3 z-10">
+          <div className={cn(
+            "p-2 rounded-full transition-all duration-300",
+            isExpanded 
+              ? "bg-cyan-500 text-white rotate-90" 
+              : "bg-white/20 backdrop-blur-sm text-white group-hover:bg-white/40"
+          )}>
+            <ChevronRight className="h-5 w-5" />
+          </div>
+        </div>
+        
+        {/* Botão de expansão/colapso visual (toda área clicável) */}
+        <button
+          onClick={onToggle}
+          className="absolute inset-0 z-0 cursor-pointer"
+          aria-label={isExpanded ? "Fechar módulo" : "Abrir módulo"}
+        />
+        
+        {/* Informações do módulo no rodapé da capa */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
+          <h4 className="font-bold text-lg text-white mb-1 line-clamp-2 drop-shadow-lg">
+            {module.title}
+          </h4>
+          {module.description && (
+            <p className="text-sm text-white/70 line-clamp-1">
+              {module.description}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* 🎬 AULAS DO MÓDULO — Renderização condicional */}
+      {isExpanded && (
+        <div className="p-4 bg-gradient-to-b from-cyan-950/30 to-card border-t border-cyan-500/20">
+          {isLoading ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              <div className="inline-block animate-spin h-5 w-5 border-2 border-green-500 border-t-transparent rounded-full mr-2" />
+              Carregando aulas...
+            </div>
+          ) : lessons && lessons.length > 0 ? (
+            <>
+              {/* Header do grid com contagem */}
+              <div className="flex items-center justify-between mb-4 px-1">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Video className="h-4 w-4 text-green-400" />
+                  <span><strong className="text-green-400">{lessons.length}</strong> aulas disponíveis</span>
+                </div>
+              </div>
+              
+              {/* Grid responsivo otimizado para aulas */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {lessons.map((lesson, idx) => (
+                  <LessonCard 
+                    key={lesson.id} 
+                    lesson={lesson} 
+                    index={idx}
+                    onPlay={() => onPlayLesson(lesson)}
+                  />
+                ))}
+              </div>
+            </>
           ) : (
-            <div className="w-12 h-14 rounded-lg border-2 border-dashed border-cyan-500/40 bg-cyan-500/10 flex items-center justify-center shrink-0">
-              <BookOpen className="h-4 w-4 text-cyan-400" />
+            <div className="py-6 text-center text-sm text-muted-foreground bg-card/30 rounded-xl border border-border/30">
+              <Video className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              Nenhuma aula disponível neste módulo
             </div>
           )}
-
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30 text-xs">
-                #{module.position + 1}
-              </Badge>
-              <h4 className="font-medium text-sm truncate">{module.title}</h4>
-            </div>
-            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <PlayCircle className="h-3 w-3 text-green-400" />
-                <strong className="text-green-400">{module._count?.lessons || 0}</strong> aulas
-              </span>
-            </div>
-          </div>
-
-          {/* Quick Play */}
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="hover:bg-green-500/20 hover:text-green-400"
-            onClick={(e) => { 
-              e.stopPropagation(); 
-              if (!isExpanded) onToggle();
-            }}
-          >
-            <Play className="h-4 w-4 mr-1" />
-            Ver Aulas
-          </Button>
         </div>
-
-        <CollapsibleContent>
-          <div className="px-3 pb-4">
-            {/* 🎬 GRID PREMIUM DE AULAS — Capas grandes e visíveis */}
-            {/* PERFORMANCE: Renderização progressiva - só renderiza quando módulo expandido */}
-            <div className="mt-4">
-              {isLoading ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">
-                  <div className="inline-block animate-spin h-5 w-5 border-2 border-green-500 border-t-transparent rounded-full mr-2" />
-                  Carregando aulas...
-                </div>
-              ) : lessons && lessons.length > 0 ? (
-                <>
-                  {/* Header do grid com contagem */}
-                  <div className="flex items-center justify-between mb-4 px-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Video className="h-4 w-4 text-green-400" />
-                      <span><strong className="text-green-400">{lessons.length}</strong> aulas neste módulo</span>
-                    </div>
-                  </div>
-                  
-                  {/* Grid responsivo otimizado */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                    {lessons.map((lesson, idx) => (
-                      <LessonCard 
-                        key={lesson.id} 
-                        lesson={lesson} 
-                        index={idx}
-                        onPlay={() => onPlayLesson(lesson)}
-                      />
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="py-8 text-center text-sm text-muted-foreground bg-card/30 rounded-xl border border-border/30">
-                  <Video className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  Nenhuma aula disponível neste módulo
-                </div>
-              )}
-            </div>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+      )}
     </div>
   );
 
@@ -629,7 +705,8 @@ function ModuleCard({
   }
 
   return cardContent;
-}
+});
+ModuleCard.displayName = 'ModuleCard';
 
 // ============================================
 // 🎬 LESSON CARD — YEAR 2300 PREMIUM VISUAL
