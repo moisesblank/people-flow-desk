@@ -631,29 +631,30 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
         )} />
         
         {/* === LEFT SIDE — MODULE NAME === */}
-        <div className="flex-1 flex flex-col justify-center items-end text-right py-2 pr-6 md:pr-8 min-w-0">
-          {/* Module Badge */}
-          <div className="mb-2">
+        <div className="flex-1 flex flex-col justify-center items-end text-right py-3 pr-8 md:pr-10 min-w-0">
+          {/* Module Badge - Premium */}
+          <div className="mb-3">
             <span className={cn(
-              "inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider",
-              "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-cyan-500/25"
+              "inline-flex items-center px-4 py-1.5 rounded-lg text-sm font-black uppercase tracking-widest",
+              "bg-gradient-to-r from-teal-500 via-cyan-500 to-teal-400 text-white",
+              "shadow-xl shadow-cyan-500/40 border border-cyan-300/30"
             )}>
               Módulo {String(module.position + 1).padStart(2, '0')}
             </span>
           </div>
           
-          {/* Title */}
+          {/* Title - Larger & Bolder */}
           <h3 className={cn(
-            "font-bold text-base md:text-lg lg:text-xl text-white leading-tight uppercase tracking-wide",
-            "line-clamp-2 transition-colors",
+            "font-black text-xl md:text-2xl lg:text-3xl text-white leading-tight uppercase tracking-wider",
+            "line-clamp-2 transition-colors drop-shadow-lg",
             isHovered && "text-cyan-200"
           )}>
             {module.title}
           </h3>
           
-          {/* Description */}
+          {/* Description - More visible */}
           {module.description && (
-            <span className="text-xs text-slate-400 line-clamp-1 mt-1 max-w-[300px]">{module.description}</span>
+            <span className="text-sm md:text-base text-slate-300 line-clamp-1 mt-2 max-w-[400px] font-medium">{module.description}</span>
           )}
         </div>
         
@@ -697,26 +698,26 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
         </div>
         
         {/* === RIGHT SIDE — EPISODES + BUTTONS === */}
-        <div className="flex-1 flex flex-col justify-center items-start text-left py-2 pl-6 md:pl-8 min-w-0">
-          {/* Episodes count */}
-          <div className="flex items-center gap-1.5 text-slate-300 mb-3">
-            <div className="w-5 h-5 rounded bg-slate-700/80 flex items-center justify-center">
-              <Play className="w-2.5 h-2.5 text-cyan-400" fill="currentColor" />
+        <div className="flex-1 flex flex-col justify-center items-start text-left py-3 pl-8 md:pl-10 min-w-0">
+          {/* Episodes count - Larger */}
+          <div className="flex items-center gap-2 text-slate-200 mb-4">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center shadow-lg border border-slate-600/50">
+              <Play className="w-3.5 h-3.5 text-cyan-400" fill="currentColor" />
             </div>
-            <span className="text-xs font-medium">{lessonCount} episódios</span>
+            <span className="text-base md:text-lg font-semibold tracking-wide">{lessonCount} episódios</span>
           </div>
           
-          {/* Progress Badge */}
+          {/* Progress Badge - Larger */}
           {progressPercent > 0 && (
             <div className={cn(
-              "flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium mb-3",
+              "flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold mb-4",
               progressPercent >= 100
-                ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-                : "bg-slate-700/50 text-slate-300 border border-slate-600/30"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-lg shadow-emerald-500/20"
+                : "bg-slate-700/60 text-slate-200 border border-slate-500/40"
             )}>
               {progressPercent >= 100 ? (
                 <>
-                  <span className="text-emerald-400">✓</span>
+                  <span className="text-emerald-400 text-base">✓</span>
                   <span>Concluído</span>
                 </>
               ) : (
@@ -725,8 +726,8 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Action Buttons - Larger & More Professional */}
+          <div className="flex items-center gap-3 flex-wrap">
             {/* Toggle Episodes Button */}
             <Button
               variant="ghost"
@@ -736,21 +737,21 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
                 onToggle();
               }}
               className={cn(
-                "h-8 px-3 text-xs font-medium rounded-md transition-all duration-200",
-                "bg-slate-800/80 border border-slate-600/40",
+                "h-10 px-5 text-sm font-bold rounded-lg transition-all duration-200",
+                "bg-slate-800/90 border-2 border-slate-600/60",
                 isExpanded
-                  ? "text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/20"
-                  : "text-slate-300 hover:text-cyan-300 hover:border-cyan-500/40"
+                  ? "text-cyan-300 border-cyan-500/50 hover:bg-cyan-500/20 shadow-lg shadow-cyan-500/20"
+                  : "text-slate-200 hover:text-cyan-300 hover:border-cyan-500/50"
               )}
             >
               <ChevronDown className={cn(
-                "w-3.5 h-3.5 mr-1.5 transition-transform duration-300",
+                "w-4 h-4 mr-2 transition-transform duration-300",
                 isExpanded && "rotate-180"
               )} />
               {isExpanded ? 'Ocultar episódios' : 'Ver episódios'}
             </Button>
             
-            {/* Watch Button - Netflix Red */}
+            {/* Watch Button - Netflix Red - Larger */}
             {lessonCount > 0 && (
               <Button
                 size="sm"
@@ -759,14 +760,14 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
                   // Play first lesson logic
                 }}
                 className={cn(
-                  "h-8 px-4 text-xs font-bold uppercase tracking-wide rounded-md",
-                  "bg-gradient-to-r from-red-600 to-red-500 text-white border-0",
-                  "hover:from-red-500 hover:to-red-400",
-                  "shadow-lg shadow-red-500/25 hover:shadow-red-500/40",
+                  "h-10 px-6 text-sm font-black uppercase tracking-wider rounded-lg",
+                  "bg-gradient-to-r from-red-600 via-red-500 to-red-600 text-white border-0",
+                  "hover:from-red-500 hover:via-red-400 hover:to-red-500",
+                  "shadow-xl shadow-red-500/40 hover:shadow-red-500/60",
                   "transition-all duration-200"
                 )}
               >
-                <Play className="w-3.5 h-3.5 mr-1.5" fill="currentColor" />
+                <Play className="w-4 h-4 mr-2" fill="currentColor" />
                 Assistir
               </Button>
             )}
