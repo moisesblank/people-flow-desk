@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { ModuleImageUploader } from './ModuleImageUploader';
 
 // ============================================
 // TIPOS
@@ -831,25 +832,13 @@ function ModuleFormContent({ form, setForm, courses, availableSubcategories }: {
         />
       </div>
 
-      {/* Imagem */}
-      <div className="space-y-2">
-        <Label className="flex items-center gap-2">
-          <Image className="h-4 w-4 text-green-400" />
-          Imagem de Capa
-          <Badge variant="outline" className="text-xs">752 × 940 px</Badge>
-        </Label>
-        <Input
-          value={form.thumbnail_url}
-          onChange={(e) => setForm(p => ({ ...p, thumbnail_url: e.target.value }))}
-          placeholder="/images/modules/meu-modulo.jpg"
-          className="bg-background/50"
-        />
-        {form.thumbnail_url && (
-          <div className="relative w-20 h-24 rounded-lg overflow-hidden border border-green-500/30 bg-muted">
-            <img src={form.thumbnail_url} alt="Preview" className="w-full h-full object-cover" />
-          </div>
-        )}
-      </div>
+      {/* Imagem - Upload Direto */}
+      <ModuleImageUploader
+        value={form.thumbnail_url}
+        onChange={(url) => setForm(p => ({ ...p, thumbnail_url: url }))}
+        showPreview={true}
+        previewSize="sm"
+      />
 
       {/* Posição e Status */}
       <div className="grid grid-cols-2 gap-4">

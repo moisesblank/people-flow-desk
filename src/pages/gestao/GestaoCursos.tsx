@@ -35,6 +35,7 @@ import { CyberBackground } from '@/components/ui/cyber-background';
 import { FuturisticPageHeader } from '@/components/ui/futuristic-page-header';
 import { ModulosGlobalManager } from '@/components/gestao/cursos/ModulosGlobalManager';
 import { CourseMasterMode } from '@/components/gestao/cursos/CourseMasterMode';
+import { ModuleImageUploader } from '@/components/gestao/cursos/ModuleImageUploader';
 
 // ============================================
 // TIPOS (baseados no schema real do banco)
@@ -1088,52 +1089,17 @@ export default function GestaoCursos() {
               {/* Layout 2 colunas: Preview | Formulário */}
               <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-8">
               
-              {/* Coluna Esquerda - Preview da Imagem */}
-              <div className="flex flex-col items-center gap-4 p-6 rounded-xl bg-muted/30 border border-border/30">
-                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Preview da Imagem</h3>
-                
-                {moduleForm.thumbnail_url ? (
-                  <div className="relative w-full max-w-[280px] aspect-[752/940] rounded-xl overflow-hidden border-2 border-green-500/50 shadow-lg shadow-green-500/10">
-                    <img 
-                      src={moduleForm.thumbnail_url} 
-                      alt="Preview do Módulo" 
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                    <Badge className="absolute bottom-2 right-2 bg-green-600 shadow-lg">
-                      <Check className="h-3 w-3 mr-1" />
-                      752×940 px
-                    </Badge>
-                  </div>
-                ) : (
-                  <div className="w-full max-w-[280px] aspect-[752/940] rounded-xl border-2 border-dashed border-destructive/50 bg-destructive/5 flex flex-col items-center justify-center gap-3 p-4">
-                    <AlertTriangle className="h-12 w-12 text-destructive/60" />
-                    <p className="text-sm text-destructive text-center font-medium">
-                      Imagem Obrigatória
-                    </p>
-                    <p className="text-xs text-muted-foreground text-center">
-                      Dimensões: 752 × 940 px
-                    </p>
-                  </div>
-                )}
-                
-                <div className="w-full space-y-2 mt-2">
-                  <Label htmlFor="module-thumbnail" className="text-sm font-medium">
-                    URL da Imagem *
-                  </Label>
-                  <Input
-                    id="module-thumbnail"
-                    value={moduleForm.thumbnail_url}
-                    onChange={(e) => setModuleForm(prev => ({ ...prev, thumbnail_url: e.target.value }))}
-                    placeholder="/images/modules/meu-modulo.jpg"
-                    className={cn(
-                      "bg-background/50 text-sm",
-                      !moduleForm.thumbnail_url && "border-destructive focus:ring-destructive"
-                    )}
-                  />
-                </div>
+              {/* Coluna Esquerda - Upload de Imagem */}
+              <div className="flex flex-col gap-4 p-6 rounded-xl bg-muted/30 border border-border/30">
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider text-center">
+                  Imagem do Módulo
+                </h3>
+                <ModuleImageUploader
+                  value={moduleForm.thumbnail_url}
+                  onChange={(url) => setModuleForm(prev => ({ ...prev, thumbnail_url: url }))}
+                  showPreview={true}
+                  previewSize="lg"
+                />
               </div>
               
               {/* Coluna Direita - Formulário */}
