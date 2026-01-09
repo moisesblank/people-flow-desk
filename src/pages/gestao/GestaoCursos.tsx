@@ -1077,7 +1077,7 @@ export default function GestaoCursos() {
             </DialogHeader>
             
             {/* Layout 2 colunas: Preview | Formulário */}
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-8 py-6 overflow-y-auto">
+            <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-8 py-6 overflow-y-auto">
               
               {/* Coluna Esquerda - Preview da Imagem */}
               <div className="flex flex-col items-center gap-4 p-6 rounded-xl bg-muted/30 border border-border/30">
