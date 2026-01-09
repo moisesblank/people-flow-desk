@@ -596,9 +596,9 @@ const ModuleCard = memo(function ModuleCard({
         "hover:shadow-md hover:shadow-cyan-500/10"
       )}
     >
-      {/* 🖼️ THUMBNAIL — Proporção original 3:4 (752x940) */}
-      {/* PADRÃO DEFINITIVO: Capa visível, proporcional, dimensão natural */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-gradient-to-br from-cyan-900/20 to-blue-900/20">
+      {/* 🖼️ THUMBNAIL — Proporção 25% menor que 3:4 (mais compacta) */}
+      {/* PADRÃO COMPACTO: Capa visível, proporcional, reduzida em 25% */}
+      <div className="relative aspect-[4/4] w-full overflow-hidden bg-gradient-to-br from-cyan-900/20 to-blue-900/20">
         {/* Skeleton placeholder enquanto não está em view */}
         {!isInView && (
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-800/10 to-blue-800/10" />
@@ -695,18 +695,18 @@ const ModuleCard = memo(function ModuleCard({
         </div>
       </div>
 
-      {/* 🎬 AULAS DO MÓDULO — Lista vertical compacta integrada */}
+      {/* 🎬 AULAS DO MÓDULO — Layout HORIZONTAL com scroll */}
       {isExpanded && (
-        <div className="border-t border-cyan-500/20 bg-gradient-to-b from-cyan-950/20 to-card/50">
+        <div className="border-t border-cyan-500/20 bg-gradient-to-b from-cyan-950/20 to-card/50 p-3">
           {isLoading ? (
             <div className="py-4 px-3 text-center text-sm text-muted-foreground">
               <div className="inline-block animate-spin h-4 w-4 border-2 border-cyan-500 border-t-transparent rounded-full mr-2" />
               Carregando...
             </div>
           ) : lessons && lessons.length > 0 ? (
-            <div className="divide-y divide-cyan-500/10">
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-cyan-500/30 scrollbar-track-transparent">
               {lessons.map((lesson, idx) => (
-                <LessonRow 
+                <LessonCardHorizontal 
                   key={lesson.id} 
                   lesson={lesson} 
                   index={idx}
@@ -743,7 +743,88 @@ const ModuleCard = memo(function ModuleCard({
 ModuleCard.displayName = 'ModuleCard';
 
 // ============================================
-// 🎬 LESSON ROW — LISTA VERTICAL COMPACTA
+// 🎬 LESSON CARD HORIZONTAL — CARD COMPACTO HORIZONTAL
+// Design: thumbnail + título + duração em card horizontal
+// PERFORMANCE: Memoizado para evitar re-renders
+// ============================================
+const LessonCardHorizontal = memo(function LessonCardHorizontal({ 
+  lesson, 
+  index,
+  onPlay
+}: { 
+  lesson: Lesson; 
+  index: number;
+  onPlay: () => void;
+}) {
+  const [imageError, setImageError] = useState(false);
+  
+  const formatDuration = (minutes: number | null) => {
+    if (!minutes) return '--';
+    const hrs = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    if (hrs > 0) return `${hrs}h${mins}m`;
+    return `${mins}min`;
+  };
+
+  const hasValidThumbnail = lesson.thumbnail_url && !imageError;
+
+  return (
+    <button
+      onClick={onPlay}
+      className={cn(
+        "shrink-0 flex flex-col w-36 rounded-lg overflow-hidden",
+        "bg-gradient-to-br from-cyan-900/30 to-blue-900/30",
+        "border border-cyan-500/20 hover:border-cyan-400/50",
+        "hover:shadow-md hover:shadow-cyan-500/20",
+        "transition-all duration-200 group cursor-pointer"
+      )}
+    >
+      {/* Thumbnail */}
+      <div className="relative w-full aspect-video bg-cyan-900/40">
+        {hasValidThumbnail ? (
+          <img
+            src={lesson.thumbnail_url!}
+            alt=""
+            onError={() => setImageError(true)}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Play className="h-6 w-6 text-cyan-500/50 group-hover:text-cyan-400 transition-colors" />
+          </div>
+        )}
+        
+        {/* Número da aula */}
+        <span className="absolute top-1 left-1 w-5 h-5 flex items-center justify-center rounded bg-black/70 text-white text-[10px] font-bold">
+          {index + 1}
+        </span>
+        
+        {/* Duração */}
+        <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/70 text-white text-[10px] font-medium flex items-center gap-1">
+          <Clock className="h-2.5 w-2.5" />
+          {formatDuration(lesson.duration_minutes)}
+        </span>
+        
+        {/* Overlay play */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
+          <PlayCircle className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+        </div>
+      </div>
+      
+      {/* Título */}
+      <div className="p-2">
+        <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
+          {lesson.title}
+        </p>
+      </div>
+    </button>
+  );
+});
+LessonCardHorizontal.displayName = 'LessonCardHorizontal';
+
+// ============================================
+// 🎬 LESSON ROW — LISTA VERTICAL COMPACTA (LEGACY)
 // Design clean: thumbnail pequena + título + duração
 // PERFORMANCE: Memoizado para evitar re-renders
 // ============================================
