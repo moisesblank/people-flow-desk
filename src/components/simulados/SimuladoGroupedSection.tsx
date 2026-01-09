@@ -239,10 +239,20 @@ function SimuladoGroupSectionInner({
   simulados,
   renderCard,
   shouldAnimate = true,
-  defaultOpen = true,
+  defaultOpen = false, // UX: começa fechado para performance
 }: SimuladoGroupSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [hasOpened, setHasOpened] = useState(defaultOpen); // Lazy: marca se já abriu
   const config = GROUP_CONFIGS[groupId];
+  
+  // Lazy rendering: só marca como "já abriu" quando expandir
+  const handleToggle = () => {
+    const newState = !isOpen;
+    setIsOpen(newState);
+    if (newState && !hasOpened) {
+      setHasOpened(true); // Uma vez aberto, mantém renderizado
+    }
+  };
 
   if (simulados.length === 0) return null;
 
@@ -259,7 +269,7 @@ function SimuladoGroupSectionInner({
     )}>
       {/* Header Clicável */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className={cn(
           "w-full flex items-center justify-between p-4 md:p-5",
           "hover:bg-white/5 transition-colors group"
@@ -305,17 +315,19 @@ function SimuladoGroupSectionInner({
         </div>
       </button>
 
-      {/* Conteúdo */}
-      <div className={cn(
-        "overflow-hidden transition-all duration-300",
-        isOpen ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
-      )}>
-        <div className="p-4 md:p-5 pt-0">
-          <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {simulados.map((simulado, index) => renderCard(simulado, index))}
+      {/* Conteúdo - LAZY RENDERING: só monta DOM quando já abriu pelo menos uma vez */}
+      {hasOpened && (
+        <div className={cn(
+          "overflow-hidden transition-all duration-300",
+          isOpen ? "max-h-[5000px] opacity-100" : "max-h-0 opacity-0"
+        )}>
+          <div className="p-4 md:p-5 pt-0">
+            <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {simulados.map((simulado, index) => renderCard(simulado, index))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -338,7 +350,16 @@ export const SimuladosBySubjectSection = memo(function SimuladosBySubjectSection
   renderCard,
   shouldAnimate = true,
 }: SimuladosBySubjectSectionProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false); // UX: começa fechado
+  const [hasOpened, setHasOpened] = useState(false); // Lazy rendering
+  
+  const handleToggle = () => {
+    const newState = !isOpen;
+    setIsOpen(newState);
+    if (newState && !hasOpened) {
+      setHasOpened(true);
+    }
+  };
 
   // Contar total de simulados nos subgrupos
   const totalCount = useMemo(() => {
@@ -359,7 +380,7 @@ export const SimuladosBySubjectSection = memo(function SimuladosBySubjectSection
     )}>
       {/* Header Principal */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className={cn(
           "w-full flex items-center justify-between p-5",
           "hover:bg-white/5 transition-colors"
@@ -395,11 +416,12 @@ export const SimuladosBySubjectSection = memo(function SimuladosBySubjectSection
         </div>
       </button>
 
-      {/* Subgrupos */}
-      <div className={cn(
-        "overflow-hidden transition-all duration-300",
-        isOpen ? "max-h-[10000px] opacity-100" : "max-h-0 opacity-0"
-      )}>
+      {/* Subgrupos - LAZY RENDERING */}
+      {hasOpened && (
+        <div className={cn(
+          "overflow-hidden transition-all duration-300",
+          isOpen ? "max-h-[10000px] opacity-100" : "max-h-0 opacity-0"
+        )}>
         <div className="p-4 md:p-5 pt-0 space-y-4">
           {/* Química Geral */}
           {groups.QUIMICA_GERAL?.length > 0 && (
@@ -435,6 +457,7 @@ export const SimuladosBySubjectSection = memo(function SimuladosBySubjectSection
           )}
         </div>
       </div>
+      )}
     </div>
   );
 });
