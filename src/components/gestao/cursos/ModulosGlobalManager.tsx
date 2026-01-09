@@ -626,6 +626,33 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
     }
   });
 
+  // Toggle publish mutation
+  const togglePublishMutation = useMutation({
+    mutationFn: async (newStatus: boolean) => {
+      const { error } = await supabase
+        .from('lessons')
+        .update({ is_published: newStatus })
+        .eq('id', lesson.id);
+      if (error) throw error;
+    },
+    onSuccess: (_, newStatus) => {
+      queryClient.invalidateQueries({ queryKey: ['gestao-module-lessons'] });
+      queryClient.invalidateQueries({ queryKey: ['gestao-all-modules'] });
+      queryClient.invalidateQueries({ queryKey: ['gestao-videoaulas'] });
+      toast({ 
+        title: newStatus ? 'Aula publicada' : 'Aula ocultada', 
+        description: newStatus ? 'A aula está visível para alunos.' : 'A aula foi ocultada dos alunos.' 
+      });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Erro ao alterar status', description: error.message, variant: 'destructive' });
+    }
+  });
+
+  const handleTogglePublish = () => {
+    togglePublishMutation.mutate(!lesson.is_published);
+  };
+
   const handleSave = () => {
     updateMutation.mutate(videoUrl);
   };
@@ -699,6 +726,23 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
             </Badge>
           )}
           
+          {/* Toggle Publish Button - Always Visible */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn(
+              "h-6 w-6 transition-colors",
+              lesson.is_published 
+                ? "text-green-400 hover:bg-amber-500/20 hover:text-amber-400" 
+                : "text-muted-foreground hover:bg-green-500/20 hover:text-green-400"
+            )}
+            onClick={handleTogglePublish}
+            disabled={togglePublishMutation.isPending}
+            title={lesson.is_published ? "Ocultar aula" : "Publicar aula"}
+          >
+            {lesson.is_published ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+          </Button>
+
           <Button
             variant="ghost"
             size="icon"
