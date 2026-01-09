@@ -78,6 +78,7 @@ interface Lesson {
   position: number;
   is_published: boolean;
   video_url: string | null;
+  panda_video_id: string | null;
   duration_minutes: number | null;
 }
 
@@ -166,7 +167,7 @@ function useModuleLessonsQuery(moduleId: string | null) {
       if (!moduleId) return [];
       const { data, error } = await supabase
         .from('lessons')
-        .select('id, module_id, title, position, is_published, video_url, duration_minutes')
+        .select('id, module_id, title, position, is_published, video_url, panda_video_id, duration_minutes')
         .eq('module_id', moduleId)
         .order('position', { ascending: true });
       
@@ -657,9 +658,22 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
     updateMutation.mutate(videoUrl);
   };
 
+  // Determina se há vídeo (video_url OU panda_video_id)
+  const hasVideo = !!(lesson.video_url || lesson.panda_video_id);
+  
+  // Gera URL do vídeo (prioriza video_url, fallback para Panda)
+  const getVideoUrl = () => {
+    if (lesson.video_url) return lesson.video_url;
+    if (lesson.panda_video_id) {
+      return `https://player-vz-c3e3c21e-7ce.tv.pandavideo.com.br/embed/?v=${lesson.panda_video_id}`;
+    }
+    return null;
+  };
+
   const handleOpenVideo = () => {
-    if (lesson.video_url) {
-      window.open(lesson.video_url, '_blank', 'noopener,noreferrer');
+    const url = getVideoUrl();
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
 
@@ -707,7 +721,7 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
         <>
           <span className="truncate flex-1 text-sm">{lesson.title}</span>
           
-          {lesson.video_url ? (
+          {hasVideo ? (
             <Button
               variant="ghost"
               size="sm"
