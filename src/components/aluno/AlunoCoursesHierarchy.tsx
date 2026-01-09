@@ -420,6 +420,7 @@ function CourseSection({
       </Collapsible>
     </Card>
   );
+}
 
 // ============================================
 // 📂 SUBCATEGORY SECTION — YEAR 2300 CINEMATIC
@@ -769,19 +770,25 @@ function AlunoCoursesHierarchy() {
 
   return (
     <div className="space-y-6">
-      {/* Video Player Modal */}
+      {/* Video Player Modal - SCROLLABLE CONTENT RULE */}
       <Dialog open={!!selectedLesson} onOpenChange={(open) => !open && closePlayer()}>
-        <DialogContent className="p-0">
+        <DialogContent className="max-w-[98vw] w-[98vw] h-[98vh] flex flex-col p-0 gap-0 overflow-hidden bg-card/95 backdrop-blur-xl border-2 border-purple-500/30">
           {selectedLesson && (
             <>
-              <DialogHeader>
-                <DialogTitle className="text-lg font-semibold line-clamp-1">
-                  {selectedLesson.title}
+              {/* Fixed Header */}
+              <DialogHeader className="shrink-0 px-6 py-4 border-b-2 border-purple-500/20 bg-gradient-to-r from-purple-500/10 via-card to-cyan-500/10">
+                <DialogTitle className="text-xl md:text-2xl font-bold flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500/30 to-cyan-500/30 border-2 border-purple-500/50 shadow-lg shadow-purple-500/20">
+                    <Video className="h-6 w-6 text-purple-300" />
+                  </div>
+                  <span className="line-clamp-1">{selectedLesson.title}</span>
                 </DialogTitle>
               </DialogHeader>
               
-              <DialogBody className="space-y-4">
-                <div className="aspect-video rounded-lg overflow-hidden bg-black">
+              {/* Scrollable Body */}
+              <DialogBody className="flex-1 min-h-0 overflow-y-auto px-6 py-6 space-y-6">
+                {/* Video Player */}
+                <div className="aspect-video rounded-2xl overflow-hidden bg-black border-2 border-cyan-500/30 shadow-2xl shadow-cyan-500/10">
                   <OmegaFortressPlayer
                     videoId={getVideoId(selectedLesson)}
                     type={getVideoType(selectedLesson)}
@@ -794,18 +801,25 @@ function AlunoCoursesHierarchy() {
                   />
                 </div>
 
-                <LessonTabs 
-                  lessonId={selectedLesson.id}
-                  lessonTitle={selectedLesson.title}
-                />
+                {/* Lesson Tabs */}
+                <div className="rounded-2xl border-2 border-border/30 bg-card/50 backdrop-blur-sm overflow-hidden">
+                  <LessonTabs 
+                    lessonId={selectedLesson.id}
+                    lessonTitle={selectedLesson.title}
+                  />
+                </div>
 
+                {/* Description */}
                 {selectedLesson.description && (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base">Sobre esta aula</CardTitle>
+                  <Card className="bg-gradient-to-br from-card via-card to-purple-950/10 border-2 border-border/30 rounded-2xl">
+                    <CardHeader className="pb-2 border-b border-border/20">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <BookOpen className="h-5 w-5 text-purple-400" />
+                        Sobre esta aula
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">
+                    <CardContent className="pt-4">
+                      <p className="text-base text-muted-foreground leading-relaxed">
                         {selectedLesson.description}
                       </p>
                     </CardContent>
