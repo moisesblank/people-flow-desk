@@ -111,11 +111,12 @@ const GROUP_CONFIGS: Record<SimuladoGroupId, GroupConfig> = {
 
 // ============================================
 // 🔍 MAPEAMENTO DE SLUGS → GRUPOS
+// Slugs reais do banco de dados (Auditoria 2026-01-09)
 // ============================================
 
 const SLUG_MAPPINGS: Record<SimuladoGroupId, string[]> = {
   NIVELAMENTO: [
-    "teste-nivelamento",
+    "teste-nivelamento-eac0156d",
   ],
   MESES_EXTENSIVO: [
     "marco-9b0aaa2c",
@@ -129,46 +130,46 @@ const SLUG_MAPPINGS: Record<SimuladoGroupId, string[]> = {
     "novembro-3e35f55e",
   ],
   MESES_INTENSIVO: [
-    "mes-1-intensivo",
-    "mes-2-intensivo",
-    "mes-3-intensivo",
-    "mes-4-intensivo",
-    "mes-5-intensivo",
+    "mes-1-intensivo-187c9db6",
+    "mes-2-intensivo-d8309b62",
+    "mes-3-intensivo-78dccc3d",
+    "mes-4-intensivo-0ef7e9b2",
+    "mes-5-intensivo-800b31ce",
   ],
   QUIMICA_GERAL: [
-    "introducao-a-inorganica",
-    "atomistica",
-    "tabela-periodica",
-    "ligacoes-quimicas",
-    "nox",
-    "funcoes-inorganicas",
-    "balanceamento",
-    "reacoes-inorganicas",
-    "estequiometria",
-    "gases",
-    "calculos-quimicos",
+    "introducao-a-inorganica-5b022a6a",
+    "atomistica-3140a0aa",
+    "tabela-periodica-80f88af8",
+    "ligacoes-quimicas-bf415041",
+    "nox-9313f9f6",
+    "funcoes-inorganicas-8562aa6a",
+    "balanceamento-26ef98ba",
+    "reacoes-inorganicas-b7706728",
+    "estequiometria-d52f0ad2",
+    "gases-1cbb048b",
+    "calculos-quimicos-2d163db4",
   ],
   FISICO_QUIMICA: [
-    "solucoes",
-    "termoquimica",
-    "cinetica-quimica",
-    "equilibrio-quimico",
-    "equilibrio-ionico",
-    "solucao-tampao",
-    "eletroquimica",
-    "hidrolise",
-    "kps-produto-de-solubilidade",
-    "radioatividade",
-    "propriedades-coligativas-bb664bab", // Físico-química
+    "solucoes-2289be7e",
+    "termoquimica-4ec6f98a",
+    "cinetica-quimica-637cbc46",
+    "equilibrio-quimico-1e544890",
+    "equilibrio-ionico-fb06313c",
+    "solucao-tampao-c1fc11e2",
+    "eletroquimica-2cb900ce",
+    "hidrolise-a0106467",
+    "kps-produto-de-solubilidade-77f2dc94",
+    "radioatividade-d5ddbf83",
+    "propriedades-coligativas-bb664bab",
   ],
   QUIMICA_ORGANICA: [
-    "introducao-a-organica",
-    "funcoes-organicas",
-    "isomeria-plana",
-    "isomeria-espacial",
-    "propriedades-coligativas-44a9803f", // Orgânica
-    "reacoes-organicas",
-    "polimeros",
+    "introducao-a-organica-a5d25c5b",
+    "funcoes-organicas-50294a19",
+    "isomeria-plana-fac8b087",
+    "isomeria-espacial-9662a67f",
+    "propriedades-coligativas-44a9803f",
+    "reacoes-organicas-ba8153a6",
+    "polimeros-9ec5b7ff",
   ],
   OUTROS: [],
 };
@@ -233,7 +234,7 @@ interface SimuladoGroupSectionProps {
   defaultOpen?: boolean;
 }
 
-export const SimuladoGroupSection = memo(function SimuladoGroupSection({
+function SimuladoGroupSectionInner({
   groupId,
   simulados,
   renderCard,
@@ -317,7 +318,10 @@ export const SimuladoGroupSection = memo(function SimuladoGroupSection({
       </div>
     </div>
   );
-});
+}
+
+// Export memoized version
+export const SimuladoGroupSection = memo(SimuladoGroupSectionInner);
 
 // ============================================
 // 🧪 COMPONENTE GRUPO PAI "POR ASSUNTO"
