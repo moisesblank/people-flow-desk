@@ -769,9 +769,9 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
             </div>
           </div>
           
-          {/* Title - Cinematic */}
+          {/* Title - Cinematic (-20% font size) */}
           <h3 className={cn(
-            "font-black text-xl md:text-2xl lg:text-3xl xl:text-4xl text-white leading-[1.1] uppercase",
+            "font-black text-base md:text-lg lg:text-xl xl:text-2xl text-white leading-[1.1] uppercase",
             "tracking-wide line-clamp-2 transition-all duration-300",
             "drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]",
             isHovered && "text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-white to-cyan-200"
