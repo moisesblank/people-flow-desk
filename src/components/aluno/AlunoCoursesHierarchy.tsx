@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
 import { OmegaFortressPlayer } from '@/components/video/OmegaFortressPlayer';
 import { LessonTabs } from '@/components/player/LessonTabs';
 
@@ -692,17 +692,17 @@ export function AlunoCoursesHierarchy() {
     <div className="space-y-6">
       {/* Video Player Modal */}
       <Dialog open={!!selectedLesson} onOpenChange={(open) => !open && closePlayer()}>
-        <DialogContent className="flex flex-col p-0 overflow-hidden">
+        <DialogContent className="p-0">
           {selectedLesson && (
             <>
-              <DialogHeader className="p-4 pb-0 shrink-0">
+              <DialogHeader>
                 <DialogTitle className="text-lg font-semibold line-clamp-1">
                   {selectedLesson.title}
                 </DialogTitle>
               </DialogHeader>
               
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                <div className="aspect-video rounded-lg overflow-hidden bg-black shrink-0">
+              <DialogBody className="space-y-4">
+                <div className="aspect-video rounded-lg overflow-hidden bg-black">
                   <OmegaFortressPlayer
                     videoId={getVideoId(selectedLesson)}
                     type={getVideoType(selectedLesson)}
@@ -732,7 +732,7 @@ export function AlunoCoursesHierarchy() {
                     </CardContent>
                   </Card>
                 )}
-              </div>
+              </DialogBody>
             </>
           )}
         </DialogContent>
