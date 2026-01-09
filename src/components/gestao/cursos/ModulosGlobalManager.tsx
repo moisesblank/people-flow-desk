@@ -747,9 +747,56 @@ function ModuleCard({
 }) {
   const { data: lessons } = useModuleLessonsQuery(isExpanded ? module.id : null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isEditingPosition, setIsEditingPosition] = useState(false);
+  const [positionValue, setPositionValue] = useState(String(module.position + 1));
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const positionInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Handler para salvar nova posição
+  const handlePositionSave = async () => {
+    const newPos = parseInt(positionValue, 10);
+    if (isNaN(newPos) || newPos < 1) {
+      setPositionValue(String(module.position + 1));
+      setIsEditingPosition(false);
+      return;
+    }
+    const dbPosition = newPos - 1; // UI mostra 1-indexed, DB é 0-indexed
+    if (dbPosition === module.position) {
+      setIsEditingPosition(false);
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from('modules')
+        .update({ position: dbPosition })
+        .eq('id', module.id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['gestao-all-modules'] });
+      toast({ title: '✅ Posição atualizada', description: `Módulo movido para posição ${newPos}` });
+    } catch (err: any) {
+      console.error('[ModuleCard] Position update error:', err);
+      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+      setPositionValue(String(module.position + 1));
+    }
+    setIsEditingPosition(false);
+  };
+
+  const handlePositionKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handlePositionSave();
+    } else if (e.key === 'Escape') {
+      setPositionValue(String(module.position + 1));
+      setIsEditingPosition(false);
+    }
+  };
+
+  // Sincronizar quando module.position mudar externamente
+  useEffect(() => {
+    setPositionValue(String(module.position + 1));
+  }, [module.position]);
 
   // Upload handler direto na thumbnail
   const handleThumbnailUpload = async (file: File) => {
@@ -891,9 +938,29 @@ function ModuleCard({
           {/* Info */}
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
-              <Badge className="px-3 py-1 text-sm bg-cyan-500/30 text-cyan-200 border-2 border-cyan-500/50 shadow-md shadow-cyan-500/10">
-                #{module.position + 1}
-              </Badge>
+              {/* Posição EDITÁVEL inline */}
+              {isEditingPosition ? (
+                <input
+                  ref={positionInputRef}
+                  type="number"
+                  min={1}
+                  value={positionValue}
+                  onChange={(e) => setPositionValue(e.target.value)}
+                  onBlur={handlePositionSave}
+                  onKeyDown={handlePositionKeyDown}
+                  autoFocus
+                  className="w-14 h-7 px-2 text-sm font-bold text-center rounded-lg bg-cyan-500/30 text-cyan-200 border-2 border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <Badge 
+                  className="px-3 py-1 text-sm bg-cyan-500/30 text-cyan-200 border-2 border-cyan-500/50 shadow-md shadow-cyan-500/10 cursor-pointer hover:bg-cyan-500/50 hover:border-cyan-400 transition-all"
+                  onClick={(e) => { e.stopPropagation(); setIsEditingPosition(true); }}
+                  title="Clique para editar posição"
+                >
+                  #{module.position + 1}
+                </Badge>
+              )}
               <h4 className="font-bold text-base truncate">{module.title}</h4>
               {!module.is_published && (
                 <Badge className="px-2 py-1 text-xs bg-muted/50 text-muted-foreground border border-border/50">
