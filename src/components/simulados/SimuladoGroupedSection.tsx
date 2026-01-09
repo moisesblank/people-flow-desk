@@ -228,46 +228,80 @@ function SimuladoGroupSectionInner({
   return (
     <div className={cn(
       "group/section relative rounded-2xl overflow-hidden",
-      "bg-gradient-to-br from-card/95 via-card/80 to-card/90",
-      "border", config.borderColor, config.hoverBorder,
+      "bg-gradient-to-br from-black/60 via-card/90 to-black/50",
+      "border-2", config.borderColor, config.hoverBorder,
       "transition-[border-color,box-shadow] duration-300",
-      isOpen && "shadow-[0_0_35px_rgba(255,255,255,0.06)]",
+      isOpen && "shadow-[0_0_40px_rgba(255,255,255,0.08)]",
       config.glowColor
     )}>
-      {/* ✨ Subtle inner glow overlay */}
+      {/* 🌌 Background layers for depth */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Primary gradient overlay */}
+        <div className={cn(
+          "absolute inset-0 opacity-50",
+          "bg-gradient-to-br", config.bgGradient
+        )} />
+        {/* Radial spotlight effect */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(255,255,255,0.05)_0%,transparent_50%)]" />
+        {/* Bottom vignette */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
+      </div>
+      
+      {/* 🔲 Scanline texture - very subtle */}
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.03)_2px,rgba(255,255,255,0.03)_4px)]" />
+      
+      {/* ✨ Corner accents */}
       <div className={cn(
-        "absolute inset-0 opacity-40 pointer-events-none",
-        "bg-gradient-to-br", config.bgGradient
+        "absolute top-0 left-0 w-8 h-8 pointer-events-none opacity-40 group-hover/section:opacity-70 transition-opacity",
+        "border-l-2 border-t-2 rounded-tl-2xl",
+        config.borderColor.replace("border-", "border-l-").replace("/20", "/50"),
+        config.borderColor.replace("border-", "border-t-").replace("/20", "/50")
+      )} />
+      <div className={cn(
+        "absolute bottom-0 right-0 w-8 h-8 pointer-events-none opacity-40 group-hover/section:opacity-70 transition-opacity",
+        "border-r-2 border-b-2 rounded-br-2xl",
+        config.borderColor.replace("border-", "border-r-").replace("/20", "/50"),
+        config.borderColor.replace("border-", "border-b-").replace("/20", "/50")
       )} />
       
-      {/* Header - CSS transitions only */}
+      {/* Header */}
       <button
         onClick={handleToggle}
-        className="relative w-full flex items-center justify-between p-4 md:p-5 transition-colors duration-200 hover:bg-white/[0.03]"
+        className="relative w-full flex items-center justify-between p-4 md:p-5 transition-colors duration-200 hover:bg-white/[0.04] z-10"
       >
         {/* Left */}
         <div className="flex items-center gap-3 md:gap-4">
-          {/* Icon with elegant container */}
+          {/* Icon with glowing container */}
           <div className={cn(
-            "relative p-2.5 md:p-3 rounded-xl transition-transform duration-300",
-            "bg-gradient-to-br from-white/[0.08] to-white/[0.02]",
+            "relative p-2.5 md:p-3 rounded-xl transition-all duration-300",
+            "bg-gradient-to-br from-white/[0.1] via-white/[0.05] to-transparent",
             "border", config.borderColor,
-            "group-hover/section:scale-105"
+            "group-hover/section:scale-110",
+            "shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
           )}>
-            {/* Icon glow */}
+            {/* Icon glow pulse */}
             <div className={cn(
-              "absolute inset-0 rounded-xl opacity-60",
+              "absolute inset-0 rounded-xl opacity-70",
               "bg-gradient-to-br", config.bgGradient
             )} />
-            <Icon className={cn("w-5 h-5 md:w-6 md:h-6 relative z-10", config.iconColor)} />
+            {/* Outer glow on hover */}
+            <div className={cn(
+              "absolute -inset-1 rounded-xl opacity-0 group-hover/section:opacity-100 transition-opacity duration-500 blur-md",
+              "bg-gradient-to-br", config.bgGradient
+            )} />
+            <Icon className={cn("w-5 h-5 md:w-6 md:h-6 relative z-10 drop-shadow-lg", config.iconColor)} />
           </div>
           
           {/* Text */}
           <div className="text-left">
-            <h3 className="font-bold text-base md:text-lg text-foreground group-hover/section:text-white transition-colors duration-200">
+            <h3 className={cn(
+              "font-bold text-base md:text-lg transition-all duration-200",
+              "text-foreground group-hover/section:text-white",
+              "drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
+            )}>
               {config.label}
             </h3>
-            <p className="text-xs md:text-sm text-muted-foreground/50">
+            <p className="text-xs md:text-sm text-muted-foreground/60 group-hover/section:text-muted-foreground/80 transition-colors">
               {simulados.length} simulado{simulados.length > 1 ? "s" : ""} disponíve{simulados.length > 1 ? "is" : "l"}
             </p>
           </div>
@@ -275,33 +309,38 @@ function SimuladoGroupSectionInner({
 
         {/* Right */}
         <div className="flex items-center gap-2 md:gap-3">
-          {/* Badge Count - Premium style */}
+          {/* Badge Count - Premium holographic */}
           <div className={cn(
-            "hidden sm:flex items-center justify-center min-w-[2.25rem] h-8 px-3 rounded-full",
+            "hidden sm:flex items-center justify-center min-w-[2.5rem] h-9 px-3.5 rounded-full",
             config.badgeBg,
             "text-white font-bold text-sm",
-            "shadow-[0_4px_15px_rgba(0,0,0,0.3)]",
-            "transition-transform duration-300 group-hover/section:scale-105"
+            "shadow-[0_4px_20px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.2)]",
+            "transition-all duration-300 group-hover/section:scale-110 group-hover/section:shadow-[0_6px_25px_rgba(0,0,0,0.5)]"
           )}>
             {simulados.length}
           </div>
           
-          {/* Chevron - Elegant container */}
+          {/* Chevron - Elegant glass container */}
           <div className={cn(
-            "p-1.5 md:p-2 rounded-lg transition-all duration-300",
-            "bg-white/[0.06] border border-white/[0.08]",
-            "group-hover/section:bg-white/[0.1] group-hover/section:border-white/[0.12]",
-            isOpen && "rotate-180 bg-white/[0.1]"
+            "p-2 md:p-2.5 rounded-xl transition-all duration-300",
+            "bg-gradient-to-br from-white/[0.08] to-white/[0.02]",
+            "border border-white/[0.1]",
+            "shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]",
+            "group-hover/section:from-white/[0.12] group-hover/section:to-white/[0.04]",
+            isOpen && "rotate-180 from-white/[0.12] to-white/[0.04]"
           )}>
-            <ChevronDown className={cn("w-4 h-4 md:w-5 md:h-5 transition-colors", config.iconColor)} />
+            <ChevronDown className={cn("w-4 h-4 md:w-5 md:h-5 drop-shadow", config.iconColor)} />
           </div>
         </div>
         
-        {/* Bottom accent line on hover */}
+        {/* Bottom accent line - animated gradient */}
         <div className={cn(
-          "absolute bottom-0 left-0 right-0 h-[1px]",
-          "bg-gradient-to-r from-transparent via-white/[0.15] to-transparent",
-          "opacity-0 group-hover/section:opacity-100 transition-opacity duration-300"
+          "absolute bottom-0 left-4 right-4 h-[2px] rounded-full",
+          "bg-gradient-to-r from-transparent", 
+          config.badgeBg.replace("bg-gradient-to-r", "via-").replace("from-", "").split(" ")[0] + "/60",
+          "to-transparent",
+          "opacity-0 group-hover/section:opacity-100 transition-opacity duration-300",
+          "shadow-[0_0_10px_rgba(255,255,255,0.2)]"
         )} />
       </button>
 
@@ -312,9 +351,12 @@ function SimuladoGroupSectionInner({
           isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
         )}>
           <div className="overflow-hidden">
-            <div className="relative p-4 md:p-5 pt-0">
-              {/* Separator with gradient */}
-              <div className="h-px mb-4 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+            <div className="relative p-4 md:p-5 pt-0 z-10">
+              {/* Separator with elegant gradient */}
+              <div className={cn(
+                "h-px mb-5 bg-gradient-to-r from-transparent to-transparent",
+                config.badgeBg.replace("bg-gradient-to-r", "via-").replace("from-", "").split(" ")[0] + "/30"
+              )} />
               <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
                 {simulados.map((simulado, index) => renderCard(simulado, index))}
               </div>
@@ -364,38 +406,59 @@ export const SimuladosBySubjectSection = memo(function SimuladosBySubjectSection
   return (
     <div className={cn(
       "group/parent relative rounded-2xl overflow-hidden",
-      "bg-gradient-to-br from-card/95 via-card/80 to-card/90",
-      "border border-violet-500/20 hover:border-violet-500/40",
+      "bg-gradient-to-br from-black/60 via-card/90 to-black/50",
+      "border-2 border-violet-500/25 hover:border-violet-500/50",
       "transition-[border-color,box-shadow] duration-300",
-      isOpen && "shadow-[0_0_40px_rgba(139,92,246,0.12)]",
-      "hover:shadow-[0_0_30px_rgba(139,92,246,0.08)]"
+      isOpen && "shadow-[0_0_50px_rgba(139,92,246,0.15)]",
+      "hover:shadow-[0_0_35px_rgba(139,92,246,0.12)]"
     )}>
-      {/* ✨ Subtle inner glow overlay */}
-      <div className="absolute inset-0 opacity-50 pointer-events-none bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-fuchsia-500/10" />
+      {/* 🌌 Background layers for depth */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Primary gradient overlay */}
+        <div className="absolute inset-0 opacity-60 bg-gradient-to-br from-violet-500/12 via-purple-500/8 to-fuchsia-500/12" />
+        {/* Radial spotlight effect */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(139,92,246,0.1)_0%,transparent_50%)]" />
+        {/* Bottom vignette */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+      </div>
+      
+      {/* 🔲 Scanline texture */}
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.03)_2px,rgba(255,255,255,0.03)_4px)]" />
+      
+      {/* ✨ Corner accents - Purple theme */}
+      <div className="absolute top-0 left-0 w-10 h-10 pointer-events-none opacity-50 group-hover/parent:opacity-80 transition-opacity border-l-2 border-t-2 border-violet-500/60 rounded-tl-2xl" />
+      <div className="absolute bottom-0 right-0 w-10 h-10 pointer-events-none opacity-50 group-hover/parent:opacity-80 transition-opacity border-r-2 border-b-2 border-fuchsia-500/60 rounded-br-2xl" />
       
       {/* Header */}
       <button
         onClick={handleToggle}
-        className="relative w-full flex items-center justify-between p-5 md:p-6 transition-colors duration-200 hover:bg-white/[0.03]"
+        className="relative w-full flex items-center justify-between p-5 md:p-6 transition-colors duration-200 hover:bg-white/[0.04] z-10"
       >
         {/* Left */}
         <div className="flex items-center gap-4">
           <div className={cn(
-            "relative p-3 md:p-3.5 rounded-xl transition-transform duration-300",
-            "bg-gradient-to-br from-white/[0.08] to-white/[0.02]",
-            "border border-violet-500/25",
-            "group-hover/parent:scale-105"
+            "relative p-3 md:p-4 rounded-xl transition-all duration-300",
+            "bg-gradient-to-br from-white/[0.1] via-white/[0.05] to-transparent",
+            "border border-violet-500/30",
+            "group-hover/parent:scale-110",
+            "shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
           )}>
             {/* Icon glow */}
-            <div className="absolute inset-0 rounded-xl opacity-60 bg-gradient-to-br from-violet-500/20 via-purple-500/15 to-fuchsia-500/20" />
-            <Beaker className="w-6 h-6 md:w-7 md:h-7 text-violet-400 relative z-10" />
+            <div className="absolute inset-0 rounded-xl opacity-70 bg-gradient-to-br from-violet-500/25 via-purple-500/20 to-fuchsia-500/25" />
+            {/* Outer glow on hover */}
+            <div className="absolute -inset-1 rounded-xl opacity-0 group-hover/parent:opacity-100 transition-opacity duration-500 blur-md bg-gradient-to-br from-violet-500/40 via-purple-500/30 to-fuchsia-500/40" />
+            <Beaker className="w-6 h-6 md:w-7 md:h-7 text-violet-400 relative z-10 drop-shadow-lg" />
           </div>
           
           <div className="text-left">
-            <h2 className="font-black text-lg md:text-xl lg:text-2xl text-violet-400 group-hover/parent:text-violet-300 transition-colors duration-200">
+            <h2 className={cn(
+              "font-black text-lg md:text-xl lg:text-2xl transition-all duration-200",
+              "text-violet-400 group-hover/parent:text-violet-300",
+              "drop-shadow-[0_2px_4px_rgba(139,92,246,0.3)]"
+            )}>
               Simulados por Assunto
             </h2>
-            <p className="text-sm text-muted-foreground/50">
+            <p className="text-sm text-muted-foreground/60 group-hover/parent:text-muted-foreground/80 transition-colors">
               Pratique por área específica da Química
             </p>
           </div>
@@ -404,31 +467,34 @@ export const SimuladosBySubjectSection = memo(function SimuladosBySubjectSection
         {/* Right */}
         <div className="flex items-center gap-3">
           <div className={cn(
-            "hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full",
+            "hidden sm:flex items-center gap-1.5 px-5 py-2.5 rounded-full",
             "bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500",
             "text-white font-bold text-sm",
-            "shadow-[0_4px_20px_rgba(139,92,246,0.35)]",
-            "transition-transform duration-300 group-hover/parent:scale-105"
+            "shadow-[0_4px_25px_rgba(139,92,246,0.4),inset_0_1px_0_rgba(255,255,255,0.2)]",
+            "transition-all duration-300 group-hover/parent:scale-110 group-hover/parent:shadow-[0_6px_30px_rgba(139,92,246,0.5)]"
           )}>
             <span>{totalCount}</span>
             <span className="font-normal opacity-80">simulados</span>
           </div>
           
           <div className={cn(
-            "p-2 md:p-2.5 rounded-xl transition-all duration-300",
-            "bg-white/[0.06] border border-violet-500/20",
-            "group-hover/parent:bg-white/[0.1] group-hover/parent:border-violet-500/30",
-            isOpen && "rotate-180 bg-white/[0.1]"
+            "p-2.5 md:p-3 rounded-xl transition-all duration-300",
+            "bg-gradient-to-br from-white/[0.08] to-white/[0.02]",
+            "border border-violet-500/25",
+            "shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]",
+            "group-hover/parent:from-white/[0.12] group-hover/parent:to-white/[0.04]",
+            isOpen && "rotate-180 from-white/[0.12] to-white/[0.04]"
           )}>
-            <ChevronDown className="w-5 h-5 text-violet-400" />
+            <ChevronDown className="w-5 h-5 text-violet-400 drop-shadow" />
           </div>
         </div>
         
-        {/* Bottom accent line on hover */}
+        {/* Bottom accent line - animated gradient */}
         <div className={cn(
-          "absolute bottom-0 left-0 right-0 h-[1px]",
-          "bg-gradient-to-r from-transparent via-violet-400/30 to-transparent",
-          "opacity-0 group-hover/parent:opacity-100 transition-opacity duration-300"
+          "absolute bottom-0 left-5 right-5 h-[2px] rounded-full",
+          "bg-gradient-to-r from-transparent via-violet-400/50 to-transparent",
+          "opacity-0 group-hover/parent:opacity-100 transition-opacity duration-300",
+          "shadow-[0_0_15px_rgba(139,92,246,0.4)]"
         )} />
       </button>
 
