@@ -40,15 +40,8 @@ export default function AlunoSimulados() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [tab, setTab] = useState("disponiveis");
   
-  // ⚡ Performance flags - LEI I
-  const { 
-    shouldAnimate, 
-    shouldBlur, 
-    shouldShowParticles, 
-    isLowEnd,
-    motionProps,
-    getBlurClass
-  } = useConstitutionPerformance();
+  // ⚡ Performance flags - LEI I (simplified)
+  const { shouldShowParticles, isLowEnd } = useConstitutionPerformance();
   
   // Simulado ativo (do URL ou selecionado)
   const activeSimuladoId = searchParams.get("s");
@@ -123,57 +116,42 @@ export default function AlunoSimulados() {
           ]}
         />
 
-        {/* ⚡ XP Banner - Performance-Optimized */}
-        <div className={cn(
-          "relative overflow-hidden rounded-xl",
-          shouldAnimate && "animate-fade-in"
-        )}>
-          <div className="dashboard-hero-2300 p-6">
-            <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-              {/* Icon Container - CSS animation instead of motion */}
-              <div className={cn(
-                "relative",
-                shouldAnimate && "animate-pulse-slow"
-              )}>
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 flex items-center justify-center shadow-[0_0_40px_hsl(45,100%,50%,0.4)]">
-                  <Zap className="w-10 h-10 text-white" />
-                </div>
-                {shouldShowParticles && (
-                  <div className="absolute -inset-2 rounded-3xl bg-gradient-to-br from-amber-500/30 to-orange-500/30 blur-xl animate-pulse" />
-                )}
+        {/* ⚡ XP Banner - Performance-Optimized (CSS-only) */}
+        <div className="relative overflow-hidden rounded-xl">
+          <div className="dashboard-hero-2300 p-5 md:p-6">
+            <div className="relative z-10 flex flex-col md:flex-row items-center gap-4 md:gap-6">
+              {/* Icon Container */}
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 flex items-center justify-center shadow-lg">
+                <Zap className="w-8 h-8 md:w-10 md:h-10 text-white" />
               </div>
 
               {/* Text Content */}
               <div className="flex-1 text-center md:text-left">
-                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-1">
                   Ganhe XP e Domine o Ranking!
                 </h3>
-                <p className="text-cyan-100/80 text-sm md:text-base max-w-xl">
-                  Cada questão correta vale pontos de experiência. Complete simulados, 
-                  suba de nível e conquiste sua vaga no topo do ranking global!
+                <p className="text-cyan-100/70 text-sm md:text-base max-w-xl">
+                  Cada questão correta vale pontos de experiência. Suba de nível e conquiste o topo!
                 </p>
               </div>
 
-              {/* XP Badge - Simplified */}
-              <div className="flex flex-col items-center gap-2 hover:scale-105 transition-transform">
-                <div className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-[0_0_30px_hsl(160,100%,50%,0.3)]">
+              {/* XP Badge */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-lg">
                   <div className="flex items-center gap-2">
-                    <Star className="w-5 h-5 text-white" />
-                    <span className="text-2xl font-bold text-white">+10 XP</span>
+                    <Star className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                    <span className="text-xl md:text-2xl font-bold text-white">+10 XP</span>
                   </div>
                 </div>
-                <span className="text-xs text-cyan-200/60 uppercase tracking-wider">por questão</span>
+                <span className="text-[10px] text-cyan-200/50 uppercase tracking-wider">por questão</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 🗂️ Tabs Navigation - Performance-Optimized */}
+        {/* 🗂️ Tabs Navigation - CSS-only */}
         <Tabs value={tab} onValueChange={setTab} className="space-y-6">
-          <TabsList className={cn(
-            "w-full p-1 border border-border/50 rounded-xl grid grid-cols-3 h-auto",
-            getBlurClass("bg-card/50 backdrop-blur-xl", "bg-card/90")
-          )}>
+          <TabsList className="w-full p-1 border border-border/50 rounded-xl grid grid-cols-3 h-auto bg-card/80">
             <TabsTrigger 
               value="disponiveis" 
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/20 data-[state=active]:to-cyan-500/20 data-[state=active]:border-emerald-500/50 data-[state=active]:text-emerald-400 rounded-lg py-3 px-4 border border-transparent transition-colors"
@@ -206,8 +184,7 @@ export default function AlunoSimulados() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Content Areas - Simplified animations */}
-          {/* Simulados Disponíveis */}
+          {/* Content Areas */}
           <TabsContent value="disponiveis" className="mt-0">
             {simuladosData?.available.length === 0 ? (
               <EmptyState 
@@ -215,18 +192,15 @@ export default function AlunoSimulados() {
                 title="Nenhum simulado disponível"
                 description="Novos simulados serão liberados em breve! Fique atento."
                 accentColor="emerald"
-                shouldAnimate={shouldAnimate}
               />
             ) : (
               <AvailableSimuladosGrouped
                 simulados={simuladosData?.available || []}
                 onSelectSimulado={handleSelectSimulado}
-                shouldAnimate={shouldAnimate}
               />
             )}
           </TabsContent>
 
-          {/* Simulados Realizados */}
           <TabsContent value="realizados" className="mt-0">
             {simuladosData?.completed.length === 0 ? (
               <EmptyState 
@@ -234,19 +208,14 @@ export default function AlunoSimulados() {
                 title="Nenhum simulado realizado"
                 description="Complete seu primeiro simulado e veja suas estatísticas aqui!"
                 accentColor="purple"
-                shouldAnimate={shouldAnimate}
               />
             ) : (
-              <div className={cn(
-                "grid gap-6 md:grid-cols-2",
-                shouldAnimate && "animate-fade-in"
-              )}>
+              <div className="grid gap-6 md:grid-cols-2">
                 {simuladosData?.completed.map((simulado, index) => (
                   <SimuladoCompletedCard
                     key={simulado.id}
                     simulado={simulado}
                     onReview={() => handleSelectSimulado(simulado.id)}
-                    shouldAnimate={shouldAnimate}
                     index={index}
                   />
                 ))}
@@ -254,7 +223,6 @@ export default function AlunoSimulados() {
             )}
           </TabsContent>
 
-          {/* Simulados Em Breve */}
           <TabsContent value="embreve" className="mt-0">
             {simuladosData?.upcoming.length === 0 ? (
               <EmptyState 
@@ -262,18 +230,13 @@ export default function AlunoSimulados() {
                 title="Nenhum simulado programado"
                 description="Fique atento! Novos desafios serão anunciados em breve."
                 accentColor="amber"
-                shouldAnimate={shouldAnimate}
               />
             ) : (
-              <div className={cn(
-                "grid gap-6 md:grid-cols-2 lg:grid-cols-3",
-                shouldAnimate && "animate-fade-in"
-              )}>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {simuladosData?.upcoming.map((simulado, index) => (
                   <SimuladoUpcomingCard
                     key={simulado.id}
                     simulado={simulado}
-                    shouldAnimate={shouldAnimate}
                     index={index}
                   />
                 ))}
@@ -303,225 +266,161 @@ import capaNormalMode from "@/assets/simulados/capa-normal.png";
 
 /**
  * 🎬 SIMULADO CARD - NETFLIX ULTRA PREMIUM + YEAR 2300 CINEMATIC
- * Design máximo: Poster dominante, efeitos cinematográficos, hover épico
+ * ⚡ PERFORMANCE-OPTIMIZED: CSS-only transitions, zero JS animations
  */
-const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, shouldAnimate = true, index = 0 }: SimuladoCardProps) {
+const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, index = 0 }: SimuladoCardProps) {
   const hasRunningAttempt = simulado.user_attempt?.status === "RUNNING";
   const isRetake = simulado.user_attempt && !simulado.user_attempt.is_scored_for_ranking;
   const isHardMode = simulado.is_hard_mode;
-  
-  // Seleciona capa baseado no modo
   const coverImage = isHardMode ? capaHardMode : capaNormalMode;
 
-  // Cores temáticas
-  const themeColors = isHardMode 
-    ? { primary: "red", secondary: "orange", glow: "rgba(239,68,68,0.4)" }
-    : { primary: "emerald", secondary: "cyan", glow: "rgba(16,185,129,0.4)" };
-
   return (
-    <div 
-      className={cn(
-        "group transition-all duration-700 ease-out",
-        shouldAnimate && "animate-fade-in"
-      )}
-      style={shouldAnimate ? { animationDelay: `${index * 80}ms` } : undefined}
-    >
-      {/* 🎬 NETFLIX ULTRA PREMIUM CARD */}
+    <div className="group">
+      {/* 🎬 NETFLIX ULTRA PREMIUM CARD - CSS-only */}
       <div 
         className={cn(
           "relative flex rounded-2xl overflow-hidden cursor-pointer",
           "bg-gradient-to-br from-black/90 via-card/95 to-black/80",
-          "border-2 transition-all duration-700 ease-out",
-          "hover:scale-[1.03] hover:-translate-y-1",
+          "border-2 transition-all duration-300 ease-out",
+          "hover:scale-[1.02] hover:-translate-y-0.5",
           isHardMode 
-            ? "border-red-500/20 hover:border-red-500/60" 
-            : "border-emerald-500/20 hover:border-emerald-500/60",
-          // Shadow épica no hover
-          "shadow-lg hover:shadow-[0_20px_60px_-15px_var(--glow-color)]"
+            ? "border-red-500/20 hover:border-red-500/50 hover:shadow-[0_15px_40px_-10px_rgba(239,68,68,0.25)]" 
+            : "border-emerald-500/20 hover:border-emerald-500/50 hover:shadow-[0_15px_40px_-10px_rgba(16,185,129,0.25)]"
         )}
-        style={{ "--glow-color": themeColors.glow } as React.CSSProperties}
         onClick={onStart}
       >
-        {/* 🌟 SCANLINE OVERLAY - Efeito Futurista */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.1)_2px,rgba(255,255,255,0.1)_4px)] z-10" />
-        
-        {/* 🖼️ POSTER - LADO ESQUERDO (Netflix Movie Poster) */}
-        <div className="relative w-32 md:w-44 lg:w-48 flex-shrink-0 overflow-hidden">
-          {/* Imagem principal */}
+        {/* 🖼️ POSTER - LADO ESQUERDO */}
+        <div className="relative w-28 md:w-40 lg:w-44 flex-shrink-0 overflow-hidden">
           <img 
             src={coverImage} 
-            alt={`Capa ${isHardMode ? 'Hard Mode' : 'Modo Normal'}`}
-            className="w-full h-full object-cover object-center transition-all duration-1000 ease-out group-hover:scale-110"
+            alt=""
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
+            decoding="async"
           />
-          
-          {/* Vignette cinematográfica */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.6)_100%)]" />
-          
-          {/* Gradient blend para o conteúdo */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/95" />
-          
-          {/* Glow pulse no hover */}
+          {/* Gradient blend */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/90" />
+          {/* Hover glow */}
           <div className={cn(
-            "absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-700",
+            "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300",
             isHardMode 
-              ? "bg-gradient-to-br from-red-500/30 via-transparent to-orange-500/20"
-              : "bg-gradient-to-br from-emerald-500/30 via-transparent to-cyan-500/20"
-          )} />
-          
-          {/* Linha de energia na borda */}
-          <div className={cn(
-            "absolute top-0 bottom-0 right-0 w-[2px] opacity-0 group-hover:opacity-100 transition-all duration-500",
-            isHardMode 
-              ? "bg-gradient-to-b from-transparent via-red-500 to-transparent shadow-[0_0_10px_rgba(239,68,68,0.8)]"
-              : "bg-gradient-to-b from-transparent via-emerald-500 to-transparent shadow-[0_0_10px_rgba(16,185,129,0.8)]"
+              ? "bg-gradient-to-br from-red-500/20 via-transparent to-transparent"
+              : "bg-gradient-to-br from-emerald-500/20 via-transparent to-transparent"
           )} />
         </div>
 
         {/* 📋 CONTEÚDO - LADO DIREITO */}
-        <div className="flex-1 p-4 md:p-5 lg:p-6 flex flex-col justify-between min-w-0 relative z-20">
+        <div className="flex-1 p-3 md:p-4 lg:p-5 flex flex-col justify-between min-w-0">
           
-          {/* TOP: Badges Premium */}
-          <div className="flex items-center gap-2 flex-wrap mb-3">
+          {/* TOP: Badges */}
+          <div className="flex items-center gap-1.5 flex-wrap mb-2">
             {hasRunningAttempt && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse shadow-[0_0_15px_rgba(245,158,11,0.3)]">
-                <Timer className="w-3 h-3 mr-1.5" />
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                <Timer className="w-2.5 h-2.5 mr-1" />
                 Em Andamento
               </span>
             )}
             {simulado.is_hard_mode && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/40 shadow-[0_0_10px_rgba(239,68,68,0.2)]">
-                <Flame className="w-3 h-3 mr-1" />
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-red-500/20 text-red-400 border border-red-500/30">
+                <Flame className="w-2.5 h-2.5 mr-1" />
                 Hard
               </span>
             )}
             {simulado.requires_camera && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] md:text-xs font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
-                <Camera className="w-3 h-3 mr-1" />
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <Camera className="w-2.5 h-2.5 mr-1" />
                 Câmera
               </span>
             )}
             {isRetake && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium text-muted-foreground border border-muted-foreground/30">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium text-muted-foreground border border-muted-foreground/20">
                 Refazer
               </span>
             )}
           </div>
 
           {/* MIDDLE: Title & Description */}
-          <div className="flex-1 min-w-0 mb-3">
+          <div className="flex-1 min-w-0 mb-2">
             <h3 className={cn(
-              "text-lg md:text-xl lg:text-2xl font-black tracking-tight transition-all duration-500 mb-2",
-              "bg-clip-text text-transparent",
+              "text-base md:text-lg lg:text-xl font-bold tracking-tight mb-1 transition-colors duration-200",
               isHardMode 
-                ? "bg-gradient-to-r from-white via-white to-red-200 group-hover:from-red-400 group-hover:via-orange-300 group-hover:to-white"
-                : "bg-gradient-to-r from-white via-white to-emerald-200 group-hover:from-emerald-400 group-hover:via-cyan-300 group-hover:to-white"
+                ? "text-white group-hover:text-red-300"
+                : "text-white group-hover:text-emerald-300"
             )}>
               {simulado.title}
             </h3>
             {simulado.description && (
-              <p className="text-xs md:text-sm text-muted-foreground/80 line-clamp-2 leading-relaxed">
+              <p className="text-xs text-muted-foreground/70 line-clamp-2">
                 {simulado.description}
               </p>
             )}
           </div>
 
-          {/* STATS: Holographic HUD Style */}
-          <div className={cn(
-            "flex items-center gap-4 md:gap-5 py-3 px-3 rounded-lg mb-3",
-            "bg-white/[0.03] border border-white/[0.08]",
-            "backdrop-blur-sm"
-          )}>
-            <div className="flex items-center gap-1.5">
-              <div className="p-1.5 rounded-md bg-purple-500/20 ring-1 ring-purple-500/30">
-                <Target className="w-3 h-3 md:w-3.5 md:h-3.5 text-purple-400" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs md:text-sm font-bold text-foreground">{simulado.total_questions}</span>
-                <span className="text-[9px] text-muted-foreground uppercase tracking-wider">questões</span>
-              </div>
+          {/* STATS: Compact HUD */}
+          <div className="flex items-center gap-3 md:gap-4 py-2 px-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] mb-2">
+            <div className="flex items-center gap-1">
+              <Target className="w-3 h-3 text-purple-400" />
+              <span className="text-xs font-semibold">{simulado.total_questions}</span>
+              <span className="text-[9px] text-muted-foreground hidden md:inline">questões</span>
             </div>
             
-            <div className="w-px h-8 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+            <div className="w-px h-4 bg-white/10" />
             
-            <div className="flex items-center gap-1.5">
-              <div className="p-1.5 rounded-md bg-blue-500/20 ring-1 ring-blue-500/30">
-                <Clock className="w-3 h-3 md:w-3.5 md:h-3.5 text-blue-400" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs md:text-sm font-bold text-foreground">{simulado.duration_minutes}</span>
-                <span className="text-[9px] text-muted-foreground uppercase tracking-wider">minutos</span>
-              </div>
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3 text-blue-400" />
+              <span className="text-xs font-semibold">{simulado.duration_minutes}</span>
+              <span className="text-[9px] text-muted-foreground hidden md:inline">min</span>
             </div>
             
-            <div className="w-px h-8 bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+            <div className="w-px h-4 bg-white/10" />
             
-            <div className="flex items-center gap-1.5">
-              <div className="p-1.5 rounded-md bg-amber-500/20 ring-1 ring-amber-500/30">
-                <Zap className="w-3 h-3 md:w-3.5 md:h-3.5 text-amber-400" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs md:text-sm font-bold text-amber-400">+{simulado.total_questions * simulado.points_per_question}</span>
-                <span className="text-[9px] text-amber-500/70 uppercase tracking-wider">XP</span>
-              </div>
+            <div className="flex items-center gap-1">
+              <Zap className="w-3 h-3 text-amber-400" />
+              <span className="text-xs font-bold text-amber-400">+{simulado.total_questions * simulado.points_per_question}</span>
+              <span className="text-[9px] text-amber-400/60">XP</span>
             </div>
           </div>
 
-          {/* BOTTOM: Date + CTA Button */}
-          <div className="flex items-center justify-between gap-3">
+          {/* BOTTOM: Date + CTA */}
+          <div className="flex items-center justify-between gap-2">
             {simulado.ends_at ? (
-              <span className="text-[10px] md:text-xs text-muted-foreground/70 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                Até {format(new Date(simulado.ends_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
+              <span className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
+                <span className="w-1 h-1 rounded-full bg-amber-500" />
+                Até {format(new Date(simulado.ends_at), "dd/MM HH:mm", { locale: ptBR })}
               </span>
             ) : (
-              <span className="text-[10px] text-muted-foreground/50">Sempre disponível</span>
+              <span className="text-[10px] text-muted-foreground/40">Sempre disponível</span>
             )}
             
-            {/* CTA BUTTON - Cinematic Style */}
+            {/* CTA BUTTON */}
             <button 
               onClick={(e) => { e.stopPropagation(); onStart(); }}
               className={cn(
-                "relative px-5 py-2.5 rounded-lg font-bold text-sm uppercase tracking-wider",
-                "transition-all duration-500 ease-out",
-                "flex items-center gap-2",
-                // Gradient background
+                "px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider",
+                "transition-all duration-200 flex items-center gap-1.5",
+                "text-white hover:scale-105",
                 hasRunningAttempt 
-                  ? "bg-gradient-to-r from-amber-500 to-orange-500"
+                  ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:shadow-lg hover:shadow-amber-500/30"
                   : isHardMode
-                    ? "bg-gradient-to-r from-red-600 to-orange-500"
-                    : "bg-gradient-to-r from-emerald-500 to-cyan-500",
-                // Hover state
-                "hover:scale-105 hover:shadow-lg",
-                hasRunningAttempt 
-                  ? "hover:shadow-amber-500/40"
-                  : isHardMode 
-                    ? "hover:shadow-red-500/40" 
-                    : "hover:shadow-emerald-500/40",
-                // Text
-                "text-white"
+                    ? "bg-gradient-to-r from-red-600 to-orange-500 hover:shadow-lg hover:shadow-red-500/30"
+                    : "bg-gradient-to-r from-emerald-500 to-cyan-500 hover:shadow-lg hover:shadow-emerald-500/30"
               )}
             >
-              {/* Shine effect */}
-              <span className="absolute inset-0 overflow-hidden rounded-lg">
-                <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-              </span>
-              
-              <Play className="w-4 h-4 relative z-10" />
-              <span className="relative z-10">{hasRunningAttempt ? "Continuar" : "Iniciar"}</span>
+              <Play className="w-3.5 h-3.5" />
+              <span>{hasRunningAttempt ? "Continuar" : "Iniciar"}</span>
             </button>
           </div>
         </div>
 
-        {/* ✨ CORNER ACCENTS - Year 2300 */}
+        {/* ✨ CORNER ACCENTS - CSS only */}
         <div className={cn(
-          "absolute top-0 left-0 w-12 h-12 opacity-0 group-hover:opacity-100 transition-opacity duration-500",
-          isHardMode ? "border-l-2 border-t-2 border-red-500/50" : "border-l-2 border-t-2 border-emerald-500/50"
-        )} style={{ borderRadius: "16px 0 0 0" }} />
+          "absolute top-0 left-0 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none",
+          isHardMode ? "border-l-2 border-t-2 border-red-500/40 rounded-tl-2xl" : "border-l-2 border-t-2 border-emerald-500/40 rounded-tl-2xl"
+        )} />
         <div className={cn(
-          "absolute bottom-0 right-0 w-12 h-12 opacity-0 group-hover:opacity-100 transition-opacity duration-500",
-          isHardMode ? "border-r-2 border-b-2 border-red-500/50" : "border-r-2 border-b-2 border-emerald-500/50"
-        )} style={{ borderRadius: "0 0 16px 0" }} />
+          "absolute bottom-0 right-0 w-8 h-8 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none",
+          isHardMode ? "border-r-2 border-b-2 border-red-500/40 rounded-br-2xl" : "border-r-2 border-b-2 border-emerald-500/40 rounded-br-2xl"
+        )} />
       </div>
     </div>
   );
@@ -535,38 +434,24 @@ const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, shouldAnima
 interface AvailableSimuladosGroupedProps {
   simulados: SimuladoListItem[];
   onSelectSimulado: (id: string) => void;
-  shouldAnimate?: boolean;
 }
 
 const AvailableSimuladosGrouped = memo(function AvailableSimuladosGrouped({
   simulados,
   onSelectSimulado,
-  shouldAnimate = true,
 }: AvailableSimuladosGroupedProps) {
-  // Classificar simulados em grupos
   const groups = useMemo(() => classifySimuladosByGroup(simulados), [simulados]);
+  const normalSimulados = useMemo(() => simulados.filter(s => !s.is_hard_mode), [simulados]);
+  const hardModeSimulados = useMemo(() => simulados.filter(s => s.is_hard_mode), [simulados]);
 
-  // Separar simulados normais e hard mode
-  const normalSimulados = useMemo(() => 
-    simulados.filter(s => !s.is_hard_mode), 
-    [simulados]
-  );
-  
-  const hardModeSimulados = useMemo(() => 
-    simulados.filter(s => s.is_hard_mode), 
-    [simulados]
-  );
-
-  // Função para renderizar card de simulado
   const renderCard = useCallback((simulado: SimuladoListItem, index: number) => (
     <SimuladoCard
       key={simulado.id}
       simulado={simulado}
       onStart={() => onSelectSimulado(simulado.id)}
-      shouldAnimate={shouldAnimate}
       index={index}
     />
-  ), [onSelectSimulado, shouldAnimate]);
+  ), [onSelectSimulado]);
 
   if (simulados.length === 0) {
     return (
@@ -575,70 +460,32 @@ const AvailableSimuladosGrouped = memo(function AvailableSimuladosGrouped({
         title="Nenhum simulado disponível"
         description="Fique atento, novos simulados serão liberados em breve!"
         accentColor="emerald"
-        shouldAnimate={shouldAnimate}
       />
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* 🎯 GRUPOS DE SIMULADOS NORMAIS */}
       {normalSimulados.length > 0 && (
         <div className="space-y-4">
-          {/* Grupo: Nivelamento */}
           {groups.NIVELAMENTO?.length > 0 && (
-            <SimuladoGroupSection
-              groupId="NIVELAMENTO"
-              simulados={groups.NIVELAMENTO}
-              renderCard={renderCard}
-              shouldAnimate={shouldAnimate}
-            />
+            <SimuladoGroupSection groupId="NIVELAMENTO" simulados={groups.NIVELAMENTO} renderCard={renderCard} />
           )}
-          
-          {/* Grupo: Meses Extensivo ENEM */}
           {groups.MESES_EXTENSIVO?.length > 0 && (
-            <SimuladoGroupSection
-              groupId="MESES_EXTENSIVO"
-              simulados={groups.MESES_EXTENSIVO}
-              renderCard={renderCard}
-              shouldAnimate={shouldAnimate}
-            />
+            <SimuladoGroupSection groupId="MESES_EXTENSIVO" simulados={groups.MESES_EXTENSIVO} renderCard={renderCard} />
           )}
-          
-          {/* Grupo: Intensivo */}
           {groups.MESES_INTENSIVO?.length > 0 && (
-            <SimuladoGroupSection
-              groupId="MESES_INTENSIVO"
-              simulados={groups.MESES_INTENSIVO}
-              renderCard={renderCard}
-              shouldAnimate={shouldAnimate}
-            />
+            <SimuladoGroupSection groupId="MESES_INTENSIVO" simulados={groups.MESES_INTENSIVO} renderCard={renderCard} />
           )}
-          
-          {/* Grupo Pai: Por Assunto (com subgrupos) */}
-          {(groups.QUIMICA_GERAL?.length > 0 || 
-            groups.FISICO_QUIMICA?.length > 0 || 
-            groups.QUIMICA_ORGANICA?.length > 0) && (
-            <SimuladosBySubjectSection
-              groups={groups}
-              renderCard={renderCard}
-              shouldAnimate={shouldAnimate}
-            />
+          {(groups.QUIMICA_GERAL?.length > 0 || groups.FISICO_QUIMICA?.length > 0 || groups.QUIMICA_ORGANICA?.length > 0) && (
+            <SimuladosBySubjectSection groups={groups} renderCard={renderCard} />
           )}
-          
-          {/* Grupo: Outros */}
           {groups.OUTROS?.length > 0 && (
-            <SimuladoGroupSection
-              groupId="OUTROS"
-              simulados={groups.OUTROS}
-              renderCard={renderCard}
-              shouldAnimate={shouldAnimate}
-            />
+            <SimuladoGroupSection groupId="OUTROS" simulados={groups.OUTROS} renderCard={renderCard} />
           )}
         </div>
       )}
 
-      {/* 🔥 SIMULADOS HARD MODE - Seção Separada com Design Especial */}
       {hardModeSimulados.length > 0 && (
         <div className="mt-8 space-y-4">
           <div className="flex items-center gap-3">
@@ -650,7 +497,7 @@ const AvailableSimuladosGrouped = memo(function AvailableSimuladosGrouped({
               {hardModeSimulados.length} disponíveis
             </Badge>
           </div>
-          <div className="grid gap-4 md:gap-5 grid-cols-1 lg:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
             {hardModeSimulados.map((simulado, index) => renderCard(simulado, index))}
           </div>
         </div>
@@ -663,11 +510,10 @@ const AvailableSimuladosGrouped = memo(function AvailableSimuladosGrouped({
 interface SimuladoCompletedCardProps {
   simulado: SimuladoListItem;
   onReview: () => void;
-  shouldAnimate?: boolean;
   index?: number;
 }
 
-const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, onReview, shouldAnimate = true, index = 0 }: SimuladoCompletedCardProps) {
+const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, onReview, index = 0 }: SimuladoCompletedCardProps) {
   const attempt = simulado.user_attempt;
   const percentage = attempt 
     ? calculatePercentage(attempt.correct_answers, simulado.total_questions) 
@@ -678,13 +524,7 @@ const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, on
     : true;
 
   return (
-    <div 
-      className={cn(
-        "group hover:scale-[1.02] transition-transform duration-300",
-        shouldAnimate && "animate-fade-in"
-      )}
-      style={shouldAnimate ? { animationDelay: `${index * 50}ms` } : undefined}
-    >
+    <div className="group hover:scale-[1.01] transition-transform duration-200">
       <div className="stat-orb-2300 relative overflow-hidden">
         {/* Status Glow Line */}
         <div className={cn(
@@ -803,21 +643,14 @@ const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, on
 
 interface SimuladoUpcomingCardProps {
   simulado: SimuladoListItem;
-  shouldAnimate?: boolean;
   index?: number;
 }
 
-const SimuladoUpcomingCard = memo(function SimuladoUpcomingCard({ simulado, shouldAnimate = true, index = 0 }: SimuladoUpcomingCardProps) {
+const SimuladoUpcomingCard = memo(function SimuladoUpcomingCard({ simulado, index = 0 }: SimuladoUpcomingCardProps) {
   const startsAt = simulado.starts_at ? new Date(simulado.starts_at) : null;
 
   return (
-    <div 
-      className={cn(
-        "group opacity-80 hover:opacity-100 transition-opacity",
-        shouldAnimate && "animate-fade-in"
-      )}
-      style={shouldAnimate ? { animationDelay: `${index * 50}ms` } : undefined}
-    >
+    <div className="group opacity-80 hover:opacity-100 transition-opacity duration-200">
       <div className="stat-orb-2300 h-full flex flex-col relative">
         {/* Lock Overlay */}
         <div className="absolute inset-0 bg-background/20 rounded-xl z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
