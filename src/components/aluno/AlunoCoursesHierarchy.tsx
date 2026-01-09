@@ -482,9 +482,8 @@ function SubcategorySection({
               <span><strong className="text-cyan-400">{modules.length}</strong> módulos nesta subcategoria</span>
             </div>
             
-            {/* Grid responsivo de módulos - capas proporcionais (3:4 original) e otimizadas */}
-            {/* PADRÃO DEFINITIVO: 5 colunas em telas grandes para capas compactas e visíveis */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+            {/* Grid responsivo de módulos - capas grandes e visíveis */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {modules.map((module, idx) => (
                 <ModuleCard
                   key={module.id}
