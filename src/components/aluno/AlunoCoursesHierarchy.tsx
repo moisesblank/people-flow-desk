@@ -692,17 +692,17 @@ export function AlunoCoursesHierarchy() {
     <div className="space-y-6">
       {/* Video Player Modal */}
       <Dialog open={!!selectedLesson} onOpenChange={(open) => !open && closePlayer()}>
-        <DialogContent className="max-w-5xl w-[95vw] max-h-[95vh] overflow-y-auto p-0">
+        <DialogContent className="flex flex-col p-0 overflow-hidden">
           {selectedLesson && (
             <>
-              <DialogHeader className="p-4 pb-0">
+              <DialogHeader className="p-4 pb-0 shrink-0">
                 <DialogTitle className="text-lg font-semibold line-clamp-1">
                   {selectedLesson.title}
                 </DialogTitle>
               </DialogHeader>
               
-              <div className="p-4 space-y-4">
-                <div className="aspect-video rounded-lg overflow-hidden bg-black">
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="aspect-video rounded-lg overflow-hidden bg-black shrink-0">
                   <OmegaFortressPlayer
                     videoId={getVideoId(selectedLesson)}
                     type={getVideoType(selectedLesson)}
