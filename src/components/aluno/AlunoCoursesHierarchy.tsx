@@ -316,7 +316,8 @@ function CourseSection({
   onToggleModule: (id: string) => void;
   onPlayLesson: (lesson: Lesson) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(true);
+  // 🔒 COLLAPSIBLE: Inicia fechado - usuário deve clicar para expandir
+  const [isOpen, setIsOpen] = useState(false);
   const totalModules = subcategoryGroups.reduce((acc, g) => acc + g.modules.length, 0);
   const totalLessons = subcategoryGroups.reduce((acc, g) => 
     acc + g.modules.reduce((a, m) => a + (m._count?.lessons || 0), 0), 0);
@@ -437,7 +438,8 @@ function SubcategorySection({
   onToggleModule: (id: string) => void;
   onPlayLesson: (lesson: Lesson) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(true);
+  // 🔒 COLLAPSIBLE: Inicia fechado - usuário deve clicar para expandir módulos
+  const [isOpen, setIsOpen] = useState(false);
   const totalLessons = modules.reduce((a, m) => a + (m._count?.lessons || 0), 0);
 
   return (
