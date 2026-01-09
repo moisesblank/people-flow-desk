@@ -12,7 +12,7 @@ import {
   ChevronRight, ChevronDown, PlayCircle, MoreHorizontal,
   FolderOpen, BookOpen, Check, AlertTriangle, Image, Video, 
   Clock, Save, X, RefreshCw, Sparkles, GraduationCap,
-  MonitorPlay, FileVideo, Pencil, ChevronUp, ExternalLink, Link2
+  MonitorPlay, FileVideo, Pencil, ChevronUp, ExternalLink, Link2, ArrowUpDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ModuleImageUploader } from './ModuleImageUploader';
+import { SubcategoryReorderModal } from './SubcategoryReorderModal';
 
 // ============================================
 // TIPOS
@@ -885,6 +886,7 @@ export function ModulosGlobalManager() {
   const [editDialog, setEditDialog] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<Module | null>(null);
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
+  const [reorderSubcatDialog, setReorderSubcatDialog] = useState(false);
   const [moduleForm, setModuleForm] = useState<ModuleFormState>({
     title: '',
     description: '',
@@ -898,6 +900,20 @@ export function ModulosGlobalManager() {
   // Queries
   const { data: modules, isLoading, refetch } = useAllModules();
   const { data: courses } = useCoursesDropdown();
+  
+  // Buscar ordenação de subcategorias
+  const { data: subcategoryOrdering } = useQuery({
+    queryKey: ['subcategory-ordering-all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('subcategory_ordering')
+        .select('*')
+        .order('position', { ascending: true });
+      
+      if (error) throw error;
+      return data as { course_id: string; subcategory: string; position: number }[];
+    }
+  });
 
   // Realtime com debounce 5s (evita Thundering Herd)
   const invalidateTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1096,7 +1112,7 @@ export function ModulosGlobalManager() {
     };
   }, [modules]);
 
-  // Group by course AND subcategory
+  // Group by course AND subcategory (respeitando ordenação salva)
   const modulesByCourseAndSubcategory = useMemo(() => {
     const courseMap = new Map<string, { 
       course: Course | null; 
@@ -1121,14 +1137,38 @@ export function ModulosGlobalManager() {
       courseData.subcategories.get(subcatKey)!.push(m);
     });
     
-    return Array.from(courseMap.values()).map(({ course, subcategories }) => ({
-      course,
-      subcategoryGroups: Array.from(subcategories.entries()).map(([key, mods]) => ({
+    // Criar mapa de posições por curso
+    const orderingMap = new Map<string, Map<string, number>>();
+    subcategoryOrdering?.forEach(o => {
+      if (!orderingMap.has(o.course_id)) {
+        orderingMap.set(o.course_id, new Map());
+      }
+      orderingMap.get(o.course_id)!.set(o.subcategory, o.position);
+    });
+    
+    return Array.from(courseMap.values()).map(({ course, subcategories }) => {
+      const courseOrderMap = course?.id ? orderingMap.get(course.id) : null;
+      
+      const groups = Array.from(subcategories.entries()).map(([key, mods]) => ({
         subcategory: key === '__sem_subcategoria__' ? null : key,
-        modules: mods
-      }))
-    }));
-  }, [filteredModules]);
+        modules: mods,
+        position: key === '__sem_subcategoria__' ? 999999 : (courseOrderMap?.get(key) ?? 999998)
+      }));
+      
+      // Ordenar: primeiro por position salva, depois alfabético
+      groups.sort((a, b) => {
+        if (a.position !== b.position) return a.position - b.position;
+        const aName = a.subcategory || '';
+        const bName = b.subcategory || '';
+        return aName.localeCompare(bName, 'pt-BR');
+      });
+      
+      return {
+        course,
+        subcategoryGroups: groups.map(({ subcategory, modules }) => ({ subcategory, modules }))
+      };
+    });
+  }, [filteredModules, subcategoryOrdering]);
 
   return (
     <div className="space-y-6">
@@ -1208,6 +1248,15 @@ export function ModulosGlobalManager() {
 
               <Button onClick={() => refetch()} variant="outline" className="bg-background/50">
                 <RefreshCw className="h-4 w-4" />
+              </Button>
+
+              <Button 
+                onClick={() => setReorderSubcatDialog(true)} 
+                variant="outline" 
+                className="bg-background/50 border-amber-500/30 text-amber-300 hover:bg-amber-500/20"
+              >
+                <ArrowUpDown className="h-4 w-4 mr-2" />
+                Ordenar Subcategorias
               </Button>
 
               <Button onClick={() => setCreateDialog(true)} className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg shadow-purple-500/25">
@@ -1361,6 +1410,14 @@ export function ModulosGlobalManager() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Subcategory Reorder Modal */}
+      <SubcategoryReorderModal
+        open={reorderSubcatDialog}
+        onOpenChange={setReorderSubcatDialog}
+        courses={courses || []}
+        allModules={(modules || []).map(m => ({ subcategory: m.subcategory, course_id: m.course_id }))}
+      />
     </div>
   );
 }

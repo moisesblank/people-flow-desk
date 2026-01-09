@@ -12473,6 +12473,41 @@ export type Database = {
         }
         Relationships: []
       }
+      subcategory_ordering: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          id: string
+          position: number
+          subcategory: string
+          updated_at: string
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          position?: number
+          subcategory: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          position?: number
+          subcategory?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcategory_ordering_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null
