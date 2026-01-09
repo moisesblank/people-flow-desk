@@ -1,17 +1,18 @@
 /**
- * 🎯 SIMULADOS — Modal READY (Year 2300 Cinematic)
- * Design: Premium Enterprise Modal + Holographic HUD
- * Layout: Dialog profissional com máxima elegância
+ * 🎯 SIMULADOS — Modal READY (Year 2300 CINEMATIC ULTRA)
+ * Design: Marvel/Iron Man HUD + Holographic Enterprise
+ * Layout: Full cinematic experience with orbital effects
  * 
  * Estado: Liberado para iniciar
- * Ação: Exibir regras épicas e botão iniciar
+ * Ação: Experiência épica cinematográfica
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import { 
   Play, Clock, FileQuestion, Shield, AlertTriangle, Camera, 
   Lightbulb, ListChecks, Zap, Rocket, Trophy, Target, Sparkles,
-  ChevronRight, Star
+  Star, Atom, Hexagon, CircuitBoard, Flame, Gauge,
+  Timer, Award, Crown, Crosshair
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,7 @@ import { Simulado } from "@/components/simulados/types";
 import { cn } from "@/lib/utils";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface SimuladoReadyScreenProps {
   simulado: Simulado;
@@ -53,350 +55,666 @@ export function SimuladoReadyScreen({
     ? `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}h`
     : `${simulado.duration_minutes}min`;
 
+  // Generate orbital particles for cinematic effect
+  const orbitalParticles = useMemo(() => 
+    Array.from({ length: 8 }).map((_, i) => ({
+      id: i,
+      angle: (360 / 8) * i,
+      delay: i * 0.15,
+      size: 3 + Math.random() * 2
+    })), []
+  );
+
   const content = (
-    <div className="relative flex flex-col h-full">
-      {/* 🌌 Background Layers - Cinematic Depth */}
+    <motion.div 
+      className="relative flex flex-col h-full"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      {/* 🌌 ULTIMATE CINEMATIC BACKGROUND */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
-        {/* Primary gradient */}
+        {/* Deep space gradient */}
         <div className={cn(
           "absolute inset-0",
           isHardMode 
-            ? "bg-gradient-to-br from-red-950/40 via-black to-orange-950/30" 
-            : "bg-gradient-to-br from-emerald-950/40 via-black to-cyan-950/30"
+            ? "bg-[radial-gradient(ellipse_120%_120%_at_50%_-20%,rgba(220,38,38,0.15),transparent_50%),radial-gradient(ellipse_80%_80%_at_80%_100%,rgba(249,115,22,0.1),transparent_50%)]" 
+            : "bg-[radial-gradient(ellipse_120%_120%_at_50%_-20%,rgba(16,185,129,0.15),transparent_50%),radial-gradient(ellipse_80%_80%_at_80%_100%,rgba(6,182,212,0.1),transparent_50%)]"
         )} />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
         
-        {/* Radial spotlight */}
-        <div className={cn(
-          "absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full blur-[120px]",
-          isHardMode ? "bg-red-500/8" : "bg-emerald-500/8"
-        )} />
-        
-        {/* Bottom vignette */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        
-        {/* Scanlines - ultra subtle */}
+        {/* Animated grid pattern */}
         {!isLowEnd && (
-          <div className="absolute inset-0 opacity-[0.015] bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.03)_2px,rgba(255,255,255,0.03)_4px)]" />
+          <div className={cn(
+            "absolute inset-0 opacity-[0.03]",
+            "bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)]",
+            "bg-[size:50px_50px]"
+          )} />
         )}
         
-        {/* Corner accents */}
+        {/* Orbital rings system */}
+        {!isLowEnd && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px]">
+            {/* Primary ring */}
+            <motion.div 
+              className={cn(
+                "absolute inset-0 rounded-full border opacity-20",
+                isHardMode ? "border-red-500" : "border-emerald-500"
+              )}
+              style={{ 
+                borderStyle: 'dashed',
+                borderWidth: '1px'
+              }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+            />
+            {/* Secondary ring */}
+            <motion.div 
+              className={cn(
+                "absolute inset-8 rounded-full border opacity-15",
+                isHardMode ? "border-orange-500" : "border-cyan-500"
+              )}
+              style={{ borderWidth: '1px' }}
+              animate={{ rotate: -360 }}
+              transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
+            />
+            {/* Tertiary ring */}
+            <motion.div 
+              className={cn(
+                "absolute inset-20 rounded-full border opacity-10",
+                isHardMode ? "border-red-400" : "border-emerald-400"
+              )}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+            />
+            
+            {/* Orbital particles */}
+            {orbitalParticles.map((particle) => (
+              <motion.div
+                key={particle.id}
+                className={cn(
+                  "absolute rounded-full",
+                  isHardMode ? "bg-red-400" : "bg-emerald-400"
+                )}
+                style={{
+                  width: particle.size,
+                  height: particle.size,
+                  top: '50%',
+                  left: '50%',
+                  marginTop: -particle.size / 2,
+                  marginLeft: -particle.size / 2,
+                  boxShadow: isHardMode 
+                    ? `0 0 ${particle.size * 3}px rgba(239,68,68,0.6)` 
+                    : `0 0 ${particle.size * 3}px rgba(16,185,129,0.6)`
+                }}
+                animate={{
+                  rotate: [particle.angle, particle.angle + 360],
+                  x: [0, Math.cos(particle.angle * Math.PI / 180) * 200],
+                  y: [0, Math.sin(particle.angle * Math.PI / 180) * 200],
+                }}
+                transition={{
+                  duration: 20 + particle.id * 2,
+                  repeat: Infinity,
+                  ease: "linear",
+                  delay: particle.delay
+                }}
+              />
+            ))}
+          </div>
+        )}
+        
+        {/* Holographic scan lines */}
+        {!isLowEnd && (
+          <motion.div 
+            className={cn(
+              "absolute inset-0 opacity-[0.03]",
+              "bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.03)_2px,rgba(255,255,255,0.03)_4px)]"
+            )}
+            animate={{ backgroundPosition: ['0 0', '0 100px'] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+          />
+        )}
+        
+        {/* Corner HUD elements */}
         <div className={cn(
-          "absolute top-0 left-0 w-24 h-24 pointer-events-none",
-          "border-l-2 border-t-2 rounded-tl-xl opacity-30",
-          isHardMode ? "border-red-500/50" : "border-emerald-500/50"
+          "absolute top-0 left-0 w-32 h-32",
+          "border-l-2 border-t-2 rounded-tl-2xl",
+          isHardMode ? "border-red-500/40" : "border-emerald-500/40"
+        )}>
+          <motion.div 
+            className={cn(
+              "absolute top-4 left-4 w-2 h-2 rounded-full",
+              isHardMode ? "bg-red-500" : "bg-emerald-500"
+            )}
+            animate={{ opacity: [1, 0.3, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          />
+        </div>
+        <div className={cn(
+          "absolute top-0 right-0 w-32 h-32",
+          "border-r-2 border-t-2 rounded-tr-2xl",
+          isHardMode ? "border-red-500/40" : "border-emerald-500/40"
+        )}>
+          <div className={cn(
+            "absolute top-4 right-4 text-[10px] font-mono uppercase tracking-widest opacity-40",
+            isHardMode ? "text-red-400" : "text-emerald-400"
+          )}>
+            SYS.READY
+          </div>
+        </div>
+        <div className={cn(
+          "absolute bottom-0 left-0 w-32 h-32",
+          "border-l-2 border-b-2 rounded-bl-2xl",
+          isHardMode ? "border-red-500/40" : "border-emerald-500/40"
         )} />
         <div className={cn(
-          "absolute bottom-0 right-0 w-24 h-24 pointer-events-none",
-          "border-r-2 border-b-2 rounded-br-xl opacity-30",
-          isHardMode ? "border-red-500/50" : "border-emerald-500/50"
-        )} />
+          "absolute bottom-0 right-0 w-32 h-32",
+          "border-r-2 border-b-2 rounded-br-2xl",
+          isHardMode ? "border-red-500/40" : "border-emerald-500/40"
+        )}>
+          <div className={cn(
+            "absolute bottom-4 right-4 text-[10px] font-mono uppercase tracking-widest opacity-40",
+            isHardMode ? "text-red-400" : "text-emerald-400"
+          )}>
+            v2.3.0.0
+          </div>
+        </div>
       </div>
 
-      {/* 📜 Scrollable Content */}
+      {/* 📜 SCROLLABLE CONTENT */}
       <ScrollArea className="flex-1 relative z-10">
-        <div className="p-6 md:p-8 space-y-6">
+        <div className="p-6 md:p-8 lg:p-10 space-y-8">
           
-          {/* 🏷️ Status Badge + Title */}
-          <div className="text-center space-y-4">
-            {/* Status Chip */}
-            <div className="inline-flex items-center justify-center">
-              <div className={cn(
-                "inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold",
-                "border shadow-lg",
-                isHardMode 
-                  ? "bg-gradient-to-r from-red-500/20 to-orange-500/20 border-red-500/40 text-red-300 shadow-red-500/20" 
-                  : "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-500/40 text-emerald-300 shadow-emerald-500/20"
-              )}>
-                <Sparkles className="h-4 w-4" />
-                {isRetake ? `Tentativa #${attemptNumber}` : "SIMULADO LIBERADO"}
-                <ChevronRight className="h-4 w-4" />
-              </div>
+          {/* 🎯 HERO SECTION */}
+          <motion.div 
+            className="text-center space-y-5 pt-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            {/* Status Holographic Badge */}
+            <div className="flex justify-center">
+              <motion.div 
+                className={cn(
+                  "inline-flex items-center gap-3 px-6 py-2.5 rounded-full",
+                  "border shadow-lg",
+                  "relative overflow-hidden",
+                  isHardMode 
+                    ? "bg-gradient-to-r from-red-950/80 via-red-900/60 to-orange-950/80 border-red-500/50 shadow-red-500/25" 
+                    : "bg-gradient-to-r from-emerald-950/80 via-emerald-900/60 to-cyan-950/80 border-emerald-500/50 shadow-emerald-500/25"
+                )}
+                whileHover={{ scale: 1.02 }}
+              >
+                {/* Shimmer effect */}
+                {!isLowEnd && (
+                  <motion.div 
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+                    animate={{ x: ['-200%', '200%'] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                  />
+                )}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                >
+                  <Atom className={cn(
+                    "h-5 w-5",
+                    isHardMode ? "text-red-400" : "text-emerald-400"
+                  )} />
+                </motion.div>
+                <span className={cn(
+                  "text-sm font-bold tracking-wide",
+                  isHardMode ? "text-red-200" : "text-emerald-200"
+                )}>
+                  {isRetake ? `TENTATIVA #${attemptNumber}` : "✦ SIMULADO LIBERADO ✦"}
+                </span>
+                <Crosshair className={cn(
+                  "h-4 w-4",
+                  isHardMode ? "text-orange-400" : "text-cyan-400"
+                )} />
+              </motion.div>
             </div>
             
-            {/* Title - Holographic */}
-            <h1 className={cn(
-              "text-2xl md:text-3xl lg:text-4xl font-black tracking-tight",
-              "bg-clip-text text-transparent drop-shadow-2xl",
-              isHardMode 
-                ? "bg-gradient-to-r from-red-300 via-orange-200 to-red-300" 
-                : "bg-gradient-to-r from-emerald-300 via-cyan-200 to-emerald-300"
-            )}>
-              {simulado.title}
-            </h1>
+            {/* Title with Holographic Effect */}
+            <motion.h1 
+              className="relative"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3, type: "spring" }}
+            >
+              <span className={cn(
+                "block text-3xl md:text-4xl lg:text-5xl font-black tracking-tight",
+                "bg-clip-text text-transparent",
+                isHardMode 
+                  ? "bg-gradient-to-r from-red-200 via-white to-orange-200" 
+                  : "bg-gradient-to-r from-emerald-200 via-white to-cyan-200"
+              )}>
+                {simulado.title}
+              </span>
+              {/* Glow layer */}
+              {!isLowEnd && (
+                <span className={cn(
+                  "absolute inset-0 text-3xl md:text-4xl lg:text-5xl font-black tracking-tight blur-xl opacity-50",
+                  isHardMode ? "text-red-500" : "text-emerald-500"
+                )}>
+                  {simulado.title}
+                </span>
+              )}
+            </motion.h1>
             
             {simulado.description && (
-              <p className="text-sm md:text-base text-muted-foreground/80 max-w-xl mx-auto leading-relaxed">
+              <motion.p 
+                className="text-sm md:text-base text-muted-foreground/70 max-w-2xl mx-auto leading-relaxed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
                 {simulado.description}
-              </p>
+              </motion.p>
             )}
-          </div>
+          </motion.div>
 
-          {/* 📊 Stats Grid - Premium Orbs */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            <StatOrb
-              icon={<Clock className="h-5 w-5" />}
+          {/* 📊 HOLOGRAPHIC STATS GRID */}
+          <motion.div 
+            className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <HolographicStatCard
+              icon={<Timer className="h-6 w-6" />}
               value={tempoFormatado}
               label="Duração"
-              gradient="from-indigo-500 to-blue-600"
-              glowColor="indigo"
+              color={isHardMode ? "red" : "cyan"}
               isLowEnd={isLowEnd}
+              delay={0}
             />
-            <StatOrb
-              icon={<FileQuestion className="h-5 w-5" />}
+            <HolographicStatCard
+              icon={<Hexagon className="h-6 w-6" />}
               value={`${simulado.total_questions || 0}`}
               label="Questões"
-              gradient="from-violet-500 to-purple-600"
-              glowColor="violet"
+              color={isHardMode ? "orange" : "emerald"}
               isLowEnd={isLowEnd}
+              delay={0.1}
             />
-            <StatOrb
-              icon={<Trophy className="h-5 w-5" />}
+            <HolographicStatCard
+              icon={<Crown className="h-6 w-6" />}
               value={`${(simulado.total_questions || 0) * 10}`}
               label="XP Máximo"
-              gradient="from-amber-500 to-orange-600"
-              glowColor="amber"
+              color={isHardMode ? "red" : "amber"}
               isLowEnd={isLowEnd}
+              delay={0.2}
             />
-            <StatOrb
-              icon={<Target className="h-5 w-5" />}
+            <HolographicStatCard
+              icon={<Gauge className="h-6 w-6" />}
               value={`${simulado.passing_score || 60}%`}
               label="Aprovação"
-              gradient="from-emerald-500 to-green-600"
-              glowColor="emerald"
+              color={isHardMode ? "orange" : "green"}
               isLowEnd={isLowEnd}
+              delay={0.3}
             />
-          </div>
+          </motion.div>
 
-          {/* ⚠️ Retake Warning OR Hard Mode Badges */}
-          {isRetake ? (
-            <div className={cn(
-              "relative overflow-hidden rounded-xl p-4",
-              "bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-500/10",
-              "border border-amber-500/30",
-              "shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]"
-            )}>
-              <div className="flex items-center gap-4">
-                <div className={cn(
-                  "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
-                  "bg-gradient-to-br from-amber-500/30 to-amber-600/20",
-                  "border border-amber-500/40"
-                )}>
-                  <AlertTriangle className="h-6 w-6 text-amber-400" />
+          {/* ⚠️ RETAKE WARNING OR HARD MODE BADGES */}
+          <AnimatePresence mode="wait">
+            {isRetake ? (
+              <motion.div 
+                key="retake"
+                className={cn(
+                  "relative overflow-hidden rounded-2xl p-5",
+                  "bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-yellow-500/15",
+                  "border-2 border-amber-500/40",
+                  "shadow-[0_0_30px_rgba(245,158,11,0.15)]"
+                )}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                <div className="flex items-center gap-5">
+                  <motion.div 
+                    className={cn(
+                      "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0",
+                      "bg-gradient-to-br from-amber-500/40 to-orange-600/30",
+                      "border-2 border-amber-500/50",
+                      "shadow-[0_0_20px_rgba(245,158,11,0.3)]"
+                    )}
+                    animate={{ rotate: [0, 5, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <AlertTriangle className="h-7 w-7 text-amber-300" />
+                  </motion.div>
+                  <div>
+                    <p className="font-black text-lg text-amber-100">MODO PRÁTICA ATIVO</p>
+                    <p className="text-sm text-amber-300/80 mt-1">
+                      Esta tentativa <span className="font-bold text-amber-200">NÃO</span> contará para o ranking e <span className="font-bold text-amber-200">NÃO</span> gerará XP.
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-amber-200">Modo Prática Ativo</p>
-                  <p className="text-sm text-amber-400/70">
-                    Esta tentativa <strong>NÃO</strong> contará para o ranking nem gerará XP.
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (simulado.is_hard_mode || simulado.requires_camera) && (
-            <div className="flex flex-wrap justify-center gap-3">
-              {simulado.is_hard_mode && (
-                <div className={cn(
-                  "inline-flex items-center gap-2 px-5 py-2.5 rounded-full",
-                  "bg-gradient-to-r from-red-500/20 to-red-600/10",
-                  "border border-red-500/40",
-                  "shadow-lg shadow-red-500/10"
-                )}>
-                  <Shield className="h-4 w-4 text-red-400" />
-                  <span className="text-sm font-semibold text-red-300">MODO HARD</span>
-                </div>
-              )}
-              {simulado.requires_camera && (
-                <div className={cn(
-                  "inline-flex items-center gap-2 px-5 py-2.5 rounded-full",
-                  "bg-gradient-to-r from-red-500/20 to-orange-500/10",
-                  "border border-red-500/40",
-                  "shadow-lg shadow-red-500/10"
-                )}>
-                  <Camera className="h-4 w-4 text-red-400" />
-                  <span className="text-sm font-semibold text-red-300">CÂMERA ATIVA</span>
-                </div>
-              )}
-            </div>
-          )}
+              </motion.div>
+            ) : (simulado.is_hard_mode || simulado.requires_camera) && (
+              <motion.div 
+                key="hardmode"
+                className="flex flex-wrap justify-center gap-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                {simulado.is_hard_mode && (
+                  <motion.div 
+                    className={cn(
+                      "inline-flex items-center gap-3 px-6 py-3 rounded-xl",
+                      "bg-gradient-to-r from-red-950/80 to-red-900/60",
+                      "border-2 border-red-500/50",
+                      "shadow-[0_0_25px_rgba(239,68,68,0.3)]"
+                    )}
+                    whileHover={{ scale: 1.03, boxShadow: '0 0 35px rgba(239,68,68,0.4)' }}
+                  >
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 1, repeat: Infinity }}
+                    >
+                      <Flame className="h-5 w-5 text-red-400" />
+                    </motion.div>
+                    <span className="text-sm font-black text-red-200 tracking-wide">MODO HARD</span>
+                  </motion.div>
+                )}
+                {simulado.requires_camera && (
+                  <motion.div 
+                    className={cn(
+                      "inline-flex items-center gap-3 px-6 py-3 rounded-xl",
+                      "bg-gradient-to-r from-red-950/80 to-orange-900/60",
+                      "border-2 border-red-500/50",
+                      "shadow-[0_0_25px_rgba(239,68,68,0.2)]"
+                    )}
+                    whileHover={{ scale: 1.03 }}
+                  >
+                    <motion.div
+                      animate={{ opacity: [1, 0.5, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      <Camera className="h-5 w-5 text-red-400" />
+                    </motion.div>
+                    <span className="text-sm font-black text-red-200 tracking-wide">CÂMERA ATIVA</span>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {/* 💡 Dicas do Professor - Premium Glass Card */}
-          <div className={cn(
-            "relative overflow-hidden rounded-2xl p-5 md:p-6",
-            "border",
-            isHardMode 
-              ? "bg-gradient-to-br from-red-500/10 via-card/80 to-orange-500/5 border-red-500/25"
-              : "bg-gradient-to-br from-indigo-500/10 via-card/80 to-violet-500/5 border-indigo-500/25",
-            shouldBlur && "backdrop-blur-sm"
-          )}>
-            {/* Card glow */}
+          {/* 💡 PROFESSOR TIPS - PREMIUM GLASS */}
+          <motion.div 
+            className={cn(
+              "relative overflow-hidden rounded-2xl",
+              "border-2",
+              shouldBlur && "backdrop-blur-xl",
+              isHardMode 
+                ? "bg-gradient-to-br from-red-500/10 via-black/40 to-orange-500/5 border-red-500/30"
+                : "bg-gradient-to-br from-indigo-500/10 via-black/40 to-violet-500/5 border-indigo-500/30"
+            )}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            {/* Animated glow */}
             {!isLowEnd && (
-              <div className={cn(
-                "absolute top-0 right-0 w-40 h-40 rounded-full blur-3xl opacity-20",
-                isHardMode ? "bg-red-500" : "bg-indigo-500"
-              )} />
+              <motion.div 
+                className={cn(
+                  "absolute -top-10 -right-10 w-60 h-60 rounded-full blur-3xl",
+                  isHardMode ? "bg-red-500/20" : "bg-indigo-500/20"
+                )}
+                animate={{ 
+                  scale: [1, 1.2, 1],
+                  opacity: [0.2, 0.3, 0.2]
+                }}
+                transition={{ duration: 4, repeat: Infinity }}
+              />
             )}
             
-            <div className="relative">
+            <div className="relative p-6">
               {/* Header */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className={cn(
-                  "w-11 h-11 rounded-xl flex items-center justify-center",
-                  "bg-gradient-to-br shadow-lg",
-                  isHardMode 
-                    ? "from-red-500 to-orange-600 shadow-red-500/30" 
-                    : "from-indigo-500 to-violet-600 shadow-indigo-500/30"
-                )}>
-                  <Lightbulb className="h-5 w-5 text-white" />
-                </div>
+              <div className="flex items-center gap-4 mb-5">
+                <motion.div 
+                  className={cn(
+                    "w-12 h-12 rounded-xl flex items-center justify-center",
+                    "bg-gradient-to-br shadow-xl",
+                    isHardMode 
+                      ? "from-red-500 to-orange-600 shadow-red-500/40" 
+                      : "from-indigo-500 to-violet-600 shadow-indigo-500/40"
+                  )}
+                  whileHover={{ rotate: [0, -10, 10, 0] }}
+                >
+                  <Lightbulb className="h-6 w-6 text-white" />
+                </motion.div>
                 <div>
                   <p className={cn(
-                    "font-bold text-base",
-                    isHardMode ? "text-red-200" : "text-indigo-200"
+                    "font-black text-lg",
+                    isHardMode ? "text-red-100" : "text-indigo-100"
                   )}>Dicas do Professor</p>
                   <p className={cn(
-                    "text-xs",
+                    "text-xs font-medium",
                     isHardMode ? "text-red-400/60" : "text-indigo-400/60"
-                  )}>Moisés Medeiros</p>
+                  )}>Prof. Moisés Medeiros</p>
                 </div>
               </div>
               
               {/* Tips List */}
-              <ul className="space-y-2.5">
+              <div className="grid gap-3">
                 {[
-                  "Concentre-se e faça primeiro as questões que você domina.",
-                  "Controle seu tempo considerando a quantidade de questões.",
-                  "Escolha um local tranquilo evitando interrupções.",
-                  "Lembre-se: na prova real não há consulta."
+                  { icon: Target, text: "Concentre-se e faça primeiro as questões que você domina." },
+                  { icon: Timer, text: "Controle seu tempo considerando a quantidade de questões." },
+                  { icon: Shield, text: "Escolha um local tranquilo evitando interrupções." },
+                  { icon: Award, text: "Lembre-se: na prova real não há consulta." }
                 ].map((tip, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-muted-foreground/90">
-                    <Star className={cn(
-                      "h-4 w-4 shrink-0 mt-0.5",
-                      isHardMode ? "text-red-400/70" : "text-indigo-400/70"
+                  <motion.div 
+                    key={i} 
+                    className={cn(
+                      "flex gap-4 p-3 rounded-xl",
+                      "bg-white/[0.03] border border-white/[0.05]"
+                    )}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7 + i * 0.1 }}
+                    whileHover={{ x: 5, backgroundColor: 'rgba(255,255,255,0.05)' }}
+                  >
+                    <tip.icon className={cn(
+                      "h-5 w-5 shrink-0 mt-0.5",
+                      isHardMode ? "text-red-400" : "text-indigo-400"
                     )} />
-                    <span>{tip}</span>
-                  </li>
+                    <span className="text-sm text-muted-foreground/90">{tip.text}</span>
+                  </motion.div>
                 ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* 🛡️ Hard Mode Rules */}
-          {simulado.is_hard_mode && (
-            <div className={cn(
-              "relative overflow-hidden rounded-2xl p-5",
-              "bg-gradient-to-br from-red-500/15 via-red-900/10 to-red-500/5",
-              "border border-red-500/30",
-              "shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-            )}>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg shadow-red-500/30">
-                  <Shield className="h-5 w-5 text-white" />
-                </div>
-                <p className="font-bold text-red-300">Regras do Modo Hard</p>
               </div>
-              
-              <ul className="space-y-2 text-sm text-red-300/80">
-                <li className="flex gap-3 items-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                  <span>Máximo de <strong>{simulado.max_tab_switches}</strong> trocas de aba permitidas</span>
-                </li>
-                {simulado.requires_camera && (
-                  <li className="flex gap-3 items-center">
-                    <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                    <span>Câmera será ativada durante todo o simulado</span>
-                  </li>
-                )}
-                <li className="flex gap-3 items-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                  <span>Violações resultam em <strong>desclassificação imediata</strong></span>
-                </li>
-              </ul>
             </div>
+          </motion.div>
+
+          {/* 🛡️ HARD MODE RULES */}
+          {simulado.is_hard_mode && (
+            <motion.div 
+              className={cn(
+                "relative overflow-hidden rounded-2xl",
+                "bg-gradient-to-br from-red-950/50 via-red-900/30 to-black/50",
+                "border-2 border-red-500/40",
+                "shadow-[0_0_40px_rgba(239,68,68,0.15)]"
+              )}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.8 }}
+            >
+              {/* Pulsing border glow */}
+              {!isLowEnd && (
+                <motion.div 
+                  className="absolute inset-0 rounded-2xl"
+                  style={{
+                    boxShadow: 'inset 0 0 30px rgba(239,68,68,0.2)'
+                  }}
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              )}
+              
+              <div className="relative p-6">
+                <div className="flex items-center gap-4 mb-5">
+                  <motion.div 
+                    className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-xl shadow-red-500/40"
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    <Shield className="h-6 w-6 text-white" />
+                  </motion.div>
+                  <div>
+                    <p className="font-black text-lg text-red-100">Regras do Modo Hard</p>
+                    <p className="text-xs text-red-400/60">Violações = Desclassificação</p>
+                  </div>
+                </div>
+                
+                <div className="grid gap-3">
+                  {[
+                    { icon: CircuitBoard, text: `Máximo de ${simulado.max_tab_switches} trocas de aba permitidas` },
+                    ...(simulado.requires_camera ? [{ icon: Camera, text: "Câmera ativa durante todo o simulado" }] : []),
+                    { icon: AlertTriangle, text: "Violações resultam em desclassificação imediata" }
+                  ].map((rule, i) => (
+                    <motion.div 
+                      key={i}
+                      className={cn(
+                        "flex gap-4 items-center p-3 rounded-xl",
+                        "bg-red-500/10 border border-red-500/20"
+                      )}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.9 + i * 0.1 }}
+                    >
+                      <rule.icon className="h-5 w-5 text-red-400 shrink-0" />
+                      <span className="text-sm text-red-200/90">{rule.text}</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
           )}
 
-          {/* 📋 Regras Gerais - Minimal Glass */}
-          <div className={cn(
-            "rounded-xl p-5",
-            "bg-card/40 border border-border/40",
-            shouldBlur && "backdrop-blur-sm"
-          )}>
-            <div className="flex items-center gap-3 mb-4">
+          {/* 📋 GENERAL RULES */}
+          <motion.div 
+            className={cn(
+              "rounded-2xl p-6",
+              "bg-white/[0.02] border border-white/[0.08]",
+              shouldBlur && "backdrop-blur-sm"
+            )}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9 }}
+          >
+            <div className="flex items-center gap-3 mb-5">
               <ListChecks className={cn(
-                "h-5 w-5",
-                isHardMode ? "text-red-400/70" : "text-emerald-400/70"
+                "h-6 w-6",
+                isHardMode ? "text-red-400" : "text-emerald-400"
               )} />
-              <p className="font-semibold text-foreground/90">Regras do Simulado</p>
+              <p className="font-bold text-foreground/90">Regras do Simulado</p>
             </div>
             
-            <div className="grid md:grid-cols-2 gap-2.5 text-sm text-muted-foreground/80">
+            <div className="grid md:grid-cols-2 gap-3">
               {[
-                `Tempo total: ${simulado.duration_minutes} minutos`,
-                "Cada questão vale 10 pontos de XP",
-                "Apenas a 1ª tentativa pontua no ranking",
-                "Respostas salvas automaticamente",
-                "Navegue livremente entre questões",
-                "Gabarito disponível após finalização"
+                { icon: Clock, text: `Tempo total: ${simulado.duration_minutes} minutos` },
+                { icon: Zap, text: "Cada questão vale 10 pontos de XP" },
+                { icon: Trophy, text: "Apenas a 1ª tentativa pontua no ranking" },
+                { icon: CircuitBoard, text: "Respostas salvas automaticamente" },
+                { icon: Target, text: "Navegue livremente entre questões" },
+                { icon: FileQuestion, text: "Gabarito disponível após finalização" }
               ].map((rule, i) => (
-                <div key={i} className="flex gap-2.5 items-center">
-                  <div className={cn(
-                    "w-1.5 h-1.5 rounded-full shrink-0",
-                    isHardMode ? "bg-red-500/70" : "bg-emerald-500/70"
+                <motion.div 
+                  key={i} 
+                  className="flex gap-3 items-center p-2 rounded-lg hover:bg-white/[0.03] transition-colors"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 + i * 0.05 }}
+                >
+                  <rule.icon className={cn(
+                    "h-4 w-4 shrink-0",
+                    isHardMode ? "text-red-500/60" : "text-emerald-500/60"
                   )} />
-                  <span>{rule}</span>
-                </div>
+                  <span className="text-sm text-muted-foreground/80">{rule.text}</span>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
       </ScrollArea>
 
-      {/* 🚀 Footer with Epic Button */}
-      <div className={cn(
-        "relative z-10 p-6 border-t",
-        "bg-gradient-to-t from-black/80 via-black/60 to-transparent",
-        isHardMode ? "border-red-500/20" : "border-emerald-500/20"
-      )}>
-        <Button
-          size="lg"
-          onClick={onStart}
-          disabled={isLoading}
-          className={cn(
-            "relative w-full h-14 text-base md:text-lg font-bold overflow-hidden",
-            "transition-all duration-300",
-            isHardMode 
-              ? "bg-gradient-to-r from-red-600 via-red-500 to-orange-500 hover:from-red-500 hover:via-red-400 hover:to-orange-400"
-              : "bg-gradient-to-r from-emerald-600 via-emerald-500 to-cyan-500 hover:from-emerald-500 hover:via-emerald-400 hover:to-cyan-400",
-            !isLowEnd && (isHardMode 
-              ? "shadow-[0_0_30px_rgba(239,68,68,0.4)] hover:shadow-[0_0_50px_rgba(239,68,68,0.6)]" 
-              : "shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:shadow-[0_0_50px_rgba(16,185,129,0.6)]"
-            ),
-            !isLowEnd && "hover:scale-[1.02]"
-          )}
+      {/* 🚀 EPIC FOOTER WITH START BUTTON */}
+      <motion.div 
+        className={cn(
+          "relative z-10 p-6 md:p-8",
+          "bg-gradient-to-t from-black via-black/95 to-transparent",
+          "border-t-2",
+          isHardMode ? "border-red-500/30" : "border-emerald-500/30"
+        )}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.1 }}
+      >
+        <motion.div
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
         >
-          {isLoading ? (
-            <>
-              <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-3" />
-              Preparando Simulado...
-            </>
-          ) : (
-            <>
-              <Play className="h-6 w-6 mr-3 fill-current" />
-              {isRetake ? "INICIAR MODO PRÁTICA" : "INICIAR SIMULADO"}
-              <Rocket className="h-5 w-5 ml-3" />
-            </>
-          )}
-          
-          {/* Shine effect */}
-          {!isLowEnd && (
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
-          )}
-        </Button>
+          <Button
+            size="lg"
+            onClick={onStart}
+            disabled={isLoading}
+            className={cn(
+              "relative w-full h-16 md:h-18 text-lg md:text-xl font-black overflow-hidden",
+              "rounded-2xl border-2",
+              "transition-all duration-300",
+              isHardMode 
+                ? "bg-gradient-to-r from-red-600 via-red-500 to-orange-500 hover:from-red-500 hover:via-red-400 hover:to-orange-400 border-red-400/50"
+                : "bg-gradient-to-r from-emerald-600 via-emerald-500 to-cyan-500 hover:from-emerald-500 hover:via-emerald-400 hover:to-cyan-400 border-emerald-400/50",
+              !isLowEnd && (isHardMode 
+                ? "shadow-[0_0_50px_rgba(239,68,68,0.4),0_0_100px_rgba(239,68,68,0.2)]" 
+                : "shadow-[0_0_50px_rgba(16,185,129,0.4),0_0_100px_rgba(16,185,129,0.2)]"
+              )
+            )}
+          >
+            {isLoading ? (
+              <div className="flex items-center gap-3">
+                <motion.div 
+                  className="h-6 w-6 border-3 border-white/30 border-t-white rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                />
+                <span>Preparando Simulado...</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4">
+                <Play className="h-7 w-7 fill-current" />
+                <span>{isRetake ? "INICIAR MODO PRÁTICA" : "INICIAR SIMULADO"}</span>
+                <motion.div
+                  animate={{ x: [0, 5, 0] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                >
+                  <Rocket className="h-6 w-6" />
+                </motion.div>
+              </div>
+            )}
+            
+            {/* Animated shine */}
+            {!isLowEnd && !isLoading && (
+              <motion.div 
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent"
+                animate={{ x: ['-200%', '200%'] }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+              />
+            )}
+          </Button>
+        </motion.div>
         
-        {/* Subtle hint */}
-        <p className="text-center text-xs text-muted-foreground/50 mt-3">
-          Ao iniciar, o cronômetro será ativado automaticamente
-        </p>
-      </div>
-    </div>
+        <motion.p 
+          className="text-center text-xs text-muted-foreground/40 mt-4 font-medium"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.3 }}
+        >
+          ⚡ Ao iniciar, o cronômetro será ativado automaticamente
+        </motion.p>
+      </motion.div>
+    </motion.div>
   );
 
   // Se open/onOpenChange forem fornecidos, renderiza como Dialog
@@ -407,12 +725,12 @@ export function SimuladoReadyScreen({
           className={cn(
             "p-0 gap-0 overflow-hidden",
             "border-2",
-            isHardMode ? "border-red-500/30" : "border-emerald-500/30",
-            "bg-gradient-to-br from-background via-card to-background",
+            isHardMode ? "border-red-500/40" : "border-emerald-500/40",
+            "bg-gradient-to-br from-black via-card to-black",
             "shadow-2xl",
             isHardMode 
-              ? "shadow-red-500/10" 
-              : "shadow-emerald-500/10"
+              ? "shadow-red-500/20" 
+              : "shadow-emerald-500/20"
           )}
           showMaximize
         >
@@ -430,10 +748,10 @@ export function SimuladoReadyScreen({
     <div className={cn(
       "relative rounded-2xl overflow-hidden",
       "border-2",
-      isHardMode ? "border-red-500/30" : "border-emerald-500/30",
-      "bg-gradient-to-br from-background via-card to-background",
+      isHardMode ? "border-red-500/40" : "border-emerald-500/40",
+      "bg-gradient-to-br from-black via-card to-black",
       "shadow-2xl min-h-[80vh]",
-      isHardMode ? "shadow-red-500/10" : "shadow-emerald-500/10"
+      isHardMode ? "shadow-red-500/20" : "shadow-emerald-500/20"
     )}>
       {content}
     </div>
@@ -441,63 +759,143 @@ export function SimuladoReadyScreen({
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   📊 STAT ORB — Premium Holographic Card
+   📊 HOLOGRAPHIC STAT CARD — Ultra Premium Design
    ═══════════════════════════════════════════════════════════════ */
-function StatOrb({ 
+function HolographicStatCard({ 
   icon, 
   value, 
   label, 
-  gradient,
-  glowColor,
+  color,
   isLowEnd = false,
+  delay = 0,
 }: { 
   icon: React.ReactNode; 
   value: string; 
   label: string;
-  gradient: string;
-  glowColor: string;
+  color: "red" | "orange" | "cyan" | "emerald" | "amber" | "green";
   isLowEnd?: boolean;
+  delay?: number;
 }) {
-  const glowClasses: Record<string, string> = {
-    indigo: "group-hover:shadow-indigo-500/30",
-    violet: "group-hover:shadow-violet-500/30",
-    amber: "group-hover:shadow-amber-500/30",
-    emerald: "group-hover:shadow-emerald-500/30",
+  const colorConfig = {
+    red: {
+      bg: "from-red-500/20 via-red-600/10 to-red-500/5",
+      border: "border-red-500/40",
+      icon: "from-red-500 to-red-700",
+      text: "text-red-200",
+      glow: "shadow-red-500/30",
+      hover: "hover:border-red-400/60 hover:shadow-red-500/40"
+    },
+    orange: {
+      bg: "from-orange-500/20 via-orange-600/10 to-orange-500/5",
+      border: "border-orange-500/40",
+      icon: "from-orange-500 to-orange-700",
+      text: "text-orange-200",
+      glow: "shadow-orange-500/30",
+      hover: "hover:border-orange-400/60 hover:shadow-orange-500/40"
+    },
+    cyan: {
+      bg: "from-cyan-500/20 via-cyan-600/10 to-cyan-500/5",
+      border: "border-cyan-500/40",
+      icon: "from-cyan-500 to-cyan-700",
+      text: "text-cyan-200",
+      glow: "shadow-cyan-500/30",
+      hover: "hover:border-cyan-400/60 hover:shadow-cyan-500/40"
+    },
+    emerald: {
+      bg: "from-emerald-500/20 via-emerald-600/10 to-emerald-500/5",
+      border: "border-emerald-500/40",
+      icon: "from-emerald-500 to-emerald-700",
+      text: "text-emerald-200",
+      glow: "shadow-emerald-500/30",
+      hover: "hover:border-emerald-400/60 hover:shadow-emerald-500/40"
+    },
+    amber: {
+      bg: "from-amber-500/20 via-amber-600/10 to-amber-500/5",
+      border: "border-amber-500/40",
+      icon: "from-amber-500 to-amber-700",
+      text: "text-amber-200",
+      glow: "shadow-amber-500/30",
+      hover: "hover:border-amber-400/60 hover:shadow-amber-500/40"
+    },
+    green: {
+      bg: "from-green-500/20 via-green-600/10 to-green-500/5",
+      border: "border-green-500/40",
+      icon: "from-green-500 to-green-700",
+      text: "text-green-200",
+      glow: "shadow-green-500/30",
+      hover: "hover:border-green-400/60 hover:shadow-green-500/40"
+    }
   };
 
+  const config = colorConfig[color];
+
   return (
-    <div className="group relative">
+    <motion.div 
+      className="group relative"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+    >
       {/* Outer glow on hover */}
       {!isLowEnd && (
-        <div className={cn(
-          "absolute -inset-1 rounded-2xl bg-gradient-to-r opacity-0 group-hover:opacity-30 blur-xl transition-opacity duration-500",
-          gradient
-        )} />
+        <motion.div 
+          className={cn(
+            "absolute -inset-1 rounded-2xl bg-gradient-to-r opacity-0 group-hover:opacity-40 blur-xl transition-opacity duration-500",
+            config.bg
+          )}
+        />
       )}
       
       <div className={cn(
-        "relative flex flex-col items-center gap-2.5 p-4 md:p-5 rounded-xl",
-        "bg-gradient-to-br from-card/90 via-card/70 to-card/50",
-        "border border-border/50 group-hover:border-white/20",
+        "relative flex flex-col items-center gap-3 p-5 md:p-6 rounded-xl",
+        "bg-gradient-to-br border",
+        config.bg,
+        config.border,
         "shadow-lg",
         !isLowEnd && "transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl",
-        !isLowEnd && glowClasses[glowColor]
+        !isLowEnd && config.hover,
+        !isLowEnd && config.glow
       )}>
+        {/* Scan line effect on hover */}
+        {!isLowEnd && (
+          <motion.div 
+            className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <motion.div 
+              className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent"
+              initial={{ y: '-100%' }}
+              whileHover={{ y: '100%' }}
+              transition={{ duration: 0.8 }}
+            />
+          </motion.div>
+        )}
+        
         {/* Icon container */}
-        <div className={cn(
-          "w-11 h-11 rounded-xl flex items-center justify-center",
-          "bg-gradient-to-br text-white shadow-lg",
-          gradient
-        )}>
+        <motion.div 
+          className={cn(
+            "w-12 h-12 rounded-xl flex items-center justify-center",
+            "bg-gradient-to-br text-white shadow-lg",
+            config.icon
+          )}
+          whileHover={{ rotate: [0, -5, 5, 0], scale: 1.1 }}
+          transition={{ duration: 0.4 }}
+        >
           {icon}
-        </div>
+        </motion.div>
         
         {/* Value & Label */}
         <div className="text-center">
-          <p className="text-lg md:text-xl font-bold text-foreground">{value}</p>
-          <p className="text-[11px] md:text-xs text-muted-foreground/70 uppercase tracking-wider">{label}</p>
+          <p className={cn(
+            "text-xl md:text-2xl font-black",
+            config.text
+          )}>
+            {value}
+          </p>
+          <p className="text-[10px] md:text-xs text-muted-foreground/60 uppercase tracking-widest mt-1 font-medium">
+            {label}
+          </p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
