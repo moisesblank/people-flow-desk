@@ -670,7 +670,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
         </div>
         
         {/* === MODULE INFO — COMPACT PREMIUM LAYOUT === */}
-        <div className="flex-1 flex flex-col justify-center py-1 min-w-0">
+        <div className="flex-1 flex flex-col justify-center items-center text-center py-2 min-w-0">
           {/* Module Badge */}
           <div className="mb-2">
             <span className={cn(
@@ -691,7 +691,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
           </h3>
 
           {/* Stats Row */}
-          <div className="flex items-center gap-2 flex-wrap mb-3">
+          <div className="flex items-center justify-center gap-2 flex-wrap mb-3">
             {/* Episodes count */}
             <div className="flex items-center gap-1.5 text-slate-300">
               <div className="w-5 h-5 rounded bg-slate-700/80 flex items-center justify-center">
@@ -710,7 +710,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center justify-center gap-2 flex-wrap">
             {/* Toggle Episodes Button */}
             <Button
               variant="ghost"
