@@ -1025,6 +1025,7 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
   isLowEnd: boolean;
 }) {
   const [isVisible, setIsVisible] = useState(false);
+  const [isClicked, setIsClicked] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const hasVideo = lesson.panda_video_id || lesson.video_url || lesson.youtube_video_id;
   const episodeNumber = index + 1;
@@ -1048,16 +1049,29 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
     return () => observer.disconnect();
   }, []);
 
+  // Handle click with individual animation
+  const handleClick = () => {
+    setIsClicked(true);
+    // Trigger animation, then call onPlay after brief delay
+    setTimeout(() => {
+      onPlay();
+      setIsClicked(false);
+    }, 150);
+  };
+
   return (
     <div
       ref={cardRef}
-      onClick={onPlay}
+      onClick={handleClick}
       className={cn(
         "relative flex-shrink-0 cursor-pointer group/card",
         "w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px]",
         "rounded-xl overflow-hidden",
-        "transition-transform duration-300 ease-out",
-        "hover:scale-[1.05] hover:z-20"
+        // Only animate on hover, NOT on layout changes - removes global transition
+        "hover:z-20",
+        // Individual click animation - only this card scales
+        isClicked && "scale-[0.95] transition-transform duration-150 ease-out",
+        !isClicked && "hover:scale-[1.05] transition-transform duration-200 ease-out"
       )}
     >
       {/* === CARD CONTAINER === */}
