@@ -567,9 +567,9 @@ const ModuleCard = memo(function ModuleCard({
         "hover:shadow-md hover:shadow-cyan-500/10"
       )}
     >
-      {/* 🖼️ THUMBNAIL — Proporção original 3:4 (752x940) em tamanho compacto */}
-      {/* PADRÃO DEFINITIVO: Capa visível, proporcional, sem exagero */}
-      <div className="relative aspect-[3/4] w-full max-h-[200px] overflow-hidden bg-gradient-to-br from-cyan-900/20 to-blue-900/20">
+      {/* 🖼️ THUMBNAIL — Proporção original 3:4 (752x940) */}
+      {/* PADRÃO DEFINITIVO: Capa visível, proporcional, dimensão natural */}
+      <div className="relative aspect-[3/4] w-full overflow-hidden bg-gradient-to-br from-cyan-900/20 to-blue-900/20">
         {/* Skeleton placeholder enquanto não está em view */}
         {!isInView && (
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-800/10 to-blue-800/10" />
