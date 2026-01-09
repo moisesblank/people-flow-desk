@@ -778,7 +778,7 @@ export function CourseMasterMode({ isOpen, onClose, initialCourseId }: CourseMas
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-5xl w-[95vw] h-[90vh] p-0 gap-0 bg-background/95 backdrop-blur-xl border-purple-500/30">
+      <DialogContent className="max-w-[98vw] w-[98vw] h-[98vh] p-0 gap-0 bg-background/95 backdrop-blur-xl border-purple-500/30">
         {/* Header */}
         <DialogHeader className="p-4 border-b border-border/50 bg-gradient-to-r from-purple-500/10 via-pink-500/5 to-cyan-500/10">
           <div className="flex items-center justify-between">

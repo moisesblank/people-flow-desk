@@ -905,7 +905,7 @@ export default function GestaoCursos() {
         
         {/* Course Dialog */}
         <Dialog open={courseDialog} onOpenChange={setCourseDialog}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card/95 backdrop-blur-sm border-border/50">
+          <DialogContent className="max-w-[98vw] w-[98vw] h-[98vh] overflow-y-auto bg-card/95 backdrop-blur-sm border-border/50">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5 text-primary" />
@@ -1063,19 +1063,7 @@ export default function GestaoCursos() {
         
         {/* Module Dialog - TELA MÁXIMA (Owner Request) */}
         <Dialog open={moduleDialog} onOpenChange={setModuleDialog}>
-          <DialogContent 
-            className="bg-card/95 backdrop-blur-sm border-border/50 overflow-y-auto p-6"
-            style={{ 
-              width: '100vw', 
-              maxWidth: '100vw', 
-              height: '100vh', 
-              maxHeight: '100vh',
-              borderRadius: 0,
-              margin: 0,
-              top: 0,
-              left: 0,
-              transform: 'none'
-            }}>
+          <DialogContent className="max-w-[98vw] w-[98vw] h-[98vh] overflow-y-auto bg-card/95 backdrop-blur-sm border-border/50 p-6">
             <DialogHeader className="border-b border-border/30 pb-4">
               <DialogTitle className="flex items-center gap-3 text-2xl">
                 <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-500/30">
