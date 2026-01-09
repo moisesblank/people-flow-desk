@@ -549,6 +549,101 @@ const NetflixCarouselRow = memo(function NetflixCarouselRow({
 NetflixCarouselRow.displayName = 'NetflixCarouselRow';
 
 // ============================================
+// 🎬 LAZY VIDEO ROW — Performance Optimized
+// Lazy loads video lessons row only when visible in viewport
+// ============================================
+const LazyVideoRow = memo(function LazyVideoRow({
+  lessons,
+  rowIndex,
+  totalRows,
+  onPlayLesson,
+  isLowEnd,
+  scrollRef
+}: {
+  lessons: Lesson[];
+  rowIndex: number;
+  totalRows: number;
+  onPlayLesson: (lesson: Lesson) => void;
+  isLowEnd: boolean;
+  scrollRef?: React.RefObject<HTMLDivElement>;
+}) {
+  const [isVisible, setIsVisible] = useState(false);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const rowLessons = useMemo(() => lessons.slice(rowIndex * 12, (rowIndex + 1) * 12), [lessons, rowIndex]);
+  const rowNumber = rowIndex + 1;
+
+  // Lazy load row via IntersectionObserver
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px', threshold: 0.01 }
+    );
+
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={rowRef} className="relative min-h-[280px]">
+      {/* Row Label (if multiple rows) */}
+      {totalRows > 1 && (
+        <div className="flex items-center gap-2 px-6 mb-3">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+            Série {rowNumber}
+          </span>
+          <div className="flex-1 h-px bg-gradient-to-r from-slate-700/50 to-transparent" />
+          <span className="text-xs text-slate-600 font-medium">
+            {rowIndex * 12 + 1}–{Math.min((rowIndex + 1) * 12, lessons.length)} de {lessons.length}
+          </span>
+        </div>
+      )}
+      
+      {/* Only render cards when visible */}
+      {isVisible ? (
+        <div className="relative group/row">
+          {/* Gradient Edges */}
+          <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#0a0e14] to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#0a0e14] to-transparent z-10 pointer-events-none" />
+          
+          {/* Scrollable Container */}
+          <div
+            ref={scrollRef}
+            className="flex gap-4 px-6 overflow-x-auto pb-2 scrollbar-none [&::-webkit-scrollbar]:hidden scroll-smooth"
+            style={{ scrollbarWidth: 'none' }}
+          >
+            {rowLessons.map((lesson, idx) => (
+              <NetflixEpisodeCard 
+                key={lesson.id} 
+                lesson={lesson} 
+                index={rowIndex * 12 + idx}
+                onPlay={() => onPlayLesson(lesson)}
+                isLowEnd={isLowEnd}
+              />
+            ))}
+          </div>
+        </div>
+      ) : (
+        /* Skeleton placeholder while loading */
+        <div className="flex gap-4 px-6 overflow-hidden">
+          {Array.from({ length: Math.min(6, rowLessons.length) }, (_, i) => (
+            <div key={i} className="flex-shrink-0 w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px] rounded-xl bg-slate-800/50 animate-pulse aspect-[3/4]" />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+LazyVideoRow.displayName = 'LazyVideoRow';
+
+// ============================================
 // 🎬 NETFLIX MODULE SECTION — Full-Width Premium
 // Módulo com thumbnail grande + carrossel de aulas
 // ============================================
@@ -859,57 +954,21 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
             </div>
           ) : lessons && lessons.length > 0 ? (
             <div className="py-6 space-y-6">
-              {/* Split lessons into rows of 12 */}
-              {Array.from({ length: Math.ceil(lessons.length / 12) }, (_, rowIndex) => {
-                const rowLessons = lessons.slice(rowIndex * 12, (rowIndex + 1) * 12);
-                const rowNumber = rowIndex + 1;
+              {/* Split lessons into rows of 12 - Memoized row generation */}
+              {useMemo(() => {
                 const totalRows = Math.ceil(lessons.length / 12);
-                
-                return (
-                  <div key={`row-${rowIndex}`} className="relative">
-                    {/* Row Label (if multiple rows) */}
-                    {totalRows > 1 && (
-                      <div className="flex items-center gap-2 px-6 mb-3">
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                          Série {rowNumber}
-                        </span>
-                        <div className="flex-1 h-px bg-gradient-to-r from-slate-700/50 to-transparent" />
-                        <span className="text-xs text-slate-600 font-medium">
-                          {rowIndex * 12 + 1}–{Math.min((rowIndex + 1) * 12, lessons.length)} de {lessons.length}
-                        </span>
-                      </div>
-                    )}
-                    
-                    {/* Horizontal Scroll Row */}
-                    <div className="relative group/row">
-                      {/* Gradient Edges */}
-                      <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#0a0e14] to-transparent z-10 pointer-events-none" />
-                      <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#0a0e14] to-transparent z-10 pointer-events-none" />
-                      
-                      {/* Scrollable Container */}
-                      <div
-                        ref={rowIndex === 0 ? scrollRef : undefined}
-                        className={cn(
-                          "flex gap-4 px-6 overflow-x-auto pb-2",
-                          "scrollbar-none [&::-webkit-scrollbar]:hidden",
-                          "scroll-smooth"
-                        )}
-                        style={{ scrollbarWidth: 'none' }}
-                      >
-                        {rowLessons.map((lesson, idx) => (
-                          <NetflixEpisodeCard 
-                            key={lesson.id} 
-                            lesson={lesson} 
-                            index={rowIndex * 12 + idx}
-                            onPlay={() => onPlayLesson(lesson)}
-                            isLowEnd={isLowEnd}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                return Array.from({ length: totalRows }, (_, rowIndex) => (
+                  <LazyVideoRow
+                    key={`row-${rowIndex}`}
+                    lessons={lessons}
+                    rowIndex={rowIndex}
+                    totalRows={totalRows}
+                    onPlayLesson={onPlayLesson}
+                    isLowEnd={isLowEnd}
+                    scrollRef={rowIndex === 0 ? scrollRef : undefined}
+                  />
+                ));
+              }, [lessons, onPlayLesson, isLowEnd])}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-slate-500">
@@ -939,7 +998,7 @@ NetflixModuleSection.displayName = 'NetflixModuleSection';
 
 // ============================================
 // 🎬 NETFLIX EPISODE CARD — Ultra Premium Cinematic Design
-// Card vertical cinematográfico com thumbnail, play, e visual Netflix
+// PERFORMANCE OPTIMIZED: Lazy loading, memoization, CSS-only effects
 // ============================================
 const NetflixEpisodeCard = memo(function NetflixEpisodeCard({ 
   lesson, 
@@ -952,42 +1011,62 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
   onPlay: () => void;
   isLowEnd: boolean;
 }) {
-  const [isHovered, setIsHovered] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const hasVideo = lesson.panda_video_id || lesson.video_url || lesson.youtube_video_id;
   const episodeNumber = index + 1;
 
+  // Lazy loading via IntersectionObserver - only load when visible
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect(); // Stop observing once visible
+        }
+      },
+      { rootMargin: '100px', threshold: 0.1 }
+    );
+
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div
+      ref={cardRef}
       onClick={onPlay}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       className={cn(
         "relative flex-shrink-0 cursor-pointer group/card",
         "w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px]",
         "rounded-xl overflow-hidden",
-        "transition-all duration-300 ease-out",
-        !isLowEnd && isHovered && "scale-[1.05] z-20"
+        "transition-transform duration-300 ease-out",
+        "hover:scale-[1.05] hover:z-20"
       )}
     >
       {/* === CARD CONTAINER === */}
       <div className={cn(
         "relative rounded-xl overflow-hidden",
         "bg-gradient-to-b from-slate-900 to-slate-950",
-        "border transition-all duration-300",
-        isHovered 
-          ? "border-red-500/60 shadow-2xl shadow-red-500/20" 
-          : "border-slate-700/50 shadow-xl shadow-black/40"
+        "border border-slate-700/50 shadow-xl shadow-black/40",
+        "transition-all duration-300",
+        "group-hover/card:border-red-500/60 group-hover/card:shadow-2xl group-hover/card:shadow-red-500/20"
       )}>
         
         {/* === THUMBNAIL SECTION === */}
         <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
-          {/* Thumbnail or Placeholder */}
-          {lesson.thumbnail_url ? (
+          {/* Lazy-loaded Thumbnail */}
+          {isVisible && lesson.thumbnail_url ? (
             <img
               src={lesson.thumbnail_url}
               alt={lesson.title}
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
+              decoding="async"
+              sizes="(max-width: 640px) 180px, (max-width: 768px) 200px, (max-width: 1024px) 220px, 240px"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-red-900/30 via-slate-900 to-slate-950">
@@ -998,18 +1077,12 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
             </div>
           )}
           
-          {/* Dark Overlay */}
-          <div className={cn(
-            "absolute inset-0 transition-opacity duration-300",
-            isHovered ? "bg-black/40" : "bg-black/20"
-          )} />
+          {/* Dark Overlay - CSS only hover */}
+          <div className="absolute inset-0 bg-black/20 group-hover/card:bg-black/40 transition-colors duration-300" />
           
           {/* Episode Number Badge */}
           <div className="absolute top-2 left-2">
-            <div className={cn(
-              "flex items-center gap-1 px-2.5 py-1 rounded-md",
-              "bg-black/80 backdrop-blur-sm border border-slate-600/50"
-            )}>
+            <div className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-sm border border-slate-600/50">
               <span className="text-[10px] text-slate-400 font-bold">EP</span>
               <span className="text-sm font-black text-white tabular-nums">
                 {String(episodeNumber).padStart(2, '0')}
@@ -1026,24 +1099,19 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
             </div>
           )}
           
-          {/* Play Button Overlay */}
-          <div className={cn(
-            "absolute inset-0 flex items-center justify-center",
-            "transition-all duration-300",
-            isHovered ? "opacity-100" : "opacity-0"
-          )}>
+          {/* Play Button Overlay - CSS only */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity duration-300">
             <div className={cn(
               "w-16 h-16 rounded-full flex items-center justify-center",
               "bg-red-600 shadow-2xl shadow-red-600/50",
               "border-4 border-white/20",
-              !isLowEnd && "transition-transform duration-300",
-              !isLowEnd && isHovered && "scale-110"
+              "group-hover/card:scale-110 transition-transform duration-300"
             )}>
               <Play className="h-7 w-7 text-white ml-1" fill="currentColor" />
             </div>
           </div>
           
-          {/* Progress Bar (if available) */}
+          {/* Progress Bar */}
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/60">
             <div className="h-full w-1/3 bg-gradient-to-r from-red-600 to-red-500 rounded-r" />
           </div>
@@ -1052,20 +1120,13 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
         {/* === INFO SECTION === */}
         <div className="p-4 space-y-3">
           {/* Title */}
-          <h4 className={cn(
-            "font-bold text-sm md:text-base leading-tight transition-colors duration-200",
-            "line-clamp-2 min-h-[2.5rem]",
-            isHovered ? "text-white" : "text-slate-200"
-          )}>
+          <h4 className="font-bold text-sm md:text-base leading-tight line-clamp-2 min-h-[2.5rem] text-slate-200 group-hover/card:text-white transition-colors duration-200">
             {lesson.title}
           </h4>
           
           {/* Meta Info Row */}
           <div className="flex items-center gap-2">
-            <span className={cn(
-              "px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
-              "bg-red-500/20 text-red-400 border border-red-500/30"
-            )}>
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30">
               Videoaula
             </span>
             {hasVideo && (
@@ -1075,26 +1136,15 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
             )}
           </div>
           
-          {/* Watch Button */}
-          <button
-            className={cn(
-              "w-full py-2.5 rounded-lg font-bold text-sm uppercase tracking-wider",
-              "flex items-center justify-center gap-2",
-              "transition-all duration-300",
-              isHovered 
-                ? "bg-gradient-to-r from-red-600 to-red-500 text-white shadow-lg shadow-red-500/40"
-                : "bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700"
-            )}
-          >
+          {/* Watch Button - CSS only hover */}
+          <button className="w-full py-2.5 rounded-lg font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 bg-slate-800 text-slate-300 border border-slate-700 group-hover/card:bg-gradient-to-r group-hover/card:from-red-600 group-hover/card:to-red-500 group-hover/card:text-white group-hover/card:border-transparent group-hover/card:shadow-lg group-hover/card:shadow-red-500/40 transition-all duration-300">
             <Play className="h-4 w-4" fill="currentColor" />
             Assistir Agora
           </button>
         </div>
         
-        {/* Hover Glow Effect */}
-        {!isLowEnd && isHovered && (
-          <div className="absolute inset-0 rounded-xl pointer-events-none ring-1 ring-red-500/40" />
-        )}
+        {/* Hover Glow Effect - CSS only */}
+        <div className="absolute inset-0 rounded-xl pointer-events-none ring-0 group-hover/card:ring-1 ring-red-500/40 transition-all duration-300" />
       </div>
     </div>
   );
