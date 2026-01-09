@@ -695,7 +695,7 @@ const ModuleCard = memo(function ModuleCard({
         </div>
       </div>
 
-      {/* 🎬 AULAS DO MÓDULO — Layout HORIZONTAL com scroll */}
+      {/* 🎬 AULAS DO MÓDULO — Grid de cards integrado */}
       {isExpanded && (
         <div className="border-t border-cyan-500/20 bg-gradient-to-b from-cyan-950/20 to-card/50 p-3">
           {isLoading ? (
@@ -704,9 +704,9 @@ const ModuleCard = memo(function ModuleCard({
               Carregando...
             </div>
           ) : lessons && lessons.length > 0 ? (
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-cyan-500/30 scrollbar-track-transparent">
+            <div className="grid grid-cols-2 gap-2">
               {lessons.map((lesson, idx) => (
-                <LessonCardHorizontal 
+                <LessonCard 
                   key={lesson.id} 
                   lesson={lesson} 
                   index={idx}
@@ -743,11 +743,11 @@ const ModuleCard = memo(function ModuleCard({
 ModuleCard.displayName = 'ModuleCard';
 
 // ============================================
-// 🎬 LESSON CARD HORIZONTAL — CARD COMPACTO HORIZONTAL
-// Design: thumbnail + título + duração em card horizontal
+// 🎬 LESSON CARD — CARD GRID ORIGINAL
+// Design como no print: thumbnail + número + título + botão assistir
 // PERFORMANCE: Memoizado para evitar re-renders
 // ============================================
-const LessonCardHorizontal = memo(function LessonCardHorizontal({ 
+const LessonCard = memo(function LessonCard({ 
   lesson, 
   index,
   onPlay
@@ -757,30 +757,20 @@ const LessonCardHorizontal = memo(function LessonCardHorizontal({
   onPlay: () => void;
 }) {
   const [imageError, setImageError] = useState(false);
-  
-  const formatDuration = (minutes: number | null) => {
-    if (!minutes) return '--';
-    const hrs = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hrs > 0) return `${hrs}h${mins}m`;
-    return `${mins}min`;
-  };
-
   const hasValidThumbnail = lesson.thumbnail_url && !imageError;
 
   return (
-    <button
-      onClick={onPlay}
+    <div
       className={cn(
-        "shrink-0 flex flex-col w-36 rounded-lg overflow-hidden",
+        "group relative flex flex-col rounded-lg overflow-hidden",
         "bg-gradient-to-br from-cyan-900/30 to-blue-900/30",
         "border border-cyan-500/20 hover:border-cyan-400/50",
         "hover:shadow-md hover:shadow-cyan-500/20",
-        "transition-all duration-200 group cursor-pointer"
+        "transition-all duration-200"
       )}
     >
-      {/* Thumbnail */}
-      <div className="relative w-full aspect-video bg-cyan-900/40">
+      {/* Thumbnail com número */}
+      <div className="relative aspect-video bg-cyan-900/40">
         {hasValidThumbnail ? (
           <img
             src={lesson.thumbnail_url!}
@@ -791,37 +781,62 @@ const LessonCardHorizontal = memo(function LessonCardHorizontal({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Play className="h-6 w-6 text-cyan-500/50 group-hover:text-cyan-400 transition-colors" />
+            <Play className="h-8 w-8 text-cyan-500/50" />
           </div>
         )}
         
         {/* Número da aula */}
-        <span className="absolute top-1 left-1 w-5 h-5 flex items-center justify-center rounded bg-black/70 text-white text-[10px] font-bold">
-          {index + 1}
+        <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-cyan-500 text-white text-[10px] font-bold">
+          #{String(index + 1).padStart(2, '0')}
         </span>
         
-        {/* Duração */}
-        <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-black/70 text-white text-[10px] font-medium flex items-center gap-1">
-          <Clock className="h-2.5 w-2.5" />
-          {formatDuration(lesson.duration_minutes)}
-        </span>
+        {/* Ícone de ação - canto superior direito */}
+        <div className="absolute top-1 right-1 flex items-center gap-1">
+          <button className="p-1 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors">
+            <Clock className="h-3 w-3" />
+          </button>
+          <button className="p-1 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors">
+            <span className="text-[10px] font-bold">···</span>
+          </button>
+        </div>
         
-        {/* Overlay play */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
-          <PlayCircle className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+        {/* Play button central no hover */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className={cn(
+            "p-3 rounded-full transition-all",
+            "bg-green-500/90 text-white",
+            "opacity-80 group-hover:opacity-100 group-hover:scale-110"
+          )}>
+            <Play className="h-5 w-5" />
+          </div>
         </div>
       </div>
       
-      {/* Título */}
-      <div className="p-2">
+      {/* Conteúdo do card */}
+      <div className="p-2 flex-1 flex flex-col gap-1">
         <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
           {lesson.title}
         </p>
+        
+        {/* Botão assistir */}
+        <button
+          onClick={onPlay}
+          className="mt-auto flex items-center justify-between text-[10px] text-cyan-400 hover:text-cyan-300 transition-colors"
+        >
+          <span className="flex items-center gap-1">
+            <Video className="h-3 w-3" />
+            VIDEOAULA
+          </span>
+          <span className="flex items-center gap-0.5">
+            Assistir
+            <ChevronRight className="h-3 w-3" />
+          </span>
+        </button>
       </div>
-    </button>
+    </div>
   );
 });
-LessonCardHorizontal.displayName = 'LessonCardHorizontal';
+LessonCard.displayName = 'LessonCard';
 
 // ============================================
 // 🎬 LESSON ROW — LISTA VERTICAL COMPACTA (LEGACY)
