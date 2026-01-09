@@ -243,7 +243,7 @@ const DialogBody = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div 
     ref={ref} 
-    className={cn("flex-1 overflow-y-auto p-4", className)} 
+    className={cn("flex-1 min-h-0 overflow-y-auto p-4", className)} 
     {...props} 
   />
 ));
