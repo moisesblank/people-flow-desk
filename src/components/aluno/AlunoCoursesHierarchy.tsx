@@ -9,16 +9,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { 
-  Layers, Search, ChevronRight, ChevronDown, PlayCircle,
+  Layers, Search, ChevronRight, PlayCircle,
   FolderOpen, BookOpen, Eye, Video, Clock, Sparkles, GraduationCap,
-  MonitorPlay, ChevronUp, Play, Filter, LayoutGrid, List
+  ChevronUp, ChevronDown, Play
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { Chronolock } from '@/components/ui/chronolock';
@@ -697,40 +695,29 @@ const ModuleCard = memo(function ModuleCard({
         </div>
       </div>
 
-      {/* 🎬 AULAS DO MÓDULO — Renderização condicional */}
+      {/* 🎬 AULAS DO MÓDULO — Lista vertical compacta integrada */}
       {isExpanded && (
-        <div className="p-4 bg-gradient-to-b from-cyan-950/30 to-card border-t border-cyan-500/20">
+        <div className="border-t border-cyan-500/20 bg-gradient-to-b from-cyan-950/20 to-card/50">
           {isLoading ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">
-              <div className="inline-block animate-spin h-5 w-5 border-2 border-green-500 border-t-transparent rounded-full mr-2" />
-              Carregando aulas...
+            <div className="py-4 px-3 text-center text-sm text-muted-foreground">
+              <div className="inline-block animate-spin h-4 w-4 border-2 border-cyan-500 border-t-transparent rounded-full mr-2" />
+              Carregando...
             </div>
           ) : lessons && lessons.length > 0 ? (
-            <>
-              {/* Header do grid com contagem */}
-              <div className="flex items-center justify-between mb-4 px-1">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Video className="h-4 w-4 text-green-400" />
-                  <span><strong className="text-green-400">{lessons.length}</strong> aulas disponíveis</span>
-                </div>
-              </div>
-              
-              {/* Grid responsivo otimizado para aulas */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {lessons.map((lesson, idx) => (
-                  <LessonCard 
-                    key={lesson.id} 
-                    lesson={lesson} 
-                    index={idx}
-                    onPlay={() => onPlayLesson(lesson)}
-                  />
-                ))}
-              </div>
-            </>
+            <div className="divide-y divide-cyan-500/10">
+              {lessons.map((lesson, idx) => (
+                <LessonRow 
+                  key={lesson.id} 
+                  lesson={lesson} 
+                  index={idx}
+                  onPlay={() => onPlayLesson(lesson)}
+                />
+              ))}
+            </div>
           ) : (
-            <div className="py-6 text-center text-sm text-muted-foreground bg-card/30 rounded-xl border border-border/30">
-              <Video className="h-8 w-8 mx-auto mb-2 opacity-30" />
-              Nenhuma aula disponível neste módulo
+            <div className="py-4 px-3 text-center text-sm text-muted-foreground">
+              <Video className="h-5 w-5 mx-auto mb-1 opacity-40" />
+              Nenhuma aula disponível
             </div>
           )}
         </div>
@@ -756,11 +743,11 @@ const ModuleCard = memo(function ModuleCard({
 ModuleCard.displayName = 'ModuleCard';
 
 // ============================================
-// 🎬 LESSON CARD — YEAR 2300 PREMIUM VISUAL
-// Card de aula com capa grande e impacto visual
-// PERFORMANCE: Memoizado para evitar re-renders desnecessários
+// 🎬 LESSON ROW — LISTA VERTICAL COMPACTA
+// Design clean: thumbnail pequena + título + duração
+// PERFORMANCE: Memoizado para evitar re-renders
 // ============================================
-const LessonCard = memo(function LessonCard({ 
+const LessonRow = memo(function LessonRow({ 
   lesson, 
   index,
   onPlay
@@ -769,162 +756,78 @@ const LessonCard = memo(function LessonCard({
   index: number;
   onPlay: () => void;
 }) {
-  const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [isInView, setIsInView] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
   
-  // 🚀 PERFORMANCE: IntersectionObserver para lazy loading inteligente
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            setIsInView(true);
-            observer.disconnect(); // Só precisa detectar uma vez
-          }
-        });
-      },
-      { rootMargin: '200px', threshold: 0 } // Pré-carregar 200px antes de entrar na viewport
-    );
-
-    if (cardRef.current) {
-      observer.observe(cardRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-  
-  const formatDuration = useCallback((minutes: number | null) => {
+  const formatDuration = (minutes: number | null) => {
     if (!minutes) return '--';
     const hrs = Math.floor(minutes / 60);
     const mins = minutes % 60;
     if (hrs > 0) return `${hrs}h ${mins}min`;
     return `${mins}min`;
-  }, []);
+  };
 
   const hasValidThumbnail = lesson.thumbnail_url && !imageError;
 
   return (
-    <div 
-      ref={cardRef}
-      className={cn(
-        "group relative flex flex-col cursor-pointer",
-        "rounded-2xl overflow-hidden",
-        "bg-gradient-to-br from-card via-card to-green-950/20",
-        "border-2 border-green-500/20 hover:border-green-400/60",
-        "shadow-lg hover:shadow-2xl hover:shadow-green-500/20",
-        "transition-all duration-300 hover:scale-[1.02]",
-        // Altura mínima para placeholder durante lazy load
-        "min-h-[280px]"
-      )}
+    <button
       onClick={onPlay}
+      className={cn(
+        "w-full flex items-center gap-3 px-3 py-2.5 text-left",
+        "hover:bg-cyan-500/10 transition-colors duration-150",
+        "group cursor-pointer"
+      )}
     >
-      {/* 🖼️ THUMBNAIL HERO — Grande e visível */}
-      <div className="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-green-900/30 to-emerald-900/30">
-        {isInView ? (
-          hasValidThumbnail ? (
-            <>
-              {/* Placeholder blur enquanto carrega */}
-              {!imageLoaded && (
-                <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-cyan-500/20 animate-pulse" />
-              )}
-              {/* Imagem da capa - LAZY LOADING com IntersectionObserver */}
-              <img
-                src={lesson.thumbnail_url!}
-                alt={lesson.title}
-                loading="lazy"
-                decoding="async"
-                onLoad={() => setImageLoaded(true)}
-                onError={() => setImageError(true)}
-                className={cn(
-                  "w-full h-full object-cover transition-all duration-500",
-                  "group-hover:scale-110",
-                  imageLoaded ? "opacity-100" : "opacity-0"
-                )}
-              />
-            </>
-          ) : (
-            /* Fallback elegante quando não tem thumbnail */
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-green-500/10 to-emerald-500/10">
-              <div className="relative">
-                <div className="absolute inset-0 bg-green-500/20 rounded-full blur-2xl" />
-                <div className="relative p-6 rounded-full bg-green-500/20 border-2 border-green-500/30">
-                  <MonitorPlay className="h-10 w-10 text-green-400" />
-                </div>
-              </div>
-            </div>
-          )
+      {/* Número da aula */}
+      <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-md bg-cyan-500/20 text-cyan-400 text-xs font-bold">
+        {index + 1}
+      </span>
+      
+      {/* Thumbnail pequena (opcional) */}
+      <div className="shrink-0 w-16 h-10 rounded-md overflow-hidden bg-cyan-900/30">
+        {hasValidThumbnail ? (
+          <img
+            src={lesson.thumbnail_url!}
+            alt=""
+            onError={() => setImageError(true)}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
         ) : (
-          /* Skeleton placeholder enquanto não está na viewport */
-          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-cyan-500/10 animate-pulse" />
-        )}
-        
-        {/* Overlay gradiente no hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-        
-        {/* Badge de posição */}
-        <div className="absolute top-3 left-3">
-          <Badge className="px-2.5 py-1 text-sm font-bold bg-black/60 backdrop-blur-sm text-green-300 border-2 border-green-500/40 shadow-lg">
-            #{String(index + 1).padStart(2, '0')}
-          </Badge>
-        </div>
-        
-        {/* Badge de duração */}
-        <div className="absolute top-3 right-3">
-          <Badge className="px-2.5 py-1 text-sm font-medium bg-black/60 backdrop-blur-sm text-white border border-white/20 shadow-lg">
-            <Clock className="h-3.5 w-3.5 mr-1.5" />
-            {formatDuration(lesson.duration_minutes)}
-          </Badge>
-        </div>
-        
-        {/* Play button central no hover */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <div className="relative">
-            <div className="absolute inset-0 bg-green-500/50 rounded-full blur-xl" />
-            <div className="relative p-5 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 border-2 border-white/30 shadow-2xl shadow-green-500/50 transform group-hover:scale-110 transition-transform">
-              <Play className="h-8 w-8 text-white fill-white" />
-            </div>
+          <div className="w-full h-full flex items-center justify-center">
+            <Play className="h-4 w-4 text-cyan-500/50" />
           </div>
-        </div>
+        )}
       </div>
       
-      {/* 📝 INFORMAÇÕES DA AULA */}
-      <div className="p-4 space-y-2 flex-1 flex flex-col">
-        {/* Título */}
-        <h4 className="font-bold text-base line-clamp-2 group-hover:text-green-400 transition-colors leading-tight">
+      {/* Título */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate group-hover:text-cyan-400 transition-colors">
           {lesson.title}
-        </h4>
-        
-        {/* Descrição (se existir) */}
+        </p>
         {lesson.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed flex-1">
+          <p className="text-xs text-muted-foreground truncate mt-0.5">
             {lesson.description}
           </p>
         )}
-        
-        {/* Footer com CTA */}
-        <div className="flex items-center justify-between pt-2 border-t border-green-500/20 mt-auto">
-          <div className="flex items-center gap-1.5 text-xs text-green-400/70">
-            <Video className="h-3.5 w-3.5" />
-            <span className="uppercase tracking-wide font-medium">Videoaula</span>
-          </div>
-          <div className="flex items-center gap-1 text-xs text-green-400 font-medium group-hover:translate-x-1 transition-transform">
-            Assistir
-            <ChevronRight className="h-4 w-4" />
-          </div>
-        </div>
       </div>
       
-      {/* Glow effect no hover */}
-      <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-        <div className="absolute inset-0 rounded-2xl shadow-[inset_0_0_30px_rgba(34,197,94,0.2)]" />
+      {/* Duração */}
+      <div className="shrink-0 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Clock className="h-3.5 w-3.5" />
+        <span>{formatDuration(lesson.duration_minutes)}</span>
       </div>
-    </div>
+      
+      {/* Play icon on hover */}
+      <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="p-1.5 rounded-full bg-green-500/20 text-green-400">
+          <Play className="h-3.5 w-3.5 fill-current" />
+        </div>
+      </div>
+    </button>
   );
 });
 
-LessonCard.displayName = 'LessonCard';
+LessonRow.displayName = 'LessonRow';
 
 // ============================================
 // MAIN COMPONENT
