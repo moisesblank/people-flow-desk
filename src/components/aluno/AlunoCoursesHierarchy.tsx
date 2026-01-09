@@ -569,7 +569,7 @@ const LazyVideoRow = memo(function LazyVideoRow({
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
-  const rowLessons = useMemo(() => lessons.slice(rowIndex * 12, (rowIndex + 1) * 12), [lessons, rowIndex]);
+  const rowLessons = useMemo(() => lessons.slice(rowIndex * 8, (rowIndex + 1) * 8), [lessons, rowIndex]);
   const rowNumber = rowIndex + 1;
 
   // Lazy load row via IntersectionObserver
@@ -601,7 +601,7 @@ const LazyVideoRow = memo(function LazyVideoRow({
           </span>
           <div className="flex-1 h-px bg-gradient-to-r from-slate-700/50 to-transparent" />
           <span className="text-xs text-slate-600 font-medium">
-            {rowIndex * 12 + 1}–{Math.min((rowIndex + 1) * 12, lessons.length)} de {lessons.length}
+            {rowIndex * 8 + 1}–{Math.min((rowIndex + 1) * 8, lessons.length)} de {lessons.length}
           </span>
         </div>
       )}
@@ -623,7 +623,7 @@ const LazyVideoRow = memo(function LazyVideoRow({
               <NetflixEpisodeCard 
                 key={lesson.id} 
                 lesson={lesson} 
-                index={rowIndex * 12 + idx}
+                index={rowIndex * 8 + idx}
                 onPlay={() => onPlayLesson(lesson)}
                 isLowEnd={isLowEnd}
               />
@@ -954,9 +954,9 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
             </div>
           ) : lessons && lessons.length > 0 ? (
             <div className="py-6 space-y-6">
-              {/* Split lessons into rows of 12 - Memoized row generation */}
+              {/* Split lessons into rows of 8 - Memoized row generation */}
               {useMemo(() => {
-                const totalRows = Math.ceil(lessons.length / 12);
+                const totalRows = Math.ceil(lessons.length / 8);
                 return Array.from({ length: totalRows }, (_, rowIndex) => (
                   <LazyVideoRow
                     key={`row-${rowIndex}`}
@@ -1136,8 +1136,8 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
             )}
           </div>
           
-          {/* Watch Button - CSS only hover */}
-          <button className="w-full py-2.5 rounded-lg font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 bg-slate-800 text-slate-300 border border-slate-700 group-hover/card:bg-gradient-to-r group-hover/card:from-red-600 group-hover/card:to-red-500 group-hover/card:text-white group-hover/card:border-transparent group-hover/card:shadow-lg group-hover/card:shadow-red-500/40 transition-all duration-300">
+          {/* Watch Button - Netflix RED Always */}
+          <button className="w-full py-2.5 rounded-lg font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-red-500 text-white border-0 shadow-lg shadow-red-500/30 hover:from-red-500 hover:to-red-400 hover:shadow-red-500/50 transition-all duration-300">
             <Play className="h-4 w-4" fill="currentColor" />
             Assistir Agora
           </button>
