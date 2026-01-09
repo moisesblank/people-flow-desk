@@ -614,7 +614,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
       <div 
         onClick={onToggle}
         className={cn(
-          "relative flex flex-row items-center justify-center gap-6 md:gap-8 p-4 md:p-5 cursor-pointer rounded-xl",
+          "relative flex flex-row items-center w-full p-4 md:p-5 cursor-pointer rounded-xl",
           "bg-gradient-to-r from-[#0a1525] via-[#0d1a30] to-[#0a1525]",
           "border transition-all duration-300",
           isExpanded 
@@ -630,7 +630,10 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
             : "bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent opacity-0 group-hover/section:opacity-100"
         )} />
         
-        {/* === MODULE THUMBNAIL — PREMIUM COVER === */}
+        {/* Left spacer for centering */}
+        <div className="flex-1" />
+        
+        {/* === MODULE THUMBNAIL — PREMIUM COVER (CENTERED) === */}
         <div className={cn(
           "relative shrink-0 rounded-lg overflow-hidden",
           "w-40 h-56 md:w-52 md:h-72 lg:w-60 lg:h-80",
@@ -669,8 +672,8 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
           )}
         </div>
         
-        {/* === MODULE INFO — COMPACT PREMIUM LAYOUT === */}
-        <div className="flex flex-col justify-center items-center text-center py-2 min-w-0">
+        {/* === MODULE INFO — RIGHT SIDE (FLEX-1 TO FILL) === */}
+        <div className="flex-1 flex flex-col justify-center items-center text-center py-2 min-w-0 pl-6 md:pl-8">
           {/* Module Badge */}
           <div className="mb-2">
             <span className={cn(
