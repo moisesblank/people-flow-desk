@@ -610,25 +610,26 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* === MODULE HEADER BAR === */}
+      {/* === MODULE SECTION — CLEAN NETFLIX PREMIUM === */}
       <div 
         onClick={onToggle}
         className={cn(
-          "relative flex items-center gap-4 p-3 cursor-pointer rounded-xl",
-          "bg-gradient-to-r from-[#0d1117] via-[#161b22] to-[#0d1117]",
-          "border transition-all duration-300",
+          "relative flex flex-col md:flex-row items-stretch gap-5 p-4 md:p-5 cursor-pointer rounded-2xl",
+          "bg-gradient-to-br from-[#0d1117] via-[#161b22] to-[#1a1f2a]",
+          "border-2 transition-all duration-300",
           isExpanded 
-            ? "border-cyan-500/60 shadow-lg shadow-cyan-500/10"
-            : "border-gray-800/80 hover:border-gray-700"
+            ? "border-cyan-500/60 shadow-xl shadow-cyan-500/15 bg-gradient-to-br from-cyan-950/20 via-[#161b22] to-purple-950/20"
+            : "border-gray-800/60 hover:border-cyan-500/40 hover:shadow-lg"
         )}
       >
-        {/* Module Thumbnail - Grande e cinematográfico */}
+        {/* === MODULE THUMBNAIL — LARGE & CLEAN === */}
         <div className={cn(
-          "relative shrink-0 rounded-lg overflow-hidden",
-          "w-[120px] h-[68px] md:w-[160px] md:h-[90px]",
+          "relative shrink-0 rounded-xl overflow-hidden mx-auto md:mx-0",
+          "w-[200px] h-[267px] md:w-[220px] md:h-[293px] lg:w-[260px] lg:h-[347px]",
           "bg-gradient-to-br from-gray-800 to-gray-900",
-          !isLowEnd && "transition-transform duration-300",
-          !isLowEnd && isHovered && "scale-[1.02]"
+          "shadow-2xl shadow-black/50 ring-2 ring-white/5",
+          !isLowEnd && "transition-all duration-300",
+          !isLowEnd && isHovered && "scale-[1.02] ring-cyan-500/30 shadow-cyan-500/20"
         )}>
           {module.thumbnail_url ? (
             <img
@@ -638,94 +639,135 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
               loading="lazy"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-cyan-900/30 to-purple-900/30">
-              <Layers className="h-8 w-8 text-cyan-500/40" />
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-cyan-900/40 to-purple-900/40">
+              <Layers className="h-16 w-16 text-cyan-500/50" />
             </div>
           )}
           
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/50" />
+          {/* Gradient overlay - subtle */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           
-          {/* Position Badge - Netflix style */}
-          <div className="absolute -left-1 top-1/2 -translate-y-1/2">
-            <span className={cn(
-              "text-4xl md:text-5xl font-black tracking-tighter",
-              "text-transparent bg-clip-text bg-gradient-to-b",
-              isExpanded 
-                ? "from-cyan-400 to-cyan-600" 
-                : "from-gray-400 to-gray-600",
-              "drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]",
-              "[text-shadow:_-2px_0_0_#000,_2px_0_0_#000,_0_-2px_0_#000,_0_2px_0_#000]"
-            )}>
-              {String(module.position + 1).padStart(2, '0')}
-            </span>
-          </div>
-          
-          {/* Progress Bar */}
+          {/* Progress Bar on thumbnail */}
           {progressPercent > 0 && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/70">
+            <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/70">
               <div 
                 className={cn(
-                  "h-full transition-all",
+                  "h-full transition-all rounded-full",
                   progressPercent >= 100 ? "bg-green-500" : "bg-red-600"
                 )}
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
           )}
+          
+          {/* Play overlay on hover */}
+          <div className={cn(
+            "absolute inset-0 flex items-center justify-center",
+            "bg-black/0 transition-all duration-300",
+            isHovered && "bg-black/40"
+          )}>
+            <div className={cn(
+              "w-16 h-16 rounded-full bg-white/90 flex items-center justify-center",
+              "transform transition-all duration-300",
+              "shadow-2xl",
+              isHovered ? "scale-100 opacity-100" : "scale-75 opacity-0"
+            )}>
+              <Play className="h-7 w-7 text-black ml-1" fill="currentColor" />
+            </div>
+          </div>
         </div>
         
-        {/* Module Info */}
-        <div className="flex-1 min-w-0 pl-6 md:pl-8">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              {/* Title */}
-              <h3 className={cn(
-                "font-bold text-base md:text-lg lg:text-xl text-white leading-tight",
-                "line-clamp-2 transition-colors duration-200",
-                isHovered && "text-cyan-300"
-              )}>
-                {module.title}
-              </h3>
-              
-              {/* Stats Row */}
-              <div className="flex items-center gap-3 mt-2 flex-wrap">
-                <span className={cn(
-                  "px-2.5 py-1 rounded text-xs font-bold flex items-center gap-1.5",
-                  "bg-gray-800/80 text-gray-300 border border-gray-700/50"
-                )}>
-                  <Video className="h-3.5 w-3.5 text-green-400" />
-                  {lessonCount} episódios
-                </span>
-                
-                {progressPercent > 0 && (
-                  <span className={cn(
-                    "px-2.5 py-1 rounded text-xs font-bold",
-                    progressPercent >= 100 
-                      ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                      : "bg-gray-800/80 text-gray-400 border border-gray-700/50"
-                  )}>
-                    {progressPercent >= 100 ? "✓ Concluído" : `${progressPercent}% assistido`}
-                  </span>
-                )}
-                
-                {module.subcategory && (
-                  <span className="px-2.5 py-1 rounded text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                    {module.subcategory}
-                  </span>
-                )}
-              </div>
-            </div>
-            
-            {/* Expand/Collapse Indicator */}
-            <div className={cn(
-              "shrink-0 p-2 rounded-full transition-all duration-300",
-              isExpanded 
-                ? "bg-cyan-500/20 text-cyan-400 rotate-180"
-                : "bg-gray-800/50 text-gray-500 group-hover/section:text-white"
+        {/* === MODULE INFO — CENTERED VERTICALLY === */}
+        <div className="flex-1 flex flex-col justify-center py-2 md:py-4 text-center md:text-left">
+          {/* Position indicator */}
+          <div className="flex items-center justify-center md:justify-start gap-2 mb-3">
+            <span className={cn(
+              "px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-widest",
+              "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
             )}>
-              <ChevronDown className="h-5 w-5" />
-            </div>
+              Módulo {String(module.position + 1).padStart(2, '0')}
+            </span>
+            
+            {progressPercent >= 100 && (
+              <span className="px-3 py-1 rounded-lg text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/30">
+                ✓ Concluído
+              </span>
+            )}
+          </div>
+          
+          {/* Title */}
+          <h3 className={cn(
+            "font-black text-xl md:text-2xl lg:text-3xl text-white leading-tight",
+            "transition-colors duration-200 mb-3",
+            isHovered && "text-cyan-300"
+          )}>
+            {module.title}
+          </h3>
+          
+          {/* Description */}
+          {module.description && (
+            <p className="text-gray-400 text-sm md:text-base line-clamp-2 mb-4 max-w-2xl mx-auto md:mx-0">
+              {module.description}
+            </p>
+          )}
+          
+          {/* Stats Row */}
+          <div className="flex items-center gap-3 flex-wrap justify-center md:justify-start mb-4">
+            <span className={cn(
+              "px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2",
+              "bg-gray-800/80 text-white border border-gray-700/50"
+            )}>
+              <Video className="h-4 w-4 text-green-400" />
+              {lessonCount} {lessonCount === 1 ? 'episódio' : 'episódios'}
+            </span>
+            
+            {progressPercent > 0 && progressPercent < 100 && (
+              <span className="px-3 py-1.5 rounded-lg text-sm font-bold bg-gray-800/80 text-gray-300 border border-gray-700/50">
+                {progressPercent}% assistido
+              </span>
+            )}
+            
+            {module.subcategory && (
+              <span className="px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                {module.subcategory}
+              </span>
+            )}
+          </div>
+          
+          {/* Action Button */}
+          <div className="flex items-center gap-3 justify-center md:justify-start">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2",
+                "transition-all duration-300",
+                isExpanded 
+                  ? "bg-cyan-500/20 text-cyan-400 border-2 border-cyan-500/40 hover:bg-cyan-500/30"
+                  : "bg-white/10 text-white border-2 border-white/20 hover:bg-white/20"
+              )}
+            >
+              <ChevronDown className={cn(
+                "h-4 w-4 transition-transform duration-300",
+                isExpanded && "rotate-180"
+              )} />
+              {isExpanded ? 'Ocultar episódios' : 'Ver episódios'}
+            </Button>
+            
+            {lessonCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="px-5 py-2.5 rounded-lg font-bold text-sm bg-red-600 hover:bg-red-500 text-white border-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Play first lesson
+                }}
+              >
+                <Play className="h-4 w-4 mr-2" fill="currentColor" />
+                Assistir
+              </Button>
+            )}
           </div>
         </div>
       </div>
