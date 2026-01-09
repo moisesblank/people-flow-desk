@@ -610,62 +610,84 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* === MODULE SECTION — NETFLIX ULTRA PREMIUM === */}
+      {/* === MODULE SECTION — NETFLIX ULTRA CINEMATIC === */}
       <div 
         onClick={onToggle}
         className={cn(
-          "relative flex flex-row items-center w-full p-4 md:p-5 cursor-pointer rounded-xl",
-          "bg-gradient-to-r from-[#0a1525] via-[#0d1a30] to-[#0a1525]",
-          "border transition-all duration-300",
+          "group/module relative flex flex-row items-center w-full cursor-pointer overflow-hidden",
+          "min-h-[280px] md:min-h-[340px] lg:min-h-[380px]",
+          "bg-gradient-to-r from-black via-[#0c1929] to-black",
+          "rounded-xl border transition-all duration-500",
           isExpanded 
-            ? "border-cyan-500/50 shadow-xl shadow-cyan-500/10"
-            : "border-slate-700/40 hover:border-cyan-500/30"
+            ? "border-cyan-400/60 shadow-2xl shadow-cyan-500/20"
+            : "border-slate-800/60 hover:border-cyan-500/40 hover:shadow-2xl hover:shadow-cyan-500/10"
         )}
       >
-        {/* Top accent line */}
-        <div className={cn(
-          "absolute top-0 left-0 right-0 h-[2px] transition-opacity",
-          isExpanded 
-            ? "bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent opacity-100" 
-            : "bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent opacity-0 group-hover/section:opacity-100"
-        )} />
+        {/* === CINEMATIC BACKGROUND EFFECTS === */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Animated gradient sweep */}
+          <div className={cn(
+            "absolute inset-0 bg-gradient-to-r from-transparent via-cyan-500/5 to-transparent",
+            "translate-x-[-100%] group-hover/module:translate-x-[100%] transition-transform duration-1000"
+          )} />
+          {/* Top light reflection */}
+          <div className="absolute top-0 left-1/4 right-1/4 h-px bg-gradient-to-r from-transparent via-cyan-400/40 to-transparent" />
+          {/* Ambient glow */}
+          <div className={cn(
+            "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full",
+            "bg-gradient-radial from-cyan-500/10 via-transparent to-transparent blur-3xl",
+            "opacity-0 group-hover/module:opacity-100 transition-opacity duration-700"
+          )} />
+        </div>
         
-        {/* === LEFT SIDE — MODULE NAME === */}
-        <div className="flex-1 flex flex-col justify-center items-end text-right py-3 pr-8 md:pr-10 min-w-0">
-          {/* Module Badge - Premium */}
-          <div className="mb-3">
-            <span className={cn(
-              "inline-flex items-center px-4 py-1.5 rounded-lg text-sm font-black uppercase tracking-widest",
-              "bg-gradient-to-r from-teal-500 via-cyan-500 to-teal-400 text-white",
-              "shadow-xl shadow-cyan-500/40 border border-cyan-300/30"
+        {/* === LEFT SIDE — MODULE INFO (Premium Typography) === */}
+        <div className="flex-1 flex flex-col justify-center items-end text-right py-6 md:py-8 pr-8 md:pr-12 lg:pr-16 min-w-0 z-10">
+          
+          {/* Module Number Badge - Cinematic */}
+          <div className="mb-4 md:mb-5">
+            <div className={cn(
+              "relative inline-flex items-center gap-2 px-5 py-2 rounded-lg overflow-hidden",
+              "bg-gradient-to-r from-cyan-600 via-teal-500 to-cyan-600",
+              "shadow-2xl shadow-cyan-500/50"
             )}>
-              Módulo {String(module.position + 1).padStart(2, '0')}
-            </span>
+              {/* Inner glow */}
+              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/20 to-white/30" />
+              <span className="relative text-sm md:text-base font-black uppercase tracking-[0.2em] text-white drop-shadow-lg">
+                Módulo {String(module.position + 1).padStart(2, '0')}
+              </span>
+            </div>
           </div>
           
-          {/* Title - Larger & Bolder */}
+          {/* Title - Massive Cinematic */}
           <h3 className={cn(
-            "font-black text-xl md:text-2xl lg:text-3xl text-white leading-tight uppercase tracking-wider",
-            "line-clamp-2 transition-colors drop-shadow-lg",
-            isHovered && "text-cyan-200"
+            "font-black text-2xl md:text-3xl lg:text-4xl xl:text-5xl text-white leading-[1.1] uppercase",
+            "tracking-wide line-clamp-2 transition-all duration-300",
+            "drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]",
+            isHovered && "text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-white to-cyan-200"
           )}>
             {module.title}
           </h3>
           
-          {/* Description - More visible */}
+          {/* Description - Elegant */}
           {module.description && (
-            <span className="text-sm md:text-base text-slate-300 line-clamp-1 mt-2 max-w-[400px] font-medium">{module.description}</span>
+            <p className={cn(
+              "mt-3 md:mt-4 text-base md:text-lg text-slate-300/90 font-medium line-clamp-2 max-w-[500px]",
+              "leading-relaxed tracking-wide"
+            )}>
+              {module.description}
+            </p>
           )}
         </div>
         
-        {/* === CENTER — MODULE THUMBNAIL === */}
+        {/* === CENTER — MODULE THUMBNAIL (Hero Poster) === */}
         <div className={cn(
-          "relative shrink-0 rounded-lg overflow-hidden",
-          "w-40 h-56 md:w-52 md:h-72 lg:w-60 lg:h-80",
+          "relative shrink-0 rounded-xl overflow-hidden z-10",
+          "w-44 h-60 md:w-56 md:h-76 lg:w-64 lg:h-88 xl:w-72 xl:h-96",
           "bg-gradient-to-br from-purple-900/50 to-slate-900",
-          "shadow-2xl shadow-black/60 border border-purple-500/30",
-          !isLowEnd && "transition-transform duration-300",
-          !isLowEnd && isHovered && "scale-[1.02]"
+          "border-2 border-white/10",
+          "shadow-[0_20px_60px_-10px_rgba(0,0,0,0.9),0_0_40px_-10px_rgba(139,92,246,0.3)]",
+          !isLowEnd && "transition-all duration-500 ease-out",
+          !isLowEnd && isHovered && "scale-[1.03] shadow-[0_25px_80px_-10px_rgba(0,0,0,0.95),0_0_60px_-10px_rgba(139,92,246,0.5)]"
         )}>
           {module.thumbnail_url ? (
             <img
@@ -676,20 +698,23 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-600 via-pink-600 to-red-600">
-              <Layers className="h-10 w-10 text-white/70" />
+              <Layers className="h-14 w-14 text-white/80" />
             </div>
           )}
           
-          {/* Subtle overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+          {/* Poster overlays */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
+          <div className="absolute inset-0 ring-1 ring-inset ring-white/10" />
           
-          {/* Progress Bar under thumbnail */}
+          {/* Progress Bar - Cinematic */}
           {progressPercent > 0 && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-slate-900/80">
+            <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/90">
               <div 
                 className={cn(
-                  "h-full rounded-r-full",
-                  progressPercent >= 100 ? "bg-emerald-500" : "bg-red-500"
+                  "h-full rounded-r transition-all duration-500",
+                  progressPercent >= 100 
+                    ? "bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-lg shadow-emerald-500/50" 
+                    : "bg-gradient-to-r from-red-600 to-red-500 shadow-lg shadow-red-500/50"
                 )}
                 style={{ width: `${progressPercent}%` }}
               />
@@ -697,78 +722,100 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
           )}
         </div>
         
-        {/* === RIGHT SIDE — EPISODES + BUTTONS === */}
-        <div className="flex-1 flex flex-col justify-center items-start text-left py-3 pl-8 md:pl-10 min-w-0">
-          {/* Episodes count - Larger */}
-          <div className="flex items-center gap-2 text-slate-200 mb-4">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center shadow-lg border border-slate-600/50">
-              <Play className="w-3.5 h-3.5 text-cyan-400" fill="currentColor" />
+        {/* === RIGHT SIDE — EPISODES + ACTIONS (Command Center) === */}
+        <div className="flex-1 flex flex-col justify-center items-start text-left py-6 md:py-8 pl-8 md:pl-12 lg:pl-16 min-w-0 z-10">
+          
+          {/* Episodes Counter - Premium Badge */}
+          <div className="flex items-center gap-3 mb-5 md:mb-6">
+            <div className={cn(
+              "w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center",
+              "bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900",
+              "border border-slate-600/50 shadow-xl shadow-black/50"
+            )}>
+              <Play className="w-5 h-5 md:w-6 md:h-6 text-cyan-400" fill="currentColor" />
             </div>
-            <span className="text-base md:text-lg font-semibold tracking-wide">{lessonCount} episódios</span>
+            <div className="flex flex-col">
+              <span className="text-xl md:text-2xl lg:text-3xl font-black text-white tracking-tight drop-shadow-lg">
+                {lessonCount}
+              </span>
+              <span className="text-sm md:text-base text-slate-400 font-semibold uppercase tracking-widest -mt-1">
+                Episódios
+              </span>
+            </div>
           </div>
           
-          {/* Progress Badge - Larger */}
+          {/* Progress Status - Premium Indicator */}
           {progressPercent > 0 && (
             <div className={cn(
-              "flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold mb-4",
+              "flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-base md:text-lg font-bold mb-5 md:mb-6",
+              "backdrop-blur-sm transition-all duration-300",
               progressPercent >= 100
-                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-lg shadow-emerald-500/20"
-                : "bg-slate-700/60 text-slate-200 border border-slate-500/40"
+                ? "bg-emerald-500/20 text-emerald-300 border-2 border-emerald-400/50 shadow-xl shadow-emerald-500/30"
+                : "bg-slate-800/80 text-slate-200 border border-slate-600/50"
             )}>
               {progressPercent >= 100 ? (
                 <>
-                  <span className="text-emerald-400 text-base">✓</span>
-                  <span>Concluído</span>
+                  <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <span className="text-white text-sm">✓</span>
+                  </div>
+                  <span className="uppercase tracking-wider">Concluído</span>
                 </>
               ) : (
-                <span>{progressPercent}%</span>
+                <>
+                  <div className="w-12 h-2 bg-slate-700 rounded-full overflow-hidden">
+                    <div className="h-full bg-cyan-400 rounded-full" style={{ width: `${progressPercent}%` }} />
+                  </div>
+                  <span>{progressPercent}% completo</span>
+                </>
               )}
             </div>
           )}
 
-          {/* Action Buttons - Larger & More Professional */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Toggle Episodes Button */}
+          {/* Action Buttons - Cinematic Command Panel */}
+          <div className="flex items-center gap-4 flex-wrap">
+            
+            {/* Toggle Episodes - Ghost Premium */}
             <Button
               variant="ghost"
-              size="sm"
               onClick={(e) => {
                 e.stopPropagation();
                 onToggle();
               }}
               className={cn(
-                "h-10 px-5 text-sm font-bold rounded-lg transition-all duration-200",
-                "bg-slate-800/90 border-2 border-slate-600/60",
+                "h-12 md:h-14 px-6 md:px-8 text-base md:text-lg font-bold rounded-xl",
+                "bg-slate-900/90 border-2 backdrop-blur-sm",
+                "transition-all duration-300 uppercase tracking-wider",
                 isExpanded
-                  ? "text-cyan-300 border-cyan-500/50 hover:bg-cyan-500/20 shadow-lg shadow-cyan-500/20"
-                  : "text-slate-200 hover:text-cyan-300 hover:border-cyan-500/50"
+                  ? "text-cyan-300 border-cyan-400/60 shadow-xl shadow-cyan-500/30 hover:bg-cyan-500/20"
+                  : "text-slate-200 border-slate-600/60 hover:text-cyan-300 hover:border-cyan-500/50 hover:shadow-lg hover:shadow-cyan-500/20"
               )}
             >
               <ChevronDown className={cn(
-                "w-4 h-4 mr-2 transition-transform duration-300",
+                "w-5 h-5 mr-2 transition-transform duration-500",
                 isExpanded && "rotate-180"
               )} />
-              {isExpanded ? 'Ocultar episódios' : 'Ver episódios'}
+              {isExpanded ? 'Ocultar' : 'Ver Episódios'}
             </Button>
             
-            {/* Watch Button - Netflix Red - Larger */}
+            {/* Watch Now - Netflix RED Cinematic */}
             {lessonCount > 0 && (
               <Button
-                size="sm"
                 onClick={(e) => {
                   e.stopPropagation();
                   // Play first lesson logic
                 }}
                 className={cn(
-                  "h-10 px-6 text-sm font-black uppercase tracking-wider rounded-lg",
-                  "bg-gradient-to-r from-red-600 via-red-500 to-red-600 text-white border-0",
-                  "hover:from-red-500 hover:via-red-400 hover:to-red-500",
-                  "shadow-xl shadow-red-500/40 hover:shadow-red-500/60",
-                  "transition-all duration-200"
+                  "relative h-12 md:h-14 px-7 md:px-10 text-base md:text-lg font-black uppercase tracking-widest rounded-xl",
+                  "bg-gradient-to-r from-red-700 via-red-600 to-red-700 text-white border-0",
+                  "hover:from-red-600 hover:via-red-500 hover:to-red-600",
+                  "shadow-2xl shadow-red-600/50 hover:shadow-red-500/70",
+                  "transition-all duration-300 overflow-hidden group/btn"
                 )}
               >
-                <Play className="w-4 h-4 mr-2" fill="currentColor" />
-                Assistir
+                {/* Button shine effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700" />
+                <Play className="w-5 h-5 md:w-6 md:h-6 mr-2 relative" fill="currentColor" />
+                <span className="relative">Assistir</span>
               </Button>
             )}
           </div>
