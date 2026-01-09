@@ -4,7 +4,7 @@
 // Mesmo padrão visual da Gestão, mas modo leitura
 // ============================================
 
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback, memo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -573,6 +573,7 @@ function ModuleCard({
         <CollapsibleContent>
           <div className="px-3 pb-4">
             {/* 🎬 GRID PREMIUM DE AULAS — Capas grandes e visíveis */}
+            {/* PERFORMANCE: Renderização progressiva - só renderiza quando módulo expandido */}
             <div className="mt-4">
               {isLoading ? (
                 <div className="py-8 text-center text-sm text-muted-foreground">
@@ -580,16 +581,27 @@ function ModuleCard({
                   Carregando aulas...
                 </div>
               ) : lessons && lessons.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {lessons.map((lesson, idx) => (
-                    <LessonCard 
-                      key={lesson.id} 
-                      lesson={lesson} 
-                      index={idx}
-                      onPlay={() => onPlayLesson(lesson)}
-                    />
-                  ))}
-                </div>
+                <>
+                  {/* Header do grid com contagem */}
+                  <div className="flex items-center justify-between mb-4 px-1">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Video className="h-4 w-4 text-green-400" />
+                      <span><strong className="text-green-400">{lessons.length}</strong> aulas neste módulo</span>
+                    </div>
+                  </div>
+                  
+                  {/* Grid responsivo otimizado */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                    {lessons.map((lesson, idx) => (
+                      <LessonCard 
+                        key={lesson.id} 
+                        lesson={lesson} 
+                        index={idx}
+                        onPlay={() => onPlayLesson(lesson)}
+                      />
+                    ))}
+                  </div>
+                </>
               ) : (
                 <div className="py-8 text-center text-sm text-muted-foreground bg-card/30 rounded-xl border border-border/30">
                   <Video className="h-8 w-8 mx-auto mb-2 opacity-30" />
@@ -622,8 +634,9 @@ function ModuleCard({
 // ============================================
 // 🎬 LESSON CARD — YEAR 2300 PREMIUM VISUAL
 // Card de aula com capa grande e impacto visual
+// PERFORMANCE: Memoizado para evitar re-renders desnecessários
 // ============================================
-function LessonCard({ 
+const LessonCard = memo(function LessonCard({ 
   lesson, 
   index,
   onPlay
@@ -634,62 +647,93 @@ function LessonCard({
 }) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   
-  const formatDuration = (minutes: number | null) => {
+  // 🚀 PERFORMANCE: IntersectionObserver para lazy loading inteligente
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            setIsInView(true);
+            observer.disconnect(); // Só precisa detectar uma vez
+          }
+        });
+      },
+      { rootMargin: '200px', threshold: 0 } // Pré-carregar 200px antes de entrar na viewport
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+  
+  const formatDuration = useCallback((minutes: number | null) => {
     if (!minutes) return '--';
     const hrs = Math.floor(minutes / 60);
     const mins = minutes % 60;
     if (hrs > 0) return `${hrs}h ${mins}min`;
     return `${mins}min`;
-  };
+  }, []);
 
   const hasValidThumbnail = lesson.thumbnail_url && !imageError;
 
   return (
     <div 
+      ref={cardRef}
       className={cn(
         "group relative flex flex-col cursor-pointer",
         "rounded-2xl overflow-hidden",
         "bg-gradient-to-br from-card via-card to-green-950/20",
         "border-2 border-green-500/20 hover:border-green-400/60",
         "shadow-lg hover:shadow-2xl hover:shadow-green-500/20",
-        "transition-all duration-300 hover:scale-[1.02]"
+        "transition-all duration-300 hover:scale-[1.02]",
+        // Altura mínima para placeholder durante lazy load
+        "min-h-[280px]"
       )}
       onClick={onPlay}
     >
       {/* 🖼️ THUMBNAIL HERO — Grande e visível */}
       <div className="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-green-900/30 to-emerald-900/30">
-        {hasValidThumbnail ? (
-          <>
-            {/* Placeholder blur enquanto carrega */}
-            {!imageLoaded && (
-              <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-cyan-500/20 animate-pulse" />
-            )}
-            {/* Imagem da capa - LAZY LOADING */}
-            <img
-              src={lesson.thumbnail_url!}
-              alt={lesson.title}
-              loading="lazy"
-              decoding="async"
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageError(true)}
-              className={cn(
-                "w-full h-full object-cover transition-all duration-500",
-                "group-hover:scale-110",
-                imageLoaded ? "opacity-100" : "opacity-0"
+        {isInView ? (
+          hasValidThumbnail ? (
+            <>
+              {/* Placeholder blur enquanto carrega */}
+              {!imageLoaded && (
+                <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-cyan-500/20 animate-pulse" />
               )}
-            />
-          </>
-        ) : (
-          /* Fallback elegante quando não tem thumbnail */
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-green-500/10 to-emerald-500/10">
-            <div className="relative">
-              <div className="absolute inset-0 bg-green-500/20 rounded-full blur-2xl animate-pulse" />
-              <div className="relative p-6 rounded-full bg-green-500/20 border-2 border-green-500/30">
-                <MonitorPlay className="h-10 w-10 text-green-400" />
+              {/* Imagem da capa - LAZY LOADING com IntersectionObserver */}
+              <img
+                src={lesson.thumbnail_url!}
+                alt={lesson.title}
+                loading="lazy"
+                decoding="async"
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageError(true)}
+                className={cn(
+                  "w-full h-full object-cover transition-all duration-500",
+                  "group-hover:scale-110",
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                )}
+              />
+            </>
+          ) : (
+            /* Fallback elegante quando não tem thumbnail */
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-green-500/10 to-emerald-500/10">
+              <div className="relative">
+                <div className="absolute inset-0 bg-green-500/20 rounded-full blur-2xl" />
+                <div className="relative p-6 rounded-full bg-green-500/20 border-2 border-green-500/30">
+                  <MonitorPlay className="h-10 w-10 text-green-400" />
+                </div>
               </div>
             </div>
-          </div>
+          )
+        ) : (
+          /* Skeleton placeholder enquanto não está na viewport */
+          <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-cyan-500/10 animate-pulse" />
         )}
         
         {/* Overlay gradiente no hover */}
@@ -713,7 +757,7 @@ function LessonCard({
         {/* Play button central no hover */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
           <div className="relative">
-            <div className="absolute inset-0 bg-green-500/50 rounded-full blur-xl animate-pulse" />
+            <div className="absolute inset-0 bg-green-500/50 rounded-full blur-xl" />
             <div className="relative p-5 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 border-2 border-white/30 shadow-2xl shadow-green-500/50 transform group-hover:scale-110 transition-transform">
               <Play className="h-8 w-8 text-white fill-white" />
             </div>
@@ -722,7 +766,7 @@ function LessonCard({
       </div>
       
       {/* 📝 INFORMAÇÕES DA AULA */}
-      <div className="p-4 space-y-2">
+      <div className="p-4 space-y-2 flex-1 flex flex-col">
         {/* Título */}
         <h4 className="font-bold text-base line-clamp-2 group-hover:text-green-400 transition-colors leading-tight">
           {lesson.title}
@@ -730,13 +774,13 @@ function LessonCard({
         
         {/* Descrição (se existir) */}
         {lesson.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed flex-1">
             {lesson.description}
           </p>
         )}
         
         {/* Footer com CTA */}
-        <div className="flex items-center justify-between pt-2 border-t border-green-500/20">
+        <div className="flex items-center justify-between pt-2 border-t border-green-500/20 mt-auto">
           <div className="flex items-center gap-1.5 text-xs text-green-400/70">
             <Video className="h-3.5 w-3.5" />
             <span className="uppercase tracking-wide font-medium">Videoaula</span>
@@ -754,7 +798,9 @@ function LessonCard({
       </div>
     </div>
   );
-}
+});
+
+LessonCard.displayName = 'LessonCard';
 
 // ============================================
 // MAIN COMPONENT
