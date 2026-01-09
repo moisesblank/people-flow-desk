@@ -863,12 +863,17 @@ function ModuleCard({
   return (
     <div
       className={cn(
-        "relative rounded-2xl border-2",
-        "bg-gradient-to-br from-cyan-500/10 via-cyan-500/5 to-blue-500/10",
+        "relative rounded-2xl border-2 transition-all",
+        module.is_published 
+          ? "bg-gradient-to-br from-cyan-500/10 via-cyan-500/5 to-blue-500/10"
+          : "bg-gradient-to-br from-rose-500/15 via-rose-500/5 to-amber-500/10 opacity-70",
         isExpanded 
-          ? "border-cyan-400/60 shadow-xl shadow-cyan-500/15" 
-          : "border-cyan-500/30",
-        module.is_published ? "opacity-100" : "opacity-60"
+          ? module.is_published
+            ? "border-cyan-400/60 shadow-xl shadow-cyan-500/15"
+            : "border-rose-400/60 shadow-xl shadow-rose-500/20"
+          : module.is_published
+            ? "border-cyan-500/30"
+            : "border-rose-500/40 border-dashed"
       )}
     >
       {/* Hidden file input for upload */}
@@ -881,8 +886,14 @@ function ModuleCard({
       />
 
       {/* Corner accents */}
-      <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-cyan-500/40 rounded-tl-2xl pointer-events-none" />
-      <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-cyan-500/40 rounded-tr-2xl pointer-events-none" />
+      <div className={cn(
+        "absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 rounded-tl-2xl pointer-events-none",
+        module.is_published ? "border-cyan-500/40" : "border-rose-500/50"
+      )} />
+      <div className={cn(
+        "absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 rounded-tr-2xl pointer-events-none",
+        module.is_published ? "border-cyan-500/40" : "border-rose-500/50"
+      )} />
       
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
         <div className="flex items-center gap-4 p-4">
@@ -964,7 +975,7 @@ function ModuleCard({
               )}
               <h4 className="font-bold text-base truncate">{module.title}</h4>
               {!module.is_published && (
-                <Badge className="px-2 py-1 text-xs bg-muted/50 text-muted-foreground border border-border/50">
+                <Badge className="px-2 py-1 text-xs bg-rose-500/30 text-rose-300 border border-rose-500/50 shadow-sm shadow-rose-500/20 animate-pulse">
                   <EyeOff className="h-3 w-3 mr-1" />
                   Oculto
                 </Badge>
