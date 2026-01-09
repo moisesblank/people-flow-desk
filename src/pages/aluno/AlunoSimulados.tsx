@@ -4,6 +4,7 @@
  * 
  * Design: Year 2300 Cinematic Experience
  * ⚡ Performance-Optimized via useConstitutionPerformance
+ * 📂 Organização por Grupos (v2.0)
  */
 
 import { useState, useCallback, memo, useMemo } from "react";
@@ -28,6 +29,11 @@ import { calculatePercentage } from "@/components/simulados/types";
 import { CyberBackground } from "@/components/ui/cyber-background";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
+import { 
+  classifySimuladosByGroup, 
+  SimuladoGroupSection, 
+  SimuladosBySubjectSection 
+} from "@/components/simulados/SimuladoGroupedSection";
 import "@/styles/dashboard-2300.css";
 
 export default function AlunoSimulados() {
@@ -212,77 +218,11 @@ export default function AlunoSimulados() {
                 shouldAnimate={shouldAnimate}
               />
             ) : (
-              <div className="space-y-8">
-                {/* Agrupa por modo: Hard primeiro, depois Normal */}
-                {(() => {
-                  const hardSimulados = simuladosData?.available.filter(s => s.is_hard_mode) || [];
-                  const normalSimulados = simuladosData?.available.filter(s => !s.is_hard_mode) || [];
-                  
-                  return (
-                    <>
-                      {/* Seção Hard Mode */}
-                      {hardSimulados.length > 0 && (
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-3 px-2">
-                            <div className="p-2 rounded-xl bg-gradient-to-br from-red-500/30 to-orange-500/30 border border-red-500/40">
-                              <Flame className="w-5 h-5 text-red-400" />
-                            </div>
-                            <div>
-                              <h3 className="text-lg font-bold text-red-400">Hard Mode</h3>
-                              <p className="text-xs text-muted-foreground">{hardSimulados.length} simulado{hardSimulados.length > 1 ? 's' : ''} de alto desafio</p>
-                            </div>
-                          </div>
-                          <div className={cn(
-                            "grid gap-6 md:grid-cols-2 lg:grid-cols-3 p-4 rounded-2xl",
-                            "bg-gradient-to-br from-red-500/5 to-orange-500/5 border border-red-500/20",
-                            shouldAnimate && "animate-fade-in"
-                          )}>
-                            {hardSimulados.map((simulado, index) => (
-                              <SimuladoCard
-                                key={simulado.id}
-                                simulado={simulado}
-                                onStart={() => handleSelectSimulado(simulado.id)}
-                                shouldAnimate={shouldAnimate}
-                                index={index}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Seção Normal Mode */}
-                      {normalSimulados.length > 0 && (
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-3 px-2">
-                            <div className="p-2 rounded-xl bg-gradient-to-br from-emerald-500/30 to-cyan-500/30 border border-emerald-500/40">
-                              <FileText className="w-5 h-5 text-emerald-400" />
-                            </div>
-                            <div>
-                              <h3 className="text-lg font-bold text-emerald-400">Modo Normal</h3>
-                              <p className="text-xs text-muted-foreground">{normalSimulados.length} simulado{normalSimulados.length > 1 ? 's' : ''} padrão</p>
-                            </div>
-                          </div>
-                          <div className={cn(
-                            "grid gap-6 md:grid-cols-2 lg:grid-cols-3 p-4 rounded-2xl",
-                            "bg-gradient-to-br from-emerald-500/5 to-cyan-500/5 border border-emerald-500/20",
-                            shouldAnimate && "animate-fade-in"
-                          )}>
-                            {normalSimulados.map((simulado, index) => (
-                              <SimuladoCard
-                                key={simulado.id}
-                                simulado={simulado}
-                                onStart={() => handleSelectSimulado(simulado.id)}
-                                shouldAnimate={shouldAnimate}
-                                index={index + hardSimulados.length}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
+              <AvailableSimuladosGrouped
+                simulados={simuladosData?.available || []}
+                onSelectSimulado={handleSelectSimulado}
+                shouldAnimate={shouldAnimate}
+              />
             )}
           </TabsContent>
 
@@ -467,6 +407,128 @@ const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, shouldAnima
           </Button>
         </div>
       </div>
+    </div>
+  );
+});
+
+// ============================================
+// 📂 AVAILABLE SIMULADOS GROUPED (Year 2300)
+// Organiza simulados em grupos colapsáveis
+// ============================================
+
+interface AvailableSimuladosGroupedProps {
+  simulados: SimuladoListItem[];
+  onSelectSimulado: (id: string) => void;
+  shouldAnimate?: boolean;
+}
+
+const AvailableSimuladosGrouped = memo(function AvailableSimuladosGrouped({
+  simulados,
+  onSelectSimulado,
+  shouldAnimate = true,
+}: AvailableSimuladosGroupedProps) {
+  // Separar Hard Mode vs Normal Mode
+  const hardSimulados = useMemo(() => simulados.filter(s => s.is_hard_mode), [simulados]);
+  const normalSimulados = useMemo(() => simulados.filter(s => !s.is_hard_mode), [simulados]);
+
+  // Classificar simulados normais em grupos
+  const groupedNormalSimulados = useMemo(() => 
+    classifySimuladosByGroup(normalSimulados), 
+    [normalSimulados]
+  );
+
+  // Renderizador de cards (reutilizado)
+  const renderCard = useCallback((simulado: SimuladoListItem, index: number) => (
+    <SimuladoCard
+      key={simulado.id}
+      simulado={simulado}
+      onStart={() => onSelectSimulado(simulado.id)}
+      shouldAnimate={shouldAnimate}
+      index={index}
+    />
+  ), [onSelectSimulado, shouldAnimate]);
+
+  return (
+    <div className="space-y-6">
+      {/* ===== SEÇÃO HARD MODE (se existir) ===== */}
+      {hardSimulados.length > 0 && (
+        <div className={cn(
+          "rounded-2xl overflow-hidden",
+          "bg-gradient-to-br from-red-500/10 to-orange-500/10",
+          "border border-red-500/30",
+          "shadow-[0_0_30px_hsl(0,100%,50%,0.15)]"
+        )}>
+          <div className="p-4 md:p-5">
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-red-500/30 to-orange-500/30 border border-red-500/40">
+                <Flame className="w-5 h-5 text-red-400" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg text-red-400">🔥 Hard Mode</h3>
+                <p className="text-xs text-muted-foreground">
+                  {hardSimulados.length} simulado{hardSimulados.length > 1 ? "s" : ""} de alto desafio
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {hardSimulados.map((simulado, index) => renderCard(simulado, index))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== SEÇÕES DE SIMULADOS NORMAIS AGRUPADOS ===== */}
+      
+      {/* GRUPO 1: Nivelamento */}
+      {groupedNormalSimulados.NIVELAMENTO?.length > 0 && (
+        <SimuladoGroupSection
+          groupId="NIVELAMENTO"
+          simulados={groupedNormalSimulados.NIVELAMENTO}
+          renderCard={renderCard}
+          shouldAnimate={shouldAnimate}
+          defaultOpen={true}
+        />
+      )}
+
+      {/* GRUPO 2: Meses Extensivo ENEM */}
+      {groupedNormalSimulados.MESES_EXTENSIVO?.length > 0 && (
+        <SimuladoGroupSection
+          groupId="MESES_EXTENSIVO"
+          simulados={groupedNormalSimulados.MESES_EXTENSIVO}
+          renderCard={renderCard}
+          shouldAnimate={shouldAnimate}
+          defaultOpen={false}
+        />
+      )}
+
+      {/* GRUPO 3: Meses Intensivos ENEM */}
+      {groupedNormalSimulados.MESES_INTENSIVO?.length > 0 && (
+        <SimuladoGroupSection
+          groupId="MESES_INTENSIVO"
+          simulados={groupedNormalSimulados.MESES_INTENSIVO}
+          renderCard={renderCard}
+          shouldAnimate={shouldAnimate}
+          defaultOpen={false}
+        />
+      )}
+
+      {/* GRUPO 4: Por Assunto (com subgrupos) */}
+      <SimuladosBySubjectSection
+        groups={groupedNormalSimulados}
+        renderCard={renderCard}
+        shouldAnimate={shouldAnimate}
+      />
+
+      {/* GRUPO OUTROS: Simulados não categorizados */}
+      {groupedNormalSimulados.OUTROS?.length > 0 && (
+        <SimuladoGroupSection
+          groupId="OUTROS"
+          simulados={groupedNormalSimulados.OUTROS}
+          renderCard={renderCard}
+          shouldAnimate={shouldAnimate}
+          defaultOpen={false}
+        />
+      )}
     </div>
   );
 });
