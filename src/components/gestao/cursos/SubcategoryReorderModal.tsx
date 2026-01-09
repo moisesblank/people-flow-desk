@@ -187,9 +187,13 @@ export function SubcategoryReorderModal({ open, onOpenChange, courses, allModule
 
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subcategory-ordering'] });
-      queryClient.invalidateQueries({ queryKey: ['gestao-all-modules'] });
+    onSuccess: async () => {
+      // Atualizar cache da ordenação (modal + listagem principal)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['subcategory-ordering', selectedCourse] }),
+        queryClient.invalidateQueries({ queryKey: ['subcategory-ordering-all'] }),
+        queryClient.invalidateQueries({ queryKey: ['gestao-all-modules'] })
+      ]);
       toast({ title: '✅ Ordem salva com sucesso!' });
       onOpenChange(false);
     },
