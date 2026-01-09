@@ -6,7 +6,7 @@
 // 🔄 REALTIME: Sincronização entre múltiplos admins
 // ============================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -14,7 +14,7 @@ import {
   Layers, ChevronRight, ChevronDown, Eye, EyeOff, 
   Save, X, FolderOpen, PlayCircle, Clock, Users,
   MoreHorizontal, Copy, ArrowUpDown, Grip, Check, AlertTriangle,
-  Sparkles, Zap, Wand2
+  Sparkles, Zap, Wand2, Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -893,6 +893,7 @@ export default function GestaoCursos() {
                           onEdit={() => openEditModule(module)}
                           onDelete={() => setDeleteDialog({ type: 'module', id: module.id, name: module.title })}
                           onToggleActive={() => updateModule.mutate({ id: module.id, is_published: !module.is_published })}
+                          onImageUpdate={(moduleId, imageUrl) => updateModule.mutate({ id: moduleId, thumbnail_url: imageUrl })}
                         />
                       ))}
                     </div>
@@ -1262,10 +1263,50 @@ interface ModuleItemProps {
   onEdit: () => void;
   onDelete: () => void;
   onToggleActive: () => void;
+  onImageUpdate: (moduleId: string, imageUrl: string) => void;
 }
 
-function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onToggleActive }: ModuleItemProps) {
+function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onToggleActive, onImageUpdate }: ModuleItemProps) {
   const { data: lessons } = useLessons(isExpanded ? module.id : undefined);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+  
+  const handleFileUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Arquivo inválido', description: 'Selecione apenas imagens.', variant: 'destructive' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'Arquivo muito grande', description: 'Máximo 5MB.', variant: 'destructive' });
+      return;
+    }
+    
+    setIsUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const fileName = `module_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+      const filePath = `modules/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('materiais')
+        .upload(filePath, file, { cacheControl: '3600', upsert: false });
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: urlData } = supabase.storage.from('materiais').getPublicUrl(filePath);
+      
+      if (urlData?.publicUrl) {
+        onImageUpdate(module.id, urlData.publicUrl);
+        toast({ title: '✅ Imagem enviada!' });
+      }
+    } catch (error: any) {
+      toast({ title: 'Erro no upload', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
   
   return (
     <div
@@ -1278,6 +1319,15 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
       )}
       style={{ animationDelay: `${index * 50}ms` }}
     >
+      {/* Input de arquivo oculto */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+      />
+      
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
         <div className="flex items-center gap-3 p-3">
           <CollapsibleTrigger asChild>
@@ -1289,22 +1339,42 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
             </Button>
           </CollapsibleTrigger>
           
-          {/* Thumbnail do módulo (752x940 → preview 60x75) - OBRIGATÓRIA */}
+          {/* Thumbnail do módulo (752x940 → preview 60x75) - CLICÁVEL PARA UPLOAD */}
           {module.thumbnail_url ? (
-            <div className="relative w-[60px] h-[75px] rounded-lg overflow-hidden border border-green-500/30 bg-muted shrink-0 shadow-lg">
+            <div 
+              className="relative w-[60px] h-[75px] rounded-lg overflow-hidden border border-green-500/30 bg-muted shrink-0 shadow-lg cursor-pointer hover:opacity-80 transition-opacity group"
+              onClick={() => fileInputRef.current?.click()}
+              title="Clique para trocar a imagem"
+            >
               <img 
                 src={module.thumbnail_url} 
                 alt={module.title} 
                 className="w-full h-full object-cover"
                 onError={(e) => e.currentTarget.style.display = 'none'}
               />
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Upload className="h-4 w-4 text-white" />
+              </div>
               <div className="absolute bottom-0 right-0 bg-green-600 p-0.5 rounded-tl">
                 <Check className="h-2.5 w-2.5 text-white" />
               </div>
             </div>
           ) : (
-            <div className="relative w-[60px] h-[75px] rounded-lg overflow-hidden border-2 border-dashed border-destructive/50 bg-destructive/10 shrink-0 flex items-center justify-center">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
+            <div 
+              className={cn(
+                "relative w-[60px] h-[75px] rounded-lg overflow-hidden border-2 border-dashed shrink-0 flex items-center justify-center cursor-pointer transition-all",
+                isUploading 
+                  ? "border-amber-500/50 bg-amber-500/10" 
+                  : "border-destructive/50 bg-destructive/10 hover:border-amber-500/50 hover:bg-amber-500/10"
+              )}
+              onClick={() => !isUploading && fileInputRef.current?.click()}
+              title="Clique para adicionar imagem (752×940px)"
+            >
+              {isUploading ? (
+                <div className="animate-spin h-5 w-5 border-2 border-amber-500 border-t-transparent rounded-full" />
+              ) : (
+                <Upload className="h-5 w-5 text-destructive hover:text-amber-500 transition-colors" />
+              )}
             </div>
           )}
           
