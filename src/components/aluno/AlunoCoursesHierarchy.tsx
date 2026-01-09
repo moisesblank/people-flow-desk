@@ -587,31 +587,37 @@ const ModuleCard = memo(function ModuleCard({
       ref={cardRef}
       className={cn(
         "group relative flex flex-col cursor-pointer",
-        "rounded-xl overflow-hidden",
-        "bg-gradient-to-br from-card via-card to-cyan-950/20",
-        "border transition-all duration-200",
+        "rounded-2xl overflow-hidden",
+        "bg-gradient-to-br from-slate-900/95 via-cyan-950/40 to-slate-900/95",
+        "border-2 transition-all duration-300",
         isExpanded 
-          ? "border-cyan-400/60 shadow-lg shadow-cyan-500/20" 
-          : "border-cyan-500/20 hover:border-cyan-400/40",
-        "hover:shadow-md hover:shadow-cyan-500/10"
+          ? "border-cyan-400 shadow-[0_0_40px_rgba(34,211,238,0.25)]" 
+          : "border-cyan-500/30 hover:border-cyan-400/60 hover:shadow-[0_0_30px_rgba(34,211,238,0.15)]",
+        "backdrop-blur-xl"
       )}
     >
-      {/* 🖼️ THUMBNAIL — Proporção 25% menor que 3:4 (mais compacta) */}
-      {/* PADRÃO COMPACTO: Capa visível, proporcional, reduzida em 25% */}
-      <div className="relative aspect-[4/4] w-full overflow-hidden bg-gradient-to-br from-cyan-900/20 to-blue-900/20">
-        {/* Skeleton placeholder enquanto não está em view */}
+      {/* ✨ HOLOGRAPHIC CORNER ACCENTS */}
+      <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-cyan-400/60 rounded-tl-2xl pointer-events-none z-20" />
+      <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-cyan-400/60 rounded-tr-2xl pointer-events-none z-20" />
+      <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-cyan-400/40 rounded-bl-2xl pointer-events-none z-20" />
+      <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-cyan-400/40 rounded-br-2xl pointer-events-none z-20" />
+      
+      {/* 🖼️ THUMBNAIL — Compacta e elegante */}
+      <div className="relative aspect-square w-full overflow-hidden">
+        {/* Skeleton */}
         {!isInView && (
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-800/10 to-blue-800/10" />
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-900/30 to-blue-900/30 animate-pulse" />
         )}
         
-        {/* Imagem com lazy loading otimizado */}
+        {/* Imagem */}
         {isInView && hasValidThumbnail && (
           <img
             src={module.thumbnail_url!}
             alt={module.title}
             className={cn(
-              "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
-              imageLoaded ? "opacity-100" : "opacity-0"
+              "absolute inset-0 w-full h-full object-cover transition-all duration-500",
+              imageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-105",
+              "group-hover:scale-105"
             )}
             onLoad={() => setImageLoaded(true)}
             onError={() => setImageError(true)}
@@ -620,91 +626,121 @@ const ModuleCard = memo(function ModuleCard({
           />
         )}
         
-        {/* Fallback quando não há capa */}
+        {/* Fallback */}
         {(!hasValidThumbnail || !isInView) && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-cyan-900/40 to-blue-900/40">
-            <div className="p-4 rounded-2xl bg-cyan-500/15 border border-cyan-500/20">
-              <Layers className="h-10 w-10 text-cyan-400/80" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-cyan-900/60 to-blue-900/60">
+            <div className="relative">
+              <div className="absolute inset-0 bg-cyan-400/30 rounded-3xl blur-2xl animate-pulse" />
+              <div className="relative p-6 rounded-3xl bg-gradient-to-br from-cyan-500/30 to-blue-500/30 border-2 border-cyan-400/50">
+                <Layers className="h-12 w-12 text-cyan-300" />
+              </div>
             </div>
           </div>
         )}
         
-        {/* Overlay gradiente leve */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        {/* Cinematic gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
         
-        {/* Badge de posição */}
-        <div className="absolute top-2 left-2 z-10">
-          <Badge className="px-2 py-1 bg-cyan-500/90 text-white border-0 shadow-md text-xs font-bold">
-            #{module.position + 1}
-          </Badge>
-        </div>
-        
-        {/* Contagem de aulas */}
-        <div className="absolute top-2 right-2 z-10">
-          <Badge className="px-2 py-1 bg-green-500/90 text-white border-0 shadow-md text-xs font-bold flex items-center gap-1">
-            <PlayCircle className="h-3 w-3" />
-            {lessonCount}
-          </Badge>
-        </div>
-        
-        {/* Indicador de expansão */}
-        <div className="absolute bottom-2 right-2 z-10">
-          <div className={cn(
-            "p-1.5 rounded-full transition-transform duration-200",
-            isExpanded 
-              ? "bg-cyan-500 text-white rotate-90" 
-              : "bg-white/20 text-white group-hover:bg-white/30"
-          )}>
-            <ChevronRight className="h-4 w-4" />
+        {/* 🔢 POSITION BADGE — HUD Style */}
+        <div className="absolute top-3 left-3 z-10">
+          <div className="relative">
+            <div className="absolute inset-0 bg-cyan-400/50 blur-md rounded-lg" />
+            <Badge className="relative px-3 py-1.5 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white border-2 border-cyan-300/50 shadow-xl text-sm font-black tracking-wider">
+              #{String(module.position + 1).padStart(2, '0')}
+            </Badge>
           </div>
         </div>
         
-        {/* Botão clicável */}
+        {/* 🎬 LESSON COUNT — Glowing badge */}
+        <div className="absolute top-3 right-3 z-10">
+          <div className="relative">
+            <div className="absolute inset-0 bg-green-400/50 blur-md rounded-lg" />
+            <Badge className="relative px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white border-2 border-green-300/50 shadow-xl text-sm font-bold flex items-center gap-1.5">
+              <PlayCircle className="h-4 w-4" />
+              {lessonCount}
+            </Badge>
+          </div>
+        </div>
+        
+        {/* 🎯 EXPAND INDICATOR — Futuristic */}
+        <div className="absolute bottom-3 right-3 z-10">
+          <div className={cn(
+            "p-2.5 rounded-xl transition-all duration-300 border-2",
+            isExpanded 
+              ? "bg-cyan-500 text-white border-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.5)] rotate-90" 
+              : "bg-black/60 text-cyan-300 border-cyan-500/50 group-hover:bg-cyan-500/20 group-hover:border-cyan-400"
+          )}>
+            <ChevronRight className="h-5 w-5" />
+          </div>
+        </div>
+        
+        {/* Click area */}
         <button
           onClick={onToggle}
           className="absolute inset-0 z-0 cursor-pointer"
           aria-label={isExpanded ? "Fechar módulo" : "Abrir módulo"}
         />
         
-        {/* Título do módulo */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 z-10">
-          <h4 className="font-semibold text-sm text-white line-clamp-2 drop-shadow-md">
+        {/* 📝 MODULE TITLE — Premium typography */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
+          <h4 className="font-bold text-base text-white line-clamp-2 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)] leading-tight">
             {module.title}
           </h4>
           
-          {/* 📊 PROGRESS BAR — Baseado no tempo real de vídeo assistido */}
+          {/* 📊 PROGRESS BAR — Cinematic style */}
           {progress && progress.totalDuration > 0 && (
-            <div className="mt-2">
-              <div className="flex items-center justify-between text-[10px] text-white/80 mb-1">
-                <span className="font-medium">{progressPercent}% concluído</span>
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-xs text-white/90 mb-1.5 font-medium">
+                <span className="flex items-center gap-1.5">
+                  <div className={cn(
+                    "w-2 h-2 rounded-full animate-pulse",
+                    progressPercent >= 100 ? "bg-green-400" : progressPercent >= 50 ? "bg-cyan-400" : "bg-amber-400"
+                  )} />
+                  {progressPercent}% concluído
+                </span>
                 {progress.lessonsCompleted > 0 && (
-                  <span>{progress.lessonsCompleted}/{progress.totalLessons} aulas</span>
+                  <span className="opacity-80">{progress.lessonsCompleted}/{progress.totalLessons} aulas</span>
                 )}
               </div>
-              <div className="h-1.5 bg-black/40 rounded-full overflow-hidden backdrop-blur-sm">
+              <div className="h-2 bg-black/50 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
                 <div 
                   className={cn(
-                    "h-full rounded-full bg-gradient-to-r transition-all duration-500",
+                    "h-full rounded-full bg-gradient-to-r transition-all duration-700 relative overflow-hidden",
                     progressColor
                   )}
                   style={{ width: `${progressPercent}%` }}
-                />
+                >
+                  {/* Animated shine effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                </div>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* 🎬 AULAS DO MÓDULO — Grid de cards integrado */}
+      {/* 🎬 LESSONS SECTION — Premium Grid */}
       {isExpanded && (
-        <div className="border-t border-cyan-500/20 bg-gradient-to-b from-cyan-950/20 to-card/50 p-3">
+        <div className="border-t-2 border-cyan-500/30 bg-gradient-to-b from-cyan-950/40 via-slate-900/60 to-slate-950/80 p-4">
+          {/* Section header */}
+          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-cyan-500/20">
+            <div className="p-1.5 rounded-lg bg-green-500/20 border border-green-500/30">
+              <PlayCircle className="h-4 w-4 text-green-400" />
+            </div>
+            <span className="text-xs font-bold text-green-400 uppercase tracking-widest">
+              {lessons?.length || 0} Videoaulas
+            </span>
+          </div>
+          
           {isLoading ? (
-            <div className="py-4 px-3 text-center text-sm text-muted-foreground">
-              <div className="inline-block animate-spin h-4 w-4 border-2 border-cyan-500 border-t-transparent rounded-full mr-2" />
-              Carregando...
+            <div className="py-6 text-center">
+              <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30">
+                <div className="h-5 w-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+                <span className="text-sm text-cyan-400 font-medium">Carregando aulas...</span>
+              </div>
             </div>
           ) : lessons && lessons.length > 0 ? (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {lessons.map((lesson, idx) => (
                 <LessonCard 
                   key={lesson.id} 
@@ -715,9 +751,11 @@ const ModuleCard = memo(function ModuleCard({
               ))}
             </div>
           ) : (
-            <div className="py-4 px-3 text-center text-sm text-muted-foreground">
-              <Video className="h-5 w-5 mx-auto mb-1 opacity-40" />
-              Nenhuma aula disponível
+            <div className="py-6 text-center">
+              <div className="inline-flex flex-col items-center gap-2 px-6 py-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                <Video className="h-8 w-8 text-slate-500" />
+                <span className="text-sm text-slate-400">Nenhuma aula disponível</span>
+              </div>
             </div>
           )}
         </div>
@@ -761,77 +799,94 @@ const LessonCard = memo(function LessonCard({
 
   return (
     <div
+      onClick={onPlay}
       className={cn(
-        "group relative flex flex-col rounded-lg overflow-hidden",
-        "bg-gradient-to-br from-cyan-900/30 to-blue-900/30",
-        "border border-cyan-500/20 hover:border-cyan-400/50",
-        "hover:shadow-md hover:shadow-cyan-500/20",
-        "transition-all duration-200"
+        "group relative flex flex-col rounded-xl overflow-hidden cursor-pointer",
+        "bg-gradient-to-br from-slate-800/90 via-cyan-900/30 to-slate-800/90",
+        "border-2 border-cyan-500/30 hover:border-cyan-400/70",
+        "hover:shadow-[0_0_25px_rgba(34,211,238,0.2)]",
+        "transition-all duration-300 hover:scale-[1.02]"
       )}
     >
-      {/* Thumbnail com número */}
-      <div className="relative aspect-video bg-cyan-900/40">
+      {/* ✨ Corner accents */}
+      <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-cyan-400/50 rounded-tl-xl pointer-events-none z-10" />
+      <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-cyan-400/50 rounded-tr-xl pointer-events-none z-10" />
+      
+      {/* 🖼️ Thumbnail */}
+      <div className="relative aspect-video overflow-hidden">
         {hasValidThumbnail ? (
           <img
             src={lesson.thumbnail_url!}
             alt=""
             onError={() => setImageError(true)}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Play className="h-8 w-8 text-cyan-500/50" />
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-cyan-900/50 to-blue-900/50">
+            <div className="p-3 rounded-xl bg-cyan-500/20 border border-cyan-500/30">
+              <Play className="h-6 w-6 text-cyan-400" />
+            </div>
           </div>
         )}
         
-        {/* Número da aula */}
-        <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-cyan-500 text-white text-[10px] font-bold">
-          #{String(index + 1).padStart(2, '0')}
-        </span>
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         
-        {/* Ícone de ação - canto superior direito */}
-        <div className="absolute top-1 right-1 flex items-center gap-1">
-          <button className="p-1 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors">
-            <Clock className="h-3 w-3" />
-          </button>
-          <button className="p-1 rounded-full bg-black/50 hover:bg-black/70 text-white/80 hover:text-white transition-colors">
-            <span className="text-[10px] font-bold">···</span>
-          </button>
+        {/* 🔢 Lesson number — Premium badge */}
+        <div className="absolute top-2 left-2 z-10">
+          <div className="relative">
+            <div className="absolute inset-0 bg-cyan-400/40 blur-sm rounded-lg" />
+            <span className="relative px-2.5 py-1 rounded-lg bg-gradient-to-r from-cyan-500 to-cyan-600 text-white text-xs font-black border border-cyan-300/50 shadow-lg">
+              #{String(index + 1).padStart(2, '0')}
+            </span>
+          </div>
         </div>
         
-        {/* Play button central no hover */}
+        {/* ⏱️ Duration badge */}
+        {lesson.duration_minutes && (
+          <div className="absolute top-2 right-2 z-10">
+            <span className="px-2 py-1 rounded-lg bg-black/70 text-white text-xs font-bold border border-white/20 flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {lesson.duration_minutes}min
+            </span>
+          </div>
+        )}
+        
+        {/* ▶️ Play button — Centered, pulsing */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className={cn(
-            "p-3 rounded-full transition-all",
-            "bg-green-500/90 text-white",
-            "opacity-80 group-hover:opacity-100 group-hover:scale-110"
+            "relative p-4 rounded-2xl transition-all duration-300",
+            "bg-gradient-to-br from-green-500 to-emerald-600",
+            "border-2 border-green-300/50",
+            "shadow-[0_0_30px_rgba(34,197,94,0.4)]",
+            "opacity-90 group-hover:opacity-100 group-hover:scale-110"
           )}>
-            <Play className="h-5 w-5" />
+            <div className="absolute inset-0 bg-green-400/30 rounded-2xl blur-xl animate-pulse" />
+            <Play className="relative h-6 w-6 text-white" fill="white" />
           </div>
         </div>
       </div>
       
-      {/* Conteúdo do card */}
-      <div className="p-2 flex-1 flex flex-col gap-1">
-        <p className="text-xs font-medium text-foreground line-clamp-2 leading-tight">
+      {/* 📝 Content */}
+      <div className="p-3 flex-1 flex flex-col gap-2 bg-gradient-to-b from-transparent to-slate-900/50">
+        <p className="text-sm font-semibold text-foreground line-clamp-2 leading-tight group-hover:text-cyan-300 transition-colors">
           {lesson.title}
         </p>
         
-        {/* Botão assistir */}
-        <button
-          onClick={onPlay}
-          className="mt-auto flex items-center justify-between text-[10px] text-cyan-400 hover:text-cyan-300 transition-colors"
-        >
-          <span className="flex items-center gap-1">
-            <Video className="h-3 w-3" />
-            VIDEOAULA
-          </span>
-          <span className="flex items-center gap-0.5">
-            Assistir
-            <ChevronRight className="h-3 w-3" />
-          </span>
-        </button>
+        {/* Action bar */}
+        <div className="mt-auto pt-2 border-t border-cyan-500/20">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-xs text-cyan-400 font-bold uppercase tracking-wider">
+              <Video className="h-3.5 w-3.5" />
+              Videoaula
+            </span>
+            <span className="flex items-center gap-1 text-xs text-green-400 font-bold group-hover:text-green-300 transition-colors">
+              Assistir
+              <ChevronRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );
