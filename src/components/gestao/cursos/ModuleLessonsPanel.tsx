@@ -1,16 +1,18 @@
 // ============================================
-// 🎛️ MODULE LESSONS PANEL — FULL PARITY v1.0
+// 🎛️ MODULE LESSONS PANEL — FULL PARITY v1.1
 // Painel completo de gestão de aulas dentro do módulo
 // Paridade total com /gestaofc/videoaulas
+// NOVO: Suporte a Material Complementar (PDF)
 // ============================================
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Plus, Trash2, Edit2, Eye, EyeOff, GripVertical,
   Video, PlayCircle, Clock, Save, X, ChevronDown, ChevronUp,
-  ExternalLink, Youtube, Tv, Link2, Check, AlertTriangle, Hash
+  ExternalLink, Youtube, Tv, Link2, Check, AlertTriangle, Hash,
+  FileText, Upload, File, Loader2
 } from 'lucide-react';
 import {
   DndContext,
@@ -63,6 +65,9 @@ interface Lesson {
   status?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  // Material Complementar (PDF)
+  material_url?: string | null;
+  material_nome?: string | null;
 }
 
 interface ModuleLessonsPanelProps {
@@ -125,6 +130,8 @@ function SortableLessonRow({
     return <Video className="h-3.5 w-3.5 text-muted-foreground" />;
   };
 
+  const hasPdfMaterial = !!lesson.material_url;
+
   return (
     <div
       ref={setNodeRef}
@@ -160,7 +167,15 @@ function SortableLessonRow({
 
       {/* Title */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{lesson.title}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium truncate">{lesson.title}</p>
+          {hasPdfMaterial && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-red-500/50 text-red-400 shrink-0">
+              <FileText className="h-2.5 w-2.5 mr-0.5" />
+              PDF
+            </Badge>
+          )}
+        </div>
         {lesson.duration_minutes && (
           <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
             <Clock className="h-3 w-3" />
@@ -228,6 +243,8 @@ function LessonEditDialog({
 }) {
   const queryClient = useQueryClient();
   const isNew = !lesson;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -240,6 +257,9 @@ function LessonEditDialog({
     position: 0,
     is_published: true,
     is_free: false,
+    // Material Complementar (PDF)
+    material_url: '',
+    material_nome: '',
   });
 
   // Reset form when lesson changes
@@ -256,6 +276,8 @@ function LessonEditDialog({
         position: lesson.position,
         is_published: lesson.is_published ?? true,
         is_free: lesson.is_free ?? false,
+        material_url: lesson.material_url || '',
+        material_nome: lesson.material_nome || '',
       });
     } else {
       setFormData({
@@ -269,9 +291,87 @@ function LessonEditDialog({
         position: nextPosition,
         is_published: true,
         is_free: false,
+        material_url: '',
+        material_nome: '',
       });
     }
   }, [lesson, nextPosition]);
+
+  // Handle PDF upload
+  const handlePdfUpload = async (file: File) => {
+    if (!file) return;
+    
+    // Validate file type
+    if (file.type !== 'application/pdf') {
+      toast.error("Apenas arquivos PDF são aceitos");
+      return;
+    }
+
+    // Validate file size (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("O arquivo deve ter no máximo 50MB");
+      return;
+    }
+
+    setIsUploadingPdf(true);
+
+    try {
+      // Generate unique path
+      const timestamp = Date.now();
+      const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `lessons/${moduleId}/${timestamp}_${sanitizedName}`;
+
+      // Upload to Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('materiais')
+        .upload(path, file, {
+          cacheControl: '3600',
+          upsert: true,
+        });
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('materiais')
+        .getPublicUrl(path);
+
+      // Update form
+      setFormData(prev => ({
+        ...prev,
+        material_url: path, // Store path, not full URL
+        material_nome: file.name,
+      }));
+
+      toast.success("PDF enviado com sucesso!");
+    } catch (error: any) {
+      console.error('Erro ao fazer upload do PDF:', error);
+      toast.error(`Erro ao enviar PDF: ${error.message}`);
+    } finally {
+      setIsUploadingPdf(false);
+    }
+  };
+
+  // Remove PDF
+  const handleRemovePdf = async () => {
+    if (formData.material_url) {
+      try {
+        // Delete from storage
+        await supabase.storage
+          .from('materiais')
+          .remove([formData.material_url]);
+      } catch (error) {
+        console.warn('Erro ao remover arquivo do storage:', error);
+      }
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      material_url: '',
+      material_nome: '',
+    }));
+    toast.success("Material removido");
+  };
 
   // Create mutation
   const createMutation = useMutation({
@@ -291,6 +391,8 @@ function LessonEditDialog({
           is_published: data.is_published,
           is_free: data.is_free,
           status: 'ativo',
+          material_url: data.material_url || null,
+          material_nome: data.material_nome || null,
         });
       if (error) throw error;
     },
@@ -324,6 +426,8 @@ function LessonEditDialog({
           position: data.position,
           is_published: data.is_published,
           is_free: data.is_free,
+          material_url: data.material_url || null,
+          material_nome: data.material_nome || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', lesson.id);
@@ -527,6 +631,98 @@ function LessonEditDialog({
               />
               <Label className="cursor-pointer">Gratuita</Label>
             </div>
+          </div>
+
+          <Separator className="my-2" />
+
+          {/* ============================================ */}
+          {/* MATERIAL COMPLEMENTAR (PDF) */}
+          {/* ============================================ */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-red-400" />
+              Material Complementar (PDF)
+            </Label>
+            
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handlePdfUpload(file);
+                e.target.value = ''; // Reset to allow re-upload
+              }}
+            />
+
+            {formData.material_url ? (
+              /* PDF Attached - Show preview card */
+              <Card className="border-red-500/30 bg-gradient-to-r from-red-500/10 to-orange-500/10">
+                <CardContent className="p-3 flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-red-500/20">
+                    <File className="h-5 w-5 text-red-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{formData.material_nome || 'material.pdf'}</p>
+                    <p className="text-xs text-muted-foreground">PDF anexado</p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 hover:bg-cyan-500/20"
+                      onClick={() => {
+                        const { data: { publicUrl } } = supabase.storage
+                          .from('materiais')
+                          .getPublicUrl(formData.material_url);
+                        window.open(publicUrl, '_blank');
+                      }}
+                      title="Visualizar PDF"
+                    >
+                      <ExternalLink className="h-4 w-4 text-cyan-400" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 hover:bg-destructive/20"
+                      onClick={handleRemovePdf}
+                      title="Remover PDF"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              /* No PDF - Show upload button */
+              <Button
+                type="button"
+                variant="outline"
+                className={cn(
+                  "w-full h-20 border-dashed border-2 flex flex-col gap-2",
+                  "hover:border-red-500/50 hover:bg-red-500/5 transition-all",
+                  isUploadingPdf && "opacity-50 cursor-not-allowed"
+                )}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingPdf}
+              >
+                {isUploadingPdf ? (
+                  <>
+                    <Loader2 className="h-6 w-6 animate-spin text-red-400" />
+                    <span className="text-xs text-muted-foreground">Enviando PDF...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-6 w-6 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Clique para anexar PDF (máx. 50MB)</span>
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
 
