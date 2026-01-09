@@ -746,6 +746,71 @@ function ModuleCard({
   onTogglePublish: () => void;
 }) {
   const { data: lessons } = useModuleLessonsQuery(isExpanded ? module.id : null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Upload handler direto na thumbnail
+  const handleThumbnailUpload = async (file: File) => {
+    // Validar tipo
+    if (!file.type.startsWith('image/')) {
+      toast({ title: 'Erro', description: 'Apenas imagens são permitidas', variant: 'destructive' });
+      return;
+    }
+    // Validar tamanho (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: 'Erro', description: 'Imagem deve ter no máximo 5MB', variant: 'destructive' });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const fileName = `module-${module.id}-${Date.now()}.${ext}`;
+      const filePath = `modules/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('materiais')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('materiais')
+        .getPublicUrl(filePath);
+
+      const publicUrl = urlData.publicUrl;
+
+      // Atualizar módulo com a nova URL
+      const { error: updateError } = await supabase
+        .from('modules')
+        .update({ thumbnail_url: publicUrl })
+        .eq('id', module.id);
+
+      if (updateError) throw updateError;
+
+      queryClient.invalidateQueries({ queryKey: ['gestao-all-modules'] });
+      toast({ title: '✅ Capa atualizada', description: 'Imagem 752x940 salva com sucesso.' });
+    } catch (err: any) {
+      console.error('[ModuleCard] Upload error:', err);
+      toast({ title: 'Erro no upload', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleThumbnailUpload(file);
+    // Reset input para permitir re-upload do mesmo arquivo
+    e.target.value = '';
+  };
+
+  const handleThumbnailClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    fileInputRef.current?.click();
+  };
 
   return (
     <div
@@ -758,6 +823,15 @@ function ModuleCard({
         module.is_published ? "opacity-100" : "opacity-60"
       )}
     >
+      {/* Hidden file input for upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
       {/* Corner accents */}
       <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-cyan-500/40 rounded-tl-2xl pointer-events-none" />
       <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-cyan-500/40 rounded-tr-2xl pointer-events-none" />
@@ -775,19 +849,44 @@ function ModuleCard({
             </Button>
           </CollapsibleTrigger>
 
-          {/* Thumbnail with frame */}
-          {module.thumbnail_url ? (
-            <div className="relative w-14 h-16 rounded-xl overflow-hidden border-2 border-green-500/40 bg-muted shrink-0 shadow-lg shadow-green-500/10">
-              <img src={module.thumbnail_url} alt={module.title} className="w-full h-full object-cover" />
-              <div className="absolute bottom-1 right-1 p-1 rounded-full bg-green-500 shadow-lg shadow-green-500/30">
-                <Check className="h-2.5 w-2.5 text-white" />
+          {/* Thumbnail CLICÁVEL para upload direto (752x940) */}
+          <div
+            onClick={handleThumbnailClick}
+            className={cn(
+              "relative w-14 h-16 rounded-xl overflow-hidden shrink-0 cursor-pointer transition-all group/thumb",
+              "hover:scale-105 hover:shadow-xl",
+              module.thumbnail_url 
+                ? "border-2 border-green-500/40 bg-muted shadow-lg shadow-green-500/10" 
+                : "border-2 border-dashed border-red-500/50 bg-red-500/10",
+              isUploading && "opacity-50 pointer-events-none animate-pulse"
+            )}
+            title="Clique para alterar capa (752x940)"
+          >
+            {module.thumbnail_url ? (
+              <>
+                <img src={module.thumbnail_url} alt={module.title} className="w-full h-full object-cover" />
+                {/* Overlay de hover */}
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
+                  <Upload className="h-5 w-5 text-white" />
+                </div>
+                {/* Badge de sucesso */}
+                <div className="absolute bottom-1 right-1 p-1 rounded-full bg-green-500 shadow-lg shadow-green-500/30 group-hover/thumb:opacity-0 transition-opacity">
+                  <Check className="h-2.5 w-2.5 text-white" />
+                </div>
+              </>
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                {isUploading ? (
+                  <RefreshCw className="h-5 w-5 text-cyan-400 animate-spin" />
+                ) : (
+                  <>
+                    <Image className="h-4 w-4 text-red-400 group-hover/thumb:hidden" />
+                    <Upload className="h-4 w-4 text-cyan-400 hidden group-hover/thumb:block" />
+                  </>
+                )}
               </div>
-            </div>
-          ) : (
-            <div className="w-14 h-16 rounded-xl border-2 border-dashed border-red-500/50 bg-red-500/10 flex items-center justify-center shrink-0">
-              <Image className="h-5 w-5 text-red-400" />
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Info */}
           <div className="flex-1 min-w-0 space-y-2">
