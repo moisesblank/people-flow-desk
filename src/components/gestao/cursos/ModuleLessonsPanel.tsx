@@ -206,13 +206,6 @@ function SortableLessonRow({
           <Trash2 className="h-4 w-4" />
         </Button>
       </div>
-
-      {/* Published indicator (always visible) */}
-      {lesson.is_published && (
-        <div className="shrink-0 group-hover:hidden">
-          <Check className="h-4 w-4 text-green-400" />
-        </div>
-      )}
     </div>
   );
 }
