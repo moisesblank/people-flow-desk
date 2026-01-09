@@ -301,6 +301,11 @@ interface SimuladoCardProps {
 import capaHardMode from "@/assets/simulados/capa-hard.png";
 import capaNormalMode from "@/assets/simulados/capa-normal.png";
 
+/**
+ * 🎬 SIMULADO CARD - NETFLIX HORIZONTAL STYLE
+ * Layout lado a lado: Capa à esquerda, conteúdo à direita
+ * Estilo premium com hover effects cinematográficos
+ */
 const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, shouldAnimate = true, index = 0 }: SimuladoCardProps) {
   const hasRunningAttempt = simulado.user_attempt?.status === "RUNNING";
   const isRetake = simulado.user_attempt && !simulado.user_attempt.is_scored_for_ranking;
@@ -312,123 +317,139 @@ const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, shouldAnima
   return (
     <div 
       className={cn(
-        "group hover:-translate-y-2 transition-transform duration-300",
+        "group transition-all duration-500",
         shouldAnimate && "animate-fade-in"
       )}
       style={shouldAnimate ? { animationDelay: `${index * 50}ms` } : undefined}
     >
+      {/* 🎬 Netflix-Style Horizontal Card */}
       <div className={cn(
-        "stat-orb-2300 h-full flex flex-col overflow-hidden",
-        isHardMode && "border-red-500/30"
+        "relative flex rounded-xl overflow-hidden",
+        "bg-gradient-to-r from-card/95 to-card/80",
+        "border border-border/50 backdrop-blur-sm",
+        "hover:scale-[1.02] hover:shadow-2xl transition-all duration-500",
+        isHardMode 
+          ? "hover:border-red-500/50 hover:shadow-red-500/20" 
+          : "hover:border-emerald-500/50 hover:shadow-emerald-500/20"
       )}>
-        {/* Glowing Top Border - Conditioned by mode */}
-        <div className={cn(
-          "absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent to-transparent",
-          isHardMode ? "via-red-500/60" : "via-emerald-500/60"
-        )} />
-        
-        {/* 🖼️ THUMBNAIL / CAPA DO SIMULADO */}
-        <div className="relative -mx-4 -mt-4 mb-4 aspect-[752/940] max-h-32 overflow-hidden">
+        {/* 🖼️ CAPA - Lado Esquerdo (Netflix Poster Style) */}
+        <div className="relative w-28 md:w-36 lg:w-40 flex-shrink-0 overflow-hidden">
           <img 
             src={coverImage} 
             alt={`Capa ${isHardMode ? 'Hard Mode' : 'Modo Normal'}`}
-            className="w-full h-full object-cover object-top"
+            className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
+            loading="lazy"
           />
-          {/* Gradient overlay para blend com o card */}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
-        </div>
-        
-        {/* Header Badges */}
-        <div className="flex items-center gap-2 flex-wrap mb-4">
-          {hasRunningAttempt && (
-            <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 animate-pulse">
-              <Timer className="w-3 h-3 mr-1" />
-              Em Andamento
-            </Badge>
-          )}
-          {simulado.is_hard_mode && (
-            <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
-              <Flame className="w-3 h-3 mr-1" />
-              Hard Mode
-            </Badge>
-          )}
-          {simulado.requires_camera && (
-            <Badge variant="outline" className="border-cyan-500/50 text-cyan-400">
-              <Camera className="w-3 h-3 mr-1" />
-              Câmera
-            </Badge>
-          )}
-          {isRetake && (
-            <Badge variant="outline" className="border-muted-foreground/50 text-muted-foreground">
-              Retake
-            </Badge>
-          )}
+          {/* Gradient overlay lateral */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-card/90" />
+          
+          {/* Glow effect on hover */}
+          <div className={cn(
+            "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500",
+            isHardMode 
+              ? "bg-gradient-to-r from-red-500/20 to-transparent"
+              : "bg-gradient-to-r from-emerald-500/20 to-transparent"
+          )} />
         </div>
 
-        {/* Title & Description */}
-        <div className="flex-1">
-          <h3 className={cn(
-            "text-lg font-bold text-foreground transition-colors mb-2",
-            isHardMode ? "group-hover:text-red-400" : "group-hover:text-emerald-400"
-          )}>
-            {simulado.title}
-          </h3>
-          {simulado.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {simulado.description}
-            </p>
-          )}
-        </div>
-
-        {/* Stats Row */}
-        <div className="flex items-center gap-4 py-4 border-y border-border/30 my-4">
-          <div className="flex items-center gap-1.5 text-sm">
-            <div className="p-1.5 rounded-lg bg-purple-500/20">
-              <Target className="w-3.5 h-3.5 text-purple-400" />
-            </div>
-            <span className="text-muted-foreground">{simulado.total_questions} questões</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-sm">
-            <div className="p-1.5 rounded-lg bg-blue-500/20">
-              <Clock className="w-3.5 h-3.5 text-blue-400" />
-            </div>
-            <span className="text-muted-foreground">{simulado.duration_minutes} min</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-sm">
-            <div className="p-1.5 rounded-lg bg-amber-500/20">
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
-            </div>
-            <span className="text-amber-400 font-semibold">+{simulado.total_questions * simulado.points_per_question} XP</span>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between">
-          {simulado.ends_at && (
-            <span className="text-xs text-muted-foreground">
-              Até {format(new Date(simulado.ends_at), "dd/MM 'às' HH:mm", { locale: ptBR })}
-            </span>
-          )}
-          <Button 
-            onClick={onStart}
-            className={cn(
-              "ml-auto transition-all duration-300",
-              hasRunningAttempt 
-                ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-[0_0_20px_hsl(45,100%,50%,0.3)]"
-                : isHardMode
-                  ? "bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 shadow-[0_0_20px_hsl(0,100%,50%,0.3)]"
-                  : "bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 shadow-[0_0_20px_hsl(160,100%,50%,0.3)]"
+        {/* 📋 CONTEÚDO - Lado Direito */}
+        <div className="flex-1 p-4 md:p-5 flex flex-col justify-between min-w-0">
+          {/* Header: Badges */}
+          <div className="flex items-center gap-2 flex-wrap mb-2">
+            {hasRunningAttempt && (
+              <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 animate-pulse text-xs">
+                <Timer className="w-3 h-3 mr-1" />
+                Em Andamento
+              </Badge>
             )}
-          >
-            <Play className="w-4 h-4 mr-2" />
-            {hasRunningAttempt ? "Continuar" : "Iniciar"}
-          </Button>
+            {simulado.is_hard_mode && (
+              <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-xs">
+                <Flame className="w-3 h-3 mr-1" />
+                Hard
+              </Badge>
+            )}
+            {simulado.requires_camera && (
+              <Badge variant="outline" className="border-cyan-500/50 text-cyan-400 text-xs">
+                <Camera className="w-3 h-3 mr-1" />
+                Câmera
+              </Badge>
+            )}
+            {isRetake && (
+              <Badge variant="outline" className="border-muted-foreground/50 text-muted-foreground text-xs">
+                Retake
+              </Badge>
+            )}
+          </div>
+
+          {/* Title & Description */}
+          <div className="flex-1 min-w-0">
+            <h3 className={cn(
+              "text-base md:text-lg font-bold text-foreground transition-colors mb-1 truncate",
+              isHardMode ? "group-hover:text-red-400" : "group-hover:text-emerald-400"
+            )}>
+              {simulado.title}
+            </h3>
+            {simulado.description && (
+              <p className="text-xs md:text-sm text-muted-foreground line-clamp-1 md:line-clamp-2">
+                {simulado.description}
+              </p>
+            )}
+          </div>
+
+          {/* Stats Row - Compacto */}
+          <div className="flex items-center gap-3 md:gap-4 py-2 my-2 border-t border-border/30">
+            <div className="flex items-center gap-1 text-xs md:text-sm">
+              <Target className="w-3 h-3 md:w-3.5 md:h-3.5 text-purple-400" />
+              <span className="text-muted-foreground">{simulado.total_questions}q</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs md:text-sm">
+              <Clock className="w-3 h-3 md:w-3.5 md:h-3.5 text-blue-400" />
+              <span className="text-muted-foreground">{simulado.duration_minutes}min</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs md:text-sm">
+              <Zap className="w-3 h-3 md:w-3.5 md:h-3.5 text-amber-400" />
+              <span className="text-amber-400 font-semibold">+{simulado.total_questions * simulado.points_per_question}</span>
+            </div>
+          </div>
+
+          {/* Footer: Date + Button */}
+          <div className="flex items-center justify-between gap-2">
+            {simulado.ends_at ? (
+              <span className="text-[10px] md:text-xs text-muted-foreground truncate">
+                Até {format(new Date(simulado.ends_at), "dd/MM HH:mm", { locale: ptBR })}
+              </span>
+            ) : (
+              <span />
+            )}
+            <Button 
+              onClick={onStart}
+              size="sm"
+              className={cn(
+                "flex-shrink-0 transition-all duration-300 text-xs md:text-sm",
+                hasRunningAttempt 
+                  ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-[0_0_15px_hsl(45,100%,50%,0.3)]"
+                  : isHardMode
+                    ? "bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 shadow-[0_0_15px_hsl(0,100%,50%,0.3)]"
+                    : "bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 shadow-[0_0_15px_hsl(160,100%,50%,0.3)]"
+              )}
+            >
+              <Play className="w-3 h-3 md:w-4 md:h-4 mr-1" />
+              {hasRunningAttempt ? "Continuar" : "Iniciar"}
+            </Button>
+          </div>
         </div>
+
+        {/* Animated border glow on hover */}
+        <div className={cn(
+          "absolute inset-0 rounded-xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500",
+          isHardMode 
+            ? "shadow-[inset_0_0_20px_rgba(239,68,68,0.15)]"
+            : "shadow-[inset_0_0_20px_rgba(16,185,129,0.15)]"
+        )} />
       </div>
     </div>
   );
 });
-
 // ============================================
 // 📂 AVAILABLE SIMULADOS GROUPED (Year 2300)
 // Organiza simulados em grupos colapsáveis
