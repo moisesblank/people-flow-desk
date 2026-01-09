@@ -297,10 +297,17 @@ interface SimuladoCardProps {
   index?: number;
 }
 
+// Capas dos simulados por modo
+import capaHardMode from "@/assets/simulados/capa-hard.png";
+import capaNormalMode from "@/assets/simulados/capa-normal.png";
+
 const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, shouldAnimate = true, index = 0 }: SimuladoCardProps) {
   const hasRunningAttempt = simulado.user_attempt?.status === "RUNNING";
   const isRetake = simulado.user_attempt && !simulado.user_attempt.is_scored_for_ranking;
   const isHardMode = simulado.is_hard_mode;
+  
+  // Seleciona capa baseado no modo
+  const coverImage = isHardMode ? capaHardMode : capaNormalMode;
 
   return (
     <div 
@@ -311,7 +318,7 @@ const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, shouldAnima
       style={shouldAnimate ? { animationDelay: `${index * 50}ms` } : undefined}
     >
       <div className={cn(
-        "stat-orb-2300 h-full flex flex-col",
+        "stat-orb-2300 h-full flex flex-col overflow-hidden",
         isHardMode && "border-red-500/30"
       )}>
         {/* Glowing Top Border - Conditioned by mode */}
@@ -319,6 +326,17 @@ const SimuladoCard = memo(function SimuladoCard({ simulado, onStart, shouldAnima
           "absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent to-transparent",
           isHardMode ? "via-red-500/60" : "via-emerald-500/60"
         )} />
+        
+        {/* 🖼️ THUMBNAIL / CAPA DO SIMULADO */}
+        <div className="relative -mx-4 -mt-4 mb-4 aspect-[752/940] max-h-32 overflow-hidden">
+          <img 
+            src={coverImage} 
+            alt={`Capa ${isHardMode ? 'Hard Mode' : 'Modo Normal'}`}
+            className="w-full h-full object-cover object-top"
+          />
+          {/* Gradient overlay para blend com o card */}
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
+        </div>
         
         {/* Header Badges */}
         <div className="flex items-center gap-2 flex-wrap mb-4">
