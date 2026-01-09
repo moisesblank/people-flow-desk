@@ -513,9 +513,9 @@ function SubcategorySection({
 }
 
 // ============================================
-// 🎬 NETFLIX CAROUSEL ROW — Horizontal Scroll Premium
-// Layout estilo Netflix com hover effects cinematográficos
-// PERFORMANCE: Usa scroll nativo + performance tiering
+// 🎬 NETFLIX SECTION ROW — Módulo + Aulas Horizontal
+// Cada módulo ocupa uma ROW completa: módulo à esquerda, aulas à direita
+// PERFORMANCE: Performance tiering adaptativo
 // ============================================
 const NetflixCarouselRow = memo(function NetflixCarouselRow({
   modules,
@@ -530,12 +530,60 @@ const NetflixCarouselRow = memo(function NetflixCarouselRow({
   onPlayLesson: (lesson: Lesson) => void;
   progressMap: Map<string, ModuleProgressData>;
 }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
   const { shouldAnimate, shouldBlur, isLowEnd } = useConstitutionPerformance();
 
-  // Check scroll position
+  return (
+    <div className="space-y-4">
+      {modules.map((module, idx) => (
+        <NetflixModuleSectionRow
+          key={module.id}
+          module={module}
+          index={idx}
+          isExpanded={expandedModules.has(module.id)}
+          onToggle={() => onToggleModule(module.id)}
+          onPlayLesson={onPlayLesson}
+          progress={progressMap.get(module.id)}
+          isLowEnd={isLowEnd}
+          shouldAnimate={shouldAnimate}
+          shouldBlur={shouldBlur}
+        />
+      ))}
+    </div>
+  );
+});
+NetflixCarouselRow.displayName = 'NetflixCarouselRow';
+
+// ============================================
+// 🎬 NETFLIX MODULE SECTION ROW — Horizontal Layout
+// Uma ROW completa: Módulo (esquerda) + Aulas (direita, horizontal scroll)
+// ============================================
+const NetflixModuleSectionRow = memo(function NetflixModuleSectionRow({ 
+  module, 
+  index, 
+  isExpanded, 
+  onToggle,
+  onPlayLesson,
+  progress,
+  isLowEnd,
+  shouldAnimate,
+  shouldBlur
+}: {
+  module: Module;
+  index: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onPlayLesson: (lesson: Lesson) => void;
+  progress?: ModuleProgressData;
+  isLowEnd: boolean;
+  shouldAnimate: boolean;
+  shouldBlur: boolean;
+}) {
+  const { data: lessons, isLoading } = useModuleLessons(isExpanded ? module.id : null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  // Check scroll position for lessons carousel
   const updateScrollButtons = useCallback(() => {
     if (!scrollRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
@@ -547,100 +595,407 @@ const NetflixCarouselRow = memo(function NetflixCarouselRow({
     const ref = scrollRef.current;
     if (!ref) return;
     ref.addEventListener('scroll', updateScrollButtons, { passive: true });
-    updateScrollButtons();
-    return () => ref.removeEventListener('scroll', updateScrollButtons);
-  }, [updateScrollButtons]);
+    // Delay initial check to allow content to render
+    const timer = setTimeout(updateScrollButtons, 100);
+    return () => {
+      ref.removeEventListener('scroll', updateScrollButtons);
+      clearTimeout(timer);
+    };
+  }, [updateScrollButtons, lessons]);
 
   const scroll = useCallback((direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
-    const scrollAmount = scrollRef.current.clientWidth * 0.75;
+    const scrollAmount = 280;
     scrollRef.current.scrollBy({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
       behavior: shouldAnimate ? 'smooth' : 'auto'
     });
   }, [shouldAnimate]);
 
-  return (
-    <div className="relative group/netflix">
-      {/* 🎮 Navigation Buttons — Netflix Style */}
-      {canScrollLeft && (
-        <button
-          onClick={() => scroll('left')}
-          className={cn(
-            "absolute left-0 top-0 bottom-0 z-30 w-12 md:w-16",
-            "flex items-center justify-center",
-            "bg-gradient-to-r from-black/90 via-black/60 to-transparent",
-            "opacity-0 group-hover/netflix:opacity-100 transition-opacity duration-300",
-            "hover:from-black/95 cursor-pointer"
-          )}
-          aria-label="Scroll left"
-        >
-          <div className={cn(
-            "p-3 rounded-full border-2 border-white/40 bg-white/10",
-            shouldBlur && "backdrop-blur-sm",
-            "hover:bg-white/20 hover:border-white/60 hover:scale-110 transition-all"
-          )}>
-            <ChevronLeft className="h-6 w-6 text-white" />
-          </div>
-        </button>
-      )}
-      
-      {canScrollRight && (
-        <button
-          onClick={() => scroll('right')}
-          className={cn(
-            "absolute right-0 top-0 bottom-0 z-30 w-12 md:w-16",
-            "flex items-center justify-center",
-            "bg-gradient-to-l from-black/90 via-black/60 to-transparent",
-            "opacity-0 group-hover/netflix:opacity-100 transition-opacity duration-300",
-            "hover:from-black/95 cursor-pointer"
-          )}
-          aria-label="Scroll right"
-        >
-          <div className={cn(
-            "p-3 rounded-full border-2 border-white/40 bg-white/10",
-            shouldBlur && "backdrop-blur-sm",
-            "hover:bg-white/20 hover:border-white/60 hover:scale-110 transition-all"
-          )}>
-            <ChevronRight className="h-6 w-6 text-white" />
-          </div>
-        </button>
-      )}
+  const isChronolocked = module.title?.toLowerCase().includes('resolução provas enem 2025');
+  const lessonCount = module._count?.lessons || 0;
+  const progressPercent = progress?.progressPercent || 0;
+  
+  const progressColor = progressPercent >= 100 
+    ? 'from-green-500 to-emerald-400' 
+    : progressPercent >= 50 
+      ? 'from-cyan-500 to-blue-400' 
+      : 'from-red-500 to-rose-400';
 
-      {/* 🎬 Scrollable Row */}
-      <div
-        ref={scrollRef}
-        className={cn(
-          "flex gap-3 md:gap-4 overflow-x-auto scroll-smooth",
-          "pb-4 px-2 -mx-2",
-          "scrollbar-none [&::-webkit-scrollbar]:hidden"
+  const sectionContent = (
+    <div 
+      className={cn(
+        "group/row relative rounded-2xl overflow-hidden transition-all duration-300",
+        "bg-gradient-to-r from-slate-900/95 via-slate-900/80 to-slate-900/60",
+        "border-2",
+        isExpanded 
+          ? "border-cyan-500/60 shadow-[0_0_40px_rgba(34,211,238,0.2)]"
+          : "border-slate-700/50 hover:border-cyan-500/40",
+        shouldBlur && "backdrop-blur-xl"
+      )}
+    >
+      {/* 🎯 HORIZONTAL LAYOUT: Module Card (left) + Lessons Carousel (right) */}
+      <div className="flex flex-col lg:flex-row">
+        
+        {/* ========== LEFT SECTION: MODULE CARD ========== */}
+        <div 
+          className={cn(
+            "relative flex-shrink-0 cursor-pointer",
+            "w-full lg:w-[260px] xl:w-[300px]",
+            "p-4 lg:p-5"
+          )}
+          onClick={onToggle}
+        >
+          <div className="flex lg:flex-col gap-4">
+            {/* Thumbnail */}
+            <div className={cn(
+              "relative flex-shrink-0 rounded-xl overflow-hidden",
+              "w-24 h-32 lg:w-full lg:h-[180px]",
+              "bg-gradient-to-br from-slate-800 to-slate-900",
+              "border border-slate-700/50 group-hover/row:border-cyan-500/30 transition-colors"
+            )}>
+              {module.thumbnail_url ? (
+                <img
+                  src={module.thumbnail_url}
+                  alt={module.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Layers className="h-10 w-10 text-cyan-400/40" />
+                </div>
+              )}
+              
+              {/* Gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+              
+              {/* Position badge */}
+              <div className="absolute top-2 left-2">
+                <span className="px-2 py-1 rounded text-xs font-black bg-black/80 text-white border border-white/20">
+                  {String(module.position + 1).padStart(2, '0')}
+                </span>
+              </div>
+              
+              {/* Lesson count */}
+              <div className="absolute top-2 right-2">
+                <span className="px-2 py-0.5 rounded text-xs font-bold bg-green-500/90 text-white flex items-center gap-1">
+                  <PlayCircle className="h-3 w-3" />
+                  {lessonCount}
+                </span>
+              </div>
+              
+              {/* Progress bar at bottom */}
+              {progress && progress.totalDuration > 0 && (
+                <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/60">
+                  <div 
+                    className={cn("h-full bg-gradient-to-r transition-all", progressColor)}
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              )}
+            </div>
+            
+            {/* Module Info */}
+            <div className="flex-1 min-w-0 space-y-2">
+              <h4 className="font-bold text-white text-base lg:text-lg leading-tight line-clamp-2 group-hover/row:text-cyan-300 transition-colors">
+                {module.title}
+              </h4>
+              
+              {/* Stats */}
+              <div className="flex items-center gap-3 flex-wrap">
+                {progress && progress.totalDuration > 0 && (
+                  <span className={cn(
+                    "text-xs font-bold px-2 py-1 rounded",
+                    progressPercent >= 70 
+                      ? "bg-green-500/30 text-green-400 border border-green-500/40" 
+                      : "bg-slate-800 text-gray-400 border border-slate-700"
+                  )}>
+                    {progressPercent}% concluído
+                  </span>
+                )}
+                <span className="text-xs text-gray-500">
+                  {lessonCount} aulas
+                </span>
+              </div>
+              
+              {/* Toggle button */}
+              <Button
+                size="sm"
+                variant="outline"
+                className={cn(
+                  "mt-2 w-full lg:w-auto",
+                  isExpanded 
+                    ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/30"
+                    : "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                )}
+              >
+                {isExpanded ? (
+                  <>
+                    <ChevronUp className="h-4 w-4 mr-2" />
+                    Fechar
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 mr-2" fill="currentColor" />
+                    Ver Aulas
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        {/* ========== RIGHT SECTION: LESSONS HORIZONTAL CAROUSEL ========== */}
+        {isExpanded && (
+          <div className={cn(
+            "flex-1 min-w-0 border-t lg:border-t-0 lg:border-l border-cyan-500/20",
+            "bg-gradient-to-r from-slate-900/50 to-transparent",
+            shouldAnimate && "animate-fade-in"
+          )}>
+            {/* Header */}
+            <div className="flex items-center justify-between gap-4 px-4 pt-4 pb-2">
+              <div className="flex items-center gap-2">
+                <Video className="h-4 w-4 text-green-400" />
+                <span className="text-sm font-bold text-green-400 uppercase tracking-wide">
+                  {lessons?.length || 0} Videoaulas
+                </span>
+              </div>
+              
+              {/* Scroll hint */}
+              <span className="text-xs text-gray-500 flex items-center gap-1">
+                <ChevronLeft className="h-3 w-3" />
+                Arraste
+                <ChevronRight className="h-3 w-3" />
+              </span>
+            </div>
+            
+            {/* Lessons Carousel */}
+            <div className="relative group/lessons px-4 pb-4">
+              {/* Navigation buttons */}
+              {canScrollLeft && (
+                <button
+                  onClick={() => scroll('left')}
+                  className={cn(
+                    "absolute left-0 top-1/2 -translate-y-1/2 z-20",
+                    "p-2 rounded-full",
+                    "bg-black/90 border border-white/30",
+                    "hover:bg-cyan-500/30 hover:border-cyan-400/50 transition-all",
+                    "opacity-0 group-hover/lessons:opacity-100"
+                  )}
+                >
+                  <ChevronLeft className="h-5 w-5 text-white" />
+                </button>
+              )}
+              
+              {canScrollRight && (
+                <button
+                  onClick={() => scroll('right')}
+                  className={cn(
+                    "absolute right-0 top-1/2 -translate-y-1/2 z-20",
+                    "p-2 rounded-full",
+                    "bg-black/90 border border-white/30",
+                    "hover:bg-cyan-500/30 hover:border-cyan-400/50 transition-all",
+                    "opacity-0 group-hover/lessons:opacity-100"
+                  )}
+                >
+                  <ChevronRight className="h-5 w-5 text-white" />
+                </button>
+              )}
+              
+              {/* Scrollable lessons */}
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="h-8 w-8 border-3 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : lessons && lessons.length > 0 ? (
+                <div
+                  ref={scrollRef}
+                  className={cn(
+                    "flex gap-3 overflow-x-auto scroll-smooth",
+                    "scrollbar-none [&::-webkit-scrollbar]:hidden"
+                  )}
+                  style={{ scrollbarWidth: 'none' }}
+                >
+                  {lessons.map((lesson, idx) => (
+                    <NetflixLessonCard 
+                      key={lesson.id} 
+                      lesson={lesson} 
+                      index={idx}
+                      onPlay={() => onPlayLesson(lesson)}
+                      shouldAnimate={shouldAnimate}
+                      isLowEnd={isLowEnd}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="py-8 text-center text-gray-500">
+                  <Video className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm">Nenhuma aula disponível</p>
+                </div>
+              )}
+            </div>
+          </div>
         )}
-        style={{ scrollbarWidth: 'none' }}
+      </div>
+    </div>
+  );
+
+  if (isChronolocked) {
+    return (
+      <Chronolock 
+        message="EM BREVE" 
+        subtitle="31/01"
+        variant="warning"
       >
-        {modules.map((module, idx) => (
-          <NetflixModuleCard
-            key={module.id}
-            module={module}
-            index={idx}
-            isExpanded={expandedModules.has(module.id)}
-            onToggle={() => onToggleModule(module.id)}
-            onPlayLesson={onPlayLesson}
-            progress={progressMap.get(module.id)}
-            isLowEnd={isLowEnd}
-            shouldAnimate={shouldAnimate}
-            shouldBlur={shouldBlur}
-          />
-        ))}
+        {sectionContent}
+      </Chronolock>
+    );
+  }
+
+  return sectionContent;
+});
+NetflixModuleSectionRow.displayName = 'NetflixModuleSectionRow';
+
+// ============================================
+// 🎬 NETFLIX LESSON CARD — Card Horizontal para Carousel
+// Design cinematográfico com thumbnail + info
+// ============================================
+const NetflixLessonCard = memo(function NetflixLessonCard({ 
+  lesson, 
+  index,
+  onPlay,
+  shouldAnimate,
+  isLowEnd
+}: { 
+  lesson: Lesson; 
+  index: number;
+  onPlay: () => void;
+  shouldAnimate: boolean;
+  isLowEnd: boolean;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const hasVideo = lesson.panda_video_id || lesson.video_url || lesson.youtube_video_id;
+
+  return (
+    <div
+      className={cn(
+        "relative flex-shrink-0 cursor-pointer",
+        "w-[200px] sm:w-[220px] md:w-[240px]",
+        !isLowEnd && "transition-all duration-300",
+        !isLowEnd && isHovered && "scale-105 z-10"
+      )}
+      onMouseEnter={() => !isLowEnd && setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={onPlay}
+    >
+      <div className={cn(
+        "relative rounded-xl overflow-hidden",
+        "bg-gradient-to-br from-slate-800 to-slate-900",
+        "border-2 transition-all duration-200",
+        isHovered 
+          ? "border-green-400/80 shadow-[0_0_20px_rgba(74,222,128,0.3)]"
+          : "border-slate-700/50 shadow-lg shadow-black/40"
+      )}>
+        {/* Thumbnail */}
+        <div className="relative aspect-video overflow-hidden">
+          {lesson.thumbnail_url ? (
+            <img
+              src={lesson.thumbnail_url}
+              alt={lesson.title}
+              className={cn(
+                "absolute inset-0 w-full h-full object-cover",
+                "transition-all duration-300",
+                imageLoaded ? "opacity-100" : "opacity-0",
+                !isLowEnd && isHovered && "scale-110"
+              )}
+              onLoad={() => setImageLoaded(true)}
+              loading="lazy"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-green-900/30 to-cyan-900/30">
+              <Video className="h-8 w-8 text-green-400/50" />
+            </div>
+          )}
+          
+          {/* Gradient overlay */}
+          <div className={cn(
+            "absolute inset-0 transition-opacity duration-300",
+            isHovered 
+              ? "bg-gradient-to-t from-black via-black/40 to-transparent"
+              : "bg-gradient-to-t from-black/80 via-transparent to-transparent"
+          )} />
+          
+          {/* Index badge */}
+          <div className="absolute top-2 left-2">
+            <span className="w-6 h-6 flex items-center justify-center rounded bg-green-500/90 text-white text-xs font-bold">
+              {index + 1}
+            </span>
+          </div>
+          
+          {/* Duration badge */}
+          {lesson.duration_minutes && (
+            <div className="absolute top-2 right-2">
+              <span className="px-2 py-0.5 rounded text-xs bg-black/80 text-white flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {lesson.duration_minutes}min
+              </span>
+            </div>
+          )}
+          
+          {/* Play button overlay */}
+          <div className={cn(
+            "absolute inset-0 flex items-center justify-center",
+            "transition-opacity duration-300",
+            isHovered ? "opacity-100" : "opacity-0"
+          )}>
+            <div className={cn(
+              "p-4 rounded-full",
+              "bg-green-500 text-white",
+              "shadow-[0_0_30px_rgba(74,222,128,0.5)]",
+              !isLowEnd && "animate-pulse"
+            )}>
+              <Play className="h-6 w-6" fill="white" />
+            </div>
+          </div>
+          
+          {/* Title at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 p-3">
+            <h5 className={cn(
+              "font-semibold text-white text-sm leading-tight",
+              isHovered ? "line-clamp-3" : "line-clamp-2"
+            )}>
+              {lesson.title}
+            </h5>
+          </div>
+        </div>
+        
+        {/* Hover info panel */}
+        {!isLowEnd && isHovered && (
+          <div className="p-3 bg-slate-900/95 border-t border-green-500/20 animate-fade-in">
+            <div className="flex items-center gap-2">
+              {hasVideo && (
+                <span className="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400 border border-green-500/30">
+                  HD
+                </span>
+              )}
+              <span className="text-xs text-gray-400 flex items-center gap-1">
+                <PlayCircle className="h-3 w-3" />
+                Assistir
+              </span>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 });
-NetflixCarouselRow.displayName = 'NetflixCarouselRow';
+NetflixLessonCard.displayName = 'NetflixLessonCard';
 
 // ============================================
-// 🎬 NETFLIX MODULE CARD — Hover Zoom Premium
-// Card estilo Netflix com zoom + info reveal on hover
-// PERFORMANCE: Performance tiering adaptativo
+// 🎬 NETFLIX MODULE CARD — LEGACY (for compatibility)
+// Agora usa NetflixModuleSectionRow internally
 // ============================================
 const NetflixModuleCard = memo(function NetflixModuleCard({ 
   module, 
@@ -663,270 +1018,8 @@ const NetflixModuleCard = memo(function NetflixModuleCard({
   shouldAnimate: boolean;
   shouldBlur: boolean;
 }) {
-  const { data: lessons, isLoading } = useModuleLessons(isExpanded ? module.id : null);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isInView, setIsInView] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  // 🚀 PERFORMANCE: IntersectionObserver para lazy loading
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            setIsInView(true);
-            observer.disconnect();
-          }
-        });
-      },
-      { rootMargin: '500px', threshold: 0 }
-    );
-
-    if (cardRef.current) observer.observe(cardRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  const isChronolocked = module.title?.toLowerCase().includes('resolução provas enem 2025');
-  const hasValidThumbnail = module.thumbnail_url && !imageError;
-  const lessonCount = module._count?.lessons || 0;
-  const progressPercent = progress?.progressPercent || 0;
-  
-  const progressColor = progressPercent >= 100 
-    ? 'from-green-500 to-emerald-400' 
-    : progressPercent >= 50 
-      ? 'from-cyan-500 to-blue-400' 
-      : 'from-red-500 to-rose-400';
-
-  const cardContent = (
-    <div 
-      ref={cardRef}
-      className={cn(
-        // 🎬 NETFLIX SIZING — Responsive poster size
-        "relative flex-shrink-0",
-        "w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px]",
-        "cursor-pointer select-none",
-        // 🎬 HOVER ZOOM — Netflix style
-        !isLowEnd && "transition-all duration-300 ease-out",
-        !isLowEnd && isHovered && "z-20 scale-[1.15] md:scale-[1.25]"
-      )}
-      onMouseEnter={() => !isLowEnd && setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={onToggle}
-    >
-      {/* 🎬 MAIN CARD */}
-      <div 
-        className={cn(
-          "relative rounded-lg overflow-hidden",
-          "bg-gradient-to-br from-slate-900 to-slate-800",
-          // 🎬 BORDER GLOW on hover
-          "border-2 transition-all duration-300",
-          isExpanded 
-            ? "border-cyan-400 shadow-[0_0_30px_rgba(34,211,238,0.4)]" 
-            : isHovered 
-              ? "border-white/80 shadow-[0_8px_40px_rgba(0,0,0,0.7)]"
-              : "border-transparent shadow-lg shadow-black/40"
-        )}
-      >
-        {/* 🖼️ THUMBNAIL — Aspect ratio 16:10 (Netflix poster style) */}
-        <div className="relative aspect-[3/4] overflow-hidden">
-          {/* Skeleton */}
-          {!isInView && (
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-800 animate-pulse" />
-          )}
-          
-          {/* Image */}
-          {isInView && hasValidThumbnail && (
-            <img
-              src={module.thumbnail_url!}
-              alt={module.title}
-              className={cn(
-                "absolute inset-0 w-full h-full object-cover",
-                "transition-all duration-500",
-                imageLoaded ? "opacity-100" : "opacity-0",
-                !isLowEnd && isHovered && "scale-110"
-              )}
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageError(true)}
-              loading="lazy"
-              decoding="async"
-            />
-          )}
-          
-          {/* Fallback */}
-          {(!hasValidThumbnail || !isInView) && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-cyan-900/60 to-purple-900/60">
-              <Layers className="h-12 w-12 text-cyan-300/60" />
-            </div>
-          )}
-          
-          {/* 🎬 Cinematic Gradient — stronger on hover */}
-          <div className={cn(
-            "absolute inset-0 transition-opacity duration-300",
-            isHovered 
-              ? "bg-gradient-to-t from-black via-black/60 to-transparent"
-              : "bg-gradient-to-t from-black/90 via-black/30 to-transparent"
-          )} />
-          
-          {/* 🔢 Position Badge — Top Left */}
-          <div className="absolute top-2 left-2 z-10">
-            <span className={cn(
-              "px-2 py-1 rounded text-xs font-black",
-              "bg-black/80 text-white border border-white/20"
-            )}>
-              {String(module.position + 1).padStart(2, '0')}
-            </span>
-          </div>
-          
-          {/* 🎬 Lesson Count Badge — Top Right */}
-          <div className="absolute top-2 right-2 z-10">
-            <span className={cn(
-              "px-2 py-1 rounded text-xs font-bold flex items-center gap-1",
-              "bg-green-500/90 text-white"
-            )}>
-              <PlayCircle className="h-3 w-3" />
-              {lessonCount}
-            </span>
-          </div>
-          
-          {/* 📊 Progress Bar — Netflix Red Bar style */}
-          {progress && progress.totalDuration > 0 && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-800/80">
-              <div 
-                className={cn(
-                  "h-full bg-gradient-to-r transition-all duration-500",
-                  progressColor
-                )}
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          )}
-          
-          {/* 📝 Title — Bottom */}
-          <div className="absolute bottom-0 left-0 right-0 p-3 z-10">
-            <h4 className={cn(
-              "font-bold text-white leading-tight drop-shadow-lg",
-              isHovered ? "text-sm line-clamp-3" : "text-xs line-clamp-2"
-            )}>
-              {module.title}
-            </h4>
-          </div>
-        </div>
-        
-        {/* 🎬 HOVER INFO PANEL — Netflix style expanded info */}
-        {!isLowEnd && isHovered && (
-          <div className={cn(
-            "absolute top-full left-0 right-0 z-30",
-            "bg-slate-900 border-2 border-t-0 border-white/20 rounded-b-lg",
-            "p-3 space-y-3",
-            "animate-fade-in"
-          )}>
-            {/* Stats row */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {progress && progress.totalDuration > 0 && (
-                <span className={cn(
-                  "text-xs font-bold px-2 py-0.5 rounded",
-                  progressPercent >= 70 ? "bg-green-500/30 text-green-400" : "text-gray-400"
-                )}>
-                  {progressPercent}% visto
-                </span>
-              )}
-              <span className="text-xs text-gray-400">
-                {lessonCount} aulas
-              </span>
-            </div>
-            
-            {/* Action buttons */}
-            <div className="flex items-center gap-2">
-              {/* Play button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggle();
-                }}
-                className={cn(
-                  "flex-1 flex items-center justify-center gap-2 py-2 rounded",
-                  "bg-white text-black font-bold text-sm",
-                  "hover:bg-gray-200 transition-colors"
-                )}
-              >
-                {isExpanded ? <ChevronUp className="h-4 w-4" /> : <Play className="h-4 w-4" fill="black" />}
-                {isExpanded ? "Fechar" : "Abrir"}
-              </button>
-              
-              {/* Info button */}
-              <button
-                onClick={(e) => e.stopPropagation()}
-                className={cn(
-                  "p-2 rounded-full border-2 border-gray-600",
-                  "hover:border-white hover:bg-white/10 transition-all"
-                )}
-              >
-                <Info className="h-4 w-4 text-white" />
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  // 🔒 Chronolock wrapper
-  if (isChronolocked) {
-    return (
-      <Chronolock 
-        message="EM BREVE" 
-        subtitle="31/01"
-        variant="warning"
-      >
-        {cardContent}
-      </Chronolock>
-    );
-  }
-
-  return (
-    <div className="flex flex-col">
-      {cardContent}
-      
-      {/* 🎬 EXPANDED LESSONS — Below the card */}
-      {isExpanded && (
-        <div className={cn(
-          "mt-3 w-[280px] sm:w-[320px] md:w-[360px]",
-          "bg-slate-900/95 border border-cyan-500/30 rounded-xl",
-          "p-3 space-y-2",
-          shouldBlur && "backdrop-blur-xl",
-          shouldAnimate && "animate-fade-in"
-        )}>
-          <div className="flex items-center gap-2 pb-2 border-b border-cyan-500/20">
-            <PlayCircle className="h-4 w-4 text-green-400" />
-            <span className="text-xs font-bold text-green-400 uppercase tracking-wide">
-              {lessons?.length || 0} Videoaulas
-            </span>
-          </div>
-          
-          {isLoading ? (
-            <div className="py-4 text-center">
-              <div className="h-5 w-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto" />
-            </div>
-          ) : lessons && lessons.length > 0 ? (
-            <div className="space-y-1 max-h-[300px] overflow-y-auto scrollbar-thin">
-              {lessons.map((lesson, idx) => (
-                <NetflixLessonRow 
-                  key={lesson.id} 
-                  lesson={lesson} 
-                  index={idx}
-                  onPlay={() => onPlayLesson(lesson)}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500 py-2">Nenhuma aula disponível</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  // Legacy component now redirects to section row
+  return null;
 });
 NetflixModuleCard.displayName = 'NetflixModuleCard';
 
