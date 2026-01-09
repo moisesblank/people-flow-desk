@@ -68,6 +68,14 @@ interface Course {
 
 // ============================================
 // HOOKS
+// Interface para ordenação de subcategorias
+interface SubcategoryOrder {
+  id: string;
+  course_id: string;
+  subcategory: string;
+  position: number;
+}
+
 // ============================================
 function usePublishedModules() {
   return useQuery({
@@ -138,6 +146,26 @@ function usePublishedCourses() {
   });
 }
 
+// ============================================
+// HOOK: Ordenação de Subcategorias (FONTE ÚNICA DE VERDADE)
+// Usa a mesma tabela subcategory_ordering da gestão
+// ============================================
+function useSubcategoryOrdering() {
+  return useQuery({
+    queryKey: ['aluno-subcategory-ordering'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('subcategory_ordering')
+        .select('*')
+        .order('position', { ascending: true });
+      
+      if (error) throw error;
+      return data as SubcategoryOrder[];
+    },
+    staleTime: 5 * 60 * 1000 // 5 minutos - sincronizado com gestão
+  });
+}
+
 function useModuleLessons(moduleId: string | null) {
   return useQuery({
     queryKey: ['aluno-module-lessons', moduleId],
@@ -183,6 +211,10 @@ function useLMSRealtime() {
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lessons' }, () => {
         debouncedInvalidate([['aluno-all-modules-hierarchy'], ['aluno-module-lessons']]);
+      })
+      // SYNC CRÍTICO: Ordenação de subcategorias deve sincronizar em tempo real
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'subcategory_ordering' }, () => {
+        debouncedInvalidate([['aluno-subcategory-ordering']]);
       })
       .subscribe();
 
@@ -1636,6 +1668,7 @@ function AlunoCoursesHierarchy() {
 
   const { data: modules, isLoading: loadingModules } = usePublishedModules();
   const { data: courses } = usePublishedCourses();
+  const { data: subcategoryOrdering } = useSubcategoryOrdering();
 
   // Agrupar por Curso → Subcategoria → Módulos
   const groupedData = useMemo(() => {
@@ -1668,14 +1701,34 @@ function AlunoCoursesHierarchy() {
       courseEntry.subcategoryGroups.get(subcat)!.push(module);
     });
 
+    // Criar mapa de posições a partir da tabela subcategory_ordering
+    // FONTE ÚNICA DE VERDADE: mesma ordenação da gestão
+    const getSubcatPosition = (courseId: string, subcategory: string | null): number => {
+      if (!subcategory || !subcategoryOrdering) return 999999;
+      const found = subcategoryOrdering.find(
+        o => o.course_id === courseId && o.subcategory === subcategory
+      );
+      return found?.position ?? 999999;
+    };
+
     return Array.from(courseMap.entries()).map(([courseId, data]) => ({
       courseId,
       course: data.course,
       subcategoryGroups: Array.from(data.subcategoryGroups.entries())
         .map(([subcat, mods]) => ({ subcategory: subcat, modules: mods }))
-        .sort((a, b) => (a.subcategory || 'ZZZ').localeCompare(b.subcategory || 'ZZZ'))
+        .sort((a, b) => {
+          // Ordenar pela posição salva na tabela subcategory_ordering
+          const posA = getSubcatPosition(courseId, a.subcategory);
+          const posB = getSubcatPosition(courseId, b.subcategory);
+          
+          if (posA !== posB) {
+            return posA - posB;
+          }
+          // Fallback: ordem alfabética para subcategorias sem posição definida
+          return (a.subcategory || 'ZZZ').localeCompare(b.subcategory || 'ZZZ', 'pt-BR');
+        })
     }));
-  }, [modules, busca]);
+  }, [modules, busca, subcategoryOrdering]);
 
   // Stats
   const stats = useMemo(() => {
