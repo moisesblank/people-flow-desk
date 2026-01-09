@@ -1,7 +1,8 @@
 // ============================================
-// MOISÉS MEDEIROS v9.0 - LESSON TABS
+// MOISÉS MEDEIROS v9.1 - LESSON TABS
 // Sistema de abas educacionais com IA
 // Lei I: Performance | Lei IV: Poder do Arquiteto
+// NOVO: Aba de Materiais (PDF)
 // ============================================
 
 import { useState, lazy, Suspense } from 'react';
@@ -15,7 +16,8 @@ import {
   Network, 
   Pencil,
   Bot,
-  Loader2
+  Loader2,
+  File
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -27,10 +29,12 @@ const FlashcardsTab = lazy(() => import('./tabs/FlashcardsTab'));
 const MindmapTab = lazy(() => import('./tabs/MindmapTab'));
 const NotesTab = lazy(() => import('./tabs/NotesTab'));
 const AITutorTab = lazy(() => import('./tabs/AITutorTab'));
+const MaterialsTab = lazy(() => import('./tabs/MaterialsTab'));
 
 // Configuração das abas
 const TABS = [
   { id: 'summary', label: 'Resumo IA', icon: Brain, color: 'text-purple-500' },
+  { id: 'materials', label: 'Materiais', icon: File, color: 'text-red-500' },
   { id: 'quiz', label: 'Quiz', icon: HelpCircle, color: 'text-green-500' },
   { id: 'flashcards', label: 'Flashcards', icon: BookOpen, color: 'text-blue-500' },
   { id: 'transcript', label: 'Transcrição', icon: FileText, color: 'text-amber-500' },
@@ -67,6 +71,8 @@ export function LessonTabs({ lessonId, lessonTitle, lessonTranscript, className 
     switch (activeTab) {
       case 'summary':
         return <SummaryTab lessonId={lessonId} lessonTitle={lessonTitle} />;
+      case 'materials':
+        return <MaterialsTab lessonId={lessonId} />;
       case 'quiz':
         return <QuizTab lessonId={lessonId} />;
       case 'flashcards':

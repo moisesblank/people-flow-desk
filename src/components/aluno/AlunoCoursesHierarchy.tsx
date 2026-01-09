@@ -55,6 +55,9 @@ interface Lesson {
   youtube_video_id: string | null;
   video_provider: string | null;
   thumbnail_url: string | null;
+  // Material Complementar (PDF)
+  material_url: string | null;
+  material_nome: string | null;
 }
 
 interface Course {
@@ -142,7 +145,7 @@ function useModuleLessons(moduleId: string | null) {
       if (!moduleId) return [];
       const { data, error } = await supabase
         .from('lessons')
-        .select('id, module_id, title, description, position, is_published, video_url, duration_minutes, panda_video_id, youtube_video_id, video_provider, thumbnail_url')
+        .select('id, module_id, title, description, position, is_published, video_url, duration_minutes, panda_video_id, youtube_video_id, video_provider, thumbnail_url, material_url, material_nome')
         .eq('module_id', moduleId)
         .eq('is_published', true)
         .order('position', { ascending: true });
