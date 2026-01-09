@@ -49,6 +49,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { ModuleImageUploader } from './ModuleImageUploader';
 import { SubcategoryReorderModal } from './SubcategoryReorderModal';
+import { ModuleLessonsPanel } from './ModuleLessonsPanel';
 
 // ============================================
 // TIPOS
@@ -1654,7 +1655,7 @@ export function ModulosGlobalManager() {
 
       {/* Edit Dialog */}
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
-        <DialogContent className="max-w-lg bg-card/95 backdrop-blur-xl border-cyan-500/30">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden bg-card/95 backdrop-blur-xl border-cyan-500/30">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20">
@@ -1667,12 +1668,27 @@ export function ModulosGlobalManager() {
             </DialogDescription>
           </DialogHeader>
           
-          <ModuleFormContent
-            form={moduleForm}
-            setForm={setModuleForm}
-            courses={courses || []}
-            availableSubcategories={availableSubcategories}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 overflow-y-auto max-h-[60vh] pr-2">
+            {/* Left: Module Form */}
+            <div>
+              <ModuleFormContent
+                form={moduleForm}
+                setForm={setModuleForm}
+                courses={courses || []}
+                availableSubcategories={availableSubcategories}
+              />
+            </div>
+            
+            {/* Right: Lessons Panel - FULL PARITY */}
+            <div className="border-l border-border/30 pl-6">
+              {selectedModule && (
+                <ModuleLessonsPanel
+                  moduleId={selectedModule.id}
+                  moduleName={selectedModule.title}
+                />
+              )}
+            </div>
+          </div>
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditDialog(false)}>Cancelar</Button>
@@ -1682,7 +1698,7 @@ export function ModulosGlobalManager() {
               className="bg-gradient-to-r from-cyan-500 to-blue-500"
             >
               <Save className="h-4 w-4 mr-2" />
-              Salvar
+              Salvar Módulo
             </Button>
           </DialogFooter>
         </DialogContent>
