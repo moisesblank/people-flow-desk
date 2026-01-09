@@ -482,8 +482,9 @@ function SubcategorySection({
               <span><strong className="text-cyan-400">{modules.length}</strong> módulos nesta subcategoria</span>
             </div>
             
-            {/* Grid responsivo de módulos - capas grandes e visíveis */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {/* Grid responsivo de módulos - capas proporcionais (3:4 original) e otimizadas */}
+            {/* PADRÃO DEFINITIVO: 5 colunas em telas grandes para capas compactas e visíveis */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
               {modules.map((module, idx) => (
                 <ModuleCard
                   key={module.id}
@@ -558,95 +559,90 @@ const ModuleCard = memo(function ModuleCard({
       ref={cardRef}
       className={cn(
         "group relative flex flex-col cursor-pointer",
-        "rounded-2xl overflow-hidden",
+        "rounded-xl overflow-hidden",
         "bg-gradient-to-br from-card via-card to-cyan-950/20",
-        "border-2 transition-all duration-300",
+        "border transition-all duration-200",
         isExpanded 
-          ? "border-cyan-400/60 shadow-2xl shadow-cyan-500/30" 
-          : "border-cyan-500/20 hover:border-cyan-400/50",
-        "hover:shadow-xl hover:shadow-cyan-500/20",
-        "min-h-[320px]"
+          ? "border-cyan-400/60 shadow-lg shadow-cyan-500/20" 
+          : "border-cyan-500/20 hover:border-cyan-400/40",
+        "hover:shadow-md hover:shadow-cyan-500/10"
       )}
     >
-      {/* 🖼️ THUMBNAIL HERO — Grande e visível (proporção 3:4 para módulos) */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-gradient-to-br from-cyan-900/30 to-blue-900/30">
+      {/* 🖼️ THUMBNAIL — Proporção original 3:4 (752x940) em tamanho compacto */}
+      {/* PADRÃO DEFINITIVO: Capa visível, proporcional, sem exagero */}
+      <div className="relative aspect-[3/4] w-full max-h-[200px] overflow-hidden bg-gradient-to-br from-cyan-900/20 to-blue-900/20">
         {/* Skeleton placeholder enquanto não está em view */}
         {!isInView && (
-          <div className="absolute inset-0 bg-gradient-to-br from-cyan-800/20 to-blue-800/20 animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-800/10 to-blue-800/10" />
         )}
         
-        {/* Imagem com lazy loading */}
+        {/* Imagem com lazy loading otimizado */}
         {isInView && hasValidThumbnail && (
           <img
             src={module.thumbnail_url!}
             alt={module.title}
             className={cn(
-              "absolute inset-0 w-full h-full object-cover transition-all duration-500",
-              imageLoaded ? "opacity-100 scale-100" : "opacity-0 scale-105"
+              "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
+              imageLoaded ? "opacity-100" : "opacity-0"
             )}
             onLoad={() => setImageLoaded(true)}
             onError={() => setImageError(true)}
             loading="lazy"
+            decoding="async"
           />
         )}
         
-        {/* Fallback elegante quando não há capa */}
+        {/* Fallback quando não há capa */}
         {(!hasValidThumbnail || !isInView) && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-cyan-900/50 to-blue-900/50">
-            <div className="p-6 rounded-3xl bg-cyan-500/20 backdrop-blur-sm border border-cyan-500/30 mb-4">
-              <Layers className="h-16 w-16 text-cyan-400" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-cyan-900/40 to-blue-900/40">
+            <div className="p-4 rounded-2xl bg-cyan-500/15 border border-cyan-500/20">
+              <Layers className="h-10 w-10 text-cyan-400/80" />
             </div>
-            <span className="text-cyan-400/70 text-sm font-medium">Módulo</span>
           </div>
         )}
         
-        {/* Overlay gradiente para legibilidade */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+        {/* Overlay gradiente leve */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         
-        {/* Badge de posição no canto superior esquerdo */}
-        <div className="absolute top-3 left-3 z-10">
-          <Badge className="px-3 py-1.5 bg-cyan-500/90 text-white border-0 shadow-lg text-sm font-bold">
+        {/* Badge de posição */}
+        <div className="absolute top-2 left-2 z-10">
+          <Badge className="px-2 py-1 bg-cyan-500/90 text-white border-0 shadow-md text-xs font-bold">
             #{module.position + 1}
           </Badge>
         </div>
         
-        {/* Contagem de aulas no canto superior direito */}
-        <div className="absolute top-3 right-3 z-10">
-          <Badge className="px-3 py-1.5 bg-green-500/90 text-white border-0 shadow-lg text-sm font-bold flex items-center gap-1.5">
-            <PlayCircle className="h-4 w-4" />
-            {lessonCount} {lessonCount === 1 ? 'aula' : 'aulas'}
+        {/* Contagem de aulas */}
+        <div className="absolute top-2 right-2 z-10">
+          <Badge className="px-2 py-1 bg-green-500/90 text-white border-0 shadow-md text-xs font-bold flex items-center gap-1">
+            <PlayCircle className="h-3 w-3" />
+            {lessonCount}
           </Badge>
         </div>
         
         {/* Indicador de expansão */}
-        <div className="absolute bottom-3 right-3 z-10">
+        <div className="absolute bottom-2 right-2 z-10">
           <div className={cn(
-            "p-2 rounded-full transition-all duration-300",
+            "p-1.5 rounded-full transition-transform duration-200",
             isExpanded 
               ? "bg-cyan-500 text-white rotate-90" 
-              : "bg-white/20 backdrop-blur-sm text-white group-hover:bg-white/40"
+              : "bg-white/20 text-white group-hover:bg-white/30"
           )}>
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4" />
           </div>
         </div>
         
-        {/* Botão de expansão/colapso visual (toda área clicável) */}
+        {/* Botão clicável */}
         <button
           onClick={onToggle}
           className="absolute inset-0 z-0 cursor-pointer"
           aria-label={isExpanded ? "Fechar módulo" : "Abrir módulo"}
         />
         
-        {/* Informações do módulo no rodapé da capa */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 z-10">
-          <h4 className="font-bold text-lg text-white mb-1 line-clamp-2 drop-shadow-lg">
+        {/* Título do módulo */}
+        <div className="absolute bottom-0 left-0 right-0 p-3 z-10">
+          <h4 className="font-semibold text-sm text-white line-clamp-2 drop-shadow-md">
             {module.title}
           </h4>
-          {module.description && (
-            <p className="text-sm text-white/70 line-clamp-1">
-              {module.description}
-            </p>
-          )}
         </div>
       </div>
 
