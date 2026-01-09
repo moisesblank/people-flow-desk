@@ -1593,36 +1593,170 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
         </div>
         
         <CollapsibleContent>
-          <div className="px-3 pb-3 pt-0">
-            <div className="pl-11 border-l-2 border-dashed border-purple-500/20 space-y-1">
-              {lessons && lessons.length > 0 ? (
-                lessons.map((lesson, idx) => (
-                  <div 
-                    key={lesson.id}
-                    className={cn(
-                      "flex items-center gap-2 p-2 rounded-lg text-sm transition-all animate-fade-in",
-                      lesson.is_published 
-                        ? "bg-muted/30 hover:bg-muted/50" 
-                        : "bg-muted/20 opacity-50"
-                    )}
-                    style={{ animationDelay: `${idx * 30}ms` }}
-                  >
-                    <PlayCircle className="h-4 w-4 text-purple-400" />
-                    <span className="truncate">{lesson.title}</span>
-                    <Badge variant="outline" className="text-xs ml-auto border-border/30">
-                      #{lesson.position + 1}
-                    </Badge>
-                  </div>
-                ))
-              ) : (
-                <div className="text-sm text-muted-foreground py-2 pl-2">
-                  Nenhuma aula neste módulo
-                </div>
-              )}
-            </div>
-          </div>
+          <LessonsList moduleId={module.id} lessons={lessons} />
         </CollapsibleContent>
       </Collapsible>
+    </div>
+  );
+}
+
+// ============================================
+// LESSONS LIST — DRAG & DROP para Videoaulas
+// ============================================
+interface LessonsListProps {
+  moduleId: string;
+  lessons: LessonBasic[] | undefined;
+}
+
+function LessonsList({ moduleId, lessons: initialLessons }: LessonsListProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [lessons, setLessons] = useState<LessonBasic[]>([]);
+  const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+  
+  useEffect(() => {
+    setLessons(initialLessons || []);
+  }, [initialLessons]);
+  
+  const lessonIds = useMemo(() => lessons.map(l => l.id), [lessons]);
+  const activeLesson = activeLessonId ? lessons.find(l => l.id === activeLessonId) : null;
+  
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveLessonId(event.active.id as string);
+  };
+  
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveLessonId(null);
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    
+    const oldIndex = lessons.findIndex(l => l.id === active.id);
+    const newIndex = lessons.findIndex(l => l.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    
+    const newOrder = arrayMove(lessons, oldIndex, newIndex);
+    setLessons(newOrder);
+    
+    try {
+      const updates = newOrder.map((lesson, idx) => ({
+        id: lesson.id,
+        position: idx
+      }));
+      
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('lessons')
+          .update({ position: update.position })
+          .eq('id', update.id);
+        if (error) throw error;
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['gestao-lessons', moduleId] });
+      toast({ title: '✅ Ordem das aulas salva!' });
+    } catch (error: any) {
+      toast({ title: 'Erro ao reordenar', description: error.message, variant: 'destructive' });
+      setLessons(initialLessons || []);
+    }
+  };
+  
+  if (!lessons || lessons.length === 0) {
+    return (
+      <div className="px-3 pb-3 pt-0">
+        <div className="pl-11 border-l-2 border-dashed border-purple-500/20">
+          <div className="text-sm text-muted-foreground py-2 pl-2">
+            Nenhuma aula neste módulo
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="px-3 pb-3 pt-0">
+      <div className="pl-11 border-l-2 border-dashed border-purple-500/20 space-y-1">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={lessonIds} strategy={verticalListSortingStrategy}>
+            {lessons.map((lesson, idx) => (
+              <SortableLessonItem key={lesson.id} lesson={lesson} index={idx} />
+            ))}
+          </SortableContext>
+          
+          <DragOverlay>
+            {activeLesson && (
+              <div className="rounded-lg border bg-card/95 backdrop-blur-sm border-purple-500/50 shadow-2xl shadow-purple-500/25 p-2 opacity-90 text-sm flex items-center gap-2">
+                <GripVertical className="h-3 w-3 text-purple-400" />
+                <PlayCircle className="h-4 w-4 text-purple-400" />
+                <span className="truncate">{activeLesson.title}</span>
+              </div>
+            )}
+          </DragOverlay>
+        </DndContext>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// SORTABLE LESSON ITEM
+// ============================================
+interface SortableLessonItemProps {
+  lesson: LessonBasic;
+  index: number;
+}
+
+function SortableLessonItem({ lesson, index }: SortableLessonItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: lesson.id });
+  
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : 'auto',
+  };
+  
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-2 p-2 rounded-lg text-sm transition-all animate-fade-in",
+        lesson.is_published 
+          ? "bg-muted/30 hover:bg-muted/50" 
+          : "bg-muted/20 opacity-50"
+      )}
+    >
+      {/* DRAG HANDLE */}
+      <div 
+        {...listeners} 
+        {...attributes}
+        className="cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-purple-500/20 transition-colors shrink-0 touch-none"
+        title="Arraste para reordenar"
+      >
+        <GripVertical className="h-3 w-3 text-muted-foreground hover:text-purple-400 transition-colors" />
+      </div>
+      
+      <PlayCircle className="h-4 w-4 text-purple-400" />
+      <span className="truncate flex-1">{lesson.title}</span>
+      <Badge variant="outline" className="text-xs border-border/30">
+        #{lesson.position + 1}
+      </Badge>
     </div>
   );
 }
