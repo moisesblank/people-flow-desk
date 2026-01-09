@@ -630,10 +630,34 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
             : "bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent opacity-0 group-hover/section:opacity-100"
         )} />
         
-        {/* Left spacer for centering */}
-        <div className="flex-1" />
+        {/* === LEFT SIDE — MODULE NAME === */}
+        <div className="flex-1 flex flex-col justify-center items-end text-right py-2 pr-6 md:pr-8 min-w-0">
+          {/* Module Badge */}
+          <div className="mb-2">
+            <span className={cn(
+              "inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider",
+              "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-cyan-500/25"
+            )}>
+              Módulo {String(module.position + 1).padStart(2, '0')}
+            </span>
+          </div>
+          
+          {/* Title */}
+          <h3 className={cn(
+            "font-bold text-base md:text-lg lg:text-xl text-white leading-tight uppercase tracking-wide",
+            "line-clamp-2 transition-colors",
+            isHovered && "text-cyan-200"
+          )}>
+            {module.title}
+          </h3>
+          
+          {/* Description */}
+          {module.description && (
+            <span className="text-xs text-slate-400 line-clamp-1 mt-1 max-w-[300px]">{module.description}</span>
+          )}
+        </div>
         
-        {/* === MODULE THUMBNAIL — PREMIUM COVER (CENTERED) === */}
+        {/* === CENTER — MODULE THUMBNAIL === */}
         <div className={cn(
           "relative shrink-0 rounded-lg overflow-hidden",
           "w-40 h-56 md:w-52 md:h-72 lg:w-60 lg:h-80",
@@ -672,48 +696,37 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
           )}
         </div>
         
-        {/* === MODULE INFO — RIGHT SIDE (FLEX-1 TO FILL) === */}
-        <div className="flex-1 flex flex-col justify-center items-center text-center py-2 min-w-0 pl-6 md:pl-8">
-          {/* Module Badge */}
-          <div className="mb-2">
-            <span className={cn(
-              "inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider",
-              "bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-cyan-500/25"
-            )}>
-              Módulo {String(module.position + 1).padStart(2, '0')}
-            </span>
+        {/* === RIGHT SIDE — EPISODES + BUTTONS === */}
+        <div className="flex-1 flex flex-col justify-center items-start text-left py-2 pl-6 md:pl-8 min-w-0">
+          {/* Episodes count */}
+          <div className="flex items-center gap-1.5 text-slate-300 mb-3">
+            <div className="w-5 h-5 rounded bg-slate-700/80 flex items-center justify-center">
+              <Play className="w-2.5 h-2.5 text-cyan-400" fill="currentColor" />
+            </div>
+            <span className="text-xs font-medium">{lessonCount} episódios</span>
           </div>
           
-          {/* Title */}
-          <h3 className={cn(
-            "font-bold text-base md:text-lg lg:text-xl text-white leading-tight uppercase tracking-wide",
-            "mb-2 line-clamp-2 transition-colors",
-            isHovered && "text-cyan-200"
-          )}>
-            {module.title}
-          </h3>
-
-          {/* Stats Row */}
-          <div className="flex items-center justify-center gap-2 flex-wrap mb-3">
-            {/* Episodes count */}
-            <div className="flex items-center gap-1.5 text-slate-300">
-              <div className="w-5 h-5 rounded bg-slate-700/80 flex items-center justify-center">
-                <Play className="w-2.5 h-2.5 text-cyan-400" fill="currentColor" />
-              </div>
-              <span className="text-xs font-medium">{lessonCount} episódios</span>
+          {/* Progress Badge */}
+          {progressPercent > 0 && (
+            <div className={cn(
+              "flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium mb-3",
+              progressPercent >= 100
+                ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                : "bg-slate-700/50 text-slate-300 border border-slate-600/30"
+            )}>
+              {progressPercent >= 100 ? (
+                <>
+                  <span className="text-emerald-400">✓</span>
+                  <span>Concluído</span>
+                </>
+              ) : (
+                <span>{progressPercent}%</span>
+              )}
             </div>
-            
-            {/* Description as subtitle */}
-            {module.description && (
-              <>
-                <span className="text-slate-600 hidden sm:inline">•</span>
-                <span className="text-xs text-slate-400 line-clamp-1 hidden sm:inline max-w-[300px]">{module.description}</span>
-              </>
-            )}
-          </div>
+          )}
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Toggle Episodes Button */}
             <Button
               variant="ghost"
@@ -756,25 +769,6 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
                 <Play className="w-3.5 h-3.5 mr-1.5" fill="currentColor" />
                 Assistir
               </Button>
-            )}
-            
-            {/* Progress Badge */}
-            {progressPercent > 0 && (
-              <div className={cn(
-                "flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium",
-                progressPercent >= 100
-                  ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
-                  : "bg-slate-700/50 text-slate-300 border border-slate-600/30"
-              )}>
-                {progressPercent >= 100 ? (
-                  <>
-                    <span className="text-emerald-400">✓</span>
-                    <span>Concluído</span>
-                  </>
-                ) : (
-                  <span>{progressPercent}%</span>
-                )}
-              </div>
             )}
           </div>
         </div>
