@@ -869,8 +869,9 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
 NetflixModuleSection.displayName = 'NetflixModuleSection';
 
 // ============================================
-// 🎬 NETFLIX EPISODE CARD — Premium Streaming Design
-// Card horizontal cinematográfico com hover elaborado
+// 🎬 PREMIUM EPISODE CARD — Year 2300 Cinematic Design
+// Card vertical premium com número grande, play destacado e bordas neon
+// Inspirado no design de referência premium
 // ============================================
 const NetflixEpisodeCard = memo(function NetflixEpisodeCard({ 
   lesson, 
@@ -884,6 +885,7 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
   isLowEnd: boolean;
 }) {
   const [isHovered, setIsHovered] = useState(false);
+  const hasVideo = lesson.panda_video_id || lesson.video_url || lesson.youtube_video_id;
 
   return (
     <div
@@ -892,121 +894,151 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
         "relative flex-shrink-0 cursor-pointer group/card",
-        "w-[280px] sm:w-[300px] md:w-[320px]",
-        "rounded-lg overflow-hidden",
-        "bg-[#181818]",
+        "w-[180px] sm:w-[200px] md:w-[220px]",
+        "rounded-xl overflow-hidden",
         "transition-all duration-300",
-        !isLowEnd && isHovered && "scale-105 shadow-2xl shadow-black/60 z-20"
+        !isLowEnd && isHovered && "scale-[1.05] z-20"
       )}
     >
-      {/* Thumbnail */}
-      <div className="relative aspect-video overflow-hidden">
-        {lesson.thumbnail_url ? (
-          <img
-            src={lesson.thumbnail_url}
-            alt={lesson.title}
-            className={cn(
-              "absolute inset-0 w-full h-full object-cover",
-              "transition-transform duration-500",
-              !isLowEnd && isHovered && "scale-110"
-            )}
-            loading="lazy"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
-            <Video className="h-12 w-12 text-gray-600" />
-          </div>
-        )}
+      {/* === OUTER GLOW BORDER === */}
+      <div className={cn(
+        "absolute -inset-[2px] rounded-xl transition-all duration-300",
+        isHovered 
+          ? "bg-gradient-to-br from-green-500 via-cyan-500 to-green-500 opacity-100"
+          : "bg-gradient-to-br from-green-500/50 via-cyan-500/30 to-green-500/50 opacity-60"
+      )} />
+      
+      {/* === INNER CARD CONTAINER === */}
+      <div className={cn(
+        "relative rounded-xl overflow-hidden m-[2px]",
+        "bg-gradient-to-br from-[#0a1a1a] via-[#0d1f1f] to-[#0a1a1a]",
+        "border border-green-500/30"
+      )}>
         
-        {/* Gradient Overlay */}
-        <div className={cn(
-          "absolute inset-0 transition-opacity duration-300",
-          isHovered 
-            ? "bg-gradient-to-t from-black via-black/50 to-transparent opacity-90"
-            : "bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80"
-        )} />
-        
-        {/* Episode Number - Grande e Bold */}
-        <div className="absolute top-3 left-3">
-          <span className={cn(
-            "text-3xl font-black text-white/90",
-            "drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
-          )}>
-            {index + 1}
-          </span>
-        </div>
-        
-        {/* Duration Badge */}
-        {lesson.duration_minutes && (
-          <div className="absolute top-3 right-3">
-            <span className="px-2 py-1 rounded text-xs font-medium bg-black/80 text-white/90 backdrop-blur-sm">
-              {lesson.duration_minutes}min
+        {/* === HEADER SECTION — Number + Menu === */}
+        <div className="relative flex items-center justify-between px-3 py-2 border-b border-green-500/20 bg-gradient-to-r from-green-900/20 to-transparent">
+          {/* Episode Number — Big & Bold */}
+          <div className="flex items-baseline gap-0.5">
+            <span className="text-xs text-green-400 font-bold">#</span>
+            <span className={cn(
+              "text-xl font-black tabular-nums",
+              "text-transparent bg-clip-text bg-gradient-to-b from-green-400 to-green-600"
+            )}>
+              {String(index + 1).padStart(2, '0')}
             </span>
           </div>
-        )}
-        
-        {/* Play Button - Central */}
-        <div className={cn(
-          "absolute inset-0 flex items-center justify-center",
-          "transition-all duration-300",
-          isHovered ? "opacity-100" : "opacity-0"
-        )}>
-          <div className={cn(
-            "relative p-4 rounded-full",
-            "bg-white text-black",
-            "shadow-[0_0_40px_rgba(255,255,255,0.4)]",
-            "transition-transform duration-300",
-            isHovered && "scale-110"
-          )}>
-            <Play className="h-8 w-8 ml-1" fill="black" />
+          
+          {/* Status indicators */}
+          <div className="flex items-center gap-2">
+            {lesson.duration_minutes && (
+              <span className="text-[10px] font-bold text-green-400/70">
+                {lesson.duration_minutes}min
+              </span>
+            )}
+            {/* Options Menu Dot */}
+            <div className="flex gap-0.5">
+              <div className="w-1 h-1 rounded-full bg-green-500/60" />
+              <div className="w-1 h-1 rounded-full bg-green-500/60" />
+              <div className="w-1 h-1 rounded-full bg-green-500/60" />
+            </div>
           </div>
         </div>
         
-        {/* Bottom Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-4">
+        {/* === CENTER SECTION — Icon + Play === */}
+        <div className="relative flex items-center justify-center py-6 px-4">
+          {/* Background Glow Effect */}
+          <div className={cn(
+            "absolute inset-0 transition-all duration-500",
+            isHovered 
+              ? "bg-gradient-to-br from-green-500/20 via-transparent to-cyan-500/20"
+              : "bg-transparent"
+          )} />
+          
+          {/* Main Icon Container */}
+          <div className={cn(
+            "relative w-20 h-20 rounded-xl flex items-center justify-center",
+            "transition-all duration-300",
+            isHovered 
+              ? "bg-green-500 shadow-[0_0_30px_rgba(34,197,94,0.6)]"
+              : "bg-gradient-to-br from-green-900/60 to-green-800/40 border border-green-500/40"
+          )}>
+            {/* Animated rings on hover */}
+            {!isLowEnd && isHovered && (
+              <>
+                <div className="absolute inset-0 rounded-xl border-2 border-green-400/50 animate-ping" style={{ animationDuration: '1.5s' }} />
+                <div className="absolute -inset-2 rounded-xl border border-green-400/30 animate-pulse" />
+              </>
+            )}
+            
+            {hasVideo ? (
+              <Play className={cn(
+                "h-9 w-9 ml-1 transition-all duration-300",
+                isHovered ? "text-black scale-110" : "text-green-400"
+              )} fill={isHovered ? "currentColor" : "none"} />
+            ) : (
+              <Video className={cn(
+                "h-8 w-8 transition-colors duration-300",
+                isHovered ? "text-black" : "text-green-500/60"
+              )} />
+            )}
+          </div>
+        </div>
+        
+        {/* === BOTTOM SECTION — Title + Action === */}
+        <div className="relative px-3 pb-3 space-y-2">
+          {/* Title */}
           <h4 className={cn(
-            "font-semibold text-white text-sm md:text-base leading-snug",
-            isHovered ? "line-clamp-3" : "line-clamp-2"
+            "font-bold text-sm leading-tight text-center transition-colors duration-200",
+            "line-clamp-2 min-h-[2.5rem]",
+            isHovered ? "text-green-400" : "text-white"
           )}>
             {lesson.title}
           </h4>
-        </div>
-      </div>
-      
-      {/* Hover Expanded Info */}
-      {!isLowEnd && isHovered && (
-        <div className="p-3 bg-[#181818] border-t border-gray-800 animate-fade-in">
-          <div className="flex items-center gap-3">
-            {/* Action Buttons */}
-            <button className="p-2 rounded-full bg-white text-black hover:bg-gray-200 transition-colors">
-              <Play className="h-4 w-4" fill="black" />
-            </button>
-            
-            <button className="p-2 rounded-full border-2 border-gray-500 text-gray-400 hover:border-white hover:text-white transition-colors">
-              <Info className="h-4 w-4" />
-            </button>
-            
-            {/* Tags */}
-            <div className="flex-1 flex items-center justify-end gap-2">
-              <span className="text-xs text-green-400 font-semibold">HD</span>
-              {lesson.duration_minutes && (
-                <span className="text-xs text-gray-400">{lesson.duration_minutes}m</span>
-              )}
-            </div>
+          
+          {/* Tags Row */}
+          <div className="flex items-center justify-center gap-2 text-[10px]">
+            <span className={cn(
+              "px-2 py-0.5 rounded font-bold uppercase tracking-wider flex items-center gap-1",
+              "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+            )}>
+              <Video className="h-2.5 w-2.5" />
+              Videoaula
+            </span>
           </div>
           
-          {/* Description Preview */}
-          {lesson.description && (
-            <p className="text-xs text-gray-400 mt-2 line-clamp-2">
-              {lesson.description}
-            </p>
-          )}
+          {/* Action Button */}
+          <button
+            className={cn(
+              "w-full py-2 rounded-lg font-bold text-xs uppercase tracking-wider",
+              "flex items-center justify-center gap-1.5",
+              "transition-all duration-300",
+              isHovered 
+                ? "bg-green-500 text-black shadow-lg shadow-green-500/30"
+                : "bg-green-500/20 text-green-400 border border-green-500/40 hover:bg-green-500/30"
+            )}
+          >
+            <Play className="h-3.5 w-3.5" fill="currentColor" />
+            Assistir
+          </button>
         </div>
-      )}
-      
-      {/* Progress Bar at Bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-800">
-        <div className="h-full w-0 bg-red-600" />
+        
+        {/* === CORNER ACCENTS === */}
+        <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-green-500/50 rounded-tl-lg pointer-events-none" />
+        <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-green-500/50 rounded-tr-lg pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-4 h-4 border-l-2 border-b-2 border-green-500/50 rounded-bl-lg pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-4 h-4 border-r-2 border-b-2 border-green-500/50 rounded-br-lg pointer-events-none" />
+        
+        {/* === SCANLINE EFFECT (High-End Only) === */}
+        {!isLowEnd && isHovered && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
+            <div 
+              className="absolute inset-0 opacity-[0.03]"
+              style={{
+                backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)',
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
