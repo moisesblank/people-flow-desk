@@ -649,30 +649,32 @@ export default function GestaoCursos() {
             </div>
             
             {/* Main Content — Split View com Cards Neon */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0 flex-1">
           {/* Left: Course List — Glassmorphism Card */}
-          <div className="relative group">
+          <div className="relative group flex flex-col min-h-0">
             {/* Neon border glow */}
             <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/50 via-purple-500/50 to-blue-500/50 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
             
-            <Card className="relative h-[600px] flex flex-col bg-card/80 backdrop-blur-sm border-border/50 rounded-2xl overflow-hidden">
-              <CardHeader className="border-b border-border/50 bg-gradient-to-r from-blue-500/5 to-purple-500/5 shrink-0">
+            <Card className="relative flex-1 min-h-[500px] max-h-[75vh] flex flex-col bg-card/80 backdrop-blur-sm border-2 border-border/50 hover:border-blue-500/40 rounded-2xl overflow-hidden transition-colors duration-300">
+              <CardHeader className="shrink-0 border-b-2 border-border/30 bg-gradient-to-r from-blue-500/10 via-card to-purple-500/10 py-5 px-5">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-blue-400" />
+                  <CardTitle className="text-xl flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/30 border border-blue-500/40">
+                      <Sparkles className="h-5 w-5 text-blue-300" />
+                    </div>
                     Cursos
                   </CardTitle>
-                  <Badge variant="secondary" className="bg-blue-500/10 text-blue-400 border-blue-500/30">
+                  <Badge variant="secondary" className="px-3 py-1 text-sm bg-blue-500/20 text-blue-300 border-2 border-blue-500/40 font-bold">
                     {filteredCourses.length}
                   </Badge>
                 </div>
-                <div className="relative mt-3">
+                <div className="relative mt-4">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Buscar cursos..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 bg-background/50 border-border/50 focus:border-primary/50"
+                    className="pl-10 h-11 bg-background/50 border-2 border-border/50 focus:border-blue-500/50 rounded-xl"
                   />
                 </div>
               </CardHeader>
@@ -803,28 +805,30 @@ export default function GestaoCursos() {
           </div>
           
           {/* Right: Modules Panel — Glassmorphism Card */}
-          <div className="relative group">
+          <div className="relative group flex flex-col min-h-0">
             {/* Neon border glow */}
             <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500/50 via-pink-500/50 to-purple-500/50 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
             
-            <Card className="relative min-h-[600px] max-h-[80vh] flex flex-col bg-card/80 backdrop-blur-sm border-border/50 rounded-2xl overflow-hidden">
-              <CardHeader className="border-b border-border/50 bg-gradient-to-r from-purple-500/5 to-pink-500/5">
+            <Card className="relative flex-1 min-h-[500px] max-h-[75vh] flex flex-col bg-card/80 backdrop-blur-sm border-2 border-border/50 hover:border-purple-500/40 rounded-2xl overflow-hidden transition-colors duration-300">
+              <CardHeader className="shrink-0 border-b-2 border-border/30 bg-gradient-to-r from-purple-500/10 via-card to-pink-500/10 py-5 px-5">
                 {selectedCourse ? (
                   <>
                     <div className="flex items-center justify-between">
                       <div>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Layers className="h-5 w-5 text-purple-400" />
+                        <CardTitle className="text-xl flex items-center gap-3">
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/30 to-pink-500/30 border border-purple-500/40">
+                            <Layers className="h-5 w-5 text-purple-300" />
+                          </div>
                           Módulos
                         </CardTitle>
-                        <CardDescription className="mt-1 text-muted-foreground">
+                        <CardDescription className="mt-2 text-base text-muted-foreground truncate max-w-[300px]">
                           {selectedCourse.title}
                         </CardDescription>
                       </div>
                       <Button 
                         size="sm" 
                         onClick={openNewModule} 
-                        className="gap-2 bg-purple-500/90 hover:bg-purple-500 shadow-lg shadow-purple-500/25"
+                        className="gap-2 h-10 px-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg shadow-purple-500/25 border-0"
                       >
                         <Plus className="h-4 w-4" />
                         Módulo
@@ -832,14 +836,16 @@ export default function GestaoCursos() {
                     </div>
                   </>
                 ) : (
-                  <CardTitle className="text-lg text-muted-foreground flex items-center gap-2">
-                    <Layers className="h-5 w-5 opacity-50" />
+                  <CardTitle className="text-xl text-muted-foreground flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-muted/30 border border-border/30">
+                      <Layers className="h-5 w-5 opacity-50" />
+                    </div>
                     Selecione um curso
                   </CardTitle>
                 )}
               </CardHeader>
-              <CardContent className="flex-1 p-0 overflow-hidden">
-                <ScrollArea className="h-[calc(80vh-120px)]">
+              <CardContent className="flex-1 p-0 min-h-0 overflow-hidden">
+                <ScrollArea className="h-full w-full">
                   {!selectedCourse ? (
                     <div className="flex flex-col items-center justify-center h-full text-center p-8">
                       <div className="p-4 rounded-full bg-purple-500/10 mb-4">
@@ -1061,23 +1067,26 @@ export default function GestaoCursos() {
           </DialogContent>
         </Dialog>
         
-        {/* Module Dialog - TELA MÁXIMA (Owner Request) */}
+        {/* Module Dialog - TELA MÁXIMA com SCROLLABLE CONTENT */}
         <Dialog open={moduleDialog} onOpenChange={setModuleDialog}>
-          <DialogContent className="max-w-[98vw] w-[98vw] h-[98vh] overflow-y-auto bg-card/95 backdrop-blur-sm border-border/50 p-6">
-            <DialogHeader className="border-b border-border/30 pb-4">
+          <DialogContent className="max-w-[98vw] w-[98vw] h-[98vh] flex flex-col bg-card/95 backdrop-blur-sm border-border/50 p-0 gap-0 overflow-hidden">
+            {/* Fixed Header */}
+            <DialogHeader className="shrink-0 border-b border-border/30 px-6 py-4 bg-gradient-to-r from-purple-500/10 via-card to-pink-500/10">
               <DialogTitle className="flex items-center gap-3 text-2xl">
-                <div className="p-2 rounded-lg bg-purple-500/20 border border-purple-500/30">
-                  <Layers className="h-6 w-6 text-purple-400" />
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500/30 to-pink-500/30 border-2 border-purple-500/50 shadow-lg shadow-purple-500/20">
+                  <Layers className="h-6 w-6 text-purple-300" />
                 </div>
                 {editingModule ? 'Editar Módulo' : 'Novo Módulo'}
               </DialogTitle>
-              <DialogDescription className="text-base">
-                Curso: <span className="text-foreground font-medium">{selectedCourse?.title}</span>
+              <DialogDescription className="text-base text-muted-foreground">
+                Curso: <span className="text-foreground font-semibold">{selectedCourse?.title}</span>
               </DialogDescription>
             </DialogHeader>
             
-            {/* Layout 2 colunas: Preview | Formulário */}
-            <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-8 py-6 overflow-y-auto">
+            {/* Scrollable Body */}
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6">
+              {/* Layout 2 colunas: Preview | Formulário */}
+              <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-8">
               
               {/* Coluna Esquerda - Preview da Imagem */}
               <div className="flex flex-col items-center gap-4 p-6 rounded-xl bg-muted/30 border border-border/30">
@@ -1195,9 +1204,11 @@ export default function GestaoCursos() {
                 </div>
                 
               </div>
-            </div>
+              </div>  {/* Fecha grid cols */}
+            </div>  {/* Fecha scrollable body */}
             
-            <DialogFooter>
+            {/* Fixed Footer */}
+            <DialogFooter className="shrink-0 border-t border-border/30 px-6 py-4 bg-card/95">
               <Button variant="outline" onClick={() => setModuleDialog(false)}>
                 Cancelar
               </Button>
