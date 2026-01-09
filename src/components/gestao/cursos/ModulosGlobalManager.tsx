@@ -975,7 +975,7 @@ function ModuleCard({
               )}
               <h4 className="font-bold text-base truncate">{module.title}</h4>
               {!module.is_published && (
-                <Badge className="px-2 py-1 text-xs bg-rose-500/30 text-rose-300 border border-rose-500/50 shadow-sm shadow-rose-500/20 animate-pulse">
+                <Badge className="px-2 py-1 text-xs bg-rose-500/30 text-rose-300 border border-rose-500/50 shadow-sm shadow-rose-500/20">
                   <EyeOff className="h-3 w-3 mr-1" />
                   Oculto
                 </Badge>
