@@ -25,6 +25,7 @@ import { Chronolock } from '@/components/ui/chronolock';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
 import { OmegaFortressPlayer } from '@/components/video/OmegaFortressPlayer';
 import { LessonTabs } from '@/components/player/LessonTabs';
+import { useModulesProgress, type ModuleProgressData } from '@/hooks/useModuleProgress';
 
 // ============================================
 // TIPOS
@@ -439,6 +440,10 @@ function SubcategorySection({
   // 🔒 COLLAPSIBLE: Inicia fechado - usuário deve clicar para expandir módulos
   const [isOpen, setIsOpen] = useState(false);
   const totalLessons = modules.reduce((a, m) => a + (m._count?.lessons || 0), 0);
+  
+  // 📊 PROGRESS: Buscar progresso de todos os módulos desta subcategoria (UMA única query)
+  const moduleIds = useMemo(() => modules.map(m => m.id), [modules]);
+  const { progressMap } = useModulesProgress(isOpen ? moduleIds : []);
 
   return (
     <div className="space-y-3">
@@ -506,6 +511,7 @@ function SubcategorySection({
                   isExpanded={expandedModules.has(module.id)}
                   onToggle={() => onToggleModule(module.id)}
                   onPlayLesson={onPlayLesson}
+                  progress={progressMap.get(module.id)}
                 />
               ))}
             </div>
@@ -521,19 +527,22 @@ function SubcategorySection({
 // Card de módulo com CAPA GRANDE e impacto visual
 // Segue o mesmo padrão premium aplicado às LessonCards
 // PERFORMANCE: Lazy loading de imagens + renderização progressiva
+// 📊 PROGRESS BAR: Baseado no tempo real de vídeo assistido
 // ============================================
 const ModuleCard = memo(function ModuleCard({ 
   module, 
   index, 
   isExpanded, 
   onToggle,
-  onPlayLesson
+  onPlayLesson,
+  progress
 }: {
   module: Module;
   index: number;
   isExpanded: boolean;
   onToggle: () => void;
   onPlayLesson: (lesson: Lesson) => void;
+  progress?: ModuleProgressData;
 }) {
   const { data: lessons, isLoading } = useModuleLessons(isExpanded ? module.id : null);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -566,6 +575,14 @@ const ModuleCard = memo(function ModuleCard({
   const isChronolocked = module.title?.toLowerCase().includes('resolução provas enem 2025');
   const hasValidThumbnail = module.thumbnail_url && !imageError;
   const lessonCount = module._count?.lessons || 0;
+  
+  // 📊 PROGRESS: Calcular cor da barra baseada no progresso
+  const progressPercent = progress?.progressPercent || 0;
+  const progressColor = progressPercent >= 100 
+    ? 'from-green-500 to-emerald-400' 
+    : progressPercent >= 50 
+      ? 'from-cyan-500 to-blue-400' 
+      : 'from-amber-500 to-orange-400';
 
   const cardContent = (
     <div 
@@ -656,6 +673,27 @@ const ModuleCard = memo(function ModuleCard({
           <h4 className="font-semibold text-sm text-white line-clamp-2 drop-shadow-md">
             {module.title}
           </h4>
+          
+          {/* 📊 PROGRESS BAR — Baseado no tempo real de vídeo assistido */}
+          {progress && progress.totalDuration > 0 && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between text-[10px] text-white/80 mb-1">
+                <span className="font-medium">{progressPercent}% concluído</span>
+                {progress.lessonsCompleted > 0 && (
+                  <span>{progress.lessonsCompleted}/{progress.totalLessons} aulas</span>
+                )}
+              </div>
+              <div className="h-1.5 bg-black/40 rounded-full overflow-hidden backdrop-blur-sm">
+                <div 
+                  className={cn(
+                    "h-full rounded-full bg-gradient-to-r transition-all duration-500",
+                    progressColor
+                  )}
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
