@@ -243,10 +243,6 @@ function HudStatOrb({
         </div>
       </div>
       
-      {/* Subtle scan line effect */}
-      <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none opacity-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent animate-[scan_3s_ease-in-out_infinite]" />
-      </div>
     </div>
   );
 }
