@@ -254,24 +254,24 @@ function HudStatOrb({
 // ============================================
 function HierarchyLegend() {
   return (
-    <div className="relative p-4 rounded-2xl bg-gradient-to-r from-[#1a0a0a]/60 via-[#0a0e14]/80 to-[#1a0a0a]/60 border-2 border-red-500/20 backdrop-blur-xl overflow-hidden">
-      {/* Background glow orbs - Netflix red */}
-      <div className="absolute top-0 left-1/4 w-32 h-32 bg-red-600/10 rounded-full blur-3xl -z-10" />
-      <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-red-500/10 rounded-full blur-3xl -z-10" />
+    <div className="relative p-4 rounded-2xl bg-gradient-to-r from-[#1a0a0a]/60 via-[#0a0e14]/80 to-[#1a0a0a]/60 border-2 border-[#E23636]/30 backdrop-blur-xl overflow-hidden">
+      {/* Background glow orbs - Spider-Man red */}
+      <div className="absolute top-0 left-1/4 w-32 h-32 bg-[#E23636]/15 rounded-full blur-3xl -z-10" />
+      <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-[#E23636]/10 rounded-full blur-3xl -z-10" />
       
       <div className="flex flex-wrap items-center gap-3 justify-center">
         <span className="text-sm font-bold text-slate-300 mr-2 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-red-400" />
+          <Sparkles className="h-4 w-4 text-[#E23636]" />
           NAVEGAÇÃO:
         </span>
         
         {/* Curso */}
-        <Badge className="px-4 py-2 text-sm bg-red-500/25 text-red-200 border-2 border-red-500/50 shadow-lg shadow-red-500/20 hover:scale-105 transition-transform">
+        <Badge className="px-4 py-2 text-sm bg-[#E23636]/25 text-[#FF6B6B] border-2 border-[#E23636]/50 shadow-lg shadow-[#E23636]/30 hover:scale-105 transition-transform">
           <GraduationCap className="h-4 w-4 mr-2" />
           Curso
         </Badge>
         
-        <ChevronRight className="h-5 w-5 text-red-400/70" />
+        <ChevronRight className="h-5 w-5 text-[#E23636]/70" />
         
         {/* Subcategoria */}
         <Badge className="px-4 py-2 text-sm bg-slate-700/50 text-slate-200 border-2 border-slate-500/40 shadow-lg hover:scale-105 transition-transform">
@@ -290,7 +290,7 @@ function HierarchyLegend() {
         <ChevronRight className="h-5 w-5 text-slate-500" />
         
         {/* Aulas */}
-        <Badge className="px-4 py-2 text-sm bg-red-500/25 text-red-200 border-2 border-red-500/50 shadow-lg shadow-red-500/20 hover:scale-105 transition-transform">
+        <Badge className="px-4 py-2 text-sm bg-[#E23636]/25 text-[#FF6B6B] border-2 border-[#E23636]/50 shadow-lg shadow-[#E23636]/30 hover:scale-105 transition-transform">
           <PlayCircle className="h-4 w-4 mr-2" />
           Videoaulas
         </Badge>
@@ -327,29 +327,29 @@ function CourseSection({
     <Card className={cn(
       "group/card relative overflow-hidden transition-all duration-500 animate-fade-in",
       "bg-gradient-to-br from-[#0a0e14] via-[#0f1419] to-[#1a0a0a]",
-      "border-2 border-red-500/30 hover:border-red-500/60",
-      "shadow-2xl shadow-red-500/10 hover:shadow-red-500/30",
+      "border-2 border-[#E23636]/40 hover:border-[#E23636]/70",
+      "shadow-2xl shadow-[#E23636]/15 hover:shadow-[#E23636]/40",
       "rounded-3xl"
     )}>
-      {/* Netflix-style corner accents */}
-      <div className="absolute top-0 left-0 w-16 h-16 border-l-4 border-t-4 border-red-600/50 rounded-tl-3xl pointer-events-none" />
-      <div className="absolute top-0 right-0 w-16 h-16 border-r-4 border-t-4 border-red-500/40 rounded-tr-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-16 h-16 border-l-4 border-b-4 border-red-500/40 rounded-bl-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-16 h-16 border-r-4 border-b-4 border-red-600/50 rounded-br-3xl pointer-events-none" />
+      {/* Spider-Man style corner accents */}
+      <div className="absolute top-0 left-0 w-16 h-16 border-l-4 border-t-4 border-[#E23636]/60 rounded-tl-3xl pointer-events-none" />
+      <div className="absolute top-0 right-0 w-16 h-16 border-r-4 border-t-4 border-[#E23636]/50 rounded-tr-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-16 h-16 border-l-4 border-b-4 border-[#E23636]/50 rounded-bl-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-16 h-16 border-r-4 border-b-4 border-[#E23636]/60 rounded-br-3xl pointer-events-none" />
       
       {/* Background glow on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-red-600/0 via-transparent to-red-600/0 group-hover/card:from-red-600/5 group-hover/card:to-red-500/5 transition-all duration-500 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#E23636]/0 via-transparent to-[#E23636]/0 group-hover/card:from-[#E23636]/8 group-hover/card:to-[#E23636]/5 transition-all duration-500 pointer-events-none" />
       
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer relative z-10 py-6 px-6 bg-gradient-to-r from-red-600/15 via-[#0a0e14]/80 to-red-500/15 border-b-2 border-red-500/20 hover:from-red-600/25 hover:to-red-500/25 transition-all duration-300">
+          <CardHeader className="cursor-pointer relative z-10 py-6 px-6 bg-gradient-to-r from-[#E23636]/20 via-[#0a0e14]/80 to-[#E23636]/15 border-b-2 border-[#E23636]/25 hover:from-[#E23636]/30 hover:to-[#E23636]/25 transition-all duration-300">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-5">
                 {/* Netflix-style icon orb */}
                 <div className="relative">
-                  <div className="absolute inset-0 bg-red-500/40 rounded-2xl blur-2xl opacity-70 group-hover/card:opacity-100 transition-opacity" />
-                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-red-600/40 to-red-500/30 border-2 border-red-500/50 shadow-xl shadow-red-500/30">
-                    <GraduationCap className="h-8 w-8 text-red-300" />
+                  <div className="absolute inset-0 bg-[#E23636]/50 rounded-2xl blur-2xl opacity-70 group-hover/card:opacity-100 transition-opacity" />
+                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-[#E23636]/50 to-[#E23636]/35 border-2 border-[#E23636]/60 shadow-xl shadow-[#E23636]/40">
+                    <GraduationCap className="h-8 w-8 text-[#FF6B6B]" />
                   </div>
                 </div>
                 
@@ -376,22 +376,22 @@ function CourseSection({
                       <span className="text-xs text-slate-400 uppercase tracking-wide">subcategorias</span>
                     </div>
                     
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-red-500/20 border border-red-500/30">
-                      <PlayCircle className="h-4 w-4 text-red-400" />
-                      <span className="text-lg font-bold text-red-300">{totalLessons}</span>
-                      <span className="text-xs text-red-400/80 uppercase tracking-wide">aulas</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#E23636]/25 border border-[#E23636]/40">
+                      <PlayCircle className="h-4 w-4 text-[#E23636]" />
+                      <span className="text-lg font-bold text-[#FF6B6B]">{totalLessons}</span>
+                      <span className="text-xs text-[#E23636]/90 uppercase tracking-wide">aulas</span>
                     </div>
                   </div>
                 </div>
               </div>
               
-              {/* Toggle button - Netflix red */}
+              {/* Toggle button - Spider-Man red */}
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-12 w-12 rounded-xl border-2 border-red-500/40 bg-red-500/10 hover:bg-red-500/30 hover:border-red-400/60 transition-all shadow-lg shadow-red-500/10"
+                className="h-12 w-12 rounded-xl border-2 border-[#E23636]/50 bg-[#E23636]/15 hover:bg-[#E23636]/35 hover:border-[#E23636]/70 transition-all shadow-lg shadow-[#E23636]/20"
               >
-                {isOpen ? <ChevronUp className="h-6 w-6 text-red-300" /> : <ChevronDown className="h-6 w-6 text-red-300" />}
+                {isOpen ? <ChevronUp className="h-6 w-6 text-[#FF6B6B]" /> : <ChevronDown className="h-6 w-6 text-[#FF6B6B]" />}
               </Button>
             </div>
           </CardHeader>
@@ -448,16 +448,16 @@ function SubcategorySection({
     <div className="space-y-3">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
-          {/* 🎬 NETFLIX PREMIUM SUBCATEGORY HEADER */}
-          <div className="group relative flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer overflow-hidden bg-gradient-to-r from-[#1a1a2e] via-[#16213e] to-[#1a1a2e] border-2 border-red-500/30 hover:border-red-500/60 shadow-lg shadow-red-500/5 hover:shadow-red-500/20 transition-all duration-300">
+          {/* 🎬 SPIDER-MAN PREMIUM SUBCATEGORY HEADER */}
+          <div className="group relative flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer overflow-hidden bg-gradient-to-r from-[#1a1a2e] via-[#16213e] to-[#1a1a2e] border-2 border-[#E23636]/40 hover:border-[#E23636]/70 shadow-lg shadow-[#E23636]/10 hover:shadow-[#E23636]/30 transition-all duration-300">
             {/* Background glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-red-600/5 via-transparent to-red-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#E23636]/8 via-transparent to-[#E23636]/8 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             
-            {/* Icon with Netflix red glow */}
+            {/* Icon with Spider-Man red glow */}
             <div className="relative z-10">
-              <div className="absolute inset-0 bg-red-500/40 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative p-3 rounded-xl bg-gradient-to-br from-red-600/30 to-red-500/20 border-2 border-red-500/40 shadow-lg shadow-red-500/20">
-                <FolderOpen className="h-5 w-5 text-red-400" />
+              <div className="absolute inset-0 bg-[#E23636]/50 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative p-3 rounded-xl bg-gradient-to-br from-[#E23636]/40 to-[#E23636]/25 border-2 border-[#E23636]/50 shadow-lg shadow-[#E23636]/30">
+                <FolderOpen className="h-5 w-5 text-[#FF6B6B]" />
               </div>
             </div>
             
@@ -468,7 +468,7 @@ function SubcategorySection({
             
             {/* Stats Badges */}
             <div className="relative z-10 flex items-center gap-3">
-              <Badge className="px-3 py-1.5 text-sm font-bold bg-red-500/20 text-red-300 border-2 border-red-500/40 shadow-lg shadow-red-500/10">
+              <Badge className="px-3 py-1.5 text-sm font-bold bg-[#E23636]/25 text-[#FF6B6B] border-2 border-[#E23636]/50 shadow-lg shadow-[#E23636]/20">
                 <Layers className="h-4 w-4 mr-1.5" />
                 {modules.length} módulos
               </Badge>
@@ -476,8 +476,8 @@ function SubcategorySection({
                 <PlayCircle className="h-4 w-4 mr-1.5" />
                 {totalLessons} aulas
               </Badge>
-              <div className="p-2 rounded-xl bg-red-500/20 border border-red-500/30 shadow-inner">
-                {isOpen ? <ChevronUp className="h-5 w-5 text-red-400" /> : <ChevronDown className="h-5 w-5 text-red-400" />}
+              <div className="p-2 rounded-xl bg-[#E23636]/25 border border-[#E23636]/40 shadow-inner">
+                {isOpen ? <ChevronUp className="h-5 w-5 text-[#E23636]" /> : <ChevronDown className="h-5 w-5 text-[#E23636]" />}
               </div>
             </div>
           </div>
@@ -808,7 +808,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
               loading="lazy"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-purple-600 via-pink-600 to-red-600">
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#E23636] via-[#D63031] to-[#B91C1C]">
               <Layers className="h-14 w-14 text-white/80" />
             </div>
           )}
@@ -825,7 +825,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
                   "h-full rounded-r transition-all duration-500",
                   progressPercent >= 100 
                     ? "bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-lg shadow-emerald-500/50" 
-                    : "bg-gradient-to-r from-red-600 to-red-500 shadow-lg shadow-red-500/50"
+                    : "bg-gradient-to-r from-[#E23636] to-[#FF4444] shadow-lg shadow-[#E23636]/50"
                 )}
                 style={{ width: `${progressPercent}%` }}
               />
@@ -917,9 +917,9 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
                 }}
                 className={cn(
                   "relative h-12 md:h-14 px-7 md:px-10 text-base md:text-lg font-black uppercase tracking-widest rounded-xl",
-                  "bg-gradient-to-r from-red-700 via-red-600 to-red-700 text-white border-0",
-                  "hover:from-red-600 hover:via-red-500 hover:to-red-600",
-                  "shadow-2xl shadow-red-600/50 hover:shadow-red-500/70",
+                  "bg-gradient-to-r from-[#E23636] via-[#D63031] to-[#E23636] text-white border-0",
+                  "hover:from-[#FF4444] hover:via-[#E23636] hover:to-[#FF4444]",
+                  "shadow-2xl shadow-[#E23636]/60 hover:shadow-[#E23636]/80",
                   "transition-all duration-300 overflow-hidden group/btn"
                 )}
               >
@@ -945,7 +945,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
           {/* Section Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-gradient-to-r from-slate-900/50 to-transparent">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-8 rounded-full bg-gradient-to-b from-red-500 to-red-700" />
+              <div className="w-1 h-8 rounded-full bg-gradient-to-b from-[#E23636] to-[#D63031]" />
               <div>
                 <h4 className="text-lg md:text-xl font-bold text-white tracking-wide">Videoaulas</h4>
                 <p className="text-sm text-slate-400 font-medium">{lessonCount} disponíveis neste módulo</p>
@@ -963,7 +963,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
               <div className="flex flex-col items-center gap-4 text-slate-400">
                 <div className="relative w-16 h-16">
                   <div className="absolute inset-0 rounded-full border-4 border-slate-700" />
-                  <div className="absolute inset-0 rounded-full border-4 border-t-red-500 border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                  <div className="absolute inset-0 rounded-full border-4 border-t-[#E23636] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
                 </div>
                 <span className="text-base font-semibold">Carregando videoaulas...</span>
               </div>
@@ -1066,7 +1066,7 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
         "bg-gradient-to-b from-slate-900 to-slate-950",
         "border border-slate-700/50 shadow-xl shadow-black/40",
         "transition-all duration-300",
-        "group-hover/card:border-red-500/60 group-hover/card:shadow-2xl group-hover/card:shadow-red-500/20"
+        "group-hover/card:border-[#E23636]/70 group-hover/card:shadow-2xl group-hover/card:shadow-[#E23636]/30"
       )}>
         
         {/* === THUMBNAIL SECTION === */}
@@ -1082,7 +1082,7 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
               sizes="(max-width: 640px) 180px, (max-width: 768px) 200px, (max-width: 1024px) 220px, 240px"
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-red-900/30 via-slate-900 to-slate-950">
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#E23636]/30 via-slate-900 to-slate-950">
               <div className="relative">
                 <Video className="h-12 w-12 text-slate-600" />
                 <div className="absolute -inset-4 rounded-full border border-slate-700/50" />
@@ -1116,7 +1116,7 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity duration-300">
             <div className={cn(
               "w-16 h-16 rounded-full flex items-center justify-center",
-              "bg-red-600 shadow-2xl shadow-red-600/50",
+              "bg-[#E23636] shadow-2xl shadow-[#E23636]/60",
               "border-4 border-white/20",
               "group-hover/card:scale-110 transition-transform duration-300"
             )}>
@@ -1126,7 +1126,7 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
           
           {/* Progress Bar */}
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/60">
-            <div className="h-full w-1/3 bg-gradient-to-r from-red-600 to-red-500 rounded-r" />
+            <div className="h-full w-1/3 bg-gradient-to-r from-[#E23636] to-[#FF4444] rounded-r" />
           </div>
         </div>
         
@@ -1139,7 +1139,7 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
           
           {/* Meta Info Row */}
           <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#E23636]/25 text-[#FF6B6B] border border-[#E23636]/40">
               Videoaula
             </span>
             {hasVideo && (
@@ -1150,14 +1150,14 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
           </div>
           
           {/* Watch Button - Netflix RED Always */}
-          <button className="w-full py-2.5 rounded-lg font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-red-500 text-white border-0 shadow-lg shadow-red-500/30 hover:from-red-500 hover:to-red-400 hover:shadow-red-500/50 transition-all duration-300">
+          <button className="w-full py-2.5 rounded-lg font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 bg-gradient-to-r from-[#E23636] to-[#FF4444] text-white border-0 shadow-lg shadow-[#E23636]/40 hover:from-[#FF4444] hover:to-[#E23636] hover:shadow-[#E23636]/60 transition-all duration-300">
             <Play className="h-4 w-4" fill="currentColor" />
             Assistir Agora
           </button>
         </div>
         
         {/* Hover Glow Effect - CSS only */}
-        <div className="absolute inset-0 rounded-xl pointer-events-none ring-0 group-hover/card:ring-1 ring-red-500/40 transition-all duration-300" />
+        <div className="absolute inset-0 rounded-xl pointer-events-none ring-0 group-hover/card:ring-1 ring-[#E23636]/50 transition-all duration-300" />
       </div>
     </div>
   );
