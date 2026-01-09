@@ -484,34 +484,29 @@ function SubcategorySection({
             </div>
             
             {/* Grid adaptativo baseado na quantidade de módulos */}
-            {/* 1 módulo: centralizado, largura média */}
-            {/* 2 módulos: 2 colunas centralizadas */}
-            {/* 3+ módulos: grid responsivo padrão */}
+            {/* PREENCHE A TELA AUTOMATICAMENTE COM POUCOS MÓDULOS */}
+            {/* 1 módulo: grid 2 colunas, módulo ocupa 1 coluna grande */}
+            {/* 2 módulos: grid 2 colunas full width */}
+            {/* 3 módulos: grid 3 colunas full width */}
+            {/* 4+ módulos: grid responsivo padrão */}
             <div 
               className={cn(
                 "gap-5",
-                modules.length === 1 && "flex justify-center",
-                modules.length === 2 && "grid grid-cols-1 sm:grid-cols-2 max-w-3xl mx-auto",
-                modules.length === 3 && "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto",
+                modules.length === 1 && "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
+                modules.length === 2 && "grid grid-cols-1 sm:grid-cols-2",
+                modules.length === 3 && "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
                 modules.length >= 4 && "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
               )}
             >
               {modules.map((module, idx) => (
-                <div 
-                  key={module.id} 
-                  className={cn(
-                    modules.length === 1 && "w-full max-w-sm",
-                    modules.length === 2 && "w-full"
-                  )}
-                >
-                  <ModuleCard
-                    module={module}
-                    index={idx}
-                    isExpanded={expandedModules.has(module.id)}
-                    onToggle={() => onToggleModule(module.id)}
-                    onPlayLesson={onPlayLesson}
-                  />
-                </div>
+                <ModuleCard
+                  key={module.id}
+                  module={module}
+                  index={idx}
+                  isExpanded={expandedModules.has(module.id)}
+                  onToggle={() => onToggleModule(module.id)}
+                  onPlayLesson={onPlayLesson}
+                />
               ))}
             </div>
           </div>
