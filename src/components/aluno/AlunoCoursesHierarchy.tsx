@@ -397,7 +397,8 @@ function CourseSection({
 
         <CollapsibleContent>
           <CardContent className="p-0">
-            <ScrollArea className="h-auto max-h-[700px]">
+            {/* SCROLLABLE CONTENT RULE: max-h adaptativo para mobile/tablet/desktop */}
+            <ScrollArea className="h-auto max-h-[50vh] md:max-h-[60vh] lg:max-h-[70vh]">
               <div className="p-5 space-y-5">
                 {subcategoryGroups.map(({ subcategory, modules: groupModules }) => (
                   <SubcategorySection
