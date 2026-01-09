@@ -169,8 +169,8 @@ function SortableLessonRow({
         )}
       </div>
 
-      {/* Status & Actions */}
-      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* Status & Actions - Always visible for quick access */}
+      <div className="flex items-center gap-1.5">
         <Button
           variant="ghost"
           size="icon"
