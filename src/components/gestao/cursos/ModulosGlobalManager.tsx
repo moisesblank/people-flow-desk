@@ -7,13 +7,32 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { 
+import {
   Layers, Search, Edit2, Trash2, Plus, Eye, EyeOff,
   ChevronRight, ChevronDown, PlayCircle, MoreHorizontal,
-  FolderOpen, BookOpen, Check, AlertTriangle, Image, Video, 
+  FolderOpen, BookOpen, Check, AlertTriangle, Image, Video,
   Clock, Save, X, RefreshCw, Sparkles, GraduationCap,
-  MonitorPlay, FileVideo, Pencil, ChevronUp, ExternalLink, Link2, ArrowUpDown
+  MonitorPlay, FileVideo, Pencil, ChevronUp, ExternalLink, Link2, ArrowUpDown,
+  GripVertical, Upload,
 } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -391,7 +410,7 @@ function SubcategorySection({
   onToggleModule,
   onEditModule,
   onDeleteModule,
-  onTogglePublish
+  onTogglePublish,
 }: {
   subcategory: string | null;
   modules: Module[];
@@ -402,7 +421,71 @@ function SubcategorySection({
   onTogglePublish: (module: Module) => void;
 }) {
   const [isOpen, setIsOpen] = useState(true);
-  const totalLessons = modules.reduce((a, m) => a + (m._count?.lessons || 0), 0);
+  const [localModules, setLocalModules] = useState<Module[]>(modules);
+  const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
+  const totalLessons = localModules.reduce((a, m) => a + (m._count?.lessons || 0), 0);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    setLocalModules(modules);
+  }, [modules]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const persistReorderMutation = useMutation({
+    mutationFn: async (ordered: Module[]) => {
+      // Regrava posições 0..N-1 para esta subcategoria (verdade no banco)
+      const updates = ordered.map((m, idx) => ({ id: m.id, position: idx }));
+      const results = await Promise.all(
+        updates.map((u) =>
+          supabase
+            .from('modules')
+            .update({ position: u.position })
+            .eq('id', u.id)
+        )
+      );
+      const anyError = results.find((r) => r.error)?.error;
+      if (anyError) throw anyError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['gestao-all-modules'] });
+      toast({ title: '✅ Ordem salva', description: 'Módulos reordenados com sucesso.' });
+    },
+    onError: (err: any) => {
+      toast({ title: '❌ Erro ao salvar ordem', description: err.message, variant: 'destructive' });
+      queryClient.invalidateQueries({ queryKey: ['gestao-all-modules'] });
+    },
+  });
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveModuleId(String(event.active.id));
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveModuleId(null);
+    if (!over || active.id === over.id) return;
+
+    setLocalModules((prev) => {
+      const oldIndex = prev.findIndex((m) => m.id === active.id);
+      const newIndex = prev.findIndex((m) => m.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      const next = arrayMove(prev, oldIndex, newIndex).map((m, idx) => ({ ...m, position: idx }));
+      // Persistir em background (sem travar UI)
+      persistReorderMutation.mutate(next);
+      return next;
+    });
+  };
+
+  const moduleIds = useMemo(() => localModules.map((m) => m.id), [localModules]);
+  const activeModule = useMemo(
+    () => localModules.find((m) => m.id === activeModuleId) || null,
+    [localModules, activeModuleId]
+  );
 
   return (
     <div className="space-y-3">
@@ -413,21 +496,19 @@ function SubcategorySection({
             <div className="p-2.5 rounded-xl bg-amber-500/30 border border-amber-500/40">
               <FolderOpen className="h-5 w-5 text-amber-300" />
             </div>
-            
-            <span className="font-bold text-lg text-amber-200 flex-1">
-              {subcategory || '📁 Sem Subcategoria'}
-            </span>
-            
+
+            <span className="font-bold text-lg text-amber-200 flex-1">{subcategory || '📁 Sem Subcategoria'}</span>
+
             <div className="flex items-center gap-3">
               <Badge className="px-3 py-1.5 text-sm bg-amber-500/20 text-amber-300 border-2 border-amber-500/40 shadow-md shadow-amber-500/10">
                 <Layers className="h-3.5 w-3.5 mr-1.5" />
-                {modules.length} módulo{modules.length !== 1 ? 's' : ''}
+                {localModules.length} módulo{localModules.length !== 1 ? 's' : ''}
               </Badge>
               <Badge className="px-3 py-1.5 text-sm bg-green-500/20 text-green-300 border-2 border-green-500/40 shadow-md shadow-green-500/10">
                 <PlayCircle className="h-3.5 w-3.5 mr-1.5" />
                 {totalLessons} aula{totalLessons !== 1 ? 's' : ''}
               </Badge>
-              
+
               <div className="p-2 rounded-lg bg-amber-500/20 border border-amber-500/30">
                 {isOpen ? <ChevronUp className="h-4 w-4 text-amber-300" /> : <ChevronDown className="h-4 w-4 text-amber-300" />}
               </div>
@@ -437,21 +518,82 @@ function SubcategorySection({
 
         <CollapsibleContent>
           <div className="pl-6 mt-3 space-y-3 border-l-4 border-amber-500/30">
-            {modules.map((module, idx) => (
-              <ModuleCard
-                key={module.id}
-                module={module}
-                index={idx}
-                isExpanded={expandedModules.has(module.id)}
-                onToggle={() => onToggleModule(module.id)}
-                onEdit={() => onEditModule(module)}
-                onDelete={() => onDeleteModule(module)}
-                onTogglePublish={() => onTogglePublish(module)}
-              />
-            ))}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={moduleIds} strategy={verticalListSortingStrategy}>
+                <div className="space-y-3">
+                  {localModules.map((module, idx) => (
+                    <SortableModuleCard
+                      key={module.id}
+                      module={module}
+                      index={idx}
+                      isExpanded={expandedModules.has(module.id)}
+                      onToggle={() => onToggleModule(module.id)}
+                      onEdit={() => onEditModule(module)}
+                      onDelete={() => onDeleteModule(module)}
+                      onTogglePublish={() => onTogglePublish(module)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+
+              {/* Overlay simples */}
+              {activeModule && (
+                <div className="hidden" aria-hidden="true">
+                  {activeModule.title}
+                </div>
+              )}
+            </DndContext>
           </div>
         </CollapsibleContent>
       </Collapsible>
+    </div>
+  );
+}
+
+// ============================================
+// SORTABLE MODULE CARD — drag dentro da subcategoria
+// ============================================
+function SortableModuleCard({
+  module,
+  index,
+  isExpanded,
+  onToggle,
+  onEdit,
+  onDelete,
+  onTogglePublish,
+}: {
+  module: Module;
+  index: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onTogglePublish: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: module.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <ModuleCard
+        module={module}
+        index={index}
+        isExpanded={isExpanded}
+        onToggle={onToggle}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onTogglePublish={onTogglePublish}
+      />
     </div>
   );
 }
