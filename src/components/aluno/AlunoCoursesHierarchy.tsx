@@ -614,7 +614,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
       <div 
         onClick={onToggle}
         className={cn(
-          "relative flex items-stretch gap-4 md:gap-6 p-3 md:p-4 cursor-pointer rounded-xl",
+          "relative flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 p-4 md:p-5 cursor-pointer rounded-xl",
           "bg-gradient-to-r from-[#0a1525] via-[#0d1a30] to-[#0a1525]",
           "border transition-all duration-300",
           isExpanded 
