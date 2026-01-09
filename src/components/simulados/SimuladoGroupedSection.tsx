@@ -227,28 +227,39 @@ function SimuladoGroupSectionInner({
 
   return (
     <div className={cn(
-      "group/section rounded-2xl overflow-hidden",
-      "bg-gradient-to-br", config.bgGradient,
-      "border-2", config.borderColor, config.hoverBorder,
+      "group/section relative rounded-2xl overflow-hidden",
+      "bg-gradient-to-br from-card/95 via-card/80 to-card/90",
+      "border", config.borderColor, config.hoverBorder,
       "transition-[border-color,box-shadow] duration-300",
-      isOpen && "shadow-[0_0_30px_rgba(255,255,255,0.05)]",
+      isOpen && "shadow-[0_0_35px_rgba(255,255,255,0.06)]",
       config.glowColor
     )}>
+      {/* ✨ Subtle inner glow overlay */}
+      <div className={cn(
+        "absolute inset-0 opacity-40 pointer-events-none",
+        "bg-gradient-to-br", config.bgGradient
+      )} />
+      
       {/* Header - CSS transitions only */}
       <button
         onClick={handleToggle}
-        className="w-full flex items-center justify-between p-4 md:p-5 transition-colors duration-200 hover:bg-white/[0.02]"
+        className="relative w-full flex items-center justify-between p-4 md:p-5 transition-colors duration-200 hover:bg-white/[0.03]"
       >
         {/* Left */}
         <div className="flex items-center gap-3 md:gap-4">
-          {/* Icon */}
+          {/* Icon with elegant container */}
           <div className={cn(
-            "p-2.5 md:p-3 rounded-xl transition-transform duration-300",
-            "bg-gradient-to-br", config.bgGradient,
+            "relative p-2.5 md:p-3 rounded-xl transition-transform duration-300",
+            "bg-gradient-to-br from-white/[0.08] to-white/[0.02]",
             "border", config.borderColor,
             "group-hover/section:scale-105"
           )}>
-            <Icon className={cn("w-5 h-5 md:w-6 md:h-6", config.iconColor)} />
+            {/* Icon glow */}
+            <div className={cn(
+              "absolute inset-0 rounded-xl opacity-60",
+              "bg-gradient-to-br", config.bgGradient
+            )} />
+            <Icon className={cn("w-5 h-5 md:w-6 md:h-6 relative z-10", config.iconColor)} />
           </div>
           
           {/* Text */}
@@ -256,7 +267,7 @@ function SimuladoGroupSectionInner({
             <h3 className="font-bold text-base md:text-lg text-foreground group-hover/section:text-white transition-colors duration-200">
               {config.label}
             </h3>
-            <p className="text-xs md:text-sm text-muted-foreground/60">
+            <p className="text-xs md:text-sm text-muted-foreground/50">
               {simulados.length} simulado{simulados.length > 1 ? "s" : ""} disponíve{simulados.length > 1 ? "is" : "l"}
             </p>
           </div>
@@ -264,26 +275,34 @@ function SimuladoGroupSectionInner({
 
         {/* Right */}
         <div className="flex items-center gap-2 md:gap-3">
-          {/* Badge Count */}
+          {/* Badge Count - Premium style */}
           <div className={cn(
-            "hidden sm:flex items-center justify-center min-w-[2rem] h-7 px-2.5 rounded-full",
+            "hidden sm:flex items-center justify-center min-w-[2.25rem] h-8 px-3 rounded-full",
             config.badgeBg,
-            "text-white font-bold text-sm shadow-lg",
+            "text-white font-bold text-sm",
+            "shadow-[0_4px_15px_rgba(0,0,0,0.3)]",
             "transition-transform duration-300 group-hover/section:scale-105"
           )}>
             {simulados.length}
           </div>
           
-          {/* Chevron */}
+          {/* Chevron - Elegant container */}
           <div className={cn(
             "p-1.5 md:p-2 rounded-lg transition-all duration-300",
-            "bg-white/5 border border-white/10",
-            "group-hover/section:bg-white/10",
-            isOpen && "rotate-180"
+            "bg-white/[0.06] border border-white/[0.08]",
+            "group-hover/section:bg-white/[0.1] group-hover/section:border-white/[0.12]",
+            isOpen && "rotate-180 bg-white/[0.1]"
           )}>
-            <ChevronDown className={cn("w-4 h-4 md:w-5 md:h-5", config.iconColor)} />
+            <ChevronDown className={cn("w-4 h-4 md:w-5 md:h-5 transition-colors", config.iconColor)} />
           </div>
         </div>
+        
+        {/* Bottom accent line on hover */}
+        <div className={cn(
+          "absolute bottom-0 left-0 right-0 h-[1px]",
+          "bg-gradient-to-r from-transparent via-white/[0.15] to-transparent",
+          "opacity-0 group-hover/section:opacity-100 transition-opacity duration-300"
+        )} />
       </button>
 
       {/* Content - Lazy + CSS collapse */}
@@ -293,10 +312,9 @@ function SimuladoGroupSectionInner({
           isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
         )}>
           <div className="overflow-hidden">
-            <div className="p-4 md:p-5 pt-0">
-              <div className={cn(
-                "h-px mb-4 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-              )} />
+            <div className="relative p-4 md:p-5 pt-0">
+              {/* Separator with gradient */}
+              <div className="h-px mb-4 bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
               <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
                 {simulados.map((simulado, index) => renderCard(simulado, index))}
               </div>
@@ -345,34 +363,39 @@ export const SimuladosBySubjectSection = memo(function SimuladosBySubjectSection
 
   return (
     <div className={cn(
-      "group/parent rounded-2xl overflow-hidden",
-      "bg-gradient-to-br from-violet-500/8 via-purple-500/4 to-fuchsia-500/8",
-      "border-2 border-violet-500/20 hover:border-violet-500/40",
+      "group/parent relative rounded-2xl overflow-hidden",
+      "bg-gradient-to-br from-card/95 via-card/80 to-card/90",
+      "border border-violet-500/20 hover:border-violet-500/40",
       "transition-[border-color,box-shadow] duration-300",
-      isOpen && "shadow-[0_0_35px_rgba(139,92,246,0.12)]",
-      "hover:shadow-[0_0_25px_rgba(139,92,246,0.1)]"
+      isOpen && "shadow-[0_0_40px_rgba(139,92,246,0.12)]",
+      "hover:shadow-[0_0_30px_rgba(139,92,246,0.08)]"
     )}>
+      {/* ✨ Subtle inner glow overlay */}
+      <div className="absolute inset-0 opacity-50 pointer-events-none bg-gradient-to-br from-violet-500/10 via-purple-500/5 to-fuchsia-500/10" />
+      
       {/* Header */}
       <button
         onClick={handleToggle}
-        className="w-full flex items-center justify-between p-5 md:p-6 transition-colors duration-200 hover:bg-white/[0.02]"
+        className="relative w-full flex items-center justify-between p-5 md:p-6 transition-colors duration-200 hover:bg-white/[0.03]"
       >
         {/* Left */}
         <div className="flex items-center gap-4">
           <div className={cn(
-            "p-3 md:p-3.5 rounded-xl transition-transform duration-300",
-            "bg-gradient-to-br from-violet-500/15 via-purple-500/15 to-fuchsia-500/15",
+            "relative p-3 md:p-3.5 rounded-xl transition-transform duration-300",
+            "bg-gradient-to-br from-white/[0.08] to-white/[0.02]",
             "border border-violet-500/25",
             "group-hover/parent:scale-105"
           )}>
-            <Beaker className="w-6 h-6 md:w-7 md:h-7 text-violet-400" />
+            {/* Icon glow */}
+            <div className="absolute inset-0 rounded-xl opacity-60 bg-gradient-to-br from-violet-500/20 via-purple-500/15 to-fuchsia-500/20" />
+            <Beaker className="w-6 h-6 md:w-7 md:h-7 text-violet-400 relative z-10" />
           </div>
           
           <div className="text-left">
             <h2 className="font-black text-lg md:text-xl lg:text-2xl text-violet-400 group-hover/parent:text-violet-300 transition-colors duration-200">
               Simulados por Assunto
             </h2>
-            <p className="text-sm text-muted-foreground/60">
+            <p className="text-sm text-muted-foreground/50">
               Pratique por área específica da Química
             </p>
           </div>
@@ -383,7 +406,8 @@ export const SimuladosBySubjectSection = memo(function SimuladosBySubjectSection
           <div className={cn(
             "hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full",
             "bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500",
-            "text-white font-bold text-sm shadow-lg",
+            "text-white font-bold text-sm",
+            "shadow-[0_4px_20px_rgba(139,92,246,0.35)]",
             "transition-transform duration-300 group-hover/parent:scale-105"
           )}>
             <span>{totalCount}</span>
@@ -392,13 +416,20 @@ export const SimuladosBySubjectSection = memo(function SimuladosBySubjectSection
           
           <div className={cn(
             "p-2 md:p-2.5 rounded-xl transition-all duration-300",
-            "bg-violet-500/10 border border-violet-500/20",
-            "group-hover/parent:bg-violet-500/15",
-            isOpen && "rotate-180"
+            "bg-white/[0.06] border border-violet-500/20",
+            "group-hover/parent:bg-white/[0.1] group-hover/parent:border-violet-500/30",
+            isOpen && "rotate-180 bg-white/[0.1]"
           )}>
             <ChevronDown className="w-5 h-5 text-violet-400" />
           </div>
         </div>
+        
+        {/* Bottom accent line on hover */}
+        <div className={cn(
+          "absolute bottom-0 left-0 right-0 h-[1px]",
+          "bg-gradient-to-r from-transparent via-violet-400/30 to-transparent",
+          "opacity-0 group-hover/parent:opacity-100 transition-opacity duration-300"
+        )} />
       </button>
 
       {/* Subgroups - Lazy */}
