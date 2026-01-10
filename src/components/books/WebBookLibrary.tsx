@@ -98,6 +98,85 @@ const BOOK_COVERS_BY_INDEX: Record<number, string> = {
 };
 
 // ============================================
+// 🎨 CORES POR CATEGORIA — BOOK WEB TYPES
+// Mapeamento centralizado para hover e elementos visuais
+// ============================================
+
+type CategoryColorTheme = {
+  border: string;
+  borderHover: string;
+  glow: string;
+  hoverBg: string;
+  text: string;
+  badge: string;
+  accent: string;
+};
+
+const CATEGORY_COLORS: Record<string, CategoryColorTheme> = {
+  quimica_geral: {
+    border: "border-amber-500/30",
+    borderHover: "hover:border-amber-500/70",
+    glow: "hover:shadow-[0_20px_60px_-15px_rgba(245,158,11,0.45)]",
+    hoverBg: "group-hover:from-amber-500/25",
+    text: "text-amber-400",
+    badge: "bg-amber-500/20 text-amber-400 border-amber-500/40",
+    accent: "#F59E0B"
+  },
+  quimica_organica: {
+    border: "border-purple-500/30",
+    borderHover: "hover:border-purple-500/70",
+    glow: "hover:shadow-[0_20px_60px_-15px_rgba(168,85,247,0.45)]",
+    hoverBg: "group-hover:from-purple-500/25",
+    text: "text-purple-400",
+    badge: "bg-purple-500/20 text-purple-400 border-purple-500/40",
+    accent: "#A855F7"
+  },
+  fisico_quimica: {
+    border: "border-cyan-500/30",
+    borderHover: "hover:border-cyan-500/70",
+    glow: "hover:shadow-[0_20px_60px_-15px_rgba(6,182,212,0.45)]",
+    hoverBg: "group-hover:from-cyan-500/25",
+    text: "text-cyan-400",
+    badge: "bg-cyan-500/20 text-cyan-400 border-cyan-500/40",
+    accent: "#06B6D4"
+  },
+  revisao_ciclica: {
+    border: "border-emerald-500/30",
+    borderHover: "hover:border-emerald-500/70",
+    glow: "hover:shadow-[0_20px_60px_-15px_rgba(16,185,129,0.45)]",
+    hoverBg: "group-hover:from-emerald-500/25",
+    text: "text-emerald-400",
+    badge: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40",
+    accent: "#10B981"
+  },
+  previsao_final: {
+    border: "border-blue-500/30",
+    borderHover: "hover:border-blue-500/70",
+    glow: "hover:shadow-[0_20px_60px_-15px_rgba(59,130,246,0.45)]",
+    hoverBg: "group-hover:from-blue-500/25",
+    text: "text-blue-400",
+    badge: "bg-blue-500/20 text-blue-400 border-blue-500/40",
+    accent: "#3B82F6"
+  },
+};
+
+// Fallback para categorias desconhecidas (vermelho Spider-Man)
+const DEFAULT_CATEGORY_COLORS: CategoryColorTheme = {
+  border: "border-[#E23636]/30",
+  borderHover: "hover:border-[#E23636]/70",
+  glow: "hover:shadow-[0_20px_60px_-15px_rgba(226,54,54,0.45)]",
+  hoverBg: "group-hover:from-[#E23636]/25",
+  text: "text-[#E23636]",
+  badge: "bg-[#E23636]/20 text-[#E23636] border-[#E23636]/40",
+  accent: "#E23636"
+};
+
+// Helper para obter cores por categoria
+function getCategoryColors(category: string): CategoryColorTheme {
+  return CATEGORY_COLORS[category] || DEFAULT_CATEGORY_COLORS;
+}
+
+// ============================================
 // TIPOS
 // ============================================
 
@@ -129,16 +208,20 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
   const isReading = hasStarted && !isCompleted;
   const isNew = !hasStarted && !isCompleted;
 
-  // Theme colors based on status
-  const themeColors = isCompleted 
-    ? { border: "border-emerald-500/30 hover:border-emerald-500/60", glow: "hover:shadow-[0_20px_60px_-15px_rgba(16,185,129,0.35)]", text: "text-emerald-400", badge: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40" }
+  // 🎨 CATEGORY-BASED COLORS — Primary hover color from Book-Web type
+  const categoryColors = getCategoryColors(book.category);
+  
+  // Status-specific badge colors (secondary)
+  const statusBadge = isCompleted 
+    ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
     : isReading 
-    ? { border: "border-amber-500/30 hover:border-amber-500/60", glow: "hover:shadow-[0_20px_60px_-15px_rgba(245,158,11,0.35)]", text: "text-amber-400", badge: "bg-amber-500/20 text-amber-400 border-amber-500/40" }
-    : { border: "border-[#E23636]/30 hover:border-[#E23636]/60", glow: "hover:shadow-[0_20px_60px_-15px_rgba(226,54,54,0.35)]", text: "text-[#E23636]", badge: "bg-[#E23636]/20 text-[#E23636] border-[#E23636]/40" };
+    ? "bg-amber-500/20 text-amber-400 border-amber-500/40"
+    : categoryColors.badge;
 
   return (
     <div className="group">
       {/* 🎬 NETFLIX ULTRA PREMIUM CARD - 50% MORE VISIBLE */}
+      {/* 🎨 HOVER COLOR: Based on Book-Web CATEGORY, not status */}
       <div 
         className={cn(
           "relative flex rounded-2xl overflow-hidden cursor-pointer",
@@ -146,8 +229,10 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
           "border-3 transition-all duration-300 ease-out",
           "hover:scale-[1.02] hover:-translate-y-2",
           "shadow-2xl hover:shadow-3xl",
-          themeColors.border.replace('/30', '/60').replace('/50', '/80'),
-          isHighEnd && themeColors.glow.replace('/20', '/40').replace('/40', '/60')
+          // Category-based border and glow (MANDATORY)
+          categoryColors.border,
+          categoryColors.borderHover,
+          isHighEnd && categoryColors.glow
         )}
         onClick={onSelect}
       >
@@ -164,25 +249,23 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
           {/* Gradient blend to content */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#0a0e14]" />
           
-          {/* Hover glow overlay */}
+          {/* Hover glow overlay — CATEGORY-BASED COLOR */}
           {isHighEnd && (
             <div className={cn(
               "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none",
-              isCompleted ? "bg-gradient-to-br from-emerald-500/20 via-transparent to-transparent"
-                : isReading ? "bg-gradient-to-br from-amber-500/20 via-transparent to-transparent"
-                : "bg-gradient-to-br from-[#E23636]/20 via-transparent to-transparent"
+              `bg-gradient-to-br via-transparent to-transparent`,
+              categoryColors.hoverBg
             )} />
           )}
           
-          {/* 📍 NUMBER BADGE — Top Left */}
+          {/* 📍 NUMBER BADGE — Top Left — CATEGORY COLOR */}
           <div className="absolute top-3 left-3">
             <div className={cn(
               "w-10 h-10 rounded-xl flex items-center justify-center font-black text-base",
               "border-2 backdrop-blur-md shadow-lg",
               "bg-black/60",
-              isCompleted ? "text-emerald-400 border-emerald-500/60" 
-                : isReading ? "text-amber-400 border-amber-500/60"
-                : "text-[#E23636] border-[#E23636]/60"
+              categoryColors.text,
+              categoryColors.border.replace('/30', '/60')
             )}>
               {String(index + 1).padStart(2, '0')}
             </div>
@@ -200,12 +283,12 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
         {/* 📋 CONTEÚDO — LADO DIREITO */}
         <div className="flex-1 p-4 md:p-5 lg:p-6 flex flex-col justify-between min-w-0">
           
-          {/* TOP: Status Badges */}
+          {/* TOP: Status Badges — Status uses fixed colors, but category badge uses category color */}
           <div className="flex items-center gap-2 flex-wrap mb-3">
             {isCompleted ? (
               <span className={cn(
                 "inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border",
-                themeColors.badge
+                "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
               )}>
                 <Crown className="w-3 h-3 mr-1" />
                 Dominado
@@ -213,7 +296,7 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
             ) : isReading ? (
               <span className={cn(
                 "inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border",
-                themeColors.badge
+                "bg-amber-500/20 text-amber-400 border-amber-500/40"
               )}>
                 <Timer className="w-3 h-3 mr-1" />
                 Lendo • {progress.toFixed(0)}%
@@ -221,7 +304,7 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
             ) : (
               <span className={cn(
                 "inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border",
-                themeColors.badge
+                categoryColors.badge
               )}>
                 <Sparkles className="w-3 h-3 mr-1" />
                 Novo
@@ -234,16 +317,22 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
             </span>
           </div>
 
-          {/* MIDDLE: Title & Author */}
-          <div className="flex-1 min-w-0 mb-3">
-            <h3 className={cn(
-              "text-lg md:text-xl lg:text-2xl font-black tracking-tight mb-1.5 transition-colors duration-200 line-clamp-2",
-              "text-white",
-              isCompleted ? "group-hover:text-emerald-300" 
-                : isReading ? "group-hover:text-amber-300"
-                : "group-hover:text-[#FF6B6B]"
-            )}>
-              {book.title}
+          {/* MIDDLE: Title & Author — CATEGORY-BASED HOVER */}
+          <div className="flex-1 min-w-0 mb-3 relative">
+            <h3 
+              className="text-lg md:text-xl lg:text-2xl font-black tracking-tight mb-1.5 transition-colors duration-200 line-clamp-2 text-white relative"
+            >
+              {/* Base title */}
+              <span className="transition-opacity duration-200 group-hover:opacity-0">
+                {book.title}
+              </span>
+              {/* Hover title with category color */}
+              <span 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 line-clamp-2"
+                style={{ color: categoryColors.accent }}
+              >
+                {book.title}
+              </span>
             </h3>
             {book.author && (
               <p className="text-sm text-muted-foreground/70 flex items-center gap-1.5">
@@ -317,19 +406,21 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
           </div>
         </div>
 
-        {/* ✨ SPIDER-MAN CORNER ACCENTS — CSS only */}
-        <div className={cn(
-          "absolute top-0 left-0 w-10 h-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none",
-          isCompleted ? "border-l-2 border-t-2 border-emerald-500/50 rounded-tl-2xl" 
-            : isReading ? "border-l-2 border-t-2 border-amber-500/50 rounded-tl-2xl"
-            : "border-l-2 border-t-2 border-[#E23636]/50 rounded-tl-2xl"
-        )} />
-        <div className={cn(
-          "absolute bottom-0 right-0 w-10 h-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none",
-          isCompleted ? "border-r-2 border-b-2 border-emerald-500/50 rounded-br-2xl" 
-            : isReading ? "border-r-2 border-b-2 border-amber-500/50 rounded-br-2xl"
-            : "border-r-2 border-b-2 border-[#E23636]/50 rounded-br-2xl"
-        )} />
+        {/* ✨ CORNER ACCENTS — CATEGORY-BASED COLOR */}
+        <div 
+          className={cn(
+            "absolute top-0 left-0 w-10 h-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none",
+            "border-l-2 border-t-2 rounded-tl-2xl"
+          )}
+          style={{ borderColor: `${categoryColors.accent}80` }}
+        />
+        <div 
+          className={cn(
+            "absolute bottom-0 right-0 w-10 h-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none",
+            "border-r-2 border-b-2 rounded-br-2xl"
+          )}
+          style={{ borderColor: `${categoryColors.accent}80` }}
+        />
       </div>
     </div>
   );
