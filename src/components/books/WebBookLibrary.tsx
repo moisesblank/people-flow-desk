@@ -633,7 +633,7 @@ const BookSection = memo(function BookSection({
                   return (
                     <DateLock 
                       key={book.id}
-                      releaseDate="31/01"
+                      releaseDate="28/09"
                       variant="danger"
                       subtitle="Este material será liberado em breve"
                     >
