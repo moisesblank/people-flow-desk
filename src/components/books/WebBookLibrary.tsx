@@ -620,7 +620,7 @@ const WebBookLibrary = memo(function WebBookLibrary({
                 {isHighEnd && (
                   <>
                     <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/60 to-[#E23636]/40 rounded-2xl blur-2xl opacity-80 group-hover:opacity-100 transition-opacity" />
-                    <div className="absolute inset-[-4px] bg-gradient-to-r from-cyan-500 via-[#E23636] to-cyan-500 rounded-2xl opacity-30 animate-pulse" style={{ animationDuration: '3s' }} />
+                    <div className="absolute inset-[-4px] bg-gradient-to-r from-cyan-500 via-[#E23636] to-cyan-500 rounded-2xl opacity-30" />
                   </>
                 )}
                 <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-gradient-to-br from-[#0f1419] via-[#1a1f26] to-[#0f1419] flex items-center justify-center shadow-2xl border-2 border-cyan-500/40 overflow-hidden">
@@ -713,13 +713,11 @@ const WebBookLibrary = memo(function WebBookLibrary({
         {/* 📢 AVISO — VERSÃO 2026 — NETFLIX ULTRA PREMIUM 2300 */}
         <div className="relative overflow-hidden rounded-3xl border-2 border-purple-500/40 bg-gradient-to-r from-[#08060f] via-[#0d0815] to-[#08060f] shadow-2xl shadow-purple-500/20 group hover:border-purple-400/60 transition-all duration-500">
           
-          {/* Animated flowing gradient */}
+          {/* Static gradient overlay */}
           <div 
             className="absolute inset-0 opacity-60"
             style={{
-              background: 'linear-gradient(90deg, transparent 0%, rgba(168,85,247,0.15) 25%, rgba(226,54,54,0.15) 50%, rgba(168,85,247,0.15) 75%, transparent 100%)',
-              backgroundSize: '200% 100%',
-              animation: isHighEnd ? 'shimmer 4s linear infinite' : 'none'
+              background: 'linear-gradient(90deg, transparent 0%, rgba(168,85,247,0.15) 25%, rgba(226,54,54,0.15) 50%, rgba(168,85,247,0.15) 75%, transparent 100%)'
             }}
           />
           
@@ -737,30 +735,19 @@ const WebBookLibrary = memo(function WebBookLibrary({
             }}
           />
           
-          {/* Floating particles - subtle */}
-          {isHighEnd && (
-            <>
-              <div className="absolute top-4 left-[15%] w-1 h-1 bg-purple-400 rounded-full opacity-60" style={{ animation: 'float 3s ease-in-out infinite' }} />
-              <div className="absolute bottom-3 left-[30%] w-1.5 h-1.5 bg-[#E23636] rounded-full opacity-50" style={{ animation: 'float 4s ease-in-out infinite 1s' }} />
-              <div className="absolute top-5 right-[20%] w-1 h-1 bg-purple-300 rounded-full opacity-70" style={{ animation: 'float 3.5s ease-in-out infinite 0.5s' }} />
-              <div className="absolute bottom-4 right-[35%] w-0.5 h-0.5 bg-cyan-400 rounded-full opacity-60" style={{ animation: 'float 2.5s ease-in-out infinite 1.5s' }} />
-            </>
-          )}
-          
           <div className="relative z-10 p-5 md:p-7 flex flex-col md:flex-row items-center gap-5 md:gap-8">
             
             {/* Icon orb - holographic */}
             <div className="relative flex-shrink-0">
               {/* Outer glow */}
               {isHighEnd && (
-                <div className="absolute -inset-3 bg-gradient-to-r from-purple-500 via-[#E23636] to-purple-500 rounded-2xl blur-xl opacity-40 group-hover:opacity-60 transition-opacity" />
+                <div className="absolute -inset-3 bg-gradient-to-r from-purple-500 via-[#E23636] to-purple-500 rounded-2xl blur-xl opacity-40" />
               )}
-              {/* Rotating ring */}
+              {/* Static ring */}
               <div 
                 className="absolute -inset-2 rounded-2xl border border-purple-500/30"
                 style={{ 
-                  background: 'linear-gradient(135deg, transparent 40%, rgba(168,85,247,0.3) 50%, transparent 60%)',
-                  animation: isHighEnd ? 'spin 6s linear infinite' : 'none'
+                  background: 'linear-gradient(135deg, transparent 40%, rgba(168,85,247,0.3) 50%, transparent 60%)'
                 }}
               />
               {/* Icon container */}
@@ -803,15 +790,12 @@ const WebBookLibrary = memo(function WebBookLibrary({
               </div>
             </div>
             
-            {/* Date badge - mega impactful */}
+            {/* Date badge - static */}
             <div className="relative flex items-center gap-4 flex-shrink-0">
-              <div className="relative group/badge">
-                {/* Pulse glow */}
+              <div className="relative">
+                {/* Static glow */}
                 {isHighEnd && (
-                  <div 
-                    className="absolute -inset-2 bg-gradient-to-r from-purple-500 via-[#E23636] to-orange-500 rounded-2xl blur-lg opacity-40"
-                    style={{ animation: 'pulse 2s ease-in-out infinite' }}
-                  />
+                  <div className="absolute -inset-2 bg-gradient-to-r from-purple-500 via-[#E23636] to-orange-500 rounded-2xl blur-lg opacity-40" />
                 )}
                 {/* Outer ring */}
                 <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-purple-500 via-[#E23636] to-orange-500 opacity-80" />
