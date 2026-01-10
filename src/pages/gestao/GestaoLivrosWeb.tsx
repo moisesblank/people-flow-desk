@@ -501,11 +501,12 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
     loadBooks();
   }, [loadBooks]);
 
-  // Calcular mapeamento de capa modelo (baseado em created_at ASC)
-  // Os 5 primeiros livros por data de criação recebem as capas 01-05
+  // Calcular mapeamento de capa modelo (baseado em created_at DESC)
+  // Os 5 primeiros livros por data de criação (mais recentes) recebem as capas 01-05
+  // SINCRONIZADO com fn_list_books_for_category que usa ORDER BY created_at DESC
   const coverIndexMap = new Map<string, number>();
   const sortedByCreation = [...books].sort(
-    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
   sortedByCreation.slice(0, 5).forEach((book, index) => {
     coverIndexMap.set(book.id, index + 1); // 1, 2, 3, 4, 5
