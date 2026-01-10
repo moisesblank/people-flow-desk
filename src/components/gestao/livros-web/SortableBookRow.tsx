@@ -20,8 +20,23 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { InlineEditableCell, InlinePositionEditor } from './index';
 
-// Capas modelo (REMOVIDAS da gestão): agora a capa vem de upload por livro.
-// Mantemos os assets apenas no /alunos/livros-web como fallback visual.
+// ============================================
+// 🖼️ CAPAS PERMANENTES DOS LIVROS (por CATEGORIA)
+// ============================================
+import capa1RevisaoCiclica from '@/assets/book-covers/capa-1-revisao-ciclica.png';
+import capa2FisicoQuimica from '@/assets/book-covers/capa-2-fisico-quimica.png';
+import capa3PrevisaoFinal from '@/assets/book-covers/capa-3-previsao-final.png';
+import capa4QuimicaOrganica from '@/assets/book-covers/capa-4-quimica-organica.png';
+import capa5QuimicaGeral from '@/assets/book-covers/capa-5-quimica-geral.png';
+
+// Mapeamento por CATEGORIA → Capa correspondente
+const BOOK_COVERS_BY_CATEGORY: Record<string, string> = {
+  quimica_geral: capa5QuimicaGeral,
+  quimica_organica: capa4QuimicaOrganica,
+  fisico_quimica: capa2FisicoQuimica,
+  revisao_ciclica: capa1RevisaoCiclica,
+  previsao_final: capa3PrevisaoFinal,
+};
 
 interface WebBookAdmin {
   id: string;
@@ -149,11 +164,11 @@ export const SortableBookRow = memo(function SortableBookRow({
       {/* COLUNA LIVRO — Título e Subtítulo Editáveis */}
       <TableCell>
         <div className="flex items-center gap-3">
-          {/* Capa (upload por livro) */}
+          {/* Capa: Prioridade: 1) Upload manual, 2) Categoria, 3) Placeholder */}
           <div className="relative flex-shrink-0">
-            {book.cover_url ? (
+            {(book.cover_url || BOOK_COVERS_BY_CATEGORY[book.category]) ? (
               <img
-                src={book.cover_url}
+                src={book.cover_url || BOOK_COVERS_BY_CATEGORY[book.category]}
                 alt={book.title}
                 className="w-12 h-16 object-cover rounded shadow-md"
                 loading="lazy"
