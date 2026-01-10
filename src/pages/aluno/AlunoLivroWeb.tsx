@@ -21,6 +21,13 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
   const location = useLocation();
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  // P0 FIX: Garantir que o componente está montado antes de renderizar
+  useEffect(() => {
+    const timer = requestAnimationFrame(() => setIsReady(true));
+    return () => cancelAnimationFrame(timer);
+  }, []);
 
   // Permite abrir um livro direto via URL: /alunos/livro-web?book=<uuid>
   useEffect(() => {
@@ -28,6 +35,15 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
     const bookId = params.get('book');
     if (bookId) setSelectedBookId(bookId);
   }, [location.search]);
+
+  // P0 anti-tela-preta: loader mínimo enquanto não está pronto
+  if (!isReady) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   const handleBookSelect = useCallback((bookId: string) => {
     setSelectedBookId(bookId);
