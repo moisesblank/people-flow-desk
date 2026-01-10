@@ -7,6 +7,7 @@
 
 import React, { memo, useState, useCallback, useMemo } from 'react';
 import { useWebBookLibrary, WebBookListItem } from '@/hooks/useWebBook';
+import { DateLock } from '@/components/ui/chronolock';
 import { 
   BookOpen, 
   CheckCircle,
@@ -483,17 +484,36 @@ const BookSection = memo(function BookSection({
           {/* ⚡ LAZY RENDERING: Só monta BookCards quando seção está aberta */}
           {isOpen && (
             <CardContent className="p-5 space-y-4 bg-gradient-to-b from-transparent to-black/20">
-              {books.map((book, idx) => (
-                <BookCard
-                  key={book.id}
-                  book={book}
-                  index={idx}
-                  // Prioridade: 1) Upload manual, 2) Categoria, 3) Posição, 4) Placeholder
-                  coverUrl={book.coverUrl || BOOK_COVERS_BY_CATEGORY[book.category || ''] || BOOK_COVERS_BY_INDEX[idx] || '/placeholder.svg'}
-                  onSelect={() => onBookSelect(book.id)}
-                  isHighEnd={isHighEnd}
-                />
-              ))}
+              {books.map((book, idx) => {
+                const isPrevisaoFinal = book.category === 'previsao_final';
+                const bookCard = (
+                  <BookCard
+                    key={book.id}
+                    book={book}
+                    index={idx}
+                    // Prioridade: 1) Upload manual, 2) Categoria, 3) Posição, 4) Placeholder
+                    coverUrl={book.coverUrl || BOOK_COVERS_BY_CATEGORY[book.category || ''] || BOOK_COVERS_BY_INDEX[idx] || '/placeholder.svg'}
+                    onSelect={() => onBookSelect(book.id)}
+                    isHighEnd={isHighEnd}
+                  />
+                );
+                
+                // 🔒 CHRONOLOCK: Previsão Final bloqueado até 31/01
+                if (isPrevisaoFinal) {
+                  return (
+                    <DateLock 
+                      key={book.id}
+                      releaseDate="31/01"
+                      variant="danger"
+                      subtitle="Este material será liberado em breve"
+                    >
+                      {bookCard}
+                    </DateLock>
+                  );
+                }
+                
+                return bookCard;
+              })}
             </CardContent>
           )}
         </CollapsibleContent>
