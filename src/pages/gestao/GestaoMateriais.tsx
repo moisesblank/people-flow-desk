@@ -2,6 +2,7 @@
 // 📄 GESTÃO DE MATERIAIS PDF
 // Organização: CONTEUDISTA → 5 MACROS → MICROS
 // Tecnologia: PDF.js + Signed URLs + Watermarks
+// COMPRESSÃO DE PDF: ATIVO (pdf-lib)
 // ============================================
 
 import { memo, useState, useCallback, useEffect, useMemo } from 'react';
@@ -92,6 +93,7 @@ import { ptBR } from 'date-fns/locale';
 import { useDropzone } from 'react-dropzone';
 import { MaterialViewer } from '@/components/materials/MaterialViewer';
 import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
+import { compressPdf, formatBytes } from '@/lib/pdfCompression';
 
 // ============================================
 // TIPOS
@@ -367,7 +369,33 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
   ): Promise<boolean> => {
     try {
       setFiles(prev => prev.map(f => 
-        f.id === fileMeta.id ? { ...f, status: 'uploading', progress: 10 } : f
+        f.id === fileMeta.id ? { ...f, status: 'uploading', progress: 5 } : f
+      ));
+
+      // ============================================
+      // COMPRESSÃO DE PDF OBRIGATÓRIA (MATERIAIS)
+      // ============================================
+      let fileToUpload = fileMeta.file;
+      let originalSize = fileMeta.file.size;
+      let compressedSize = fileMeta.file.size;
+      
+      if (fileMeta.file.type === 'application/pdf' || fileMeta.file.name.toLowerCase().endsWith('.pdf')) {
+        setFiles(prev => prev.map(f => 
+          f.id === fileMeta.id ? { ...f, progress: 10 } : f
+        ));
+        
+        const compressionResult = await compressPdf(fileMeta.file);
+        fileToUpload = compressionResult.file;
+        originalSize = compressionResult.originalSize;
+        compressedSize = compressionResult.compressedSize;
+        
+        if (compressionResult.reductionPercent > 0) {
+          console.log(`[Materiais] PDF comprimido: ${formatBytes(originalSize)} → ${formatBytes(compressedSize)} (-${compressionResult.reductionPercent.toFixed(1)}%)`);
+        }
+      }
+
+      setFiles(prev => prev.map(f => 
+        f.id === fileMeta.id ? { ...f, progress: 25 } : f
       ));
 
       const ano = now.getFullYear();
@@ -381,12 +409,13 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
       const filePath = `${folder}/${fileName}`;
 
       setFiles(prev => prev.map(f => 
-        f.id === fileMeta.id ? { ...f, progress: 30 } : f
+        f.id === fileMeta.id ? { ...f, progress: 40 } : f
       ));
 
+      // Upload do arquivo (comprimido se PDF)
       const { error: uploadError } = await supabase.storage
         .from('materiais')
-        .upload(filePath, fileMeta.file, {
+        .upload(filePath, fileToUpload, {
           cacheControl: '3600',
           upsert: false
         });
@@ -416,7 +445,7 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
           status: 'ready',
           file_path: filePath,
           file_name: fileMeta.file.name,
-          file_size_bytes: fileMeta.file.size,
+          file_size_bytes: compressedSize, // Tamanho COMPRIMIDO salvo no banco
           watermark_enabled: watermarkEnabled,
           is_premium: isPremium,
           created_by: userId,
