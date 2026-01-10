@@ -42,12 +42,14 @@ export interface PdfRendererState {
 }
 
 // ============================================
-// CONSTANTES
+// CONSTANTES — OTIMIZADAS PARA PERFORMANCE
 // ============================================
 
 const RAW_BUCKET = 'ena-assets-raw';
-const RENDER_SCALE = 2; // Alta resolução
-const PAGE_CACHE_SIZE = 10;
+const RENDER_SCALE = 1.5; // ✅ Otimizado: 1.5 (boa qualidade, 44% mais rápido que 2)
+const JPEG_QUALITY = 0.85; // ✅ Otimizado: compressão mais rápida
+const PAGE_CACHE_SIZE = 20; // ✅ Ampliado: menos re-renderizações
+const PREFETCH_PAGES = 3; // ✅ Prefetch de 3 páginas
 const URL_EXPIRY_SECONDS = 3600; // 1 hora
 
 // ============================================
@@ -178,27 +180,28 @@ export function usePdfRenderer(bookId?: string, originalPath?: string) {
 
       console.log(`[PdfRenderer] PDF carregado: ${pdf.numPages} páginas`);
 
-      // ✅ Extrair sumário inteligente do PDF
-      let extractedOutline: PdfOutlineItem[] = [];
-      try {
-        const rawOutline = await pdf.getOutline();
-        if (rawOutline && rawOutline.length > 0) {
-          extractedOutline = await parseOutline(pdf, rawOutline, 0);
-          console.log(`[PdfRenderer] Sumário extraído: ${extractedOutline.length} itens`);
-        } else {
-          console.log('[PdfRenderer] PDF não possui sumário nativo');
-        }
-      } catch (outlineErr) {
-        console.warn('[PdfRenderer] Erro ao extrair sumário:', outlineErr);
-      }
-
+      // ✅ OTIMIZAÇÃO: Liberar UI imediatamente, extrair outline em background
       setState(s => ({
         ...s,
         isLoading: false,
         pdfLoaded: true,
         totalPages: pdf.numPages,
-        outline: extractedOutline
+        outline: [] // Outline carrega depois
       }));
+
+      // ✅ Extrair sumário em BACKGROUND (não bloqueia UI)
+      (async () => {
+        try {
+          const rawOutline = await pdf.getOutline();
+          if (rawOutline && rawOutline.length > 0) {
+            const extractedOutline = await parseOutline(pdf, rawOutline, 0);
+            console.log(`[PdfRenderer] Sumário extraído: ${extractedOutline.length} itens`);
+            setState(s => ({ ...s, outline: extractedOutline }));
+          }
+        } catch (outlineErr) {
+          console.warn('[PdfRenderer] Erro ao extrair sumário:', outlineErr);
+        }
+      })();
 
       // ✅ P0: Atualizar total_pages no banco SEMPRE que carrega (sem filtro de total_pages=0)
       // Isso corrige livros que foram publicados com 0 páginas
@@ -269,7 +272,7 @@ export function usePdfRenderer(bookId?: string, originalPath?: string) {
       }).promise;
 
       // Converter para data URL
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
 
       const pageData: PdfPageRender = {
         pageNumber,
@@ -304,19 +307,24 @@ export function usePdfRenderer(bookId?: string, originalPath?: string) {
     }
   }, []);
 
-  // Prefetch de páginas adjacentes
+  // ✅ Prefetch paralelo de páginas adjacentes
   const prefetchPages = useCallback(async (currentPage: number) => {
     const pdf = pdfDocRef.current;
     if (!pdf) return;
 
-    // Prefetch próximas 2 páginas
-    for (let i = 1; i <= 2; i++) {
+    // Prefetch em paralelo (não sequencial)
+    const pagesToPrefetch: number[] = [];
+    for (let i = 1; i <= PREFETCH_PAGES; i++) {
       const nextPage = currentPage + i;
       if (nextPage <= pdf.numPages && !pageCache.current.has(nextPage)) {
-        // Renderizar em background sem atualizar state
-        renderPage(nextPage);
+        pagesToPrefetch.push(nextPage);
       }
     }
+    
+    // Executar todos em paralelo sem aguardar
+    pagesToPrefetch.forEach(page => {
+      renderPage(page);
+    });
   }, [renderPage]);
 
   // Limpar recursos
