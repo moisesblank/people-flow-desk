@@ -50,6 +50,9 @@ import { BestStudyTimeInsight } from "./BestStudyTimeInsight";
 import { StudentCommandCenter } from "./StudentCommandCenter";
 import { AdaptiveScheduler } from "./AdaptiveScheduler";
 
+// Widget de Ranking integrado no Dashboard
+import { DashboardRankingWidget } from "./DashboardRankingWidget";
+
 // Componentes de Análise por Áreas
 import {
   PerformanceStatsCards,
@@ -496,7 +499,10 @@ export function BetaStudentDashboard() {
 
         <motion.div variants={item}>
           <Card className="border-0 bg-gradient-to-br from-amber-500/20 to-yellow-500/10 hover:shadow-lg transition-all duration-300 group cursor-pointer"
-            onClick={() => navigate('/alunos/ranking')}>
+            onClick={() => {
+              // Scroll para seção de ranking integrada
+              document.getElementById('ranking-section')?.scrollIntoView({ behavior: 'smooth' });
+            }}>
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div className="p-3 rounded-2xl bg-amber-500/20 group-hover:bg-amber-500/30 transition-colors">
@@ -517,6 +523,7 @@ export function BetaStudentDashboard() {
       {/* SEÇÃO ANÁLISE POR ÁREAS - DADOS REAIS */}
       {/* ============================================ */}
       <motion.div
+        id="performance-section"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35 }}
@@ -566,6 +573,18 @@ export function BetaStudentDashboard() {
             />
           </CardContent>
         </Card>
+      </motion.div>
+
+      {/* ============================================ */}
+      {/* SEÇÃO RANKING INTEGRADO - PANTEÃO DOS CAMPEÕES */}
+      {/* ============================================ */}
+      <motion.div
+        id="ranking-section"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <DashboardRankingWidget />
       </motion.div>
 
       {/* Main Content Grid */}
@@ -745,7 +764,10 @@ export function BetaStudentDashboard() {
                 size="lg" 
                 variant="outline"
                 className="gap-2"
-                onClick={() => navigate('/alunos/desempenho')}
+                onClick={() => {
+                  // Scroll para seção de performance integrada
+                  document.getElementById('performance-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
               >
                 <TrendingUp className="w-4 h-4" />
                 Ver Evolução

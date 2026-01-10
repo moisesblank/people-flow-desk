@@ -320,19 +320,20 @@ const alunoMenuGroups: MenuGroup[] = [
   //     { title: "Calculadora Química", url: "/alunos/calculadora", icon: CalcIcon, area: "aluno-calculadora" },
   //   ],
   // },
-  {
-    id: "aluno-performance",
-    label: "🏆 PERFORMANCE",
-    image: alunosCentralImg,
-    color: "from-amber-500/80 via-yellow-500/80",
-    items: [
-      { title: "Meu Desempenho", url: "/alunos/desempenho", icon: BarChart3, area: "aluno-desempenho" },
-      { title: "Ranking Geral", url: "/alunos/ranking", icon: Trophy, area: "aluno-ranking", badge: "TOP" },
-      // HIDDEN_ITEMS: Conquistas e Metas de Estudo removidas do menu (mantidas no sistema)
-      // { title: "Conquistas", url: "/alunos/conquistas", icon: Medal, area: "aluno-conquistas" },
-      // { title: "Metas de Estudo", url: "/alunos/metas", icon: Target, area: "aluno-metas" },
-    ],
-  },
+  // HIDDEN_GROUP: Performance (Meu Desempenho e Ranking) integradas no /alunos/dashboard (mantidas no sistema)
+  // {
+  //   id: "aluno-performance",
+  //   label: "🏆 PERFORMANCE",
+  //   image: alunosCentralImg,
+  //   color: "from-amber-500/80 via-yellow-500/80",
+  //   items: [
+  //     { title: "Meu Desempenho", url: "/alunos/desempenho", icon: BarChart3, area: "aluno-desempenho" },
+  //     { title: "Ranking Geral", url: "/alunos/ranking", icon: Trophy, area: "aluno-ranking", badge: "TOP" },
+  //     // HIDDEN_ITEMS: Conquistas e Metas de Estudo removidas do menu (mantidas no sistema)
+  //     // { title: "Conquistas", url: "/alunos/conquistas", icon: Medal, area: "aluno-conquistas" },
+  //     // { title: "Metas de Estudo", url: "/alunos/metas", icon: Target, area: "aluno-metas" },
+  //   ],
+  // },
   {
     id: "aluno-comunidade",
     label: "💬 COMUNIDADE",
