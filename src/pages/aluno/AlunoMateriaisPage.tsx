@@ -1,6 +1,7 @@
 // ============================================
 // 📄 MATERIAIS DO ALUNO - Biblioteca de PDFs
 // Visual Netflix Ultra Premium + Year 2300
+// Organização: CONTEUDISTA → 5 MACROS → MICROS
 // Tecnologia: PDF.js + Signed URLs + Watermarks
 // ============================================
 
@@ -16,13 +17,21 @@ import {
   ChevronDown,
   BookOpen,
   Filter,
-  Loader2
+  Loader2,
+  Brain,
+  HelpCircle,
+  Atom,
+  FlaskConical,
+  Beaker,
+  Leaf,
+  Dna,
+  FolderOpen
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -35,10 +44,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { MaterialViewer } from '@/components/materials/MaterialViewer';
+import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
 
 // ============================================
 // TIPOS
@@ -49,6 +60,9 @@ interface Material {
   title: string;
   description?: string;
   category: string;
+  content_type: string;
+  macro?: string;
+  micro?: string;
   total_pages: number;
   view_count: number;
   download_count: number;
@@ -59,24 +73,28 @@ interface Material {
 }
 
 // ============================================
-// CATEGORIAS
+// CONFIGURAÇÕES
 // ============================================
 
-const CATEGORIES = [
-  { value: 'apostilas', label: '📚 Apostilas', color: 'from-blue-500 to-cyan-500' },
-  { value: 'resumos', label: '📋 Resumos', color: 'from-emerald-500 to-green-500' },
-  { value: 'exercicios', label: '✏️ Exercícios', color: 'from-amber-500 to-orange-500' },
-  { value: 'simulados', label: '📝 Simulados', color: 'from-purple-500 to-violet-500' },
-  { value: 'mapas_mentais', label: '🧠 Mapas Mentais', color: 'from-pink-500 to-rose-500' },
-  { value: 'formulas', label: '🔬 Fórmulas', color: 'from-indigo-500 to-blue-500' },
-  { value: 'tabelas', label: '📊 Tabelas', color: 'from-teal-500 to-cyan-500' },
-  { value: 'revisao', label: '🔄 Revisão', color: 'from-red-500 to-pink-500' },
-  { value: 'extras', label: '⭐ Extras', color: 'from-yellow-500 to-amber-500' },
-  { value: 'outros', label: '📁 Outros', color: 'from-gray-500 to-slate-500' },
+const CONTENT_TYPES = [
+  { value: 'mapa_mental', label: '🧠 Mapas Mentais', icon: Brain, color: 'from-pink-500 to-rose-500' },
+  { value: 'questoes', label: '❓ Questões', icon: HelpCircle, color: 'from-blue-500 to-cyan-500' },
+  { value: 'resumo', label: '📋 Resumos', icon: FileText, color: 'from-emerald-500 to-green-500' },
+  { value: 'formula', label: '🔬 Fórmulas', icon: FlaskConical, color: 'from-purple-500 to-violet-500' },
+  { value: 'tabela', label: '📊 Tabelas', icon: FileText, color: 'from-amber-500 to-orange-500' },
+  { value: 'outros', label: '📁 Outros', icon: FolderOpen, color: 'from-gray-500 to-slate-500' },
 ];
 
+const MACRO_CONFIG: Record<string, { icon: React.ElementType; color: string; gradient: string; label: string }> = {
+  'quimica_geral': { icon: Atom, color: 'text-amber-500', gradient: 'from-amber-500 to-orange-500', label: 'Química Geral' },
+  'fisico_quimica': { icon: FlaskConical, color: 'text-cyan-500', gradient: 'from-cyan-500 to-blue-500', label: 'Físico-Química' },
+  'quimica_organica': { icon: Beaker, color: 'text-purple-500', gradient: 'from-purple-500 to-violet-500', label: 'Química Orgânica' },
+  'quimica_ambiental': { icon: Leaf, color: 'text-green-500', gradient: 'from-green-500 to-emerald-500', label: 'Química Ambiental' },
+  'bioquimica': { icon: Dna, color: 'text-pink-500', gradient: 'from-pink-500 to-rose-500', label: 'Bioquímica' },
+};
+
 // ============================================
-// MATERIAL CARD
+// MATERIAL CARD (Netflix Style)
 // ============================================
 
 interface MaterialCardProps {
@@ -85,53 +103,64 @@ interface MaterialCardProps {
 }
 
 const MaterialCard = memo(function MaterialCard({ material, onView }: MaterialCardProps) {
+  const macroConfig = MACRO_CONFIG[material.macro || ''];
+  const MacroIcon = macroConfig?.icon || Atom;
+  
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: 1.03, y: -5 }}
       transition={{ duration: 0.2 }}
     >
       <Card 
-        className="overflow-hidden cursor-pointer group hover:shadow-xl transition-all duration-300 border-0 bg-card/50 backdrop-blur-sm"
+        className="overflow-hidden cursor-pointer group hover:shadow-2xl transition-all duration-300 border-0 bg-card/80 backdrop-blur-sm hover:ring-2 hover:ring-primary/30"
         onClick={onView}
       >
         <CardContent className="p-0">
-          {/* Cover / Icon */}
-          <div className="relative h-32 bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-            <FileText className="w-16 h-16 text-primary/50 group-hover:scale-110 transition-transform" />
-            {material.watermark_enabled && (
-              <Badge className="absolute top-2 right-2 bg-amber-500/90 text-white border-0 gap-1">
-                <Shield className="w-3 h-3" />
-                Protegido
-              </Badge>
-            )}
-            {material.is_premium && (
-              <Badge className="absolute top-2 left-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 gap-1">
-                <Sparkles className="w-3 h-3" />
-                Premium
-              </Badge>
-            )}
+          {/* Cover / Gradient Header */}
+          <div className={cn(
+            "relative h-28 bg-gradient-to-br flex items-center justify-center",
+            macroConfig?.gradient || 'from-primary/20 to-primary/5'
+          )}>
+            <MacroIcon className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform" />
+            
+            {/* Badges */}
+            <div className="absolute top-2 right-2 flex flex-col gap-1">
+              {material.watermark_enabled && (
+                <Badge className="bg-black/50 text-white border-0 text-xs gap-1">
+                  <Shield className="w-3 h-3" />
+                </Badge>
+              )}
+              {material.is_premium && (
+                <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 text-xs gap-1">
+                  <Sparkles className="w-3 h-3" />
+                </Badge>
+              )}
+            </div>
+
+            {/* Content Type Badge */}
+            <Badge className="absolute bottom-2 left-2 bg-black/60 text-white border-0 text-xs">
+              {material.content_type === 'mapa_mental' ? '🧠 Mapa Mental' : 
+               material.content_type === 'questoes' ? '❓ Questões' : 
+               material.content_type}
+            </Badge>
           </div>
 
           {/* Info */}
           <div className="p-4 space-y-2">
-            <h3 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+            <h3 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors text-sm">
               {material.title}
             </h3>
-            {material.description && (
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {material.description}
+            {material.micro && (
+              <p className="text-xs text-muted-foreground line-clamp-1">
+                {material.micro}
               </p>
             )}
-            <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground pt-1">
               <span className="flex items-center gap-1">
                 <Eye className="w-3 h-3" />
                 {material.view_count || 0}
-              </span>
-              <span className="flex items-center gap-1">
-                <Download className="w-3 h-3" />
-                {material.download_count || 0}
               </span>
               {material.total_pages > 0 && (
                 <span className="flex items-center gap-1">
@@ -148,23 +177,29 @@ const MaterialCard = memo(function MaterialCard({ material, onView }: MaterialCa
 });
 
 // ============================================
-// CATEGORY SECTION
+// MACRO SECTION (Collapsible Netflix Style)
 // ============================================
 
-interface CategorySectionProps {
-  category: typeof CATEGORIES[0];
+interface MacroSectionProps {
+  macroValue: string;
   materials: Material[];
   onViewMaterial: (m: Material) => void;
   defaultOpen?: boolean;
 }
 
-const CategorySection = memo(function CategorySection({ 
-  category, 
+const MacroSection = memo(function MacroSection({ 
+  macroValue, 
   materials, 
   onViewMaterial,
   defaultOpen = false 
-}: CategorySectionProps) {
+}: MacroSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const config = MACRO_CONFIG[macroValue] || { 
+    icon: Atom, 
+    gradient: 'from-gray-500 to-slate-500', 
+    label: 'Outros' 
+  };
+  const Icon = config.icon;
 
   if (materials.length === 0) return null;
 
@@ -176,27 +211,29 @@ const CategorySection = memo(function CategorySection({
           className="w-full"
         >
           <Card className={cn(
-            "cursor-pointer overflow-hidden transition-all duration-300",
+            "cursor-pointer overflow-hidden transition-all duration-300 border-0",
             isOpen && "ring-2 ring-primary/20"
           )}>
             <div className={cn(
-              "h-16 md:h-20 bg-gradient-to-r",
-              category.color,
+              "h-20 md:h-24 bg-gradient-to-r",
+              config.gradient,
               "flex items-center justify-between px-4 md:px-6"
             )}>
               <div className="flex items-center gap-4">
-                <span className="text-2xl md:text-3xl">{category.label.split(' ')[0]}</span>
+                <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+                  <Icon className="w-8 h-8 text-white" />
+                </div>
                 <div>
-                  <h2 className="text-lg md:text-xl font-bold text-white">
-                    {category.label.split(' ').slice(1).join(' ')}
+                  <h2 className="text-xl md:text-2xl font-bold text-white">
+                    {config.label}
                   </h2>
                   <p className="text-white/80 text-sm">
-                    {materials.length} {materials.length === 1 ? 'material' : 'materiais'}
+                    {materials.length} {materials.length === 1 ? 'material' : 'materiais'} disponíveis
                   </p>
                 </div>
               </div>
               <ChevronDown className={cn(
-                "w-6 h-6 text-white transition-transform duration-300",
+                "w-8 h-8 text-white/80 transition-transform duration-300",
                 isOpen && "rotate-180"
               )} />
             </div>
@@ -208,7 +245,7 @@ const CategorySection = memo(function CategorySection({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-4"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pt-4"
         >
           {materials.map(material => (
             <MaterialCard
@@ -231,8 +268,10 @@ const AlunoMateriaisPage = memo(function AlunoMateriaisPage() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [contentTypeFilter, setContentTypeFilter] = useState<string>('all');
   const [viewingMaterial, setViewingMaterial] = useState<Material | null>(null);
+
+  const { macros } = useTaxonomyForSelects();
 
   // Buscar materiais
   const fetchMaterials = useCallback(async () => {
@@ -256,9 +295,8 @@ const AlunoMateriaisPage = memo(function AlunoMateriaisPage() {
   useEffect(() => {
     fetchMaterials();
 
-    // Realtime subscription - reflete em tempo real
     const channel = supabase
-      .channel('materials_aluno_changes')
+      .channel('materials_aluno_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'materials' }, () => {
         fetchMaterials();
       })
@@ -271,17 +309,18 @@ const AlunoMateriaisPage = memo(function AlunoMateriaisPage() {
   const filteredMaterials = useMemo(() => {
     return materials.filter(m => {
       const matchesSearch = m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           m.description?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = categoryFilter === 'all' || m.category === categoryFilter;
-      return matchesSearch && matchesCategory;
+                           m.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           m.micro?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesContentType = contentTypeFilter === 'all' || m.content_type === contentTypeFilter;
+      return matchesSearch && matchesContentType;
     });
-  }, [materials, searchQuery, categoryFilter]);
+  }, [materials, searchQuery, contentTypeFilter]);
 
-  // Agrupar por categoria
-  const materialsByCategory = useMemo(() => {
+  // Agrupar por MACRO
+  const materialsByMacro = useMemo(() => {
     const grouped: Record<string, Material[]> = {};
-    CATEGORIES.forEach(cat => {
-      grouped[cat.value] = filteredMaterials.filter(m => m.category === cat.value);
+    Object.keys(MACRO_CONFIG).forEach(macroKey => {
+      grouped[macroKey] = filteredMaterials.filter(m => m.macro === macroKey);
     });
     return grouped;
   }, [filteredMaterials]);
@@ -290,11 +329,9 @@ const AlunoMateriaisPage = memo(function AlunoMateriaisPage() {
   const handleViewMaterial = useCallback(async (material: Material) => {
     setViewingMaterial(material);
     
-    // Log de acesso e incrementar view_count
     try {
       const { data: userData } = await supabase.auth.getUser();
       
-      // Log de acesso
       await supabase.from('material_access_logs').insert({
         material_id: material.id,
         user_id: userData.user?.id,
@@ -302,7 +339,6 @@ const AlunoMateriaisPage = memo(function AlunoMateriaisPage() {
         user_email: userData.user?.email,
       });
 
-      // Incrementar view_count diretamente
       await supabase
         .from('materials')
         .update({ view_count: (material.view_count || 0) + 1 })
@@ -311,6 +347,14 @@ const AlunoMateriaisPage = memo(function AlunoMateriaisPage() {
       console.error('Erro ao registrar visualização:', e);
     }
   }, []);
+
+  // Stats
+  const stats = useMemo(() => ({
+    total: materials.length,
+    mapas: materials.filter(m => m.content_type === 'mapa_mental').length,
+    questoes: materials.filter(m => m.content_type === 'questoes').length,
+    macrosAtivos: Object.values(materialsByMacro).filter(arr => arr.length > 0).length,
+  }), [materials, materialsByMacro]);
 
   if (loading) {
     return (
@@ -342,24 +386,30 @@ const AlunoMateriaisPage = memo(function AlunoMateriaisPage() {
               <FileText className="w-8 h-8 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold">Materiais PDF</h1>
+              <h1 className="text-2xl md:text-3xl font-bold">Materiais de Estudo</h1>
               <p className="text-muted-foreground">
-                Apostilas, resumos e exercícios protegidos
+                Mapas mentais, questões e materiais organizados por área
               </p>
             </div>
           </div>
           
           {/* Stats */}
-          <div className="flex gap-6 mt-6">
+          <div className="flex flex-wrap gap-6 mt-6">
             <div>
-              <p className="text-3xl font-bold text-primary">{materials.length}</p>
+              <p className="text-3xl font-bold text-primary">{stats.total}</p>
               <p className="text-sm text-muted-foreground">Materiais</p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-emerald-500">
-                {CATEGORIES.filter(c => materialsByCategory[c.value]?.length > 0).length}
-              </p>
-              <p className="text-sm text-muted-foreground">Categorias</p>
+              <p className="text-3xl font-bold text-pink-500">{stats.mapas}</p>
+              <p className="text-sm text-muted-foreground">Mapas Mentais</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-blue-500">{stats.questoes}</p>
+              <p className="text-sm text-muted-foreground">Questões</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-emerald-500">{stats.macrosAtivos}</p>
+              <p className="text-sm text-muted-foreground">Áreas</p>
             </div>
           </div>
         </div>
@@ -376,26 +426,26 @@ const AlunoMateriaisPage = memo(function AlunoMateriaisPage() {
             className="pl-10"
           />
         </div>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-full sm:w-52">
+        <Select value={contentTypeFilter} onValueChange={setContentTypeFilter}>
+          <SelectTrigger className="w-full sm:w-56">
             <Filter className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Categoria" />
+            <SelectValue placeholder="Tipo de Conteúdo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas Categorias</SelectItem>
-            {CATEGORIES.map(cat => (
-              <SelectItem key={cat.value} value={cat.value}>
-                {cat.label}
+            <SelectItem value="all">Todos os Tipos</SelectItem>
+            {CONTENT_TYPES.map(ct => (
+              <SelectItem key={ct.value} value={ct.value}>
+                {ct.label}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* Categories */}
+      {/* Lista por MACRO (5 Áreas) */}
       <div className="space-y-4">
         {filteredMaterials.length === 0 ? (
-          <Card className="p-12 text-center">
+          <Card className="p-12 text-center border-0 bg-card/50">
             <FileText className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Nenhum material encontrado</h3>
             <p className="text-muted-foreground">
@@ -403,11 +453,11 @@ const AlunoMateriaisPage = memo(function AlunoMateriaisPage() {
             </p>
           </Card>
         ) : (
-          CATEGORIES.map((category, index) => (
-            <CategorySection
-              key={category.value}
-              category={category}
-              materials={materialsByCategory[category.value]}
+          Object.entries(MACRO_CONFIG).map(([macroKey, config], index) => (
+            <MacroSection
+              key={macroKey}
+              macroValue={macroKey}
+              materials={materialsByMacro[macroKey] || []}
               onViewMaterial={handleViewMaterial}
               defaultOpen={index === 0}
             />
