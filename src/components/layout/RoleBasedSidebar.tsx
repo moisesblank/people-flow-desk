@@ -353,7 +353,8 @@ const alunoMenuGroups: MenuGroup[] = [
     image: alunosCentralImg,
     color: "from-slate-500/80 via-gray-600/80",
     items: [
-      { title: "Minha Agenda", url: "/alunos/agenda", icon: Calendar, area: "aluno-agenda" },
+      // HIDDEN_ITEMS: Minha Agenda integrada ao /alunos/perfil (mantida no sistema)
+      // { title: "Minha Agenda", url: "/alunos/agenda", icon: Calendar, area: "aluno-agenda" },
       // HIDDEN_ITEMS: Certificados removido do menu (mantido no sistema)
       // { title: "Certificados", url: "/alunos/certificados", icon: Award, area: "aluno-certificados" },
       { title: "Meu Perfil", url: "/alunos/perfil", icon: User, area: "aluno-perfil" },

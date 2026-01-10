@@ -12,6 +12,7 @@ import { useGamification, useUserAchievements, getLevelInfo } from '@/hooks/useG
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { StudentDispatchSection } from '@/components/aluno/StudentDispatchSection';
+import { ProfileAgendaWidget } from '@/components/aluno/ProfileAgendaWidget';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -562,6 +563,9 @@ const ProfilePage = () => {
           </motion.div>
         </TabsContent>
       </Tabs>
+
+      {/* Widget de Agenda integrado */}
+      <ProfileAgendaWidget />
     </div>
   );
 };
