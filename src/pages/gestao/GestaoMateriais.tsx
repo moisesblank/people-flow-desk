@@ -1067,6 +1067,8 @@ const MacroSection = memo(function MacroSection({
 // COMPONENTE PRINCIPAL
 // ============================================
 
+const ITEMS_PER_PAGE = 20;
+
 const GestaoMateriais = memo(function GestaoMateriais() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1076,6 +1078,7 @@ const GestaoMateriais = memo(function GestaoMateriais() {
   const [microFilter, setMicroFilter] = useState<string>('all');
   const [uploadOpen, setUploadOpen] = useState(false);
   const [viewingMaterial, setViewingMaterial] = useState<Material | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { macros, getMicrosForSelect } = useTaxonomyForSelects();
   const microsForFilter = macroFilter && macroFilter !== 'all' ? getMicrosForSelect(macroFilter) : [];
@@ -1117,6 +1120,11 @@ const GestaoMateriais = memo(function GestaoMateriais() {
     return () => { supabase.removeChannel(channel); };
   }, [fetchMaterials]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, contentTypeFilter, macroFilter, microFilter]);
+
   // Filtros
   const filteredMaterials = useMemo(() => {
     return materials.filter(m => {
@@ -1129,16 +1137,23 @@ const GestaoMateriais = memo(function GestaoMateriais() {
     });
   }, [materials, searchQuery, contentTypeFilter, macroFilter, microFilter]);
 
-  // Agrupar por MACRO
+  // Paginação
+  const totalPages = Math.ceil(filteredMaterials.length / ITEMS_PER_PAGE);
+  const paginatedMaterials = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredMaterials.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredMaterials, currentPage]);
+
+  // Agrupar materiais PAGINADOS por MACRO
   const materialsByMacro = useMemo(() => {
     const grouped: Record<string, Material[]> = {};
     macros.forEach(m => {
-      grouped[m.value] = filteredMaterials.filter(mat => mat.macro === m.value);
+      grouped[m.value] = paginatedMaterials.filter(mat => mat.macro === m.value);
     });
     // Adicionar materiais sem macro
-    grouped['sem_macro'] = filteredMaterials.filter(m => !m.macro);
+    grouped['sem_macro'] = paginatedMaterials.filter(m => !m.macro);
     return grouped;
-  }, [filteredMaterials, macros]);
+  }, [paginatedMaterials, macros]);
 
   // Ações
   const handleStatusChange = async (id: string, newStatus: 'draft' | 'processing' | 'ready' | 'archived') => {
@@ -1307,6 +1322,62 @@ const GestaoMateriais = memo(function GestaoMateriais() {
         </Select>
       </div>
 
+      {/* Pagination Info */}
+      {filteredMaterials.length > 0 && (
+        <div className="flex items-center justify-between bg-muted/30 rounded-lg p-3">
+          <p className="text-sm text-muted-foreground">
+            Exibindo <span className="font-semibold text-foreground">{((currentPage - 1) * ITEMS_PER_PAGE) + 1}</span> a{' '}
+            <span className="font-semibold text-foreground">{Math.min(currentPage * ITEMS_PER_PAGE, filteredMaterials.length)}</span> de{' '}
+            <span className="font-semibold text-foreground">{filteredMaterials.length}</span> materiais
+          </p>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Anterior
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "ghost"}
+                      size="sm"
+                      className="w-9"
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Próximo
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Lista por MACRO */}
       <div className="space-y-4">
         {filteredMaterials.length === 0 ? (
@@ -1322,45 +1393,107 @@ const GestaoMateriais = memo(function GestaoMateriais() {
             </Button>
           </Card>
         ) : (
-          macros.map((macro, index) => (
-            <MacroSection
-              key={macro.value}
-              macroValue={macro.value}
-              macroLabel={macro.label}
-              materials={materialsByMacro[macro.value] || []}
-              onView={setViewingMaterial}
-              onStatusChange={handleStatusChange}
-              onDelete={handleDelete}
-              defaultOpen={index === 0}
-            />
-          ))
-        )}
+          <>
+            {/* Materiais sem MACRO (mostrar primeiro e sempre aberto) */}
+            {materialsByMacro['sem_macro']?.length > 0 && (
+              <Card className="border-amber-500/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500">
+                      <FolderOpen className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <span>Sem Macro Definido</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({materialsByMacro['sem_macro'].length} materiais)
+                      </span>
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Material</TableHead>
+                      <TableHead>Categoria</TableHead>
+                      <TableHead>Tags</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Views</TableHead>
+                      <TableHead>Data</TableHead>
+                      <TableHead className="w-12"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {materialsByMacro['sem_macro'].map(m => (
+                      <MaterialRow
+                        key={m.id}
+                        material={m}
+                        onView={() => setViewingMaterial(m)}
+                        onStatusChange={handleStatusChange}
+                        onDelete={handleDelete}
+                      />
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
 
-        {/* Materiais sem MACRO */}
-        {materialsByMacro['sem_macro']?.length > 0 && (
-          <Card className="p-4">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <FolderOpen className="w-5 h-5 text-muted-foreground" />
-                Sem Macro Definido
-              </CardTitle>
-            </CardHeader>
-            <Table>
-              <TableBody>
-                {materialsByMacro['sem_macro'].map(m => (
-                  <MaterialRow
-                    key={m.id}
-                    material={m}
-                    onView={() => setViewingMaterial(m)}
-                    onStatusChange={handleStatusChange}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </TableBody>
-            </Table>
-          </Card>
+            {/* Macros agrupados */}
+            {macros.map((macro, index) => (
+              <MacroSection
+                key={macro.value}
+                macroValue={macro.value}
+                macroLabel={macro.label}
+                materials={materialsByMacro[macro.value] || []}
+                onView={setViewingMaterial}
+                onStatusChange={handleStatusChange}
+                onDelete={handleDelete}
+                defaultOpen={materialsByMacro['sem_macro']?.length === 0 && index === 0}
+              />
+            ))}
+          </>
         )}
       </div>
+
+      {/* Pagination Bottom */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(1)}
+            disabled={currentPage === 1}
+          >
+            Primeira
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+          >
+            Anterior
+          </Button>
+          <span className="text-sm px-4">
+            Página <span className="font-semibold">{currentPage}</span> de <span className="font-semibold">{totalPages}</span>
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Próximo
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(totalPages)}
+            disabled={currentPage === totalPages}
+          >
+            Última
+          </Button>
+        </div>
+      )}
 
       {/* Upload Dialog */}
       <UploadDialog
