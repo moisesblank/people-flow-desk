@@ -104,6 +104,7 @@ const BOOK_COVERS_BY_INDEX: Record<number, string> = {
 interface WebBookLibraryProps {
   onBookSelect: (bookId: string) => void;
   externalCategory?: string | null;
+  targetBookId?: string | null; // Auto-open section containing this book
   className?: string;
 }
 
@@ -347,6 +348,8 @@ interface BookSectionProps {
   isHighEnd: boolean;
   accentColor: 'red' | 'amber' | 'emerald' | 'cyan' | 'blue' | 'yellow';
   defaultOpen?: boolean;
+  targetBookId?: string | null; // Auto-open if this book is in this section
+  categoryKey: string; // For scroll-to-view
 }
 
 const BookSection = memo(function BookSection({ 
@@ -356,9 +359,30 @@ const BookSection = memo(function BookSection({
   onBookSelect, 
   isHighEnd,
   accentColor,
-  defaultOpen = true
+  defaultOpen = true,
+  targetBookId,
+  categoryKey
 }: BookSectionProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  // Auto-open if this section contains the target book
+  const containsTargetBook = targetBookId ? books.some(b => b.id === targetBookId) : false;
+  const shouldBeOpen = containsTargetBook || defaultOpen;
+  const [isOpen, setIsOpen] = useState(shouldBeOpen);
+  
+  // Ref for scroll-to-view
+  const sectionRef = React.useRef<HTMLDivElement>(null);
+  
+  // Effect to auto-open and scroll when targetBookId changes
+  React.useEffect(() => {
+    if (containsTargetBook && !isOpen) {
+      setIsOpen(true);
+    }
+    // Scroll into view after opening
+    if (containsTargetBook && sectionRef.current) {
+      setTimeout(() => {
+        sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  }, [containsTargetBook, targetBookId]);
   
   if (books.length === 0) return null;
 
@@ -434,13 +458,17 @@ const BookSection = memo(function BookSection({
   const colors = colorClasses[accentColor];
 
   return (
-    <Card className={cn(
-      "group/card relative overflow-hidden transition-all duration-500",
-      "bg-gradient-to-br from-[#0a0e14]/60 via-[#0f1419]/40 to-[#1a0a0a]/30",
-      "border shadow-md rounded-2xl",
-      colors.border.replace('/40', '/15').replace('/70', '/30'),
-      isHighEnd && colors.shadow.replace('/15', '/5').replace('/40', '/15')
-    )}>
+    <Card 
+      ref={sectionRef}
+      className={cn(
+        "group/card relative overflow-hidden transition-all duration-500",
+        "bg-gradient-to-br from-[#0a0e14]/60 via-[#0f1419]/40 to-[#1a0a0a]/30",
+        "border shadow-md rounded-2xl",
+        colors.border.replace('/40', '/15').replace('/70', '/30'),
+        isHighEnd && colors.shadow.replace('/15', '/5').replace('/40', '/15')
+      )}
+      data-category={categoryKey}
+    >
       {/* Minimal corner accents (80% menos visível) */}
       <div className={cn("absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 rounded-tl-2xl pointer-events-none opacity-30", colors.corner.replace('/60', '/25'))} />
       <div className={cn("absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 rounded-br-2xl pointer-events-none opacity-30", colors.corner.replace('/60', '/25'))} />
@@ -598,6 +626,7 @@ const SortableBookCard = memo(function SortableBookCard({
 const WebBookLibrary = memo(function WebBookLibrary({ 
   onBookSelect,
   externalCategory,
+  targetBookId,
   className 
 }: WebBookLibraryProps) {
   const { books, isLoading, error, refreshBooks } = useWebBookLibrary();
@@ -1105,7 +1134,9 @@ const WebBookLibrary = memo(function WebBookLibrary({
               onBookSelect={onBookSelect}
               isHighEnd={isHighEnd}
               accentColor="red"
-              defaultOpen={true}
+              defaultOpen={!targetBookId}
+              targetBookId={targetBookId}
+              categoryKey="quimica_geral"
             />
 
             <BookSection
@@ -1116,6 +1147,8 @@ const WebBookLibrary = memo(function WebBookLibrary({
               isHighEnd={isHighEnd}
               accentColor="cyan"
               defaultOpen={false}
+              targetBookId={targetBookId}
+              categoryKey="quimica_organica"
             />
 
             <BookSection
@@ -1126,6 +1159,8 @@ const WebBookLibrary = memo(function WebBookLibrary({
               isHighEnd={isHighEnd}
               accentColor="emerald"
               defaultOpen={false}
+              targetBookId={targetBookId}
+              categoryKey="fisico_quimica"
             />
 
             <BookSection
@@ -1136,6 +1171,8 @@ const WebBookLibrary = memo(function WebBookLibrary({
               isHighEnd={isHighEnd}
               accentColor="blue"
               defaultOpen={false}
+              targetBookId={targetBookId}
+              categoryKey="revisao_ciclica"
             />
 
             <BookSection
@@ -1146,6 +1183,8 @@ const WebBookLibrary = memo(function WebBookLibrary({
               isHighEnd={isHighEnd}
               accentColor="yellow"
               defaultOpen={false}
+              targetBookId={targetBookId}
+              categoryKey="previsao_final"
             />
           </div>
         )}
