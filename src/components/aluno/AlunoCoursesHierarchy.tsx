@@ -942,7 +942,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
       {/* === VIDEO LESSONS GALLERY — NETFLIX PREMIUM === */}
       {isExpanded && (
         <div className={cn(
-          "relative mt-4 rounded-2xl overflow-hidden",
+          "relative mt-4 rounded-2xl overflow-visible",
           "bg-gradient-to-b from-[#0c1018] via-[#0a0e14] to-[#080c10]",
           "border border-slate-800/60",
           "shadow-2xl shadow-black/50",
