@@ -88,12 +88,12 @@ interface MaterialBookSectionProps {
 // 📂 MATERIAL BOOK SECTION
 // ============================================
 
-export const MaterialBookSection = memo(function MaterialBookSection({
+export const MaterialBookSection = memo(forwardRef<HTMLDivElement, MaterialBookSectionProps>(function MaterialBookSection({
   categoryKey,
   items,
   onItemSelect,
   defaultOpen = true
-}: MaterialBookSectionProps) {
+}, ref) {
   const { tier } = useConstitutionPerformance();
   const isHighEnd = tier === 'quantum' || tier === 'neural';
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -190,6 +190,6 @@ export const MaterialBookSection = memo(function MaterialBookSection({
       </CollapsibleContent>
     </Collapsible>
   );
-});
+}));
 
 export default MaterialBookSection;
