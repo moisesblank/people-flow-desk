@@ -86,6 +86,8 @@ interface WebBookAdmin {
   view_count: number;
   unique_readers: number;
   cover_url?: string;
+  description?: string;
+  tags?: string[];
 }
 
 // ============================================
@@ -440,6 +442,17 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
   const [previewBookId, setPreviewBookId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
+  // Edição de livro
+  const [editingBook, setEditingBook] = useState<WebBookAdmin | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    subtitle: '',
+    category: 'quimica_geral',
+    description: '',
+    tags: [] as string[],
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
   const { clearAllCache } = useCacheManager();
 
   // Carregar livros
@@ -514,6 +527,49 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
       loadBooks();
     } catch (err) {
       toast.error('Erro ao publicar');
+    }
+  };
+
+  // Abrir modal de edição
+  const handleOpenEdit = (book: WebBookAdmin) => {
+    setEditingBook(book);
+    setEditForm({
+      title: book.title,
+      subtitle: book.subtitle || '',
+      category: book.category || 'quimica_geral',
+      description: book.description || '',
+      tags: book.tags || [],
+    });
+  };
+
+  // Salvar edição
+  const handleSaveEdit = async () => {
+    if (!editingBook) return;
+    
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('web_books')
+        .update({
+          title: editForm.title.trim(),
+          subtitle: editForm.subtitle?.trim() || null,
+          category: editForm.category as "exercicios" | "fisico_quimica" | "mapas_mentais" | "outros" | "previsao_final" | "quimica_geral" | "quimica_organica" | "resumos" | "revisao_ciclica" | "simulados",
+          description: editForm.description?.trim() || null,
+          tags: editForm.tags.length > 0 ? editForm.tags : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', editingBook.id);
+
+      if (error) throw error;
+      
+      toast.success('Livro atualizado com sucesso!');
+      setEditingBook(null);
+      loadBooks();
+    } catch (err) {
+      console.error('[GestaoLivrosWeb] Erro ao salvar:', err);
+      toast.error('Erro ao salvar alterações');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -718,7 +774,7 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                               <Eye className="w-4 h-4 mr-2" />
                               Visualizar
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleOpenEdit(book)}>
                               <Edit className="w-4 h-4 mr-2" />
                               Editar
                             </DropdownMenuItem>
@@ -787,6 +843,103 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
         onClose={() => setShowUploadDialog(false)}
         onSuccess={loadBooks}
       />
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingBook} onOpenChange={(open) => !open && setEditingBook(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="w-5 h-5" />
+              Editar Livro
+            </DialogTitle>
+            <DialogDescription>
+              Atualize os dados do livro
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-title">Título *</Label>
+              <Input
+                id="edit-title"
+                value={editForm.title}
+                onChange={(e) => setEditForm(f => ({ ...f, title: e.target.value }))}
+                placeholder="Título do livro"
+                disabled={isSaving}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-subtitle">Subtítulo</Label>
+              <Input
+                id="edit-subtitle"
+                value={editForm.subtitle}
+                onChange={(e) => setEditForm(f => ({ ...f, subtitle: e.target.value }))}
+                placeholder="Subtítulo opcional"
+                disabled={isSaving}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-category">Categoria</Label>
+              <Select
+                value={editForm.category}
+                onValueChange={(value) => setEditForm(f => ({ ...f, category: value }))}
+                disabled={isSaving}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map(cat => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="edit-description">Descrição</Label>
+              <Textarea
+                id="edit-description"
+                value={editForm.description}
+                onChange={(e) => setEditForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="Descrição opcional"
+                rows={3}
+                disabled={isSaving}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit-tags">Tags</Label>
+              <TagInput
+                value={editForm.tags}
+                onChange={(tags) => setEditForm(f => ({ ...f, tags }))}
+                placeholder="Digite e pressione Enter..."
+                disabled={isSaving}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingBook(null)} disabled={isSaving}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={isSaving || !editForm.title.trim()}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Salvando...
+                </>
+              ) : (
+                'Salvar'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 });
