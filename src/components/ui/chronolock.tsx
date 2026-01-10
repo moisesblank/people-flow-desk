@@ -71,6 +71,10 @@ const variantStyles = {
   },
 };
 
+// 🎨 VISUAL INTENSITY: 30% reduction applied globally
+// Original defaults: blurIntensity=8, overlayOpacity=0.85
+// Reduced defaults: blurIntensity=5.6 (8 * 0.7), overlayOpacity=0.595 (0.85 * 0.7)
+
 export const Chronolock = memo(function Chronolock({
   children,
   message = "CONTEÚDO BLOQUEADO",
@@ -78,8 +82,8 @@ export const Chronolock = memo(function Chronolock({
   isLocked = true,
   releaseDate,
   className,
-  blurIntensity = 8,
-  overlayOpacity = 0.85,
+  blurIntensity = 5.6, // 30% reduction from 8
+  overlayOpacity = 0.595, // 30% reduction from 0.85
   variant = 'default',
   icon,
 }: ChronolockProps) {
@@ -103,7 +107,7 @@ export const Chronolock = memo(function Chronolock({
 
   return (
     <div className={cn("relative overflow-hidden rounded-lg", className)}>
-      {/* Conteúdo de fundo com blur */}
+      {/* Conteúdo de fundo com blur — 30% REDUCED */}
       <div 
         className="select-none pointer-events-none"
         style={{ 
@@ -114,7 +118,19 @@ export const Chronolock = memo(function Chronolock({
         {children}
       </div>
       
-      {/* Overlay escuro com gradiente */}
+      {/* 🔒 PERMANENT LOCK ICON — Always visible on top */}
+      <div className="absolute top-3 right-3 z-20 pointer-events-none">
+        <div className={cn(
+          "p-2 rounded-lg border backdrop-blur-sm",
+          "bg-black/40",
+          styles.border,
+          styles.iconBg
+        )}>
+          <Lock className={cn("w-5 h-5", styles.text)} />
+        </div>
+      </div>
+      
+      {/* Overlay escuro com gradiente — 30% REDUCED OPACITY */}
       <div 
         className={cn(
           "absolute inset-0 flex flex-col items-center justify-center",
@@ -184,7 +200,6 @@ export const Chronolock = memo(function Chronolock({
     </div>
   );
 });
-
 // Atalho para bloqueio por data
 export const DateLock = memo(function DateLock({
   children,
