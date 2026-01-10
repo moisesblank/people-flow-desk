@@ -621,33 +621,41 @@ const LazyVideoRow = memo(function LazyVideoRow({
       {/* Only render cards when visible */}
       {isVisible ? (
         <div className="relative group/row">
-          {/* Gradient Edges */}
-          <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[#0a0e14] to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[#0a0e14] to-transparent z-10 pointer-events-none" />
-          
-          {/* Scrollable Container */}
+          {/* Gradient Edges (visual only — never allowed to hide content) */}
+          <div className="absolute left-0 top-0 bottom-0 w-10 sm:w-12 bg-gradient-to-r from-[#0a0e14] to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-10 sm:w-12 bg-gradient-to-l from-[#0a0e14] to-transparent z-10 pointer-events-none" />
+
+          {/* Scrollable Container (owns horizontal scroll + guarantees end-safe-area) */}
           <div
             ref={scrollRef}
-            className="flex gap-4 px-6 overflow-x-auto pb-2 scrollbar-none [&::-webkit-scrollbar]:hidden scroll-smooth"
-            style={{ scrollbarWidth: 'none' }}
+            className="flex gap-4 pl-6 pr-2 overflow-x-auto overflow-y-visible pb-4 scrollbar-none [&::-webkit-scrollbar]:hidden scroll-smooth"
+            style={{
+              scrollbarWidth: 'none',
+              paddingRight: 'max(2.5rem, env(safe-area-inset-right))',
+              paddingLeft: 'max(1.5rem, env(safe-area-inset-left))',
+              scrollPaddingRight: 'max(2.5rem, env(safe-area-inset-right))',
+              scrollPaddingLeft: 'max(1.5rem, env(safe-area-inset-left))',
+            }}
           >
             {rowLessons.map((lesson, idx) => (
-              <NetflixEpisodeCard 
-                key={lesson.id} 
-                lesson={lesson} 
+              <NetflixEpisodeCard
+                key={lesson.id}
+                lesson={lesson}
                 index={rowIndex * 8 + idx}
                 onPlay={() => onPlayLesson(lesson)}
                 isLowEnd={isLowEnd}
               />
             ))}
+            <div aria-hidden className="w-12 sm:w-16 flex-shrink-0" />
           </div>
         </div>
       ) : (
         /* Skeleton placeholder while loading */
-        <div className="flex gap-4 px-6 overflow-hidden">
+        <div className="flex gap-4 pl-6 pr-2 overflow-hidden">
           {Array.from({ length: Math.min(6, rowLessons.length) }, (_, i) => (
             <div key={i} className="flex-shrink-0 w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px] rounded-xl bg-slate-800/50 animate-pulse aspect-[3/4]" />
           ))}
+          <div aria-hidden className="w-12 sm:w-16 flex-shrink-0" />
         </div>
       )}
     </div>
