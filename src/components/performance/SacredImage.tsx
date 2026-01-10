@@ -16,6 +16,7 @@ import {
   detectTier,
   getImageQuality,
   getRootMargin,
+  IMAGE_CONSTITUTION,
   type PerformanceTier 
 } from "@/lib/constitution/LEI_I_PERFORMANCE";
 
@@ -80,6 +81,27 @@ export const SacredImage = memo(function SacredImage({
       format: 'auto',
     });
   }, [src, width, height, effectiveQuality]);
+  
+  // 🏛️ LEI I Art. 10 - Gerar srcset completo com breakpoints constitucionais
+  const generateSrcSet = useMemo(() => {
+    // Só gera srcset para URLs do Supabase que suportam transformações
+    if (!src.includes('supabase')) return undefined;
+    
+    const breakpoints = IMAGE_CONSTITUTION.SRCSET; // [320, 480, 640, 768, 1024, 1280, 1536, 1920]
+    
+    return (format?: 'avif' | 'webp') => {
+      return breakpoints
+        .map(bp => {
+          const url = getOptimizedImageUrl(src, {
+            width: bp,
+            quality: effectiveQuality,
+            format: format || 'auto',
+          });
+          return `${url} ${bp}w`;
+        })
+        .join(', ');
+    };
+  }, [src, effectiveQuality]);
   
   // Placeholder gradient
   const blurPlaceholder = useMemo(() => {
@@ -167,16 +189,19 @@ export const SacredImage = memo(function SacredImage({
       {/* Imagem principal - só renderiza quando em view */}
       {isInView && !hasError && (
         <picture>
-          {/* DOGMA II.2 - Fontes modernas com fallback */}
-          {getImageFormatSupport().avif && src.includes('supabase') && (
+          {/* 🏛️ LEI I Art. 10 - AVIF com srcset completo multi-resolução */}
+          {getImageFormatSupport().avif && src.includes('supabase') && generateSrcSet && (
             <source 
-              srcSet={getOptimizedImageUrl(src, { width, height, quality: effectiveQuality, format: 'avif' })} 
+              srcSet={generateSrcSet('avif')} 
+              sizes={sizes || '100vw'}
               type="image/avif" 
             />
           )}
-          {getImageFormatSupport().webp && src.includes('supabase') && (
+          {/* 🏛️ LEI I Art. 10 - WebP com srcset completo multi-resolução */}
+          {getImageFormatSupport().webp && src.includes('supabase') && generateSrcSet && (
             <source 
-              srcSet={getOptimizedImageUrl(src, { width, height, quality: effectiveQuality, format: 'webp' })} 
+              srcSet={generateSrcSet('webp')} 
+              sizes={sizes || '100vw'}
               type="image/webp" 
             />
           )}
@@ -186,7 +211,9 @@ export const SacredImage = memo(function SacredImage({
             alt={alt}
             width={width}
             height={height}
-            sizes={sizes}
+            // 🏛️ LEI I Art. 10 - srcset fallback para formatos não-modernos
+            srcSet={generateSrcSet?.() || undefined}
+            sizes={sizes || '100vw'}
             // DOGMA III.1 - Native lazy loading
             loading={priority ? "eager" : "lazy"}
             decoding="async"
