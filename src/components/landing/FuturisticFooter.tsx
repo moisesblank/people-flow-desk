@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
+import { SacredImage } from "@/components/performance/SacredImage";
 
 const footerLinks = {
   cursos: [
@@ -151,17 +152,19 @@ export const FuturisticFooter = () => {
           {/* Brand column */}
           <div className="col-span-2 lg:col-span-2">
             {/* 🚀 OTIMIZAÇÃO: width/height explícitos para evitar CLS */}
-            <motion.img 
-              src={logoMoises} 
-              alt="Moisés Medeiros" 
-              width={134}
-              height={56}
-              className="h-14 mb-6"
+            <motion.div
               whileHover={{ scale: 1.05 }}
-              loading="lazy"
-              decoding="async"
-              style={{ filter: 'drop-shadow(0 0 20px rgba(220, 38, 38, 0.3))' }}
-            />
+              className="h-14 mb-6 w-[134px]"
+            >
+              <SacredImage 
+                src={logoMoises} 
+                alt="Moisés Medeiros" 
+                width={134}
+                height={56}
+                className="h-14 w-auto"
+                priority
+              />
+            </motion.div>
             <p className="text-gray-400 mb-8 max-w-sm leading-relaxed">
               O curso de Química que mais aprova no Brasil. 
               Transformando sonhos em aprovações há mais de 15 anos com tecnologia do futuro.

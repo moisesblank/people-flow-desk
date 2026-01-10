@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   RefreshCw
 } from "lucide-react";
+import { SacredImage } from "@/components/performance/SacredImage";
 
 // ============================================
 // WATERMARK OVERLAY (CSS Grid dinâmico)
@@ -329,20 +330,22 @@ export const SanctumAssetViewer = memo(function SanctumAssetViewer({
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
               </div>
             )}
-            <img
-              src={currentPageUrl}
-              alt={`Página ${currentPage} de ${manifest.totalPages}`}
+            <div 
               className={cn(
-                "max-w-full max-h-[600px] object-contain transition-opacity duration-300",
-                "pointer-events-none",
+                "max-w-full max-h-[600px] transition-opacity duration-300 pointer-events-none select-none",
                 imageLoaded ? "opacity-100" : "opacity-0"
               )}
-              onLoad={handleImageLoad}
-              onError={() => setImageLoaded(true)}
               draggable={false}
-              loading="lazy"
-              decoding="async"
-            />
+            >
+              <SacredImage
+                src={currentPageUrl}
+                alt={`Página ${currentPage} de ${manifest.totalPages}`}
+                className="max-w-full max-h-[600px]"
+                objectFit="contain"
+                onLoad={handleImageLoad}
+                onError={() => setImageLoaded(true)}
+              />
+            </div>
           </div>
         )}
         

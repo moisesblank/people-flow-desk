@@ -44,6 +44,7 @@ import { EditableText } from "@/components/editor/EditableText";
 import { EditableImage } from "@/components/editor/EditableImage";
 import { EditableLink } from "@/components/editor/EditableLink";
 import { EditModeToggle } from "@/components/editor/EditModeToggle";
+import { SacredImage } from "@/components/performance/SacredImage";
 
 // ============================================
 // ANIMATED COUNTER COMPONENT
@@ -490,10 +491,12 @@ export default function LandingPage() {
                 <div className="relative wine-card p-8 md:p-10">
                   {/* Professor Photo */}
                   <div className="relative mx-auto w-72 h-72 md:w-80 md:h-80 rounded-2xl overflow-hidden border-4 border-primary/40 mb-6 shadow-2xl shadow-primary/30">
-                    <img 
+                    <SacredImage 
                       src={professorPhoto} 
                       alt="Professor Moisés Medeiros" 
-                      className="w-full h-full object-cover object-center scale-110"
+                      className="w-full h-full"
+                      objectFit="cover"
+                      priority
                     />
                     <motion.div
                       className="absolute -bottom-2 -right-2 bg-stats-green rounded-full p-3 shadow-lg border-2 border-background"

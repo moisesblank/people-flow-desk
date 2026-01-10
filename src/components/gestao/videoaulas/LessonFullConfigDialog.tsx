@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SacredImage } from "@/components/performance/SacredImage";
 
 type VideoProvider = 'panda' | 'youtube' | 'vimeo' | 'upload';
 
@@ -495,10 +496,13 @@ export function LessonFullConfigDialog({ lesson, open, onOpenChange }: LessonFul
                       onChange={(e) => setFormData(prev => ({ ...prev, thumbnail_url: e.target.value }))}
                     />
                     {formData.thumbnail_url && (
-                      <img 
+                      <SacredImage 
                         src={formData.thumbnail_url} 
                         alt="Thumbnail preview" 
-                        className="w-32 h-20 object-cover rounded border"
+                        width={128}
+                        height={80}
+                        className="w-32 h-20 rounded border"
+                        objectFit="cover"
                       />
                     )}
                   </div>

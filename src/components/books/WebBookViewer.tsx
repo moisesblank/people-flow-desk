@@ -35,6 +35,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { SacredImage } from '@/components/performance/SacredImage';
 import { PdfPageViewer } from './PdfPageViewer';
 import { ReadingModeToolbar, ToolMode } from './ReadingModeToolbar';
 import { useBookAnnotations } from '@/hooks/useBookAnnotations';
@@ -1224,19 +1225,20 @@ export const WebBookViewer = memo(function WebBookViewer({
               
               {currentPageUrl ? (
                 <>
-                  <img
-                    src={currentPageUrl}
-                    alt={`Página ${currentPage}`}
-                    className="max-h-[calc(100vh-180px)] max-w-[95vw] lg:max-w-[85vw] xl:max-w-[80vw] 2xl:max-w-[75vw] w-auto h-auto rounded-lg shadow-2xl object-contain"
-                    style={{ 
-                      pointerEvents: 'none',
-                      imageRendering: 'auto',
-                    }}
-                    onLoad={() => setImageLoading(false)}
-                    onError={() => setImageLoading(false)}
+                  <div 
+                    className="max-h-[calc(100vh-180px)] max-w-[95vw] lg:max-w-[85vw] xl:max-w-[80vw] 2xl:max-w-[75vw] w-auto h-auto rounded-lg shadow-2xl pointer-events-none select-none"
                     draggable={false}
                     onContextMenu={(e) => e.preventDefault()}
-                  />
+                  >
+                    <SacredImage
+                      src={currentPageUrl}
+                      alt={`Página ${currentPage}`}
+                      className="w-full h-full rounded-lg"
+                      objectFit="contain"
+                      onLoad={() => setImageLoading(false)}
+                      onError={() => setImageLoading(false)}
+                    />
+                  </div>
                   
                   {/* 🎨 CANVAS DE DESENHO - Só ativo em Modo Leitura */}
                   {/* ✅ STAGGER: Overlays só montam após Frame 2 */}

@@ -7,6 +7,7 @@
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { SacredImage } from "@/components/performance/SacredImage";
 
 interface SidebarGroupBannerProps {
   title: string;
@@ -57,14 +58,14 @@ export function SidebarGroupBanner({
       )}
     >
       {/* Background Image */}
-      <motion.img 
-        src={image} 
-        alt={title}
-        className="absolute inset-0 w-full h-full object-cover"
-        initial={{ scale: 1.1 }}
-        whileHover={{ scale: 1.15 }}
-        transition={{ duration: 0.5 }}
-      />
+      <div className="absolute inset-0">
+        <SacredImage 
+          src={image} 
+          alt={title}
+          className="w-full h-full"
+          objectFit="cover"
+        />
+      </div>
       
       {/* Gradient Overlay */}
       <div className={cn(

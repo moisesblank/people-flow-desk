@@ -9,6 +9,7 @@ import { LucideIcon, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "./button";
 import { Badge } from "./badge";
 import { cn } from "@/lib/utils";
+import { SacredImage } from "@/components/performance/SacredImage";
 
 interface PageHeroProps {
   title: string;
@@ -89,10 +90,11 @@ export function PageHero({
       {/* Background Image */}
       {image && (
         <>
-          <img
+          <SacredImage
             src={image}
-            alt={imageAlt}
-            className="absolute inset-0 w-full h-full object-cover"
+            alt={imageAlt || "Hero background"}
+            className="absolute inset-0 w-full h-full"
+            objectFit="cover"
           />
           <div className={cn("absolute inset-0", overlayClasses[overlay])} />
         </>

@@ -11,6 +11,7 @@ import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, Side
 import { Badge } from "@/components/ui/badge";
 import { NavLink } from "@/components/NavLink";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { SacredImage } from "@/components/performance/SacredImage";
 type MenuItem = {
   title: string;
   url: string;
@@ -411,7 +412,7 @@ export function SidebarNavDnd(props: {
             }}>
                       <SidebarGroup>
                         <div className="relative mb-2 rounded-lg overflow-hidden h-12 group">
-                          <img src={group.image} alt={group.label} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" />
+                          <SacredImage src={group.image} alt={group.label} className="w-full h-full opacity-60 group-hover:opacity-80 transition-opacity" objectFit="cover" />
                           <div className={`absolute inset-0 bg-gradient-to-r ${group.color} to-transparent flex items-center px-3`}>
                             {showEditControls && <div className="flex items-center gap-1 mr-2">
                                 <Tooltip>

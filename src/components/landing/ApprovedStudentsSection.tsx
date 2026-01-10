@@ -13,6 +13,7 @@ import {
   Zap,
   Medal
 } from "lucide-react";
+import { SacredImage } from "@/components/performance/SacredImage";
 
 // Import approved students image
 import alunosImage from "@/assets/alunos-aprovados.jpg";
@@ -192,10 +193,11 @@ export const ApprovedStudentsSection = () => {
           className="mb-12 max-w-4xl mx-auto"
         >
           <div className="relative rounded-3xl overflow-hidden border-2 border-yellow-500/30">
-            <img 
+            <SacredImage 
               src={alunosImage} 
               alt="Alunos Aprovados" 
               className="w-full h-auto"
+              objectFit="cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4 text-center">

@@ -20,6 +20,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getThumbnailUrl } from "@/lib/video/thumbnails";
+import { SacredImage } from "@/components/performance/SacredImage";
 
 // Configuração de virtualização
 const GRID_ITEM_HEIGHT = 340; // Altura aproximada do card em grid
@@ -117,15 +118,12 @@ const GridItem = memo(function GridItem({
         onClick={() => onPreview(lesson)}
       >
         {thumbnailUrl ? (
-          <img 
+          <SacredImage 
             src={thumbnailUrl} 
             alt={lesson.title}
-            className="w-full h-full object-cover transition-transform group-hover:scale-105"
-            loading="lazy"
-            onError={(e) => {
-              // Fallback: esconder imagem se falhar
-              e.currentTarget.style.display = 'none';
-            }}
+            className="w-full h-full transition-transform group-hover:scale-105"
+            objectFit="cover"
+            onError={() => {}}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
