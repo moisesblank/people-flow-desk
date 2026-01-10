@@ -109,7 +109,8 @@ interface WebBookAdmin {
   updated_at: string;
   view_count: number;
   unique_readers: number;
-  cover_url?: string;
+  cover_url?: string | null;
+  cover_path?: string | null;
   description?: string;
   tags?: string[];
   original_filename?: string;
@@ -765,6 +766,87 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
     }
   }, [loadBooks, clearAllCache]);
 
+  // ============================================
+  // CAPA DO LIVRO — Upload por livro (reflete no /alunos/livros-web)
+  // Bucket público: book-category-assets
+  // ============================================
+  const handleUploadCover = useCallback(async (bookId: string, file: File) => {
+    try {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Selecione uma imagem (PNG/JPG/WebP)');
+        return;
+      }
+
+      const extRaw = file.name.split('.').pop()?.toLowerCase();
+      const ext = extRaw && ['png', 'jpg', 'jpeg', 'webp'].includes(extRaw) ? extRaw : 'png';
+      const coverPath = `web-books/${bookId}/cover.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('book-category-assets')
+        .upload(coverPath, file, {
+          upsert: true,
+          contentType: file.type || 'image/png',
+          cacheControl: '3600',
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicData } = supabase.storage
+        .from('book-category-assets')
+        .getPublicUrl(coverPath);
+
+      const coverUrl = publicData.publicUrl;
+
+      const { error: updateError } = await supabase
+        .from('web_books')
+        .update({
+          cover_url: coverUrl,
+          cover_path: coverPath,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', bookId);
+
+      if (updateError) throw updateError;
+
+      toast.success('Capa atualizada!');
+      await clearAllCache(true);
+      loadBooks();
+    } catch (err) {
+      console.error('[CoverUpload] Erro:', err);
+      toast.error('Erro ao enviar capa');
+    }
+  }, [clearAllCache, loadBooks]);
+
+  const handleRemoveCover = useCallback(async (bookId: string) => {
+    try {
+      const book = books.find(b => b.id === bookId);
+
+      // 1) Remover arquivo no storage (se soubermos o path)
+      if (book?.cover_path) {
+        await supabase.storage.from('book-category-assets').remove([book.cover_path]);
+      }
+
+      // 2) Zerar no banco
+      const { error } = await supabase
+        .from('web_books')
+        .update({
+          cover_url: null,
+          cover_path: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', bookId);
+
+      if (error) throw error;
+
+      toast.success('Capa removida');
+      await clearAllCache(true);
+      loadBooks();
+    } catch (err) {
+      console.error('[CoverRemove] Erro:', err);
+      toast.error('Erro ao remover capa');
+    }
+  }, [books, clearAllCache, loadBooks]);
+
   // Abrir modal de edição
   const handleOpenEdit = (book: WebBookAdmin) => {
     setEditingBook(book);
@@ -964,6 +1046,8 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                         categories={CATEGORIES}
                         statusMap={STATUS_MAP}
                         onInlineUpdate={handleInlineUpdate}
+                        onUploadCover={handleUploadCover}
+                        onRemoveCover={handleRemoveCover}
                         onPreview={(id) => {
                           setPreviewBookId(id);
                           setPreviewOpen(true);

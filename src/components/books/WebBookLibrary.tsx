@@ -461,7 +461,8 @@ const BookSection = memo(function BookSection({
                   key={book.id}
                   book={book}
                   index={idx}
-                  coverUrl={BOOK_COVERS_BY_INDEX[idx] || book.coverUrl || '/placeholder.svg'}
+                  // Preferir capa definida no backend (gestão) e usar modelo apenas como fallback
+                  coverUrl={book.coverUrl || BOOK_COVERS_BY_INDEX[idx] || '/placeholder.svg'}
                   onSelect={() => onBookSelect(book.id)}
                   isHighEnd={isHighEnd}
                 />
