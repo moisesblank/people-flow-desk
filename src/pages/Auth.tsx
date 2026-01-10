@@ -1984,7 +1984,7 @@ export default function Auth() {
             style={{ animationDelay: "1s", animationFillMode: "backwards" }}
           >
             <div className="w-8 h-px bg-gradient-to-r from-transparent to-primary/50" />
-            <span className="text-xs uppercase tracking-widest">Sistema de Gestão</span>
+            <span className="text-xs uppercase tracking-widest">Sistema de aprovações</span>
           </div>
         </div>
 
