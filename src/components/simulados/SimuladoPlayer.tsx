@@ -56,6 +56,7 @@ export function SimuladoPlayer({
   simuladoId,
   onComplete,
   onExit,
+  forcedMode = null,
 }: SimuladoPlayerProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -82,7 +83,15 @@ export function SimuladoPlayer({
     refresh,
   } = useSimuladoState({ simuladoId });
 
-  // Hook de tentativa
+  // 🎮 Effective Hard Mode: respeita forcedMode se definido
+  // forcedMode === 'treino' → NUNCA hard mode (ignora configuração do simulado)
+  // forcedMode === 'hard' → SEMPRE hard mode (força mesmo se simulado é normal)
+  // forcedMode === null → usa configuração nativa do simulado
+  const effectiveHardMode = useMemo(() => {
+    if (forcedMode === 'treino') return false;
+    if (forcedMode === 'hard') return true;
+    return simulado?.is_hard_mode ?? false;
+  }, [forcedMode, simulado?.is_hard_mode]);
   const {
     startAttempt,
     finishAttempt,
@@ -211,8 +220,8 @@ export function SimuladoPlayer({
   const handleStart = useCallback(async () => {
     if (!simulado) return;
     
-    // Hard Mode precisa de consentimento
-    if (simulado.is_hard_mode && !showHardModeConsent) {
+    // Hard Mode (efetivo) precisa de consentimento
+    if (effectiveHardMode && !showHardModeConsent) {
       setShowHardModeConsent(true);
       return;
     }
@@ -226,8 +235,8 @@ export function SimuladoPlayer({
           logger.logStart(simuladoId, false);
           setShowHardModeConsent(false);
           
-          // Se hard mode com câmera, solicitar
-          if (simulado.requires_camera) {
+          // Se hard mode efetivo com câmera, solicitar
+          if (effectiveHardMode && simulado.requires_camera) {
             await antiCheat.camera.requestCamera();
           }
           
@@ -239,7 +248,7 @@ export function SimuladoPlayer({
         setIsStarting(false);
       }
     });
-  }, [simulado, simuladoId, showHardModeConsent, startAttempt, antiCheat.camera, refresh, withStartLock, logger]);
+  }, [simulado, simuladoId, effectiveHardMode, showHardModeConsent, startAttempt, antiCheat.camera, refresh, withStartLock, logger]);
 
   // Handler: Finalizar tentativa (COM PROTEÇÃO DE LOCK)
   const handleFinish = useCallback(async () => {

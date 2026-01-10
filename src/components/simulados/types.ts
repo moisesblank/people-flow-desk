@@ -219,6 +219,8 @@ export interface SimuladoPlayerProps {
   simuladoId: string;
   onComplete?: (result: SimuladoResult) => void;
   onExit?: () => void;
+  /** Força modo específico: 'treino' ignora Hard Mode, 'hard' força Hard Mode */
+  forcedMode?: 'treino' | 'hard' | null;
 }
 
 export interface SimuladoConsentProps {

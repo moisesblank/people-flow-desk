@@ -5,6 +5,7 @@
  * Design: Year 2300 Cinematic Experience
  * ⚡ Performance-Optimized via useConstitutionPerformance
  * 📂 Organização por Grupos (v2.0)
+ * 🎮 Mode Selector: Treino vs Hard (v2.1)
  */
 
 import { useState, useCallback, memo, useMemo } from "react";
@@ -24,6 +25,7 @@ import { LoadingState } from "@/components/LoadingState";
 import { cn } from "@/lib/utils";
 import { useSimuladosList, SimuladoListItem } from "@/hooks/simulados/useSimuladosList";
 import { SimuladoPlayer } from "@/components/simulados";
+import { SimuladoModeSelector } from "@/components/simulados/screens";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { calculatePercentage } from "@/components/simulados/types";
 import { CyberBackground } from "@/components/ui/cyber-background";
@@ -47,8 +49,20 @@ export default function AlunoSimulados() {
   const activeSimuladoId = searchParams.get("s");
   const [selectedSimuladoId, setSelectedSimuladoId] = useState<string | null>(activeSimuladoId);
   
+  // 🎮 Mode Selector State
+  const [showModeSelector, setShowModeSelector] = useState(false);
+  const [pendingSimuladoId, setPendingSimuladoId] = useState<string | null>(null);
+  const [selectedMode, setSelectedMode] = useState<'treino' | 'hard' | null>(null);
+  
   // Buscar simulados reais
   const { data: simuladosData, isLoading, refetch } = useSimuladosList();
+
+  // Encontrar simulado pendente para mode selector
+  const pendingSimulado = useMemo(() => {
+    if (!pendingSimuladoId || !simuladosData) return null;
+    return [...simuladosData.available, ...simuladosData.completed, ...simuladosData.upcoming]
+      .find(s => s.id === pendingSimuladoId) || null;
+  }, [pendingSimuladoId, simuladosData]);
 
   // Estatísticas calculadas
   const stats = useMemo(() => ({
@@ -60,14 +74,52 @@ export default function AlunoSimulados() {
            (simuladosData?.upcoming.length || 0),
   }), [simuladosData]);
 
-  // Handlers
+  // Handler: Clicou em um card de simulado
   const handleSelectSimulado = useCallback((id: string) => {
-    setSelectedSimuladoId(id);
-    setSearchParams({ s: id });
-  }, [setSearchParams]);
+    // Encontrar o simulado
+    const simulado = [...(simuladosData?.available || []), ...(simuladosData?.completed || []), ...(simuladosData?.upcoming || [])]
+      .find(s => s.id === id);
+    
+    if (!simulado) {
+      // Fallback: abrir direto
+      setSelectedSimuladoId(id);
+      setSearchParams({ s: id });
+      return;
+    }
+
+    // Se JÁ é hard mode nativo → abrir direto (sem seletor)
+    if (simulado.is_hard_mode) {
+      setSelectedMode('hard');
+      setSelectedSimuladoId(id);
+      setSearchParams({ s: id });
+      return;
+    }
+
+    // Se é NORMAL → mostrar seletor de modo
+    setPendingSimuladoId(id);
+    setShowModeSelector(true);
+  }, [simuladosData, setSearchParams]);
+
+  // Handler: Modo selecionado
+  const handleModeSelected = useCallback((mode: 'treino' | 'hard') => {
+    if (!pendingSimuladoId) return;
+    
+    setSelectedMode(mode);
+    setShowModeSelector(false);
+    setSelectedSimuladoId(pendingSimuladoId);
+    setSearchParams({ s: pendingSimuladoId });
+    setPendingSimuladoId(null);
+  }, [pendingSimuladoId, setSearchParams]);
+
+  // Handler: Fechou mode selector
+  const handleCloseModeSelector = useCallback(() => {
+    setShowModeSelector(false);
+    setPendingSimuladoId(null);
+  }, []);
 
   const handleCloseSimulado = useCallback(() => {
     setSelectedSimuladoId(null);
+    setSelectedMode(null);
     setSearchParams({});
     refetch();
   }, [setSearchParams, refetch]);
@@ -75,6 +127,21 @@ export default function AlunoSimulados() {
   const handleSimuladoComplete = useCallback(() => {
     refetch();
   }, [refetch]);
+
+  // 🎮 Mode Selector Modal
+  if (showModeSelector && pendingSimulado) {
+    return (
+      <SimuladoModeSelector
+        isOpen={true}
+        onClose={handleCloseModeSelector}
+        onSelectMode={handleModeSelected}
+        simuladoTitle={pendingSimulado.title}
+        durationMinutes={pendingSimulado.duration_minutes}
+        questionCount={pendingSimulado.total_questions}
+        requiresCamera={pendingSimulado.requires_camera}
+      />
+    );
+  }
 
   // Se há simulado ativo, mostrar player em fullscreen
   if (selectedSimuladoId) {
@@ -85,6 +152,7 @@ export default function AlunoSimulados() {
             simuladoId={selectedSimuladoId}
             onComplete={handleSimuladoComplete}
             onExit={handleCloseSimulado}
+            forcedMode={selectedMode}
           />
         </DialogContent>
       </Dialog>
