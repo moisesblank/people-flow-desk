@@ -667,7 +667,7 @@ function LessonRow({ lesson }: { lesson: Lesson }) {
   const getVideoUrl = () => {
     if (lesson.video_url) return lesson.video_url;
     if (lesson.panda_video_id) {
-      return `https://player-vz-d59d6cb7-b9c.tv.pandavideo.com.br/embed/?v=${lesson.panda_video_id}`;
+      return `https://player-vz-c3e3c21e-7ce.tv.pandavideo.com.br/embed/?v=${lesson.panda_video_id}`;
     }
     return null;
   };
