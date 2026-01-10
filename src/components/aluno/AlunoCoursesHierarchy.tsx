@@ -25,6 +25,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/
 import { OmegaFortressPlayer } from '@/components/video/OmegaFortressPlayer';
 import { LessonTabs } from '@/components/player/LessonTabs';
 import { useModulesProgress, type ModuleProgressData } from '@/hooks/useModuleProgress';
+import { getThumbnailUrl } from '@/lib/video/thumbnails';
 
 // ============================================
 // TIPOS
@@ -1040,9 +1041,13 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
+  const [thumbnailError, setThumbnailError] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const hasVideo = lesson.panda_video_id || lesson.video_url || lesson.youtube_video_id;
   const episodeNumber = index + 1;
+  
+  // 🎬 UNIVERSAL THUMBNAIL: Panda + YouTube CDN (lazy, ~30-80KB)
+  const thumbnailUrl = useMemo(() => getThumbnailUrl(lesson), [lesson]);
 
   // Lazy loading via IntersectionObserver - only load when visible
   useEffect(() => {
@@ -1102,15 +1107,16 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
         
         {/* === THUMBNAIL SECTION === */}
         <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900">
-          {/* Lazy-loaded Thumbnail */}
-          {isVisible && lesson.thumbnail_url ? (
+          {/* 🎬 UNIVERSAL THUMBNAIL: Panda + YouTube CDN (lazy, ~30-80KB) */}
+          {isVisible && thumbnailUrl && !thumbnailError ? (
             <img
-              src={lesson.thumbnail_url}
+              src={thumbnailUrl}
               alt={lesson.title}
               className="absolute inset-0 w-full h-full object-cover"
               loading="lazy"
               decoding="async"
               sizes="(max-width: 640px) 180px, (max-width: 768px) 200px, (max-width: 1024px) 220px, 240px"
+              onError={() => setThumbnailError(true)}
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#E50914]/30 via-slate-900 to-slate-950">
