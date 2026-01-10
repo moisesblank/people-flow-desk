@@ -7,7 +7,7 @@
 /**
  * PANDA VIDEO THUMBNAIL
  * CDN CORRETO: https://b-vz-{library_id}.tv.pandavideo.com.br/{video_id}/thumbnail.jpg
- * Nota: O Library ID de thumbnails (c3e3c21e-7ce) é diferente do player (d59d6cb7-b9c)
+ * Nota: O Library ID (c3e3c21e-7ce) é o mesmo para thumbnails e player
  */
 const PANDA_THUMBNAIL_LIBRARY_ID = 'c3e3c21e-7ce';
 const PANDA_CDN_BASE = `https://b-vz-${PANDA_THUMBNAIL_LIBRARY_ID}.tv.pandavideo.com.br`;
