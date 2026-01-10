@@ -288,8 +288,9 @@ const alunoMenuGroups: MenuGroup[] = [
       { title: "Meu Planejamento", url: "/alunos/planejamento", icon: Target, area: "aluno-planejamento", badge: "NOVO" },
       { title: "Meu Cronograma", url: "/alunos/cronograma", icon: CalendarDays, area: "aluno-cronograma" },
       { title: "Videoaulas", url: "/alunos/videoaulas", icon: Video, area: "aluno-videoaulas", badge: "HD" },
-      { title: "Resumos", url: "/alunos/resumos", icon: Lightbulb, area: "aluno-resumos" },
-      { title: "Mapas Mentais", url: "/alunos/mapas-mentais", icon: Network, area: "aluno-mapas-mentais" },
+      // HIDDEN_ITEMS: Resumos e Mapas Mentais removidos do menu (mantidos no sistema)
+      // { title: "Resumos", url: "/alunos/resumos", icon: Lightbulb, area: "aluno-resumos" },
+      // { title: "Mapas Mentais", url: "/alunos/mapas-mentais", icon: Network, area: "aluno-mapas-mentais" },
     ],
   },
   {
@@ -300,22 +301,25 @@ const alunoMenuGroups: MenuGroup[] = [
     items: [
       { title: "Banco de Questões", url: "/alunos/questoes", icon: HelpCircle, area: "aluno-questoes", badge: "+5000" },
       { title: "Simulados ENEM", url: "/alunos/simulados", icon: Brain, area: "aluno-simulados", badge: "REAL" },
-      { title: "Redação Química", url: "/alunos/redacao", icon: PenLine, area: "aluno-redacao" },
+      // HIDDEN_ITEMS: Redação Química removida do menu (mantida no sistema)
+      // { title: "Redação Química", url: "/alunos/redacao", icon: PenLine, area: "aluno-redacao" },
       { title: "Flashcards", url: "/alunos/flashcards", icon: Sparkles, area: "aluno-flashcards" },
       { title: "Materiais PDF", url: "/alunos/materiais", icon: FileDown, area: "aluno-materiais", badge: "PDF" },
-      { title: "Revisão Inteligente", url: "/alunos/revisao", icon: Eraser, area: "aluno-revisao", badge: "IA" },
+      // HIDDEN_ITEMS: Revisão Inteligente removida do menu (mantida no sistema)
+      // { title: "Revisão Inteligente", url: "/alunos/revisao", icon: Eraser, area: "aluno-revisao", badge: "IA" },
     ],
   },
-  {
-    id: "aluno-ferramentas",
-    label: "🔬 FERRAMENTAS",
-    image: alunosCentralImg,
-    color: "from-violet-600/80 via-purple-600/80",
-    items: [
-      { title: "Laboratório Virtual", url: "/alunos/laboratorio", icon: Beaker, area: "aluno-laboratorio", badge: "3D" },
-      { title: "Calculadora Química", url: "/alunos/calculadora", icon: CalcIcon, area: "aluno-calculadora" },
-    ],
-  },
+  // HIDDEN_GROUP: Ferramentas (Laboratório Virtual e Calculadora Química) removidas do menu (mantidas no sistema)
+  // {
+  //   id: "aluno-ferramentas",
+  //   label: "🔬 FERRAMENTAS",
+  //   image: alunosCentralImg,
+  //   color: "from-violet-600/80 via-purple-600/80",
+  //   items: [
+  //     { title: "Laboratório Virtual", url: "/alunos/laboratorio", icon: Beaker, area: "aluno-laboratorio", badge: "3D" },
+  //     { title: "Calculadora Química", url: "/alunos/calculadora", icon: CalcIcon, area: "aluno-calculadora" },
+  //   ],
+  // },
   {
     id: "aluno-performance",
     label: "🏆 PERFORMANCE",
@@ -324,8 +328,9 @@ const alunoMenuGroups: MenuGroup[] = [
     items: [
       { title: "Meu Desempenho", url: "/alunos/desempenho", icon: BarChart3, area: "aluno-desempenho" },
       { title: "Ranking Geral", url: "/alunos/ranking", icon: Trophy, area: "aluno-ranking", badge: "TOP" },
-      { title: "Conquistas", url: "/alunos/conquistas", icon: Medal, area: "aluno-conquistas" },
-      { title: "Metas de Estudo", url: "/alunos/metas", icon: Target, area: "aluno-metas" },
+      // HIDDEN_ITEMS: Conquistas e Metas de Estudo removidas do menu (mantidas no sistema)
+      // { title: "Conquistas", url: "/alunos/conquistas", icon: Medal, area: "aluno-conquistas" },
+      // { title: "Metas de Estudo", url: "/alunos/metas", icon: Target, area: "aluno-metas" },
     ],
   },
   {
@@ -337,7 +342,8 @@ const alunoMenuGroups: MenuGroup[] = [
       { title: "Tutoria ao Vivo", url: "/alunos/tutoria", icon: UserCheck, area: "aluno-tutoria", badge: "LIVE" },
       { title: "Fórum de Dúvidas", url: "/alunos/forum", icon: MessageCircle, area: "aluno-forum" },
       { title: "Lives Exclusivas", url: "/alunos/lives", icon: Radio, area: "aluno-lives", badge: "AO VIVO" },
-      { title: "Tire suas Dúvidas", url: "/alunos/duvidas", icon: HelpCircle, area: "aluno-duvidas" },
+      // HIDDEN_ITEMS: Tire suas Dúvidas removida do menu (mantida no sistema)
+      // { title: "Tire suas Dúvidas", url: "/alunos/duvidas", icon: HelpCircle, area: "aluno-duvidas" },
     ],
   },
   {
@@ -347,7 +353,8 @@ const alunoMenuGroups: MenuGroup[] = [
     color: "from-slate-500/80 via-gray-600/80",
     items: [
       { title: "Minha Agenda", url: "/alunos/agenda", icon: Calendar, area: "aluno-agenda" },
-      { title: "Certificados", url: "/alunos/certificados", icon: Award, area: "aluno-certificados" },
+      // HIDDEN_ITEMS: Certificados removido do menu (mantido no sistema)
+      // { title: "Certificados", url: "/alunos/certificados", icon: Award, area: "aluno-certificados" },
       { title: "Meu Perfil", url: "/alunos/perfil", icon: User, area: "aluno-perfil" },
     ],
   },
