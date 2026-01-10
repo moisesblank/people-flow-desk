@@ -273,6 +273,8 @@ export const URL_TO_AREA: Record<string, SystemArea> = {
   "/gestaofc/forum": "forum",
   "/gestaofc/cronograma": "cronograma",
   "/gestaofc/planejamento": "planejamento",
+  "/gestaofc/materiais": "materiais",
+  "/gestaofc/questoes": "questoes",
   
   // ===== ROTAS /empresas/* =====
   "/empresas/dashboard": "financas-empresa",
