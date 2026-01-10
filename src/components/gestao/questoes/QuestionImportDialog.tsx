@@ -88,6 +88,8 @@ import * as XLSX from 'xlsx';
 import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, findBancaByValue } from '@/constants/bancas';
 import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
 import { useLogQuestionAIIntervention } from '@/hooks/useLogQuestionAIIntervention';
+import { parseWordFile, isWordFile } from '@/lib/parsers/wordQuestionParser';
+import { FileType } from 'lucide-react';
 
 // ============================================
 // TIPOS
@@ -848,16 +850,29 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   // HANDLERS
   // ============================================
 
-  // Função para processar um único arquivo Excel
-  const parseExcelFile = useCallback(async (file: File): Promise<{ data: Record<string, any>[]; headers: string[] }> => {
+  // Função para processar um único arquivo (Excel, CSV, TXT ou Word)
+  const parseFileUniversal = useCallback(async (file: File): Promise<{ data: Record<string, any>[]; headers: string[]; warnings?: string[] }> => {
     const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
     const isCsv = file.name.endsWith('.csv');
     const isTxt = file.name.endsWith('.txt');
+    const isWord = isWordFile(file);
 
     let data: Record<string, any>[] = [];
     let detectedHeaders: string[] = [];
+    let warnings: string[] = [];
 
-    if (isExcel || isCsv) {
+    // NOVO: Suporte a Word (.docx)
+    if (isWord) {
+      console.log('[IMPORT] Processando arquivo Word:', file.name);
+      const wordResult = await parseWordFile(file);
+      data = wordResult.data;
+      detectedHeaders = wordResult.headers;
+      warnings = wordResult.warnings;
+      
+      if (warnings.length > 0) {
+        console.log('[IMPORT] Avisos do parser Word:', warnings);
+      }
+    } else if (isExcel || isCsv) {
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: 'array' });
       const sheetName = workbook.SheetNames[0];
@@ -891,7 +906,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       }
     }
 
-    return { data, headers: detectedHeaders };
+    return { data, headers: detectedHeaders, warnings };
   }, []);
 
   // Handler para seleção de MÚLTIPLOS arquivos
@@ -923,7 +938,12 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         setCurrentFileIndex(i);
         
         try {
-          const { data, headers: fileHeaders } = await parseExcelFile(file);
+          const { data, headers: fileHeaders, warnings } = await parseFileUniversal(file);
+          
+          // Se houver avisos do parser (especialmente Word), exibir
+          if (warnings && warnings.length > 0) {
+            warnings.forEach(w => console.warn(`[IMPORT] Aviso ${file.name}:`, w));
+          }
           
           // Na primeira iteração, usar os headers como base
           if (i === 0) {
@@ -981,7 +1001,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     } finally {
       setIsProcessing(false);
     }
-  }, [parseExcelFile]);
+  }, [parseFileUniversal]);
 
   const handleDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -2468,7 +2488,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                       <input
                         id="file-import-input"
                         type="file"
-                        accept=".xlsx,.xls,.csv,.txt"
+                        accept=".xlsx,.xls,.csv,.txt,.docx"
                         multiple
                         onChange={handleFileSelect}
                         className="hidden"
@@ -2526,6 +2546,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                           <Badge variant="outline" className="gap-1">
                             <FileText className="h-3 w-3" />
                             CSV
+                          </Badge>
+                          <Badge className="bg-blue-500/20 text-blue-500 border-blue-500/30 gap-1">
+                            <FileType className="h-3 w-3" />
+                            Word (.docx)
                           </Badge>
                           <Badge className="bg-green-500/20 text-green-500 border-green-500/30 gap-1">
                             <Zap className="h-3 w-3" />
