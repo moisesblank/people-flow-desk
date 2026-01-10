@@ -6846,6 +6846,151 @@ export type Database = {
           },
         ]
       }
+      material_access_logs: {
+        Row: {
+          created_at: string
+          device_fingerprint: string | null
+          event_type: string
+          id: string
+          ip_hash: string | null
+          is_violation: boolean | null
+          material_id: string | null
+          page_number: number | null
+          threat_score: number | null
+          user_email: string | null
+          user_id: string | null
+          user_name: string | null
+          violation_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_fingerprint?: string | null
+          event_type: string
+          id?: string
+          ip_hash?: string | null
+          is_violation?: boolean | null
+          material_id?: string | null
+          page_number?: number | null
+          threat_score?: number | null
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+          violation_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_fingerprint?: string | null
+          event_type?: string
+          id?: string
+          ip_hash?: string | null
+          is_violation?: boolean | null
+          material_id?: string | null
+          page_number?: number | null
+          threat_score?: number | null
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+          violation_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_access_logs_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      materials: {
+        Row: {
+          bucket: string
+          category: string
+          course_id: string | null
+          cover_path: string | null
+          cover_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          download_count: number | null
+          file_name: string | null
+          file_path: string
+          file_size_bytes: number | null
+          id: string
+          is_premium: boolean
+          position: number | null
+          required_roles: string[]
+          status: Database["public"]["Enums"]["material_status"]
+          tags: string[] | null
+          title: string
+          total_pages: number | null
+          unique_readers: number | null
+          updated_at: string
+          view_count: number | null
+          watermark_enabled: boolean
+        }
+        Insert: {
+          bucket?: string
+          category?: string
+          course_id?: string | null
+          cover_path?: string | null
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          download_count?: number | null
+          file_name?: string | null
+          file_path: string
+          file_size_bytes?: number | null
+          id?: string
+          is_premium?: boolean
+          position?: number | null
+          required_roles?: string[]
+          status?: Database["public"]["Enums"]["material_status"]
+          tags?: string[] | null
+          title: string
+          total_pages?: number | null
+          unique_readers?: number | null
+          updated_at?: string
+          view_count?: number | null
+          watermark_enabled?: boolean
+        }
+        Update: {
+          bucket?: string
+          category?: string
+          course_id?: string | null
+          cover_path?: string | null
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          download_count?: number | null
+          file_name?: string | null
+          file_path?: string
+          file_size_bytes?: number | null
+          id?: string
+          is_premium?: boolean
+          position?: number | null
+          required_roles?: string[]
+          status?: Database["public"]["Enums"]["material_status"]
+          tags?: string[] | null
+          title?: string
+          total_pages?: number | null
+          unique_readers?: number | null
+          updated_at?: string
+          view_count?: number | null
+          watermark_enabled?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "materials_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_groups: {
         Row: {
           created_at: string | null
@@ -19763,6 +19908,7 @@ export type Database = {
         | "lanches"
       flashcard_rating: "again" | "hard" | "good" | "easy"
       flashcard_state: "new" | "learning" | "review" | "relearning"
+      material_status: "draft" | "processing" | "ready" | "archived"
       question_difficulty: "easy" | "medium" | "hard"
       sanctum_job_status:
         | "pending"
@@ -20135,6 +20281,7 @@ export const Constants = {
       ],
       flashcard_rating: ["again", "hard", "good", "easy"],
       flashcard_state: ["new", "learning", "review", "relearning"],
+      material_status: ["draft", "processing", "ready", "archived"],
       question_difficulty: ["easy", "medium", "hard"],
       sanctum_job_status: [
         "pending",

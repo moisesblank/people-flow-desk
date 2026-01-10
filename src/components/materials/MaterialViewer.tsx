@@ -1,0 +1,406 @@
+// ============================================
+// 📄 MATERIAL VIEWER - Visualizador de PDF
+// Tecnologia de Ponta: PDF.js + Fabric.js + Signed URLs + Watermarks
+// ============================================
+
+import { memo, useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { motion } from 'framer-motion';
+import {
+  X,
+  ZoomIn,
+  ZoomOut,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Loader2,
+  Shield,
+  Maximize2,
+  Minimize2,
+  Pencil,
+  Eraser,
+  RotateCcw,
+  Eye
+} from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Slider } from '@/components/ui/slider';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { usePdfRenderer } from '@/hooks/usePdfRenderer';
+import { cn } from '@/lib/utils';
+
+// ============================================
+// TIPOS
+// ============================================
+
+interface Material {
+  id: string;
+  title: string;
+  description?: string;
+  file_path: string;
+  watermark_enabled: boolean;
+  total_pages?: number;
+}
+
+interface MaterialViewerProps {
+  material: Material;
+  onClose: () => void;
+  isAdmin?: boolean;
+}
+
+// ============================================
+// WATERMARK OVERLAY
+// ============================================
+
+const WatermarkOverlay = memo(function WatermarkOverlay({ text }: { text: string }) {
+  if (!text) return null;
+  
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+      <div 
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 100px,
+            rgba(128, 128, 128, 0.03) 100px,
+            rgba(128, 128, 128, 0.03) 200px
+          )`,
+        }}
+      />
+      {/* Grid de watermarks */}
+      <div className="grid grid-cols-3 grid-rows-4 gap-8 h-full w-full p-8">
+        {Array.from({ length: 12 }).map((_, i) => (
+          <div 
+            key={i}
+            className="flex items-center justify-center"
+            style={{ transform: 'rotate(-30deg)' }}
+          >
+            <span className="text-xs text-muted-foreground/20 font-mono whitespace-nowrap select-none">
+              {text}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
+
+// ============================================
+// COMPONENTE PRINCIPAL
+// ============================================
+
+export const MaterialViewer = memo(function MaterialViewer({ 
+  material, 
+  onClose,
+  isAdmin = false 
+}: MaterialViewerProps) {
+  const { user } = useAuth();
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Estados
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [zoom, setZoom] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [drawingMode, setDrawingMode] = useState(false);
+
+  // PDF Renderer
+  const {
+    pageDataUrl,
+    totalPages,
+    isLoading: pdfLoading,
+    error: pdfError,
+    goToPage,
+    prefetchAdjacentPages
+  } = usePdfRenderer(pdfUrl || undefined, currentPage);
+
+  // Watermark text
+  const watermarkText = useMemo(() => {
+    if (!material.watermark_enabled || isAdmin) return '';
+    if (!user) return '';
+    const name = user.user_metadata?.name || user.email?.split('@')[0] || 'Usuário';
+    const timestamp = new Date().toLocaleDateString('pt-BR');
+    return `${name} • ${user.email} • ${timestamp}`;
+  }, [material.watermark_enabled, isAdmin, user]);
+
+  // Buscar URL assinada do PDF
+  const fetchSignedUrl = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: urlError } = await supabase.storage
+        .from('materiais')
+        .createSignedUrl(material.file_path, 3600); // 1 hora
+
+      if (urlError) throw urlError;
+      if (!data?.signedUrl) throw new Error('URL não gerada');
+
+      setPdfUrl(data.signedUrl);
+    } catch (e: any) {
+      console.error('Erro ao buscar URL:', e);
+      setError(e.message || 'Erro ao carregar PDF');
+    } finally {
+      setLoading(false);
+    }
+  }, [material.file_path]);
+
+  useEffect(() => {
+    fetchSignedUrl();
+  }, [fetchSignedUrl]);
+
+  // Navegação
+  const goToPreviousPage = useCallback(() => {
+    if (currentPage > 1) {
+      const newPage = currentPage - 1;
+      setCurrentPage(newPage);
+      goToPage(newPage);
+    }
+  }, [currentPage, goToPage]);
+
+  const goToNextPage = useCallback(() => {
+    if (currentPage < totalPages) {
+      const newPage = currentPage + 1;
+      setCurrentPage(newPage);
+      goToPage(newPage);
+    }
+  }, [currentPage, totalPages, goToPage]);
+
+  // Prefetch ao mudar de página
+  useEffect(() => {
+    prefetchAdjacentPages(currentPage);
+  }, [currentPage, prefetchAdjacentPages]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') goToPreviousPage();
+      if (e.key === 'ArrowRight') goToNextPage();
+      if (e.key === '+' || e.key === '=') setZoom(z => Math.min(z + 0.1, 3));
+      if (e.key === '-') setZoom(z => Math.max(z - 0.1, 0.5));
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, goToPreviousPage, goToNextPage]);
+
+  // Fullscreen
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  }, []);
+
+  // Bloquear context menu e seleção
+  useEffect(() => {
+    const preventActions = (e: Event) => {
+      if (!isAdmin) e.preventDefault();
+    };
+    
+    document.addEventListener('contextmenu', preventActions);
+    document.addEventListener('selectstart', preventActions);
+    
+    return () => {
+      document.removeEventListener('contextmenu', preventActions);
+      document.removeEventListener('selectstart', preventActions);
+    };
+  }, [isAdmin]);
+
+  return (
+    <motion.div
+      ref={containerRef}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-black/95 flex flex-col"
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between p-3 md:p-4 border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={onClose} className="text-white hover:bg-white/10">
+            <X className="w-5 h-5" />
+          </Button>
+          <div>
+            <h2 className="font-semibold text-white line-clamp-1">{material.title}</h2>
+            <div className="flex items-center gap-2 text-sm text-white/60">
+              <span>Página {currentPage} de {totalPages || '?'}</span>
+              {material.watermark_enabled && (
+                <Badge variant="outline" className="bg-amber-500/20 text-amber-400 border-amber-500/50 gap-1">
+                  <Shield className="w-3 h-3" />
+                  Protegido
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Toolbar */}
+        <div className="flex items-center gap-2">
+          {/* Zoom */}
+          <div className="hidden md:flex items-center gap-2 bg-white/10 rounded-lg px-3 py-1">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-white hover:bg-white/10"
+              onClick={() => setZoom(z => Math.max(z - 0.1, 0.5))}
+            >
+              <ZoomOut className="w-4 h-4" />
+            </Button>
+            <span className="text-white text-sm w-12 text-center">
+              {Math.round(zoom * 100)}%
+            </span>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-white hover:bg-white/10"
+              onClick={() => setZoom(z => Math.min(z + 0.1, 3))}
+            >
+              <ZoomIn className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Drawing Mode */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "text-white hover:bg-white/10",
+                  drawingMode && "bg-primary text-primary-foreground"
+                )}
+                onClick={() => setDrawingMode(!drawingMode)}
+              >
+                <Pencil className="w-4 h-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Modo Desenho</TooltipContent>
+          </Tooltip>
+
+          {/* Fullscreen */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-white hover:bg-white/10"
+                onClick={toggleFullscreen}
+              >
+                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Tela Cheia</TooltipContent>
+          </Tooltip>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 relative overflow-hidden flex items-center justify-center">
+        {(loading || pdfLoading) && !pageDataUrl ? (
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            <p className="text-white/60">Carregando PDF...</p>
+          </div>
+        ) : error || pdfError ? (
+          <div className="text-center space-y-4">
+            <p className="text-red-400">{error || pdfError}</p>
+            <Button onClick={fetchSignedUrl} variant="outline">
+              Tentar novamente
+            </Button>
+          </div>
+        ) : (
+          <div 
+            className="relative overflow-auto max-h-full max-w-full"
+            style={{ 
+              transform: `scale(${zoom})`,
+              transformOrigin: 'center center',
+              transition: 'transform 0.2s ease'
+            }}
+          >
+            {/* PDF Page */}
+            {pageDataUrl && (
+              <img
+                src={pageDataUrl}
+                alt={`Página ${currentPage}`}
+                className="max-w-full h-auto select-none pointer-events-none"
+                draggable={false}
+                style={{ userSelect: 'none' }}
+              />
+            )}
+
+            {/* Watermark Overlay */}
+            {material.watermark_enabled && !isAdmin && (
+              <WatermarkOverlay text={watermarkText} />
+            )}
+          </div>
+        )}
+
+        {/* Navigation Arrows */}
+        {totalPages > 1 && (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 text-white hover:bg-white/20",
+                currentPage === 1 && "opacity-30 pointer-events-none"
+              )}
+              onClick={goToPreviousPage}
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/10 text-white hover:bg-white/20",
+                currentPage === totalPages && "opacity-30 pointer-events-none"
+              )}
+              onClick={goToNextPage}
+            >
+              <ChevronRight className="w-6 h-6" />
+            </Button>
+          </>
+        )}
+      </div>
+
+      {/* Footer - Page Slider */}
+      {totalPages > 1 && (
+        <div className="p-4 border-t border-white/10">
+          <div className="max-w-md mx-auto flex items-center gap-4">
+            <span className="text-white/60 text-sm w-8">{currentPage}</span>
+            <Slider
+              value={[currentPage]}
+              min={1}
+              max={totalPages}
+              step={1}
+              onValueChange={([value]) => {
+                setCurrentPage(value);
+                goToPage(value);
+              }}
+              className="flex-1"
+            />
+            <span className="text-white/60 text-sm w-8 text-right">{totalPages}</span>
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+});
+
+export default MaterialViewer;
