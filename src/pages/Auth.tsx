@@ -46,6 +46,7 @@ import { registerDeviceBeforeSession, getDeviceErrorMessage } from "@/lib/device
 import { useDeviceGateStore, DeviceGatePayload, DeviceInfo, CurrentDeviceInfo } from "@/state/deviceGateStore";
 import { useSameTypeReplacementStore } from "@/state/sameTypeReplacementStore";
 import { collectFingerprintRawData, generateDeviceName } from "@/lib/deviceFingerprintRaw";
+import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 
 // 🛡️ CRITÉRIO EXPLÍCITO: Getter para setLoginIntent (evita re-render desnecessário)
 const getDeviceGateActions = () => useDeviceGateStore.getState();
@@ -341,52 +342,43 @@ function HoloCardFrame() {
 
 // Stats Display - Futuristic 2300 version
 function ApprovalHeroText() {
+  // 🏛️ LEI I - Performance Tiering (5000+ usuários)
+  const { shouldAnimate, shouldBlur, isLowEnd } = useConstitutionPerformance();
+  
   return (
     <div className="relative text-center mt-6 w-full overflow-visible">
-      {/* 🔥 GLOW BACKGROUND - Cinematic Aura */}
-      <div 
-        className="absolute inset-0 -z-10 opacity-60"
-        style={{
-          background: "radial-gradient(ellipse 80% 50% at 50% 50%, hsl(320 90% 50% / 0.15), transparent 70%)",
-          filter: "blur(40px)",
-          animation: "auth-hero-pulse 4s ease-in-out infinite",
-        }}
-      />
+      {/* 🔥 GLOW BACKGROUND - Apenas em high-end */}
+      {!isLowEnd && (
+        <div 
+          className="absolute inset-0 -z-10 opacity-60 auth-hero-glow-bg"
+          style={{
+            background: "radial-gradient(ellipse 80% 50% at 50% 50%, hsl(320 90% 50% / 0.15), transparent 70%)",
+            filter: shouldBlur ? "blur(40px)" : "blur(20px)",
+          }}
+        />
+      )}
       
-      {/* ⚡ MAIN TITLE - Cinematic Entry */}
-      <div 
-        className="space-y-1"
-        style={{
-          animation: "auth-hero-reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards",
-          opacity: 0,
-          transform: "translateY(30px)",
-        }}
-      >
+      {/* ⚡ MAIN TITLE - CSS-only animations for stability */}
+      <div className={shouldAnimate ? "auth-hero-title-animated" : ""}>
         <h2 
           className="text-3xl sm:text-4xl xl:text-5xl font-black text-white leading-[1.1] tracking-tight"
-          style={{ textShadow: "0 0 60px hsl(0 0% 100% / 0.1)" }}
+          style={{ textShadow: !isLowEnd ? "0 0 60px hsl(0 0% 100% / 0.1)" : undefined }}
         >
           O Professor que
         </h2>
         
-        {/* 🌟 HIGHLIGHT - "Mais Aprova" com MEGA GLOW */}
-        <div 
-          className="relative inline-block py-2"
-          style={{
-            animation: "auth-hero-reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards",
-            opacity: 0,
-            transform: "translateY(30px) scale(0.9)",
-          }}
-        >
-          {/* Glow Layer Behind */}
-          <div 
-            className="absolute inset-0 -z-10 rounded-lg"
-            style={{
-              background: "linear-gradient(90deg, hsl(280 90% 60% / 0.4), hsl(320 95% 55% / 0.5), hsl(0 90% 55% / 0.4))",
-              filter: "blur(25px)",
-              animation: "auth-glow-breathe 3s ease-in-out infinite",
-            }}
-          />
+        {/* 🌟 HIGHLIGHT - "Mais Aprova" com GLOW otimizado */}
+        <div className={`relative inline-block py-2 ${shouldAnimate ? "auth-hero-highlight-animated" : ""}`}>
+          {/* Glow Layer - só em high-end */}
+          {!isLowEnd && (
+            <div 
+              className="absolute inset-0 -z-10 rounded-lg auth-glow-layer"
+              style={{
+                background: "linear-gradient(90deg, hsl(280 90% 60% / 0.4), hsl(320 95% 55% / 0.5), hsl(0 90% 55% / 0.4))",
+                filter: shouldBlur ? "blur(25px)" : "blur(15px)",
+              }}
+            />
+          )}
           
           <span 
             className="relative text-4xl sm:text-5xl xl:text-6xl font-black"
@@ -395,7 +387,9 @@ function ApprovalHeroText() {
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
-              filter: "drop-shadow(0 0 30px hsl(320 90% 55% / 0.6)) drop-shadow(0 0 60px hsl(320 90% 55% / 0.3))",
+              filter: !isLowEnd 
+                ? "drop-shadow(0 0 30px hsl(320 90% 55% / 0.6)) drop-shadow(0 0 60px hsl(320 90% 55% / 0.3))"
+                : "drop-shadow(0 0 15px hsl(320 90% 55% / 0.4))",
               letterSpacing: "-0.02em",
             }}
           >
@@ -404,94 +398,50 @@ function ApprovalHeroText() {
         </div>
         
         <h2 
-          className="text-3xl sm:text-4xl xl:text-5xl font-black text-white leading-[1.1] tracking-tight"
-          style={{
-            animation: "auth-hero-reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards",
-            opacity: 0,
-            transform: "translateY(30px)",
-            textShadow: "0 0 60px hsl(0 0% 100% / 0.1)",
-          }}
+          className={`text-3xl sm:text-4xl xl:text-5xl font-black text-white leading-[1.1] tracking-tight ${shouldAnimate ? "auth-hero-subtitle-animated" : ""}`}
+          style={{ textShadow: !isLowEnd ? "0 0 60px hsl(0 0% 100% / 0.1)" : undefined }}
         >
           em <span style={{ color: "hsl(210 100% 70%)" }}>Medicina</span> no Brasil
         </h2>
       </div>
       
-      {/* 📝 DESCRIPTION - Fade in elegant */}
+      {/* 📝 DESCRIPTION */}
       <p 
-        className="mt-6 text-sm sm:text-base text-gray-300 max-w-sm mx-auto leading-relaxed"
-        style={{
-          animation: "auth-hero-reveal 1s cubic-bezier(0.16, 1, 0.3, 1) 0.7s forwards",
-          opacity: 0,
-          transform: "translateY(20px)",
-        }}
+        className={`mt-6 text-sm sm:text-base text-gray-300 max-w-sm mx-auto leading-relaxed ${shouldAnimate ? "auth-hero-desc-animated" : ""}`}
       >
         Química de alto nível com metodologia exclusiva.<br />
         <span className="text-gray-400">Milhares de alunos aprovados nas melhores faculdades do país.</span>
       </p>
       
-      {/* ✨ DECORATIVE ORBITAL LINE */}
-      <div 
-        className="flex items-center justify-center gap-4 mt-6"
-        style={{
-          animation: "auth-hero-reveal 1s cubic-bezier(0.16, 1, 0.3, 1) 0.9s forwards",
-          opacity: 0,
-        }}
-      >
+      {/* ✨ DECORATIVE LINE */}
+      <div className={`flex items-center justify-center gap-4 mt-6 ${shouldAnimate ? "auth-hero-line-animated" : ""}`}>
         <div 
           className="h-px w-16 sm:w-24"
-          style={{
-            background: "linear-gradient(90deg, transparent, hsl(320 90% 55% / 0.6), hsl(320 90% 55%))",
-          }}
+          style={{ background: "linear-gradient(90deg, transparent, hsl(320 90% 55% / 0.6), hsl(320 90% 55%))" }}
         />
         <div className="relative">
           <div 
-            className="w-3 h-3 rounded-full"
+            className={`w-3 h-3 rounded-full ${shouldAnimate ? "auth-orb-animated" : ""}`}
             style={{ 
               background: "linear-gradient(135deg, hsl(320 90% 60%), hsl(280 90% 55%))",
-              boxShadow: "0 0 15px hsl(320 90% 55% / 0.8), 0 0 30px hsl(320 90% 55% / 0.4)",
-              animation: "auth-orb-pulse 2s ease-in-out infinite",
+              boxShadow: !isLowEnd 
+                ? "0 0 15px hsl(320 90% 55% / 0.8), 0 0 30px hsl(320 90% 55% / 0.4)"
+                : "0 0 10px hsl(320 90% 55% / 0.6)",
             }}
           />
-          {/* Orbiting Ring */}
-          <div 
-            className="absolute inset-0 rounded-full border border-primary/30"
-            style={{
-              transform: "scale(2.5)",
-              animation: "auth-ring-spin 8s linear infinite",
-            }}
-          />
+          {/* Orbiting Ring - só em high-end com animações */}
+          {!isLowEnd && shouldAnimate && (
+            <div 
+              className="absolute inset-0 rounded-full border border-primary/30 auth-ring-animated"
+              style={{ transform: "scale(2.5)" }}
+            />
+          )}
         </div>
         <div 
           className="h-px w-16 sm:w-24"
-          style={{
-            background: "linear-gradient(90deg, hsl(320 90% 55%), hsl(320 90% 55% / 0.6), transparent)",
-          }}
+          style={{ background: "linear-gradient(90deg, hsl(320 90% 55%), hsl(320 90% 55% / 0.6), transparent)" }}
         />
       </div>
-      
-      {/* 🎬 KEYFRAMES - Inline for Auth page only */}
-      <style>{`
-        @keyframes auth-hero-reveal {
-          0% { opacity: 0; transform: translateY(30px) scale(0.95); }
-          100% { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes auth-hero-pulse {
-          0%, 100% { opacity: 0.4; transform: scale(1); }
-          50% { opacity: 0.7; transform: scale(1.1); }
-        }
-        @keyframes auth-glow-breathe {
-          0%, 100% { opacity: 0.6; filter: blur(25px); }
-          50% { opacity: 1; filter: blur(35px); }
-        }
-        @keyframes auth-orb-pulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 15px hsl(320 90% 55% / 0.8), 0 0 30px hsl(320 90% 55% / 0.4); }
-          50% { transform: scale(1.3); box-shadow: 0 0 25px hsl(320 90% 55% / 1), 0 0 50px hsl(320 90% 55% / 0.6); }
-        }
-        @keyframes auth-ring-spin {
-          from { transform: scale(2.5) rotate(0deg); }
-          to { transform: scale(2.5) rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 }
