@@ -327,7 +327,6 @@ serve(async (req: Request) => {
           status_message: "Aguardando reprocessamento",
           job_id: jobId,
           total_pages: 0,
-          processing_progress: 0,
           updated_at: new Date().toISOString(),
         })
         .eq("id", bookId);
