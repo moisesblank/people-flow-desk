@@ -606,6 +606,15 @@ export const WebBookViewer = memo(function WebBookViewer({
         texts: (textAnnotations.filter((t) => t.pageNumber === page) as unknown) as any,
       }));
 
+      console.log('[WebBookViewer] handleSaveHistory()', {
+        bookId,
+        currentPage,
+        pagesWithData: Array.from(pagesWithData).sort((a, b) => a - b),
+        overlayPayloadLength: overlayPayload.length,
+        totalStrokes: drawingStrokes.length,
+        totalTexts: textAnnotations.length,
+      });
+
       if (overlayPayload.length) {
         await saveOverlays(overlayPayload as any);
         // ✅ Garantir que os overlays em cache reflitam o que acabou de salvar
@@ -622,12 +631,23 @@ export const WebBookViewer = memo(function WebBookViewer({
         icon: <Save className="w-4 h-4 text-green-500" />,
       });
     } catch (error) {
-      console.error('Erro ao salvar histórico:', error);
-      toast.error('Erro ao salvar histórico');
+      console.error('[WebBookViewer] Erro ao salvar histórico:', error);
+      toast.error('Erro ao salvar histórico', {
+        description: error instanceof Error ? error.message : 'Falha desconhecida',
+      });
     } finally {
       setIsSavingHistory(false);
     }
-  }, [bookId, drawingStrokes, textAnnotations, saveOverlays, refetchOverlays, refetchAnnotations, clearDirtyPages]);
+  }, [
+    bookId,
+    currentPage,
+    drawingStrokes,
+    textAnnotations,
+    saveOverlays,
+    refetchOverlays,
+    refetchAnnotations,
+    clearDirtyPages,
+  ]);
 
   useEffect(() => {
     if (isOwner) return; // Owner não tem bloqueios
