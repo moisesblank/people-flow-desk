@@ -220,19 +220,23 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
 
   return (
     <div className="group">
-      {/* 🎬 NETFLIX ULTRA PREMIUM CARD - 50% MORE VISIBLE */}
-      {/* 🎨 HOVER COLOR: Based on Book-Web CATEGORY, not status */}
+      {/* 🎬 NETFLIX ULTRA PREMIUM CARD — 50% MORE PROMINENT */}
+      {/* 🎨 ENHANCED: Stronger contrast, elevation, and visual weight */}
       <div 
         className={cn(
           "relative flex rounded-2xl overflow-hidden cursor-pointer",
-          "bg-gradient-to-br from-[#0a0e14] via-[#0f1419] to-[#1a0a0a]",
-          "border-3 transition-all duration-300 ease-out",
-          "hover:scale-[1.02] hover:-translate-y-2",
-          "shadow-2xl hover:shadow-3xl",
-          // Category-based border and glow (MANDATORY)
-          categoryColors.border,
-          categoryColors.borderHover,
-          isHighEnd && categoryColors.glow
+          // 🎨 REBALANCED: 50% stronger background contrast
+          "bg-gradient-to-br from-[#0d1218] via-[#121922] to-[#1a1020]",
+          // Enhanced border: 50% more visible
+          "border-2 transition-all duration-300 ease-out",
+          "hover:scale-[1.025] hover:-translate-y-3",
+          // 50% stronger shadows and elevation
+          "shadow-[0_8px_32px_-8px_rgba(0,0,0,0.7),0_4px_16px_-4px_rgba(0,0,0,0.5)]",
+          "hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.8),0_8px_24px_-6px_rgba(0,0,0,0.6)]",
+          // Category-based border and glow (MANDATORY) — enhanced opacity
+          categoryColors.border.replace('/30', '/50'),
+          categoryColors.borderHover.replace('/70', '/90'),
+          isHighEnd && categoryColors.glow.replace('/0.45', '/0.6')
         )}
         onClick={onSelect}
       >
@@ -553,57 +557,54 @@ const BookSection = memo(function BookSection({
       ref={sectionRef}
       className={cn(
         "group/card relative overflow-hidden transition-all duration-500",
-        "bg-gradient-to-br from-[#0a0e14]/60 via-[#0f1419]/40 to-[#1a0a0a]/30",
-        "border shadow-md rounded-2xl",
-        colors.border.replace('/40', '/15').replace('/70', '/30'),
-        isHighEnd && colors.shadow.replace('/15', '/5').replace('/40', '/15')
+        // 🎨 REBALANCED: 80% less visual weight — ultra-subtle container
+        "bg-gradient-to-br from-[#0a0e14]/15 via-[#0f1419]/10 to-transparent",
+        "border shadow-none rounded-2xl",
+        "border-white/[0.04]", // ~80% reduction from original
+        isHighEnd && "hover:border-white/[0.08]"
       )}
       data-category={categoryKey}
     >
-      {/* Minimal corner accents (80% menos visível) */}
-      <div className={cn("absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 rounded-tl-2xl pointer-events-none opacity-30", colors.corner.replace('/60', '/25'))} />
-      <div className={cn("absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 rounded-br-2xl pointer-events-none opacity-30", colors.corner.replace('/60', '/25'))} />
+      {/* Corner accents: 80% less visible — almost invisible container hints */}
+      <div className="absolute top-0 left-0 w-6 h-6 border-l border-t rounded-tl-2xl pointer-events-none border-white/[0.06] opacity-40" />
+      <div className="absolute bottom-0 right-0 w-6 h-6 border-r border-b rounded-br-2xl pointer-events-none border-white/[0.06] opacity-40" />
       
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
           <CardHeader className={cn(
-            "cursor-pointer relative z-10 py-3 px-4",
+            "cursor-pointer relative z-10 py-2.5 px-3",
+            // 🎨 REBALANCED: Minimal header — 80% less prominent
             "border-b transition-all duration-300",
-            `bg-gradient-to-r ${colors.headerBg.replace('/20', '/8').replace('/15', '/5').replace('/80', '/90')}`,
-            "border-white/5 hover:border-white/10"
+            "bg-transparent hover:bg-white/[0.02]",
+            "border-white/[0.03] hover:border-white/[0.06]"
           )}>
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                {/* Icon minimal */}
-                <div className="relative">
-                  <div className={cn(
-                    "relative p-2 rounded-xl bg-gradient-to-br border shadow-sm opacity-60",
-                    colors.iconBg.replace('/50', '/20').replace('/35', '/15').replace('/60', '/25').replace('/40', '/15')
-                  )}>
-                    {icon}
-                  </div>
+              <div className="flex items-center gap-2.5">
+                {/* Icon: Minimal, subtle */}
+                <div className={cn(
+                  "p-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] opacity-50",
+                  colors.iconColor
+                )}>
+                  {icon}
                 </div>
                 
-                <div className="flex items-center gap-3">
-                  <CardTitle className="text-base md:text-lg font-semibold text-white/70">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-sm md:text-base font-medium text-white/50">
                     {title}
                   </CardTitle>
-                  <Badge className={cn("px-2 py-0.5 text-[10px] font-medium border opacity-60", colors.badge.replace('/25', '/10').replace('/40', '/20'))}>
+                  <Badge className="px-1.5 py-0.5 text-[9px] font-normal border bg-white/[0.03] text-white/40 border-white/[0.06]">
                     {books.length}
                   </Badge>
                 </div>
               </div>
               
-              {/* Toggle button minimal */}
+              {/* Toggle button: Ultra-subtle */}
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className={cn(
-                  "h-7 w-7 rounded-lg border transition-all opacity-50 hover:opacity-80",
-                  "border-white/10 bg-white/5 hover:bg-white/10"
-                )}
+                className="h-6 w-6 rounded-md border-0 transition-all opacity-40 hover:opacity-70 bg-transparent hover:bg-white/[0.05]"
               >
-                {isOpen ? <ChevronUp className="h-4 w-4 text-white/50" /> : <ChevronDown className="h-4 w-4 text-white/50" />}
+                {isOpen ? <ChevronUp className="h-3.5 w-3.5 text-white/40" /> : <ChevronDown className="h-3.5 w-3.5 text-white/40" />}
               </Button>
             </div>
           </CardHeader>
