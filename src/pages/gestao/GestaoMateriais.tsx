@@ -673,10 +673,18 @@ const GestaoMateriais = memo(function GestaoMateriais() {
   const [searchQuery, setSearchQuery] = useState('');
   const [contentTypeFilter, setContentTypeFilter] = useState<string>('all');
   const [macroFilter, setMacroFilter] = useState<string>('all');
+  const [microFilter, setMicroFilter] = useState<string>('all');
   const [uploadOpen, setUploadOpen] = useState(false);
   const [viewingMaterial, setViewingMaterial] = useState<Material | null>(null);
 
-  const { macros } = useTaxonomyForSelects();
+  const { macros, getMicrosForSelect } = useTaxonomyForSelects();
+  const microsForFilter = macroFilter && macroFilter !== 'all' ? getMicrosForSelect(macroFilter) : [];
+
+  // Reset micro filter when macro changes
+  const handleMacroFilterChange = (value: string) => {
+    setMacroFilter(value);
+    setMicroFilter('all');
+  };
 
   // Buscar materiais
   const fetchMaterials = useCallback(async () => {
@@ -716,9 +724,10 @@ const GestaoMateriais = memo(function GestaoMateriais() {
                            m.description?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesContentType = contentTypeFilter === 'all' || m.content_type === contentTypeFilter;
       const matchesMacro = macroFilter === 'all' || m.macro === macroFilter;
-      return matchesSearch && matchesContentType && matchesMacro;
+      const matchesMicro = microFilter === 'all' || m.micro === microFilter;
+      return matchesSearch && matchesContentType && matchesMacro && matchesMicro;
     });
-  }, [materials, searchQuery, contentTypeFilter, macroFilter]);
+  }, [materials, searchQuery, contentTypeFilter, macroFilter, microFilter]);
 
   // Agrupar por MACRO
   const materialsByMacro = useMemo(() => {
@@ -863,13 +872,33 @@ const GestaoMateriais = memo(function GestaoMateriais() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={macroFilter} onValueChange={setMacroFilter}>
+        <Select value={macroFilter} onValueChange={handleMacroFilterChange}>
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Macro" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os Macros</SelectItem>
             {macros.map(m => (
+              <SelectItem key={m.value} value={m.value}>
+                {m.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select 
+          value={microFilter} 
+          onValueChange={setMicroFilter}
+          disabled={macroFilter === 'all'}
+        >
+          <SelectTrigger className={cn(
+            "w-full sm:w-48",
+            macroFilter === 'all' && "opacity-50"
+          )}>
+            <SelectValue placeholder="Micro" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Micros</SelectItem>
+            {microsForFilter.map(m => (
               <SelectItem key={m.value} value={m.value}>
                 {m.label}
               </SelectItem>
