@@ -18,7 +18,7 @@ import {
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { InlineEditableCell, InlinePositionEditor } from './index';
+import { InlineEditableCell } from './index';
 
 // ============================================
 // 🖼️ CAPAS PERMANENTES DOS LIVROS (por CATEGORIA)
@@ -125,40 +125,24 @@ export const SortableBookRow = memo(function SortableBookRow({
         'group'
       )}
     >
-      {/* COLUNA DRAG HANDLE + POSIÇÃO */}
-      <TableCell className="w-20">
-        <div className="flex items-center gap-1">
-          {/* Handle para arrastar */}
-          <button
-            ref={setActivatorNodeRef}
-            type="button"
-            {...attributes}
-            {...listeners}
-            className={cn(
-              "p-3 rounded cursor-grab active:cursor-grabbing",
-              "touch-none select-none",
-              "opacity-60 group-hover:opacity-100 transition-opacity",
-              "hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/50",
-              "border border-transparent hover:border-primary/30"
-            )}
-            title="Arraste para reordenar"
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => {
-              console.log('[DnD] MouseDown no handle');
-            }}
-          >
-            <GripVertical className="w-5 h-5 text-primary" />
-          </button>
-          
-          {/* Posição editável */}
-          <InlinePositionEditor
-            position={bookPosition}
-            coverIndex={coverIndex}
-            onSave={async (newPos) => {
-              await onInlineUpdate(book.id, 'position', newPos);
-            }}
-          />
-        </div>
+      {/* COLUNA DRAG HANDLE */}
+      <TableCell className="w-12">
+        <button
+          ref={setActivatorNodeRef}
+          type="button"
+          {...attributes}
+          {...listeners}
+          className={cn(
+            "p-2 rounded cursor-grab active:cursor-grabbing",
+            "touch-none select-none",
+            "opacity-60 group-hover:opacity-100 transition-opacity",
+            "hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/50"
+          )}
+          title="Arraste para reordenar"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical className="w-4 h-4 text-muted-foreground" />
+        </button>
       </TableCell>
 
       {/* COLUNA LIVRO — Título e Subtítulo Editáveis */}

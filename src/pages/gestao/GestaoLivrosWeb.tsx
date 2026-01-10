@@ -1023,7 +1023,7 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-20">#</TableHead>
+                    <TableHead className="w-12"></TableHead>
                     <TableHead>Livro</TableHead>
                     <TableHead>Categoria</TableHead>
                     <TableHead>Status</TableHead>
