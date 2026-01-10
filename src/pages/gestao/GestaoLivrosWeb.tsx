@@ -635,7 +635,7 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // Mínimo para iniciar arrasto
+        distance: 2, // mais responsivo para "pegar" o arrasto
       },
     }),
     useSensor(KeyboardSensor, {
