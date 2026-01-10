@@ -460,19 +460,19 @@ const BookSection = memo(function BookSection({
   targetBookId,
   categoryKey
 }: BookSectionProps) {
+  // 🏛️ P0 FIX: Seções SEMPRE abertas na página de alunos — sem click necessário
   // Auto-open if this section contains the target book
   const containsTargetBook = targetBookId ? books.some(b => b.id === targetBookId) : false;
-  const shouldBeOpen = containsTargetBook || defaultOpen;
-  const [isOpen, setIsOpen] = useState(shouldBeOpen);
+  
+  // 🎯 DOGMA: isOpen SEMPRE true para /alunos/livro-web — cards visíveis instantaneamente
+  const isOpen = true; // Forçado permanentemente aberto
+  const setIsOpen = () => {}; // No-op para manter compatibilidade
   
   // Ref for scroll-to-view
   const sectionRef = React.useRef<HTMLDivElement>(null);
   
-  // Effect to auto-open and scroll when targetBookId changes
+  // Effect to scroll when targetBookId changes (isOpen já é sempre true)
   React.useEffect(() => {
-    if (containsTargetBook && !isOpen) {
-      setIsOpen(true);
-    }
     // Scroll into view after opening
     if (containsTargetBook && sectionRef.current) {
       setTimeout(() => {
