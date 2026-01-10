@@ -244,9 +244,8 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
             )}
             
             <div className="flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-sm font-bold text-amber-400">+50</span>
-              <span className="text-[9px] text-amber-400/60 uppercase">XP</span>
+              <BookMarked className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-sm font-bold text-cyan-400">Premium</span>
             </div>
           </div>
 
@@ -635,30 +634,6 @@ const WebBookLibrary = memo(function WebBookLibrary({
                   <span className="text-[10px] text-cyan-200/50 uppercase tracking-wider font-bold">Dominados</span>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ⚡ XP POWER BANNER */}
-        <div className="relative overflow-hidden rounded-2xl border-2 border-[#E23636]/30 bg-gradient-to-r from-[#0a0e14] via-[#1a0a0a] to-[#0a0e14]">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#E23636]/5 via-transparent to-[#E23636]/5" />
-          <div className="relative z-10 p-5 md:p-6 flex flex-col md:flex-row items-center gap-4 md:gap-6">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-[#E23636]/30 to-[#E23636]/15 border border-[#E23636]/40">
-              <Rocket className="w-7 h-7 text-[#E23636]" />
-            </div>
-            <div className="flex-1 text-center md:text-left">
-              <h3 className="text-lg md:text-xl font-bold text-white">
-                Complete livros e <span className="text-[#E23636]">ganhe XP!</span>
-              </h3>
-              <p className="text-xs md:text-sm text-muted-foreground/70">
-                Cada livro finalizado te recompensa com pontos de experiência no ranking
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="px-4 py-2 rounded-lg bg-[#E23636]/20 border border-[#E23636]/40">
-                <span className="text-lg font-black text-[#E23636]">+50 XP</span>
-              </div>
-              <span className="text-xs text-muted-foreground/50 uppercase">por livro</span>
             </div>
           </div>
         </div>
