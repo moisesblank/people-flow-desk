@@ -15721,6 +15721,7 @@ export type Database = {
           original_mime_type: string | null
           original_path: string
           original_size_bytes: number | null
+          position: number | null
           processed_at: string | null
           rating_average: number | null
           rating_count: number | null
@@ -15762,6 +15763,7 @@ export type Database = {
           original_mime_type?: string | null
           original_path: string
           original_size_bytes?: number | null
+          position?: number | null
           processed_at?: string | null
           rating_average?: number | null
           rating_count?: number | null
@@ -15803,6 +15805,7 @@ export type Database = {
           original_mime_type?: string | null
           original_path?: string
           original_size_bytes?: number | null
+          position?: number | null
           processed_at?: string | null
           rating_average?: number | null
           rating_count?: number | null
@@ -18332,15 +18335,26 @@ export type Database = {
           risk_score: number
         }[]
       }
-      fn_list_books_for_category: {
-        Args: {
-          p_category?: string
-          p_limit?: number
-          p_offset?: number
-          p_search?: string
-        }
-        Returns: Json
-      }
+      fn_list_books_for_category:
+        | {
+            Args: {
+              p_category?: string
+              p_limit?: number
+              p_offset?: number
+              p_search?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_category?: string
+              p_limit?: number
+              p_offset?: number
+              p_search?: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
       fn_log_asset_access: {
         Args: {
           p_action: string
