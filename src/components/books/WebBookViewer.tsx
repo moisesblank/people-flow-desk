@@ -7,6 +7,8 @@
 import React, { memo, useState, useCallback, useEffect, useRef } from 'react';
 import { useWebBook } from '@/hooks/useWebBook';
 import { usePdfRenderer } from '@/hooks/usePdfRenderer';
+import { useBookSecurityGuard } from '@/hooks/useBookSecurityGuard';
+import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
@@ -407,6 +409,21 @@ export const WebBookViewer = memo(function WebBookViewer({
 
   // Hook de overlays (desenhos + texto do canvas) — persistência por aluno
   const { getOverlayForPage, saveOverlays, refetchOverlays } = useBookPageOverlays(bookId);
+
+  // 🛡️ BOOK SECURITY GUARD — Anti-PrintScreen/DevTools (Owner bypass)
+  const { user } = useAuth();
+  useBookSecurityGuard({
+    bookId,
+    bookTitle: bookData?.book?.title,
+    isOwner: isOwner || false,
+    userId: user?.id,
+    userEmail: user?.email || undefined,
+    userName: user?.user_metadata?.name,
+    onViolation: (type) => {
+      // Reportar violação ao sistema Sanctum também
+      reportViolation(type, { source: 'book_security_guard' });
+    },
+  });
 
   // Estado local
   const [zoom, setZoom] = useState(1);
