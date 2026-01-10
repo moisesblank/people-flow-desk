@@ -97,6 +97,14 @@ interface Material {
   file_size_bytes?: number;
   watermark_enabled: boolean;
   is_premium: boolean;
+  // Campos temporais (padrão arquivos_universal)
+  ano?: number;
+  mes?: number;
+  semana?: number;
+  dia?: number;
+  folder?: string;
+  position?: number;
+  upload_date?: string;
 }
 
 // ============================================
@@ -171,9 +179,17 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error('Não autenticado');
 
-      // 1. Upload do arquivo
-      const fileName = `${Date.now()}_${file.name}`;
-      const filePath = `uploads/${fileName}`;
+      // Preparar dados temporais (padrão arquivos_universal)
+      const now = new Date();
+      const ano = now.getFullYear();
+      const mes = now.getMonth() + 1;
+      const dia = now.getDate();
+      const semana = Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7);
+
+      // 1. Upload do arquivo com organização por data
+      const folder = `${ano}/${String(mes).padStart(2, '0')}/${String(dia).padStart(2, '0')}`;
+      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const filePath = `${folder}/${fileName}`;
       
       setProgress(30);
       
@@ -188,7 +204,7 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
       
       setProgress(70);
 
-      // 2. Criar registro no banco
+      // 2. Criar registro no banco com campos temporais
       const { error: dbError } = await supabase
         .from('materials')
         .insert({
@@ -202,6 +218,13 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
           watermark_enabled: watermarkEnabled,
           is_premium: isPremium,
           created_by: userData.user.id,
+          // Campos temporais (padrão arquivos_universal)
+          ano,
+          mes,
+          semana,
+          dia,
+          folder,
+          upload_date: now.toISOString(),
         });
 
       if (dbError) throw dbError;
