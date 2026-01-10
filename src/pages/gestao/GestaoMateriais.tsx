@@ -155,6 +155,107 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: React.Ele
 };
 
 // ============================================
+// 5 HUB CARDS — ESPELHADO DE /alunos/materiais
+// ============================================
+
+interface CardFilter {
+  value: string;
+  label: string;
+  category?: string;
+}
+
+interface HubCard {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  color: string;
+  filters: CardFilter[];
+}
+
+// Bancas para Direcionamentos e Provas Anteriores (19 bancas)
+const BANCAS_FILTERS: CardFilter[] = [
+  { value: 'enem', label: 'ENEM', category: 'nacional' },
+  { value: 'fuvest', label: 'FUVEST', category: 'sp' },
+  { value: 'unicamp', label: 'UNICAMP', category: 'sp' },
+  { value: 'unesp', label: 'UNESP', category: 'sp' },
+  { value: 'unifesp', label: 'UNIFESP', category: 'sp' },
+  { value: 'famerp', label: 'FAMERP', category: 'sp' },
+  { value: 'ita', label: 'ITA', category: 'militar' },
+  { value: 'especex', label: 'ESPECEX', category: 'militar' },
+  { value: 'unb', label: 'UNB', category: 'centro-oeste' },
+  { value: 'ufpr', label: 'UFPR', category: 'sul' },
+  { value: 'ufrgs', label: 'UFRGS', category: 'sul' },
+  { value: 'uel', label: 'UEL', category: 'sul' },
+  { value: 'uerj', label: 'UERJ', category: 'rj' },
+  { value: 'upe', label: 'UPE', category: 'nordeste' },
+  { value: 'uece', label: 'UECE', category: 'nordeste' },
+  { value: 'uema', label: 'UEMA', category: 'nordeste' },
+  { value: 'uneb', label: 'UNEB', category: 'nordeste' },
+  { value: 'ufam', label: 'UFAM', category: 'norte' },
+  { value: 'ufgd', label: 'UFGD', category: 'centro-oeste' },
+];
+
+// 5 MACROS Químicos
+const MACRO_FILTERS: CardFilter[] = [
+  { value: 'quimica_geral', label: 'Química Geral' },
+  { value: 'fisico_quimica', label: 'Físico-Química' },
+  { value: 'quimica_organica', label: 'Química Orgânica' },
+  { value: 'quimica_ambiental', label: 'Química Ambiental' },
+  { value: 'bioquimica', label: 'Bioquímica' },
+];
+
+// 5 HUB CARDS — Exatamente igual a /alunos/materiais
+const HUB_CARDS: HubCard[] = [
+  {
+    id: 'questoes-mapas',
+    name: 'Questões e Mapas Mentais',
+    icon: '🧠',
+    description: 'Material de estudo com questões e mapas mentais',
+    color: 'rose',
+    filters: MACRO_FILTERS,
+  },
+  {
+    id: 'direcionamentos',
+    name: 'Direcionamentos Vestibulares',
+    icon: '🎯',
+    description: 'Materiais direcionados para cada vestibular',
+    color: 'cyan',
+    filters: BANCAS_FILTERS,
+  },
+  {
+    id: 'provas-anteriores',
+    name: 'Provas Anteriores',
+    icon: '🏆',
+    description: 'Provas anteriores resolvidas e comentadas',
+    color: 'amber',
+    filters: BANCAS_FILTERS,
+  },
+  {
+    id: 'extras',
+    name: 'Extras',
+    icon: '📦',
+    description: 'Levantamentos, cronogramas e extras',
+    color: 'emerald',
+    filters: [
+      { value: 'levantamento_enem', label: 'Levantamento ENEM' },
+      { value: 'cronograma', label: 'Cronograma' },
+      { value: 'extras', label: 'Extras' },
+    ],
+  },
+  {
+    id: 'flush-card',
+    name: 'Flush Card',
+    icon: '⚡',
+    description: 'Cards de revisão rápida',
+    color: 'violet',
+    filters: [
+      { value: 'flush_card', label: 'Flush Card' },
+    ],
+  },
+];
+
+// ============================================
 // UPLOAD DIALOG COM TAXONOMIA — BATCH 50 PDFs
 // ============================================
 
@@ -180,22 +281,22 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
   const [files, setFiles] = useState<FileWithMeta[]>([]);
   const [description, setDescription] = useState('');
   const [contentType, setContentType] = useState('mapa_mental');
-  const [selectedMacro, setSelectedMacro] = useState('');
-  const [selectedMicro, setSelectedMicro] = useState('');
+  const [selectedCard, setSelectedCard] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('');
   const [watermarkEnabled, setWatermarkEnabled] = useState(true);
   const [isPremium, setIsPremium] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [overallProgress, setOverallProgress] = useState(0);
 
-  const { macros, getMicrosForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
-  const micros = selectedMacro ? getMicrosForSelect(selectedMacro) : [];
+  // Get current card and its filters
+  const currentCard = HUB_CARDS.find(c => c.id === selectedCard);
+  const cardFilters = currentCard?.filters || [];
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] },
     maxFiles: MAX_FILES,
     maxSize: MAX_FILE_SIZE,
     onDrop: (acceptedFiles, rejectedFiles) => {
-      // Handle rejected files
       if (rejectedFiles.length > 0) {
         const tooMany = rejectedFiles.find(r => r.errors.some(e => e.code === 'too-many-files'));
         if (tooMany) {
@@ -210,7 +311,6 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
         });
       }
 
-      // Add new files (respecting max limit)
       const currentCount = files.length;
       const availableSlots = MAX_FILES - currentCount;
       const filesToAdd = acceptedFiles.slice(0, availableSlots);
@@ -241,9 +341,9 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
     ));
   }, []);
 
-  const handleMacroChange = (value: string) => {
-    setSelectedMacro(value);
-    setSelectedMicro('');
+  const handleCardChange = (value: string) => {
+    setSelectedCard(value);
+    setSelectedFilter(''); // Reset filter when card changes
   };
 
   const uploadSingleFile = async (
@@ -261,7 +361,8 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
       const dia = now.getDate();
       const semana = Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7);
 
-      const folder = `${contentType}/${selectedMacro}/${selectedMicro || 'geral'}/${ano}/${String(mes).padStart(2, '0')}`;
+      // Organizar por: card/filter/data
+      const folder = `${selectedCard}/${selectedFilter || 'geral'}/${ano}/${String(mes).padStart(2, '0')}`;
       const fileName = `${Date.now()}_${fileMeta.file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       const filePath = `${folder}/${fileName}`;
 
@@ -282,15 +383,21 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
         f.id === fileMeta.id ? { ...f, progress: 70 } : f
       ));
 
+      // Determine macro based on card type
+      const isQuestoesMacro = selectedCard === 'questoes-mapas';
+      const macroValue = isQuestoesMacro ? selectedFilter : null;
+
       const { error: dbError } = await supabase
         .from('materials')
         .insert({
           title: fileMeta.title.trim(),
           description: description.trim() || null,
-          category: contentType,
+          category: selectedCard, // Card ID = category (para mapeamento com alunos)
           content_type: contentType,
-          macro: selectedMacro,
-          micro: selectedMicro || null,
+          macro: macroValue,
+          micro: null,
+          // Filtro específico vai no campo 'folder' ou 'tags' para bancas
+          tags: !isQuestoesMacro && selectedFilter ? [selectedFilter] : [],
           status: 'ready',
           file_path: filePath,
           file_name: fileMeta.file.name,
@@ -302,7 +409,7 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
           mes,
           semana,
           dia,
-          folder,
+          folder: selectedFilter || 'geral',
           upload_date: now.toISOString(),
         });
 
@@ -329,12 +436,15 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
       toast.error('Nenhum arquivo para enviar');
       return;
     }
-    if (!selectedMacro) {
-      toast.error('Selecione um Macro-assunto');
+    if (!selectedCard) {
+      toast.error('Selecione um Card de destino');
+      return;
+    }
+    if (!selectedFilter) {
+      toast.error('Selecione um Filtro');
       return;
     }
 
-    // Validate all titles
     const emptyTitles = pendingFiles.filter(f => !f.title.trim());
     if (emptyTitles.length > 0) {
       toast.error(`${emptyTitles.length} arquivo(s) sem título`);
@@ -352,7 +462,6 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
       let successCount = 0;
       let errorCount = 0;
 
-      // Upload files in parallel batches of 5
       const BATCH_SIZE = 5;
       for (let i = 0; i < pendingFiles.length; i += BATCH_SIZE) {
         const batch = pendingFiles.slice(i, i + BATCH_SIZE);
@@ -367,17 +476,15 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
       }
 
       if (successCount > 0) {
-        toast.success(`${successCount} material(is) enviado(s) com sucesso!`);
+        toast.success(`${successCount} material(is) enviado(s) para "${currentCard?.name}"!`);
         onSuccess();
       }
       if (errorCount > 0) {
         toast.error(`${errorCount} arquivo(s) com erro`);
       }
 
-      // Remove successful files from list
       setFiles(prev => prev.filter(f => f.status !== 'success'));
 
-      // Close dialog if all succeeded
       if (errorCount === 0) {
         onOpenChange(false);
         resetForm();
@@ -396,8 +503,8 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
     setFiles([]);
     setDescription('');
     setContentType('mapa_mental');
-    setSelectedMacro('');
-    setSelectedMicro('');
+    setSelectedCard('');
+    setSelectedFilter('');
     setWatermarkEnabled(true);
     setIsPremium(true);
   };
@@ -418,7 +525,7 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
             </Badge>
           </DialogTitle>
           <DialogDescription>
-            Arraste múltiplos PDFs ou clique para selecionar (máx {MAX_FILES})
+            Selecione o Card e Filtro de destino — espelha /alunos/materiais
           </DialogDescription>
         </DialogHeader>
 
@@ -462,7 +569,7 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
                   Limpar todos
                 </Button>
               </div>
-              <ScrollArea className="h-[200px] border rounded-lg p-2">
+              <ScrollArea className="h-[150px] border rounded-lg p-2">
                 <div className="space-y-2">
                   {files.map((fileMeta) => (
                     <div 
@@ -474,7 +581,6 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
                         fileMeta.status === 'uploading' && "bg-blue-500/10 border-blue-500/30"
                       )}
                     >
-                      {/* Status Icon */}
                       <div className="w-8 h-8 flex items-center justify-center">
                         {fileMeta.status === 'pending' && (
                           <FileText className="w-5 h-5 text-muted-foreground" />
@@ -489,8 +595,6 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
                           <AlertCircle className="w-5 h-5 text-red-500" />
                         )}
                       </div>
-
-                      {/* Title Input */}
                       <div className="flex-1 min-w-0">
                         <Input
                           value={fileMeta.title}
@@ -506,13 +610,9 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
                           <p className="text-xs text-red-500 mt-1 truncate">{fileMeta.error}</p>
                         )}
                       </div>
-
-                      {/* Size */}
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
                         {(fileMeta.file.size / 1024 / 1024).toFixed(1)}MB
                       </span>
-
-                      {/* Remove Button */}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -527,7 +627,6 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
                 </div>
               </ScrollArea>
 
-              {/* Status Summary */}
               {(successCount > 0 || errorCount > 0) && (
                 <div className="flex gap-2 text-sm">
                   {successCount > 0 && (
@@ -564,40 +663,80 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
             </Select>
           </div>
 
-          {/* Macro-assunto */}
+          {/* CARD SELECTION — Espelha /alunos/materiais */}
           <div className="space-y-2">
-            <Label>Macro-assunto * (5 Áreas)</Label>
-            <Select value={selectedMacro} onValueChange={handleMacroChange} disabled={taxonomyLoading || uploading}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o macro..." />
+            <Label className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              Card de Destino * <span className="text-xs text-muted-foreground">(5 Cards do Portal Aluno)</span>
+            </Label>
+            <Select value={selectedCard} onValueChange={handleCardChange} disabled={uploading}>
+              <SelectTrigger className={cn(
+                "h-12",
+                selectedCard && `border-${HUB_CARDS.find(c => c.id === selectedCard)?.color}-500/50`
+              )}>
+                <SelectValue placeholder="Selecione o card de destino..." />
               </SelectTrigger>
               <SelectContent>
-                {macros.map(m => (
-                  <SelectItem key={m.value} value={m.value}>
-                    {m.label}
+                {HUB_CARDS.map((card, index) => (
+                  <SelectItem key={card.id} value={card.id}>
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">{card.icon}</span>
+                      <div>
+                        <span className="font-medium">{card.name}</span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          ({card.filters.length} filtros)
+                        </span>
+                      </div>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {currentCard && (
+              <p className="text-xs text-muted-foreground">
+                {currentCard.description}
+              </p>
+            )}
           </div>
 
-          {/* Micro-assunto */}
-          {selectedMacro && (
+          {/* FILTER SELECTION — Baseado no Card selecionado */}
+          {selectedCard && (
             <div className="space-y-2">
-              <Label>Micro-assunto</Label>
-              <Select value={selectedMicro} onValueChange={setSelectedMicro} disabled={uploading}>
+              <Label className="flex items-center gap-2">
+                <Filter className="w-4 h-4" />
+                Filtro * <span className="text-xs text-muted-foreground">({cardFilters.length} opções)</span>
+              </Label>
+              <Select value={selectedFilter} onValueChange={setSelectedFilter} disabled={uploading}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o micro (opcional)..." />
+                  <SelectValue placeholder="Selecione o filtro..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Geral / Todos</SelectItem>
-                  {micros.map(m => (
-                    <SelectItem key={m.value} value={m.value}>
-                      {m.label}
+                  {cardFilters.map(filter => (
+                    <SelectItem key={filter.value} value={filter.value}>
+                      <div className="flex items-center gap-2">
+                        <span>{filter.label}</span>
+                        {filter.category && (
+                          <Badge variant="outline" className="text-xs">
+                            {filter.category}
+                          </Badge>
+                        )}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          )}
+
+          {/* Preview do destino */}
+          {selectedCard && selectedFilter && (
+            <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <p className="text-sm font-medium flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-primary" />
+                Destino: <span className="text-primary">{currentCard?.icon} {currentCard?.name}</span>
+                <span className="text-muted-foreground">→</span>
+                <span className="text-primary">{cardFilters.find(f => f.value === selectedFilter)?.label}</span>
+              </p>
             </div>
           )}
 
@@ -656,7 +795,7 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
           </Button>
           <Button 
             onClick={handleUploadAll} 
-            disabled={uploading || pendingCount === 0 || !selectedMacro}
+            disabled={uploading || pendingCount === 0 || !selectedCard || !selectedFilter}
             className="min-w-[140px]"
           >
             {uploading ? (
@@ -676,6 +815,7 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
     </Dialog>
   );
 });
+
 // ============================================
 // MATERIAL ROW
 // ============================================
@@ -687,93 +827,82 @@ interface MaterialRowProps {
   onDelete: (id: string) => void;
 }
 
-const MaterialRow = memo(function MaterialRow({ material, onView, onStatusChange, onDelete }: MaterialRowProps) {
-  const status = STATUS_MAP[material.status] || STATUS_MAP.draft;
-  const StatusIcon = status.icon;
+const MaterialRow = memo(function MaterialRow({ 
+  material, 
+  onView, 
+  onStatusChange, 
+  onDelete 
+}: MaterialRowProps) {
   const macroConfig = MACRO_CONFIG[material.macro || ''];
   const MacroIcon = macroConfig?.icon || Atom;
   
   return (
-    <TableRow className="hover:bg-muted/50">
+    <TableRow className="group hover:bg-muted/30 transition-colors">
       <TableCell>
         <div className="flex items-center gap-3">
-          <div className={cn(
-            "p-2 rounded-lg",
-            macroConfig?.color ? `bg-${macroConfig.color.replace('text-', '')}/10` : 'bg-muted'
-          )}>
-            <MacroIcon className={cn("w-5 h-5", macroConfig?.color || 'text-muted-foreground')} />
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <FileText className="w-5 h-5 text-primary" />
           </div>
-          <div>
-            <p className="font-medium line-clamp-1">{material.title}</p>
-            <p className="text-xs text-muted-foreground">
-              {material.content_type === 'mapa_mental' ? '🧠 Mapa Mental' : 
-               material.content_type === 'questoes' ? '❓ Questões' : material.content_type}
+          <div className="min-w-0">
+            <p className="font-medium truncate max-w-[200px]" title={material.title}>
+              {material.title}
+            </p>
+            <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+              {material.file_name}
             </p>
           </div>
         </div>
       </TableCell>
       <TableCell>
-        <Badge variant="outline" className="font-normal">
-          {material.macro || '-'}
+        <Badge variant="outline" className="capitalize">
+          {material.macro?.replace('_', ' ') || 'Geral'}
         </Badge>
       </TableCell>
       <TableCell>
-        <span className="text-sm text-muted-foreground">{material.micro || 'Geral'}</span>
-      </TableCell>
-      <TableCell>
-        <Badge className={cn(status.color, 'text-white gap-1')}>
-          <StatusIcon className={cn("w-3 h-3", material.status === 'processing' && 'animate-spin')} />
-          {status.label}
-        </Badge>
-      </TableCell>
-      <TableCell>
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Eye className="w-3 h-3" />
-            {material.view_count || 0}
-          </span>
-        </div>
-      </TableCell>
-      <TableCell>
-        <span className="text-sm text-muted-foreground">
-          {format(new Date(material.created_at), 'dd/MM/yy', { locale: ptBR })}
+        <span className="text-xs text-muted-foreground">
+          {material.micro || '-'}
         </span>
       </TableCell>
       <TableCell>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onView}>
-              <Eye className="w-4 h-4 mr-2" />
-              Visualizar
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {material.status !== 'ready' && (
-              <DropdownMenuItem onClick={() => onStatusChange(material.id, 'ready')}>
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Publicar
-              </DropdownMenuItem>
-            )}
-            {material.status !== 'archived' && (
-              <DropdownMenuItem onClick={() => onStatusChange(material.id, 'archived')}>
-                <Archive className="w-4 h-4 mr-2" />
-                Arquivar
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={() => onDelete(material.id)}
-              className="text-destructive"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Excluir
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Select 
+          value={material.status} 
+          onValueChange={(val: any) => onStatusChange(material.id, val)}
+        >
+          <SelectTrigger className="h-8 w-[110px] text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="draft">Rascunho</SelectItem>
+            <SelectItem value="ready">Pronto</SelectItem>
+            <SelectItem value="archived">Arquivado</SelectItem>
+          </SelectContent>
+        </Select>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Eye className="w-3 h-3" />
+          {material.view_count || 0}
+        </div>
+      </TableCell>
+      <TableCell>
+        <span className="text-xs text-muted-foreground">
+          {new Date(material.created_at).toLocaleDateString()}
+        </span>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onView}>
+            <Eye className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+            onClick={() => onDelete(material.id)}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
       </TableCell>
     </TableRow>
   );
