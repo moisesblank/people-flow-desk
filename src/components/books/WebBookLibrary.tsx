@@ -447,18 +447,21 @@ const BookSection = memo(function BookSection({
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <CardContent className="p-5 space-y-4 bg-gradient-to-b from-transparent to-black/20">
-            {books.map((book, idx) => (
-              <BookCard
-                key={book.id}
-                book={book}
-                index={idx}
-                coverUrl={BOOK_COVERS_BY_INDEX[idx] || book.coverUrl || '/placeholder.svg'}
-                onSelect={() => onBookSelect(book.id)}
-                isHighEnd={isHighEnd}
-              />
-            ))}
-          </CardContent>
+          {/* ⚡ LAZY RENDERING: Só monta BookCards quando seção está aberta */}
+          {isOpen && (
+            <CardContent className="p-5 space-y-4 bg-gradient-to-b from-transparent to-black/20">
+              {books.map((book, idx) => (
+                <BookCard
+                  key={book.id}
+                  book={book}
+                  index={idx}
+                  coverUrl={BOOK_COVERS_BY_INDEX[idx] || book.coverUrl || '/placeholder.svg'}
+                  onSelect={() => onBookSelect(book.id)}
+                  isHighEnd={isHighEnd}
+                />
+              ))}
+            </CardContent>
+          )}
         </CollapsibleContent>
       </Collapsible>
     </Card>
