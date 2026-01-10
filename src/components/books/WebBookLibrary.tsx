@@ -536,92 +536,69 @@ const BookSection = memo(function BookSection({
       className="relative"
       data-category={categoryKey}
     >
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        {/* 🎬 SLIM NETFLIX SECTION HEADER — Single line with category color */}
-        <CollapsibleTrigger asChild>
-          <div 
-            className={cn(
-              "cursor-pointer flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl mb-3",
-              "transition-all duration-200",
-              // 🎨 CATEGORY COLOR: Left border accent
-              "border-l-4",
-              `border-l-${accentColor === 'red' ? '[#E50914]' : accentColor}-500`,
-              // Subtle background with category tint
-              "bg-gradient-to-r from-white/[0.03] to-transparent",
-              "hover:from-white/[0.06] hover:to-white/[0.02]"
-            )}
-            style={{ 
-              borderLeftColor: colors.accent.includes('text-') 
-                ? colors.accent.replace('text-', '').replace('[', '').replace(']', '')
-                : undefined 
-            }}
-          >
-            <div className="flex items-center gap-3">
-              {/* Icon with category color */}
-              <div className={cn("p-1.5 rounded-lg", colors.iconColor)}>
-                {icon}
-              </div>
-              
-              <span className={cn("text-sm font-semibold", colors.accent)}>
-                {title}
-              </span>
-              
-              <Badge className={cn(
-                "px-2 py-0.5 text-[10px] font-medium border",
-                colors.badge
-              )}>
-                {books.length}
-              </Badge>
-            </div>
-            
-            {/* Toggle */}
-            <div className={cn("p-1 rounded-md transition-colors", "hover:bg-white/10")}>
-              {isOpen 
-                ? <ChevronUp className={cn("h-4 w-4", colors.iconColor)} /> 
-                : <ChevronDown className={cn("h-4 w-4", colors.iconColor)} />
-              }
-            </div>
-          </div>
-        </CollapsibleTrigger>
+      {/* 🎬 MICRO SECTION HEADER — 90% MENOR (sem collapsible, sempre aberto) */}
+      <div 
+        className={cn(
+          "flex items-center gap-1.5 px-2 py-1 mb-2",
+          "border-l-2",
+          // Minimal background
+          "bg-white/[0.01]"
+        )}
+        style={{ 
+          borderLeftColor: colors.accent.includes('text-') 
+            ? colors.accent.replace('text-', '').replace('[', '').replace(']', '')
+            : undefined 
+        }}
+      >
+        {/* Micro icon */}
+        <div className={cn("w-4 h-4", colors.iconColor)}>
+          {icon}
+        </div>
+        
+        <span className={cn("text-[11px] font-medium", colors.accent)}>
+          {title}
+        </span>
+        
+        <Badge className={cn(
+          "px-1.5 py-0 text-[9px] font-medium border h-4 min-w-4",
+          colors.badge
+        )}>
+          {books.length}
+        </Badge>
+      </div>
 
-        <CollapsibleContent>
-          {/* ⚡ LAZY RENDERING: Só monta BookCards quando seção está aberta */}
-          {isOpen && (
-            <div className="space-y-5 pl-4 pb-4">
-              {books.map((book, idx) => {
-                const isPrevisaoFinal = book.category === 'previsao_final';
-                const bookCard = (
-                  <BookCard
-                    key={book.id}
-                    book={book}
-                    index={idx}
-                    // Prioridade: 1) Upload manual, 2) Categoria, 3) Posição, 4) Placeholder
-                    coverUrl={book.coverUrl || BOOK_COVERS_BY_CATEGORY[book.category || ''] || BOOK_COVERS_BY_INDEX[idx] || '/placeholder.svg'}
-                    onSelect={() => onBookSelect(book.id)}
-                    isHighEnd={isHighEnd}
-                  />
-                );
-                
-                // 🔒 CHRONOLOCK: Previsão Final bloqueado até 28/09
-                if (isPrevisaoFinal) {
-                  return (
-                    <DateLock 
-                      key={book.id}
-                      releaseDate="28/09"
-                      variant="danger"
-                      subtitle="Este material será liberado em breve"
-                    >
-                      {bookCard}
-                    </DateLock>
-                  );
-                }
-                
-                return bookCard;
-              })}
-            </div>
-          )}
-        </CollapsibleContent>
-      </Collapsible>
+      {/* 📚 BOOK CARDS — Sempre visíveis */}
+      <div className="space-y-4 pl-2 pb-3">
+        {books.map((book, idx) => {
+          const isPrevisaoFinal = book.category === 'previsao_final';
+          const bookCard = (
+            <BookCard
+              key={book.id}
+              book={book}
+              index={idx}
+              coverUrl={book.coverUrl || BOOK_COVERS_BY_CATEGORY[book.category || ''] || BOOK_COVERS_BY_INDEX[idx] || '/placeholder.svg'}
+              onSelect={() => onBookSelect(book.id)}
+              isHighEnd={isHighEnd}
+            />
+          );
+          
+          // 🔒 CHRONOLOCK: Previsão Final bloqueado até 28/09
+          if (isPrevisaoFinal) {
+            return (
+              <DateLock 
+                key={book.id}
+                releaseDate="28/09"
+                variant="danger"
+                subtitle="Este material será liberado em breve"
+              >
+                {bookCard}
+              </DateLock>
+            );
+          }
+          
+          return bookCard;
+        })}
+      </div>
     </div>
   );
 });
