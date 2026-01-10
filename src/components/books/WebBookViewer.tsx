@@ -1094,7 +1094,7 @@ export const WebBookViewer = memo(function WebBookViewer({
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    SALVAR HISTÓRICO
+                    Clique para salvar e sair do modo leitura.
                   </>
                 )}
               </span>
