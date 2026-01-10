@@ -29,7 +29,9 @@ import {
 import {
   DndContext,
   DragEndEvent,
+  DragStartEvent,
   PointerSensor,
+  TouchSensor,
   KeyboardSensor,
   closestCenter,
   useSensor,
@@ -635,7 +637,13 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 2, // mais responsivo para "pegar" o arrasto
+        distance: 5, // Distância mínima para iniciar arrasto
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 100,
+        tolerance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -643,18 +651,33 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
     })
   );
 
+  // Handler para debug quando arrasto inicia
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    console.log('[DnD] 🚀 Arrasto INICIADO:', event.active.id);
+  }, []);
+
   // ============================================
   // DND HANDLER — Ao soltar, recalcula posições
   // ============================================
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (!over || active.id === over.id) return;
+    console.log('[DnD] handleDragEnd chamado:', { activeId: active?.id, overId: over?.id });
+    
+    if (!over || active.id === over.id) {
+      console.log('[DnD] Ignorando: sem destino ou mesmo item');
+      return;
+    }
 
     const oldIndex = filteredBooks.findIndex(b => b.id === active.id);
     const newIndex = filteredBooks.findIndex(b => b.id === over.id);
 
-    if (oldIndex === -1 || newIndex === -1) return;
+    console.log('[DnD] Índices:', { oldIndex, newIndex, totalBooks: filteredBooks.length });
+
+    if (oldIndex === -1 || newIndex === -1) {
+      console.log('[DnD] Índice não encontrado');
+      return;
+    }
 
     // Reordenar localmente para feedback imediato
     const reordered = arrayMove(filteredBooks, oldIndex, newIndex);
@@ -664,6 +687,8 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
       id: book.id,
       position: idx,
     }));
+
+    console.log('[DnD] Updates a persistir:', updates);
 
     // Atualizar estado local imediatamente
     setBooks(prev => {
@@ -677,15 +702,24 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
       return [...prev].sort((a, b) => ((a as any).position || 999) - ((b as any).position || 999));
     });
 
-    // Persistir no banco
+    // Persistir no banco - batch para eficiência
     try {
-      for (const update of updates) {
-        await supabase
+      const updatePromises = updates.map(update => 
+        supabase
           .from('web_books')
           .update({ position: update.position, updated_at: new Date().toISOString() })
-          .eq('id', update.id);
+          .eq('id', update.id)
+      );
+      
+      const results = await Promise.all(updatePromises);
+      const hasError = results.some(r => r.error);
+      
+      if (hasError) {
+        console.error('[DnD] Erros no batch:', results.filter(r => r.error));
+        throw new Error('Erro ao salvar algumas posições');
       }
       
+      console.log('[DnD] ✅ Ordem salva com sucesso!');
       toast.success('Ordem dos livros atualizada!');
       clearAllCache();
     } catch (err) {
@@ -900,6 +934,7 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               modifiers={[restrictToVerticalAxis]}
             >

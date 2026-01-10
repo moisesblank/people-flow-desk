@@ -121,14 +121,19 @@ export const SortableBookRow = memo(function SortableBookRow({
             {...attributes}
             {...listeners}
             className={cn(
-              "p-2 rounded cursor-grab active:cursor-grabbing",
+              "p-3 rounded cursor-grab active:cursor-grabbing",
               "touch-none select-none",
-              "opacity-40 group-hover:opacity-100 transition-opacity",
-              "hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
+              "opacity-60 group-hover:opacity-100 transition-opacity",
+              "hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/50",
+              "border border-transparent hover:border-primary/30"
             )}
             title="Arraste para reordenar"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => {
+              console.log('[DnD] MouseDown no handle');
+            }}
           >
-            <GripVertical className="w-4 h-4 text-muted-foreground" />
+            <GripVertical className="w-5 h-5 text-primary" />
           </button>
           
           {/* Posição editável */}
