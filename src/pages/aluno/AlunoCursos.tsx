@@ -17,11 +17,13 @@ import AlunoCoursesHierarchy from '@/components/aluno/AlunoCoursesHierarchy';
 
 const AlunoCursos = memo(function AlunoCursos() {
   return (
-    <div className="relative min-h-screen">
+    // 🛡️ ROOT LAYOUT FIX: Usar pb-safe para garantir padding inferior em viewports móveis
+    // Removido min-h-screen que forçava altura fixa causando clipping
+    <div className="relative">
       {/* 🌌 Cinematic Background */}
       <CyberBackground variant="grid" intensity="medium" />
       
-      <div className="relative z-10 p-3 md:p-4 lg:p-6">
+      <div className="relative z-10 p-3 md:p-4 lg:p-6 pb-16">
         <div className="mx-auto max-w-[98vw] space-y-6">
           
           {/* 🎬 Futuristic Header */}
