@@ -172,8 +172,10 @@ const DEFAULT_CATEGORY_COLORS: CategoryColorTheme = {
 };
 
 // Helper para obter cores por categoria
-function getCategoryColors(category: string): CategoryColorTheme {
-  return CATEGORY_COLORS[category] || DEFAULT_CATEGORY_COLORS;
+// 🎨 TODAS as animações de hover usam a cor do PRIMEIRO livro (Amber/Química Geral)
+function getCategoryColors(_category: string): CategoryColorTheme {
+  // Retorna SEMPRE as cores amber (quimica_geral) para TODOS os livros
+  return CATEGORY_COLORS.quimica_geral;
 }
 
 // ============================================
