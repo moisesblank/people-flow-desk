@@ -48,8 +48,9 @@ export interface PdfRendererState {
 const RAW_BUCKET = 'ena-assets-raw';
 const RENDER_SCALE = 1.5; // ✅ Otimizado: 1.5 (boa qualidade, 44% mais rápido que 2)
 const JPEG_QUALITY = 0.85; // ✅ Otimizado: compressão mais rápida
-const PAGE_CACHE_SIZE = 20; // ✅ Ampliado: menos re-renderizações
-const PREFETCH_PAGES = 3; // Prefetch de 3 páginas adjacentes
+const PAGE_CACHE_SIZE = 10; // ✅ OTIMIZADO: Cache menor (menos memória)
+const PREFETCH_PAGES = 1; // ✅ OTIMIZADO: 1 página à frente apenas (idleCallback)
+const PREFETCH_BEHIND = 1; // ✅ OTIMIZADO: 1 página atrás
 const URL_EXPIRY_SECONDS = 3600; // 1 hora
 
 // ============================================
@@ -307,24 +308,44 @@ export function usePdfRenderer(bookId?: string, originalPath?: string) {
     }
   }, []);
 
-  // ✅ Prefetch paralelo de páginas adjacentes
+  // ✅ OTIMIZADO: Prefetch inteligente com idleCallback (1+1)
   const prefetchPages = useCallback(async (currentPage: number) => {
     const pdf = pdfDocRef.current;
     if (!pdf) return;
 
-    // Prefetch em paralelo (não sequencial)
-    const pagesToPrefetch: number[] = [];
-    for (let i = 1; i <= PREFETCH_PAGES; i++) {
-      const nextPage = currentPage + i;
-      if (nextPage <= pdf.numPages && !pageCache.current.has(nextPage)) {
-        pagesToPrefetch.push(nextPage);
+    // Usar requestIdleCallback para não bloquear UI
+    const doIdlePrefetch = () => {
+      const pagesToPrefetch: number[] = [];
+      
+      // 1 página à frente
+      for (let i = 1; i <= PREFETCH_PAGES; i++) {
+        const nextPage = currentPage + i;
+        if (nextPage <= pdf.numPages && !pageCache.current.has(nextPage)) {
+          pagesToPrefetch.push(nextPage);
+        }
       }
+      
+      // 1 página atrás
+      for (let i = 1; i <= PREFETCH_BEHIND; i++) {
+        const prevPage = currentPage - i;
+        if (prevPage >= 1 && !pageCache.current.has(prevPage)) {
+          pagesToPrefetch.push(prevPage);
+        }
+      }
+      
+      // Executar todos em paralelo sem aguardar
+      pagesToPrefetch.forEach(page => {
+        renderPage(page);
+      });
+    };
+
+    // Agendar para quando o browser estiver idle
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(doIdlePrefetch, { timeout: 2000 });
+    } else {
+      // Fallback para navegadores sem suporte
+      setTimeout(doIdlePrefetch, 100);
     }
-    
-    // Executar todos em paralelo sem aguardar
-    pagesToPrefetch.forEach(page => {
-      renderPage(page);
-    });
   }, [renderPage]);
 
   // Limpar recursos

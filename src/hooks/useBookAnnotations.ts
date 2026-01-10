@@ -293,18 +293,36 @@ export function useBookAnnotations(bookId: string) {
   });
 
   // ============================================
-  // HELPERS
+  // HELPERS - MEMOIZAÇÃO AGRESSIVA
   // ============================================
 
-  // Anotações da página atual
-  const getAnnotationsForPage = useCallback((pageNumber: number) => {
-    return annotations.filter(a => a.page_number === pageNumber);
+  // ✅ OTIMIZADO: Mapa de anotações por página (acesso O(1) em vez de O(n))
+  const annotationsByPage = useMemo(() => {
+    const map = new Map<number, BookAnnotation[]>();
+    annotations.forEach(a => {
+      const existing = map.get(a.page_number) || [];
+      existing.push(a);
+      map.set(a.page_number, existing);
+    });
+    return map;
   }, [annotations]);
 
-  // Verificar se página está favoritada
-  const isPageBookmarked = useCallback((pageNumber: number) => {
-    return bookmarks.some(b => b.page_number === pageNumber);
+  // ✅ OTIMIZADO: Mapa de bookmarks por página (acesso O(1))
+  const bookmarksByPage = useMemo(() => {
+    const map = new Map<number, BookBookmark>();
+    bookmarks.forEach(b => map.set(b.page_number, b));
+    return map;
   }, [bookmarks]);
+
+  // Anotações da página atual - agora O(1)
+  const getAnnotationsForPage = useCallback((pageNumber: number) => {
+    return annotationsByPage.get(pageNumber) || [];
+  }, [annotationsByPage]);
+
+  // Verificar se página está favoritada - agora O(1)
+  const isPageBookmarked = useCallback((pageNumber: number) => {
+    return bookmarksByPage.has(pageNumber);
+  }, [bookmarksByPage]);
 
   // Contadores
   const stats = useMemo(() => ({
