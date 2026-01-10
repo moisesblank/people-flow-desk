@@ -1019,7 +1019,7 @@ export const WebBookViewer = memo(function WebBookViewer({
                   MODO LEITURA ATIVADO
                 </>
               ) : (
-                <>MODO LEITURA</>
+                <>Clique aqui para ativar o modo leitura</>
               )}
             </span>
             
