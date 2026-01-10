@@ -38,6 +38,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { SacredImage } from '@/components/performance/SacredImage';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -983,7 +984,7 @@ function ModuleCard({
           >
             {module.thumbnail_url ? (
               <>
-                <img src={module.thumbnail_url} alt={module.title} className="w-full h-full object-cover" />
+                <SacredImage src={module.thumbnail_url} alt={module.title} className="w-full h-full" objectFit="cover" />
                 {/* Overlay de hover */}
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center">
                   <Upload className="h-5 w-5 text-white" />

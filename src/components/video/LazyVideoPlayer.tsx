@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { useFuturisticUI } from "@/hooks/useFuturisticUI";
 import { Button } from "@/components/ui/button";
 import { VideoDisclaimer, useVideoDisclaimer } from "@/components/video/VideoDisclaimer";
+import { SacredImage } from "@/components/performance/SacredImage";
 
 // ============================================
 // TYPES
@@ -154,18 +155,19 @@ export const LazyVideoPlayer = memo(function LazyVideoPlayer({
         <>
           {/* Poster image (lazy loaded) */}
           {posterUrl && (
-            <img
-              src={posterUrl}
-              alt={`Thumbnail: ${title}`}
-              className={cn(
-                "absolute inset-0 w-full h-full object-cover transition-opacity duration-300",
-                imageLoaded ? "opacity-100" : "opacity-0"
-              )}
-              loading="lazy"
-              decoding="async"
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageLoaded(true)} // Still show play button
-            />
+            <div className={cn(
+              "absolute inset-0 transition-opacity duration-300",
+              imageLoaded ? "opacity-100" : "opacity-0"
+            )}>
+              <SacredImage
+                src={posterUrl}
+                alt={`Thumbnail: ${title}`}
+                className="w-full h-full"
+                objectFit="cover"
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageLoaded(true)}
+              />
+            </div>
           )}
           
           {/* Placeholder while image loads */}

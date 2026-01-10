@@ -26,6 +26,7 @@ import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { SacredImage } from "@/components/performance/SacredImage";
 import QuestionEnunciado from "@/components/shared/QuestionEnunciado";
 import QuestionResolution from "@/components/shared/QuestionResolution";
 import QuestionTextField from "@/components/shared/QuestionTextField";
@@ -332,11 +333,12 @@ function PracticeSession({
                             )}
                           </div>
                           {option.image_url && (
-                            <img 
+                            <SacredImage 
                               src={option.image_url} 
                               alt={`Imagem alternativa ${option.id.toUpperCase()}`}
-                              className="min-h-[300px] max-h-[800px] w-auto object-contain rounded-lg ml-11"
-                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                              className="min-h-[300px] max-h-[800px] w-auto rounded-lg ml-11"
+                              objectFit="contain"
+                              onError={() => {}}
                             />
                           )}
                         </Label>

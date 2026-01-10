@@ -6,6 +6,7 @@
 import { motion } from "framer-motion";
 import { Smartphone, Apple, Download, Star, Zap, Shield, Rocket } from "lucide-react";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
+import { SacredImage } from "@/components/performance/SacredImage";
 import appArte from "@/assets/app-exclusivo-arte.png";
 
 // Floating particles
@@ -184,10 +185,8 @@ export const AppExclusivoSection = () => {
             <div className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-red-500/20 via-purple-500/20 to-blue-500/20 blur-xl" />
 
             {/* Image */}
-            <motion.img
-              src={appArte}
-              alt="App Exclusivo iOS e Android - Curso Moisés Medeiros"
-              className="relative w-full max-w-lg md:max-w-2xl rounded-2xl shadow-2xl"
+            <motion.div
+              className="relative w-full max-w-lg md:max-w-2xl rounded-2xl shadow-2xl overflow-hidden"
               style={{ 
                 boxShadow: '0 0 60px rgba(220,38,38,0.3), 0 0 120px rgba(147,51,234,0.2)',
               }}
@@ -204,7 +203,15 @@ export const AppExclusivoSection = () => {
                 scale: 1.02,
                 boxShadow: '0 0 80px rgba(220,38,38,0.5), 0 0 160px rgba(147,51,234,0.3)',
               }}
-            />
+            >
+              <SacredImage
+                src={appArte}
+                alt="App Exclusivo iOS e Android - Curso Moisés Medeiros"
+                className="w-full h-auto"
+                objectFit="cover"
+                priority
+              />
+            </motion.div>
 
             {/* Floating badges around image */}
             <motion.div

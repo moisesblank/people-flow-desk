@@ -48,6 +48,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SacredImage } from '@/components/performance/SacredImage';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { CyberBackground } from '@/components/ui/cyber-background';
@@ -1536,11 +1537,12 @@ function ModuleItem({ module, index, isExpanded, onToggle, onEdit, onDelete, onT
               onClick={() => fileInputRef.current?.click()}
               title="Clique para trocar a imagem (752×940px)"
             >
-              <img 
+              <SacredImage 
                 src={module.thumbnail_url} 
                 alt={module.title} 
-                className="w-full h-full object-cover"
-                onError={(e) => e.currentTarget.style.display = 'none'}
+                className="w-full h-full"
+                objectFit="cover"
+                onError={() => {}}
               />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Upload className="h-4 w-4 text-white" />
