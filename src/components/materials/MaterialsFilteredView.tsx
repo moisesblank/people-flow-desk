@@ -214,16 +214,27 @@ export const MaterialsFilteredView = memo(function MaterialsFilteredView({
   const [searchTerm, setSearchTerm] = useState('');
 
   // Buscar materiais
+  // Para 'questoes-mapas', o filtro está em 'macro' (5 macros químicos)
+  // Para os demais cards (bancas, extras), o filtro está em 'tags[]'
+  const isQuestoesMapas = bookId === 'questoes-mapas';
+
   const { data: materials, isLoading, error } = useQuery({
     queryKey: ['materials-filtered', bookId, filterValue],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('materials')
         .select('*')
         .eq('status', 'ready')
-        .eq('category', bookId)
-        .eq('macro', filterValue)
-        .order('created_at', { ascending: false });
+        .eq('category', bookId);
+
+      // Filtrar por macro (questoes-mapas) ou por tags (demais cards)
+      if (isQuestoesMapas) {
+        query = query.eq('macro', filterValue);
+      } else {
+        query = query.contains('tags', [filterValue]);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       return (data || []) as MaterialItem[];
