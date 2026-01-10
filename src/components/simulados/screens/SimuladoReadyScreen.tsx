@@ -5,13 +5,18 @@
  * 
  * Estado: Liberado para iniciar
  * Ação: Experiência épica cinematográfica
+ * 
+ * ⚡ PERFORMANCE OPTIMIZATION v2.0:
+ * - CSS-only animations for infinite loops (GPU-accelerated)
+ * - Framer Motion only for finite transitions
+ * - Hybrid tiering: Epic on high-end, clean on low-end
  */
 
-import React, { useMemo } from "react";
+import React from "react";
 import { 
   Play, Clock, FileQuestion, Shield, AlertTriangle, Camera, 
-  Lightbulb, ListChecks, Zap, Rocket, Trophy, Target, Sparkles,
-  Star, Atom, Hexagon, CircuitBoard, Flame, Gauge,
+  Lightbulb, ListChecks, Zap, Rocket, Trophy, Target,
+  Atom, Hexagon, CircuitBoard, Flame, Gauge,
   Timer, Award, Crown, Crosshair
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
+import "@/styles/simulado-ready-animations.css";
 
 interface SimuladoReadyScreenProps {
   simulado: Simulado;
@@ -55,16 +61,6 @@ export function SimuladoReadyScreen({
     ? `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}h`
     : `${simulado.duration_minutes}min`;
 
-  // Generate orbital particles for cinematic effect
-  const orbitalParticles = useMemo(() => 
-    Array.from({ length: 8 }).map((_, i) => ({
-      id: i,
-      angle: (360 / 8) * i,
-      delay: i * 0.15,
-      size: 3 + Math.random() * 2
-    })), []
-  );
-
   const content = (
     <motion.div 
       className="relative flex flex-col h-full"
@@ -72,7 +68,7 @@ export function SimuladoReadyScreen({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* 🌌 ULTIMATE CINEMATIC BACKGROUND */}
+      {/* 🌌 CINEMATIC BACKGROUND — CSS-only for performance */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-xl">
         {/* Deep space gradient */}
         <div className={cn(
@@ -83,7 +79,7 @@ export function SimuladoReadyScreen({
         )} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
         
-        {/* Animated grid pattern */}
+        {/* Animated grid pattern — CSS animation */}
         {!isLowEnd && (
           <div className={cn(
             "absolute inset-0 opacity-[0.03]",
@@ -92,87 +88,44 @@ export function SimuladoReadyScreen({
           )} />
         )}
         
-        {/* Orbital rings system */}
+        {/* Orbital rings system — CSS-only infinite rotation */}
         {!isLowEnd && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px]">
             {/* Primary ring */}
-            <motion.div 
-              className={cn(
-                "absolute inset-0 rounded-full border opacity-20",
-                isHardMode ? "border-red-500" : "border-emerald-500"
-              )}
-              style={{ 
-                borderStyle: 'dashed',
-                borderWidth: '1px'
-              }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-            />
+            <div className={cn(
+              "absolute inset-0 rounded-full border opacity-20 simulado-ring-slow",
+              isHardMode ? "border-red-500" : "border-emerald-500"
+            )} style={{ borderStyle: 'dashed', borderWidth: '1px' }} />
             {/* Secondary ring */}
-            <motion.div 
-              className={cn(
-                "absolute inset-8 rounded-full border opacity-15",
-                isHardMode ? "border-orange-500" : "border-cyan-500"
-              )}
-              style={{ borderWidth: '1px' }}
-              animate={{ rotate: -360 }}
-              transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
-            />
+            <div className={cn(
+              "absolute inset-8 rounded-full border opacity-15 simulado-ring-reverse",
+              isHardMode ? "border-orange-500" : "border-cyan-500"
+            )} style={{ borderWidth: '1px' }} />
             {/* Tertiary ring */}
-            <motion.div 
-              className={cn(
-                "absolute inset-20 rounded-full border opacity-10",
-                isHardMode ? "border-red-400" : "border-emerald-400"
-              )}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-            />
+            <div className={cn(
+              "absolute inset-20 rounded-full border opacity-10 simulado-ring-fast",
+              isHardMode ? "border-red-400" : "border-emerald-400"
+            )} />
             
-            {/* Orbital particles */}
-            {orbitalParticles.map((particle) => (
-              <motion.div
-                key={particle.id}
-                className={cn(
-                  "absolute rounded-full",
-                  isHardMode ? "bg-red-400" : "bg-emerald-400"
-                )}
-                style={{
-                  width: particle.size,
-                  height: particle.size,
-                  top: '50%',
-                  left: '50%',
-                  marginTop: -particle.size / 2,
-                  marginLeft: -particle.size / 2,
-                  boxShadow: isHardMode 
-                    ? `0 0 ${particle.size * 3}px rgba(239,68,68,0.6)` 
-                    : `0 0 ${particle.size * 3}px rgba(16,185,129,0.6)`
-                }}
-                animate={{
-                  rotate: [particle.angle, particle.angle + 360],
-                  x: [0, Math.cos(particle.angle * Math.PI / 180) * 200],
-                  y: [0, Math.sin(particle.angle * Math.PI / 180) * 200],
-                }}
-                transition={{
-                  duration: 20 + particle.id * 2,
-                  repeat: Infinity,
-                  ease: "linear",
-                  delay: particle.delay
-                }}
-              />
-            ))}
+            {/* Orbital particles — CSS keyframes */}
+            <div className={cn(
+              "absolute top-1/2 left-1/2 w-3 h-3 -ml-1.5 -mt-1.5 rounded-full simulado-particle-orbit",
+              isHardMode ? "bg-red-400 shadow-[0_0_12px_rgba(239,68,68,0.6)]" : "bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.6)]"
+            )} style={{ animationDelay: '0s' }} />
+            <div className={cn(
+              "absolute top-1/2 left-1/2 w-2 h-2 -ml-1 -mt-1 rounded-full simulado-particle-orbit",
+              isHardMode ? "bg-orange-400 shadow-[0_0_8px_rgba(249,115,22,0.6)]" : "bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.6)]"
+            )} style={{ animationDelay: '-5s' }} />
+            <div className={cn(
+              "absolute top-1/2 left-1/2 w-2 h-2 -ml-1 -mt-1 rounded-full simulado-particle-orbit",
+              isHardMode ? "bg-red-300 shadow-[0_0_8px_rgba(252,165,165,0.6)]" : "bg-emerald-300 shadow-[0_0_8px_rgba(110,231,183,0.6)]"
+            )} style={{ animationDelay: '-10s' }} />
           </div>
         )}
         
-        {/* Holographic scan lines */}
+        {/* Holographic scan lines — CSS animation */}
         {!isLowEnd && (
-          <motion.div 
-            className={cn(
-              "absolute inset-0 opacity-[0.03]",
-              "bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.03)_2px,rgba(255,255,255,0.03)_4px)]"
-            )}
-            animate={{ backgroundPosition: ['0 0', '0 100px'] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          />
+          <div className="absolute inset-0 opacity-[0.03] simulado-scanlines bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.03)_2px,rgba(255,255,255,0.03)_4px)]" />
         )}
         
         {/* Corner HUD elements */}
@@ -181,14 +134,10 @@ export function SimuladoReadyScreen({
           "border-l-2 border-t-2 rounded-tl-2xl",
           isHardMode ? "border-red-500/40" : "border-emerald-500/40"
         )}>
-          <motion.div 
-            className={cn(
-              "absolute top-4 left-4 w-2 h-2 rounded-full",
-              isHardMode ? "bg-red-500" : "bg-emerald-500"
-            )}
-            animate={{ opacity: [1, 0.3, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          />
+          <div className={cn(
+            "absolute top-4 left-4 w-2 h-2 rounded-full simulado-pulse",
+            isHardMode ? "bg-red-500" : "bg-emerald-500"
+          )} />
         </div>
         <div className={cn(
           "absolute top-0 right-0 w-32 h-32",
@@ -234,34 +183,23 @@ export function SimuladoReadyScreen({
           >
             {/* Status Holographic Badge */}
             <div className="flex justify-center">
-              <motion.div 
-                className={cn(
-                  "inline-flex items-center gap-3 px-6 py-2.5 rounded-full",
-                  "border shadow-lg",
-                  "relative overflow-hidden",
-                  isHardMode 
-                    ? "bg-gradient-to-r from-red-950/80 via-red-900/60 to-orange-950/80 border-red-500/50 shadow-red-500/25" 
-                    : "bg-gradient-to-r from-emerald-950/80 via-emerald-900/60 to-cyan-950/80 border-emerald-500/50 shadow-emerald-500/25"
-                )}
-                whileHover={{ scale: 1.02 }}
-              >
-                {/* Shimmer effect */}
+              <div className={cn(
+                "inline-flex items-center gap-3 px-6 py-2.5 rounded-full",
+                "border shadow-lg relative overflow-hidden",
+                isHardMode 
+                  ? "bg-gradient-to-r from-red-950/80 via-red-900/60 to-orange-950/80 border-red-500/50 shadow-red-500/25" 
+                  : "bg-gradient-to-r from-emerald-950/80 via-emerald-900/60 to-cyan-950/80 border-emerald-500/50 shadow-emerald-500/25"
+              )}>
+                {/* Shimmer effect — CSS animation */}
                 {!isLowEnd && (
-                  <motion.div 
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-                    animate={{ x: ['-200%', '200%'] }}
-                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                  />
+                  <div className="absolute inset-0 simulado-shimmer bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                 )}
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                >
-                  <Atom className={cn(
-                    "h-5 w-5",
-                    isHardMode ? "text-red-400" : "text-emerald-400"
-                  )} />
-                </motion.div>
+                <div className={cn(
+                  "simulado-spin-slow",
+                  isHardMode ? "text-red-400" : "text-emerald-400"
+                )}>
+                  <Atom className="h-5 w-5" />
+                </div>
                 <span className={cn(
                   "text-sm font-bold tracking-wide",
                   isHardMode ? "text-red-200" : "text-emerald-200"
@@ -272,7 +210,7 @@ export function SimuladoReadyScreen({
                   "h-4 w-4",
                   isHardMode ? "text-orange-400" : "text-cyan-400"
                 )} />
-              </motion.div>
+              </div>
             </div>
             
             {/* Title with Holographic Effect */}
@@ -294,7 +232,7 @@ export function SimuladoReadyScreen({
               {/* Glow layer */}
               {!isLowEnd && (
                 <span className={cn(
-                  "absolute inset-0 text-3xl md:text-4xl lg:text-5xl font-black tracking-tight blur-xl opacity-50",
+                  "absolute inset-0 text-3xl md:text-4xl lg:text-5xl font-black tracking-tight blur-xl opacity-50 pointer-events-none",
                   isHardMode ? "text-red-500" : "text-emerald-500"
                 )}>
                   {simulado.title}
@@ -327,7 +265,6 @@ export function SimuladoReadyScreen({
               label="Duração"
               color={isHardMode ? "red" : "cyan"}
               isLowEnd={isLowEnd}
-              delay={0}
             />
             <HolographicStatCard
               icon={<Hexagon className="h-6 w-6" />}
@@ -335,7 +272,6 @@ export function SimuladoReadyScreen({
               label="Questões"
               color={isHardMode ? "orange" : "emerald"}
               isLowEnd={isLowEnd}
-              delay={0.1}
             />
             <HolographicStatCard
               icon={<Crown className="h-6 w-6" />}
@@ -343,7 +279,6 @@ export function SimuladoReadyScreen({
               label="XP Máximo"
               color={isHardMode ? "red" : "amber"}
               isLowEnd={isLowEnd}
-              delay={0.2}
             />
             <HolographicStatCard
               icon={<Gauge className="h-6 w-6" />}
@@ -351,7 +286,6 @@ export function SimuladoReadyScreen({
               label="Aprovação"
               color={isHardMode ? "orange" : "green"}
               isLowEnd={isLowEnd}
-              delay={0.3}
             />
           </motion.div>
 
@@ -371,18 +305,14 @@ export function SimuladoReadyScreen({
                 transition={{ delay: 0.5 }}
               >
                 <div className="flex items-center gap-5">
-                  <motion.div 
-                    className={cn(
-                      "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0",
-                      "bg-gradient-to-br from-amber-500/40 to-orange-600/30",
-                      "border-2 border-amber-500/50",
-                      "shadow-[0_0_20px_rgba(245,158,11,0.3)]"
-                    )}
-                    animate={{ rotate: [0, 5, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
+                  <div className={cn(
+                    "w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 simulado-wobble",
+                    "bg-gradient-to-br from-amber-500/40 to-orange-600/30",
+                    "border-2 border-amber-500/50",
+                    "shadow-[0_0_20px_rgba(245,158,11,0.3)]"
+                  )}>
                     <AlertTriangle className="h-7 w-7 text-amber-300" />
-                  </motion.div>
+                  </div>
                   <div>
                     <p className="font-black text-lg text-amber-100">MODO PRÁTICA ATIVO</p>
                     <p className="text-sm text-amber-300/80 mt-1">
@@ -400,42 +330,30 @@ export function SimuladoReadyScreen({
                 transition={{ delay: 0.5 }}
               >
                 {simulado.is_hard_mode && (
-                  <motion.div 
-                    className={cn(
-                      "inline-flex items-center gap-3 px-6 py-3 rounded-xl",
-                      "bg-gradient-to-r from-red-950/80 to-red-900/60",
-                      "border-2 border-red-500/50",
-                      "shadow-[0_0_25px_rgba(239,68,68,0.3)]"
-                    )}
-                    whileHover={{ scale: 1.03, boxShadow: '0 0 35px rgba(239,68,68,0.4)' }}
-                  >
-                    <motion.div
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                    >
+                  <div className={cn(
+                    "inline-flex items-center gap-3 px-6 py-3 rounded-xl transition-transform hover:scale-[1.03]",
+                    "bg-gradient-to-r from-red-950/80 to-red-900/60",
+                    "border-2 border-red-500/50",
+                    "shadow-[0_0_25px_rgba(239,68,68,0.3)] hover:shadow-[0_0_35px_rgba(239,68,68,0.4)]"
+                  )}>
+                    <div className="simulado-scale-pulse">
                       <Flame className="h-5 w-5 text-red-400" />
-                    </motion.div>
+                    </div>
                     <span className="text-sm font-black text-red-200 tracking-wide">MODO HARD</span>
-                  </motion.div>
+                  </div>
                 )}
                 {simulado.requires_camera && (
-                  <motion.div 
-                    className={cn(
-                      "inline-flex items-center gap-3 px-6 py-3 rounded-xl",
-                      "bg-gradient-to-r from-red-950/80 to-orange-900/60",
-                      "border-2 border-red-500/50",
-                      "shadow-[0_0_25px_rgba(239,68,68,0.2)]"
-                    )}
-                    whileHover={{ scale: 1.03 }}
-                  >
-                    <motion.div
-                      animate={{ opacity: [1, 0.5, 1] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    >
+                  <div className={cn(
+                    "inline-flex items-center gap-3 px-6 py-3 rounded-xl transition-transform hover:scale-[1.03]",
+                    "bg-gradient-to-r from-red-950/80 to-orange-900/60",
+                    "border-2 border-red-500/50",
+                    "shadow-[0_0_25px_rgba(239,68,68,0.2)]"
+                  )}>
+                    <div className="simulado-pulse">
                       <Camera className="h-5 w-5 text-red-400" />
-                    </motion.div>
+                    </div>
                     <span className="text-sm font-black text-red-200 tracking-wide">CÂMERA ATIVA</span>
-                  </motion.div>
+                  </div>
                 )}
               </motion.div>
             )}
@@ -446,7 +364,7 @@ export function SimuladoReadyScreen({
             className={cn(
               "relative overflow-hidden rounded-2xl",
               "border-2",
-              shouldBlur && "backdrop-blur-xl",
+              shouldBlur && !isLowEnd && "backdrop-blur-xl",
               isHardMode 
                 ? "bg-gradient-to-br from-red-500/10 via-black/40 to-orange-500/5 border-red-500/30"
                 : "bg-gradient-to-br from-indigo-500/10 via-black/40 to-violet-500/5 border-indigo-500/30"
@@ -455,36 +373,26 @@ export function SimuladoReadyScreen({
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.6 }}
           >
-            {/* Animated glow */}
+            {/* Animated glow — CSS animation */}
             {!isLowEnd && (
-              <motion.div 
-                className={cn(
-                  "absolute -top-10 -right-10 w-60 h-60 rounded-full blur-3xl",
-                  isHardMode ? "bg-red-500/20" : "bg-indigo-500/20"
-                )}
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  opacity: [0.2, 0.3, 0.2]
-                }}
-                transition={{ duration: 4, repeat: Infinity }}
-              />
+              <div className={cn(
+                "absolute -top-10 -right-10 w-60 h-60 rounded-full blur-3xl simulado-glow-pulse",
+                isHardMode ? "bg-red-500/20" : "bg-indigo-500/20"
+              )} />
             )}
             
             <div className="relative p-6">
               {/* Header */}
               <div className="flex items-center gap-4 mb-5">
-                <motion.div 
-                  className={cn(
-                    "w-12 h-12 rounded-xl flex items-center justify-center",
-                    "bg-gradient-to-br shadow-xl",
-                    isHardMode 
-                      ? "from-red-500 to-orange-600 shadow-red-500/40" 
-                      : "from-indigo-500 to-violet-600 shadow-indigo-500/40"
-                  )}
-                  whileHover={{ rotate: [0, -10, 10, 0] }}
-                >
+                <div className={cn(
+                  "w-12 h-12 rounded-xl flex items-center justify-center transition-transform hover:rotate-12",
+                  "bg-gradient-to-br shadow-xl",
+                  isHardMode 
+                    ? "from-red-500 to-orange-600 shadow-red-500/40" 
+                    : "from-indigo-500 to-violet-600 shadow-indigo-500/40"
+                )}>
                   <Lightbulb className="h-6 w-6 text-white" />
-                </motion.div>
+                </div>
                 <div>
                   <p className={cn(
                     "font-black text-lg",
@@ -509,12 +417,12 @@ export function SimuladoReadyScreen({
                     key={i} 
                     className={cn(
                       "flex gap-4 p-3 rounded-xl",
-                      "bg-white/[0.03] border border-white/[0.05]"
+                      "bg-white/[0.03] border border-white/[0.05]",
+                      "hover:translate-x-1 hover:bg-white/[0.05] transition-all"
                     )}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.7 + i * 0.1 }}
-                    whileHover={{ x: 5, backgroundColor: 'rgba(255,255,255,0.05)' }}
                   >
                     <tip.icon className={cn(
                       "h-5 w-5 shrink-0 mt-0.5",
@@ -540,27 +448,18 @@ export function SimuladoReadyScreen({
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.8 }}
             >
-              {/* Pulsing border glow */}
+              {/* Pulsing border glow — CSS animation */}
               {!isLowEnd && (
-                <motion.div 
-                  className="absolute inset-0 rounded-2xl"
-                  style={{
-                    boxShadow: 'inset 0 0 30px rgba(239,68,68,0.2)'
-                  }}
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
+                <div className="absolute inset-0 rounded-2xl simulado-glow-pulse" style={{
+                  boxShadow: 'inset 0 0 30px rgba(239,68,68,0.2)'
+                }} />
               )}
               
               <div className="relative p-6">
                 <div className="flex items-center gap-4 mb-5">
-                  <motion.div 
-                    className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-xl shadow-red-500/40"
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  >
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-xl shadow-red-500/40 simulado-scale-pulse">
                     <Shield className="h-6 w-6 text-white" />
-                  </motion.div>
+                  </div>
                   <div>
                     <p className="font-black text-lg text-red-100">Regras do Modo Hard</p>
                     <p className="text-xs text-red-400/60">Violações = Desclassificação</p>
@@ -597,7 +496,7 @@ export function SimuladoReadyScreen({
             className={cn(
               "rounded-2xl p-6",
               "bg-white/[0.02] border border-white/[0.08]",
-              shouldBlur && "backdrop-blur-sm"
+              shouldBlur && !isLowEnd && "backdrop-blur-sm"
             )}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -620,19 +519,16 @@ export function SimuladoReadyScreen({
                 { icon: Target, text: "Navegue livremente entre questões" },
                 { icon: FileQuestion, text: "Gabarito disponível após finalização" }
               ].map((rule, i) => (
-                <motion.div 
+                <div 
                   key={i} 
                   className="flex gap-3 items-center p-2 rounded-lg hover:bg-white/[0.03] transition-colors"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1 + i * 0.05 }}
                 >
                   <rule.icon className={cn(
                     "h-4 w-4 shrink-0",
                     isHardMode ? "text-red-500/60" : "text-emerald-500/60"
                   )} />
                   <span className="text-sm text-muted-foreground/80">{rule.text}</span>
-                </motion.div>
+                </div>
               ))}
             </div>
           </motion.div>
@@ -651,68 +547,47 @@ export function SimuladoReadyScreen({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.1 }}
       >
-        <motion.div
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
+        <Button
+          size="lg"
+          onClick={onStart}
+          disabled={isLoading}
+          className={cn(
+            "relative w-full h-16 md:h-18 text-lg md:text-xl font-black overflow-hidden",
+            "rounded-2xl border-2",
+            "transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]",
+            isHardMode 
+              ? "bg-gradient-to-r from-red-600 via-red-500 to-orange-500 hover:from-red-500 hover:via-red-400 hover:to-orange-400 border-red-400/50"
+              : "bg-gradient-to-r from-emerald-600 via-emerald-500 to-cyan-500 hover:from-emerald-500 hover:via-emerald-400 hover:to-cyan-400 border-emerald-400/50",
+            !isLowEnd && (isHardMode 
+              ? "shadow-[0_0_50px_rgba(239,68,68,0.4),0_0_100px_rgba(239,68,68,0.2)]" 
+              : "shadow-[0_0_50px_rgba(16,185,129,0.4),0_0_100px_rgba(16,185,129,0.2)]"
+            )
+          )}
         >
-          <Button
-            size="lg"
-            onClick={onStart}
-            disabled={isLoading}
-            className={cn(
-              "relative w-full h-16 md:h-18 text-lg md:text-xl font-black overflow-hidden",
-              "rounded-2xl border-2",
-              "transition-all duration-300",
-              isHardMode 
-                ? "bg-gradient-to-r from-red-600 via-red-500 to-orange-500 hover:from-red-500 hover:via-red-400 hover:to-orange-400 border-red-400/50"
-                : "bg-gradient-to-r from-emerald-600 via-emerald-500 to-cyan-500 hover:from-emerald-500 hover:via-emerald-400 hover:to-cyan-400 border-emerald-400/50",
-              !isLowEnd && (isHardMode 
-                ? "shadow-[0_0_50px_rgba(239,68,68,0.4),0_0_100px_rgba(239,68,68,0.2)]" 
-                : "shadow-[0_0_50px_rgba(16,185,129,0.4),0_0_100px_rgba(16,185,129,0.2)]"
-              )
-            )}
-          >
-            {isLoading ? (
-              <div className="flex items-center gap-3">
-                <motion.div 
-                  className="h-6 w-6 border-3 border-white/30 border-t-white rounded-full"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                />
-                <span>Preparando Simulado...</span>
+          {isLoading ? (
+            <div className="flex items-center gap-3">
+              <div className="h-6 w-6 border-3 border-white/30 border-t-white rounded-full animate-spin" />
+              <span>Preparando Simulado...</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <Play className="h-7 w-7 fill-current" />
+              <span>{isRetake ? "INICIAR MODO PRÁTICA" : "INICIAR SIMULADO"}</span>
+              <div className="simulado-bounce-x">
+                <Rocket className="h-6 w-6" />
               </div>
-            ) : (
-              <div className="flex items-center gap-4">
-                <Play className="h-7 w-7 fill-current" />
-                <span>{isRetake ? "INICIAR MODO PRÁTICA" : "INICIAR SIMULADO"}</span>
-                <motion.div
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                >
-                  <Rocket className="h-6 w-6" />
-                </motion.div>
-              </div>
-            )}
-            
-            {/* Animated shine */}
-            {!isLowEnd && !isLoading && (
-              <motion.div 
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent"
-                animate={{ x: ['-200%', '200%'] }}
-                transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-              />
-            )}
-          </Button>
-        </motion.div>
+            </div>
+          )}
+          
+          {/* Animated shine — CSS animation */}
+          {!isLowEnd && !isLoading && (
+            <div className="absolute inset-0 simulado-shimmer-fast bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+          )}
+        </Button>
         
-        <motion.p 
-          className="text-center text-xs text-muted-foreground/40 mt-4 font-medium"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.3 }}
-        >
+        <p className="text-center text-xs text-muted-foreground/40 mt-4 font-medium">
           ⚡ Ao iniciar, o cronômetro será ativado automaticamente
-        </motion.p>
+        </p>
       </motion.div>
     </motion.div>
   );
@@ -759,7 +634,7 @@ export function SimuladoReadyScreen({
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   📊 HOLOGRAPHIC STAT CARD — Ultra Premium Design
+   📊 HOLOGRAPHIC STAT CARD — Optimized for Performance
    ═══════════════════════════════════════════════════════════════ */
 function HolographicStatCard({ 
   icon, 
@@ -767,14 +642,12 @@ function HolographicStatCard({
   label, 
   color,
   isLowEnd = false,
-  delay = 0,
 }: { 
   icon: React.ReactNode; 
   value: string; 
   label: string;
   color: "red" | "orange" | "cyan" | "emerald" | "amber" | "green";
   isLowEnd?: boolean;
-  delay?: number;
 }) {
   const colorConfig = {
     red: {
@@ -830,20 +703,13 @@ function HolographicStatCard({
   const config = colorConfig[color];
 
   return (
-    <motion.div 
-      className="group relative"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-    >
-      {/* Outer glow on hover */}
+    <div className="group relative">
+      {/* Outer glow on hover — CSS transition */}
       {!isLowEnd && (
-        <motion.div 
-          className={cn(
-            "absolute -inset-1 rounded-2xl bg-gradient-to-r opacity-0 group-hover:opacity-40 blur-xl transition-opacity duration-500",
-            config.bg
-          )}
-        />
+        <div className={cn(
+          "absolute -inset-1 rounded-2xl bg-gradient-to-r opacity-0 group-hover:opacity-40 blur-xl transition-opacity duration-500",
+          config.bg
+        )} />
       )}
       
       <div className={cn(
@@ -856,32 +722,15 @@ function HolographicStatCard({
         !isLowEnd && config.hover,
         !isLowEnd && config.glow
       )}>
-        {/* Scan line effect on hover */}
-        {!isLowEnd && (
-          <motion.div 
-            className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <motion.div 
-              className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent"
-              initial={{ y: '-100%' }}
-              whileHover={{ y: '100%' }}
-              transition={{ duration: 0.8 }}
-            />
-          </motion.div>
-        )}
-        
         {/* Icon container */}
-        <motion.div 
-          className={cn(
-            "w-12 h-12 rounded-xl flex items-center justify-center",
-            "bg-gradient-to-br text-white shadow-lg",
-            config.icon
-          )}
-          whileHover={{ rotate: [0, -5, 5, 0], scale: 1.1 }}
-          transition={{ duration: 0.4 }}
-        >
+        <div className={cn(
+          "w-12 h-12 rounded-xl flex items-center justify-center",
+          "bg-gradient-to-br text-white shadow-lg",
+          config.icon,
+          !isLowEnd && "transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
+        )}>
           {icon}
-        </motion.div>
+        </div>
         
         {/* Value & Label */}
         <div className="text-center">
@@ -891,11 +740,11 @@ function HolographicStatCard({
           )}>
             {value}
           </p>
-          <p className="text-[10px] md:text-xs text-muted-foreground/60 uppercase tracking-widest mt-1 font-medium">
+          <p className="text-xs text-muted-foreground/60 font-medium uppercase tracking-wider mt-1">
             {label}
           </p>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
