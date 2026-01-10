@@ -538,35 +538,62 @@ const BookSection = memo(function BookSection({
       className="relative"
       data-category={categoryKey}
     >
-      {/* 🎬 MICRO SECTION HEADER — 90% MENOR (sem collapsible, sempre aberto) */}
+      {/* 🎬 FUTURISTIC SECTION HEADER — Year 2300 Cinematic Design */}
       <div 
         className={cn(
-          "flex items-center gap-1.5 px-2 py-1 mb-2",
-          "border-l-2",
-          // Minimal background
-          "bg-white/[0.01]"
+          "relative flex items-center gap-3 px-4 py-3 mb-4 rounded-xl",
+          "border border-white/10",
+          // 🌌 Futuristic gradient background
+          "bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-yellow-500/10",
+          // ✨ Glassmorphism effect
+          "backdrop-blur-sm",
+          // 🎯 Glow effect
+          "shadow-[0_0_30px_-5px_rgba(245,158,11,0.3),inset_0_1px_1px_rgba(255,255,255,0.1)]",
+          // 📏 Overflow hidden for pseudo-elements
+          "overflow-hidden"
         )}
-        style={{ 
-          borderLeftColor: colors.accent.includes('text-') 
-            ? colors.accent.replace('text-', '').replace('[', '').replace(']', '')
-            : undefined 
-        }}
       >
-        {/* Micro icon */}
-        <div className={cn("w-4 h-4", colors.iconColor)}>
+        {/* 🌟 Animated gradient line at top */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-60" />
+        
+        {/* 💫 Corner accents */}
+        <div className="absolute top-0 left-0 w-4 h-4 border-l-2 border-t-2 border-amber-400/50 rounded-tl-lg" />
+        <div className="absolute top-0 right-0 w-4 h-4 border-r-2 border-t-2 border-amber-400/50 rounded-tr-lg" />
+        <div className="absolute bottom-0 left-0 w-4 h-4 border-l-2 border-b-2 border-amber-400/50 rounded-bl-lg" />
+        <div className="absolute bottom-0 right-0 w-4 h-4 border-r-2 border-b-2 border-amber-400/50 rounded-br-lg" />
+        
+        {/* 🎨 Icon with glow */}
+        <div className={cn(
+          "w-7 h-7 flex items-center justify-center rounded-lg",
+          "bg-gradient-to-br from-amber-500/30 to-orange-500/20",
+          "border border-amber-400/30",
+          "shadow-[0_0_15px_rgba(245,158,11,0.4)]",
+          colors.iconColor
+        )}>
           {icon}
         </div>
         
-        <span className={cn("text-[11px] font-medium", colors.accent)}>
+        {/* 📝 Title with gradient text */}
+        <span className={cn(
+          "text-base font-bold tracking-wide uppercase",
+          "bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-300 bg-clip-text text-transparent",
+          "drop-shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+        )}>
           {title}
         </span>
         
+        {/* 🏷️ Badge with futuristic style */}
         <Badge className={cn(
-          "px-1.5 py-0 text-[9px] font-medium border h-4 min-w-4",
-          colors.badge
+          "px-3 py-1 text-xs font-bold border rounded-lg",
+          "bg-gradient-to-r from-amber-500/25 to-orange-500/20",
+          "text-amber-300 border-amber-400/40",
+          "shadow-[0_0_10px_rgba(245,158,11,0.3)]"
         )}>
           {books.length}
         </Badge>
+        
+        {/* ⚡ Scan line animation */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent pointer-events-none" />
       </div>
 
       {/* 📚 BOOK CARDS — Sempre visíveis */}
