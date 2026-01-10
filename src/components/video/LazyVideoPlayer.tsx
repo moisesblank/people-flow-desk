@@ -85,7 +85,7 @@ export const LazyVideoPlayer = memo(function LazyVideoPlayer({
         return `https://www.youtube.com/embed/${videoId}?${YT_PARAMS}`;
       case "panda":
         // 🐼 Panda Video: Usar Library ID canônico (src/lib/video/panda.ts)
-        return `https://player-vz-c3e3c21e-7ce.tv.pandavideo.com.br/embed/?v=${videoId}`;
+        return `https://player-vz-d59d6cb7-b9c.tv.pandavideo.com.br/embed/?v=${videoId}`;
       case "vimeo":
         return `https://player.vimeo.com/video/${videoId}?autoplay=1&dnt=1`;
       default:

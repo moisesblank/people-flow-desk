@@ -22,7 +22,7 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 // P0 FIX: Usar PANDA_DRM_SECRET_KEY para geração de URLs assinadas (DRM via API ativado)
 const PANDA_DRM_SECRET_KEY = Deno.env.get("PANDA_DRM_SECRET_KEY") || "";
-const PANDA_LIBRARY_ID = "c3e3c21e-7ce";
+const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
 
 const SANCTUM_VERSION = "2.0-OMEGA-DRM";
 const SESSION_TTL_MINUTES = 5;
