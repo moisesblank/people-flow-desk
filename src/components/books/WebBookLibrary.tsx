@@ -137,15 +137,16 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
 
   return (
     <div className="group">
-      {/* 🎬 NETFLIX ULTRA PREMIUM CARD - CSS-only */}
+      {/* 🎬 NETFLIX ULTRA PREMIUM CARD - 50% MORE VISIBLE */}
       <div 
         className={cn(
           "relative flex rounded-2xl overflow-hidden cursor-pointer",
-          "bg-gradient-to-br from-[#0a0e14] via-[#0f1419]/95 to-[#1a0a0a]",
-          "border-2 transition-all duration-300 ease-out",
-          "hover:scale-[1.015] hover:-translate-y-1",
-          themeColors.border,
-          isHighEnd && themeColors.glow
+          "bg-gradient-to-br from-[#0a0e14] via-[#0f1419] to-[#1a0a0a]",
+          "border-3 transition-all duration-300 ease-out",
+          "hover:scale-[1.02] hover:-translate-y-2",
+          "shadow-2xl hover:shadow-3xl",
+          themeColors.border.replace('/30', '/60').replace('/50', '/80'),
+          isHighEnd && themeColors.glow.replace('/20', '/40').replace('/40', '/60')
         )}
         onClick={onSelect}
       >
@@ -435,79 +436,55 @@ const BookSection = memo(function BookSection({
   return (
     <Card className={cn(
       "group/card relative overflow-hidden transition-all duration-500",
-      "bg-gradient-to-br from-[#0a0e14] via-[#0f1419] to-[#1a0a0a]",
-      "border-2 shadow-2xl rounded-3xl",
-      colors.border,
-      isHighEnd && colors.shadow
+      "bg-gradient-to-br from-[#0a0e14]/60 via-[#0f1419]/40 to-[#1a0a0a]/30",
+      "border shadow-md rounded-2xl",
+      colors.border.replace('/40', '/15').replace('/70', '/30'),
+      isHighEnd && colors.shadow.replace('/15', '/5').replace('/40', '/15')
     )}>
-      {/* Spider-Man style corner accents */}
-      <div className={cn("absolute top-0 left-0 w-16 h-16 border-l-4 border-t-4 rounded-tl-3xl pointer-events-none", colors.corner)} />
-      <div className={cn("absolute top-0 right-0 w-16 h-16 border-r-4 border-t-4 rounded-tr-3xl pointer-events-none opacity-80", colors.corner)} />
-      <div className={cn("absolute bottom-0 left-0 w-16 h-16 border-l-4 border-b-4 rounded-bl-3xl pointer-events-none opacity-80", colors.corner)} />
-      <div className={cn("absolute bottom-0 right-0 w-16 h-16 border-r-4 border-b-4 rounded-br-3xl pointer-events-none", colors.corner)} />
-      
-      {/* Background glow on hover */}
-      {isHighEnd && (
-        <div className={cn(
-          "absolute inset-0 opacity-0 group-hover/card:opacity-100 transition-all duration-500 pointer-events-none",
-          accentColor === 'red' ? "bg-gradient-to-br from-[#E23636]/5 via-transparent to-[#E23636]/5"
-            : accentColor === 'amber' ? "bg-gradient-to-br from-amber-500/5 via-transparent to-amber-500/5"
-            : "bg-gradient-to-br from-emerald-500/5 via-transparent to-emerald-500/5"
-        )} />
-      )}
+      {/* Minimal corner accents (80% menos visível) */}
+      <div className={cn("absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 rounded-tl-2xl pointer-events-none opacity-30", colors.corner.replace('/60', '/25'))} />
+      <div className={cn("absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 rounded-br-2xl pointer-events-none opacity-30", colors.corner.replace('/60', '/25'))} />
       
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
           <CardHeader className={cn(
-            "cursor-pointer relative z-10 py-5 px-6",
-            "border-b-2 transition-all duration-300",
-            `bg-gradient-to-r ${colors.headerBg}`,
-            accentColor === 'red' ? "border-[#E23636]/25 hover:from-[#E23636]/30 hover:to-[#E23636]/25"
-              : accentColor === 'amber' ? "border-amber-500/25 hover:from-amber-500/30 hover:to-amber-500/25"
-              : "border-emerald-500/25 hover:from-emerald-500/30 hover:to-emerald-500/25"
+            "cursor-pointer relative z-10 py-3 px-4",
+            "border-b transition-all duration-300",
+            `bg-gradient-to-r ${colors.headerBg.replace('/20', '/8').replace('/15', '/5').replace('/80', '/90')}`,
+            "border-white/5 hover:border-white/10"
           )}>
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                {/* Icon with glow */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                {/* Icon minimal */}
                 <div className="relative">
-                  {isHighEnd && (
-                    <div className={cn("absolute inset-0 rounded-2xl blur-2xl opacity-70 group-hover/card:opacity-100 transition-opacity", colors.iconGlow)} />
-                  )}
                   <div className={cn(
-                    "relative p-3.5 rounded-2xl bg-gradient-to-br border-2 shadow-xl",
-                    colors.iconBg
+                    "relative p-2 rounded-xl bg-gradient-to-br border shadow-sm opacity-60",
+                    colors.iconBg.replace('/50', '/20').replace('/35', '/15').replace('/60', '/25').replace('/40', '/15')
                   )}>
                     {icon}
                   </div>
                 </div>
                 
-                <div className="space-y-1">
-                  <CardTitle className="text-xl md:text-2xl font-black text-white flex items-center gap-3">
+                <div className="flex items-center gap-3">
+                  <CardTitle className="text-base md:text-lg font-semibold text-white/70">
                     {title}
                   </CardTitle>
-                  
-                  {/* Stats row */}
-                  <div className="flex items-center gap-3">
-                    <Badge className={cn("px-2.5 py-1 text-xs font-bold border-2 shadow-lg", colors.badge)}>
-                      <BookOpen className="h-3.5 w-3.5 mr-1.5" />
-                      {books.length} {books.length === 1 ? 'livro' : 'livros'}
-                    </Badge>
-                  </div>
+                  <Badge className={cn("px-2 py-0.5 text-[10px] font-medium border opacity-60", colors.badge.replace('/25', '/10').replace('/40', '/20'))}>
+                    {books.length}
+                  </Badge>
                 </div>
               </div>
               
-              {/* Toggle button */}
+              {/* Toggle button minimal */}
               <Button 
                 variant="ghost" 
                 size="icon" 
                 className={cn(
-                  "h-10 w-10 rounded-xl border-2 transition-all shadow-lg",
-                  accentColor === 'red' ? "border-[#E23636]/50 bg-[#E23636]/15 hover:bg-[#E23636]/35 hover:border-[#E23636]/70 shadow-[#E23636]/20"
-                    : accentColor === 'amber' ? "border-amber-500/50 bg-amber-500/15 hover:bg-amber-500/35 hover:border-amber-500/70 shadow-amber-500/20"
-                    : "border-emerald-500/50 bg-emerald-500/15 hover:bg-emerald-500/35 hover:border-emerald-500/70 shadow-emerald-500/20"
+                  "h-7 w-7 rounded-lg border transition-all opacity-50 hover:opacity-80",
+                  "border-white/10 bg-white/5 hover:bg-white/10"
                 )}
               >
-                {isOpen ? <ChevronUp className={cn("h-5 w-5", colors.iconColor)} /> : <ChevronDown className={cn("h-5 w-5", colors.iconColor)} />}
+                {isOpen ? <ChevronUp className="h-4 w-4 text-white/50" /> : <ChevronDown className="h-4 w-4 text-white/50" />}
               </Button>
             </div>
           </CardHeader>
@@ -516,7 +493,7 @@ const BookSection = memo(function BookSection({
         <CollapsibleContent>
           {/* ⚡ LAZY RENDERING: Só monta BookCards quando seção está aberta */}
           {isOpen && (
-            <CardContent className="p-5 space-y-4 bg-gradient-to-b from-transparent to-black/20">
+            <CardContent className="p-4 space-y-4 bg-transparent">
               {books.map((book, idx) => {
                 const isPrevisaoFinal = book.category === 'previsao_final';
                 const bookCard = (
