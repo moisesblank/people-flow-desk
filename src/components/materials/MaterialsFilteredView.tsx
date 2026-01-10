@@ -51,8 +51,10 @@ interface MaterialItem {
 interface MaterialsFilteredViewProps {
   bookId: string;
   bookName: string;
-  filterValue: string;
+  filterValue: string;   // macro para questoes-mapas, tag para demais
   filterLabel: string;
+  microValue?: string;   // micro para questoes-mapas
+  microLabel?: string;
   onBack: () => void;
   onSelectMaterial: (materialId: string) => void;
 }
@@ -206,6 +208,8 @@ export const MaterialsFilteredView = memo(function MaterialsFilteredView({
   bookName,
   filterValue,
   filterLabel,
+  microValue,
+  microLabel,
   onBack,
   onSelectMaterial
 }: MaterialsFilteredViewProps) {
@@ -214,12 +218,12 @@ export const MaterialsFilteredView = memo(function MaterialsFilteredView({
   const [searchTerm, setSearchTerm] = useState('');
 
   // Buscar materiais
-  // Para 'questoes-mapas', o filtro está em 'macro' (5 macros químicos)
+  // Para 'questoes-mapas', o filtro está em 'macro' (5 macros químicos) + 'micro' opcional
   // Para os demais cards (bancas, extras), o filtro está em 'tags[]'
   const isQuestoesMapas = bookId === 'questoes-mapas';
 
   const { data: materials, isLoading, error } = useQuery({
-    queryKey: ['materials-filtered', bookId, filterValue],
+    queryKey: ['materials-filtered', bookId, filterValue, microValue],
     queryFn: async () => {
       let query = supabase
         .from('materials')
@@ -230,6 +234,10 @@ export const MaterialsFilteredView = memo(function MaterialsFilteredView({
       // Filtrar por macro (questoes-mapas) ou por tags (demais cards)
       if (isQuestoesMapas) {
         query = query.eq('macro', filterValue);
+        // Se micro foi fornecido, filtrar também por micro
+        if (microValue) {
+          query = query.eq('micro', microValue);
+        }
       } else {
         query = query.contains('tags', [filterValue]);
       }
@@ -253,6 +261,11 @@ export const MaterialsFilteredView = memo(function MaterialsFilteredView({
       m.description?.toLowerCase().includes(term)
     );
   }, [materials, searchTerm]);
+
+  // Label para exibir no header (inclui micro se presente)
+  const displayLabel = microLabel || microValue 
+    ? `${filterLabel} → ${microLabel || microValue}` 
+    : filterLabel;
 
   return (
     <motion.div
@@ -304,7 +317,7 @@ export const MaterialsFilteredView = memo(function MaterialsFilteredView({
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xl md:text-2xl font-bold text-white">{filterLabel}</h2>
+                  <h2 className="text-xl md:text-2xl font-bold text-white">{displayLabel}</h2>
                   <Badge variant="outline" className="border-white/20 text-white/60 text-xs">
                     {bookName}
                   </Badge>

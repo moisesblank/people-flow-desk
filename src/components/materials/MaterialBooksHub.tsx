@@ -2,9 +2,10 @@
 // 📚 MATERIAL BOOKS HUB — NETFLIX ULTRA PREMIUM 2300
 // Year 2300 Cinematic Experience
 // 5 Hub Cards Fixos com Design Cinematográfico
+// Fluxo: Macro → Micro para Questões e Mapas Mentais
 // ============================================
 
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, 
@@ -28,6 +29,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useConstitutionPerformance } from '@/hooks/useConstitutionPerformance';
+import { useQuestionTaxonomy } from '@/hooks/useQuestionTaxonomy';
 import '@/styles/dashboard-2300.css';
 
 // ============================================
@@ -375,12 +377,13 @@ const NetflixBookCard = memo(function NetflixBookCard({
 
 // ============================================
 // 📂 BOOK DETAIL VIEW — FILTROS INTERNOS
+// Com navegação Macro → Micro para 'questoes-mapas'
 // ============================================
 
 interface BookDetailViewProps {
   book: MaterialBook;
   onBack: () => void;
-  onSelectFilter: (bookId: string, filter: string) => void;
+  onSelectFilter: (bookId: string, filter: string, micro?: string) => void;
   isHighEnd: boolean;
 }
 
@@ -391,9 +394,23 @@ const BookDetailView = memo(function BookDetailView({
   isHighEnd
 }: BookDetailViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMacro, setSelectedMacro] = useState<string | null>(null);
+  const { data: taxonomy } = useQuestionTaxonomy();
+
+  const isQuestoesMapas = book.id === 'questoes-mapas';
+
+  // Obter micros do macro selecionado
+  const microsForMacro = useMemo(() => {
+    if (!isQuestoesMapas || !selectedMacro || !taxonomy?.tree) return [];
+    return taxonomy.tree.getMicros(selectedMacro);
+  }, [isQuestoesMapas, selectedMacro, taxonomy]);
 
   const filteredFilters = book.filters.filter(f => 
     f.label.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredMicros = microsForMacro.filter(m =>
+    m.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Agrupar filtros por categoria
@@ -415,6 +432,34 @@ const BookDetailView = memo(function BookDetailView({
     'militar': '🎖️ Militar',
     'geral': '📚 Geral'
   };
+
+  // Handler para clique em filtro
+  const handleFilterClick = useCallback((filterValue: string) => {
+    if (isQuestoesMapas && !selectedMacro) {
+      // Primeiro nível: selecionar macro
+      setSelectedMacro(filterValue);
+      setSearchTerm('');
+    } else if (isQuestoesMapas && selectedMacro) {
+      // Segundo nível: selecionar micro - passa macro + micro
+      onSelectFilter(book.id, selectedMacro, filterValue);
+    } else {
+      // Cards normais: ir direto para materiais
+      onSelectFilter(book.id, filterValue);
+    }
+  }, [isQuestoesMapas, selectedMacro, book.id, onSelectFilter]);
+
+  // Handler para voltar do micro para macro
+  const handleBackFromMicro = useCallback(() => {
+    setSelectedMacro(null);
+    setSearchTerm('');
+  }, []);
+
+  // Obter label do macro selecionado
+  const selectedMacroLabel = useMemo(() => {
+    if (!selectedMacro) return '';
+    const filter = book.filters.find(f => f.value === selectedMacro);
+    return filter?.label || selectedMacro;
+  }, [selectedMacro, book.filters]);
 
   return (
     <motion.div
@@ -453,7 +498,7 @@ const BookDetailView = memo(function BookDetailView({
           <Button 
             variant="ghost" 
             size="icon"
-            onClick={onBack}
+            onClick={selectedMacro ? handleBackFromMicro : onBack}
             className={cn(
               "rounded-xl h-12 w-12",
               "bg-white/5 border border-white/10",
@@ -478,8 +523,31 @@ const BookDetailView = memo(function BookDetailView({
 
           {/* Title + Description */}
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-white">{book.name}</h2>
-            <p className="text-sm text-muted-foreground">{book.description}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-2xl font-bold text-white">{book.name}</h2>
+              {selectedMacro && (
+                <>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  <Badge 
+                    className={cn(
+                      "text-sm font-bold px-3 py-1",
+                      "bg-gradient-to-r border-0",
+                      book.gradientFrom.replace('/20', '/40'),
+                      book.gradientTo.replace('/5', '/20'),
+                      book.accentColor
+                    )}
+                  >
+                    {selectedMacroLabel}
+                  </Badge>
+                </>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {selectedMacro 
+                ? `Selecione o micro-assunto de ${selectedMacroLabel}`
+                : book.description
+              }
+            </p>
           </div>
 
           {/* Filter Count */}
@@ -492,7 +560,7 @@ const BookDetailView = memo(function BookDetailView({
               book.accentColor
             )}
           >
-            {book.filters.length} categorias
+            {selectedMacro ? `${microsForMacro.length} micros` : `${book.filters.length} categorias`}
           </Badge>
         </div>
       </div>
@@ -501,7 +569,7 @@ const BookDetailView = memo(function BookDetailView({
       <div className="relative max-w-lg">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
         <Input
-          placeholder="Buscar categoria..."
+          placeholder={selectedMacro ? "Buscar micro-assunto..." : "Buscar categoria..."}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className={cn(
@@ -513,29 +581,26 @@ const BookDetailView = memo(function BookDetailView({
         />
       </div>
 
-      {/* 📂 FILTERS GRID */}
+      {/* 📂 FILTERS/MICROS GRID */}
       <div className="space-y-8">
-        {Object.entries(groupedFilters).map(([category, filters]) => (
-          <div key={category} className="space-y-4">
-            {/* Category Label */}
-            {Object.keys(groupedFilters).length > 1 && (
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                {categoryLabels[category] || category}
-                <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
-              </h3>
-            )}
+        {/* Se está mostrando micros (segundo nível) */}
+        {isQuestoesMapas && selectedMacro ? (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              🧪 Micro-Assuntos de {selectedMacroLabel}
+              <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+            </h3>
             
-            {/* Filters */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {filters.map((filter, idx) => (
+              {filteredMicros.map((micro, idx) => (
                 <motion.button
-                  key={filter.value}
+                  key={micro.value}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: idx * 0.02 }}
                   whileHover={isHighEnd ? { scale: 1.05, y: -2 } : undefined}
                   whileTap={{ scale: 0.98 }}
-                  onClick={() => onSelectFilter(book.id, filter.value)}
+                  onClick={() => handleFilterClick(micro.value)}
                   className={cn(
                     "relative px-4 py-4 rounded-xl text-center",
                     "bg-gradient-to-br from-[#0a0d12] to-[#151a22]",
@@ -569,15 +634,96 @@ const BookDetailView = memo(function BookDetailView({
                   <span className={cn(
                     "relative text-sm font-semibold text-white/80 group-hover:text-white transition-colors"
                   )}>
-                    {filter.label}
+                    {micro.label}
                   </span>
                 </motion.button>
               ))}
             </div>
-          </div>
-        ))}
 
-        {filteredFilters.length === 0 && (
+            {filteredMicros.length === 0 && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-16"
+              >
+                <Search className="w-16 h-16 text-muted-foreground/20 mx-auto mb-4" />
+                <p className="text-muted-foreground text-lg">Nenhum micro-assunto encontrado</p>
+                <p className="text-muted-foreground/60 text-sm mt-1">Tente buscar com outro termo</p>
+              </motion.div>
+            )}
+          </div>
+        ) : (
+          /* Mostrando macros/filtros (primeiro nível) */
+          Object.entries(groupedFilters).map(([category, filters]) => (
+            <div key={category} className="space-y-4">
+              {/* Category Label */}
+              {Object.keys(groupedFilters).length > 1 && (
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                  {categoryLabels[category] || category}
+                  <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
+                </h3>
+              )}
+              
+              {/* Filters */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                {filters.map((filter, idx) => (
+                  <motion.button
+                    key={filter.value}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.02 }}
+                    whileHover={isHighEnd ? { scale: 1.05, y: -2 } : undefined}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleFilterClick(filter.value)}
+                    className={cn(
+                      "relative px-4 py-4 rounded-xl text-center",
+                      "bg-gradient-to-br from-[#0a0d12] to-[#151a22]",
+                      "border transition-all duration-300",
+                      book.borderColor,
+                      "hover:border-opacity-100",
+                      "group"
+                    )}
+                    style={isHighEnd ? {
+                      boxShadow: `0 0 0 1px transparent`
+                    } : undefined}
+                    onMouseEnter={(e) => {
+                      if (isHighEnd) {
+                        e.currentTarget.style.boxShadow = `0 10px 30px -10px ${book.glowColor}`;
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (isHighEnd) {
+                        e.currentTarget.style.boxShadow = `0 0 0 1px transparent`;
+                      }
+                    }}
+                  >
+                    {/* Gradient Overlay on Hover */}
+                    <div className={cn(
+                      "absolute inset-0 rounded-xl opacity-0 group-hover:opacity-40 transition-opacity",
+                      "bg-gradient-to-br",
+                      book.gradientFrom,
+                      book.gradientTo
+                    )} />
+                    
+                    {/* Show arrow for macros in questoes-mapas */}
+                    <div className="flex items-center justify-center gap-2">
+                      <span className={cn(
+                        "relative text-sm font-semibold text-white/80 group-hover:text-white transition-colors"
+                      )}>
+                        {filter.label}
+                      </span>
+                      {isQuestoesMapas && (
+                        <ChevronRight className="w-4 h-4 text-white/40 group-hover:text-white/70 group-hover:translate-x-0.5 transition-all" />
+                      )}
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+
+        {!selectedMacro && filteredFilters.length === 0 && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -592,7 +738,6 @@ const BookDetailView = memo(function BookDetailView({
     </motion.div>
   );
 });
-
 // ============================================
 // 📚 MAIN HUB COMPONENT — NETFLIX ULTRA PREMIUM
 // ============================================
