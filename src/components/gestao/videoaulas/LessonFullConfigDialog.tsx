@@ -438,13 +438,14 @@ export function LessonFullConfigDialog({ lesson, open, onOpenChange }: LessonFul
                         onChange={(e) => {
                           const videoId = e.target.value.trim();
                           // Auto-preenche thumbnail quando digitar UUID válido
+                          // Usando o CDN correto: b-vz-c3e3c21e-7ce.tv.pandavideo.com.br
                           const autoThumbnail = videoId && /^[a-f0-9-]{36}$/i.test(videoId)
-                            ? `https://vz-d59d6cb7-b9c.b-cdn.net/${videoId}/thumbnail.jpg`
+                            ? `https://b-vz-c3e3c21e-7ce.tv.pandavideo.com.br/${videoId}/thumbnail.jpg`
                             : '';
                           setFormData(prev => ({ 
                             ...prev, 
                             panda_video_id: videoId,
-                            thumbnail_url: !prev.thumbnail_url || prev.thumbnail_url.includes('b-cdn.net') 
+                            thumbnail_url: !prev.thumbnail_url || prev.thumbnail_url.includes('pandavideo.com.br') || prev.thumbnail_url.includes('b-cdn.net')
                               ? autoThumbnail 
                               : prev.thumbnail_url
                           }));

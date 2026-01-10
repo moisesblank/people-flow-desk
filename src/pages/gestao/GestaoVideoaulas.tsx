@@ -1123,14 +1123,15 @@ function LessonFormModal({ open, onClose, lesson, modules, areas, onSubmit, isLo
                     onChange={(e) => {
                       const videoId = e.target.value.trim();
                       // Auto-preenche thumbnail_url quando digitar o Panda Video ID
+                      // Usando o CDN correto: b-vz-c3e3c21e-7ce.tv.pandavideo.com.br
                       const autoThumbnail = videoId && /^[a-f0-9-]{36}$/i.test(videoId)
-                        ? `https://vz-d59d6cb7-b9c.b-cdn.net/${videoId}/thumbnail.jpg`
+                        ? `https://b-vz-c3e3c21e-7ce.tv.pandavideo.com.br/${videoId}/thumbnail.jpg`
                         : '';
                       setFormData(prev => ({ 
                         ...prev, 
                         panda_video_id: videoId,
                         // Só preenche se estiver vazio ou já for auto-gerado
-                        thumbnail_url: !prev.thumbnail_url || prev.thumbnail_url.includes('b-cdn.net') 
+                        thumbnail_url: !prev.thumbnail_url || prev.thumbnail_url.includes('pandavideo.com.br') || prev.thumbnail_url.includes('b-cdn.net')
                           ? autoThumbnail 
                           : prev.thumbnail_url
                       }));
