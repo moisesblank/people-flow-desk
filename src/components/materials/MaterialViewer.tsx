@@ -106,23 +106,23 @@ export const MaterialViewer = memo(function MaterialViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Estados
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [drawingMode, setDrawingMode] = useState(false);
 
-  // PDF Renderer
+  // PDF Renderer - usa o hook correto com file_path do material
   const {
-    pageDataUrl,
-    totalPages,
     isLoading: pdfLoading,
+    pdfLoaded,
+    totalPages,
     error: pdfError,
-    goToPage,
-    prefetchAdjacentPages
-  } = usePdfRenderer(pdfUrl || undefined, currentPage);
+    currentPageData,
+    loadPdf,
+    renderPage,
+    prefetchPages,
+    cleanup
+  } = usePdfRenderer(material.id, material.file_path);
 
   // Watermark text
   const watermarkText = useMemo(() => {
@@ -133,53 +133,38 @@ export const MaterialViewer = memo(function MaterialViewer({
     return `${name} • ${user.email} • ${timestamp}`;
   }, [material.watermark_enabled, isAdmin, user]);
 
-  // Buscar URL assinada do PDF
-  const fetchSignedUrl = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { data, error: urlError } = await supabase.storage
-        .from('materiais')
-        .createSignedUrl(material.file_path, 3600); // 1 hora
-
-      if (urlError) throw urlError;
-      if (!data?.signedUrl) throw new Error('URL não gerada');
-
-      setPdfUrl(data.signedUrl);
-    } catch (e: any) {
-      console.error('Erro ao buscar URL:', e);
-      setError(e.message || 'Erro ao carregar PDF');
-    } finally {
-      setLoading(false);
-    }
-  }, [material.file_path]);
-
+  // Carregar PDF ao montar
   useEffect(() => {
-    fetchSignedUrl();
-  }, [fetchSignedUrl]);
+    loadPdf();
+    return () => cleanup();
+  }, [loadPdf, cleanup]);
+
+  // Renderizar página quando mudar
+  useEffect(() => {
+    if (pdfLoaded) {
+      renderPage(currentPage);
+    }
+  }, [currentPage, pdfLoaded, renderPage]);
+
+  // Prefetch ao mudar de página
+  useEffect(() => {
+    if (pdfLoaded) {
+      prefetchPages(currentPage);
+    }
+  }, [currentPage, pdfLoaded, prefetchPages]);
 
   // Navegação
   const goToPreviousPage = useCallback(() => {
     if (currentPage > 1) {
-      const newPage = currentPage - 1;
-      setCurrentPage(newPage);
-      goToPage(newPage);
+      setCurrentPage(prev => prev - 1);
     }
-  }, [currentPage, goToPage]);
+  }, [currentPage]);
 
   const goToNextPage = useCallback(() => {
     if (currentPage < totalPages) {
-      const newPage = currentPage + 1;
-      setCurrentPage(newPage);
-      goToPage(newPage);
+      setCurrentPage(prev => prev + 1);
     }
-  }, [currentPage, totalPages, goToPage]);
-
-  // Prefetch ao mudar de página
-  useEffect(() => {
-    prefetchAdjacentPages(currentPage);
-  }, [currentPage, prefetchAdjacentPages]);
+  }, [currentPage, totalPages]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -311,15 +296,15 @@ export const MaterialViewer = memo(function MaterialViewer({
 
       {/* Content */}
       <div className="flex-1 relative overflow-hidden flex items-center justify-center">
-        {(loading || pdfLoading) && !pageDataUrl ? (
+        {pdfLoading && !currentPageData ? (
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="w-12 h-12 text-primary animate-spin" />
             <p className="text-white/60">Carregando PDF...</p>
           </div>
-        ) : error || pdfError ? (
+        ) : pdfError ? (
           <div className="text-center space-y-4">
-            <p className="text-red-400">{error || pdfError}</p>
-            <Button onClick={fetchSignedUrl} variant="outline">
+            <p className="text-red-400">{pdfError}</p>
+            <Button onClick={loadPdf} variant="outline">
               Tentar novamente
             </Button>
           </div>
@@ -333,9 +318,9 @@ export const MaterialViewer = memo(function MaterialViewer({
             }}
           >
             {/* PDF Page */}
-            {pageDataUrl && (
+            {currentPageData?.dataUrl && (
               <img
-                src={pageDataUrl}
+                src={currentPageData.dataUrl}
                 alt={`Página ${currentPage}`}
                 className="max-w-full h-auto select-none pointer-events-none"
                 draggable={false}
@@ -391,7 +376,6 @@ export const MaterialViewer = memo(function MaterialViewer({
               step={1}
               onValueChange={([value]) => {
                 setCurrentPage(value);
-                goToPage(value);
               }}
               className="flex-1"
             />
