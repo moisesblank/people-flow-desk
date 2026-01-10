@@ -40,7 +40,7 @@ const GestaoLivrosWeb = lazy(() => import("@/pages/gestao/GestaoLivrosWeb"));
 const GestaoQuestoes = lazy(() => import("@/pages/gestao/GestaoQuestoes"));
 const GestaoQuestaoDetalhe = lazy(() => import("@/pages/gestao/GestaoQuestaoDetalhe"));
 const GestaoFlashcards = lazy(() => import("@/pages/gestao/GestaoFlashcards"));
-const GestaoMateriais = lazy(() => import("@/pages/gestao/GestaoMateriais"));
+const GestaoMateriais = lazy(() => import("@/pages/gestao/GestaoMateriaisNetflix"));
 const GestaoMapasMentais = lazy(() => import("@/pages/gestao/GestaoMapasMentais"));
 const GestaoVideoaulas = lazy(() => import("@/pages/gestao/GestaoVideoaulas"));
 const GestaoTutoria = lazy(() => import("@/pages/gestao/GestaoTutoria"));
