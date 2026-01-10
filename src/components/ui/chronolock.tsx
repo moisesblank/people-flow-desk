@@ -71,9 +71,8 @@ const variantStyles = {
   },
 };
 
-// 🎨 VISUAL INTENSITY: 30% reduction applied globally
-// Original defaults: blurIntensity=8, overlayOpacity=0.85
-// Reduced defaults: blurIntensity=5.6 (8 * 0.7), overlayOpacity=0.595 (0.85 * 0.7)
+// 🎨 VISUAL INTENSITY: Ultra-light lock visibility
+// Reduced defaults: blurIntensity=3, overlayOpacity=0.35
 
 export const Chronolock = memo(function Chronolock({
   children,
@@ -82,8 +81,8 @@ export const Chronolock = memo(function Chronolock({
   isLocked = true,
   releaseDate,
   className,
-  blurIntensity = 5.6, // 30% reduction from 8
-  overlayOpacity = 0.595, // 30% reduction from 0.85
+  blurIntensity = 3,
+  overlayOpacity = 0.35,
   variant = 'default',
   icon,
 }: ChronolockProps) {
@@ -149,11 +148,10 @@ export const Chronolock = memo(function Chronolock({
           styles.border,
           styles.glow
         )}>
-          {/* Ícone */}
+          {/* Ícone — SEM ANIMAÇÃO */}
           <div className={cn(
             "p-4 rounded-full",
-            styles.iconBg,
-            "animate-pulse"
+            styles.iconBg
           )}>
             {icon || (
               releaseDate ? (
