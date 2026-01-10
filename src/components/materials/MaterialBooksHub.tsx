@@ -173,7 +173,8 @@ interface MaterialBooksHubProps {
 }
 
 // ============================================
-// 🎬 NETFLIX PREMIUM BOOK CARD
+// 🎬 NETFLIX ULTRA PREMIUM BOOK CARD — UNIFORM SIZE
+// Todos os 5 cards com mesma dimensão e formato
 // ============================================
 
 const NetflixBookCard = memo(function NetflixBookCard({ 
@@ -189,168 +190,184 @@ const NetflixBookCard = memo(function NetflixBookCard({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      initial={{ opacity: 0, y: 20, scale: 0.97 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ 
-        duration: 0.5, 
-        delay: index * 0.1,
+        duration: 0.4, 
+        delay: index * 0.08,
         ease: [0.25, 0.46, 0.45, 0.94]
       }}
       whileHover={isHighEnd ? { 
-        scale: 1.03, 
-        y: -8,
-        transition: { duration: 0.25 }
+        scale: 1.02, 
+        y: -6,
+        transition: { duration: 0.2 }
       } : undefined}
-      className="group relative"
+      className="group relative h-full"
     >
-      {/* Glow Effect Behind Card */}
+      {/* Outer Glow Effect */}
       {isHighEnd && (
         <div 
-          className="absolute -inset-1 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"
+          className="absolute -inset-[2px] rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"
           style={{ backgroundColor: book.glowColor }}
         />
       )}
       
-      {/* Main Card */}
+      {/* Main Card — Fixed Height */}
       <div 
         onClick={() => onSelect(book.id)}
         className={cn(
-          "relative cursor-pointer overflow-hidden rounded-2xl",
-          "bg-gradient-to-br from-[#0a0d12] via-[#0f1419] to-[#151a22]",
-          "border transition-all duration-500",
+          "relative cursor-pointer overflow-hidden rounded-2xl h-full",
+          "bg-gradient-to-br from-[#0a0b0f] via-[#0d0f14] to-[#12151c]",
+          "border-2 transition-all duration-400",
           book.borderColor,
-          "group-hover:border-opacity-100",
-          isHighEnd && "group-hover:shadow-2xl"
+          "hover:border-opacity-80",
+          isHighEnd && "hover:shadow-[0_20px_60px_-15px_var(--card-glow)]"
         )}
-        style={isHighEnd ? {
-          boxShadow: `0 25px 50px -12px ${book.glowColor}`
-        } : undefined}
+        style={{ 
+          '--card-glow': book.glowColor,
+          minHeight: '280px'
+        } as React.CSSProperties}
       >
-        {/* Top Gradient Bar */}
+        {/* Top Gradient Bar — Netflix Style */}
         <div className={cn(
-          "absolute top-0 left-0 right-0 h-1",
-          "bg-gradient-to-r",
-          book.gradientFrom.replace('/20', ''),
-          book.gradientTo.replace('/5', '/80')
-        )} />
+          "absolute top-0 left-0 right-0 h-[3px]",
+          "bg-gradient-to-r opacity-80 group-hover:opacity-100 transition-opacity"
+        )} style={{
+          backgroundImage: `linear-gradient(90deg, transparent, ${book.glowColor}, transparent)`
+        }} />
 
         {/* Animated Background Gradient */}
         <div className={cn(
-          "absolute inset-0 opacity-40 group-hover:opacity-70 transition-opacity duration-500",
+          "absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-500",
           "bg-gradient-to-br",
           book.gradientFrom,
           book.gradientVia,
           book.gradientTo
         )} />
 
-        {/* Scan Line Effect */}
+        {/* Cinematic Scan Line Effect */}
         {isHighEnd && (
-          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden pointer-events-none">
             <div 
-              className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent"
+              className="absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-white/[0.03] to-transparent"
               style={{
-                animation: 'scan-line 2s linear infinite',
+                animation: 'netflix-scan 2.5s linear infinite',
                 transform: 'translateY(-100%)'
               }}
             />
           </div>
         )}
 
+        {/* Grid Pattern Overlay */}
+        <div className="absolute inset-0 opacity-[0.02] group-hover:opacity-[0.04] transition-opacity"
+          style={{
+            backgroundImage: `repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(255,255,255,0.03) 50px, rgba(255,255,255,0.03) 51px),
+                              repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.03) 50px, rgba(255,255,255,0.03) 51px)`
+          }}
+        />
+
         {/* Content Container */}
-        <div className="relative p-6 space-y-5">
+        <div className="relative p-5 flex flex-col h-full justify-between">
           {/* Header: Icon + Badge */}
-          <div className="flex items-start justify-between">
-            {/* Icon Container */}
+          <div className="flex items-start justify-between mb-4">
+            {/* Icon Container — Glowing */}
             <div className={cn(
-              "relative p-4 rounded-xl",
-              "bg-gradient-to-br",
-              book.gradientFrom,
-              book.gradientTo,
+              "relative p-3.5 rounded-xl",
+              "bg-gradient-to-br from-black/40 to-black/20",
               "border",
               book.borderColor,
-              "group-hover:scale-110 transition-transform duration-300"
+              "group-hover:scale-105 transition-all duration-300"
             )}>
-              {/* Icon Glow */}
+              {/* Icon Inner Glow */}
               {isHighEnd && (
                 <div 
-                  className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-60 transition-opacity blur-md"
+                  className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-70 transition-opacity blur-lg"
                   style={{ backgroundColor: book.glowColor }}
                 />
               )}
-              <span className={cn("relative", book.accentColor)}>
+              {/* Pulsing Ring */}
+              <div 
+                className={cn(
+                  "absolute -inset-1 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity",
+                  "border",
+                  book.borderColor
+                )}
+                style={{ animation: isHighEnd ? 'pulse 2s ease-in-out infinite' : undefined }}
+              />
+              <span className={cn("relative z-10", book.accentColor)}>
                 {book.icon}
               </span>
             </div>
 
-            {/* Badge */}
+            {/* Badge — Premium Style */}
             {book.badge && (
-              <Badge 
+              <span 
                 className={cn(
-                  "text-[10px] font-bold tracking-wider px-2 py-1",
-                  "bg-gradient-to-r border-0",
-                  book.gradientFrom.replace('from-', 'from-').replace('/20', '/40'),
-                  book.gradientTo.replace('to-', 'to-').replace('/5', '/20'),
+                  "text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-md",
+                  "border",
+                  book.borderColor,
                   book.accentColor
                 )}
+                style={{
+                  background: `linear-gradient(135deg, ${book.glowColor.replace('0.4', '0.2')}, transparent)`
+                }}
               >
                 {book.badge}
-              </Badge>
+              </span>
             )}
           </div>
 
           {/* Title + Description */}
-          <div className="space-y-2">
-            <h3 className="text-xl font-bold text-white group-hover:text-white/90 transition-colors line-clamp-1">
+          <div className="flex-1 space-y-2">
+            <h3 className={cn(
+              "text-lg font-bold text-white/95 group-hover:text-white transition-colors",
+              "leading-tight line-clamp-2"
+            )}>
               {book.name}
             </h3>
-            <p className="text-sm text-muted-foreground/80 line-clamp-2 leading-relaxed">
+            <p className="text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed">
               {book.description}
             </p>
           </div>
 
           {/* Footer: Stats + Action */}
-          <div className="flex items-center justify-between pt-2">
-            {/* Filter Count */}
-            <div className="flex items-center gap-2">
-              <div className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-full",
-                "bg-white/5 border border-white/10",
-                "group-hover:bg-white/10 group-hover:border-white/20 transition-all"
-              )}>
-                <Filter className="w-3.5 h-3.5 text-muted-foreground" />
-                <span className="text-xs font-medium text-white/70">
-                  {book.filters.length} {book.filters.length === 1 ? 'categoria' : 'categorias'}
-                </span>
-              </div>
+          <div className="flex items-center justify-between pt-4 mt-auto border-t border-white/[0.06]">
+            {/* Filter Count — Chip */}
+            <div className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1 rounded-lg",
+              "bg-white/[0.04] border border-white/[0.08]",
+              "group-hover:bg-white/[0.06] group-hover:border-white/[0.12] transition-all"
+            )}>
+              <Filter className="w-3 h-3 text-muted-foreground/60" />
+              <span className="text-[11px] font-medium text-white/60">
+                {book.filters.length} {book.filters.length === 1 ? 'categoria' : 'categorias'}
+              </span>
             </div>
 
-            {/* Explore Button */}
-            <div className={cn(
-              "flex items-center gap-1 px-3 py-1.5 rounded-full",
-              "bg-gradient-to-r",
-              book.gradientFrom.replace('/20', '/30'),
-              book.gradientTo.replace('/5', '/10'),
-              "border",
+            {/* Explore Button — Netflix Hover */}
+            <button className={cn(
+              "flex items-center gap-1 px-3 py-1.5 rounded-lg",
+              "border transition-all duration-300",
               book.borderColor,
-              "group-hover:scale-105 transition-transform duration-300"
-            )}>
+              "group-hover:scale-105"
+            )}
+              style={{
+                background: `linear-gradient(135deg, ${book.glowColor.replace('0.4', '0.15')}, transparent)`
+              }}
+            >
               <span className={cn("text-xs font-semibold", book.accentColor)}>
                 Explorar
               </span>
-              <ChevronRight className={cn("w-4 h-4", book.accentColor)} />
-            </div>
+              <ChevronRight className={cn("w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform", book.accentColor)} />
+            </button>
           </div>
-
-          {/* Bottom Corner Accent */}
-          <div 
-            className={cn(
-              "absolute -bottom-8 -right-8 w-32 h-32 rounded-full opacity-20 group-hover:opacity-40 transition-opacity",
-              "bg-gradient-to-tl",
-              book.gradientFrom,
-              book.gradientTo
-            )}
-          />
         </div>
+
+        {/* Corner Accent Glow */}
+        <div 
+          className="absolute -bottom-16 -right-16 w-40 h-40 rounded-full opacity-10 group-hover:opacity-25 transition-opacity blur-2xl pointer-events-none"
+          style={{ backgroundColor: book.glowColor }}
+        />
       </div>
     </motion.div>
   );
@@ -635,9 +652,9 @@ export const MaterialBooksHub = memo(function MaterialBooksHub({
               </Badge>
             </motion.div>
 
-            {/* Grid Layout — 3 + 2 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {MATERIAL_BOOKS.slice(0, 3).map((book, idx) => (
+            {/* 🎬 NETFLIX ULTRA GRID — 5 UNIFORM CARDS */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 auto-rows-fr">
+              {MATERIAL_BOOKS.map((book, idx) => (
                 <NetflixBookCard
                   key={book.id}
                   book={book}
@@ -647,28 +664,15 @@ export const MaterialBooksHub = memo(function MaterialBooksHub({
                 />
               ))}
             </div>
-
-            {/* Second Row — 2 Cards Centered */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-5 max-w-4xl mx-auto">
-              {MATERIAL_BOOKS.slice(3).map((book, idx) => (
-                <NetflixBookCard
-                  key={book.id}
-                  book={book}
-                  index={idx + 3}
-                  onSelect={handleSelectBook}
-                  isHighEnd={isHighEnd}
-                />
-              ))}
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Scan Line Animation Style */}
+      {/* Netflix Scan Animation Keyframes */}
       <style>{`
-        @keyframes scan-line {
+        @keyframes netflix-scan {
           0% { transform: translateY(-100%); }
-          100% { transform: translateY(200%); }
+          100% { transform: translateY(400%); }
         }
       `}</style>
     </div>
