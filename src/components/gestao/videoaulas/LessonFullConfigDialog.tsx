@@ -435,10 +435,23 @@ export function LessonFullConfigDialog({ lesson, open, onOpenChange }: LessonFul
                       <Input
                         placeholder="Ex: abc123-def456-..."
                         value={formData.panda_video_id}
-                        onChange={(e) => setFormData(prev => ({ ...prev, panda_video_id: e.target.value }))}
+                        onChange={(e) => {
+                          const videoId = e.target.value.trim();
+                          // Auto-preenche thumbnail quando digitar UUID válido
+                          const autoThumbnail = videoId && /^[a-f0-9-]{36}$/i.test(videoId)
+                            ? `https://vz-d59d6cb7-b9c.b-cdn.net/${videoId}/thumbnail.jpg`
+                            : '';
+                          setFormData(prev => ({ 
+                            ...prev, 
+                            panda_video_id: videoId,
+                            thumbnail_url: !prev.thumbnail_url || prev.thumbnail_url.includes('b-cdn.net') 
+                              ? autoThumbnail 
+                              : prev.thumbnail_url
+                          }));
+                        }}
                       />
                       <p className="text-xs text-muted-foreground">
-                        UUID do vídeo no Panda Video
+                        UUID do vídeo (thumbnail automática)
                       </p>
                     </div>
                   )}

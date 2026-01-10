@@ -9,7 +9,7 @@
  * CDN: https://vz-{library_id}.b-cdn.net/{video_id}/thumbnail.jpg
  * Alternativas: thumbnail_0.jpg, thumbnail_1.jpg, thumbnail_2.jpg
  */
-const PANDA_LIBRARY_ID = 'c3e3c21e-7ce';
+const PANDA_LIBRARY_ID = 'd59d6cb7-b9c';
 const PANDA_CDN_BASE = `https://vz-${PANDA_LIBRARY_ID}.b-cdn.net`;
 
 /**

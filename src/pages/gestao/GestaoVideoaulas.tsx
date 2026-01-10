@@ -1120,11 +1120,25 @@ function LessonFormModal({ open, onClose, lesson, modules, areas, onSubmit, isLo
                   <Input
                     id="panda_video_id"
                     value={formData.panda_video_id}
-                    onChange={(e) => setFormData(prev => ({ ...prev, panda_video_id: e.target.value }))}
+                    onChange={(e) => {
+                      const videoId = e.target.value.trim();
+                      // Auto-preenche thumbnail_url quando digitar o Panda Video ID
+                      const autoThumbnail = videoId && /^[a-f0-9-]{36}$/i.test(videoId)
+                        ? `https://vz-d59d6cb7-b9c.b-cdn.net/${videoId}/thumbnail.jpg`
+                        : '';
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        panda_video_id: videoId,
+                        // Só preenche se estiver vazio ou já for auto-gerado
+                        thumbnail_url: !prev.thumbnail_url || prev.thumbnail_url.includes('b-cdn.net') 
+                          ? autoThumbnail 
+                          : prev.thumbnail_url
+                      }));
+                    }}
                     placeholder="Ex: a7ce1bfd-0af1-4b03-b33b-7ed7226c5fb0"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Formato UUID do Panda Video
+                    Formato UUID do Panda Video (thumbnail será preenchida automaticamente)
                   </p>
                 </div>
                 <div className="space-y-2">

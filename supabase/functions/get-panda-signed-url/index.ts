@@ -11,7 +11,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
 // Library ID canônico do Panda Video
-const PANDA_LIBRARY_ID = "c3e3c21e-7ce";
+const PANDA_LIBRARY_ID = "d59d6cb7-b9c";
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
