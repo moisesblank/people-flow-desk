@@ -220,28 +220,30 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
 
   return (
     <div className="group">
-      {/* 🎬 NETFLIX ULTRA PREMIUM CARD — 50% MORE PROMINENT */}
-      {/* 🎨 ENHANCED: Stronger contrast, elevation, and visual weight */}
+      {/* 🎬 NETFLIX ULTRA PREMIUM CARD — +50% DIMENSION INCREASE */}
+      {/* 🎨 CLICK ANIMATION: Light gray for ALL books */}
       <div 
         className={cn(
           "relative flex rounded-2xl overflow-hidden cursor-pointer",
-          // 🎨 REBALANCED: 50% stronger background contrast
+          // 🎨 Strong background contrast
           "bg-gradient-to-br from-[#0d1218] via-[#121922] to-[#1a1020]",
-          // Enhanced border: 50% more visible
+          // Enhanced border
           "border-2 transition-all duration-300 ease-out",
           "hover:scale-[1.025] hover:-translate-y-3",
-          // 50% stronger shadows and elevation
+          // Strong shadows and elevation
           "shadow-[0_8px_32px_-8px_rgba(0,0,0,0.7),0_4px_16px_-4px_rgba(0,0,0,0.5)]",
           "hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.8),0_8px_24px_-6px_rgba(0,0,0,0.6)]",
-          // Category-based border and glow (MANDATORY) — enhanced opacity
+          // Category-based border and glow (MANDATORY)
           categoryColors.border.replace('/30', '/50'),
           categoryColors.borderHover.replace('/70', '/90'),
-          isHighEnd && categoryColors.glow.replace('/0.45', '/0.6')
+          isHighEnd && categoryColors.glow.replace('/0.45', '/0.6'),
+          // 🎨 CLICK ANIMATION: Light gray for ALL books
+          "active:scale-[0.98] active:bg-gray-300/20"
         )}
         onClick={onSelect}
       >
-        {/* 🖼️ POSTER — LADO ESQUERDO (Netflix Style) */}
-        <div className="relative w-32 md:w-44 lg:w-52 flex-shrink-0 overflow-hidden">
+        {/* 🖼️ POSTER — LADO ESQUERDO (Netflix Style) — +50% SIZE */}
+        <div className="relative w-48 md:w-64 lg:w-80 flex-shrink-0 overflow-hidden">
           <img 
             src={coverUrl} 
             alt={book.title}
@@ -284,8 +286,8 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
           )}
         </div>
 
-        {/* 📋 CONTEÚDO — LADO DIREITO */}
-        <div className="flex-1 p-4 md:p-5 lg:p-6 flex flex-col justify-between min-w-0">
+        {/* 📋 CONTEÚDO — LADO DIREITO — +50% PADDING */}
+        <div className="flex-1 p-6 md:p-8 lg:p-10 flex flex-col justify-between min-w-0">
           
           {/* TOP: Status Badges — Status uses fixed colors, but category badge uses category color */}
           <div className="flex items-center gap-2 flex-wrap mb-3">
@@ -553,67 +555,63 @@ const BookSection = memo(function BookSection({
   const colors = colorClasses[accentColor];
 
   return (
-    <Card 
+    <div 
       ref={sectionRef}
-      className={cn(
-        "group/card relative overflow-hidden transition-all duration-500",
-        // 🎨 REBALANCED: 80% less visual weight — ultra-subtle container
-        "bg-gradient-to-br from-[#0a0e14]/15 via-[#0f1419]/10 to-transparent",
-        "border shadow-none rounded-2xl",
-        "border-white/[0.04]", // ~80% reduction from original
-        isHighEnd && "hover:border-white/[0.08]"
-      )}
+      className="relative"
       data-category={categoryKey}
     >
-      {/* Corner accents: 80% less visible — almost invisible container hints */}
-      <div className="absolute top-0 left-0 w-6 h-6 border-l border-t rounded-tl-2xl pointer-events-none border-white/[0.06] opacity-40" />
-      <div className="absolute bottom-0 right-0 w-6 h-6 border-r border-b rounded-br-2xl pointer-events-none border-white/[0.06] opacity-40" />
-      
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        {/* 🎬 SLIM NETFLIX SECTION HEADER — Single line with category color */}
         <CollapsibleTrigger asChild>
-          <CardHeader className={cn(
-            "cursor-pointer relative z-10 py-2.5 px-3",
-            // 🎨 REBALANCED: Minimal header — 80% less prominent
-            "border-b transition-all duration-300",
-            "bg-transparent hover:bg-white/[0.02]",
-            "border-white/[0.03] hover:border-white/[0.06]"
-          )}>
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                {/* Icon: Minimal, subtle */}
-                <div className={cn(
-                  "p-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] opacity-50",
-                  colors.iconColor
-                )}>
-                  {icon}
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-sm md:text-base font-medium text-white/50">
-                    {title}
-                  </CardTitle>
-                  <Badge className="px-1.5 py-0.5 text-[9px] font-normal border bg-white/[0.03] text-white/40 border-white/[0.06]">
-                    {books.length}
-                  </Badge>
-                </div>
+          <div 
+            className={cn(
+              "cursor-pointer flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl mb-3",
+              "transition-all duration-200",
+              // 🎨 CATEGORY COLOR: Left border accent
+              "border-l-4",
+              `border-l-${accentColor === 'red' ? '[#E23636]' : accentColor}-500`,
+              // Subtle background with category tint
+              "bg-gradient-to-r from-white/[0.03] to-transparent",
+              "hover:from-white/[0.06] hover:to-white/[0.02]"
+            )}
+            style={{ 
+              borderLeftColor: colors.accent.includes('text-') 
+                ? colors.accent.replace('text-', '').replace('[', '').replace(']', '')
+                : undefined 
+            }}
+          >
+            <div className="flex items-center gap-3">
+              {/* Icon with category color */}
+              <div className={cn("p-1.5 rounded-lg", colors.iconColor)}>
+                {icon}
               </div>
               
-              {/* Toggle button: Ultra-subtle */}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-6 w-6 rounded-md border-0 transition-all opacity-40 hover:opacity-70 bg-transparent hover:bg-white/[0.05]"
-              >
-                {isOpen ? <ChevronUp className="h-3.5 w-3.5 text-white/40" /> : <ChevronDown className="h-3.5 w-3.5 text-white/40" />}
-              </Button>
+              <span className={cn("text-sm font-semibold", colors.accent)}>
+                {title}
+              </span>
+              
+              <Badge className={cn(
+                "px-2 py-0.5 text-[10px] font-medium border",
+                colors.badge
+              )}>
+                {books.length}
+              </Badge>
             </div>
-          </CardHeader>
+            
+            {/* Toggle */}
+            <div className={cn("p-1 rounded-md transition-colors", "hover:bg-white/10")}>
+              {isOpen 
+                ? <ChevronUp className={cn("h-4 w-4", colors.iconColor)} /> 
+                : <ChevronDown className={cn("h-4 w-4", colors.iconColor)} />
+              }
+            </div>
+          </div>
         </CollapsibleTrigger>
 
         <CollapsibleContent>
           {/* ⚡ LAZY RENDERING: Só monta BookCards quando seção está aberta */}
           {isOpen && (
-            <CardContent className="p-4 space-y-4 bg-transparent">
+            <div className="space-y-5 pl-4 pb-4">
               {books.map((book, idx) => {
                 const isPrevisaoFinal = book.category === 'previsao_final';
                 const bookCard = (
@@ -628,7 +626,7 @@ const BookSection = memo(function BookSection({
                   />
                 );
                 
-                // 🔒 CHRONOLOCK: Previsão Final bloqueado até 31/01
+                // 🔒 CHRONOLOCK: Previsão Final bloqueado até 28/09
                 if (isPrevisaoFinal) {
                   return (
                     <DateLock 
@@ -644,11 +642,11 @@ const BookSection = memo(function BookSection({
                 
                 return bookCard;
               })}
-            </CardContent>
+            </div>
           )}
         </CollapsibleContent>
       </Collapsible>
-    </Card>
+    </div>
   );
 });
 
