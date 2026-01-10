@@ -1,7 +1,7 @@
 // ============================================
-// 📚 LIVROS DO MOISA - NETFLIX ULTRA PREMIUM v16.0
+// 📚 LIVROS DO MOISA — NETFLIX ULTRA PREMIUM v17.0
+// Year 2300 Cinematic + Spider-Man Red (#E23636)
 // PERFORMANCE ADAPTATIVA — 5000+ USUÁRIOS
-// Year 2300 Cinematic + GPU Optimized
 // ============================================
 
 import React, { memo, useState, useCallback, useEffect, useMemo, useRef } from 'react';
@@ -24,8 +24,11 @@ import {
   Award,
   Info,
   Plus,
-  Volume2,
-  VolumeX
+  Sparkles,
+  GraduationCap,
+  Layers,
+  PlayCircle,
+  Zap
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { 
@@ -35,10 +38,13 @@ import {
   SelectTrigger,
   SelectValue 
 } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { getCategoryConfig, normalizeCategoryId } from './CategoryCover';
 import { useBookCategories } from '@/hooks/useBookCategories';
 import { useConstitutionPerformance } from '@/hooks/useConstitutionPerformance';
+import { CyberBackground } from '@/components/ui/cyber-background';
+import { FuturisticPageHeader } from '@/components/ui/futuristic-page-header';
 
 // ============================================
 // TIPOS
@@ -71,77 +77,109 @@ const CATEGORIES = [
 ];
 
 // ============================================
-// CSS KEYFRAMES — GPU OPTIMIZED
+// CSS KEYFRAMES — GPU OPTIMIZED + YEAR 2300
 // ============================================
 
-const OPTIMIZED_STYLES = `
-  @keyframes netflix-grain {
-    0%, 100% { transform: translate3d(0, 0, 0); }
-    25% { transform: translate3d(-1%, -1%, 0); }
-    50% { transform: translate3d(1%, 1%, 0); }
-    75% { transform: translate3d(-1%, 1%, 0); }
+const CINEMATIC_STYLES = `
+  @keyframes cinematic-pulse {
+    0%, 100% { box-shadow: 0 0 40px rgba(226,54,54,0.3), inset 0 0 20px rgba(226,54,54,0.1); }
+    50% { box-shadow: 0 0 80px rgba(226,54,54,0.5), inset 0 0 40px rgba(226,54,54,0.2); }
   }
-  @keyframes netflix-glow {
-    0%, 100% { opacity: 0.03; }
-    50% { opacity: 0.08; }
+  @keyframes cinematic-glow {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
   }
-  @keyframes netflix-float {
-    0% { transform: translate3d(0, 0, 0); opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { transform: translate3d(var(--tx), -120vh, 0); opacity: 0; }
-  }
-  @keyframes netflix-ken-burns {
-    0% { transform: scale(1) translate3d(0,0,0); }
-    100% { transform: scale(1.08) translate3d(0,0,0); }
-  }
-  @keyframes netflix-pulse {
-    0%, 100% { box-shadow: 0 0 60px rgba(229,9,20,0.4); }
-    50% { box-shadow: 0 0 100px rgba(229,9,20,0.6); }
-  }
-  @keyframes netflix-orbit {
+  @keyframes cinematic-orbit {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
   }
+  @keyframes cinematic-float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  @keyframes cinematic-shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes cinematic-scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
   .hide-scrollbar::-webkit-scrollbar { display: none; }
   .hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-  .netflix-card { transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s ease; }
-  .netflix-card:hover { transform: scale(1.25) translateY(-20px); z-index: 50; }
-  .netflix-card-info { opacity: 0; transform: translateY(10px); transition: all 0.2s ease; }
-  .netflix-card:hover .netflix-card-info { opacity: 1; transform: translateY(0); }
-  .perf-reduced .netflix-card:hover { transform: scale(1.05) translateY(-5px); }
-  .perf-reduced .netflix-ken-burns { animation: none !important; }
-  .perf-reduced .netflix-particles { display: none !important; }
-  .perf-reduced .netflix-grain { display: none !important; }
-  .perf-reduced .netflix-glow { display: none !important; }
+  .cinematic-card { 
+    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), 
+                box-shadow 0.4s ease,
+                border-color 0.3s ease; 
+  }
+  .cinematic-card:hover { 
+    transform: scale(1.08) translateY(-8px); 
+    z-index: 30;
+    border-color: rgba(226,54,54,0.8);
+    box-shadow: 0 20px 60px rgba(226,54,54,0.4), 0 0 100px rgba(226,54,54,0.2);
+  }
+  .perf-reduced .cinematic-card:hover { 
+    transform: scale(1.03) translateY(-4px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .perf-reduced .cinematic-pulse { animation: none !important; }
+  .perf-reduced .cinematic-glow { display: none !important; }
+  .perf-reduced .cinematic-particles { display: none !important; }
+  .perf-reduced .cinematic-scanline { display: none !important; }
 `;
 
 // ============================================
-// NETFLIX LOGO ANIMATION (CSS Only)
+// 🎯 HUD STAT ORB — YEAR 2300 CINEMATIC
+// Orbes flutuantes com glow holográfico intenso
 // ============================================
 
-const NetflixLogoIntro = memo(function NetflixLogoIntro({ onComplete }: { onComplete: () => void }) {
-  useEffect(() => {
-    const timer = setTimeout(onComplete, 2200);
-    return () => clearTimeout(timer);
-  }, [onComplete]);
-
+const HudStatOrb = memo(function HudStatOrb({ 
+  icon, 
+  value, 
+  label, 
+  color,
+  glowColor
+}: { 
+  icon: React.ReactNode; 
+  value: number; 
+  label: string; 
+  color: string;
+  glowColor?: string;
+}) {
   return (
-    <div className="fixed inset-0 z-50 bg-black flex items-center justify-center animate-fade-out" style={{ animationDelay: '1.8s', animationDuration: '0.4s', animationFillMode: 'forwards' }}>
-      <div className="relative animate-scale-in" style={{ animationDuration: '1s' }}>
-        <div 
-          className="text-6xl md:text-8xl font-black tracking-tighter"
-          style={{
-            background: 'linear-gradient(180deg, #E50914 0%, #B81D24 50%, #831010 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            filter: 'drop-shadow(0 0 60px rgba(229,9,20,0.8))',
-          }}
-        >
-          MOISA
+    <div className={cn(
+      "group relative p-4 md:p-5 rounded-2xl border-2 backdrop-blur-xl transition-all duration-500",
+      "bg-gradient-to-br hover:scale-[1.03] hover:shadow-2xl",
+      "cursor-default select-none",
+      color
+    )}>
+      {/* Outer glow ring */}
+      <div className={cn(
+        "absolute -inset-1 rounded-3xl opacity-0 group-hover:opacity-40 blur-xl transition-opacity duration-500 -z-10",
+        glowColor || "bg-[#E23636]"
+      )} />
+      
+      {/* Animated corner accents */}
+      <div className="absolute top-0 left-0 w-3 h-3 border-l-2 border-t-2 border-current opacity-50 rounded-tl-lg" />
+      <div className="absolute top-0 right-0 w-3 h-3 border-r-2 border-t-2 border-current opacity-50 rounded-tr-lg" />
+      <div className="absolute bottom-0 left-0 w-3 h-3 border-l-2 border-b-2 border-current opacity-50 rounded-bl-lg" />
+      <div className="absolute bottom-0 right-0 w-3 h-3 border-r-2 border-b-2 border-current opacity-50 rounded-br-lg" />
+      
+      <div className="flex items-center gap-3">
+        {/* Icon container with pulse */}
+        <div className="relative">
+          <div className="absolute inset-0 rounded-xl bg-current opacity-20 blur-md animate-pulse" />
+          <div className="relative p-2.5 rounded-xl bg-background/30 backdrop-blur-sm border border-current/30 shadow-inner">
+            {icon}
+          </div>
         </div>
-        <div className="text-center text-white/60 text-sm tracking-[0.3em] uppercase mt-2 animate-fade-in" style={{ animationDelay: '0.8s' }}>
-          Biblioteca Digital
+        
+        {/* Value and label */}
+        <div>
+          <p className="text-2xl md:text-3xl font-black tracking-tight tabular-nums">
+            {value.toLocaleString()}
+          </p>
+          <p className="text-[10px] md:text-xs font-semibold uppercase tracking-widest opacity-80">{label}</p>
         </div>
       </div>
     </div>
@@ -149,494 +187,273 @@ const NetflixLogoIntro = memo(function NetflixLogoIntro({ onComplete }: { onComp
 });
 
 // ============================================
-// FLOATING PARTICLES — CSS ONLY (PERFORMANT)
+// 🎨 HIERARCHY LEGEND — NETFLIX PREMIUM CINEMATIC
 // ============================================
 
-const FloatingParticles = memo(function FloatingParticles({ count = 20, isHighEnd }: { count?: number; isHighEnd: boolean }) {
-  if (!isHighEnd) return null;
-  
-  const particles = useMemo(() => 
-    Array.from({ length: count }, (_, i) => ({
-      id: i,
-      left: `${(i * 5) % 100}%`,
-      delay: `${(i * 0.5) % 8}s`,
-      duration: `${10 + (i % 5) * 2}s`,
-      tx: `${((i % 2 === 0 ? 1 : -1) * (10 + i % 30))}px`,
-      size: 2 + (i % 2),
-      color: i % 3 === 0 ? 'rgba(229,9,20,0.6)' : i % 3 === 1 ? 'rgba(255,255,255,0.4)' : 'rgba(255,215,0,0.4)'
-    })), [count]
-  );
-
+const HierarchyLegend = memo(function HierarchyLegend() {
   return (
-    <div className="netflix-particles absolute inset-0 pointer-events-none overflow-hidden">
-      {particles.map(p => (
-        <div
-          key={p.id}
-          className="absolute rounded-full"
-          style={{
-            width: p.size,
-            height: p.size,
-            left: p.left,
-            bottom: '-5%',
-            background: p.color,
-            animation: `netflix-float ${p.duration} linear infinite`,
-            animationDelay: p.delay,
-            '--tx': p.tx,
-            willChange: 'transform, opacity'
-          } as React.CSSProperties}
-        />
-      ))}
+    <div className="relative p-4 rounded-2xl bg-gradient-to-r from-[#1a0a0a]/60 via-[#0a0e14]/80 to-[#1a0a0a]/60 border-2 border-[#E23636]/30 backdrop-blur-xl overflow-hidden">
+      {/* Background glow orbs */}
+      <div className="absolute top-0 left-1/4 w-32 h-32 bg-[#E23636]/15 rounded-full blur-3xl -z-10" />
+      <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-[#E23636]/10 rounded-full blur-3xl -z-10" />
+      
+      <div className="flex flex-wrap items-center gap-3 justify-center">
+        <span className="text-sm font-bold text-slate-300 mr-2 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-[#E23636]" />
+          BIBLIOTECA:
+        </span>
+        
+        {/* Categorias */}
+        <Badge className="px-3 py-1.5 text-xs bg-[#E23636]/25 text-[#FF6B6B] border-2 border-[#E23636]/50 shadow-lg shadow-[#E23636]/30 hover:scale-105 transition-transform">
+          <Layers className="h-3.5 w-3.5 mr-1.5" />
+          Categoria
+        </Badge>
+        
+        <ChevronRight className="h-4 w-4 text-[#E23636]/70" />
+        
+        {/* Livros */}
+        <Badge className="px-3 py-1.5 text-xs bg-slate-700/50 text-slate-200 border-2 border-slate-500/40 shadow-lg hover:scale-105 transition-transform">
+          <BookOpen className="h-3.5 w-3.5 mr-1.5" />
+          Livros
+        </Badge>
+        
+        <ChevronRight className="h-4 w-4 text-slate-500" />
+        
+        {/* Leitura */}
+        <Badge className="px-3 py-1.5 text-xs bg-[#E23636]/25 text-[#FF6B6B] border-2 border-[#E23636]/50 shadow-lg shadow-[#E23636]/30 hover:scale-105 transition-transform">
+          <PlayCircle className="h-3.5 w-3.5 mr-1.5" />
+          Leitura
+        </Badge>
+      </div>
     </div>
   );
 });
 
 // ============================================
-// HERO BILLBOARD — Performance Optimized
+// 📊 STATS PANEL — YEAR 2300 HUD
 // ============================================
 
-interface HeroBillboardProps {
-  book: WebBookListItem | null;
-  onClick: () => void;
-  categoryCoverUrl?: string | null;
-  isHighEnd: boolean;
+interface StatsPanelProps {
+  totalBooks: number;
+  inProgress: number;
+  completed: number;
+  trending: number;
 }
 
-const HeroBillboard = memo(function HeroBillboard({ book, onClick, categoryCoverUrl, isHighEnd }: HeroBillboardProps) {
-  const [isMuted, setIsMuted] = useState(true);
-  
-  if (!book) return null;
-  
-  const coverImage = book.coverUrl || categoryCoverUrl || getCategoryConfig(book.category)?.cover;
-  const progress = book.progress?.progressPercent || 0;
-  const isCompleted = book.progress?.isCompleted || false;
-
+const StatsPanel = memo(function StatsPanel({ 
+  totalBooks, 
+  inProgress, 
+  completed, 
+  trending 
+}: StatsPanelProps) {
   return (
-    <div className="relative w-full h-[75vh] min-h-[550px] max-h-[850px] overflow-hidden">
-      {/* BACKGROUND */}
-      <div className="absolute inset-0">
-        {coverImage && (
-          <img
-            src={coverImage}
-            alt={book.title}
-            className={cn(
-              "w-full h-full object-cover",
-              isHighEnd && "netflix-ken-burns"
-            )}
-            style={isHighEnd ? { animation: 'netflix-ken-burns 20s ease-in-out infinite alternate' } : undefined}
-            loading="eager"
-          />
-        )}
-        
-        {/* Netflix Gradients */}
-        <div 
-          className="absolute inset-0"
-          style={{
-            background: `
-              linear-gradient(to right, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 30%, rgba(0,0,0,0.3) 50%, transparent 70%),
-              linear-gradient(to top, rgb(0,0,0) 0%, rgba(0,0,0,0.9) 10%, rgba(0,0,0,0.4) 30%, transparent 50%),
-              linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 15%)
-            `
-          }}
-        />
-
-        {/* Animated Glow (High-End only) */}
-        {isHighEnd && (
-          <div 
-            className="netflix-glow absolute inset-0"
-            style={{
-              background: 'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 40%, rgba(229,9,20,0.05) 100%)',
-              animation: 'netflix-glow 4s ease-in-out infinite'
-            }}
-          />
-        )}
-
-        {/* Film Grain (High-End only) */}
-        {isHighEnd && (
-          <div 
-            className="netflix-grain absolute inset-0 opacity-[0.012] pointer-events-none mix-blend-overlay"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-              animation: 'netflix-grain 0.8s steps(1) infinite'
-            }}
-          />
-        )}
-
-        {/* Scanlines */}
-        <div 
-          className="absolute inset-0 opacity-[0.015] pointer-events-none"
-          style={{
-            backgroundImage: `repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(255,255,255,0.02) 2px, rgba(255,255,255,0.02) 4px)`
-          }}
-        />
-      </div>
-
-      {/* Floating Particles */}
-      <FloatingParticles count={isHighEnd ? 25 : 0} isHighEnd={isHighEnd} />
-
-      {/* CONTENT */}
-      <div className="relative z-10 h-full flex flex-col justify-end p-8 lg:p-16 max-w-4xl">
-        
-        {/* Badges */}
-        <div className="flex flex-wrap items-center gap-3 mb-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
-          <div 
-            className="flex items-center gap-2 px-3 py-1.5 rounded"
-            style={{ background: 'linear-gradient(135deg, #E50914 0%, #B81D24 100%)', boxShadow: '0 4px 20px rgba(229,9,20,0.4)' }}
-          >
-            <span className="text-white text-xs font-black tracking-wide">M</span>
-            <span className="text-white text-xs font-bold uppercase tracking-wider">SERIES</span>
-          </div>
-          
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-white/10 backdrop-blur-sm">
-            <Crown className="w-4 h-4 text-yellow-400" />
-            <span className="text-white text-xs font-bold uppercase tracking-wider">Top 1 Hoje</span>
-          </div>
-          
-          {isCompleted && (
-            <div 
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded"
-              style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', boxShadow: '0 4px 20px rgba(16,185,129,0.4)' }}
-            >
-              <CheckCircle className="w-4 h-4 text-white" />
-              <span className="text-white text-xs font-bold uppercase tracking-wider">Concluído</span>
-            </div>
-          )}
-        </div>
-
-        {/* Title */}
-        <h1 
-          className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-black text-white leading-[0.95] mb-6 max-w-3xl animate-fade-up"
-          style={{
-            textShadow: '0 2px 10px rgba(0,0,0,0.8), 0 8px 40px rgba(0,0,0,0.6), 0 0 80px rgba(229,9,20,0.2)',
-            letterSpacing: '-0.02em',
-            animationDelay: '0.4s'
-          }}
-        >
-          {book.title}
-        </h1>
-
-        {/* Metadata */}
-        <div className="flex flex-wrap items-center gap-3 mb-6 animate-fade-in" style={{ animationDelay: '0.5s' }}>
-          <span className="text-emerald-400 font-bold text-sm">98% Relevante</span>
-          <span className="text-white/60">•</span>
-          <span className="text-white/80 text-sm font-medium">2024</span>
-          <span className="text-white/60">•</span>
-          {book.totalPages > 0 && (
-            <>
-              <span className="text-white/80 text-sm font-medium">{book.totalPages} páginas</span>
-              <span className="text-white/60">•</span>
-            </>
-          )}
-          <span className="px-1.5 py-0.5 border border-white/40 rounded text-[10px] text-white/80 font-medium">HD</span>
-          <span className="px-1.5 py-0.5 border border-white/40 rounded text-[10px] text-white/80 font-medium">PDF</span>
-        </div>
-
-        {/* Author & Stats */}
-        <div className="flex flex-wrap items-center gap-4 mb-6 text-white/70 animate-fade-in" style={{ animationDelay: '0.55s' }}>
-          {book.author && (
-            <span className="flex items-center gap-2">
-              <BookMarked className="w-4 h-4 text-red-500" />
-              <span className="text-sm font-medium">{book.author}</span>
-            </span>
-          )}
-          <span className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-red-500" />
-            <span className="text-sm font-medium">{book.viewCount || 0} leitores</span>
-          </span>
-          <span className="flex items-center gap-2">
-            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-            <span className="text-sm font-medium">4.9</span>
-          </span>
-        </div>
-
-        {/* Description */}
-        {book.subtitle && (
-          <p className="text-white/80 text-lg lg:text-xl max-w-2xl mb-8 line-clamp-3 leading-relaxed animate-fade-in" style={{ animationDelay: '0.6s' }}>
-            {book.subtitle}
-          </p>
-        )}
-
-        {/* Progress */}
-        {progress > 0 && !isCompleted && (
-          <div className="mb-8 max-w-lg animate-fade-in" style={{ animationDelay: '0.65s' }}>
-            <div className="flex items-center justify-between text-sm text-white/50 mb-2">
-              <span className="font-medium">Continuar de onde parou</span>
-              <span className="text-red-500 font-bold">{progress.toFixed(0)}% concluído</span>
-            </div>
-            <div className="h-1 rounded-full bg-white/20 overflow-hidden">
-              <div 
-                className="h-full rounded-full transition-all duration-1000"
-                style={{ 
-                  width: `${progress}%`,
-                  background: 'linear-gradient(90deg, #E50914 0%, #FF3D47 100%)',
-                  boxShadow: '0 0 20px rgba(229,9,20,0.6)'
-                }}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Buttons */}
-        <div className="flex flex-wrap items-center gap-4 animate-fade-up" style={{ animationDelay: '0.7s' }}>
-          <button
-            onClick={onClick}
-            className="group flex items-center gap-3 px-8 py-4 rounded-md font-bold text-lg transition-all duration-200 bg-white text-black hover:bg-white/90 active:scale-95"
-            style={{ boxShadow: '0 8px 30px rgba(255,255,255,0.2)' }}
-          >
-            <Play className="w-7 h-7 fill-black group-hover:scale-110 transition-transform" />
-            <span>{progress > 0 ? 'Continuar' : 'Ler Agora'}</span>
-          </button>
-
-          <button className="flex items-center gap-3 px-6 py-4 rounded-md font-bold text-lg transition-all duration-200 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white active:scale-95">
-            <Info className="w-6 h-6" />
-            <span>Mais Informações</span>
-          </button>
-
-          <button className="w-12 h-12 rounded-full flex items-center justify-center bg-black/50 backdrop-blur-sm border-2 border-white/40 hover:border-white transition-colors active:scale-95">
-            <Plus className="w-6 h-6 text-white" />
-          </button>
-        </div>
-      </div>
-
-      {/* Mute Button */}
-      <button
-        onClick={() => setIsMuted(!isMuted)}
-        className="absolute bottom-8 right-8 lg:right-16 z-20 w-10 h-10 rounded-full flex items-center justify-center bg-black/30 backdrop-blur-sm border border-white/30 hover:bg-black/50 transition-colors animate-fade-in"
-        style={{ animationDelay: '1s' }}
-      >
-        {isMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
-      </button>
-
-      {/* Age Rating */}
-      <div className="absolute bottom-8 right-24 lg:right-32 z-20 flex items-center gap-2 px-4 py-2 bg-black/60 backdrop-blur-sm border-l-4 border-white/60 animate-fade-in" style={{ animationDelay: '1s' }}>
-        <span className="text-white text-sm font-medium">L</span>
-      </div>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <HudStatOrb
+        icon={<Library className="h-5 w-5 md:h-6 md:w-6 text-[#E23636]" />}
+        value={totalBooks}
+        label="Total"
+        color="from-[#E23636]/15 to-[#E23636]/5 border-[#E23636]/40 text-[#FF6B6B]"
+        glowColor="bg-[#E23636]"
+      />
+      <HudStatOrb
+        icon={<Clock className="h-5 w-5 md:h-6 md:w-6 text-amber-400" />}
+        value={inProgress}
+        label="Lendo"
+        color="from-amber-500/15 to-amber-500/5 border-amber-500/40 text-amber-300"
+        glowColor="bg-amber-500"
+      />
+      <HudStatOrb
+        icon={<CheckCircle className="h-5 w-5 md:h-6 md:w-6 text-emerald-400" />}
+        value={completed}
+        label="Concluídos"
+        color="from-emerald-500/15 to-emerald-500/5 border-emerald-500/40 text-emerald-300"
+        glowColor="bg-emerald-500"
+      />
+      <HudStatOrb
+        icon={<Flame className="h-5 w-5 md:h-6 md:w-6 text-orange-400" />}
+        value={trending}
+        label="Trending"
+        color="from-orange-500/15 to-orange-500/5 border-orange-500/40 text-orange-300"
+        glowColor="bg-orange-500"
+      />
     </div>
   );
 });
 
 // ============================================
-// TOP 10 CARD — CSS Optimized
+// 🎬 CINEMATIC BOOK CARD — YEAR 2300 DESIGN
 // ============================================
 
-const Top10Card = memo(function Top10Card({
-  book,
-  rank,
-  onClick,
-  categoryCoverUrl
-}: {
-  book: WebBookListItem;
-  rank: number;
-  onClick: () => void;
-  categoryCoverUrl?: string | null;
-}) {
-  const coverImage = book.coverUrl || categoryCoverUrl || getCategoryConfig(book.category)?.cover;
-  const progress = book.progress?.progressPercent || 0;
-  const isCompleted = book.progress?.isCompleted || false;
-
-  return (
-    <div
-      className="relative flex-shrink-0 flex items-end cursor-pointer group animate-fade-in"
-      style={{ width: '280px', height: '200px', animationDelay: `${rank * 0.08}s` }}
-      onClick={onClick}
-    >
-      {/* Giant Number */}
-      <div 
-        className="absolute left-0 bottom-0 z-10 select-none transition-transform duration-300 group-hover:scale-105"
-        style={{
-          fontSize: '180px',
-          fontWeight: 900,
-          lineHeight: 0.8,
-          color: 'transparent',
-          WebkitTextStroke: '4px rgba(255,255,255,0.3)',
-          textShadow: '4px 4px 0 rgba(0,0,0,0.8)',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-          letterSpacing: '-0.05em'
-        }}
-      >
-        {rank}
-      </div>
-
-      {/* Book Cover */}
-      <div
-        className="relative ml-auto rounded-md overflow-hidden transition-all duration-300 group-hover:translate-x-2"
-        style={{ 
-          width: '140px', 
-          height: '190px',
-          boxShadow: '0 5px 20px rgba(0,0,0,0.5)'
-        }}
-      >
-        {coverImage ? (
-          <img
-            src={coverImage}
-            alt={book.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            draggable={false}
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
-            <BookOpen className="w-10 h-10 text-red-500/30" />
-          </div>
-        )}
-
-        {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-        {/* Completed Badge */}
-        {isCompleted && (
-          <div className="absolute top-2 right-2">
-            <div 
-              className="w-6 h-6 rounded-full flex items-center justify-center"
-              style={{ background: '#10B981', boxShadow: '0 0 10px rgba(16,185,129,0.5)' }}
-            >
-              <CheckCircle className="w-4 h-4 text-white" />
-            </div>
-          </div>
-        )}
-
-        {/* Progress */}
-        {progress > 0 && !isCompleted && (
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-            <div className="h-full bg-red-600" style={{ width: `${progress}%`, boxShadow: '0 0 10px rgba(229,9,20,0.5)' }} />
-          </div>
-        )}
-
-        {/* Play Button */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
-            <Play className="w-6 h-6 text-black ml-0.5" fill="black" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-});
-
-// ============================================
-// NETFLIX BOOK CARD — CSS Hover (No Framer)
-// ============================================
-
-const NetflixBookCard = memo(function NetflixBookCard({
+const CinematicBookCard = memo(function CinematicBookCard({
   book,
   onClick,
   categoryCoverUrl,
   index,
-  size = 'normal'
+  isHighEnd
 }: {
   book: WebBookListItem;
   onClick: () => void;
   categoryCoverUrl?: string | null;
   index: number;
-  size?: 'normal' | 'large';
+  isHighEnd: boolean;
 }) {
   const progress = book.progress?.progressPercent || 0;
   const isCompleted = book.progress?.isCompleted || false;
   const hasStarted = progress > 0;
   const coverImage = book.coverUrl || categoryCoverUrl || getCategoryConfig(book.category)?.cover;
-  
-  const cardWidth = size === 'large' ? 'w-[280px]' : 'w-[200px]';
 
   return (
     <div
-      className={cn("relative flex-shrink-0 netflix-card animate-fade-in", cardWidth)}
-      style={{ animationDelay: `${index * 0.03}s`, transformOrigin: 'center bottom' }}
+      className="relative flex-shrink-0 w-[180px] md:w-[200px] cinematic-card animate-fade-in group"
+      style={{ animationDelay: `${Math.min(index * 0.03, 0.3)}s` }}
     >
       <button
         onClick={onClick}
-        className="relative w-full focus:outline-none"
+        className={cn(
+          "relative w-full rounded-2xl overflow-hidden transition-all duration-500",
+          "bg-gradient-to-br from-[#0a0e14] via-[#0f1419] to-[#1a0a0a]",
+          "border-2 border-[#E23636]/30 hover:border-[#E23636]/80",
+          "shadow-xl shadow-black/50 hover:shadow-[#E23636]/30",
+          "focus:outline-none focus:ring-2 focus:ring-[#E23636]/50"
+        )}
         style={{ aspectRatio: '2/3' }}
       >
-        {/* Main Card */}
-        <div className="w-full h-full rounded-md overflow-hidden shadow-lg">
-          {coverImage ? (
-            <img
-              src={coverImage}
-              alt={book.title}
-              className="w-full h-full object-cover"
-              draggable={false}
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
-              <BookOpen className="w-14 h-14 text-red-500/20" />
-            </div>
-          )}
+        {/* Spider-Man corner accents */}
+        <div className="absolute top-0 left-0 w-8 h-8 border-l-3 border-t-3 border-[#E23636]/50 rounded-tl-2xl pointer-events-none z-20 group-hover:border-[#E23636] transition-colors" />
+        <div className="absolute top-0 right-0 w-8 h-8 border-r-3 border-t-3 border-[#E23636]/40 rounded-tr-2xl pointer-events-none z-20 group-hover:border-[#E23636] transition-colors" />
+        <div className="absolute bottom-0 left-0 w-8 h-8 border-l-3 border-b-3 border-[#E23636]/40 rounded-bl-2xl pointer-events-none z-20 group-hover:border-[#E23636] transition-colors" />
+        <div className="absolute bottom-0 right-0 w-8 h-8 border-r-3 border-b-3 border-[#E23636]/50 rounded-br-2xl pointer-events-none z-20 group-hover:border-[#E23636] transition-colors" />
 
-          {/* Gradient */}
-          <div 
-            className="absolute inset-0 transition-opacity duration-300"
-            style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)' }}
+        {/* Cover Image */}
+        {coverImage ? (
+          <img
+            src={coverImage}
+            alt={book.title}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            draggable={false}
+            loading="lazy"
           />
+        ) : (
+          <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
+            <BookOpen className="w-14 h-14 text-[#E23636]/30" />
+          </div>
+        )}
 
+        {/* Gradient Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-80" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#E23636]/0 via-transparent to-[#E23636]/0 group-hover:from-[#E23636]/10 group-hover:to-[#E23636]/5 transition-all duration-500" />
+
+        {/* Scanline Effect (High-End) */}
+        {isHighEnd && (
+          <div 
+            className="cinematic-scanline absolute inset-0 pointer-events-none opacity-[0.02]"
+            style={{
+              backgroundImage: `repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)`
+            }}
+          />
+        )}
+
+        {/* Completed Badge */}
+        {isCompleted && (
+          <div className="absolute top-3 right-3 z-30">
+            <div 
+              className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-emerald-400/50"
+              style={{ 
+                background: 'linear-gradient(135deg, rgba(16,185,129,0.9) 0%, rgba(5,150,105,0.9) 100%)', 
+                boxShadow: '0 0 20px rgba(16,185,129,0.5)' 
+              }}
+            >
+              <CheckCircle className="w-5 h-5 text-white" />
+            </div>
+          </div>
+        )}
+
+        {/* Progress Badge */}
+        {hasStarted && !isCompleted && (
+          <div className="absolute top-3 left-3 z-30">
+            <div 
+              className="px-2.5 py-1 rounded-full text-[10px] font-bold text-white flex items-center gap-1.5 border border-amber-400/50"
+              style={{ 
+                background: 'linear-gradient(135deg, rgba(245,158,11,0.9) 0%, rgba(217,119,6,0.9) 100%)',
+                boxShadow: '0 0 15px rgba(245,158,11,0.4)'
+              }}
+            >
+              <Clock className="w-3 h-3" />
+              {progress.toFixed(0)}%
+            </div>
+          </div>
+        )}
+
+        {/* Bottom Content */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
           {/* Progress Bar */}
           {hasStarted && !isCompleted && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-600/50">
-              <div className="h-full bg-red-600" style={{ width: `${progress}%` }} />
-            </div>
-          )}
-
-          {/* Completed Badge */}
-          {isCompleted && (
-            <div className="absolute top-2 right-2 z-10">
-              <div 
-                className="w-8 h-8 rounded-full flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', boxShadow: '0 2px 10px rgba(16,185,129,0.5)' }}
-              >
-                <CheckCircle className="w-5 h-5 text-white" />
+            <div className="mb-3">
+              <div className="h-1.5 rounded-full bg-white/20 overflow-hidden">
+                <div 
+                  className="h-full rounded-full transition-all duration-1000"
+                  style={{ 
+                    width: `${progress}%`,
+                    background: 'linear-gradient(90deg, #E23636 0%, #FF6B6B 100%)',
+                    boxShadow: '0 0 10px rgba(226,54,54,0.6)'
+                  }}
+                />
               </div>
             </div>
           )}
 
-          {/* Hover Play */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 netflix-card-info">
-            <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
-              <Play className="w-6 h-6 text-black ml-0.5" fill="black" />
-            </div>
+          {/* Title */}
+          <h3 className="text-white font-bold text-sm leading-tight line-clamp-2 mb-2 group-hover:text-[#FF6B6B] transition-colors">
+            {book.title}
+          </h3>
+
+          {/* Meta */}
+          <div className="flex items-center gap-2 text-[10px] text-white/60">
+            {book.totalPages > 0 && (
+              <span className="flex items-center gap-1">
+                <BookOpen className="w-3 h-3" />
+                {book.totalPages} pág
+              </span>
+            )}
+            {book.viewCount > 0 && (
+              <span className="flex items-center gap-1">
+                <Eye className="w-3 h-3" />
+                {book.viewCount}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Expanded Info */}
-        <div className="netflix-card-info absolute left-0 right-0 top-full pt-2 px-1">
-          <div className="p-3 rounded-b-md bg-zinc-900/95 shadow-2xl">
-            {/* Actions */}
-            <div className="flex items-center gap-2 mb-2">
-              <button 
-                className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-white/90 transition-colors"
-                onClick={(e) => { e.stopPropagation(); onClick(); }}
-              >
-                <Play className="w-4 h-4 text-black ml-0.5" fill="black" />
-              </button>
-              <button className="w-8 h-8 rounded-full bg-zinc-800 border-2 border-zinc-600 flex items-center justify-center hover:border-white transition-colors">
-                <Plus className="w-4 h-4 text-white" />
-              </button>
-              <button className="w-8 h-8 rounded-full bg-zinc-800 border-2 border-zinc-600 flex items-center justify-center hover:border-white transition-colors ml-auto">
-                <ChevronRight className="w-4 h-4 text-white" />
-              </button>
-            </div>
-
-            {/* Metadata */}
-            <div className="flex items-center gap-2 text-xs mb-1.5">
-              <span className="text-emerald-400 font-bold">98%</span>
-              {book.totalPages > 0 && (
-                <>
-                  <span className="text-white/40">•</span>
-                  <span className="text-white/70">{book.totalPages} pág</span>
-                </>
-              )}
-              <span className="px-1 py-0.5 border border-white/30 rounded text-[9px] text-white/70">HD</span>
-            </div>
-
-            {/* Title */}
-            <h4 className="text-white font-bold text-xs leading-tight line-clamp-2">{book.title}</h4>
+        {/* Hover Play Button */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-25">
+          <div 
+            className="w-14 h-14 rounded-full flex items-center justify-center border-2 border-white/80 backdrop-blur-sm"
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(226,54,54,0.95) 0%, rgba(180,30,30,0.95) 100%)',
+              boxShadow: '0 0 30px rgba(226,54,54,0.6)'
+            }}
+          >
+            <Play className="w-7 h-7 text-white ml-1" fill="white" />
           </div>
         </div>
+
+        {/* Glow Effect (High-End) */}
+        {isHighEnd && (
+          <div 
+            className="cinematic-glow absolute -inset-2 rounded-3xl opacity-0 group-hover:opacity-100 -z-10 pointer-events-none transition-opacity duration-500"
+            style={{
+              background: 'radial-gradient(ellipse at center, rgba(226,54,54,0.3) 0%, transparent 70%)',
+              filter: 'blur(20px)'
+            }}
+          />
+        )}
       </button>
     </div>
   );
 });
 
 // ============================================
-// CAROUSEL ROW — Optimized
+// 📚 CAROUSEL ROW — NETFLIX PREMIUM CINEMATIC
 // ============================================
 
 interface CarouselRowProps {
@@ -645,7 +462,8 @@ interface CarouselRowProps {
   books: WebBookListItem[];
   onBookSelect: (bookId: string) => void;
   getCoverForBook: (book: WebBookListItem) => string | null;
-  variant?: 'normal' | 'top10' | 'large';
+  isHighEnd: boolean;
+  accentColor?: string;
 }
 
 const CarouselRow = memo(function CarouselRow({ 
@@ -654,7 +472,8 @@ const CarouselRow = memo(function CarouselRow({
   books, 
   onBookSelect,
   getCoverForBook,
-  variant = 'normal'
+  isHighEnd,
+  accentColor = '#E23636'
 }: CarouselRowProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -685,79 +504,122 @@ const CarouselRow = memo(function CarouselRow({
   if (books.length === 0) return null;
 
   return (
-    <div className="relative group/row py-6">
-      {/* Title */}
-      <div className="flex items-center gap-3 px-6 lg:px-16 mb-4 animate-fade-in">
+    <div className="relative group/row">
+      {/* Section Card with Corner Accents */}
+      <div className={cn(
+        "relative overflow-hidden transition-all duration-500",
+        "bg-gradient-to-br from-[#0a0e14]/80 via-[#0f1419]/60 to-[#1a0a0a]/80",
+        "border-2 border-[#E23636]/20 hover:border-[#E23636]/40",
+        "rounded-3xl p-6",
+        "shadow-xl shadow-black/30"
+      )}>
+        {/* Spider-Man style corner accents */}
+        <div className="absolute top-0 left-0 w-12 h-12 border-l-4 border-t-4 border-[#E23636]/40 rounded-tl-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-12 h-12 border-r-4 border-t-4 border-[#E23636]/30 rounded-tr-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-12 h-12 border-l-4 border-b-4 border-[#E23636]/30 rounded-bl-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-12 h-12 border-r-4 border-b-4 border-[#E23636]/40 rounded-br-3xl pointer-events-none" />
+
+        {/* Background glow */}
         <div 
-          className="p-2 rounded-lg"
-          style={{ background: 'linear-gradient(135deg, rgba(229,9,20,0.2) 0%, rgba(229,9,20,0.05) 100%)', boxShadow: '0 0 20px rgba(229,9,20,0.1)' }}
-        >
-          {icon}
-        </div>
-        <h2 className="text-xl lg:text-2xl font-bold text-white tracking-tight group-hover/row:text-red-500 transition-colors duration-300">
-          {title}
-        </h2>
-        <div className="flex items-center gap-1 text-red-500 text-sm font-medium opacity-0 group-hover/row:opacity-100 transition-opacity">
-          <span>Explorar Todos</span>
-          <ChevronRight className="w-4 h-4" />
-        </div>
-      </div>
+          className="absolute inset-0 opacity-10 group-hover/row:opacity-20 transition-opacity pointer-events-none"
+          style={{ background: `radial-gradient(ellipse at top left, ${accentColor}30 0%, transparent 50%)` }}
+        />
 
-      {/* Carousel */}
-      <div className="relative">
-        {/* Left Arrow */}
-        {canScrollLeft && (
-          <button
-            onClick={() => scroll('left')}
-            className="absolute left-0 top-0 bottom-0 z-30 w-16 lg:w-20 flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity"
-            style={{ background: 'linear-gradient(to right, rgba(0,0,0,0.95) 0%, transparent 100%)' }}
-          >
-            <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/20 hover:border-white/50 hover:scale-110 transition-all">
-              <ChevronLeft className="w-7 h-7 text-white" />
-            </div>
-          </button>
-        )}
-
-        {/* Right Arrow */}
-        {canScrollRight && (
-          <button
-            onClick={() => scroll('right')}
-            className="absolute right-0 top-0 bottom-0 z-30 w-16 lg:w-20 flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-opacity"
-            style={{ background: 'linear-gradient(to left, rgba(0,0,0,0.95) 0%, transparent 100%)' }}
-          >
-            <div className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center border border-white/20 hover:border-white/50 hover:scale-110 transition-all">
-              <ChevronRight className="w-7 h-7 text-white" />
-            </div>
-          </button>
-        )}
-
-        {/* Scrollable Row */}
-        <div
-          ref={scrollRef}
-          className="flex gap-2 overflow-x-auto scroll-smooth px-6 lg:px-16 pb-32 pt-4 hide-scrollbar"
-        >
-          {variant === 'top10' ? (
-            books.slice(0, 10).map((book, index) => (
-              <Top10Card
-                key={book.id}
-                book={book}
-                rank={index + 1}
-                onClick={() => onBookSelect(book.id)}
-                categoryCoverUrl={getCoverForBook(book)}
+        {/* Title Row */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-4">
+            {/* Icon Orb */}
+            <div className="relative">
+              <div 
+                className="absolute inset-0 rounded-xl blur-xl opacity-50"
+                style={{ background: accentColor }}
               />
-            ))
-          ) : (
-            books.map((book, index) => (
-              <NetflixBookCard
+              <div 
+                className="relative p-3 rounded-xl border-2"
+                style={{ 
+                  background: `linear-gradient(135deg, ${accentColor}40 0%, ${accentColor}20 100%)`,
+                  borderColor: `${accentColor}60`,
+                  boxShadow: `0 0 20px ${accentColor}30`
+                }}
+              >
+                {icon}
+              </div>
+            </div>
+            
+            {/* Title & Count */}
+            <div>
+              <h2 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-3">
+                {title}
+                <Badge 
+                  className="px-2.5 py-1 text-xs font-bold"
+                  style={{ 
+                    background: `${accentColor}30`,
+                    color: accentColor,
+                    borderColor: `${accentColor}50`
+                  }}
+                >
+                  {books.length}
+                </Badge>
+              </h2>
+              <p className="text-xs text-white/50 mt-0.5">
+                {books.length === 1 ? '1 livro disponível' : `${books.length} livros disponíveis`}
+              </p>
+            </div>
+          </div>
+
+          {/* Explore Link */}
+          <div className="hidden md:flex items-center gap-1.5 text-[#E23636] text-sm font-medium opacity-0 group-hover/row:opacity-100 transition-opacity cursor-pointer hover:text-[#FF6B6B]">
+            <span>Ver Todos</span>
+            <ChevronRight className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Carousel */}
+        <div className="relative">
+          {/* Left Arrow */}
+          {canScrollLeft && (
+            <button
+              onClick={() => scroll('left')}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-all duration-300 -translate-x-2 group-hover/row:translate-x-0"
+              style={{
+                background: 'linear-gradient(135deg, rgba(226,54,54,0.9) 0%, rgba(180,30,30,0.9) 100%)',
+                boxShadow: '0 0 30px rgba(226,54,54,0.5)'
+              }}
+            >
+              <ChevronLeft className="w-6 h-6 text-white" />
+            </button>
+          )}
+
+          {/* Right Arrow */}
+          {canScrollRight && (
+            <button
+              onClick={() => scroll('right')}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-all duration-300 translate-x-2 group-hover/row:translate-x-0"
+              style={{
+                background: 'linear-gradient(135deg, rgba(226,54,54,0.9) 0%, rgba(180,30,30,0.9) 100%)',
+                boxShadow: '0 0 30px rgba(226,54,54,0.5)'
+              }}
+            >
+              <ChevronRight className="w-6 h-6 text-white" />
+            </button>
+          )}
+
+          {/* Scrollable Row */}
+          <div
+            ref={scrollRef}
+            className="flex gap-4 overflow-x-auto scroll-smooth hide-scrollbar py-2"
+          >
+            {books.map((book, index) => (
+              <CinematicBookCard
                 key={book.id}
                 book={book}
                 onClick={() => onBookSelect(book.id)}
                 categoryCoverUrl={getCoverForBook(book)}
                 index={index}
-                size={variant === 'large' ? 'large' : 'normal'}
+                isHighEnd={isHighEnd}
               />
-            ))
-          )}
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -765,23 +627,102 @@ const CarouselRow = memo(function CarouselRow({
 });
 
 // ============================================
-// LOADING STATE — Optimized
+// 🔍 SEARCH BAR — YEAR 2300 CINEMATIC
+// ============================================
+
+interface SearchBarProps {
+  searchQuery: string;
+  onSearchChange: (value: string) => void;
+  selectedCategory: string;
+  onCategoryChange: (value: string) => void;
+}
+
+const SearchBar = memo(function SearchBar({
+  searchQuery,
+  onSearchChange,
+  selectedCategory,
+  onCategoryChange
+}: SearchBarProps) {
+  return (
+    <div className={cn(
+      "relative p-4 rounded-2xl overflow-hidden",
+      "bg-gradient-to-r from-[#1a0a0a]/80 via-[#0a0e14]/90 to-[#1a0a0a]/80",
+      "border-2 border-[#E23636]/25 backdrop-blur-xl"
+    )}>
+      {/* Corner accents */}
+      <div className="absolute top-0 left-0 w-8 h-8 border-l-3 border-t-3 border-[#E23636]/40 rounded-tl-2xl" />
+      <div className="absolute top-0 right-0 w-8 h-8 border-r-3 border-t-3 border-[#E23636]/40 rounded-tr-2xl" />
+      <div className="absolute bottom-0 left-0 w-8 h-8 border-l-3 border-b-3 border-[#E23636]/40 rounded-bl-2xl" />
+      <div className="absolute bottom-0 right-0 w-8 h-8 border-r-3 border-b-3 border-[#E23636]/40 rounded-br-2xl" />
+
+      {/* Background glow */}
+      <div className="absolute top-0 left-1/4 w-40 h-20 bg-[#E23636]/10 rounded-full blur-3xl -z-10" />
+
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Search Input */}
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#E23636]/70" />
+          <Input
+            type="text"
+            placeholder="Buscar livros, autores..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className={cn(
+              "pl-12 h-12 rounded-xl",
+              "bg-slate-900/60 border-2 border-slate-600/30",
+              "text-white placeholder:text-white/40",
+              "focus:bg-slate-900/80 focus:border-[#E23636]/50 focus:ring-2 focus:ring-[#E23636]/20",
+              "transition-all duration-300"
+            )}
+          />
+        </div>
+
+        {/* Category Select */}
+        <Select value={selectedCategory} onValueChange={onCategoryChange}>
+          <SelectTrigger 
+            className={cn(
+              "w-full md:w-[220px] h-12 rounded-xl",
+              "bg-slate-900/60 border-2 border-slate-600/30 text-white",
+              "focus:ring-2 focus:ring-[#E23636]/30"
+            )}
+          >
+            <SelectValue placeholder="Categoria" />
+          </SelectTrigger>
+          <SelectContent className="bg-slate-900/95 backdrop-blur-xl border-slate-700/50 text-white rounded-xl">
+            {CATEGORIES.map(cat => (
+              <SelectItem 
+                key={cat.value} 
+                value={cat.value} 
+                className="text-white/80 focus:bg-[#E23636]/30 focus:text-white rounded-lg"
+              >
+                {cat.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+});
+
+// ============================================
+// 🎬 LOADING STATE — YEAR 2300 CINEMATIC
 // ============================================
 
 const LoadingState = memo(function LoadingState({ isHighEnd }: { isHighEnd: boolean }) {
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0e14] via-[#0f1419] to-[#1a0a0a] flex items-center justify-center">
       <div className="flex flex-col items-center gap-8">
         <div className="relative">
           <div 
-            className="w-28 h-28 rounded-xl flex items-center justify-center"
+            className="w-28 h-28 rounded-2xl flex items-center justify-center border-2 border-[#E23636]/50"
             style={{ 
-              background: 'linear-gradient(135deg, #E50914 0%, #B81D24 100%)',
-              animation: isHighEnd ? 'netflix-pulse 2s ease-in-out infinite' : undefined,
-              boxShadow: '0 0 60px rgba(229,9,20,0.4)'
+              background: 'linear-gradient(135deg, rgba(226,54,54,0.3) 0%, rgba(180,30,30,0.2) 100%)',
+              animation: isHighEnd ? 'cinematic-pulse 2s ease-in-out infinite' : undefined,
+              boxShadow: '0 0 60px rgba(226,54,54,0.4)'
             }}
           >
-            <Library className="w-14 h-14 text-white" />
+            <Library className="w-14 h-14 text-[#E23636]" />
           </div>
           
           {/* Orbital Rings */}
@@ -791,9 +732,9 @@ const LoadingState = memo(function LoadingState({ isHighEnd }: { isHighEnd: bool
               className="absolute rounded-full border pointer-events-none"
               style={{
                 inset: `${-ring * 20}px`,
-                borderColor: `rgba(229,9,20,${0.4 - ring * 0.1})`,
+                borderColor: `rgba(226,54,54,${0.4 - ring * 0.1})`,
                 borderWidth: ring === 1 ? '2px' : '1px',
-                animation: `netflix-orbit ${4 + ring * 2}s linear infinite${ring % 2 === 0 ? ' reverse' : ''}`
+                animation: `cinematic-orbit ${4 + ring * 2}s linear infinite${ring % 2 === 0 ? ' reverse' : ''}`
               }}
             />
           ))}
@@ -801,9 +742,9 @@ const LoadingState = memo(function LoadingState({ isHighEnd }: { isHighEnd: bool
         
         <div className="text-center">
           <p className="text-white text-2xl font-bold tracking-wide animate-pulse">
-            Carregando...
+            Carregando Biblioteca...
           </p>
-          <p className="text-white/40 text-sm mt-2">Preparando sua experiência</p>
+          <p className="text-white/40 text-sm mt-2">Preparando sua experiência Year 2300</p>
         </div>
       </div>
     </div>
@@ -811,7 +752,7 @@ const LoadingState = memo(function LoadingState({ isHighEnd }: { isHighEnd: bool
 });
 
 // ============================================
-// COMPONENTE PRINCIPAL — PERFORMANCE ADAPTIVE
+// 🚀 COMPONENTE PRINCIPAL — YEAR 2300 CINEMATIC
 // ============================================
 
 export const WebBookLibrary = memo(function WebBookLibrary({
@@ -823,22 +764,10 @@ export const WebBookLibrary = memo(function WebBookLibrary({
   const { categories: dbCategories } = useBookCategories();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [showIntro, setShowIntro] = useState(true);
   
   // Performance tier detection
   const { tier, isLowEnd, isCritical } = useConstitutionPerformance();
   const isHighEnd = tier === 'quantum' || tier === 'neural' || tier === 'enhanced';
-
-  // Skip intro on subsequent visits
-  useEffect(() => {
-    const hasSeenIntro = sessionStorage.getItem('moisa_library_intro');
-    if (hasSeenIntro) setShowIntro(false);
-  }, []);
-
-  const handleIntroComplete = useCallback(() => {
-    setShowIntro(false);
-    sessionStorage.setItem('moisa_library_intro', 'true');
-  }, []);
 
   // Category cover map
   const categoryCoverMap = useMemo(() => {
@@ -882,13 +811,6 @@ export const WebBookLibrary = memo(function WebBookLibrary({
     return { inProgress, completed, trending, all: filteredBooks };
   }, [filteredBooks]);
 
-  // Hero book
-  const heroBook = useMemo(() => {
-    if (categorizedBooks.inProgress.length > 0) return categorizedBooks.inProgress[0];
-    if (categorizedBooks.trending.length > 0) return categorizedBooks.trending[0];
-    return filteredBooks[0] || null;
-  }, [categorizedBooks, filteredBooks]);
-
   const handleCategoryChange = useCallback((category: string) => {
     setSelectedCategory(category);
     loadBooks(category === 'all' ? undefined : category);
@@ -902,19 +824,22 @@ export const WebBookLibrary = memo(function WebBookLibrary({
   // Error
   if (error) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0e14] via-[#0f1419] to-[#1a0a0a] flex items-center justify-center px-4">
         <div className="flex flex-col items-center gap-6 text-center max-w-md">
           <div 
-            className="w-24 h-24 rounded-xl flex items-center justify-center"
-            style={{ background: 'linear-gradient(135deg, #991B1B 0%, #7F1D1D 100%)', boxShadow: '0 0 40px rgba(153,27,27,0.5)' }}
+            className="w-24 h-24 rounded-2xl flex items-center justify-center border-2 border-red-500/50"
+            style={{ 
+              background: 'linear-gradient(135deg, rgba(153,27,27,0.4) 0%, rgba(127,29,29,0.3) 100%)', 
+              boxShadow: '0 0 40px rgba(153,27,27,0.5)' 
+            }}
           >
-            <BookOpen className="w-12 h-12 text-white" />
+            <BookOpen className="w-12 h-12 text-red-400" />
           </div>
           <h2 className="text-3xl font-bold text-white">Ops!</h2>
           <p className="text-white/60">{error}</p>
           <button
             onClick={() => loadBooks()}
-            className="px-8 py-3 rounded bg-red-600 hover:bg-red-500 text-white font-bold transition-colors"
+            className="px-8 py-3 rounded-xl bg-gradient-to-r from-[#E23636] to-[#B41E1E] hover:from-[#FF4444] hover:to-[#E23636] text-white font-bold transition-all duration-300 shadow-lg shadow-[#E23636]/30"
           >
             Tentar Novamente
           </button>
@@ -924,149 +849,122 @@ export const WebBookLibrary = memo(function WebBookLibrary({
   }
 
   return (
-    <div className={cn("min-h-screen bg-black", !isHighEnd && "perf-reduced", className)}>
-      {/* Intro Animation */}
-      <AnimatePresence>
-        {showIntro && <NetflixLogoIntro onComplete={handleIntroComplete} />}
-      </AnimatePresence>
+    <div className={cn("relative min-h-screen", !isHighEnd && "perf-reduced", className)}>
+      {/* Cinematic Background */}
+      <CyberBackground variant="grid" intensity="medium" />
+      
+      {/* Cinematic Styles */}
+      <style>{CINEMATIC_STYLES}</style>
 
-      {/* Optimized Styles */}
-      <style>{OPTIMIZED_STYLES}</style>
+      <div className="relative z-10 p-3 md:p-4 lg:p-6">
+        <div className="mx-auto max-w-[98vw] space-y-6">
+          
+          {/* Futuristic Header */}
+          <FuturisticPageHeader
+            title="Livros do Moisa"
+            subtitle="Biblioteca digital completa com materiais exclusivos"
+            icon={BookOpen}
+            accentColor="primary"
+          />
 
-      {/* Fixed Navigation */}
-      <nav
-        className="fixed top-0 left-0 right-0 z-50 px-6 lg:px-16 py-4 animate-fade-down"
-        style={{
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 50%, transparent 100%)',
-          animationDelay: showIntro ? '2.2s' : '0s'
-        }}
-      >
-        <div className="flex items-center gap-8">
-          {/* Logo */}
-          <div 
-            className="text-2xl font-black tracking-tighter"
-            style={{
-              background: 'linear-gradient(180deg, #E50914 0%, #B81D24 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}
-          >
-            MOISA
-          </div>
+          {/* Stats Panel */}
+          <StatsPanel
+            totalBooks={filteredBooks.length}
+            inProgress={categorizedBooks.inProgress.length}
+            completed={categorizedBooks.completed.length}
+            trending={categorizedBooks.trending.length}
+          />
 
-          {/* Search */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
-            <Input
-              type="text"
-              placeholder="Buscar livros..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-11 h-10 bg-black/50 border-white/20 text-white placeholder:text-white/50 rounded focus:bg-black/80 focus:border-white/40 transition-all"
+          {/* Hierarchy Legend */}
+          <HierarchyLegend />
+
+          {/* Search Bar */}
+          <SearchBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            selectedCategory={selectedCategory}
+            onCategoryChange={handleCategoryChange}
+          />
+
+          {/* Content Rows */}
+          <div className="space-y-6">
+            {categorizedBooks.inProgress.length > 0 && (
+              <CarouselRow
+                title="Continuar Lendo"
+                icon={<Clock className="w-6 h-6 text-amber-400" />}
+                books={categorizedBooks.inProgress}
+                onBookSelect={onBookSelect}
+                getCoverForBook={getCoverForBook}
+                isHighEnd={isHighEnd}
+                accentColor="#F59E0B"
+              />
+            )}
+
+            {categorizedBooks.completed.length > 0 && (
+              <CarouselRow
+                title="Concluídos"
+                icon={<CheckCircle className="w-6 h-6 text-emerald-400" />}
+                books={categorizedBooks.completed}
+                onBookSelect={onBookSelect}
+                getCoverForBook={getCoverForBook}
+                isHighEnd={isHighEnd}
+                accentColor="#10B981"
+              />
+            )}
+
+            {categorizedBooks.trending.length > 0 && (
+              <CarouselRow
+                title="Mais Populares"
+                icon={<Flame className="w-6 h-6 text-orange-400" />}
+                books={categorizedBooks.trending}
+                onBookSelect={onBookSelect}
+                getCoverForBook={getCoverForBook}
+                isHighEnd={isHighEnd}
+                accentColor="#F97316"
+              />
+            )}
+
+            <CarouselRow
+              title="Todos os Livros"
+              icon={<Library className="w-6 h-6 text-[#E23636]" />}
+              books={filteredBooks}
+              onBookSelect={onBookSelect}
+              getCoverForBook={getCoverForBook}
+              isHighEnd={isHighEnd}
+              accentColor="#E23636"
             />
-          </div>
 
-          {/* Category */}
-          <Select value={selectedCategory} onValueChange={handleCategoryChange}>
-            <SelectTrigger className="w-[200px] h-10 bg-black/50 border-white/20 text-white rounded focus:ring-red-500/50">
-              <SelectValue placeholder="Categoria" />
-            </SelectTrigger>
-            <SelectContent className="bg-zinc-900/95 backdrop-blur-xl border-white/10 text-white">
-              {CATEGORIES.map(cat => (
-                <SelectItem key={cat.value} value={cat.value} className="text-white/80 focus:bg-red-600/40 focus:text-white">
-                  {cat.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            {/* Empty State */}
+            {filteredBooks.length === 0 && !isLoading && (
+              <div className={cn(
+                "relative p-12 rounded-3xl overflow-hidden text-center",
+                "bg-gradient-to-br from-[#0a0e14]/80 via-[#0f1419]/60 to-[#1a0a0a]/80",
+                "border-2 border-[#E23636]/20"
+              )}>
+                {/* Corner accents */}
+                <div className="absolute top-0 left-0 w-12 h-12 border-l-4 border-t-4 border-[#E23636]/40 rounded-tl-3xl" />
+                <div className="absolute top-0 right-0 w-12 h-12 border-r-4 border-t-4 border-[#E23636]/40 rounded-tr-3xl" />
+                <div className="absolute bottom-0 left-0 w-12 h-12 border-l-4 border-b-4 border-[#E23636]/40 rounded-bl-3xl" />
+                <div className="absolute bottom-0 right-0 w-12 h-12 border-r-4 border-b-4 border-[#E23636]/40 rounded-br-3xl" />
 
-          {/* Stats */}
-          <div className="hidden lg:flex items-center gap-4 ml-auto text-sm">
-            <div className="flex items-center gap-2 text-white/70">
-              <Library className="w-4 h-4 text-red-500" />
-              <span>{filteredBooks.length}</span>
-            </div>
-            <div className="flex items-center gap-2 text-white/70">
-              <Award className="w-4 h-4 text-emerald-500" />
-              <span>{categorizedBooks.completed.length}</span>
-            </div>
+                <div 
+                  className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center border-2 border-[#E23636]/40"
+                  style={{ 
+                    background: 'linear-gradient(135deg, rgba(226,54,54,0.2) 0%, rgba(180,30,30,0.1) 100%)',
+                    boxShadow: '0 0 40px rgba(226,54,54,0.2)'
+                  }}
+                >
+                  <Search className="w-10 h-10 text-[#E23636]/60" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">Nenhum livro encontrado</h3>
+                <p className="text-white/50">Tente ajustar seus filtros de busca</p>
+              </div>
+            )}
           </div>
         </div>
-      </nav>
-
-      {/* Hero */}
-      {heroBook && (
-        <div className="animate-fade-in" style={{ animationDelay: showIntro ? '2.2s' : '0s' }}>
-          <HeroBillboard 
-            book={heroBook} 
-            onClick={() => onBookSelect(heroBook.id)}
-            categoryCoverUrl={getCoverForBook(heroBook)}
-            isHighEnd={isHighEnd}
-          />
-        </div>
-      )}
-
-      {/* Content Rows */}
-      <div 
-        className="relative z-10 -mt-40 pb-20 space-y-2 animate-fade-in"
-        style={{ animationDelay: showIntro ? '2.5s' : '0.3s' }}
-      >
-        {categorizedBooks.inProgress.length > 0 && (
-          <CarouselRow
-            title="Continuar Lendo"
-            icon={<Clock className="w-5 h-5 text-red-500" />}
-            books={categorizedBooks.inProgress}
-            onBookSelect={onBookSelect}
-            getCoverForBook={getCoverForBook}
-            variant="large"
-          />
-        )}
-
-        {categorizedBooks.trending.length > 0 && (
-          <CarouselRow
-            title="Top 10 da Semana no Brasil"
-            icon={<Flame className="w-5 h-5 text-orange-500" />}
-            books={categorizedBooks.trending}
-            onBookSelect={onBookSelect}
-            getCoverForBook={getCoverForBook}
-            variant="top10"
-          />
-        )}
-
-        {categorizedBooks.completed.length > 0 && (
-          <CarouselRow
-            title="Concluídos"
-            icon={<CheckCircle className="w-5 h-5 text-emerald-500" />}
-            books={categorizedBooks.completed}
-            onBookSelect={onBookSelect}
-            getCoverForBook={getCoverForBook}
-          />
-        )}
-
-        <CarouselRow
-          title="Todos os Livros"
-          icon={<Library className="w-5 h-5 text-blue-500" />}
-          books={filteredBooks}
-          onBookSelect={onBookSelect}
-          getCoverForBook={getCoverForBook}
-        />
-
-        {/* Empty State */}
-        {filteredBooks.length === 0 && !isLoading && (
-          <div className="flex flex-col items-center justify-center py-32 px-4 text-center">
-            <div 
-              className="w-24 h-24 rounded-xl flex items-center justify-center mb-6"
-              style={{ background: 'linear-gradient(135deg, rgba(229,9,20,0.2) 0%, rgba(229,9,20,0.05) 100%)' }}
-            >
-              <Search className="w-12 h-12 text-red-500/50" />
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Nenhum livro encontrado</h2>
-            <p className="text-white/50 max-w-md">
-              Tente ajustar sua busca ou filtros para encontrar o que procura.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );
 });
+
+export default WebBookLibrary;
