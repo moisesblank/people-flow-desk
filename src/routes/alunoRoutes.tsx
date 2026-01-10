@@ -28,7 +28,7 @@ const AlunoPerfil = lazy(() => import("@/pages/ProfilePage"));
 
 // Placeholders - Named exports
 const AlunoCronograma = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoCronograma })));
-const AlunoMateriais = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoMateriais })));
+const AlunoMateriais = lazy(() => import("@/pages/aluno/AlunoMateriaisPage"));
 const AlunoResumos = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoResumos })));
 const AlunoMapasMentais = lazy(() => import("@/pages/aluno/AlunoMapasMentais"));
 const AlunoRedacao = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoRedacao })));
