@@ -45,7 +45,7 @@ import { CyberBackground } from '@/components/ui/cyber-background';
 import '@/styles/dashboard-2300.css';
 
 // ============================================
-// 🖼️ CAPAS PERMANENTES DOS LIVROS
+// 🖼️ CAPAS PERMANENTES DOS LIVROS (por CATEGORIA)
 // ============================================
 
 import capa1RevisaoCiclica from '@/assets/book-covers/capa-1-revisao-ciclica.png';
@@ -54,12 +54,17 @@ import capa3PrevisaoFinal from '@/assets/book-covers/capa-3-previsao-final.png';
 import capa4QuimicaOrganica from '@/assets/book-covers/capa-4-quimica-organica.png';
 import capa5QuimicaGeral from '@/assets/book-covers/capa-5-quimica-geral.png';
 
-// Ordem CANÔNICA (position 0-4) — sincronizada com Gestão:
-// 0: Química Geral (#01)
-// 1: Química Orgânica (#02)
-// 2: Físico-Química (#03)
-// 3: Revisão Cíclica (#04)
-// 4: Previsão Final (#05)
+// Mapeamento por CATEGORIA → Capa correspondente
+// Qualquer livro dessa categoria terá essa capa automaticamente
+const BOOK_COVERS_BY_CATEGORY: Record<string, string> = {
+  quimica_geral: capa5QuimicaGeral,
+  quimica_organica: capa4QuimicaOrganica,
+  fisico_quimica: capa2FisicoQuimica,
+  revisao_ciclica: capa1RevisaoCiclica,
+  previsao_final: capa3PrevisaoFinal,
+};
+
+// Fallback por posição (caso categoria não seja reconhecida)
 const BOOK_COVERS_BY_INDEX: Record<number, string> = {
   0: capa5QuimicaGeral,
   1: capa4QuimicaOrganica,
@@ -460,8 +465,8 @@ const BookSection = memo(function BookSection({
                   key={book.id}
                   book={book}
                   index={idx}
-                  // Preferir capa definida no backend (gestão) e usar modelo apenas como fallback
-                  coverUrl={book.coverUrl || BOOK_COVERS_BY_INDEX[idx] || '/placeholder.svg'}
+                  // Prioridade: 1) Upload manual, 2) Categoria, 3) Posição, 4) Placeholder
+                  coverUrl={book.coverUrl || BOOK_COVERS_BY_CATEGORY[book.category || ''] || BOOK_COVERS_BY_INDEX[idx] || '/placeholder.svg'}
                   onSelect={() => onBookSelect(book.id)}
                   isHighEnd={isHighEnd}
                 />
