@@ -20,6 +20,7 @@ type MenuItem = {
   }>;
   area: string;
   badge?: string;
+  textColor?: string; // Cor personalizada para o item
 };
 export type MenuGroup = {
   id: string;
@@ -457,8 +458,8 @@ export function SidebarNavDnd(props: {
                             setActivatorNodeRef
                           }) => <SidebarMenuItem>
                                         <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
-                                          <NavLink to={item.url} end className="flex items-center gap-3" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                                            <item.icon className="h-4 w-4 shrink-0" />
+                                          <NavLink to={item.url} end className={`flex items-center gap-3 ${item.textColor || ''}`} activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                                            <item.icon className={`h-4 w-4 shrink-0 ${item.textColor || ''}`} />
                                             <span className="flex items-center gap-2 min-w-0 flex-1">
                                               {showEditControls && <span className="flex items-center gap-0.5 shrink-0">
                                                   <Tooltip>
@@ -485,10 +486,10 @@ export function SidebarNavDnd(props: {
                                                     <TooltipContent side="right">Duplicar item</TooltipContent>
                                                   </Tooltip>
                                                 </span>}
-                                              <span data-editable-key={`nav_${item.area}_title`} className="truncate text-center font-sans font-extrabold text-sm">
+                                              <span data-editable-key={`nav_${item.area}_title`} className={`truncate text-center font-sans font-extrabold text-sm ${item.textColor || ''}`}>
                                                 {getContent(`nav_${item.area}_title`, item.title)}
                                               </span>
-                                              {item.badge && <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                              {item.badge && <Badge variant="outline" className={`text-[10px] px-1 py-0 ${item.textColor ? `${item.textColor} border-current` : ''}`}>
                                                   {item.badge}
                                                 </Badge>}
                                             </span>

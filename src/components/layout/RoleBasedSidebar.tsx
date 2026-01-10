@@ -113,6 +113,7 @@ interface MenuItem {
   icon: React.ComponentType<{ className?: string }>;
   area: SystemArea;
   badge?: string;
+  textColor?: string; // Cor personalizada para o item (ex: "text-red-500")
 }
 
 interface MenuGroup {
@@ -342,7 +343,7 @@ const alunoMenuGroups: MenuGroup[] = [
     items: [
       { title: "Tutoria ao Vivo", url: "/alunos/tutoria", icon: UserCheck, area: "aluno-tutoria", badge: "LIVE" },
       { title: "Fórum de Dúvidas", url: "/alunos/forum", icon: MessageCircle, area: "aluno-forum" },
-      { title: "Lives Exclusivas", url: "/alunos/lives", icon: Radio, area: "aluno-lives", badge: "AO VIVO" },
+      { title: "Lives Exclusivas", url: "/alunos/lives", icon: Radio, area: "aluno-lives", badge: "AO VIVO", textColor: "text-red-500" },
       // HIDDEN_ITEMS: Tire suas Dúvidas removida do menu (mantida no sistema)
       // { title: "Tire suas Dúvidas", url: "/alunos/duvidas", icon: HelpCircle, area: "aluno-duvidas" },
     ],
