@@ -3,7 +3,7 @@
 // ============================================
 
 export { WebBookViewer } from './WebBookViewer';
-export { WebBookLibrary } from './WebBookLibrary';
+export { default as WebBookLibrary } from './WebBookLibrary';
 export { PdfPageViewer } from './PdfPageViewer';
 export { CategoryImageManager } from './CategoryImageManager';
 export { FuturisticCategoryFilter } from './FuturisticCategoryFilter';
