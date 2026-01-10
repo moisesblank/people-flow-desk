@@ -340,37 +340,54 @@ function HoloCardFrame() {
 }
 
 // Stats Display - Futuristic 2300 version
-function StatsDisplay({ stats }: { stats: { value: string; label: string }[] }) {
+function ApprovalHeroText() {
   return (
-    <div className="flex flex-wrap justify-center gap-4 mt-8 w-full">
-      {stats.map((stat, i) => (
-        <div
-          key={i}
-          className="relative text-center px-6 py-4 rounded-xl backdrop-blur-xl min-w-[130px] group auth-stat-card"
+    <div className="text-center mt-8 w-full animate-fade-in" style={{ animationDelay: "0.3s", animationFillMode: "backwards" }}>
+      {/* Main Impact Text */}
+      <h2 className="text-2xl sm:text-3xl xl:text-4xl font-bold text-white leading-tight tracking-tight">
+        O Professor que
+        <br />
+        <span 
+          className="inline-block mt-1"
           style={{
-            animationDelay: `${0.3 + i * 0.1}s`,
-            animationFillMode: "backwards",
-            background: "linear-gradient(135deg, hsl(var(--holo-cyan) / 0.05), hsl(var(--holo-purple) / 0.05))",
-            border: "1px solid hsl(var(--holo-cyan) / 0.2)",
+            background: "linear-gradient(90deg, hsl(280 80% 60%), hsl(320 85% 55%), hsl(350 85% 55%))",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            backgroundClip: "text",
+            filter: "drop-shadow(0 0 20px hsl(320 85% 55% / 0.4))",
           }}
         >
-          {/* Hover glow */}
-          <div
-            className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            style={{
-              background: "linear-gradient(135deg, hsl(var(--holo-cyan) / 0.1), hsl(var(--holo-purple) / 0.1))",
-              boxShadow: "0 0 30px hsl(var(--holo-cyan) / 0.2)",
-            }}
-          />
-
-          <div className="relative text-2xl xl:text-3xl font-bold bg-gradient-to-r from-holo-cyan via-holo-purple to-primary bg-clip-text text-transparent">
-            {stat.value}
-          </div>
-          <div className="relative text-xs text-gray-400 uppercase tracking-wider mt-1 group-hover:text-holo-cyan transition-colors">
-            {stat.label}
-          </div>
-        </div>
-      ))}
+          Mais Aprova
+        </span>
+        {" "}em
+        <br />
+        Medicina no Brasil
+      </h2>
+      
+      {/* Subtle Description */}
+      <p 
+        className="mt-4 text-sm text-gray-400 max-w-xs mx-auto animate-fade-in"
+        style={{ animationDelay: "0.5s", animationFillMode: "backwards" }}
+      >
+        Química de alto nível com metodologia exclusiva. 
+        Milhares de alunos aprovados nas melhores faculdades de Medicina do país.
+      </p>
+      
+      {/* Decorative Line */}
+      <div 
+        className="flex items-center justify-center gap-3 mt-5 animate-fade-in"
+        style={{ animationDelay: "0.7s", animationFillMode: "backwards" }}
+      >
+        <div className="h-px w-12 bg-gradient-to-r from-transparent to-primary/50" />
+        <div 
+          className="w-2 h-2 rounded-full animate-pulse"
+          style={{ 
+            background: "hsl(320 85% 55%)",
+            boxShadow: "0 0 10px hsl(320 85% 55% / 0.6)"
+          }}
+        />
+        <div className="h-px w-12 bg-gradient-to-l from-transparent to-primary/50" />
+      </div>
     </div>
   );
 }
@@ -1975,8 +1992,8 @@ export default function Auth() {
             ))}
           </div>
 
-          {/* Stats */}
-          <StatsDisplay stats={stats} />
+          {/* Hero Impact Text */}
+          <ApprovalHeroText />
 
           {/* Decorative Elements - CSS only */}
           <div
