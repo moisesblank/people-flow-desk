@@ -106,9 +106,33 @@ export interface WebBookListItem {
 
 const PROGRESS_SAVE_INTERVAL = 30000; // 30 segundos
 const URL_CACHE_TTL = 3500000; // ~58 minutos (antes do TTL de 1h expirar)
-const PREFETCH_AHEAD = 3; // Prefetch 3 páginas à frente
-const MAX_CACHED_URLS = 20; // Cache de 20 URLs
+const PREFETCH_AHEAD = 1; // ✅ OTIMIZADO: 1 página à frente
+const PREFETCH_BEHIND = 1; // ✅ OTIMIZADO: 1 página atrás
+const MAX_CACHED_URLS = 5; // ✅ OTIMIZADO: Cache mínimo
 const OWNER_EMAIL = "moisesblank@gmail.com";
+
+// Polyfill para requestIdleCallback
+const requestIdleCallbackPolyfill = (
+  callback: IdleRequestCallback,
+  options?: IdleRequestOptions
+): number => {
+  if ('requestIdleCallback' in window) {
+    return (window as any).requestIdleCallback(callback, options);
+  }
+  // Fallback: setTimeout com delay pequeno
+  return setTimeout(() => callback({ 
+    didTimeout: false, 
+    timeRemaining: () => 50 
+  } as IdleDeadline), options?.timeout || 50) as unknown as number;
+};
+
+const cancelIdleCallbackPolyfill = (handle: number): void => {
+  if ('cancelIdleCallback' in window) {
+    (window as any).cancelIdleCallback(handle);
+  } else {
+    clearTimeout(handle);
+  }
+};
 
 // Cache de URLs assinadas
 const urlCache = new Map<string, { url: string; expiresAt: number }>();
@@ -245,17 +269,37 @@ export function useWebBook(bookId?: string) {
     return null;
   }, [bookId]);
 
-  // Prefetch de páginas
-  const prefetchPages = useCallback((fromPage: number) => {
-    for (let i = 1; i <= PREFETCH_AHEAD; i++) {
-      const targetPage = fromPage + i;
-      if (!prefetchingRef.current.has(targetPage)) {
-        prefetchingRef.current.add(targetPage);
-        fetchSignedUrl(targetPage).finally(() => {
-          prefetchingRef.current.delete(targetPage);
-        });
+  // ============================================
+  // ✅ PREFETCH INTELIGENTE COM idleCallback
+  // 1 página à frente + 1 atrás, só quando idle
+  // ============================================
+  const prefetchPages = useCallback((fromPage: number, totalPages?: number) => {
+    // Usar requestIdleCallback para não bloquear UI
+    requestIdleCallbackPolyfill(() => {
+      // Prefetch página à frente
+      for (let i = 1; i <= PREFETCH_AHEAD; i++) {
+        const targetPage = fromPage + i;
+        if (totalPages && targetPage > totalPages) continue;
+        if (!prefetchingRef.current.has(targetPage)) {
+          prefetchingRef.current.add(targetPage);
+          fetchSignedUrl(targetPage).finally(() => {
+            prefetchingRef.current.delete(targetPage);
+          });
+        }
       }
-    }
+      
+      // Prefetch página atrás
+      for (let i = 1; i <= PREFETCH_BEHIND; i++) {
+        const targetPage = fromPage - i;
+        if (targetPage < 1) continue;
+        if (!prefetchingRef.current.has(targetPage)) {
+          prefetchingRef.current.add(targetPage);
+          fetchSignedUrl(targetPage).finally(() => {
+            prefetchingRef.current.delete(targetPage);
+          });
+        }
+      }
+    }, { timeout: 2000 }); // Timeout de 2s para garantir execução
   }, [fetchSignedUrl]);
 
   // Carregar anotações

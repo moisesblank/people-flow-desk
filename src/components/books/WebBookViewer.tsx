@@ -4,13 +4,14 @@
 // Suporta PDF direto + Signed URLs + Prefetch
 // ============================================
 
-import React, { memo, useState, useCallback, useEffect, useRef } from 'react';
+import React, { memo, useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useWebBook } from '@/hooks/useWebBook';
 import { usePdfRenderer } from '@/hooks/usePdfRenderer';
 import { useBookSecurityGuard } from '@/hooks/useBookSecurityGuard';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
+import { useStaggeredMount } from '@/hooks/useStaggeredMount';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -410,8 +411,12 @@ export const WebBookViewer = memo(function WebBookViewer({
   // Hook de overlays (desenhos + texto do canvas) — persistência por aluno
   const { getOverlayForPage, saveOverlays, refetchOverlays } = useBookPageOverlays(bookId);
 
+  // ✅ STAGGER: Montagem escalonada para melhor TTI
+  const stagger = useStaggeredMount(true, currentPage);
+
   // 🛡️ BOOK SECURITY GUARD — Anti-PrintScreen/DevTools (Owner bypass)
   // ✅ M4: Sistema de escalonamento de resposta
+  // ✅ STAGGER: Só ativa listeners quando listenersReady = true
   const { user } = useAuth();
   const { showSevereOverlay } = useBookSecurityGuard({
     bookId,
@@ -420,6 +425,7 @@ export const WebBookViewer = memo(function WebBookViewer({
     userId: user?.id,
     userEmail: user?.email || undefined,
     userName: user?.user_metadata?.name,
+    enabled: stagger.listenersReady, // ✅ STAGGER: Só ativa após Frame 3
     onViolation: (type) => {
       // Reportar violação ao sistema Sanctum também
       reportViolation(type, { source: 'book_security_guard' });

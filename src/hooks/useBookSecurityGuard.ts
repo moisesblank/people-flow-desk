@@ -68,6 +68,8 @@ interface UseBookSecurityGuardOptions {
   userId?: string;
   userEmail?: string;
   userName?: string;
+  /** ✅ STAGGER: Se false, não ativa os listeners (montagem escalonada) */
+  enabled?: boolean;
   onViolation?: (type: string) => void;
   onSessionEnd?: () => void;
 }
@@ -84,6 +86,7 @@ export function useBookSecurityGuard({
   userId,
   userEmail,
   userName,
+  enabled = true, // ✅ STAGGER: Default true para retrocompatibilidade
   onViolation,
   onSessionEnd,
 }: UseBookSecurityGuardOptions) {
@@ -228,6 +231,8 @@ export function useBookSecurityGuard({
   // HANDLER DE KEYBOARD
   // ═══════════════════════════════════════════════════════════
   useEffect(() => {
+    // ✅ STAGGER: Se não habilitado, não ativa listeners
+    if (!enabled) return;
     // Owner bypass total
     if (isOwnerRef.current) return;
 
@@ -317,6 +322,8 @@ export function useBookSecurityGuard({
   // M4 - ITEM 1: DETECÇÃO DE GRAVAÇÃO DE TELA
   // ═══════════════════════════════════════════════════════════
   useEffect(() => {
+    // ✅ STAGGER: Se não habilitado, não ativa listeners
+    if (!enabled) return;
     if (isOwnerRef.current) return;
 
     let blurCount = 0;
@@ -361,6 +368,8 @@ export function useBookSecurityGuard({
   // DETECÇÃO DE DEVTOOLS POR DIMENSÕES
   // ═══════════════════════════════════════════════════════════
   useEffect(() => {
+    // ✅ STAGGER: Se não habilitado, não ativa listeners
+    if (!enabled) return;
     if (isOwnerRef.current) return;
 
     let lastDevToolsDetection = 0;
@@ -396,6 +405,8 @@ export function useBookSecurityGuard({
   // BLOQUEIO DE CONTEXT MENU (Right-click)
   // ═══════════════════════════════════════════════════════════
   useEffect(() => {
+    // ✅ STAGGER: Se não habilitado, não ativa listeners
+    if (!enabled) return;
     if (isOwnerRef.current) return;
 
     const handleContextMenu = (e: MouseEvent) => {
@@ -415,6 +426,8 @@ export function useBookSecurityGuard({
   // M4 - DETECÇÃO DE PICTURE-IN-PICTURE
   // ═══════════════════════════════════════════════════════════
   useEffect(() => {
+    // ✅ STAGGER: Se não habilitado, não ativa listeners
+    if (!enabled) return;
     if (isOwnerRef.current) return;
 
     const checkPiP = () => {
