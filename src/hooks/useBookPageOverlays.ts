@@ -38,6 +38,7 @@ export function useBookPageOverlays(bookId: string) {
         .from('book_user_page_overlays')
         .select('*')
         .eq('book_id', bookId)
+        .eq('user_id', userData.user.id)
         .order('page_number', { ascending: true });
 
       if (error) throw error;
@@ -67,8 +68,8 @@ export function useBookPageOverlays(bookId: string) {
         user_id: userData.user.id,
         book_id: i.book_id,
         page_number: i.page_number,
-        strokes: i.strokes,
-        texts: i.texts,
+        strokes: (i.strokes ?? []) as Json,
+        texts: (i.texts ?? []) as Json,
       }));
 
       console.log('[useBookPageOverlays] SALVANDO overlays:', {
