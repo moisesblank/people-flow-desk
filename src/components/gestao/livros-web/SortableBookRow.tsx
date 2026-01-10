@@ -84,10 +84,13 @@ export const SortableBookRow = memo(function SortableBookRow({
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: book.id });
+  } = useSortable({
+    id: book.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -113,10 +116,13 @@ export const SortableBookRow = memo(function SortableBookRow({
         <div className="flex items-center gap-1">
           {/* Handle para arrastar */}
           <button
+            ref={setActivatorNodeRef}
+            type="button"
             {...attributes}
             {...listeners}
             className={cn(
-              "p-1 rounded cursor-grab active:cursor-grabbing",
+              "p-2 rounded cursor-grab active:cursor-grabbing",
+              "touch-none select-none",
               "opacity-40 group-hover:opacity-100 transition-opacity",
               "hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary/50"
             )}
