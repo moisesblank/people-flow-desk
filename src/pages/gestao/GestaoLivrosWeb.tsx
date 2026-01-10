@@ -492,6 +492,16 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
     loadBooks();
   }, [loadBooks]);
 
+  // Calcular mapeamento de capa modelo (baseado em created_at ASC)
+  // Os 5 primeiros livros por data de criação recebem as capas 01-05
+  const coverIndexMap = new Map<string, number>();
+  const sortedByCreation = [...books].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+  sortedByCreation.slice(0, 5).forEach((book, index) => {
+    coverIndexMap.set(book.id, index + 1); // 1, 2, 3, 4, 5
+  });
+
   // Filtrar por busca
   const filteredBooks = books.filter(book =>
     !searchQuery ||
@@ -782,6 +792,12 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                     <TableRow key={book.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
+                          {/* Badge de Capa Modelo (01-05) */}
+                          {coverIndexMap.has(book.id) && (
+                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white font-bold text-sm shadow-lg ring-2 ring-red-400/30">
+                              {String(coverIndexMap.get(book.id)!).padStart(2, '0')}
+                            </div>
+                          )}
                           {book.cover_url ? (
                             <img
                               src={book.cover_url}
@@ -794,7 +810,14 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                             </div>
                           )}
                           <div>
-                            <p className="font-medium line-clamp-1">{book.title}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium line-clamp-1">{book.title}</p>
+                              {coverIndexMap.has(book.id) && (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-red-500/50 text-red-400">
+                                  Capa {String(coverIndexMap.get(book.id)!).padStart(2, '0')}
+                                </Badge>
+                              )}
+                            </div>
                             {book.subtitle && (
                               <p className="text-sm text-muted-foreground line-clamp-1">
                                 {book.subtitle}
