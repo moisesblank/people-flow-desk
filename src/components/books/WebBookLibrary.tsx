@@ -2,7 +2,7 @@
 // 📚 BIBLIOTECA DE LIVROS — NETFLIX ULTRA PREMIUM
 // YEAR 2300 CINEMATIC EXPERIENCE
 // ⚡ PERFORMANCE-OPTIMIZED: CSS-only, zero JS animations
-// 🎬 SPIDER-MAN RED (#E23636) Theme
+// 🎬 NETFLIX RED (#E50914) Theme
 // ============================================
 
 import React, { memo, useState, useCallback, useMemo } from 'react';
@@ -545,7 +545,7 @@ const BookSection = memo(function BookSection({
               "transition-all duration-200",
               // 🎨 CATEGORY COLOR: Left border accent
               "border-l-4",
-              `border-l-${accentColor === 'red' ? '[#E23636]' : accentColor}-500`,
+              `border-l-${accentColor === 'red' ? '[#E50914]' : accentColor}-500`,
               // Subtle background with category tint
               "bg-gradient-to-r from-white/[0.03] to-transparent",
               "hover:from-white/[0.06] hover:to-white/[0.02]"
@@ -872,7 +872,7 @@ const WebBookLibrary = memo(function WebBookLibrary({
           {isHighEnd && (
             <>
               <div className="absolute -top-20 -right-20 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl" />
-              <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-[#E23636]/15 rounded-full blur-3xl" />
+              <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-[#E50914]/15 rounded-full blur-3xl" />
             </>
           )}
           
@@ -891,18 +891,18 @@ const WebBookLibrary = memo(function WebBookLibrary({
               <div className="relative group">
                 {isHighEnd && (
                   <>
-                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/60 to-[#E23636]/40 rounded-2xl blur-2xl opacity-80 group-hover:opacity-100 transition-opacity" />
-                    <div className="absolute inset-[-4px] bg-gradient-to-r from-cyan-500 via-[#E23636] to-cyan-500 rounded-2xl opacity-30" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/60 to-[#E50914]/40 rounded-2xl blur-2xl opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-[-4px] bg-gradient-to-r from-cyan-500 via-[#E50914] to-cyan-500 rounded-2xl opacity-30" />
                   </>
                 )}
                 <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-gradient-to-br from-[#0f1419] via-[#1a1f26] to-[#0f1419] flex items-center justify-center shadow-2xl border-2 border-cyan-500/40 overflow-hidden">
                   {/* Inner glow */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 via-transparent to-[#E23636]/20" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 via-transparent to-[#E50914]/20" />
                   {/* Icon bars (book spine style) */}
                   <div className="relative flex gap-1">
-                    <div className="w-2 h-12 md:h-14 bg-gradient-to-b from-[#E23636] to-orange-500 rounded-sm" />
+                    <div className="w-2 h-12 md:h-14 bg-gradient-to-b from-[#E50914] to-orange-500 rounded-sm" />
                     <div className="w-2 h-10 md:h-12 bg-gradient-to-b from-cyan-400 to-cyan-600 rounded-sm mt-1" />
-                    <div className="w-2 h-14 md:h-16 bg-gradient-to-b from-[#E23636] to-rose-500 rounded-sm -mt-1" />
+                    <div className="w-2 h-14 md:h-16 bg-gradient-to-b from-[#E50914] to-rose-500 rounded-sm -mt-1" />
                     <div className="w-2 h-11 md:h-13 bg-gradient-to-b from-amber-400 to-orange-500 rounded-sm" />
                   </div>
                 </div>
@@ -912,7 +912,7 @@ const WebBookLibrary = memo(function WebBookLibrary({
               <div className="flex-1 text-center lg:text-left space-y-3">
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight">
                   <span className="text-white">Biblioteca </span>
-                  <span className="bg-gradient-to-r from-cyan-400 via-[#E23636] to-orange-500 bg-clip-text text-transparent">Premium</span>
+                  <span className="bg-gradient-to-r from-cyan-400 via-[#E50914] to-orange-500 bg-clip-text text-transparent">Premium</span>
                 </h1>
                 <p className="text-cyan-100/60 text-sm md:text-base max-w-xl leading-relaxed">
                   Materiais exclusivos criados pelo Moisa para sua aprovação. Cada página te aproxima do sonho!
@@ -999,7 +999,7 @@ const WebBookLibrary = memo(function WebBookLibrary({
             style={{
               backgroundImage: `
                 radial-gradient(circle at 20% 50%, rgba(168,85,247,0.6) 0%, transparent 30%),
-                radial-gradient(circle at 80% 50%, rgba(226,54,54,0.6) 0%, transparent 30%),
+                radial-gradient(circle at 80% 50%, rgba(229,9,20,0.6) 0%, transparent 30%),
                 linear-gradient(rgba(168,85,247,0.5) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(168,85,247,0.5) 1px, transparent 1px)
               `,
@@ -1084,8 +1084,8 @@ const WebBookLibrary = memo(function WebBookLibrary({
           
           {/* Corner accents - enhanced */}
           <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-purple-500/50 rounded-tl-3xl pointer-events-none" />
-          <div className="absolute top-0 right-0 w-16 h-16 border-r-2 border-t-2 border-[#E23636]/50 rounded-tr-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-16 h-16 border-l-2 border-b-2 border-[#E23636]/50 rounded-bl-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-16 h-16 border-r-2 border-t-2 border-[#E50914]/50 rounded-tr-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-16 h-16 border-l-2 border-b-2 border-[#E50914]/50 rounded-bl-3xl pointer-events-none" />
           <div className="absolute bottom-0 right-0 w-16 h-16 border-r-2 border-b-2 border-purple-500/50 rounded-br-3xl pointer-events-none" />
           
           {/* Scanline effect */}

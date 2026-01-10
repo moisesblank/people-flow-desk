@@ -951,7 +951,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
           {/* Section Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-gradient-to-r from-slate-900/50 to-transparent">
             <div className="flex items-center gap-3">
-              <div className="w-1 h-8 rounded-full bg-gradient-to-b from-[#E23636] to-[#D63031]" />
+              <div className="w-1 h-8 rounded-full bg-gradient-to-b from-[#E50914] to-[#B20710]" />
               <div>
                 <h4 className="text-lg md:text-xl font-bold text-white tracking-wide">Videoaulas</h4>
                 <p className="text-sm text-slate-400 font-medium">{lessonCount} disponíveis neste módulo</p>
@@ -969,7 +969,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
               <div className="flex flex-col items-center gap-4 text-slate-400">
                 <div className="relative w-16 h-16">
                   <div className="absolute inset-0 rounded-full border-4 border-slate-700" />
-                  <div className="absolute inset-0 rounded-full border-4 border-t-[#E23636] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+                  <div className="absolute inset-0 rounded-full border-4 border-t-[#E50914] border-r-transparent border-b-transparent border-l-transparent animate-spin" />
                 </div>
                 <span className="text-base font-semibold">Carregando videoaulas...</span>
               </div>
