@@ -886,7 +886,7 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
 });
 
 // ============================================
-// MATERIAL ROW
+// MATERIAL ROW — Exibe associações completas
 // ============================================
 
 interface MaterialRowProps {
@@ -896,48 +896,92 @@ interface MaterialRowProps {
   onDelete: (id: string) => void;
 }
 
+// Helper para obter info do Hub Card
+const getHubCardInfo = (category: string) => {
+  const card = HUB_CARDS.find(c => c.id === category);
+  return card || { id: 'unknown', name: 'Desconhecido', icon: '📄', color: 'gray', filters: [] };
+};
+
+// Helper para obter label do filtro
+const getFilterLabel = (category: string, filterValue: string) => {
+  const card = HUB_CARDS.find(c => c.id === category);
+  if (!card) return filterValue;
+  const filter = card.filters.find(f => f.value === filterValue);
+  return filter?.label || filterValue;
+};
+
+// Helper para obter label do macro
+const getMacroLabel = (macro: string) => {
+  const macroFilter = MACRO_FILTERS.find(m => m.value === macro);
+  return macroFilter?.label || macro?.replace('_', ' ') || '';
+};
+
 const MaterialRow = memo(function MaterialRow({ 
   material, 
   onView, 
   onStatusChange, 
   onDelete 
 }: MaterialRowProps) {
-  const macroConfig = MACRO_CONFIG[material.macro || ''];
-  const MacroIcon = macroConfig?.icon || Atom;
+  const cardInfo = getHubCardInfo(material.category);
+  const isQuestoesMapas = material.category === 'questoes-mapas';
+  
+  // Para questoes-mapas: filtro está no macro
+  // Para outros cards: filtro está nas tags[0]
+  const filterValue = isQuestoesMapas ? material.macro : (material.tags?.[0] || '');
+  const filterLabel = isQuestoesMapas 
+    ? getMacroLabel(material.macro || '') 
+    : getFilterLabel(material.category, filterValue || '');
   
   return (
     <TableRow className="group hover:bg-muted/30 transition-colors">
+      {/* Material */}
       <TableCell>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
             <FileText className="w-5 h-5 text-primary" />
           </div>
           <div className="min-w-0">
-            <p className="font-medium truncate max-w-[200px]" title={material.title}>
+            <p className="font-medium truncate max-w-[180px]" title={material.title}>
               {material.title}
             </p>
-            <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+            <p className="text-xs text-muted-foreground truncate max-w-[180px]">
               {material.file_name}
             </p>
           </div>
         </div>
       </TableCell>
+      
+      {/* Hub Card */}
       <TableCell>
-        <Badge variant="outline" className="capitalize">
-          {material.macro?.replace('_', ' ') || 'Geral'}
+        <div className="flex items-center gap-1.5">
+          <span className="text-base">{cardInfo.icon}</span>
+          <span className="text-xs font-medium truncate max-w-[100px]" title={cardInfo.name}>
+            {cardInfo.name.length > 12 ? cardInfo.name.substring(0, 12) + '...' : cardInfo.name}
+          </span>
+        </div>
+      </TableCell>
+      
+      {/* Filtro/Associação */}
+      <TableCell>
+        <Badge variant="outline" className="text-xs">
+          {filterLabel || '-'}
         </Badge>
       </TableCell>
+      
+      {/* Micro (apenas para questoes-mapas) */}
       <TableCell>
         <span className="text-xs text-muted-foreground">
-          {material.micro || '-'}
+          {isQuestoesMapas && material.micro ? material.micro : '-'}
         </span>
       </TableCell>
+      
+      {/* Status */}
       <TableCell>
         <Select 
           value={material.status} 
           onValueChange={(val: any) => onStatusChange(material.id, val)}
         >
-          <SelectTrigger className="h-8 w-[110px] text-xs">
+          <SelectTrigger className="h-8 w-[100px] text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -947,17 +991,23 @@ const MaterialRow = memo(function MaterialRow({
           </SelectContent>
         </Select>
       </TableCell>
+      
+      {/* Views */}
       <TableCell>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Eye className="w-3 h-3" />
           {material.view_count || 0}
         </div>
       </TableCell>
+      
+      {/* Data */}
       <TableCell>
         <span className="text-xs text-muted-foreground">
-          {new Date(material.created_at).toLocaleDateString()}
+          {new Date(material.created_at).toLocaleDateString('pt-BR')}
         </span>
       </TableCell>
+      
+      {/* Ações */}
       <TableCell>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onView}>
@@ -978,12 +1028,11 @@ const MaterialRow = memo(function MaterialRow({
 });
 
 // ============================================
-// MACRO SECTION (Collapsible)
+// HUB CARD SECTION (Collapsible) — Agrupa por Card
 // ============================================
 
-interface MacroSectionProps {
-  macroValue: string;
-  macroLabel: string;
+interface HubCardSectionProps {
+  card: HubCard;
   materials: Material[];
   onView: (m: Material) => void;
   onStatusChange: (id: string, status: 'draft' | 'processing' | 'ready' | 'archived') => void;
@@ -991,18 +1040,25 @@ interface MacroSectionProps {
   defaultOpen?: boolean;
 }
 
-const MacroSection = memo(function MacroSection({ 
-  macroValue, 
-  macroLabel, 
+// Color mapping for hub cards
+const HUB_CARD_GRADIENTS: Record<string, string> = {
+  'questoes-mapas': 'from-rose-500 to-pink-500',
+  'direcionamentos': 'from-cyan-500 to-blue-500',
+  'provas-anteriores': 'from-amber-500 to-orange-500',
+  'extras': 'from-emerald-500 to-green-500',
+  'flush-card': 'from-violet-500 to-purple-500',
+};
+
+const HubCardSection = memo(function HubCardSection({ 
+  card, 
   materials, 
   onView, 
   onStatusChange, 
   onDelete,
   defaultOpen = false 
-}: MacroSectionProps) {
+}: HubCardSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const config = MACRO_CONFIG[macroValue] || MACRO_CONFIG['quimica_geral'];
-  const Icon = config.icon;
+  const gradient = HUB_CARD_GRADIENTS[card.id] || 'from-gray-500 to-slate-500';
 
   if (materials.length === 0) return null;
 
@@ -1013,11 +1069,11 @@ const MacroSection = memo(function MacroSection({
           <CardHeader className="py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className={cn("p-2 rounded-lg bg-gradient-to-br", config.gradient)}>
-                  <Icon className="w-5 h-5 text-white" />
+                <div className={cn("p-2 rounded-lg bg-gradient-to-br", gradient)}>
+                  <span className="text-xl">{card.icon}</span>
                 </div>
                 <div>
-                  <CardTitle className="text-base">{macroLabel}</CardTitle>
+                  <CardTitle className="text-base">{card.name}</CardTitle>
                   <CardDescription>{materials.length} materiais</CardDescription>
                 </div>
               </div>
@@ -1037,7 +1093,8 @@ const MacroSection = memo(function MacroSection({
             <TableHeader>
               <TableRow>
                 <TableHead>Material</TableHead>
-                <TableHead>Macro</TableHead>
+                <TableHead>Hub Card</TableHead>
+                <TableHead>Filtro</TableHead>
                 <TableHead>Micro</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Views</TableHead>
@@ -1073,6 +1130,7 @@ const GestaoMateriais = memo(function GestaoMateriais() {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [cardFilter, setCardFilter] = useState<string>('all');
   const [contentTypeFilter, setContentTypeFilter] = useState<string>('all');
   const [macroFilter, setMacroFilter] = useState<string>('all');
   const [microFilter, setMicroFilter] = useState<string>('all');
@@ -1082,6 +1140,15 @@ const GestaoMateriais = memo(function GestaoMateriais() {
 
   const { macros, getMicrosForSelect } = useTaxonomyForSelects();
   const microsForFilter = macroFilter && macroFilter !== 'all' ? getMicrosForSelect(macroFilter) : [];
+
+  // Reset filters when card changes
+  const handleCardFilterChange = (value: string) => {
+    setCardFilter(value);
+    if (value !== 'questoes-mapas') {
+      setMacroFilter('all');
+      setMicroFilter('all');
+    }
+  };
 
   // Reset micro filter when macro changes
   const handleMacroFilterChange = (value: string) => {
@@ -1123,19 +1190,20 @@ const GestaoMateriais = memo(function GestaoMateriais() {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, contentTypeFilter, macroFilter, microFilter]);
+  }, [searchQuery, cardFilter, contentTypeFilter, macroFilter, microFilter]);
 
   // Filtros
   const filteredMaterials = useMemo(() => {
     return materials.filter(m => {
       const matchesSearch = m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            m.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCard = cardFilter === 'all' || m.category === cardFilter;
       const matchesContentType = contentTypeFilter === 'all' || m.content_type === contentTypeFilter;
       const matchesMacro = macroFilter === 'all' || m.macro === macroFilter;
       const matchesMicro = microFilter === 'all' || m.micro === microFilter;
-      return matchesSearch && matchesContentType && matchesMacro && matchesMicro;
+      return matchesSearch && matchesCard && matchesContentType && matchesMacro && matchesMicro;
     });
-  }, [materials, searchQuery, contentTypeFilter, macroFilter, microFilter]);
+  }, [materials, searchQuery, cardFilter, contentTypeFilter, macroFilter, microFilter]);
 
   // Paginação
   const totalPages = Math.ceil(filteredMaterials.length / ITEMS_PER_PAGE);
@@ -1144,16 +1212,16 @@ const GestaoMateriais = memo(function GestaoMateriais() {
     return filteredMaterials.slice(start, start + ITEMS_PER_PAGE);
   }, [filteredMaterials, currentPage]);
 
-  // Agrupar materiais PAGINADOS por MACRO
-  const materialsByMacro = useMemo(() => {
+  // Agrupar materiais PAGINADOS por HUB CARD (category)
+  const materialsByCard = useMemo(() => {
     const grouped: Record<string, Material[]> = {};
-    macros.forEach(m => {
-      grouped[m.value] = paginatedMaterials.filter(mat => mat.macro === m.value);
+    HUB_CARDS.forEach(card => {
+      grouped[card.id] = paginatedMaterials.filter(mat => mat.category === card.id);
     });
-    // Adicionar materiais sem macro
-    grouped['sem_macro'] = paginatedMaterials.filter(m => !m.macro);
+    // Adicionar materiais sem categoria definida
+    grouped['sem_card'] = paginatedMaterials.filter(m => !m.category || !HUB_CARDS.some(c => c.id === m.category));
     return grouped;
-  }, [paginatedMaterials, macros]);
+  }, [paginatedMaterials]);
 
   // Ações
   const handleStatusChange = async (id: string, newStatus: 'draft' | 'processing' | 'ready' | 'archived') => {
@@ -1188,11 +1256,13 @@ const GestaoMateriais = memo(function GestaoMateriais() {
     }
   };
 
-  // Stats
+  // Stats — por Hub Card
   const stats = useMemo(() => ({
     total: materials.length,
-    mapas: materials.filter(m => m.content_type === 'mapa_mental').length,
-    questoes: materials.filter(m => m.content_type === 'questoes').length,
+    byCard: HUB_CARDS.reduce((acc, card) => {
+      acc[card.id] = materials.filter(m => m.category === card.id).length;
+      return acc;
+    }, {} as Record<string, number>),
     published: materials.filter(m => m.status === 'ready').length,
   }), [materials]);
 
@@ -1214,7 +1284,7 @@ const GestaoMateriais = memo(function GestaoMateriais() {
             Gestão de Materiais PDF
           </h1>
           <p className="text-muted-foreground">
-            Organize por tipo de conteúdo e taxonomia (5 Macros)
+            Organize por Hub Cards (5 Cards do Portal Aluno)
           </p>
         </div>
         <Button onClick={() => setUploadOpen(true)} className="gap-2">
@@ -1223,49 +1293,42 @@ const GestaoMateriais = memo(function GestaoMateriais() {
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <FileText className="w-8 h-8 text-primary" />
+      {/* Stats — Hub Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <Card className="p-3 bg-gradient-to-br from-primary/5 to-primary/10">
+          <div className="flex items-center gap-2">
+            <FileText className="w-6 h-6 text-primary" />
             <div>
-              <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-sm text-muted-foreground">Total</p>
+              <p className="text-xl font-bold">{stats.total}</p>
+              <p className="text-xs text-muted-foreground">Total</p>
             </div>
           </div>
         </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <Brain className="w-8 h-8 text-pink-500" />
-            <div>
-              <p className="text-2xl font-bold">{stats.mapas}</p>
-              <p className="text-sm text-muted-foreground">Mapas Mentais</p>
+        {HUB_CARDS.map(card => (
+          <Card key={card.id} className={cn(
+            "p-3 bg-gradient-to-br",
+            card.color === 'rose' && "from-rose-500/10 to-pink-500/10",
+            card.color === 'cyan' && "from-cyan-500/10 to-blue-500/10",
+            card.color === 'amber' && "from-amber-500/10 to-orange-500/10",
+            card.color === 'emerald' && "from-emerald-500/10 to-green-500/10",
+            card.color === 'violet' && "from-violet-500/10 to-purple-500/10",
+          )}>
+            <div className="flex items-center gap-2">
+              <span className="text-xl">{card.icon}</span>
+              <div>
+                <p className="text-xl font-bold">{stats.byCard[card.id] || 0}</p>
+                <p className="text-xs text-muted-foreground truncate max-w-[80px]" title={card.name}>
+                  {card.name.length > 10 ? card.name.substring(0, 10) + '...' : card.name}
+                </p>
+              </div>
             </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <HelpCircle className="w-8 h-8 text-blue-500" />
-            <div>
-              <p className="text-2xl font-bold">{stats.questoes}</p>
-              <p className="text-sm text-muted-foreground">Questões</p>
-            </div>
-          </div>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="w-8 h-8 text-green-500" />
-            <div>
-              <p className="text-2xl font-bold">{stats.published}</p>
-              <p className="text-sm text-muted-foreground">Publicados</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        ))}
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Buscar materiais..."
@@ -1274,8 +1337,25 @@ const GestaoMateriais = memo(function GestaoMateriais() {
             className="pl-10"
           />
         </div>
+        {/* FILTRO POR HUB CARD */}
+        <Select value={cardFilter} onValueChange={handleCardFilterChange}>
+          <SelectTrigger className="w-full sm:w-52">
+            <SelectValue placeholder="Hub Card" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Cards</SelectItem>
+            {HUB_CARDS.map(card => (
+              <SelectItem key={card.id} value={card.id}>
+                <div className="flex items-center gap-2">
+                  <span>{card.icon}</span>
+                  <span>{card.name}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={contentTypeFilter} onValueChange={setContentTypeFilter}>
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Tipo" />
           </SelectTrigger>
           <SelectContent>
@@ -1287,39 +1367,41 @@ const GestaoMateriais = memo(function GestaoMateriais() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={macroFilter} onValueChange={handleMacroFilterChange}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Macro" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Macros</SelectItem>
-            {macros.map(m => (
-              <SelectItem key={m.value} value={m.value}>
-                {m.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select 
-          value={microFilter} 
-          onValueChange={setMicroFilter}
-          disabled={macroFilter === 'all'}
-        >
-          <SelectTrigger className={cn(
-            "w-full sm:w-48",
-            macroFilter === 'all' && "opacity-50"
-          )}>
-            <SelectValue placeholder="Micro" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Micros</SelectItem>
-            {microsForFilter.map(m => (
-              <SelectItem key={m.value} value={m.value}>
-                {m.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* Macro filter (only visible for questoes-mapas card) */}
+        {(cardFilter === 'all' || cardFilter === 'questoes-mapas') && (
+          <Select value={macroFilter} onValueChange={handleMacroFilterChange}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="Macro" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Macros</SelectItem>
+              {macros.map(m => (
+                <SelectItem key={m.value} value={m.value}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {/* Micro filter (only when macro selected) */}
+        {(cardFilter === 'all' || cardFilter === 'questoes-mapas') && macroFilter !== 'all' && (
+          <Select 
+            value={microFilter} 
+            onValueChange={setMicroFilter}
+          >
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="Micro" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Micros</SelectItem>
+              {microsForFilter.map(m => (
+                <SelectItem key={m.value} value={m.value}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {/* Pagination Info */}
@@ -1394,18 +1476,18 @@ const GestaoMateriais = memo(function GestaoMateriais() {
           </Card>
         ) : (
           <>
-            {/* Materiais sem MACRO (mostrar primeiro e sempre aberto) */}
-            {materialsByMacro['sem_macro']?.length > 0 && (
+            {/* Materiais sem Card (mostrar primeiro se existirem) */}
+            {materialsByCard['sem_card']?.length > 0 && (
               <Card className="border-amber-500/30">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
-                    <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500">
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-gray-500 to-slate-500">
                       <FolderOpen className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <span>Sem Macro Definido</span>
+                      <span>Sem Card Definido</span>
                       <span className="text-xs text-muted-foreground ml-2">
-                        ({materialsByMacro['sem_macro'].length} materiais)
+                        ({materialsByCard['sem_card'].length} materiais)
                       </span>
                     </div>
                   </CardTitle>
@@ -1414,8 +1496,9 @@ const GestaoMateriais = memo(function GestaoMateriais() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Material</TableHead>
-                      <TableHead>Categoria</TableHead>
-                      <TableHead>Tags</TableHead>
+                      <TableHead>Hub Card</TableHead>
+                      <TableHead>Filtro</TableHead>
+                      <TableHead>Micro</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Views</TableHead>
                       <TableHead>Data</TableHead>
@@ -1423,7 +1506,7 @@ const GestaoMateriais = memo(function GestaoMateriais() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {materialsByMacro['sem_macro'].map(m => (
+                    {materialsByCard['sem_card'].map(m => (
                       <MaterialRow
                         key={m.id}
                         material={m}
@@ -1437,17 +1520,16 @@ const GestaoMateriais = memo(function GestaoMateriais() {
               </Card>
             )}
 
-            {/* Macros agrupados */}
-            {macros.map((macro, index) => (
-              <MacroSection
-                key={macro.value}
-                macroValue={macro.value}
-                macroLabel={macro.label}
-                materials={materialsByMacro[macro.value] || []}
+            {/* Hub Cards agrupados */}
+            {HUB_CARDS.map((card, index) => (
+              <HubCardSection
+                key={card.id}
+                card={card}
+                materials={materialsByCard[card.id] || []}
                 onView={setViewingMaterial}
                 onStatusChange={handleStatusChange}
                 onDelete={handleDelete}
-                defaultOpen={materialsByMacro['sem_macro']?.length === 0 && index === 0}
+                defaultOpen={materialsByCard['sem_card']?.length === 0 && index === 0}
               />
             ))}
           </>
