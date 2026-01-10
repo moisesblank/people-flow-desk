@@ -20,12 +20,17 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { InlineEditableCell, InlinePositionEditor } from './index';
 
-// Capas modelo
-import capa1 from '@/assets/book-covers/capa-1-revisao-ciclica.png';
-import capa2 from '@/assets/book-covers/capa-2-fisico-quimica.png';
-import capa3 from '@/assets/book-covers/capa-3-previsao-final.png';
-import capa4 from '@/assets/book-covers/capa-4-quimica-organica.png';
-import capa5 from '@/assets/book-covers/capa-5-quimica-geral.png';
+// Capas modelo (ordem CANÔNICA 01-05)
+// 01: Química Geral
+// 02: Química Orgânica
+// 03: Físico-Química
+// 04: Revisão Cíclica
+// 05: Previsão Final
+import capa1 from '@/assets/book-covers/capa-5-quimica-geral.png';
+import capa2 from '@/assets/book-covers/capa-4-quimica-organica.png';
+import capa3 from '@/assets/book-covers/capa-2-fisico-quimica.png';
+import capa4 from '@/assets/book-covers/capa-1-revisao-ciclica.png';
+import capa5 from '@/assets/book-covers/capa-3-previsao-final.png';
 
 const COVER_MODELS = [capa1, capa2, capa3, capa4, capa5];
 

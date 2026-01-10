@@ -54,12 +54,18 @@ import capa3PrevisaoFinal from '@/assets/book-covers/capa-3-previsao-final.png';
 import capa4QuimicaOrganica from '@/assets/book-covers/capa-4-quimica-organica.png';
 import capa5QuimicaGeral from '@/assets/book-covers/capa-5-quimica-geral.png';
 
+// Ordem CANÔNICA (position 0-4) — sincronizada com Gestão:
+// 0: Química Geral (#01)
+// 1: Química Orgânica (#02)
+// 2: Físico-Química (#03)
+// 3: Revisão Cíclica (#04)
+// 4: Previsão Final (#05)
 const BOOK_COVERS_BY_INDEX: Record<number, string> = {
-  0: capa1RevisaoCiclica,
-  1: capa2FisicoQuimica,
-  2: capa3PrevisaoFinal,
-  3: capa4QuimicaOrganica,
-  4: capa5QuimicaGeral,
+  0: capa5QuimicaGeral,
+  1: capa4QuimicaOrganica,
+  2: capa2FisicoQuimica,
+  3: capa1RevisaoCiclica,
+  4: capa3PrevisaoFinal,
 };
 
 // ============================================
