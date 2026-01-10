@@ -24,6 +24,15 @@ import {
   X,
   Tag
 } from 'lucide-react';
+
+// Capas modelo (mesmas usadas em /alunos/livro-web)
+import capa1 from '@/assets/book-covers/capa-1-revisao-ciclica.png';
+import capa2 from '@/assets/book-covers/capa-2-fisico-quimica.png';
+import capa3 from '@/assets/book-covers/capa-3-previsao-final.png';
+import capa4 from '@/assets/book-covers/capa-4-quimica-organica.png';
+import capa5 from '@/assets/book-covers/capa-5-quimica-geral.png';
+
+const COVER_MODELS = [capa1, capa2, capa3, capa4, capa5];
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -792,13 +801,19 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                     <TableRow key={book.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          {/* Badge de Capa Modelo (01-05) */}
-                          {coverIndexMap.has(book.id) && (
-                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white font-bold text-sm shadow-lg ring-2 ring-red-400/30">
-                              {String(coverIndexMap.get(book.id)!).padStart(2, '0')}
+                          {/* Miniatura da Capa Modelo (01-05) */}
+                          {coverIndexMap.has(book.id) ? (
+                            <div className="relative flex-shrink-0">
+                              <img
+                                src={COVER_MODELS[coverIndexMap.get(book.id)! - 1]}
+                                alt={`Capa ${coverIndexMap.get(book.id)!}`}
+                                className="w-12 h-16 object-cover rounded shadow-md ring-2 ring-red-500/50"
+                              />
+                              <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white font-bold text-[10px] shadow ring-1 ring-background">
+                                {String(coverIndexMap.get(book.id)!).padStart(2, '0')}
+                              </div>
                             </div>
-                          )}
-                          {book.cover_url ? (
+                          ) : book.cover_url ? (
                             <img
                               src={book.cover_url}
                               alt={book.title}
