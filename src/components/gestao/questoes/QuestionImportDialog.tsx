@@ -1743,6 +1743,48 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     let failed = 0;
 
     const currentYear = new Date().getFullYear();
+    const startTime = Date.now();
+    
+    // ═══════════════════════════════════════════════════════════════════
+    // CRIAR HISTÓRICO PRIMEIRO para vincular questões (RASTREABILIDADE v1.0)
+    // ═══════════════════════════════════════════════════════════════════
+    let importHistoryId: string | null = null;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Consolidar campos inferidos e null únicos ANTES de começar
+      const allInferidos = new Set<string>();
+      const allNull = new Set<string>();
+      toImport.forEach(q => {
+        q.campos_inferidos.forEach(c => allInferidos.add(c.split(':')[0]));
+        q.campos_null.forEach(c => allNull.add(c));
+      });
+      
+      const { data: historyData, error: historyError } = await supabase
+        .from('question_import_history')
+        .insert({
+          imported_by: user?.id,
+          file_names: files.map(f => f.name),
+          total_files: files.length,
+          total_questions: toImport.length,
+          imported_count: 0, // Será atualizado ao final
+          failed_count: 0,   // Será atualizado ao final
+          target_group: selectedGroup,
+          campos_inferidos: Array.from(allInferidos),
+          campos_null: Array.from(allNull),
+          duration_ms: null, // Será atualizado ao final
+          status: 'processing',
+        })
+        .select('id')
+        .single();
+      
+      if (!historyError && historyData) {
+        importHistoryId = historyData.id;
+        console.log('[IMPORT] Histórico criado:', importHistoryId);
+      }
+    } catch (historyErr) {
+      console.error('Erro ao criar histórico (continuando sem rastreabilidade):', historyErr);
+    }
     
     for (let i = 0; i < toImport.length; i++) {
       const q = toImport[i];
@@ -1862,6 +1904,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           image_urls: q.image_urls && q.image_urls.length > 0 ? q.image_urls : [],
           // Rastreabilidade (inclui fallbacks aplicados)
           campos_inferidos: camposInferidos,
+          // RASTREABILIDADE v1.0: Vincular ao histórico de importação
+          import_history_id: importHistoryId,
         };
 
         const { data: insertedData, error } = await supabase
@@ -1943,41 +1987,41 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       setImportProgress(Math.round(((i + 1) / toImport.length) * 100));
     }
 
-    // Consolidar campos inferidos e null únicos
-    const allInferidos = new Set<string>();
-    const allNull = new Set<string>();
-    toImport.forEach(q => {
-      q.campos_inferidos.forEach(c => allInferidos.add(c.split(':')[0]));
-      q.campos_null.forEach(c => allNull.add(c));
-    });
-
-    // Salvar histórico de importação
-    const startTime = Date.now();
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from('question_import_history').insert({
-        imported_by: user?.id,
-        file_names: files.map(f => f.name),
-        total_files: files.length,
-        total_questions: toImport.length,
-        imported_count: imported,
-        failed_count: failed,
-        target_group: selectedGroup,
-        campos_inferidos: Array.from(allInferidos),
-        campos_null: Array.from(allNull),
-        duration_ms: Date.now() - startTime,
-        status: failed === 0 ? 'completed' : imported > 0 ? 'partial' : 'failed',
-      });
-    } catch (historyErr) {
-      console.error('Erro ao salvar histórico:', historyErr);
+    // ═══════════════════════════════════════════════════════════════════
+    // ATUALIZAR HISTÓRICO COM RESULTADOS FINAIS
+    // ═══════════════════════════════════════════════════════════════════
+    if (importHistoryId) {
+      try {
+        const durationMs = Date.now() - startTime;
+        await supabase
+          .from('question_import_history')
+          .update({
+            imported_count: imported,
+            failed_count: failed,
+            duration_ms: durationMs,
+            status: failed === 0 ? 'completed' : imported > 0 ? 'partial' : 'failed',
+          })
+          .eq('id', importHistoryId);
+        console.log('[IMPORT] Histórico atualizado:', { imported, failed, durationMs });
+      } catch (historyErr) {
+        console.error('Erro ao atualizar histórico:', historyErr);
+      }
     }
+
+    // Consolidar campos para resultado (recalcular aqui)
+    const finalInferidos = new Set<string>();
+    const finalNull = new Set<string>();
+    toImport.forEach(q => {
+      q.campos_inferidos.forEach(c => finalInferidos.add(c.split(':')[0]));
+      q.campos_null.forEach(c => finalNull.add(c));
+    });
 
     // Salvar resultado e ir para estado terminal
     setImportResult({
       imported,
       failed,
-      camposInferidos: Array.from(allInferidos),
-      camposNull: Array.from(allNull),
+      camposInferidos: Array.from(finalInferidos),
+      camposNull: Array.from(finalNull),
       filesProcessed: files.length,
     });
     setFlowState('importacao_concluida');
