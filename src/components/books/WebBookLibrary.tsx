@@ -656,36 +656,41 @@ const WebBookLibrary = memo(function WebBookLibrary({
     setIsEditMode(false);
   }, [books]);
   
-  // Categorizar livros
-  const { reading, available, completed, stats } = useMemo(() => {
-    if (!books) return { reading: [], available: [], completed: [], stats: { total: 0, reading: 0, completed: 0 } };
-    
-    const reading: WebBookListItem[] = [];
-    const available: WebBookListItem[] = [];
-    const completed: WebBookListItem[] = [];
-    
-    books.forEach(book => {
+  // Estatísticas + agrupamento por categoria (ordem canônica do Livro Web)
+  const { stats, booksByCategory } = useMemo(() => {
+    const safeBooks = books ?? [];
+
+    const booksByCategory: Record<string, WebBookListItem[]> = {
+      quimica_geral: [],
+      quimica_organica: [],
+      fisico_quimica: [],
+      revisao_ciclica: [],
+      previsao_final: [],
+    };
+
+    let readingCount = 0;
+    let completedCount = 0;
+
+    safeBooks.forEach((book) => {
       const progress = book.progress?.progressPercent || 0;
       const isCompleted = book.progress?.isCompleted || false;
-      
-      if (isCompleted) {
-        completed.push(book);
-      } else if (progress > 0) {
-        reading.push(book);
-      } else {
-        available.push(book);
+
+      if (isCompleted) completedCount += 1;
+      else if (progress > 0) readingCount += 1;
+
+      // Só distribuímos nas 5 categorias canônicas; qualquer outra cai fora (não aparece na UI)
+      if (book.category in booksByCategory) {
+        booksByCategory[book.category].push(book);
       }
     });
-    
+
     return {
-      reading,
-      available,
-      completed,
+      booksByCategory,
       stats: {
-        total: books.length,
-        reading: reading.length,
-        completed: completed.length
-      }
+        total: safeBooks.length,
+        reading: readingCount,
+        completed: completedCount,
+      },
     };
   }, [books]);
 
@@ -1081,36 +1086,52 @@ const WebBookLibrary = memo(function WebBookLibrary({
             </div>
           </DndContext>
         ) : (
-          // 📚 NORMAL MODE — NETFLIX COLLAPSIBLE STYLE
+          // 📚 NORMAL MODE — ORGANIZAÇÃO POR CATEGORIA (CANÔNICA)
           <div className="space-y-6">
-            
-            {/* 🔥 CONTINUAR LENDO */}
             <BookSection
-              title="Continuar Lendo"
-              icon={<Flame className="h-7 w-7 text-amber-300" />}
-              books={reading}
-              onBookSelect={onBookSelect}
-              isHighEnd={isHighEnd}
-              accentColor="amber"
-              defaultOpen={true}
-            />
-            
-            {/* 📖 DISPONÍVEIS */}
-            <BookSection
-              title="Disponíveis para Você"
-              icon={<BookOpen className="h-7 w-7 text-[#FF6B6B]" />}
-              books={available}
+              title="Química Geral"
+              icon={<span className="text-2xl">⚗️</span>}
+              books={booksByCategory.quimica_geral}
               onBookSelect={onBookSelect}
               isHighEnd={isHighEnd}
               accentColor="red"
               defaultOpen={true}
             />
-            
-            {/* ✅ DOMINADOS */}
+
             <BookSection
-              title="Livros Dominados"
-              icon={<Crown className="h-7 w-7 text-emerald-300" />}
-              books={completed}
+              title="Química Orgânica"
+              icon={<span className="text-2xl">🧪</span>}
+              books={booksByCategory.quimica_organica}
+              onBookSelect={onBookSelect}
+              isHighEnd={isHighEnd}
+              accentColor="red"
+              defaultOpen={false}
+            />
+
+            <BookSection
+              title="Físico-Química"
+              icon={<span className="text-2xl">📊</span>}
+              books={booksByCategory.fisico_quimica}
+              onBookSelect={onBookSelect}
+              isHighEnd={isHighEnd}
+              accentColor="amber"
+              defaultOpen={false}
+            />
+
+            <BookSection
+              title="Revisão Cíclica"
+              icon={<span className="text-2xl">🔄</span>}
+              books={booksByCategory.revisao_ciclica}
+              onBookSelect={onBookSelect}
+              isHighEnd={isHighEnd}
+              accentColor="amber"
+              defaultOpen={false}
+            />
+
+            <BookSection
+              title="Previsão Final"
+              icon={<span className="text-2xl">🎯</span>}
+              books={booksByCategory.previsao_final}
               onBookSelect={onBookSelect}
               isHighEnd={isHighEnd}
               accentColor="emerald"
