@@ -162,13 +162,13 @@ const CATEGORY_COLORS: Record<string, CategoryColorTheme> = {
 
 // Fallback para categorias desconhecidas (vermelho Spider-Man)
 const DEFAULT_CATEGORY_COLORS: CategoryColorTheme = {
-  border: "border-[#E23636]/30",
-  borderHover: "hover:border-[#E23636]/70",
-  glow: "hover:shadow-[0_20px_60px_-15px_rgba(226,54,54,0.45)]",
-  hoverBg: "group-hover:from-[#E23636]/25",
-  text: "text-[#E23636]",
-  badge: "bg-[#E23636]/20 text-[#E23636] border-[#E23636]/40",
-  accent: "#E23636"
+  border: "border-[#E50914]/30",
+  borderHover: "hover:border-[#E50914]/70",
+  glow: "hover:shadow-[0_20px_60px_-15px_rgba(229,9,20,0.45)]",
+  hoverBg: "group-hover:from-[#E50914]/25",
+  text: "text-[#E50914]",
+  badge: "bg-[#E50914]/20 text-[#E50914] border-[#E50914]/40",
+  accent: "#E50914"
 };
 
 // Helper para obter cores por categoria
@@ -403,7 +403,7 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
                   ? "bg-gradient-to-r from-emerald-600 to-cyan-500 hover:shadow-emerald-500/30"
                   : isReading
                   ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:shadow-amber-500/30"
-                  : "bg-gradient-to-r from-[#E23636] to-red-500 hover:shadow-[#E23636]/30"
+                  : "bg-gradient-to-r from-[#E50914] to-red-500 hover:shadow-[#E50914]/30"
               )}
             >
               <Play className="w-4 h-4" />
@@ -485,10 +485,10 @@ const BookSection = memo(function BookSection({
 
   const colorClasses = {
     red: {
-      border: "border-[#E23636]/40 hover:border-[#E23636]/70",
+      border: "border-[#E50914]/40 hover:border-[#E50914]/70",
       iconColor: "text-[#FF6B6B]",
-      badge: "bg-[#E23636]/25 text-[#FF6B6B] border-[#E23636]/40",
-      accent: "text-[#E23636]"
+      badge: "bg-[#E50914]/25 text-[#FF6B6B] border-[#E50914]/40",
+      accent: "text-[#E50914]"
     },
     amber: {
       border: "border-amber-500/40 hover:border-amber-500/70",
@@ -808,20 +808,20 @@ const WebBookLibrary = memo(function WebBookLibrary({
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a0a0a]">
         <div className="relative">
           {/* Central orb */}
-          <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-[#E23636] via-red-600 to-[#E23636] animate-pulse flex items-center justify-center shadow-2xl shadow-[#E23636]/40">
+          <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-[#E50914] via-red-600 to-[#E50914] animate-pulse flex items-center justify-center shadow-2xl shadow-[#E50914]/40">
             <Library className="w-10 h-10 text-white" />
           </div>
           
           {/* Orbital rings */}
           {isHighEnd && (
             <>
-              <div className="absolute inset-[-20px] border-2 border-[#E23636]/30 rounded-full animate-spin" style={{ animationDuration: '4s' }} />
-              <div className="absolute inset-[-40px] border border-[#E23636]/20 rounded-full animate-spin" style={{ animationDuration: '6s', animationDirection: 'reverse' }} />
+              <div className="absolute inset-[-20px] border-2 border-[#E50914]/30 rounded-full animate-spin" style={{ animationDuration: '4s' }} />
+              <div className="absolute inset-[-40px] border border-[#E50914]/20 rounded-full animate-spin" style={{ animationDuration: '6s', animationDirection: 'reverse' }} />
             </>
           )}
           
           {/* Loading text */}
-          <p className="absolute -bottom-12 left-1/2 -translate-x-1/2 text-sm text-[#E23636] font-bold uppercase tracking-widest whitespace-nowrap">
+          <p className="absolute -bottom-12 left-1/2 -translate-x-1/2 text-sm text-[#E50914] font-bold uppercase tracking-widest whitespace-nowrap">
             Carregando Biblioteca...
           </p>
         </div>
@@ -924,7 +924,7 @@ const WebBookLibrary = memo(function WebBookLibrary({
                     <Zap className="w-3 h-3" />
                     Conteúdo Exclusivo
                   </span>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E23636]/10 text-[#E23636] border border-[#E23636]/30">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E50914]/10 text-[#E50914] border border-[#E50914]/30">
                     <Award className="w-3 h-3" />
                     Material Premium
                   </span>
@@ -935,8 +935,8 @@ const WebBookLibrary = memo(function WebBookLibrary({
               <div className="flex gap-3 md:gap-4">
                 {/* TOTAL */}
                 <div className="relative group flex flex-col items-center gap-2">
-                  {isHighEnd && <div className="absolute inset-0 bg-[#E23636]/30 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />}
-                  <div className="relative px-5 py-4 rounded-2xl bg-gradient-to-br from-[#E23636] via-red-500 to-orange-500 shadow-lg shadow-[#E23636]/40 border border-[#E23636]/60 overflow-hidden">
+                  {isHighEnd && <div className="absolute inset-0 bg-[#E50914]/30 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />}
+                  <div className="relative px-5 py-4 rounded-2xl bg-gradient-to-br from-[#E50914] via-red-500 to-orange-500 shadow-lg shadow-[#E50914]/40 border border-[#E50914]/60 overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                     <div className="relative flex items-center gap-2">
                       <BookOpen className="w-5 h-5 text-white/90" />
@@ -977,8 +977,8 @@ const WebBookLibrary = memo(function WebBookLibrary({
           
           {/* Corner accents */}
           <div className="absolute top-0 left-0 w-20 h-20 border-l-2 border-t-2 border-cyan-500/40 rounded-tl-3xl pointer-events-none" />
-          <div className="absolute top-0 right-0 w-20 h-20 border-r-2 border-t-2 border-[#E23636]/40 rounded-tr-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-20 h-20 border-l-2 border-b-2 border-[#E23636]/40 rounded-bl-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-20 h-20 border-r-2 border-t-2 border-[#E50914]/40 rounded-tr-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-20 h-20 border-l-2 border-b-2 border-[#E50914]/40 rounded-bl-3xl pointer-events-none" />
           <div className="absolute bottom-0 right-0 w-20 h-20 border-r-2 border-b-2 border-cyan-500/40 rounded-br-3xl pointer-events-none" />
         </div>
 
@@ -1013,7 +1013,7 @@ const WebBookLibrary = memo(function WebBookLibrary({
             <div className="relative flex-shrink-0">
               {/* Outer glow */}
               {isHighEnd && (
-                <div className="absolute -inset-3 bg-gradient-to-r from-purple-500 via-[#E23636] to-purple-500 rounded-2xl blur-xl opacity-40" />
+                <div className="absolute -inset-3 bg-gradient-to-r from-purple-500 via-[#E50914] to-purple-500 rounded-2xl blur-xl opacity-40" />
               )}
               {/* Static ring */}
               <div 
@@ -1023,7 +1023,7 @@ const WebBookLibrary = memo(function WebBookLibrary({
                 }}
               />
               {/* Icon container */}
-              <div className="relative p-4 rounded-xl bg-gradient-to-br from-purple-600/40 via-purple-500/20 to-[#E23636]/30 border border-purple-400/60 shadow-xl shadow-purple-500/30 backdrop-blur-sm overflow-hidden">
+              <div className="relative p-4 rounded-xl bg-gradient-to-br from-purple-600/40 via-purple-500/20 to-[#E50914]/30 border border-purple-400/60 shadow-xl shadow-purple-500/30 backdrop-blur-sm overflow-hidden">
                 {/* Inner shimmer */}
                 <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent" />
                 <Rocket className="relative w-8 h-8 text-purple-300 drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
@@ -1037,10 +1037,10 @@ const WebBookLibrary = memo(function WebBookLibrary({
                 <span 
                   className="relative inline-block"
                   style={{
-                    background: 'linear-gradient(135deg, #a855f7 0%, #E23636 50%, #f97316 100%)',
+                    background: 'linear-gradient(135deg, #a855f7 0%, #E50914 50%, #f97316 100%)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    filter: isHighEnd ? 'drop-shadow(0 0 10px rgba(226,54,54,0.5))' : 'none'
+                    filter: isHighEnd ? 'drop-shadow(0 0 10px rgba(229,9,20,0.5))' : 'none'
                   }}
                 >
                   2026
@@ -1055,7 +1055,7 @@ const WebBookLibrary = memo(function WebBookLibrary({
                   <Sparkles className="w-2.5 h-2.5" />
                   Conteúdo Inédito
                 </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-[#E23636]/15 text-[#E23636] border border-[#E23636]/40">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-[#E50914]/15 text-[#E50914] border border-[#E50914]/40">
                   <Award className="w-2.5 h-2.5" />
                   Atualizado
                 </span>
@@ -1067,10 +1067,10 @@ const WebBookLibrary = memo(function WebBookLibrary({
               <div className="relative">
                 {/* Static glow */}
                 {isHighEnd && (
-                  <div className="absolute -inset-2 bg-gradient-to-r from-purple-500 via-[#E23636] to-orange-500 rounded-2xl blur-lg opacity-40" />
+                  <div className="absolute -inset-2 bg-gradient-to-r from-purple-500 via-[#E50914] to-orange-500 rounded-2xl blur-lg opacity-40" />
                 )}
                 {/* Outer ring */}
-                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-purple-500 via-[#E23636] to-orange-500 opacity-80" />
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-purple-500 via-[#E50914] to-orange-500 opacity-80" />
                 {/* Badge */}
                 <div className="relative px-6 py-3 rounded-xl bg-gradient-to-br from-[#1a0a20] via-[#150812] to-[#1a0a20] border border-purple-400/30 shadow-inner">
                   <div className="flex flex-col items-center">
@@ -1197,7 +1197,7 @@ const WebBookLibrary = memo(function WebBookLibrary({
             <div className="space-y-3">
               <div className="flex items-center gap-3 px-2">
                 <span className="text-lg md:text-xl font-bold text-white">Química Geral</span>
-                <span className="text-[#E23636] text-lg">⚗️</span>
+                <span className="text-[#E50914] text-lg">⚗️</span>
                 <div className="h-px flex-1 bg-gradient-to-r from-amber-500/30 to-transparent" />
               </div>
               <BookSection
@@ -1299,8 +1299,8 @@ const WebBookLibrary = memo(function WebBookLibrary({
         {books?.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="relative mb-6">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#E23636]/30 to-[#E23636]/10 border-2 border-[#E23636]/40 flex items-center justify-center">
-                <Library className="w-12 h-12 text-[#E23636]" />
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#E50914]/30 to-[#E50914]/10 border-2 border-[#E50914]/40 flex items-center justify-center">
+                <Library className="w-12 h-12 text-[#E50914]" />
               </div>
             </div>
             <h3 className="text-2xl font-bold text-white mb-2">Biblioteca Vazia</h3>
