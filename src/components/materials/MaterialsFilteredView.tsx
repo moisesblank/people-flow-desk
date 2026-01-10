@@ -70,6 +70,9 @@ interface MaterialsFilteredViewProps {
 // 🎬 NETFLIX MATERIAL CARD
 // ============================================
 
+// Logo para fundo dos cards
+import logoMoisesMedeiros from '@/assets/logo-moises-medeiros.png';
+
 const MaterialCard = memo(forwardRef<HTMLDivElement, {
   material: MaterialItem;
   onSelect: (id: string) => void;
@@ -87,124 +90,137 @@ const MaterialCard = memo(forwardRef<HTMLDivElement, {
         ease: [0.25, 0.46, 0.45, 0.94]
       }}
       whileHover={isHighEnd ? { scale: 1.03, y: -5 } : undefined}
-      className="group relative"
+      className="group relative flex flex-col"
     >
       {/* Glow Behind Card */}
       {isHighEnd && (
         <div className="absolute -inset-1 rounded-2xl bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl" />
       )}
 
-      <Card
+      {/* Main Card */}
+      <div
         onClick={() => onSelect(material.id)}
         className={cn(
-          "relative cursor-pointer overflow-hidden rounded-2xl",
+          "relative cursor-pointer overflow-hidden rounded-2xl flex-1",
           "bg-gradient-to-br from-[#0a0d12] via-[#0f1419] to-[#151a22]",
-          "border border-white/10 hover:border-primary/40",
-          "transition-all duration-500"
+          "border-2 border-white/10 hover:border-primary/50",
+          "transition-all duration-500",
+          "shadow-[0_8px_32px_-8px_rgba(0,0,0,0.7)]",
+          "hover:shadow-[0_25px_50px_-12px_rgba(229,9,20,0.35)]"
         )}
-        style={isHighEnd ? {
-          boxShadow: '0 0 0 1px transparent'
-        } : undefined}
-        onMouseEnter={(e) => {
-          if (isHighEnd) {
-            e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(229, 9, 20, 0.25)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (isHighEnd) {
-            e.currentTarget.style.boxShadow = '0 0 0 1px transparent';
-          }
-        }}
       >
         {/* Top Gradient Bar */}
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-transparent via-primary/70 to-transparent opacity-60 group-hover:opacity-100 transition-opacity" />
 
-        {/* Cover / Thumbnail */}
-        <div className="relative h-44 bg-gradient-to-br from-primary/10 via-primary/5 to-cyan-500/10 flex items-center justify-center overflow-hidden">
+        {/* Cover with Logo Background — Netflix Style */}
+        <div className="relative h-56 md:h-64 bg-gradient-to-br from-primary/10 via-primary/5 to-cyan-500/10 flex items-center justify-center overflow-hidden">
+          {/* Logo Background Watermark */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <img 
+              src={logoMoisesMedeiros} 
+              alt=""
+              className="w-28 md:w-36 h-auto opacity-[0.08] group-hover:opacity-[0.12] transition-opacity duration-500"
+              loading="lazy"
+            />
+          </div>
+
+          {/* Grid Pattern */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0" style={{
+              backgroundImage: 'linear-gradient(rgba(229,9,20,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(229,9,20,0.15) 1px, transparent 1px)',
+              backgroundSize: '24px 24px'
+            }} />
+          </div>
+
+          {/* Cover Image or Icon */}
           {material.cover_url ? (
             <img 
               src={material.cover_url} 
               alt={material.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+              className="relative z-10 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
             />
           ) : (
-            <>
-              {/* Background Pattern */}
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute inset-0" style={{
-                  backgroundImage: 'linear-gradient(rgba(229,9,20,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(229,9,20,0.1) 1px, transparent 1px)',
-                  backgroundSize: '20px 20px'
-                }} />
-              </div>
-              <FileText className="w-20 h-20 text-primary/30 group-hover:text-primary/50 transition-colors" />
-            </>
+            <FileText className="relative z-10 w-20 h-20 text-primary/40 group-hover:text-primary/60 transition-colors" />
           )}
           
           {/* Premium badge */}
           {material.is_premium && (
-            <div className="absolute top-3 right-3">
-              <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 text-[10px] font-bold">
+            <div className="absolute top-3 right-3 z-20">
+              <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 text-[10px] font-bold shadow-lg">
                 <Sparkles className="w-3 h-3 mr-1" />
                 PREMIUM
               </Badge>
             </div>
           )}
 
-          {/* Hover Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d12] via-transparent to-transparent opacity-60" />
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d12] via-transparent to-transparent opacity-80" />
+
+          {/* Cinematic Scan Line */}
+          {isHighEnd && (
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden pointer-events-none">
+              <div 
+                className="absolute inset-x-0 h-20 bg-gradient-to-b from-transparent via-white/[0.04] to-transparent"
+                style={{
+                  animation: 'material-scan 2s linear infinite',
+                  transform: 'translateY(-100%)'
+                }}
+              />
+            </div>
+          )}
         </div>
 
-        <CardContent className="relative p-5 space-y-4">
-          {/* Title */}
-          <h3 className="text-lg font-bold text-white line-clamp-2 leading-tight group-hover:text-white/90 transition-colors">
-            {material.title}
-          </h3>
+        {/* Stats Bar (above content) */}
+        <div className="relative px-4 py-2 flex items-center gap-4 border-t border-white/5 bg-black/30">
+          {/* Pages */}
+          {material.total_pages > 0 && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <FileStack className="w-3.5 h-3.5 text-primary/70" />
+              <span>{material.total_pages} págs</span>
+            </div>
+          )}
           
-          {/* Description */}
-          {material.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {material.description}
-            </p>
+          {/* Views */}
+          {material.view_count > 0 && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Eye className="w-3.5 h-3.5 text-cyan-400/70" />
+              <span>{material.view_count}</span>
+            </div>
           )}
 
-          {/* Stats Row */}
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-3">
-              {/* Pages */}
-              {material.total_pages > 0 && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <FileStack className="w-3.5 h-3.5" />
-                  <span>{material.total_pages} págs</span>
-                </div>
-              )}
-              
-              {/* Views */}
-              {material.view_count > 0 && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>{material.view_count}</span>
-                </div>
-              )}
-            </div>
+          {/* Spacer */}
+          <div className="flex-1" />
 
-            {/* View Button */}
-            <div className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-full",
-              "bg-gradient-to-r from-primary/20 to-primary/10",
-              "border border-primary/30",
-              "group-hover:from-primary/30 group-hover:to-primary/20 transition-all"
-            )}>
-              <span className="text-xs font-semibold text-primary">Abrir</span>
-            </div>
+          {/* Open Button */}
+          <div className={cn(
+            "flex items-center gap-1.5 px-3 py-1 rounded-full",
+            "bg-gradient-to-r from-primary/30 to-primary/20",
+            "border border-primary/40",
+            "group-hover:from-primary/50 group-hover:to-primary/30 transition-all"
+          )}>
+            <span className="text-xs font-bold text-white">Abrir</span>
           </div>
-        </CardContent>
+        </div>
 
         {/* Bottom Corner Glow */}
         <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-      </Card>
+      </div>
+
+      {/* 📖 TEXT BELOW CARD — Netflix Style */}
+      <div className="mt-3 px-1 space-y-1">
+        <h3 className="text-sm md:text-base font-bold text-white line-clamp-2 leading-tight group-hover:text-primary/90 transition-colors">
+          {material.title}
+        </h3>
+        {material.description && (
+          <p className="text-xs text-muted-foreground line-clamp-1">
+            {material.description}
+          </p>
+        )}
+      </div>
     </motion.div>
   );
 }));
+
 
 // ============================================
 // 📊 VIRTUALIZED MATERIAL GRID — Performance
@@ -523,6 +539,14 @@ export const MaterialsFilteredView = memo(function MaterialsFilteredView({
           isHighEnd={isHighEnd}
         />
       )}
+
+      {/* Keyframes for Netflix-style scan animation */}
+      <style>{`
+        @keyframes material-scan {
+          0% { transform: translateY(-100%); }
+          100% { transform: translateY(500%); }
+        }
+      `}</style>
     </motion.div>
   );
 });
