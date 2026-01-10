@@ -40,6 +40,7 @@ const GestaoLivrosWeb = lazy(() => import("@/pages/gestao/GestaoLivrosWeb"));
 const GestaoQuestoes = lazy(() => import("@/pages/gestao/GestaoQuestoes"));
 const GestaoQuestaoDetalhe = lazy(() => import("@/pages/gestao/GestaoQuestaoDetalhe"));
 const GestaoFlashcards = lazy(() => import("@/pages/gestao/GestaoFlashcards"));
+const GestaoMateriais = lazy(() => import("@/pages/gestao/GestaoMateriais"));
 const GestaoMapasMentais = lazy(() => import("@/pages/gestao/GestaoMapasMentais"));
 const GestaoVideoaulas = lazy(() => import("@/pages/gestao/GestaoVideoaulas"));
 const GestaoTutoria = lazy(() => import("@/pages/gestao/GestaoTutoria"));
@@ -123,6 +124,7 @@ export const gestaofcRoutes = (
     <Route path="/gestaofc/questoes" element={<ProtectedPage><GestaoQuestoes /></ProtectedPage>} />
     <Route path="/gestaofc/questoes/:id" element={<ProtectedPage><GestaoQuestaoDetalhe /></ProtectedPage>} />
     <Route path="/gestaofc/flashcards" element={<ProtectedPage><GestaoFlashcards /></ProtectedPage>} />
+    <Route path="/gestaofc/materiais" element={<ProtectedPage><GestaoMateriais /></ProtectedPage>} />
     <Route path="/gestaofc/mapas-mentais" element={<ProtectedPage><GestaoMapasMentais /></ProtectedPage>} />
     <Route path="/gestaofc/videoaulas" element={<ProtectedPage><GestaoVideoaulas /></ProtectedPage>} />
     <Route path="/gestaofc/tutoria" element={<ProtectedPage><GestaoTutoria /></ProtectedPage>} />

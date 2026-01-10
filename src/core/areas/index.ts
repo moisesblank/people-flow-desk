@@ -60,6 +60,7 @@ export const SYSTEM_AREAS = [
   
   // ===== GESTÃO ACADÊMICA (GESTAOFC) =====
   "flashcards",
+  "materiais",
   "mapas-mentais",
   
   // ===== AFILIADOS & ALUNOS (GESTÃO) =====
