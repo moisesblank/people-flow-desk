@@ -255,6 +255,16 @@ const AlunoMateriaisPage = memo(function AlunoMateriaisPage() {
 
   useEffect(() => {
     fetchMaterials();
+
+    // Realtime subscription - reflete em tempo real
+    const channel = supabase
+      .channel('materials_aluno_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'materials' }, () => {
+        fetchMaterials();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [fetchMaterials]);
 
   // Filtros
