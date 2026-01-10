@@ -12,7 +12,7 @@ import { getCorsHeaders, handleCorsOptions, isOriginAllowed } from "../_shared/c
 // Fonte da verdade: user_roles.role = 'owner'
 // ============================================
 const TRANSMUTED_BUCKET = "ena-assets-transmuted";
-const URL_TTL_SECONDS = 30; // TTL curto para segurança
+const URL_TTL_SECONDS = 60; // ✅ M2: TTL 60s (segurança + UX balanceado)
 
 // Rate limit em memória
 const rateLimitCache = new Map<string, { count: number; resetAt: number }>();

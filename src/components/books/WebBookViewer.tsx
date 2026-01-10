@@ -411,8 +411,9 @@ export const WebBookViewer = memo(function WebBookViewer({
   const { getOverlayForPage, saveOverlays, refetchOverlays } = useBookPageOverlays(bookId);
 
   // 🛡️ BOOK SECURITY GUARD — Anti-PrintScreen/DevTools (Owner bypass)
+  // ✅ M4: Sistema de escalonamento de resposta
   const { user } = useAuth();
-  useBookSecurityGuard({
+  const { showSevereOverlay } = useBookSecurityGuard({
     bookId,
     bookTitle: bookData?.book?.title,
     isOwner: isOwner || false,
@@ -422,6 +423,11 @@ export const WebBookViewer = memo(function WebBookViewer({
     onViolation: (type) => {
       // Reportar violação ao sistema Sanctum também
       reportViolation(type, { source: 'book_security_guard' });
+    },
+    onSessionEnd: () => {
+      // M4: Encerrar sessão e redirecionar ao atingir limite
+      toast.error('Você foi desconectado por violações repetidas.');
+      onClose?.();
     },
   });
 
@@ -833,6 +839,58 @@ export const WebBookViewer = memo(function WebBookViewer({
         userSelect: 'none',
       }}
     >
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/* M4: OVERLAY SEVERO DE VIOLAÇÃO                              */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {showSevereOverlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/95 backdrop-blur-lg"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="text-center p-8 max-w-lg"
+            >
+              <motion.div
+                animate={{ 
+                  scale: [1, 1.1, 1],
+                  rotate: [0, 5, -5, 0],
+                }}
+                transition={{ 
+                  duration: 0.5, 
+                  repeat: Infinity,
+                  repeatDelay: 1 
+                }}
+              >
+                <Shield className="w-24 h-24 text-red-500 mx-auto mb-6" />
+              </motion.div>
+              
+              <h2 className="text-3xl font-bold text-red-500 mb-4 tracking-wider">
+                ⚠️ VIOLAÇÃO DETECTADA
+              </h2>
+              
+              <p className="text-white/80 text-lg mb-2">
+                Tentativas de captura de tela são <strong className="text-red-400">proibidas</strong>.
+              </p>
+              
+              <p className="text-red-400/80 text-sm mb-6">
+                Esta ação foi registrada. Tentativas adicionais resultarão no encerramento da sua sessão.
+              </p>
+              
+              <div className="flex items-center justify-center gap-2 text-white/50 text-xs">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Aguarde 5 segundos...
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-2 border-b border-border bg-background/80 backdrop-blur-sm">
         <div className="flex items-center gap-4">

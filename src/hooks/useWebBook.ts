@@ -105,9 +105,9 @@ export interface WebBookListItem {
 // ============================================
 
 const PROGRESS_SAVE_INTERVAL = 30000; // 30 segundos
-const URL_CACHE_TTL = 25000; // 25 segundos (antes de expirar)
-const PREFETCH_AHEAD = 3; // Prefetch 3 páginas à frente
-const MAX_CACHED_URLS = 10;
+const URL_CACHE_TTL = 55000; // ✅ M2: 55 segundos (antes do TTL de 60s expirar)
+const PREFETCH_AHEAD = 1; // ✅ M3: Prefetch 1 página à frente (segurança)
+const MAX_CACHED_URLS = 5; // ✅ M3: Menos URLs em cache
 const OWNER_EMAIL = "moisesblank@gmail.com";
 
 // Cache de URLs assinadas

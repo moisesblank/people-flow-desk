@@ -49,7 +49,7 @@ const RAW_BUCKET = 'ena-assets-raw';
 const RENDER_SCALE = 1.5; // ✅ Otimizado: 1.5 (boa qualidade, 44% mais rápido que 2)
 const JPEG_QUALITY = 0.85; // ✅ Otimizado: compressão mais rápida
 const PAGE_CACHE_SIZE = 20; // ✅ Ampliado: menos re-renderizações
-const PREFETCH_PAGES = 3; // ✅ Prefetch de 3 páginas
+const PREFETCH_PAGES = 1; // ✅ M3: Prefetch de 1 página apenas (segurança)
 const URL_EXPIRY_SECONDS = 3600; // 1 hora
 
 // ============================================
