@@ -1,7 +1,8 @@
 // ============================================
-// VIRTUALIZED VIDEOAULA LIST v1.0
+// VIRTUALIZED VIDEOAULA LIST v1.1
 // Renderiza apenas itens visíveis para performance
 // Padrão permanente para /gestaofc/videoaulas
+// CDN CORRIGIDO: b-vz-c3e3c21e-7ce.tv.pandavideo.com.br
 // ============================================
 
 import { useRef, useState, useEffect, useCallback, memo } from 'react';
@@ -18,6 +19,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getThumbnailUrl } from "@/lib/video/thumbnails";
 
 // Configuração de virtualização
 const GRID_ITEM_HEIGHT = 340; // Altura aproximada do card em grid
@@ -102,6 +104,9 @@ const GridItem = memo(function GridItem({
   onDelete: (id: string) => void;
   onTogglePublish: (id: string, is_published: boolean) => void;
 }) {
+  // Gerar thumbnail dinamicamente a partir do panda_video_id ou thumbnail_url
+  const thumbnailUrl = getThumbnailUrl(lesson);
+  
   return (
     <Card className={`overflow-hidden transition-all hover:shadow-lg h-full ${
       !lesson.is_published ? 'opacity-70 border-dashed' : ''
@@ -111,12 +116,16 @@ const GridItem = memo(function GridItem({
         className="relative h-40 bg-gradient-to-br from-primary/20 to-primary/5 cursor-pointer group"
         onClick={() => onPreview(lesson)}
       >
-        {lesson.thumbnail_url ? (
+        {thumbnailUrl ? (
           <img 
-            src={lesson.thumbnail_url} 
+            src={thumbnailUrl} 
             alt={lesson.title}
             className="w-full h-full object-cover transition-transform group-hover:scale-105"
             loading="lazy"
+            onError={(e) => {
+              // Fallback: esconder imagem se falhar
+              e.currentTarget.style.display = 'none';
+            }}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
