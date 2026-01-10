@@ -3,7 +3,7 @@
 // Bloqueia acesso se onboarding não completo
 // ============================================
 
-import { ReactNode, useMemo } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,6 +19,14 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, isLoading: authLoading } = useAuth();
   const { isLoading: onboardingLoading, needsOnboarding } = useOnboardingStatus();
   const location = useLocation();
+
+  // P0 anti-tela-preta: se auth/onboarding travarem por rede/RLS, não congelar UI.
+  // Mantém segurança server-side: só destrava a UX e redireciona para fluxos seguros.
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setLoadingTimeout(true), 8000);
+    return () => window.clearTimeout(t);
+  }, []);
 
   // Owner bypass de friccão
   const isOwner = useMemo(() => {
@@ -39,7 +47,23 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Não redirecionar se já estamos na página de primeiro acesso
   const isOnPrimeiroAcesso = location.pathname === "/primeiro-acesso";
 
+  // Loading: com fail-safe por timeout
   if (authLoading || onboardingLoading) {
+    if (loadingTimeout) {
+      // Se já sabemos o user (auth parcial), manda para um caminho seguro.
+      if (user) {
+        // Owner não pode ficar preso em loader por falha de leitura de onboarding.
+        if (isOwner) return <>{children}</>;
+        // Para alunos/roles comuns, onboarding é obrigatório: seguir para /primeiro-acesso.
+        if (!isOnPrimeiroAcesso) return <Navigate to="/primeiro-acesso" replace />;
+        // Se já está no onboarding, renderiza (evita loop).
+        return <>{children}</>;
+      }
+
+      // Sem user após timeout: volta para /auth (estado seguro)
+      return <Navigate to="/auth" replace />;
+    }
+
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -62,3 +86,4 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   return <>{children}</>;
 }
+
