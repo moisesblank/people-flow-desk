@@ -5,7 +5,7 @@
 import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, BookOpen, Eye, Edit, Archive, Trash2, CheckCircle, MoreVertical } from 'lucide-react';
+import { GripVertical, BookOpen, Eye, Edit, Archive, Trash2, CheckCircle, MoreVertical, Image as ImageIcon, XCircle } from 'lucide-react';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,19 +20,8 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { InlineEditableCell, InlinePositionEditor } from './index';
 
-// Capas modelo (ordem CANÔNICA 01-05)
-// 01: Química Geral
-// 02: Química Orgânica
-// 03: Físico-Química
-// 04: Revisão Cíclica
-// 05: Previsão Final
-import capa1 from '@/assets/book-covers/capa-5-quimica-geral.png';
-import capa2 from '@/assets/book-covers/capa-4-quimica-organica.png';
-import capa3 from '@/assets/book-covers/capa-2-fisico-quimica.png';
-import capa4 from '@/assets/book-covers/capa-1-revisao-ciclica.png';
-import capa5 from '@/assets/book-covers/capa-3-previsao-final.png';
-
-const COVER_MODELS = [capa1, capa2, capa3, capa4, capa5];
+// Capas modelo (REMOVIDAS da gestão): agora a capa vem de upload por livro.
+// Mantemos os assets apenas no /alunos/livros-web como fallback visual.
 
 interface WebBookAdmin {
   id: string;
@@ -45,7 +34,8 @@ interface WebBookAdmin {
   updated_at: string;
   view_count: number;
   unique_readers: number;
-  cover_url?: string;
+  cover_url?: string | null;
+  cover_path?: string | null;
   position?: number;
 }
 
@@ -71,6 +61,8 @@ interface SortableBookRowProps {
   onPublish: (bookId: string) => void;
   onArchive: (bookId: string) => void;
   onAnnihilate: (book: WebBookAdmin) => void;
+  onUploadCover: (bookId: string, file: File) => Promise<void>;
+  onRemoveCover: (bookId: string) => Promise<void>;
 }
 
 export const SortableBookRow = memo(function SortableBookRow({
@@ -84,6 +76,8 @@ export const SortableBookRow = memo(function SortableBookRow({
   onPublish,
   onArchive,
   onAnnihilate,
+  onUploadCover,
+  onRemoveCover,
 }: SortableBookRowProps) {
   const {
     attributes,
@@ -155,26 +149,67 @@ export const SortableBookRow = memo(function SortableBookRow({
       {/* COLUNA LIVRO — Título e Subtítulo Editáveis */}
       <TableCell>
         <div className="flex items-center gap-3">
-          {/* Miniatura da Capa Modelo (01-05) */}
-          {coverIndex !== undefined ? (
-            <div className="relative flex-shrink-0">
+          {/* Capa (upload por livro) */}
+          <div className="relative flex-shrink-0">
+            {book.cover_url ? (
               <img
-                src={COVER_MODELS[coverIndex - 1]}
-                alt={`Capa ${coverIndex}`}
-                className="w-12 h-16 object-cover rounded shadow-md ring-2 ring-red-500/50"
+                src={book.cover_url}
+                alt={book.title}
+                className="w-12 h-16 object-cover rounded shadow-md"
+                loading="lazy"
+                decoding="async"
               />
+            ) : (
+              <div className="w-12 h-16 bg-muted rounded flex items-center justify-center">
+                <BookOpen className="w-5 h-5 text-muted-foreground" />
+              </div>
+            )}
+
+            {/* Upload / Remover */}
+            <div className="absolute -bottom-2 -right-2 flex items-center gap-1">
+              <input
+                id={`cover-upload-${book.id}`}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.currentTarget.files?.[0];
+                  // permite re-selecionar o mesmo arquivo
+                  e.currentTarget.value = '';
+                  if (file) await onUploadCover(book.id, file);
+                }}
+              />
+              <label
+                htmlFor={`cover-upload-${book.id}`}
+                className={cn(
+                  'h-7 w-7 inline-flex items-center justify-center rounded-full border bg-background shadow-sm',
+                  'hover:bg-accent cursor-pointer'
+                )}
+                title="Enviar/alterar capa"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ImageIcon className="w-4 h-4 text-foreground" />
+              </label>
+
+              {book.cover_url && (
+                <button
+                  type="button"
+                  className={cn(
+                    'h-7 w-7 inline-flex items-center justify-center rounded-full border bg-background shadow-sm',
+                    'hover:bg-accent'
+                  )}
+                  title="Remover capa"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    await onRemoveCover(book.id);
+                  }}
+                >
+                  <XCircle className="w-4 h-4 text-foreground" />
+                </button>
+              )}
             </div>
-          ) : book.cover_url ? (
-            <img
-              src={book.cover_url}
-              alt={book.title}
-              className="w-10 h-14 object-cover rounded"
-            />
-          ) : (
-            <div className="w-10 h-14 bg-muted rounded flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-muted-foreground" />
-            </div>
-          )}
+          </div>
+
           <div className="space-y-0.5 min-w-0 flex-1">
             {/* Título Editável */}
             <InlineEditableCell
