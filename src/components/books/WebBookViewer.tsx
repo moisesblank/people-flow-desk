@@ -1239,7 +1239,8 @@ export const WebBookViewer = memo(function WebBookViewer({
                   />
                   
                   {/* 🎨 CANVAS DE DESENHO - Só ativo em Modo Leitura */}
-                  {isFullscreen && (
+                  {/* ✅ STAGGER: Overlays só montam após Frame 2 */}
+                  {stagger.overlaysReady && isFullscreen && (
                     <DrawingCanvas
                       isActive={isFullscreen && activeTool !== 'select'}
                       activeTool={activeTool}
@@ -1263,9 +1264,12 @@ export const WebBookViewer = memo(function WebBookViewer({
               )}
 
               {/* SANCTUM Watermark overlay - SEMPRE VISÍVEL PARA TODOS (incluindo OWNER) */}
-              <SanctumWatermark 
-                text={watermarkText || `CPF: 09290783491 | moisesblank@gmail.com`} 
-              />
+              {/* ✅ STAGGER: Watermark só monta após Frame 1 */}
+              {stagger.watermarkReady && (
+                <SanctumWatermark 
+                  text={watermarkText || `CPF: 09290783491 | moisesblank@gmail.com`} 
+                />
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
