@@ -1084,9 +1084,12 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
       <div className={cn(
         "relative rounded-xl overflow-hidden",
         "bg-gradient-to-b from-slate-900 to-slate-950",
-        "border border-slate-700/50 shadow-xl shadow-black/40",
-        "transition-all duration-300",
-        "group-hover/card:border-[#E23636]/70 group-hover/card:shadow-2xl group-hover/card:shadow-[#E23636]/30"
+        "border shadow-xl transition-all duration-200",
+        // Hover sutil (cinza claro) - NÃO vermelho
+        "border-slate-700/50 shadow-black/40",
+        "group-hover/card:border-slate-500/60 group-hover/card:shadow-slate-500/20",
+        // Vermelho APENAS no clicado
+        isClicked && "border-[#E23636]/80 shadow-2xl shadow-[#E23636]/40"
       )}>
         
         {/* === THUMBNAIL SECTION === */}
@@ -1132,15 +1135,15 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
             </div>
           )}
           
-          {/* Play Button Overlay - CSS only */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity duration-300">
+          {/* Play Button Overlay - Hover sutil */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity duration-200">
             <div className={cn(
-              "w-16 h-16 rounded-full flex items-center justify-center",
-              "bg-[#E23636] shadow-2xl shadow-[#E23636]/60",
-              "border-4 border-white/20",
-              "group-hover/card:scale-110 transition-transform duration-300"
+              "w-14 h-14 rounded-full flex items-center justify-center",
+              "bg-white/90 shadow-xl",
+              "border-2 border-white/40",
+              "group-hover/card:scale-105 transition-transform duration-200"
             )}>
-              <Play className="h-7 w-7 text-white ml-1" fill="currentColor" />
+              <Play className="h-6 w-6 text-slate-900 ml-0.5" fill="currentColor" />
             </div>
           </div>
           
@@ -1176,8 +1179,11 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
           </button>
         </div>
         
-        {/* Hover Glow Effect - CSS only */}
-        <div className="absolute inset-0 rounded-xl pointer-events-none ring-0 group-hover/card:ring-1 ring-[#E23636]/50 transition-all duration-300" />
+        {/* Glow Effect - Vermelho APENAS no clicado */}
+        <div className={cn(
+          "absolute inset-0 rounded-xl pointer-events-none transition-all duration-200",
+          isClicked ? "ring-2 ring-[#E23636]/70" : "ring-0"
+        )} />
       </div>
     </div>
   );
