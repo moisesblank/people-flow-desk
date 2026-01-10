@@ -1,0 +1,199 @@
+/**
+ * 🎬 SIMULADO READY — GPU-Accelerated CSS Animations
+ * Year 2300 Cinematic Design
+ * 
+ * ⚡ PERFORMANCE OPTIMIZED:
+ * - All animations use transform/opacity only (GPU layers)
+ * - No layout thrashing
+ * - Hardware acceleration via will-change
+ * - Infinite loops are CSS-only (no JS overhead)
+ */
+
+/* ═══════════════════════════════════════════════════════════════
+   🔄 ORBITAL RING ROTATIONS
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes simulado-ring-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes simulado-ring-rotate-reverse {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+.simulado-ring-slow {
+  animation: simulado-ring-rotate 60s linear infinite;
+  will-change: transform;
+}
+
+.simulado-ring-reverse {
+  animation: simulado-ring-rotate-reverse 45s linear infinite;
+  will-change: transform;
+}
+
+.simulado-ring-fast {
+  animation: simulado-ring-rotate 30s linear infinite;
+  will-change: transform;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ✨ ORBITAL PARTICLES
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes simulado-orbit {
+  0% {
+    transform: rotate(0deg) translateX(200px) rotate(0deg);
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(360deg) translateX(200px) rotate(-360deg);
+    opacity: 0.8;
+  }
+}
+
+.simulado-particle-orbit {
+  animation: simulado-orbit 20s linear infinite;
+  will-change: transform, opacity;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   📡 SCAN LINES
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes simulado-scan {
+  from { transform: translateY(0); }
+  to { transform: translateY(100px); }
+}
+
+.simulado-scanlines {
+  animation: simulado-scan 3s linear infinite;
+  will-change: transform;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   💫 SHIMMER EFFECTS
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes simulado-shimmer {
+  0% { transform: translateX(-200%); }
+  100% { transform: translateX(200%); }
+}
+
+.simulado-shimmer {
+  animation: simulado-shimmer 4s ease-in-out infinite;
+  animation-delay: 2s;
+  will-change: transform;
+}
+
+.simulado-shimmer-fast {
+  animation: simulado-shimmer 2s ease-in-out infinite;
+  animation-delay: 1s;
+  will-change: transform;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🔆 PULSE & GLOW
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes simulado-pulse-opacity {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.simulado-pulse {
+  animation: simulado-pulse-opacity 1.5s ease-in-out infinite;
+  will-change: opacity;
+}
+
+@keyframes simulado-scale-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.simulado-scale-pulse {
+  animation: simulado-scale-pulse 1.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes simulado-glow {
+  0%, 100% { 
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.35;
+    transform: scale(1.1);
+  }
+}
+
+.simulado-glow-pulse {
+  animation: simulado-glow 4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🔄 SPIN
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes simulado-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.simulado-spin-slow {
+  animation: simulado-spin 8s linear infinite;
+  will-change: transform;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   📳 WOBBLE & BOUNCE
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes simulado-wobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}
+
+.simulado-wobble {
+  animation: simulado-wobble 2s ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes simulado-bounce-x {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(5px); }
+}
+
+.simulado-bounce-x {
+  animation: simulado-bounce-x 1s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🎨 LOW-END DEVICE OVERRIDES
+   Automatically disables animations for prefers-reduced-motion
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .simulado-ring-slow,
+  .simulado-ring-reverse,
+  .simulado-ring-fast,
+  .simulado-particle-orbit,
+  .simulado-scanlines,
+  .simulado-shimmer,
+  .simulado-shimmer-fast,
+  .simulado-pulse,
+  .simulado-scale-pulse,
+  .simulado-glow-pulse,
+  .simulado-spin-slow,
+  .simulado-wobble,
+  .simulado-bounce-x {
+    animation: none !important;
+  }
+}
