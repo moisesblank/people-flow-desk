@@ -33,8 +33,31 @@ import {
   ArrowRight,
   User,
   Layers,
-  PlayCircle
+  PlayCircle,
+  GripVertical,
+  Save,
+  X
 } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -480,6 +503,65 @@ const BookSection = memo(function BookSection({
 });
 
 // ============================================
+// 🔀 SORTABLE BOOK CARD — OWNER ONLY DRAG
+// ============================================
+
+interface SortableBookCardProps {
+  book: WebBookListItem;
+  index: number;
+  coverUrl: string;
+  onSelect: () => void;
+  isHighEnd: boolean;
+  isEditMode: boolean;
+}
+
+const SortableBookCard = memo(function SortableBookCard({ 
+  book, 
+  index, 
+  coverUrl, 
+  onSelect, 
+  isHighEnd,
+  isEditMode 
+}: SortableBookCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: book.id, disabled: !isEditMode });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative">
+      {isEditMode && (
+        <div 
+          {...attributes} 
+          {...listeners}
+          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 z-20 p-2 bg-purple-500/80 hover:bg-purple-500 rounded-xl cursor-grab active:cursor-grabbing shadow-lg border-2 border-purple-300/50 transition-all"
+        >
+          <GripVertical className="w-5 h-5 text-white" />
+        </div>
+      )}
+      <BookCard
+        book={book}
+        index={index}
+        coverUrl={coverUrl}
+        onSelect={onSelect}
+        isHighEnd={isHighEnd}
+      />
+    </div>
+  );
+});
+
+// ============================================
 // 🏠 MAIN COMPONENT — NETFLIX ULTRA PREMIUM
 // ============================================
 
@@ -488,11 +570,71 @@ const WebBookLibrary = memo(function WebBookLibrary({
   externalCategory,
   className 
 }: WebBookLibraryProps) {
-  const { books, isLoading, error } = useWebBookLibrary();
+  const { books, isLoading, error, refreshBooks } = useWebBookLibrary();
+  const { isOwner } = useRolePermissions();
   
   // ⚡ Performance flags - LEI I
   const { shouldShowParticles, isLowEnd, tier } = useConstitutionPerformance();
   const isHighEnd = tier === 'enhanced' || tier === 'standard' || !isLowEnd;
+  
+  // 🔀 Owner reorder state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [localBooks, setLocalBooks] = useState<WebBookListItem[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Sensors for drag-and-drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  // Sync local books with server books when not in edit mode
+  React.useEffect(() => {
+    if (books && !isEditMode) {
+      setLocalBooks(books);
+    }
+  }, [books, isEditMode]);
+
+  // Handle drag end
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (over && active.id !== over.id) {
+      setLocalBooks((items) => {
+        const oldIndex = items.findIndex(item => item.id === active.id);
+        const newIndex = items.findIndex(item => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }, []);
+
+  // Save new order to database
+  const handleSaveOrder = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      // Update positions in database
+      const updates = localBooks.map((book, index) => 
+        supabase.from('web_books').update({ position: index }).eq('id', book.id)
+      );
+      
+      await Promise.all(updates);
+      
+      toast.success('Ordem dos livros salva com sucesso!');
+      setIsEditMode(false);
+      refreshBooks?.();
+    } catch (error) {
+      console.error('Error saving book order:', error);
+      toast.error('Erro ao salvar ordem dos livros');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [localBooks, refreshBooks]);
+
+  // Cancel edit mode
+  const handleCancelEdit = useCallback(() => {
+    setLocalBooks(books || []);
+    setIsEditMode(false);
+  }, [books]);
   
   // Categorizar livros
   const { reading, available, completed, stats } = useMemo(() => {
@@ -827,42 +969,135 @@ const WebBookLibrary = memo(function WebBookLibrary({
           )}
         </div>
 
-        {/* 📚 BOOK SECTIONS — NETFLIX COLLAPSIBLE STYLE */}
-        <div className="space-y-6">
-          
-          {/* 🔥 CONTINUAR LENDO */}
-          <BookSection
-            title="Continuar Lendo"
-            icon={<Flame className="h-7 w-7 text-amber-300" />}
-            books={reading}
-            onBookSelect={onBookSelect}
-            isHighEnd={isHighEnd}
-            accentColor="amber"
-            defaultOpen={true}
-          />
-          
-          {/* 📖 DISPONÍVEIS */}
-          <BookSection
-            title="Disponíveis para Você"
-            icon={<BookOpen className="h-7 w-7 text-[#FF6B6B]" />}
-            books={available}
-            onBookSelect={onBookSelect}
-            isHighEnd={isHighEnd}
-            accentColor="red"
-            defaultOpen={true}
-          />
-          
-          {/* ✅ DOMINADOS */}
-          <BookSection
-            title="Livros Dominados"
-            icon={<Crown className="h-7 w-7 text-emerald-300" />}
-            books={completed}
-            onBookSelect={onBookSelect}
-            isHighEnd={isHighEnd}
-            accentColor="emerald"
-            defaultOpen={false}
-          />
-        </div>
+        {/* 🔀 OWNER EDIT MODE — DRAG & DROP */}
+        {isOwner && (
+          <div className="relative overflow-hidden rounded-2xl border-2 border-purple-500/40 bg-gradient-to-r from-[#0d0815] via-[#120820] to-[#0d0815] p-4 shadow-xl">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-purple-500/20 border border-purple-500/40">
+                  <GripVertical className="w-5 h-5 text-purple-400" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">Reordenar Livros</h4>
+                  <p className="text-xs text-purple-300/60">Owner Mode: Arraste para reorganizar</p>
+                </div>
+              </div>
+              
+              {isEditMode ? (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCancelEdit}
+                    disabled={isSaving}
+                    className="border-red-500/40 text-red-400 hover:bg-red-500/10"
+                  >
+                    <X className="w-4 h-4 mr-1" />
+                    Cancelar
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleSaveOrder}
+                    disabled={isSaving}
+                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:opacity-90"
+                  >
+                    <Save className="w-4 h-4 mr-1" />
+                    {isSaving ? 'Salvando...' : 'Salvar Ordem'}
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() => setIsEditMode(true)}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90"
+                >
+                  <GripVertical className="w-4 h-4 mr-1" />
+                  Editar Ordem
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 📚 BOOK SECTIONS — OWNER DRAG MODE OR NORMAL */}
+        {isEditMode && isOwner ? (
+          // 🔀 DRAG & DROP MODE — Lista completa ordenável
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <div className="space-y-6">
+              <Card className={cn(
+                "relative overflow-hidden transition-all duration-500",
+                "bg-gradient-to-br from-[#0a0e14] via-[#0f1419] to-[#1a0a0a]",
+                "border-2 border-purple-500/40 shadow-2xl rounded-3xl"
+              )}>
+                <CardHeader className="py-5 px-6 border-b-2 border-purple-500/25 bg-gradient-to-r from-purple-500/20 via-[#0a0e14]/80 to-purple-500/15">
+                  <div className="flex items-center gap-4">
+                    <div className="relative p-3 rounded-xl bg-gradient-to-br from-purple-500/50 to-purple-500/35 border-2 border-purple-500/60 shadow-lg">
+                      <GripVertical className="h-6 w-6 text-purple-300" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl md:text-2xl font-black text-white tracking-tight">
+                        Todos os Livros — Modo Edição
+                      </CardTitle>
+                      <p className="text-sm text-purple-300/60 mt-1">Arraste para reordenar • A posição será salva no banco</p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-5 space-y-4 bg-gradient-to-b from-transparent to-black/20">
+                  <SortableContext items={localBooks.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                    {localBooks.map((book, idx) => (
+                      <SortableBookCard
+                        key={book.id}
+                        book={book}
+                        index={idx}
+                        coverUrl={book.coverUrl || BOOK_COVERS_BY_CATEGORY[book.category || ''] || BOOK_COVERS_BY_INDEX[idx] || '/placeholder.svg'}
+                        onSelect={() => onBookSelect(book.id)}
+                        isHighEnd={isHighEnd}
+                        isEditMode={true}
+                      />
+                    ))}
+                  </SortableContext>
+                </CardContent>
+              </Card>
+            </div>
+          </DndContext>
+        ) : (
+          // 📚 NORMAL MODE — NETFLIX COLLAPSIBLE STYLE
+          <div className="space-y-6">
+            
+            {/* 🔥 CONTINUAR LENDO */}
+            <BookSection
+              title="Continuar Lendo"
+              icon={<Flame className="h-7 w-7 text-amber-300" />}
+              books={reading}
+              onBookSelect={onBookSelect}
+              isHighEnd={isHighEnd}
+              accentColor="amber"
+              defaultOpen={true}
+            />
+            
+            {/* 📖 DISPONÍVEIS */}
+            <BookSection
+              title="Disponíveis para Você"
+              icon={<BookOpen className="h-7 w-7 text-[#FF6B6B]" />}
+              books={available}
+              onBookSelect={onBookSelect}
+              isHighEnd={isHighEnd}
+              accentColor="red"
+              defaultOpen={true}
+            />
+            
+            {/* ✅ DOMINADOS */}
+            <BookSection
+              title="Livros Dominados"
+              icon={<Crown className="h-7 w-7 text-emerald-300" />}
+              books={completed}
+              onBookSelect={onBookSelect}
+              isHighEnd={isHighEnd}
+              accentColor="emerald"
+              defaultOpen={false}
+            />
+          </div>
+        )}
 
         {/* Empty State */}
         {books?.length === 0 && (
