@@ -33,6 +33,10 @@ import capa4 from '@/assets/book-covers/capa-4-quimica-organica.png';
 import capa5 from '@/assets/book-covers/capa-5-quimica-geral.png';
 
 const COVER_MODELS = [capa1, capa2, capa3, capa4, capa5];
+
+// Componentes de edição inline
+import { InlineEditableCell, InlinePositionEditor } from '@/components/gestao/livros-web';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -615,6 +619,42 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
     }
   };
 
+  // ============================================
+  // ATUALIZAÇÃO INLINE — Fonte da Verdade Absoluta
+  // Salva campo individual no banco e recarrega lista
+  // ============================================
+  const handleInlineUpdate = useCallback(async (
+    bookId: string, 
+    field: string, 
+    value: string | number
+  ) => {
+    try {
+      const updateData: Record<string, unknown> = {
+        [field]: value,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('web_books')
+        .update(updateData)
+        .eq('id', bookId);
+
+      if (error) throw error;
+      
+      toast.success(`${field === 'title' ? 'Título' : field === 'subtitle' ? 'Subtítulo' : field === 'category' ? 'Categoria' : field === 'position' ? 'Posição' : field === 'status' ? 'Status' : 'Campo'} atualizado!`);
+      
+      // Recarregar para sincronizar
+      loadBooks();
+      
+      // Limpar cache para garantir sincronização com portal do aluno
+      clearAllCache();
+    } catch (err) {
+      console.error('[InlineUpdate] Erro:', err);
+      toast.error('Erro ao atualizar');
+      throw err; // Re-throw para o componente inline reverter
+    }
+  }, [loadBooks, clearAllCache]);
+
   // Abrir modal de edição
   const handleOpenEdit = (book: WebBookAdmin) => {
     setEditingBook(book);
@@ -784,6 +824,7 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-14">#</TableHead>
                   <TableHead>Livro</TableHead>
                   <TableHead>Categoria</TableHead>
                   <TableHead>Status</TableHead>
@@ -798,9 +839,22 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                   const status = STATUS_MAP[book.status] || STATUS_MAP.draft;
                   const StatusIcon = status.icon;
                   const category = CATEGORIES.find(c => c.value === book.category);
+                  const bookPosition = (book as any).position || 999;
 
                   return (
                     <TableRow key={book.id}>
+                      {/* COLUNA POSIÇÃO — Editável */}
+                      <TableCell>
+                        <InlinePositionEditor
+                          position={bookPosition}
+                          coverIndex={coverIndexMap.get(book.id)}
+                          onSave={async (newPos) => {
+                            await handleInlineUpdate(book.id, 'position', newPos);
+                          }}
+                        />
+                      </TableCell>
+
+                      {/* COLUNA LIVRO — Título e Subtítulo Editáveis */}
                       <TableCell>
                         <div className="flex items-center gap-3">
                           {/* Miniatura da Capa Modelo (01-05) */}
@@ -811,9 +865,6 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                                 alt={`Capa ${coverIndexMap.get(book.id)!}`}
                                 className="w-12 h-16 object-cover rounded shadow-md ring-2 ring-red-500/50"
                               />
-                              <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white font-bold text-[10px] shadow ring-1 ring-background">
-                                {String(coverIndexMap.get(book.id)!).padStart(2, '0')}
-                              </div>
                             </div>
                           ) : book.cover_url ? (
                             <img
@@ -826,34 +877,76 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                               <BookOpen className="w-5 h-5 text-muted-foreground" />
                             </div>
                           )}
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium line-clamp-1">{book.title}</p>
-                              {coverIndexMap.has(book.id) && (
-                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-red-500/50 text-red-400">
-                                  Capa {String(coverIndexMap.get(book.id)!).padStart(2, '0')}
-                                </Badge>
-                              )}
-                            </div>
-                            {book.subtitle && (
-                              <p className="text-sm text-muted-foreground line-clamp-1">
-                                {book.subtitle}
-                              </p>
-                            )}
+                          <div className="space-y-0.5 min-w-0 flex-1">
+                            {/* Título Editável */}
+                            <InlineEditableCell
+                              value={book.title}
+                              onSave={async (val) => {
+                                await handleInlineUpdate(book.id, 'title', val);
+                              }}
+                              placeholder="Título do livro"
+                              className="font-medium"
+                              minWidth="180px"
+                            />
+                            {/* Subtítulo Editável */}
+                            <InlineEditableCell
+                              value={book.subtitle || ''}
+                              onSave={async (val) => {
+                                await handleInlineUpdate(book.id, 'subtitle', val);
+                              }}
+                              placeholder="Adicionar subtítulo..."
+                              className="text-muted-foreground"
+                              minWidth="160px"
+                            />
                           </div>
                         </div>
                       </TableCell>
+
+                      {/* COLUNA CATEGORIA — Editável via Select */}
                       <TableCell>
-                        <span className="text-sm">{category?.label || book.category}</span>
+                        <InlineEditableCell
+                          value={book.category}
+                          displayValue={category?.label || book.category}
+                          onSave={async (val) => {
+                            await handleInlineUpdate(book.id, 'category', val);
+                          }}
+                          type="select"
+                          options={CATEGORIES}
+                          minWidth="140px"
+                        />
                       </TableCell>
+
+                      {/* COLUNA STATUS — Editável via Select */}
                       <TableCell>
-                        <Badge className={cn("gap-1", status.color)}>
-                          <StatusIcon className={cn("w-3 h-3", book.status === 'processing' && 'animate-spin')} />
-                          {status.label}
-                        </Badge>
+                        <InlineEditableCell
+                          value={book.status}
+                          displayValue={
+                            <Badge className={cn("gap-1", status.color)}>
+                              <StatusIcon className={cn("w-3 h-3", book.status === 'processing' && 'animate-spin')} />
+                              {status.label}
+                            </Badge>
+                          }
+                          onSave={async (val) => {
+                            await handleInlineUpdate(book.id, 'status', val);
+                          }}
+                          type="select"
+                          options={[
+                            { value: 'draft', label: '📝 Rascunho' },
+                            { value: 'queued', label: '⏳ Na fila' },
+                            { value: 'ready', label: '✅ Publicado' },
+                            { value: 'archived', label: '📦 Arquivado' },
+                          ]}
+                          minWidth="120px"
+                        />
                       </TableCell>
+
+                      {/* COLUNA PÁGINAS — Apenas visualização */}
                       <TableCell>{book.total_pages || 0}</TableCell>
+
+                      {/* COLUNA LEITORES — Apenas visualização */}
                       <TableCell>{book.unique_readers || 0}</TableCell>
+
+                      {/* COLUNA DATA — Apenas visualização */}
                       <TableCell>
                         <span className="text-sm text-muted-foreground">
                           {format(new Date(book.created_at), "dd/MM/yy", { locale: ptBR })}
