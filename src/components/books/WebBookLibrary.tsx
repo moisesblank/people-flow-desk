@@ -665,9 +665,8 @@ export const WebBookLibrary = memo(function WebBookLibrary({
     const inProgress = filteredBooks.filter(b => (b.progress?.progressPercent || 0) > 0 && !b.progress?.isCompleted);
     const completed = filteredBooks.filter(b => b.progress?.isCompleted);
     const trending = [...filteredBooks].sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0)).slice(0, 15);
-    const recent = filteredBooks.slice(0, 15); // Most recent by default order
     
-    return { inProgress, completed, trending, recent, all: filteredBooks };
+    return { inProgress, completed, trending, all: filteredBooks };
   }, [filteredBooks]);
 
   // Hero book (most viewed or in progress)
@@ -888,16 +887,6 @@ export const WebBookLibrary = memo(function WebBookLibrary({
           />
         )}
 
-        {/* Recent */}
-        {categorizedBooks.recent.length > 0 && (
-          <CarouselRow
-            title="Adicionados Recentemente"
-            icon={<Sparkles className="w-5 h-5 text-purple-500" />}
-            books={categorizedBooks.recent}
-            onBookSelect={onBookSelect}
-            getCoverForBook={getCoverForBook}
-          />
-        )}
 
         {/* All Books */}
         {filteredBooks.length > 15 && (
