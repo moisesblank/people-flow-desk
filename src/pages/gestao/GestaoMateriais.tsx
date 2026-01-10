@@ -283,14 +283,22 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
   const [contentType, setContentType] = useState('mapa_mental');
   const [selectedCard, setSelectedCard] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('');
+  const [selectedMicro, setSelectedMicro] = useState('');
   const [watermarkEnabled, setWatermarkEnabled] = useState(true);
   const [isPremium, setIsPremium] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [overallProgress, setOverallProgress] = useState(0);
 
+  // Get taxonomy for micro selection
+  const { getMicrosForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
+
   // Get current card and its filters
   const currentCard = HUB_CARDS.find(c => c.id === selectedCard);
   const cardFilters = currentCard?.filters || [];
+  
+  // Get micros for selected macro (only for questoes-mapas card)
+  const isQuestoesMapas = selectedCard === 'questoes-mapas';
+  const availableMicros = isQuestoesMapas && selectedFilter ? getMicrosForSelect(selectedFilter) : [];
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] },
@@ -344,6 +352,12 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
   const handleCardChange = (value: string) => {
     setSelectedCard(value);
     setSelectedFilter(''); // Reset filter when card changes
+    setSelectedMicro(''); // Reset micro when card changes
+  };
+
+  const handleFilterChange = (value: string) => {
+    setSelectedFilter(value);
+    setSelectedMicro(''); // Reset micro when filter changes
   };
 
   const uploadSingleFile = async (
@@ -394,10 +408,10 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
           description: description.trim() || null,
           category: selectedCard, // Card ID = category (para mapeamento com alunos)
           content_type: contentType,
-          // Se for questoes-mapas, o filtro vai em macro (5 macros químicos)
+          // Se for questoes-mapas, o filtro vai em macro (5 macros químicos) e micro
           // Para os demais cards, o filtro vai em tags (bancas, extras, etc.)
           macro: isQuestoesMacro ? selectedFilter : null,
-          micro: null,
+          micro: isQuestoesMacro && selectedMicro ? selectedMicro : null,
           tags: !isQuestoesMacro && selectedFilter ? [selectedFilter] : [],
           status: 'ready',
           file_path: filePath,
@@ -699,11 +713,11 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Filter className="w-4 h-4" />
-                Filtro * <span className="text-xs text-muted-foreground">({cardFilters.length} opções)</span>
+                {isQuestoesMapas ? 'Macro *' : 'Filtro *'} <span className="text-xs text-muted-foreground">({cardFilters.length} opções)</span>
               </Label>
-              <Select value={selectedFilter} onValueChange={setSelectedFilter} disabled={uploading}>
+              <Select value={selectedFilter} onValueChange={handleFilterChange} disabled={uploading}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o filtro..." />
+                  <SelectValue placeholder={isQuestoesMapas ? "Selecione o macro..." : "Selecione o filtro..."} />
                 </SelectTrigger>
                 <SelectContent>
                   {cardFilters.map(filter => (
@@ -723,14 +737,45 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
             </div>
           )}
 
+          {/* MICRO SELECTION — Apenas para card questoes-mapas quando macro selecionado */}
+          {isQuestoesMapas && selectedFilter && availableMicros.length > 0 && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Tag className="w-4 h-4" />
+                Micro <span className="text-xs text-muted-foreground">(opcional, {availableMicros.length} opções)</span>
+              </Label>
+              <Select value={selectedMicro} onValueChange={setSelectedMicro} disabled={uploading || taxonomyLoading}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o micro (opcional)..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">
+                    <span className="text-muted-foreground">Nenhum (apenas macro)</span>
+                  </SelectItem>
+                  {availableMicros.map(micro => (
+                    <SelectItem key={micro.value} value={micro.value}>
+                      {micro.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {/* Preview do destino */}
           {selectedCard && selectedFilter && (
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-              <p className="text-sm font-medium flex items-center gap-2">
+              <p className="text-sm font-medium flex items-center gap-2 flex-wrap">
                 <CheckCircle className="w-4 h-4 text-primary" />
                 Destino: <span className="text-primary">{currentCard?.icon} {currentCard?.name}</span>
                 <span className="text-muted-foreground">→</span>
                 <span className="text-primary">{cardFilters.find(f => f.value === selectedFilter)?.label}</span>
+                {isQuestoesMapas && selectedMicro && (
+                  <>
+                    <span className="text-muted-foreground">→</span>
+                    <span className="text-primary">{availableMicros.find(m => m.value === selectedMicro)?.label}</span>
+                  </>
+                )}
               </p>
             </div>
           )}
