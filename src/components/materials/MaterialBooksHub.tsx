@@ -32,6 +32,9 @@ import { useConstitutionPerformance } from '@/hooks/useConstitutionPerformance';
 import { useQuestionTaxonomy } from '@/hooks/useQuestionTaxonomy';
 import '@/styles/dashboard-2300.css';
 
+// Logo para fundo dos cards
+import logoMoisesMedeiros from '@/assets/logo-moises-medeiros.png';
+
 // ============================================
 // DEFINIÇÃO DOS 5 BOOKS FIXOS
 // ============================================
@@ -204,7 +207,7 @@ const NetflixBookCard = memo(function NetflixBookCard({
         y: -6,
         transition: { duration: 0.2 }
       } : undefined}
-      className="group relative h-full"
+      className="group relative flex flex-col"
     >
       {/* Outer Glow Effect */}
       {isHighEnd && (
@@ -214,11 +217,11 @@ const NetflixBookCard = memo(function NetflixBookCard({
         />
       )}
       
-      {/* Main Card — Fixed Height */}
+      {/* Main Card — Netflix Style with Logo Background */}
       <div 
         onClick={() => onSelect(book.id)}
         className={cn(
-          "relative cursor-pointer overflow-hidden rounded-2xl h-full",
+          "relative cursor-pointer overflow-hidden rounded-2xl",
           "bg-gradient-to-br from-[#0a0b0f] via-[#0d0f14] to-[#12151c]",
           "border-2 transition-all duration-400",
           book.borderColor,
@@ -227,7 +230,7 @@ const NetflixBookCard = memo(function NetflixBookCard({
         )}
         style={{ 
           '--card-glow': book.glowColor,
-          minHeight: '280px'
+          minHeight: '320px'
         } as React.CSSProperties}
       >
         {/* Top Gradient Bar — Netflix Style */}
@@ -246,6 +249,16 @@ const NetflixBookCard = memo(function NetflixBookCard({
           book.gradientVia,
           book.gradientTo
         )} />
+
+        {/* 🖼️ LOGO BACKGROUND — Centered Watermark */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <img 
+            src={logoMoisesMedeiros} 
+            alt=""
+            className="w-24 md:w-32 h-auto opacity-[0.06] group-hover:opacity-[0.10] transition-opacity duration-500"
+            loading="lazy"
+          />
+        </div>
 
         {/* Cinematic Scan Line Effect */}
         {isHighEnd && (
@@ -269,7 +282,7 @@ const NetflixBookCard = memo(function NetflixBookCard({
         />
 
         {/* Content Container */}
-        <div className="relative p-5 flex flex-col h-full justify-between">
+        <div className="relative p-5 flex flex-col h-full justify-between" style={{ minHeight: '320px' }}>
           {/* Header: Icon + Badge */}
           <div className="flex items-start justify-between mb-4">
             {/* Icon Container — Glowing */}
@@ -319,18 +332,8 @@ const NetflixBookCard = memo(function NetflixBookCard({
             )}
           </div>
 
-          {/* Title + Description */}
-          <div className="flex-1 space-y-2">
-            <h3 className={cn(
-              "text-lg font-bold text-white/95 group-hover:text-white transition-colors",
-              "leading-tight line-clamp-2"
-            )}>
-              {book.name}
-            </h3>
-            <p className="text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed">
-              {book.description}
-            </p>
-          </div>
+          {/* Spacer to push footer down */}
+          <div className="flex-1" />
 
           {/* Footer: Stats + Action */}
           <div className="flex items-center justify-between pt-4 mt-auto border-t border-white/[0.06]">
@@ -370,6 +373,19 @@ const NetflixBookCard = memo(function NetflixBookCard({
           className="absolute -bottom-16 -right-16 w-40 h-40 rounded-full opacity-10 group-hover:opacity-25 transition-opacity blur-2xl pointer-events-none"
           style={{ backgroundColor: book.glowColor }}
         />
+      </div>
+
+      {/* 📖 TEXT BELOW CARD — Netflix Style */}
+      <div className="mt-3 px-1 space-y-1.5">
+        <h3 className={cn(
+          "text-base md:text-lg font-bold text-white/95 group-hover:text-white transition-colors",
+          "leading-tight line-clamp-2"
+        )}>
+          {book.name}
+        </h3>
+        <p className="text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed">
+          {book.description}
+        </p>
       </div>
     </motion.div>
   );
