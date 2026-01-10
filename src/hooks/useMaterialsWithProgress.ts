@@ -76,7 +76,8 @@ export function useMaterialsWithProgress() {
     return materials.map(m => ({
       id: m.id,
       title: m.title,
-      subtitle: m.micro || m.description?.slice(0, 50),
+      subtitle: m.micro || m.description?.slice(0, 60),
+      author: 'Prof. Moisés Medeiros',
       category: m.macro || 'quimica_geral',
       coverUrl: m.cover_url || undefined,
       totalPages: m.total_pages || 0,

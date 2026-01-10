@@ -5,10 +5,9 @@
 // 🎯 SHELL ESTRUTURAL: Receberá PDFs posteriormente
 // ============================================
 
-import { memo, useState } from 'react';
+import { memo, useState, forwardRef } from 'react';
 import { 
   ChevronDown,
-  ChevronUp,
   Flame,
   GraduationCap,
   Atom,
@@ -113,70 +112,68 @@ export const MaterialBookSection = memo(function MaterialBookSection({
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger asChild>
-        <div className="w-full cursor-pointer group">
-          <Card className={cn(
-            "overflow-hidden border-0 transition-all duration-300",
-            isOpen && "ring-2 ring-white/10"
+      <CollapsibleTrigger className="w-full text-left">
+        <Card className={cn(
+          "overflow-hidden border-0 transition-all duration-300 cursor-pointer group",
+          isOpen && "ring-2 ring-white/10"
+        )}>
+          {/* Section Header — Cinematic Gradient */}
+          <div className={cn(
+            "relative h-24 md:h-28 bg-gradient-to-r px-6 py-4",
+            config.gradient,
+            "flex items-center justify-between"
           )}>
-            {/* Section Header — Cinematic Gradient */}
-            <div className={cn(
-              "relative h-24 md:h-28 bg-gradient-to-r px-6 py-4",
-              config.gradient,
-              "flex items-center justify-between"
-            )}>
-              {/* Background effects */}
-              {isHighEnd && (
-                <>
-                  <div className="absolute inset-0 opacity-20" 
-                    style={{ 
-                      backgroundImage: `repeating-linear-gradient(90deg, transparent 0px, transparent 4px, rgba(255,255,255,0.1) 4px, rgba(255,255,255,0.1) 5px)` 
-                    }} 
-                  />
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                </>
-              )}
+            {/* Background effects */}
+            {isHighEnd && (
+              <>
+                <div className="absolute inset-0 opacity-20" 
+                  style={{ 
+                    backgroundImage: `repeating-linear-gradient(90deg, transparent 0px, transparent 4px, rgba(255,255,255,0.1) 4px, rgba(255,255,255,0.1) 5px)` 
+                  }} 
+                />
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+              </>
+            )}
 
-              {/* Content */}
-              <div className="relative flex items-center gap-4">
-                <div className="p-3 rounded-2xl bg-white/20 backdrop-blur-sm shadow-lg">
-                  <Icon className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-3 mb-1">
-                    <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">
-                      {config.label}
-                    </h2>
-                    <Badge className="bg-white/20 text-white border-0 font-bold">
-                      {items.length}
-                    </Badge>
-                  </div>
-                  <p className="text-white/80 text-sm">
-                    {config.description}
-                  </p>
-                </div>
+            {/* Content */}
+            <div className="relative flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-white/20 backdrop-blur-sm shadow-lg">
+                <Icon className="w-8 h-8 text-white" />
               </div>
-
-              {/* Chevron */}
-              <div className={cn(
-                "p-2 rounded-xl bg-white/10 backdrop-blur-sm transition-transform duration-300",
-                isOpen && "rotate-180"
-              )}>
-                <ChevronDown className="w-6 h-6 text-white" />
+              <div>
+                <div className="flex items-center gap-3 mb-1">
+                  <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">
+                    {config.label}
+                  </h2>
+                  <Badge className="bg-white/20 text-white border-0 font-bold">
+                    {items.length}
+                  </Badge>
+                </div>
+                <p className="text-white/80 text-sm">
+                  {config.description}
+                </p>
               </div>
-
-              {/* Corner accents */}
-              <div 
-                className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 rounded-tl-xl opacity-50"
-                style={{ borderColor: 'rgba(255,255,255,0.3)' }}
-              />
-              <div 
-                className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 rounded-br-xl opacity-50"
-                style={{ borderColor: 'rgba(255,255,255,0.3)' }}
-              />
             </div>
-          </Card>
-        </div>
+
+            {/* Chevron */}
+            <div className={cn(
+              "p-2 rounded-xl bg-white/10 backdrop-blur-sm transition-transform duration-300",
+              isOpen && "rotate-180"
+            )}>
+              <ChevronDown className="w-6 h-6 text-white" />
+            </div>
+
+            {/* Corner accents */}
+            <div 
+              className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 rounded-tl-xl opacity-50"
+              style={{ borderColor: 'rgba(255,255,255,0.3)' }}
+            />
+            <div 
+              className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 rounded-br-xl opacity-50"
+              style={{ borderColor: 'rgba(255,255,255,0.3)' }}
+            />
+          </div>
+        </Card>
       </CollapsibleTrigger>
 
       <CollapsibleContent>
