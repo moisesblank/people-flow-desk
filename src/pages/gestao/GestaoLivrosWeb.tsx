@@ -453,6 +453,11 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
   });
   const [isSaving, setIsSaving] = useState(false);
 
+  // Aniquilar livro
+  const [annihilateBook, setAnnihilateBook] = useState<WebBookAdmin | null>(null);
+  const [annihilateConfirm, setAnnihilateConfirm] = useState('');
+  const [isAnnihilating, setIsAnnihilating] = useState(false);
+
   const { clearAllCache } = useCacheManager();
 
   // Carregar livros
@@ -527,6 +532,65 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
       loadBooks();
     } catch (err) {
       toast.error('Erro ao publicar');
+    }
+  };
+
+  // Aniquilar livro (exclusão permanente)
+  const handleAnnihilate = async () => {
+    if (!annihilateBook || annihilateConfirm !== 'EXCLUIR') return;
+    
+    setIsAnnihilating(true);
+    try {
+      const bookId = annihilateBook.id;
+      const bookTitle = annihilateBook.title;
+
+      // 1. Deletar anotações do usuário
+      await supabase.from('book_user_annotations').delete().eq('book_id', bookId);
+      
+      // 2. Deletar bookmarks
+      await supabase.from('book_user_bookmarks').delete().eq('book_id', bookId);
+      
+      // 3. Deletar overlays de página
+      await supabase.from('book_user_page_overlays').delete().eq('book_id', bookId);
+      
+      // 4. Deletar mensagens de chat
+      await supabase.from('book_chat_messages').delete().eq('book_id', bookId);
+      
+      // 5. Deletar threads de chat
+      await supabase.from('book_chat_threads').delete().eq('book_id', bookId);
+      
+      // 6. Deletar sessões de leitura
+      await supabase.from('book_reading_sessions').delete().eq('book_id', bookId);
+      
+      // 7. Deletar logs de acesso
+      await supabase.from('book_access_logs').delete().eq('book_id', bookId);
+      
+      // 8. Deletar ratings
+      await supabase.from('book_ratings').delete().eq('book_id', bookId);
+      
+      // 9. Deletar jobs de import
+      await supabase.from('book_import_jobs').delete().eq('book_id', bookId);
+      
+      // 10. Deletar o livro (cascata para web_book_pages via FK)
+      const { error } = await supabase
+        .from('web_books')
+        .delete()
+        .eq('id', bookId);
+
+      if (error) throw error;
+
+      // 11. Limpar cache
+      clearAllCache();
+
+      toast.success(`📕 Livro "${bookTitle}" aniquilado permanentemente`);
+      setAnnihilateBook(null);
+      setAnnihilateConfirm('');
+      loadBooks();
+    } catch (err) {
+      console.error('[Aniquilar] Erro:', err);
+      toast.error('Erro ao aniquilar livro');
+    } finally {
+      setIsAnnihilating(false);
     }
   };
 
@@ -786,10 +850,17 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                             )}
                             <DropdownMenuItem 
                               onClick={() => handleArchive(book.id)}
-                              className="text-destructive"
+                              className="text-amber-600"
                             >
                               <Archive className="w-4 h-4 mr-2" />
                               Arquivar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => setAnnihilateBook(book)}
+                              className="text-destructive font-semibold"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              🔥 Aniquilar
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -935,6 +1006,93 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                 </>
               ) : (
                 'Salvar'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Aniquilar Dialog */}
+      <Dialog 
+        open={!!annihilateBook} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setAnnihilateBook(null);
+            setAnnihilateConfirm('');
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />
+              🔥 Aniquilar Livro
+            </DialogTitle>
+            <DialogDescription>
+              Esta ação é <strong className="text-destructive">IRREVERSÍVEL</strong>. 
+              O livro e todos os dados associados serão excluídos permanentemente:
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Info do livro */}
+            <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/30">
+              <p className="font-semibold text-foreground">{annihilateBook?.title}</p>
+              <p className="text-sm text-muted-foreground">{annihilateBook?.total_pages || 0} páginas</p>
+            </div>
+
+            {/* Lista do que será deletado */}
+            <div className="text-sm space-y-1 text-muted-foreground">
+              <p>• Todas as páginas do livro</p>
+              <p>• Anotações e marcações dos alunos</p>
+              <p>• Histórico de chat com IA</p>
+              <p>• Sessões de leitura e logs</p>
+              <p>• Avaliações e ratings</p>
+              <p>• Arquivos no storage</p>
+            </div>
+
+            {/* Campo de confirmação */}
+            <div>
+              <Label htmlFor="confirm-annihilate" className="text-destructive">
+                Digite <strong>EXCLUIR</strong> para confirmar:
+              </Label>
+              <Input
+                id="confirm-annihilate"
+                value={annihilateConfirm}
+                onChange={(e) => setAnnihilateConfirm(e.target.value.toUpperCase())}
+                placeholder="EXCLUIR"
+                className="mt-2 font-mono"
+                disabled={isAnnihilating}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setAnnihilateBook(null);
+                setAnnihilateConfirm('');
+              }}
+              disabled={isAnnihilating}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={handleAnnihilate}
+              disabled={annihilateConfirm !== 'EXCLUIR' || isAnnihilating}
+            >
+              {isAnnihilating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Aniquilando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  🔥 Aniquilar Permanentemente
+                </>
               )}
             </Button>
           </DialogFooter>
