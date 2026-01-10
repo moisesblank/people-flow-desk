@@ -1,6 +1,7 @@
 // ============================================
-// 📚 ALUNO MATERIAIS — 5 BOOKS FIXOS
+// 📚 ALUNO MATERIAIS — NETFLIX ULTRA PREMIUM 2300
 // Year 2300 Cinematic Experience
+// 5 Hub Cards Fixos
 // ============================================
 
 import { memo, useState, useCallback } from 'react';
@@ -13,10 +14,11 @@ import {
   Library, 
   Sparkles,
   BookOpen,
-  Shield
+  Shield,
+  Zap,
+  FileText
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useConstitutionPerformance } from '@/hooks/useConstitutionPerformance';
 import { CyberBackground } from '@/components/ui/cyber-background';
 import { cn } from '@/lib/utils';
@@ -141,94 +143,152 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
         <title>Materiais de Estudo | Portal do Aluno</title>
       </Helmet>
 
-      <div className="relative min-h-screen">
+      <div className="relative min-h-screen bg-[#030508]">
         {/* 🌌 CYBER BACKGROUND */}
         {isHighEnd && <CyberBackground variant="grid" />}
         
         <div className="relative z-10 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
           
-          {/* 🎬 HERO HEADER — Year 2300 Cinematic */}
+          {/* 🎬 HERO HEADER — Netflix Ultra Premium 2300 */}
           {viewState.mode === 'hub' && (
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: -30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="relative"
             >
               <div className={cn(
-                "relative rounded-3xl overflow-hidden p-8 md:p-12",
-                "bg-gradient-to-br from-[#0d1218] via-[#121922] to-[#1a1020]",
-                "border border-white/10",
-                isHighEnd && "shadow-[0_0_60px_-15px_rgba(229,9,20,0.3)]"
-              )}>
-                {/* Background effects */}
+                "relative rounded-3xl overflow-hidden",
+                "bg-gradient-to-br from-[#0a0d12] via-[#0f1419] to-[#151a22]",
+                "border border-primary/20"
+              )}
+                style={isHighEnd ? {
+                  boxShadow: '0 0 80px -20px rgba(229, 9, 20, 0.25), 0 0 40px -20px rgba(6, 182, 212, 0.15)'
+                } : undefined}
+              >
+                {/* Top Gradient Line */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
+                
+                {/* Background Orbs */}
                 {isHighEnd && (
                   <>
-                    <div className="absolute inset-0 opacity-30"
-                      style={{
-                        backgroundImage: `radial-gradient(circle at 20% 50%, rgba(229, 9, 20, 0.15) 0%, transparent 50%),
-                                          radial-gradient(circle at 80% 50%, rgba(6, 182, 212, 0.1) 0%, transparent 50%)`
-                      }}
-                    />
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[100px]" />
+                    <div className="absolute -top-20 -left-20 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
+                    <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-cyan-500/10 rounded-full blur-[120px]" />
+                    
+                    {/* Animated Scan Line */}
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                      <div 
+                        className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.03] to-transparent"
+                        style={{
+                          animation: 'hero-scan 4s ease-in-out infinite'
+                        }}
+                      />
+                    </div>
                   </>
                 )}
                 
                 {/* Content */}
-                <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
+                <div className="relative p-8 md:p-12">
+                  <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+                    {/* Left Side: Icon + Title + Description */}
+                    <div className="flex items-start gap-5">
+                      {/* Icon Container */}
                       <div className={cn(
-                        "p-3 rounded-2xl",
-                        "bg-gradient-to-br from-primary/30 to-primary/10",
-                        "border border-primary/20"
+                        "relative p-5 rounded-2xl",
+                        "bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5",
+                        "border border-primary/30"
                       )}>
-                        <Library className="w-8 h-8 text-primary" />
+                        {isHighEnd && (
+                          <div className="absolute inset-0 rounded-2xl bg-primary/20 blur-xl opacity-50" />
+                        )}
+                        <Library className="relative w-10 h-10 text-primary" />
                       </div>
-                      <div>
-                        <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-                          Materiais de Estudo
-                        </h1>
-                        <p className="text-muted-foreground">
-                          Biblioteca completa organizada por categoria
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {/* Quick Stats */}
-                    <div className="flex flex-wrap items-center gap-4">
-                      <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-                        <BookOpen className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium text-white">5 coleções</span>
-                      </div>
-                      <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-                        <Shield className="w-4 h-4 text-amber-400" />
-                        <span className="text-sm font-medium text-white">Protegido com Watermark</span>
-                      </div>
-                      <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-                        <Sparkles className="w-4 h-4 text-cyan-400" />
-                        <span className="text-sm font-medium text-white">Acesso Premium</span>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Decorative Element */}
-                  {isHighEnd && (
-                    <div className="hidden lg:block relative w-32 h-32">
-                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-cyan-500/20 animate-pulse" />
-                      <div className="absolute inset-2 rounded-full bg-gradient-to-br from-[#0d1218] to-[#1a1020] flex items-center justify-center">
-                        <Library className="w-12 h-12 text-primary/60" />
+                      {/* Title + Description */}
+                      <div className="space-y-3">
+                        <div>
+                          <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+                            Materiais de Estudo
+                          </h1>
+                          <p className="text-muted-foreground text-lg mt-1">
+                            Biblioteca completa organizada por categoria
+                          </p>
+                        </div>
+                        
+                        {/* Quick Stats */}
+                        <div className="flex flex-wrap items-center gap-3">
+                          <div className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-xl",
+                            "bg-white/5 border border-white/10",
+                            "hover:bg-white/10 transition-colors"
+                          )}>
+                            <BookOpen className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-medium text-white">5 coleções</span>
+                          </div>
+                          <div className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-xl",
+                            "bg-white/5 border border-white/10",
+                            "hover:bg-white/10 transition-colors"
+                          )}>
+                            <Shield className="w-4 h-4 text-amber-400" />
+                            <span className="text-sm font-medium text-white">Watermark Forense</span>
+                          </div>
+                          <div className={cn(
+                            "flex items-center gap-2 px-4 py-2 rounded-xl",
+                            "bg-white/5 border border-white/10",
+                            "hover:bg-white/10 transition-colors"
+                          )}>
+                            <Zap className="w-4 h-4 text-cyan-400" />
+                            <span className="text-sm font-medium text-white">Premium</span>
+                          </div>
+                        </div>
                       </div>
-                      {/* Orbital ring */}
-                      <div className="absolute inset-0 rounded-full border border-primary/20 animate-spin" style={{ animationDuration: '20s' }} />
-                      <div className="absolute inset-[-4px] rounded-full border border-cyan-500/10 animate-spin" style={{ animationDuration: '30s', animationDirection: 'reverse' }} />
                     </div>
-                  )}
+
+                    {/* Right Side: Decorative Element */}
+                    {isHighEnd && (
+                      <div className="hidden xl:block relative w-40 h-40">
+                        {/* Outer Glow */}
+                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/20 to-cyan-500/20 blur-xl" />
+                        
+                        {/* Main Circle */}
+                        <div className="absolute inset-4 rounded-full bg-gradient-to-br from-[#0a0d12] to-[#151a22] border border-white/10 flex items-center justify-center">
+                          <FileText className="w-14 h-14 text-primary/40" />
+                        </div>
+                        
+                        {/* Orbital Rings */}
+                        <div 
+                          className="absolute inset-0 rounded-full border border-primary/20"
+                          style={{ animation: 'spin 20s linear infinite' }}
+                        />
+                        <div 
+                          className="absolute -inset-2 rounded-full border border-cyan-500/10"
+                          style={{ animation: 'spin 30s linear infinite reverse' }}
+                        />
+                        <div 
+                          className="absolute -inset-4 rounded-full border border-primary/5"
+                          style={{ animation: 'spin 40s linear infinite' }}
+                        />
+                        
+                        {/* Orbiting Dots */}
+                        <div 
+                          className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-primary"
+                          style={{ animation: 'spin 20s linear infinite', transformOrigin: 'center 80px' }}
+                        />
+                        <div 
+                          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-cyan-400"
+                          style={{ animation: 'spin 30s linear infinite reverse', transformOrigin: 'center -60px' }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Corner accents */}
-                <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-primary/30 rounded-tl-3xl" />
-                <div className="absolute bottom-0 right-0 w-16 h-16 border-r-2 border-b-2 border-cyan-500/30 rounded-br-3xl" />
+                {/* Corner Accents */}
+                <div className="absolute top-4 left-4 w-8 h-8 border-l-2 border-t-2 border-primary/40 rounded-tl-xl" />
+                <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-cyan-500/30 rounded-tr-xl" />
+                <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-cyan-500/30 rounded-bl-xl" />
+                <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-primary/40 rounded-br-xl" />
               </div>
             </motion.div>
           )}
@@ -237,7 +297,7 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
           >
             {viewState.mode === 'hub' && (
               <MaterialBooksHub onSelectBook={handleSelectBook} />
