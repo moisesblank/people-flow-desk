@@ -582,89 +582,186 @@ const WebBookLibrary = memo(function WebBookLibrary({
       
       <div className="relative z-10 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
         
-        {/* 🎬 HERO HEADER — SPIDER-MAN RED */}
-        <div className="relative overflow-hidden rounded-3xl">
-          <div className="dashboard-hero-2300 p-6 md:p-8">
-            <div className="relative z-10 flex flex-col lg:flex-row items-center gap-6">
+        {/* 🎬 HERO HEADER — NETFLIX ULTRA PREMIUM 2300 */}
+        <div className="relative overflow-hidden rounded-3xl border-2 border-cyan-500/30 shadow-2xl shadow-cyan-500/10">
+          {/* Animated gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0a0e14] via-[#0c1219] to-[#0a0a12]" />
+          
+          {/* Holographic mesh overlay */}
+          <div 
+            className="absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage: `linear-gradient(rgba(6,182,212,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(6,182,212,0.3) 1px, transparent 1px)`,
+              backgroundSize: '30px 30px'
+            }}
+          />
+          
+          {/* Glow orbs */}
+          {isHighEnd && (
+            <>
+              <div className="absolute -top-20 -right-20 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl" />
+              <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-[#E23636]/15 rounded-full blur-3xl" />
+            </>
+          )}
+          
+          {/* Scanlines */}
+          {isHighEnd && (
+            <div 
+              className="absolute inset-0 opacity-[0.02] pointer-events-none"
+              style={{ backgroundImage: `repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(255,255,255,0.05) 2px, rgba(255,255,255,0.05) 4px)` }}
+            />
+          )}
+          
+          <div className="relative z-10 p-6 md:p-8 lg:p-10">
+            <div className="flex flex-col lg:flex-row items-center gap-8">
               
-              {/* Icon Orb */}
-              <div className="relative">
+              {/* Icon Orb — Holographic */}
+              <div className="relative group">
                 {isHighEnd && (
-                  <div className="absolute inset-0 bg-[#E23636]/50 rounded-2xl blur-2xl animate-pulse" />
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/60 to-[#E23636]/40 rounded-2xl blur-2xl opacity-80 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-[-4px] bg-gradient-to-r from-cyan-500 via-[#E23636] to-cyan-500 rounded-2xl opacity-30 animate-pulse" style={{ animationDuration: '3s' }} />
+                  </>
                 )}
-                <div className="relative w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-gradient-to-br from-[#E23636] via-red-500 to-orange-500 flex items-center justify-center shadow-2xl shadow-[#E23636]/40 border-2 border-[#E23636]/50">
-                  <Library className="w-10 h-10 md:w-12 md:h-12 text-white" />
+                <div className="relative w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-gradient-to-br from-[#0f1419] via-[#1a1f26] to-[#0f1419] flex items-center justify-center shadow-2xl border-2 border-cyan-500/40 overflow-hidden">
+                  {/* Inner glow */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 via-transparent to-[#E23636]/20" />
+                  {/* Icon bars (book spine style) */}
+                  <div className="relative flex gap-1">
+                    <div className="w-2 h-12 md:h-14 bg-gradient-to-b from-[#E23636] to-orange-500 rounded-sm" />
+                    <div className="w-2 h-10 md:h-12 bg-gradient-to-b from-cyan-400 to-cyan-600 rounded-sm mt-1" />
+                    <div className="w-2 h-14 md:h-16 bg-gradient-to-b from-[#E23636] to-rose-500 rounded-sm -mt-1" />
+                    <div className="w-2 h-11 md:h-13 bg-gradient-to-b from-amber-400 to-orange-500 rounded-sm" />
+                  </div>
                 </div>
               </div>
 
               {/* Title & Subtitle */}
-              <div className="flex-1 text-center lg:text-left">
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-white mb-2 tracking-tight">
-                  Biblioteca <span className="text-[#E23636]">Premium</span>
+              <div className="flex-1 text-center lg:text-left space-y-3">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight">
+                  <span className="text-white">Biblioteca </span>
+                  <span className="bg-gradient-to-r from-cyan-400 via-[#E23636] to-orange-500 bg-clip-text text-transparent">Premium</span>
                 </h1>
-                <p className="text-cyan-100/70 text-sm md:text-base max-w-xl">
+                <p className="text-cyan-100/60 text-sm md:text-base max-w-xl leading-relaxed">
                   Materiais exclusivos criados pelo Moisa para sua aprovação. Cada página te aproxima do sonho!
                 </p>
+                
+                {/* Micro-tags */}
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2 pt-1">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                    <Zap className="w-3 h-3" />
+                    Conteúdo Exclusivo
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E23636]/10 text-[#E23636] border border-[#E23636]/30">
+                    <Award className="w-3 h-3" />
+                    Material Premium
+                  </span>
+                </div>
               </div>
 
-              {/* Stats Orbs */}
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center gap-1.5">
-                  <div className="px-5 py-3 rounded-xl bg-gradient-to-r from-[#E23636] to-red-500 shadow-lg shadow-[#E23636]/30">
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="w-5 h-5 text-white" />
-                      <span className="text-2xl font-black text-white">{stats.total}</span>
+              {/* Stats HUD Orbs */}
+              <div className="flex gap-3 md:gap-4">
+                {/* TOTAL */}
+                <div className="relative group flex flex-col items-center gap-2">
+                  {isHighEnd && <div className="absolute inset-0 bg-[#E23636]/30 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />}
+                  <div className="relative px-5 py-4 rounded-2xl bg-gradient-to-br from-[#E23636] via-red-500 to-orange-500 shadow-lg shadow-[#E23636]/40 border border-[#E23636]/60 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                    <div className="relative flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-white/90" />
+                      <span className="text-2xl md:text-3xl font-black text-white">{stats.total}</span>
                     </div>
                   </div>
-                  <span className="text-[10px] text-cyan-200/50 uppercase tracking-wider font-bold">Total</span>
+                  <span className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold">Total</span>
                 </div>
                 
-                <div className="flex flex-col items-center gap-1.5">
-                  <div className="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 shadow-lg shadow-amber-500/30">
-                    <div className="flex items-center gap-2">
-                      <Flame className="w-5 h-5 text-white" />
-                      <span className="text-2xl font-black text-white">{stats.reading}</span>
+                {/* LENDO */}
+                <div className="relative group flex flex-col items-center gap-2">
+                  {isHighEnd && <div className="absolute inset-0 bg-amber-500/30 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />}
+                  <div className="relative px-5 py-4 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-yellow-500 shadow-lg shadow-amber-500/40 border border-amber-500/60 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                    <div className="relative flex items-center gap-2">
+                      <Flame className="w-5 h-5 text-white/90" />
+                      <span className="text-2xl md:text-3xl font-black text-white">{stats.reading}</span>
                     </div>
                   </div>
-                  <span className="text-[10px] text-cyan-200/50 uppercase tracking-wider font-bold">Lendo</span>
+                  <span className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold">Lendo</span>
                 </div>
                 
-                <div className="flex flex-col items-center gap-1.5">
-                  <div className="px-5 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-lg shadow-emerald-500/30">
-                    <div className="flex items-center gap-2">
-                      <Crown className="w-5 h-5 text-white" />
-                      <span className="text-2xl font-black text-white">{stats.completed}</span>
+                {/* DOMINADOS */}
+                <div className="relative group flex flex-col items-center gap-2">
+                  {isHighEnd && <div className="absolute inset-0 bg-emerald-500/30 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />}
+                  <div className="relative px-5 py-4 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 shadow-lg shadow-emerald-500/40 border border-emerald-500/60 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                    <div className="relative flex items-center gap-2">
+                      <Crown className="w-5 h-5 text-white/90" />
+                      <span className="text-2xl md:text-3xl font-black text-white">{stats.completed}</span>
                     </div>
                   </div>
-                  <span className="text-[10px] text-cyan-200/50 uppercase tracking-wider font-bold">Dominados</span>
+                  <span className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold">Dominados</span>
                 </div>
               </div>
             </div>
           </div>
+          
+          {/* Corner accents */}
+          <div className="absolute top-0 left-0 w-20 h-20 border-l-2 border-t-2 border-cyan-500/40 rounded-tl-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-20 h-20 border-r-2 border-t-2 border-[#E23636]/40 rounded-tr-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-20 h-20 border-l-2 border-b-2 border-[#E23636]/40 rounded-bl-3xl pointer-events-none" />
+          <div className="absolute bottom-0 right-0 w-20 h-20 border-r-2 border-b-2 border-cyan-500/40 rounded-br-3xl pointer-events-none" />
         </div>
 
-        {/* 📢 AVISO — VERSÃO 2026 */}
-        <div className="relative overflow-hidden rounded-2xl border-2 border-[#E23636]/30 bg-gradient-to-r from-[#0a0e14] via-[#1a0a0a] to-[#0a0e14]">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#E23636]/5 via-transparent to-[#E23636]/5" />
+        {/* 📢 AVISO — VERSÃO 2026 — NETFLIX FUTURISTIC */}
+        <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-r from-[#0a0e14] via-[#0f0a14] to-[#0a0e14] shadow-lg shadow-purple-500/10">
+          {/* Animated gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-[#E23636]/5 to-purple-500/5" />
+          
+          {/* Grid pattern */}
+          <div 
+            className="absolute inset-0 opacity-[0.03]"
+            style={{
+              backgroundImage: `linear-gradient(rgba(168,85,247,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(168,85,247,0.4) 1px, transparent 1px)`,
+              backgroundSize: '20px 20px'
+            }}
+          />
+          
           <div className="relative z-10 p-5 md:p-6 flex flex-col md:flex-row items-center gap-4 md:gap-6">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-[#E23636]/30 to-[#E23636]/15 border border-[#E23636]/40">
-              <Rocket className="w-7 h-7 text-[#E23636]" />
+            {/* Icon */}
+            <div className="relative">
+              {isHighEnd && (
+                <div className="absolute inset-0 bg-purple-500/40 rounded-xl blur-xl" />
+              )}
+              <div className="relative p-3 rounded-xl bg-gradient-to-br from-purple-500/30 to-[#E23636]/20 border border-purple-500/50 shadow-lg">
+                <Rocket className="w-7 h-7 text-purple-400" />
+              </div>
             </div>
+            
+            {/* Text */}
             <div className="flex-1 text-center md:text-left">
-              <h3 className="text-lg md:text-xl font-bold text-white">
-                Aguarde a versão dos livros de <span className="text-[#E23636]">2026</span>
+              <h3 className="text-lg md:text-xl font-bold text-white mb-1">
+                Aguarde a versão dos livros de <span className="bg-gradient-to-r from-purple-400 to-[#E23636] bg-clip-text text-transparent font-black">2026</span>
               </h3>
-              <p className="text-xs md:text-sm text-muted-foreground/70">
-                Liberadas apenas dia 31/01
+              <p className="text-xs md:text-sm text-muted-foreground/60">
+                Novos materiais atualizados serão liberados em breve!
               </p>
             </div>
+            
+            {/* Date badge */}
             <div className="flex items-center gap-3">
-              <div className="px-4 py-2 rounded-lg bg-[#E23636]/20 border border-[#E23636]/40">
-                <span className="text-lg font-black text-[#E23636]">31/01</span>
+              <div className="relative group">
+                {isHighEnd && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-[#E23636] rounded-xl blur-md opacity-50 group-hover:opacity-80 transition-opacity" />
+                )}
+                <div className="relative px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-500/90 to-[#E23636]/90 border border-purple-400/50 shadow-lg">
+                  <span className="text-lg font-black text-white">31/01</span>
+                </div>
               </div>
-              <span className="text-xs text-muted-foreground/50 uppercase">lançamento</span>
+              <span className="text-[10px] text-purple-300/60 uppercase tracking-widest font-bold">Lançamento</span>
             </div>
           </div>
+          
+          {/* Corner accents */}
+          <div className="absolute top-0 left-0 w-12 h-12 border-l-2 border-t-2 border-purple-500/40 rounded-tl-2xl pointer-events-none" />
+          <div className="absolute bottom-0 right-0 w-12 h-12 border-r-2 border-b-2 border-purple-500/40 rounded-br-2xl pointer-events-none" />
         </div>
 
         {/* 📚 BOOK SECTIONS — NETFLIX COLLAPSIBLE STYLE */}
