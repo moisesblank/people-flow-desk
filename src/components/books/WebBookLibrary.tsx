@@ -1,43 +1,29 @@
 // ============================================
-// 📚 LIVROS DO MOISA — NETFLIX ULTRA PREMIUM v17.0
+// 📚 LIVROS DO MOISA — APOTEÓTICO v20.0
 // Year 2300 Cinematic + Spider-Man Red (#E23636)
+// CADA LIVRO = UMA SEÇÃO CINEMATOGRÁFICA
 // PERFORMANCE ADAPTATIVA — 5000+ USUÁRIOS
 // ============================================
 
-import React, { memo, useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { memo, useState, useCallback, useMemo } from 'react';
 import { useWebBookLibrary, WebBookListItem } from '@/hooks/useWebBook';
-import { AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, 
-  Search, 
   CheckCircle,
   Play,
-  Star,
   Clock,
-  ChevronLeft,
-  ChevronRight,
-  Crown,
-  Eye,
-  BookMarked,
   Library,
   Flame,
+  BookMarked,
+  Eye,
+  FileText,
+  ChevronDown,
+  ChevronUp,
   Award,
-  Info,
-  Plus,
   Sparkles,
-  GraduationCap,
-  Layers,
-  PlayCircle,
-  Zap
+  Zap,
+  Target
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue 
-} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { getCategoryConfig, normalizeCategoryId } from './CategoryCover';
@@ -45,6 +31,7 @@ import { useBookCategories } from '@/hooks/useBookCategories';
 import { useConstitutionPerformance } from '@/hooks/useConstitutionPerformance';
 import { CyberBackground } from '@/components/ui/cyber-background';
 import { FuturisticPageHeader } from '@/components/ui/futuristic-page-header';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 // ============================================
 // TIPOS
@@ -57,80 +44,55 @@ interface WebBookLibraryProps {
 }
 
 // ============================================
-// CATEGORIAS
-// ============================================
-
-const CATEGORIES = [
-  { value: 'all', label: 'Todas as categorias' },
-  { value: 'quimica_geral', label: '⚗️ Química Geral' },
-  { value: 'quimica_organica', label: '🧪 Química Orgânica' },
-  { value: 'fisico_quimica', label: '📊 Físico-Química' },
-  { value: 'quimica_ambiental', label: '🌍 Química Ambiental' },
-  { value: 'bioquimica', label: '🧬 Bioquímica' },
-  { value: 'revisao_ciclica', label: '🔄 Revisão Cíclica' },
-  { value: 'previsao_final', label: '🎯 Previsão Final' },
-  { value: 'exercicios', label: '✏️ Exercícios' },
-  { value: 'simulados', label: '📝 Simulados' },
-  { value: 'resumos', label: '📋 Resumos' },
-  { value: 'mapas_mentais', label: '🧠 Mapas Mentais' },
-  { value: 'outros', label: '📚 Outros' },
-];
-
-// ============================================
 // CSS KEYFRAMES — GPU OPTIMIZED + YEAR 2300
 // ============================================
 
-const CINEMATIC_STYLES = `
-  @keyframes cinematic-pulse {
+const APOTEOTIC_STYLES = `
+  @keyframes apo-pulse {
     0%, 100% { box-shadow: 0 0 40px rgba(226,54,54,0.3), inset 0 0 20px rgba(226,54,54,0.1); }
     50% { box-shadow: 0 0 80px rgba(226,54,54,0.5), inset 0 0 40px rgba(226,54,54,0.2); }
   }
-  @keyframes cinematic-glow {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.6; }
-  }
-  @keyframes cinematic-orbit {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-  @keyframes cinematic-float {
+  @keyframes apo-float {
     0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+    50% { transform: translateY(-8px); }
   }
-  @keyframes cinematic-shimmer {
+  @keyframes apo-shimmer {
     0% { background-position: -200% center; }
     100% { background-position: 200% center; }
   }
-  @keyframes cinematic-scanline {
+  @keyframes apo-glow-pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+  }
+  @keyframes apo-orbit {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes apo-scanline {
     0% { transform: translateY(-100%); }
     100% { transform: translateY(100vh); }
   }
-  .hide-scrollbar::-webkit-scrollbar { display: none; }
-  .hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-  .cinematic-card { 
-    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), 
-                box-shadow 0.4s ease,
-                border-color 0.3s ease; 
+  .apo-section {
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
   }
-  .cinematic-card:hover { 
-    transform: scale(1.08) translateY(-8px); 
-    z-index: 30;
-    border-color: rgba(226,54,54,0.8);
-    box-shadow: 0 20px 60px rgba(226,54,54,0.4), 0 0 100px rgba(226,54,54,0.2);
+  .apo-section:hover {
+    transform: scale(1.005);
   }
-  .perf-reduced .cinematic-card:hover { 
+  .apo-book-cover {
+    transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .apo-book-cover:hover {
     transform: scale(1.03) translateY(-4px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 30px 80px rgba(226,54,54,0.4), 0 0 120px rgba(226,54,54,0.2);
   }
-  .perf-reduced .cinematic-pulse { animation: none !important; }
-  .perf-reduced .cinematic-glow { display: none !important; }
-  .perf-reduced .cinematic-particles { display: none !important; }
-  .perf-reduced .cinematic-scanline { display: none !important; }
+  .perf-reduced .apo-pulse { animation: none !important; }
+  .perf-reduced .apo-glow { display: none !important; }
+  .perf-reduced .apo-orbit { animation: none !important; }
+  .perf-reduced .apo-book-cover:hover { transform: scale(1.02); }
 `;
 
 // ============================================
-// 🎯 HUD STAT ORB — YEAR 2300 CINEMATIC
-// Orbes flutuantes com glow holográfico intenso
+// 🎯 HUD STAT ORB — YEAR 2300 APOTEOTIC
 // ============================================
 
 const HudStatOrb = memo(function HudStatOrb({ 
@@ -166,7 +128,6 @@ const HudStatOrb = memo(function HudStatOrb({
       <div className="absolute bottom-0 right-0 w-3 h-3 border-r-2 border-b-2 border-current opacity-50 rounded-br-lg" />
       
       <div className="flex items-center gap-3">
-        {/* Icon container with pulse */}
         <div className="relative">
           <div className="absolute inset-0 rounded-xl bg-current opacity-20 blur-md animate-pulse" />
           <div className="relative p-2.5 rounded-xl bg-background/30 backdrop-blur-sm border border-current/30 shadow-inner">
@@ -174,7 +135,6 @@ const HudStatOrb = memo(function HudStatOrb({
           </div>
         </div>
         
-        {/* Value and label */}
         <div>
           <p className="text-2xl md:text-3xl font-black tracking-tight tabular-nums">
             {value.toLocaleString()}
@@ -187,71 +147,24 @@ const HudStatOrb = memo(function HudStatOrb({
 });
 
 // ============================================
-// 🎨 HIERARCHY LEGEND — NETFLIX PREMIUM CINEMATIC
+// 📊 STATS PANEL — YEAR 2300 APOTEOTIC HUD
 // ============================================
-
-const HierarchyLegend = memo(function HierarchyLegend() {
-  return (
-    <div className="relative p-4 rounded-2xl bg-gradient-to-r from-[#1a0a0a]/60 via-[#0a0e14]/80 to-[#1a0a0a]/60 border-2 border-[#E23636]/30 backdrop-blur-xl overflow-hidden">
-      {/* Background glow orbs */}
-      <div className="absolute top-0 left-1/4 w-32 h-32 bg-[#E23636]/15 rounded-full blur-3xl -z-10" />
-      <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-[#E23636]/10 rounded-full blur-3xl -z-10" />
-      
-      <div className="flex flex-wrap items-center gap-3 justify-center">
-        <span className="text-sm font-bold text-slate-300 mr-2 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-[#E23636]" />
-          BIBLIOTECA:
-        </span>
-        
-        {/* Categorias */}
-        <Badge className="px-3 py-1.5 text-xs bg-[#E23636]/25 text-[#FF6B6B] border-2 border-[#E23636]/50 shadow-lg shadow-[#E23636]/30 hover:scale-105 transition-transform">
-          <Layers className="h-3.5 w-3.5 mr-1.5" />
-          Categoria
-        </Badge>
-        
-        <ChevronRight className="h-4 w-4 text-[#E23636]/70" />
-        
-        {/* Livros */}
-        <Badge className="px-3 py-1.5 text-xs bg-slate-700/50 text-slate-200 border-2 border-slate-500/40 shadow-lg hover:scale-105 transition-transform">
-          <BookOpen className="h-3.5 w-3.5 mr-1.5" />
-          Livros
-        </Badge>
-        
-        <ChevronRight className="h-4 w-4 text-slate-500" />
-        
-        {/* Leitura */}
-        <Badge className="px-3 py-1.5 text-xs bg-[#E23636]/25 text-[#FF6B6B] border-2 border-[#E23636]/50 shadow-lg shadow-[#E23636]/30 hover:scale-105 transition-transform">
-          <PlayCircle className="h-3.5 w-3.5 mr-1.5" />
-          Leitura
-        </Badge>
-      </div>
-    </div>
-  );
-});
-
-// ============================================
-// 📊 STATS PANEL — YEAR 2300 HUD
-// ============================================
-
-interface StatsPanelProps {
-  totalBooks: number;
-  inProgress: number;
-  completed: number;
-  trending: number;
-}
 
 const StatsPanel = memo(function StatsPanel({ 
   totalBooks, 
   inProgress, 
-  completed, 
-  trending 
-}: StatsPanelProps) {
+  completed
+}: { 
+  totalBooks: number;
+  inProgress: number;
+  completed: number;
+}) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+    <div className="grid grid-cols-3 gap-3 md:gap-4">
       <HudStatOrb
         icon={<Library className="h-5 w-5 md:h-6 md:w-6 text-[#E23636]" />}
         value={totalBooks}
-        label="Total"
+        label="Biblioteca"
         color="from-[#E23636]/15 to-[#E23636]/5 border-[#E23636]/40 text-[#FF6B6B]"
         glowColor="bg-[#E23636]"
       />
@@ -269,444 +182,346 @@ const StatsPanel = memo(function StatsPanel({
         color="from-emerald-500/15 to-emerald-500/5 border-emerald-500/40 text-emerald-300"
         glowColor="bg-emerald-500"
       />
-      <HudStatOrb
-        icon={<Flame className="h-5 w-5 md:h-6 md:w-6 text-orange-400" />}
-        value={trending}
-        label="Trending"
-        color="from-orange-500/15 to-orange-500/5 border-orange-500/40 text-orange-300"
-        glowColor="bg-orange-500"
-      />
     </div>
   );
 });
 
 // ============================================
-// 🎬 CINEMATIC BOOK CARD — YEAR 2300 DESIGN
+// 📚 BOOK SECTION — APOTEOTIC CINEMATIC CARD
+// Cada livro é uma seção própria com design cinematográfico
 // ============================================
 
-const CinematicBookCard = memo(function CinematicBookCard({
-  book,
-  onClick,
-  categoryCoverUrl,
-  index,
-  isHighEnd
-}: {
+interface BookSectionProps {
   book: WebBookListItem;
-  onClick: () => void;
-  categoryCoverUrl?: string | null;
   index: number;
+  coverUrl: string | null;
+  onSelect: () => void;
   isHighEnd: boolean;
-}) {
+  isOpen: boolean;
+  onToggle: () => void;
+}
+
+const BookSection = memo(function BookSection({
+  book,
+  index,
+  coverUrl,
+  onSelect,
+  isHighEnd,
+  isOpen,
+  onToggle
+}: BookSectionProps) {
   const progress = book.progress?.progressPercent || 0;
   const isCompleted = book.progress?.isCompleted || false;
   const hasStarted = progress > 0;
-  const coverImage = book.coverUrl || categoryCoverUrl || getCategoryConfig(book.category)?.cover;
+  const coverImage = book.coverUrl || coverUrl || getCategoryConfig(book.category)?.cover;
+
+  // Status config
+  const statusConfig = isCompleted 
+    ? { color: 'emerald', icon: CheckCircle, label: 'CONCLUÍDO', glow: 'rgba(16,185,129,0.4)' }
+    : hasStarted 
+      ? { color: 'amber', icon: Clock, label: `${progress.toFixed(0)}% LIDO`, glow: 'rgba(245,158,11,0.4)' }
+      : { color: 'primary', icon: BookOpen, label: 'NOVO', glow: 'rgba(226,54,54,0.4)' };
 
   return (
-    <div
-      className="relative flex-shrink-0 w-[180px] md:w-[200px] cinematic-card animate-fade-in group"
-      style={{ animationDelay: `${Math.min(index * 0.03, 0.3)}s` }}
+    <div 
+      className="apo-section animate-fade-in"
+      style={{ animationDelay: `${Math.min(index * 0.08, 0.5)}s` }}
     >
-      <button
-        onClick={onClick}
-        className={cn(
-          "relative w-full rounded-2xl overflow-hidden transition-all duration-500",
-          "bg-gradient-to-br from-[#0a0e14] via-[#0f1419] to-[#1a0a0a]",
-          "border-2 border-[#E23636]/30 hover:border-[#E23636]/80",
-          "shadow-xl shadow-black/50 hover:shadow-[#E23636]/30",
-          "focus:outline-none focus:ring-2 focus:ring-[#E23636]/50"
-        )}
-        style={{ aspectRatio: '2/3' }}
-      >
-        {/* Spider-Man corner accents */}
-        <div className="absolute top-0 left-0 w-8 h-8 border-l-3 border-t-3 border-[#E23636]/50 rounded-tl-2xl pointer-events-none z-20 group-hover:border-[#E23636] transition-colors" />
-        <div className="absolute top-0 right-0 w-8 h-8 border-r-3 border-t-3 border-[#E23636]/40 rounded-tr-2xl pointer-events-none z-20 group-hover:border-[#E23636] transition-colors" />
-        <div className="absolute bottom-0 left-0 w-8 h-8 border-l-3 border-b-3 border-[#E23636]/40 rounded-bl-2xl pointer-events-none z-20 group-hover:border-[#E23636] transition-colors" />
-        <div className="absolute bottom-0 right-0 w-8 h-8 border-r-3 border-b-3 border-[#E23636]/50 rounded-br-2xl pointer-events-none z-20 group-hover:border-[#E23636] transition-colors" />
+      <Collapsible open={isOpen} onOpenChange={onToggle}>
+        {/* 🎬 SECTION HEADER — APOTEOTIC CINEMATIC */}
+        <CollapsibleTrigger asChild>
+          <div className={cn(
+            "group relative cursor-pointer overflow-hidden",
+            "rounded-3xl border-2 transition-all duration-500",
+            "bg-gradient-to-r from-[#0a0e14] via-[#0f1419] to-[#0a0e14]",
+            isOpen 
+              ? "border-[#E23636]/70 shadow-2xl shadow-[#E23636]/20" 
+              : "border-[#E23636]/30 hover:border-[#E23636]/60 hover:shadow-xl hover:shadow-[#E23636]/10"
+          )}>
+            {/* Background Gradient Sweep */}
+            <div className={cn(
+              "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none",
+              "bg-gradient-to-r from-[#E23636]/5 via-[#E23636]/10 to-[#E23636]/5"
+            )} />
 
-        {/* Cover Image */}
-        {coverImage ? (
-          <img
-            src={coverImage}
-            alt={book.title}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-            draggable={false}
-            loading="lazy"
-          />
-        ) : (
-          <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
-            <BookOpen className="w-14 h-14 text-[#E23636]/30" />
-          </div>
-        )}
+            {/* Spider-Man Corner Accents */}
+            <div className="absolute top-0 left-0 w-16 h-16 border-l-4 border-t-4 border-[#E23636]/50 rounded-tl-3xl pointer-events-none group-hover:border-[#E23636] transition-colors" />
+            <div className="absolute top-0 right-0 w-16 h-16 border-r-4 border-t-4 border-[#E23636]/40 rounded-tr-3xl pointer-events-none group-hover:border-[#E23636] transition-colors" />
+            <div className="absolute bottom-0 left-0 w-16 h-16 border-l-4 border-b-4 border-[#E23636]/40 rounded-bl-3xl pointer-events-none group-hover:border-[#E23636] transition-colors" />
+            <div className="absolute bottom-0 right-0 w-16 h-16 border-r-4 border-b-4 border-[#E23636]/50 rounded-br-3xl pointer-events-none group-hover:border-[#E23636] transition-colors" />
 
-        {/* Gradient Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent opacity-80" />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#E23636]/0 via-transparent to-[#E23636]/0 group-hover:from-[#E23636]/10 group-hover:to-[#E23636]/5 transition-all duration-500" />
-
-        {/* Scanline Effect (High-End) */}
-        {isHighEnd && (
-          <div 
-            className="cinematic-scanline absolute inset-0 pointer-events-none opacity-[0.02]"
-            style={{
-              backgroundImage: `repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)`
-            }}
-          />
-        )}
-
-        {/* Completed Badge */}
-        {isCompleted && (
-          <div className="absolute top-3 right-3 z-30">
-            <div 
-              className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-emerald-400/50"
-              style={{ 
-                background: 'linear-gradient(135deg, rgba(16,185,129,0.9) 0%, rgba(5,150,105,0.9) 100%)', 
-                boxShadow: '0 0 20px rgba(16,185,129,0.5)' 
-              }}
-            >
-              <CheckCircle className="w-5 h-5 text-white" />
-            </div>
-          </div>
-        )}
-
-        {/* Progress Badge */}
-        {hasStarted && !isCompleted && (
-          <div className="absolute top-3 left-3 z-30">
-            <div 
-              className="px-2.5 py-1 rounded-full text-[10px] font-bold text-white flex items-center gap-1.5 border border-amber-400/50"
-              style={{ 
-                background: 'linear-gradient(135deg, rgba(245,158,11,0.9) 0%, rgba(217,119,6,0.9) 100%)',
-                boxShadow: '0 0 15px rgba(245,158,11,0.4)'
-              }}
-            >
-              <Clock className="w-3 h-3" />
-              {progress.toFixed(0)}%
-            </div>
-          </div>
-        )}
-
-        {/* Bottom Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-          {/* Progress Bar */}
-          {hasStarted && !isCompleted && (
-            <div className="mb-3">
-              <div className="h-1.5 rounded-full bg-white/20 overflow-hidden">
-                <div 
-                  className="h-full rounded-full transition-all duration-1000"
-                  style={{ 
-                    width: `${progress}%`,
-                    background: 'linear-gradient(90deg, #E23636 0%, #FF6B6B 100%)',
-                    boxShadow: '0 0 10px rgba(226,54,54,0.6)'
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Title */}
-          <h3 className="text-white font-bold text-sm leading-tight line-clamp-2 mb-2 group-hover:text-[#FF6B6B] transition-colors">
-            {book.title}
-          </h3>
-
-          {/* Meta */}
-          <div className="flex items-center gap-2 text-[10px] text-white/60">
-            {book.totalPages > 0 && (
-              <span className="flex items-center gap-1">
-                <BookOpen className="w-3 h-3" />
-                {book.totalPages} pág
-              </span>
-            )}
-            {book.viewCount > 0 && (
-              <span className="flex items-center gap-1">
-                <Eye className="w-3 h-3" />
-                {book.viewCount}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Hover Play Button */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-25">
-          <div 
-            className="w-14 h-14 rounded-full flex items-center justify-center border-2 border-white/80 backdrop-blur-sm"
-            style={{ 
-              background: 'linear-gradient(135deg, rgba(226,54,54,0.95) 0%, rgba(180,30,30,0.95) 100%)',
-              boxShadow: '0 0 30px rgba(226,54,54,0.6)'
-            }}
-          >
-            <Play className="w-7 h-7 text-white ml-1" fill="white" />
-          </div>
-        </div>
-
-        {/* Glow Effect (High-End) */}
-        {isHighEnd && (
-          <div 
-            className="cinematic-glow absolute -inset-2 rounded-3xl opacity-0 group-hover:opacity-100 -z-10 pointer-events-none transition-opacity duration-500"
-            style={{
-              background: 'radial-gradient(ellipse at center, rgba(226,54,54,0.3) 0%, transparent 70%)',
-              filter: 'blur(20px)'
-            }}
-          />
-        )}
-      </button>
-    </div>
-  );
-});
-
-// ============================================
-// 📚 CAROUSEL ROW — NETFLIX PREMIUM CINEMATIC
-// ============================================
-
-interface CarouselRowProps {
-  title: string;
-  icon: React.ReactNode;
-  books: WebBookListItem[];
-  onBookSelect: (bookId: string) => void;
-  getCoverForBook: (book: WebBookListItem) => string | null;
-  isHighEnd: boolean;
-  accentColor?: string;
-}
-
-const CarouselRow = memo(function CarouselRow({ 
-  title, 
-  icon, 
-  books, 
-  onBookSelect,
-  getCoverForBook,
-  isHighEnd,
-  accentColor = '#E23636'
-}: CarouselRowProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  const updateScrollState = useCallback(() => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setCanScrollLeft(scrollLeft > 10);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-    }
-  }, []);
-
-  useEffect(() => {
-    updateScrollState();
-    const ref = scrollRef.current;
-    ref?.addEventListener('scroll', updateScrollState, { passive: true });
-    return () => ref?.removeEventListener('scroll', updateScrollState);
-  }, [updateScrollState, books.length]);
-
-  const scroll = useCallback((direction: 'left' | 'right') => {
-    if (scrollRef.current) {
-      const scrollAmount = scrollRef.current.clientWidth * 0.75;
-      scrollRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
-    }
-  }, []);
-
-  if (books.length === 0) return null;
-
-  return (
-    <div className="relative group/row">
-      {/* Section Card with Corner Accents */}
-      <div className={cn(
-        "relative overflow-hidden transition-all duration-500",
-        "bg-gradient-to-br from-[#0a0e14]/80 via-[#0f1419]/60 to-[#1a0a0a]/80",
-        "border-2 border-[#E23636]/20 hover:border-[#E23636]/40",
-        "rounded-3xl p-6",
-        "shadow-xl shadow-black/30"
-      )}>
-        {/* Spider-Man style corner accents */}
-        <div className="absolute top-0 left-0 w-12 h-12 border-l-4 border-t-4 border-[#E23636]/40 rounded-tl-3xl pointer-events-none" />
-        <div className="absolute top-0 right-0 w-12 h-12 border-r-4 border-t-4 border-[#E23636]/30 rounded-tr-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-12 h-12 border-l-4 border-b-4 border-[#E23636]/30 rounded-bl-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-12 h-12 border-r-4 border-b-4 border-[#E23636]/40 rounded-br-3xl pointer-events-none" />
-
-        {/* Background glow */}
-        <div 
-          className="absolute inset-0 opacity-10 group-hover/row:opacity-20 transition-opacity pointer-events-none"
-          style={{ background: `radial-gradient(ellipse at top left, ${accentColor}30 0%, transparent 50%)` }}
-        />
-
-        {/* Title Row */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-4">
-            {/* Icon Orb */}
-            <div className="relative">
+            {/* Ambient Glow */}
+            {isHighEnd && (
               <div 
-                className="absolute inset-0 rounded-xl blur-xl opacity-50"
-                style={{ background: accentColor }}
-              />
-              <div 
-                className="relative p-3 rounded-xl border-2"
-                style={{ 
-                  background: `linear-gradient(135deg, ${accentColor}40 0%, ${accentColor}20 100%)`,
-                  borderColor: `${accentColor}60`,
-                  boxShadow: `0 0 20px ${accentColor}30`
+                className="apo-glow absolute -inset-4 rounded-[40px] -z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                style={{
+                  background: `radial-gradient(ellipse at center, ${statusConfig.glow} 0%, transparent 70%)`,
+                  filter: 'blur(40px)'
                 }}
-              >
-                {icon}
-              </div>
-            </div>
-            
-            {/* Title & Count */}
-            <div>
-              <h2 className="text-xl md:text-2xl font-black text-white tracking-tight flex items-center gap-3">
-                {title}
-                <Badge 
-                  className="px-2.5 py-1 text-xs font-bold"
+              />
+            )}
+
+            <div className="relative flex items-center gap-6 p-6 md:p-8">
+              {/* 📘 BOOK NUMBER — Cinematic Badge */}
+              <div className="hidden md:flex flex-col items-center justify-center">
+                <div 
+                  className="relative w-20 h-20 rounded-2xl flex items-center justify-center border-2 overflow-hidden"
                   style={{ 
-                    background: `${accentColor}30`,
-                    color: accentColor,
-                    borderColor: `${accentColor}50`
+                    background: 'linear-gradient(135deg, rgba(226,54,54,0.3) 0%, rgba(180,30,30,0.2) 100%)',
+                    borderColor: 'rgba(226,54,54,0.5)',
+                    boxShadow: '0 0 30px rgba(226,54,54,0.3)'
                   }}
                 >
-                  {books.length}
-                </Badge>
-              </h2>
-              <p className="text-xs text-white/50 mt-0.5">
-                {books.length === 1 ? '1 livro disponível' : `${books.length} livros disponíveis`}
-              </p>
+                  {/* Orbital ring */}
+                  {isHighEnd && (
+                    <div 
+                      className="absolute inset-0 rounded-2xl border border-[#E23636]/30 apo-orbit"
+                      style={{ animation: 'apo-orbit 20s linear infinite' }}
+                    />
+                  )}
+                  <span className="text-4xl font-black text-[#E23636] drop-shadow-lg">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                </div>
+                <span className="text-[10px] text-white/40 mt-2 uppercase tracking-widest font-bold">LIVRO</span>
+              </div>
+
+              {/* 📚 BOOK COVER — Large Cinematic */}
+              <div className="relative flex-shrink-0">
+                <div 
+                  className="apo-book-cover relative w-32 h-44 md:w-40 md:h-56 rounded-2xl overflow-hidden border-2 border-[#E23636]/40 group-hover:border-[#E23636]/80"
+                  style={{ boxShadow: '0 10px 40px rgba(0,0,0,0.5), 0 0 30px rgba(226,54,54,0.2)' }}
+                >
+                  {coverImage ? (
+                    <img
+                      src={coverImage}
+                      alt={book.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      draggable={false}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
+                      <BookOpen className="w-12 h-12 text-[#E23636]/30" />
+                    </div>
+                  )}
+                  
+                  {/* Cover Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  
+                  {/* Status Badge */}
+                  <div 
+                    className="absolute top-3 left-3 px-2.5 py-1 rounded-full flex items-center gap-1.5 text-[10px] font-bold text-white border"
+                    style={{
+                      background: isCompleted 
+                        ? 'linear-gradient(135deg, rgba(16,185,129,0.9) 0%, rgba(5,150,105,0.9) 100%)'
+                        : hasStarted
+                          ? 'linear-gradient(135deg, rgba(245,158,11,0.9) 0%, rgba(217,119,6,0.9) 100%)'
+                          : 'linear-gradient(135deg, rgba(226,54,54,0.9) 0%, rgba(180,30,30,0.9) 100%)',
+                      borderColor: isCompleted ? 'rgba(16,185,129,0.5)' : hasStarted ? 'rgba(245,158,11,0.5)' : 'rgba(226,54,54,0.5)',
+                      boxShadow: `0 0 15px ${statusConfig.glow}`
+                    }}
+                  >
+                    <statusConfig.icon className="w-3 h-3" />
+                    {statusConfig.label}
+                  </div>
+
+                  {/* Scanlines (High-End) */}
+                  {isHighEnd && (
+                    <div 
+                      className="absolute inset-0 pointer-events-none opacity-[0.03]"
+                      style={{
+                        backgroundImage: `repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(255,255,255,0.05) 2px, rgba(255,255,255,0.05) 4px)`
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* 📋 BOOK INFO — Year 2300 Typography */}
+              <div className="flex-1 min-w-0">
+                {/* Title */}
+                <h2 className="text-2xl md:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight mb-3 group-hover:text-[#FF6B6B] transition-colors">
+                  {book.title}
+                </h2>
+
+                {/* Subtitle / Description */}
+                {book.subtitle && (
+                  <p className="text-white/60 text-sm md:text-base mb-4 line-clamp-2">
+                    {book.subtitle}
+                  </p>
+                )}
+
+                {/* Meta Stats — HUD Style */}
+                <div className="flex flex-wrap items-center gap-3 md:gap-4 mb-4">
+                  {book.totalPages > 0 && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                      <FileText className="w-4 h-4 text-[#E23636]" />
+                      <span className="text-sm font-bold text-white">{book.totalPages}</span>
+                      <span className="text-xs text-white/50">páginas</span>
+                    </div>
+                  )}
+                  {book.viewCount > 0 && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                      <Eye className="w-4 h-4 text-cyan-400" />
+                      <span className="text-sm font-bold text-white">{book.viewCount}</span>
+                      <span className="text-xs text-white/50">views</span>
+                    </div>
+                  )}
+                  {book.author && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                      <Award className="w-4 h-4 text-amber-400" />
+                      <span className="text-sm text-white/70">{book.author}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Progress Bar (if reading) */}
+                {hasStarted && !isCompleted && (
+                  <div className="max-w-md">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs text-white/50 uppercase tracking-wider font-medium">Progresso</span>
+                      <span className="text-xs font-bold text-[#E23636]">{progress.toFixed(0)}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                      <div 
+                        className="h-full rounded-full transition-all duration-1000"
+                        style={{ 
+                          width: `${progress}%`,
+                          background: 'linear-gradient(90deg, #E23636 0%, #FF6B6B 50%, #E23636 100%)',
+                          backgroundSize: '200% 100%',
+                          animation: isHighEnd ? 'apo-shimmer 2s ease-in-out infinite' : undefined,
+                          boxShadow: '0 0 20px rgba(226,54,54,0.6)'
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 🎮 EXPAND INDICATOR */}
+              <div className="flex flex-col items-center gap-2">
+                <div 
+                  className={cn(
+                    "w-12 h-12 rounded-xl flex items-center justify-center border-2 transition-all duration-300",
+                    isOpen 
+                      ? "bg-[#E23636]/30 border-[#E23636]/60 rotate-180" 
+                      : "bg-white/5 border-white/20 group-hover:bg-[#E23636]/20 group-hover:border-[#E23636]/40"
+                  )}
+                >
+                  <ChevronDown className={cn("w-6 h-6 transition-colors", isOpen ? "text-[#E23636]" : "text-white/60")} />
+                </div>
+                <span className="text-[10px] text-white/40 uppercase tracking-widest hidden md:block">
+                  {isOpen ? 'FECHAR' : 'ABRIR'}
+                </span>
+              </div>
             </div>
           </div>
+        </CollapsibleTrigger>
 
-          {/* Explore Link */}
-          <div className="hidden md:flex items-center gap-1.5 text-[#E23636] text-sm font-medium opacity-0 group-hover/row:opacity-100 transition-opacity cursor-pointer hover:text-[#FF6B6B]">
-            <span>Ver Todos</span>
-            <ChevronRight className="w-4 h-4" />
-          </div>
-        </div>
-
-        {/* Carousel */}
-        <div className="relative">
-          {/* Left Arrow */}
-          {canScrollLeft && (
-            <button
-              onClick={() => scroll('left')}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-all duration-300 -translate-x-2 group-hover/row:translate-x-0"
-              style={{
-                background: 'linear-gradient(135deg, rgba(226,54,54,0.9) 0%, rgba(180,30,30,0.9) 100%)',
-                boxShadow: '0 0 30px rgba(226,54,54,0.5)'
-              }}
-            >
-              <ChevronLeft className="w-6 h-6 text-white" />
-            </button>
-          )}
-
-          {/* Right Arrow */}
-          {canScrollRight && (
-            <button
-              onClick={() => scroll('right')}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover/row:opacity-100 transition-all duration-300 translate-x-2 group-hover/row:translate-x-0"
-              style={{
-                background: 'linear-gradient(135deg, rgba(226,54,54,0.9) 0%, rgba(180,30,30,0.9) 100%)',
-                boxShadow: '0 0 30px rgba(226,54,54,0.5)'
-              }}
-            >
-              <ChevronRight className="w-6 h-6 text-white" />
-            </button>
-          )}
-
-          {/* Scrollable Row */}
-          <div
-            ref={scrollRef}
-            className="flex gap-4 overflow-x-auto scroll-smooth hide-scrollbar py-2"
-          >
-            {books.map((book, index) => (
-              <CinematicBookCard
-                key={book.id}
-                book={book}
-                onClick={() => onBookSelect(book.id)}
-                categoryCoverUrl={getCoverForBook(book)}
-                index={index}
-                isHighEnd={isHighEnd}
+        {/* 📖 EXPANDED CONTENT — APOTEOTIC ACTION PANEL */}
+        <CollapsibleContent>
+          <div className="mt-4 animate-fade-in">
+            <div className={cn(
+              "relative rounded-3xl overflow-hidden border-2 border-[#E23636]/30",
+              "bg-gradient-to-br from-[#0f1419]/90 via-[#1a0a0a]/80 to-[#0f1419]/90"
+            )}>
+              {/* Background Pattern */}
+              <div 
+                className="absolute inset-0 opacity-5 pointer-events-none"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+                }}
               />
-            ))}
+
+              <div className="relative p-8 md:p-10">
+                <div className="flex flex-col md:flex-row items-center gap-8">
+                  {/* Main CTA — READ NOW */}
+                  <button
+                    onClick={onSelect}
+                    className={cn(
+                      "group/cta relative flex-1 w-full md:w-auto overflow-hidden",
+                      "px-10 py-6 rounded-2xl border-2",
+                      "transition-all duration-500 transform hover:scale-[1.02]"
+                    )}
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(226,54,54,0.9) 0%, rgba(180,30,30,0.9) 100%)',
+                      borderColor: 'rgba(255,107,107,0.5)',
+                      boxShadow: '0 10px 40px rgba(226,54,54,0.4), 0 0 60px rgba(226,54,54,0.2)'
+                    }}
+                  >
+                    {/* Shimmer Effect */}
+                    {isHighEnd && (
+                      <div 
+                        className="absolute inset-0 opacity-0 group-hover/cta:opacity-100 transition-opacity duration-500"
+                        style={{
+                          background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)',
+                          backgroundSize: '200% 100%',
+                          animation: 'apo-shimmer 1.5s ease-in-out infinite'
+                        }}
+                      />
+                    )}
+                    
+                    <div className="relative flex items-center justify-center gap-4">
+                      <div 
+                        className="w-16 h-16 rounded-xl flex items-center justify-center"
+                        style={{ 
+                          background: 'rgba(255,255,255,0.2)',
+                          boxShadow: '0 0 30px rgba(255,255,255,0.3)'
+                        }}
+                      >
+                        <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                      </div>
+                      <div className="text-left">
+                        <div className="text-2xl md:text-3xl font-black text-white tracking-tight">
+                          {hasStarted ? 'CONTINUAR LENDO' : 'COMEÇAR A LER'}
+                        </div>
+                        <div className="text-white/70 text-sm font-medium">
+                          {hasStarted 
+                            ? `Página ${Math.round((progress / 100) * book.totalPages)} de ${book.totalPages}` 
+                            : `${book.totalPages} páginas disponíveis`}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Secondary Info — Stats HUD */}
+                  <div className="flex flex-wrap gap-4 justify-center">
+                    {/* Reading Time Estimate */}
+                    <div className="flex flex-col items-center p-4 rounded-xl bg-white/5 border border-white/10">
+                      <Clock className="w-6 h-6 text-amber-400 mb-2" />
+                      <span className="text-lg font-bold text-white">{Math.ceil(book.totalPages * 1.5)} min</span>
+                      <span className="text-[10px] text-white/50 uppercase tracking-wider">Tempo Est.</span>
+                    </div>
+                    
+                    {/* Category */}
+                    <div className="flex flex-col items-center p-4 rounded-xl bg-white/5 border border-white/10">
+                      <BookMarked className="w-6 h-6 text-[#E23636] mb-2" />
+                      <span className="text-sm font-bold text-white capitalize">
+                        {book.category?.replace(/_/g, ' ') || 'Geral'}
+                      </span>
+                      <span className="text-[10px] text-white/50 uppercase tracking-wider">Categoria</span>
+                    </div>
+
+                    {/* XP Reward */}
+                    <div className="flex flex-col items-center p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                      <Zap className="w-6 h-6 text-emerald-400 mb-2" />
+                      <span className="text-lg font-bold text-emerald-400">+{book.totalPages * 2} XP</span>
+                      <span className="text-[10px] text-emerald-400/70 uppercase tracking-wider">Potencial</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 });
 
 // ============================================
-// 🔍 SEARCH BAR — YEAR 2300 CINEMATIC
-// ============================================
-
-interface SearchBarProps {
-  searchQuery: string;
-  onSearchChange: (value: string) => void;
-  selectedCategory: string;
-  onCategoryChange: (value: string) => void;
-}
-
-const SearchBar = memo(function SearchBar({
-  searchQuery,
-  onSearchChange,
-  selectedCategory,
-  onCategoryChange
-}: SearchBarProps) {
-  return (
-    <div className={cn(
-      "relative p-4 rounded-2xl overflow-hidden",
-      "bg-gradient-to-r from-[#1a0a0a]/80 via-[#0a0e14]/90 to-[#1a0a0a]/80",
-      "border-2 border-[#E23636]/25 backdrop-blur-xl"
-    )}>
-      {/* Corner accents */}
-      <div className="absolute top-0 left-0 w-8 h-8 border-l-3 border-t-3 border-[#E23636]/40 rounded-tl-2xl" />
-      <div className="absolute top-0 right-0 w-8 h-8 border-r-3 border-t-3 border-[#E23636]/40 rounded-tr-2xl" />
-      <div className="absolute bottom-0 left-0 w-8 h-8 border-l-3 border-b-3 border-[#E23636]/40 rounded-bl-2xl" />
-      <div className="absolute bottom-0 right-0 w-8 h-8 border-r-3 border-b-3 border-[#E23636]/40 rounded-br-2xl" />
-
-      {/* Background glow */}
-      <div className="absolute top-0 left-1/4 w-40 h-20 bg-[#E23636]/10 rounded-full blur-3xl -z-10" />
-
-      <div className="flex flex-col md:flex-row gap-4">
-        {/* Search Input */}
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#E23636]/70" />
-          <Input
-            type="text"
-            placeholder="Buscar livros, autores..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className={cn(
-              "pl-12 h-12 rounded-xl",
-              "bg-slate-900/60 border-2 border-slate-600/30",
-              "text-white placeholder:text-white/40",
-              "focus:bg-slate-900/80 focus:border-[#E23636]/50 focus:ring-2 focus:ring-[#E23636]/20",
-              "transition-all duration-300"
-            )}
-          />
-        </div>
-
-        {/* Category Select */}
-        <Select value={selectedCategory} onValueChange={onCategoryChange}>
-          <SelectTrigger 
-            className={cn(
-              "w-full md:w-[220px] h-12 rounded-xl",
-              "bg-slate-900/60 border-2 border-slate-600/30 text-white",
-              "focus:ring-2 focus:ring-[#E23636]/30"
-            )}
-          >
-            <SelectValue placeholder="Categoria" />
-          </SelectTrigger>
-          <SelectContent className="bg-slate-900/95 backdrop-blur-xl border-slate-700/50 text-white rounded-xl">
-            {CATEGORIES.map(cat => (
-              <SelectItem 
-                key={cat.value} 
-                value={cat.value} 
-                className="text-white/80 focus:bg-[#E23636]/30 focus:text-white rounded-lg"
-              >
-                {cat.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-  );
-});
-
-// ============================================
-// 🎬 LOADING STATE — YEAR 2300 CINEMATIC
+// 🎬 LOADING STATE — YEAR 2300 APOTEOTIC
 // ============================================
 
 const LoadingState = memo(function LoadingState({ isHighEnd }: { isHighEnd: boolean }) {
@@ -718,7 +533,7 @@ const LoadingState = memo(function LoadingState({ isHighEnd }: { isHighEnd: bool
             className="w-28 h-28 rounded-2xl flex items-center justify-center border-2 border-[#E23636]/50"
             style={{ 
               background: 'linear-gradient(135deg, rgba(226,54,54,0.3) 0%, rgba(180,30,30,0.2) 100%)',
-              animation: isHighEnd ? 'cinematic-pulse 2s ease-in-out infinite' : undefined,
+              animation: isHighEnd ? 'apo-pulse 2s ease-in-out infinite' : undefined,
               boxShadow: '0 0 60px rgba(226,54,54,0.4)'
             }}
           >
@@ -729,12 +544,12 @@ const LoadingState = memo(function LoadingState({ isHighEnd }: { isHighEnd: bool
           {isHighEnd && [1, 2, 3].map((ring) => (
             <div 
               key={ring}
-              className="absolute rounded-full border pointer-events-none"
+              className="absolute rounded-full border pointer-events-none apo-orbit"
               style={{
                 inset: `${-ring * 20}px`,
                 borderColor: `rgba(226,54,54,${0.4 - ring * 0.1})`,
                 borderWidth: ring === 1 ? '2px' : '1px',
-                animation: `cinematic-orbit ${4 + ring * 2}s linear infinite${ring % 2 === 0 ? ' reverse' : ''}`
+                animation: `apo-orbit ${4 + ring * 2}s linear infinite${ring % 2 === 0 ? ' reverse' : ''}`
               }}
             />
           ))}
@@ -744,7 +559,7 @@ const LoadingState = memo(function LoadingState({ isHighEnd }: { isHighEnd: bool
           <p className="text-white text-2xl font-bold tracking-wide animate-pulse">
             Carregando Biblioteca...
           </p>
-          <p className="text-white/40 text-sm mt-2">Preparando sua experiência Year 2300</p>
+          <p className="text-white/40 text-sm mt-2">Preparando sua experiência apoteótica</p>
         </div>
       </div>
     </div>
@@ -752,7 +567,7 @@ const LoadingState = memo(function LoadingState({ isHighEnd }: { isHighEnd: bool
 });
 
 // ============================================
-// 🚀 COMPONENTE PRINCIPAL — YEAR 2300 CINEMATIC
+// 🚀 COMPONENTE PRINCIPAL — YEAR 2300 APOTEOTIC
 // ============================================
 
 export const WebBookLibrary = memo(function WebBookLibrary({
@@ -762,11 +577,10 @@ export const WebBookLibrary = memo(function WebBookLibrary({
 }: WebBookLibraryProps) {
   const { books, isLoading, error, loadBooks } = useWebBookLibrary();
   const { categories: dbCategories } = useBookCategories();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [openBooks, setOpenBooks] = useState<Set<string>>(new Set());
   
   // Performance tier detection
-  const { tier, isLowEnd, isCritical } = useConstitutionPerformance();
+  const { tier, isLowEnd } = useConstitutionPerformance();
   const isHighEnd = tier === 'quantum' || tier === 'neural' || tier === 'enhanced';
 
   // Category cover map
@@ -784,37 +598,25 @@ export const WebBookLibrary = memo(function WebBookLibrary({
     return null;
   }, [categoryCoverMap]);
 
-  useEffect(() => {
-    if (externalCategory !== undefined) {
-      const category = externalCategory || 'all';
-      setSelectedCategory(category);
-      loadBooks(externalCategory || undefined);
-    }
-  }, [externalCategory, loadBooks]);
-
-  // Filter books
-  const filteredBooks = useMemo(() => {
-    return books.filter(book => {
-      const matchesSearch = !searchQuery || 
-        book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        book.author.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || book.category === selectedCategory;
-      return matchesSearch && matchesCategory;
+  // Toggle book section
+  const toggleBook = useCallback((bookId: string) => {
+    setOpenBooks(prev => {
+      const next = new Set(prev);
+      if (next.has(bookId)) {
+        next.delete(bookId);
+      } else {
+        next.add(bookId);
+      }
+      return next;
     });
-  }, [books, searchQuery, selectedCategory]);
+  }, []);
 
-  // Categorize books
-  const categorizedBooks = useMemo(() => {
-    const inProgress = filteredBooks.filter(b => (b.progress?.progressPercent || 0) > 0 && !b.progress?.isCompleted);
-    const completed = filteredBooks.filter(b => b.progress?.isCompleted);
-    const trending = [...filteredBooks].sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0)).slice(0, 15);
-    return { inProgress, completed, trending, all: filteredBooks };
-  }, [filteredBooks]);
-
-  const handleCategoryChange = useCallback((category: string) => {
-    setSelectedCategory(category);
-    loadBooks(category === 'all' ? undefined : category);
-  }, [loadBooks]);
+  // Stats
+  const stats = useMemo(() => {
+    const inProgress = books.filter(b => (b.progress?.progressPercent || 0) > 0 && !b.progress?.isCompleted).length;
+    const completed = books.filter(b => b.progress?.isCompleted).length;
+    return { total: books.length, inProgress, completed };
+  }, [books]);
 
   // Loading
   if (isLoading && books.length === 0) {
@@ -853,8 +655,8 @@ export const WebBookLibrary = memo(function WebBookLibrary({
       {/* Cinematic Background */}
       <CyberBackground variant="grid" intensity="medium" />
       
-      {/* Cinematic Styles */}
-      <style>{CINEMATIC_STYLES}</style>
+      {/* Apoteotic Styles */}
+      <style>{APOTEOTIC_STYLES}</style>
 
       <div className="relative z-10 p-3 md:p-4 lg:p-6">
         <div className="mx-auto max-w-[98vw] space-y-6">
@@ -862,105 +664,60 @@ export const WebBookLibrary = memo(function WebBookLibrary({
           {/* Futuristic Header */}
           <FuturisticPageHeader
             title="Livros do Moisa"
-            subtitle="Biblioteca digital completa com materiais exclusivos"
+            subtitle="Sua biblioteca digital exclusiva — Materiais completos para dominar a Química"
             icon={BookOpen}
             accentColor="primary"
+            badge="EXCLUSIVO"
+            stats={[
+              { label: "Biblioteca", value: stats.total, icon: Library },
+              { label: "Lendo", value: stats.inProgress, icon: Clock },
+              { label: "Concluídos", value: stats.completed, icon: CheckCircle },
+            ]}
           />
 
-          {/* Stats Panel */}
-          <StatsPanel
-            totalBooks={filteredBooks.length}
-            inProgress={categorizedBooks.inProgress.length}
-            completed={categorizedBooks.completed.length}
-            trending={categorizedBooks.trending.length}
-          />
-
-          {/* Hierarchy Legend */}
-          <HierarchyLegend />
-
-          {/* Search Bar */}
-          <SearchBar
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            selectedCategory={selectedCategory}
-            onCategoryChange={handleCategoryChange}
-          />
-
-          {/* Content Rows */}
-          <div className="space-y-6">
-            {categorizedBooks.inProgress.length > 0 && (
-              <CarouselRow
-                title="Continuar Lendo"
-                icon={<Clock className="w-6 h-6 text-amber-400" />}
-                books={categorizedBooks.inProgress}
-                onBookSelect={onBookSelect}
-                getCoverForBook={getCoverForBook}
-                isHighEnd={isHighEnd}
-                accentColor="#F59E0B"
-              />
-            )}
-
-            {categorizedBooks.completed.length > 0 && (
-              <CarouselRow
-                title="Concluídos"
-                icon={<CheckCircle className="w-6 h-6 text-emerald-400" />}
-                books={categorizedBooks.completed}
-                onBookSelect={onBookSelect}
-                getCoverForBook={getCoverForBook}
-                isHighEnd={isHighEnd}
-                accentColor="#10B981"
-              />
-            )}
-
-            {categorizedBooks.trending.length > 0 && (
-              <CarouselRow
-                title="Mais Populares"
-                icon={<Flame className="w-6 h-6 text-orange-400" />}
-                books={categorizedBooks.trending}
-                onBookSelect={onBookSelect}
-                getCoverForBook={getCoverForBook}
-                isHighEnd={isHighEnd}
-                accentColor="#F97316"
-              />
-            )}
-
-            <CarouselRow
-              title="Todos os Livros"
-              icon={<Library className="w-6 h-6 text-[#E23636]" />}
-              books={filteredBooks}
-              onBookSelect={onBookSelect}
-              getCoverForBook={getCoverForBook}
-              isHighEnd={isHighEnd}
-              accentColor="#E23636"
+          {/* Stats Panel Mobile */}
+          <div className="md:hidden">
+            <StatsPanel
+              totalBooks={stats.total}
+              inProgress={stats.inProgress}
+              completed={stats.completed}
             />
-
-            {/* Empty State */}
-            {filteredBooks.length === 0 && !isLoading && (
-              <div className={cn(
-                "relative p-12 rounded-3xl overflow-hidden text-center",
-                "bg-gradient-to-br from-[#0a0e14]/80 via-[#0f1419]/60 to-[#1a0a0a]/80",
-                "border-2 border-[#E23636]/20"
-              )}>
-                {/* Corner accents */}
-                <div className="absolute top-0 left-0 w-12 h-12 border-l-4 border-t-4 border-[#E23636]/40 rounded-tl-3xl" />
-                <div className="absolute top-0 right-0 w-12 h-12 border-r-4 border-t-4 border-[#E23636]/40 rounded-tr-3xl" />
-                <div className="absolute bottom-0 left-0 w-12 h-12 border-l-4 border-b-4 border-[#E23636]/40 rounded-bl-3xl" />
-                <div className="absolute bottom-0 right-0 w-12 h-12 border-r-4 border-b-4 border-[#E23636]/40 rounded-br-3xl" />
-
-                <div 
-                  className="w-20 h-20 mx-auto mb-6 rounded-2xl flex items-center justify-center border-2 border-[#E23636]/40"
-                  style={{ 
-                    background: 'linear-gradient(135deg, rgba(226,54,54,0.2) 0%, rgba(180,30,30,0.1) 100%)',
-                    boxShadow: '0 0 40px rgba(226,54,54,0.2)'
-                  }}
-                >
-                  <Search className="w-10 h-10 text-[#E23636]/60" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">Nenhum livro encontrado</h3>
-                <p className="text-white/50">Tente ajustar seus filtros de busca</p>
-              </div>
-            )}
           </div>
+
+          {/* 📚 BOOK SECTIONS — Each book is a cinematic section */}
+          <div className="space-y-5">
+            {books.map((book, index) => (
+              <BookSection
+                key={book.id}
+                book={book}
+                index={index}
+                coverUrl={getCoverForBook(book)}
+                onSelect={() => onBookSelect(book.id)}
+                isHighEnd={isHighEnd}
+                isOpen={openBooks.has(book.id)}
+                onToggle={() => toggleBook(book.id)}
+              />
+            ))}
+          </div>
+
+          {/* Empty State */}
+          {books.length === 0 && !isLoading && (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div 
+                className="w-32 h-32 rounded-3xl flex items-center justify-center border-2 border-[#E23636]/30 mb-6"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(226,54,54,0.15) 0%, rgba(180,30,30,0.1) 100%)',
+                  boxShadow: '0 0 40px rgba(226,54,54,0.2)'
+                }}
+              >
+                <Library className="w-16 h-16 text-[#E23636]/50" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Biblioteca Vazia</h3>
+              <p className="text-white/50 text-center max-w-md">
+                Ainda não há livros disponíveis na sua biblioteca. Aguarde novos materiais!
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
