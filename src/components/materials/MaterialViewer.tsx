@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { usePdfRenderer } from '@/hooks/usePdfRenderer';
+import { useMaterialPdfRenderer } from '@/hooks/useMaterialPdfRenderer';
 import { cn } from '@/lib/utils';
 
 // ============================================
@@ -111,7 +111,7 @@ export const MaterialViewer = memo(function MaterialViewer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [drawingMode, setDrawingMode] = useState(false);
 
-  // PDF Renderer - usa o hook correto com file_path do material
+  // PDF Renderer - usa hook específico para materiais (bucket público)
   const {
     isLoading: pdfLoading,
     pdfLoaded,
@@ -122,7 +122,7 @@ export const MaterialViewer = memo(function MaterialViewer({
     renderPage,
     prefetchPages,
     cleanup
-  } = usePdfRenderer(material.id, material.file_path);
+  } = useMaterialPdfRenderer(material.file_path);
 
   // Watermark text
   const watermarkText = useMemo(() => {
