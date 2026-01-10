@@ -228,7 +228,7 @@ AppHeader.displayName = "AppHeader";
 // ⚡ Main Content com animação CSS pura (sem framer-motion)
 // 🛡️ ROOT LAYOUT FIX: min-h-0 permite scroll natural, overflow-y-auto garante scroll vertical
 const MainContent = memo(({ children }: { children: ReactNode }) => (
-  <main className="flex-1 min-h-0 overflow-y-auto animate-fade-in">{children}</main>
+  <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden animate-fade-in">{children}</main>
 ));
 MainContent.displayName = "MainContent";
 
@@ -283,7 +283,7 @@ export const AppLayout = memo(
     return (
       <div ref={ref} className="w-full">
         <SidebarProvider>
-          <div className="min-h-screen flex w-full">
+          <div className="min-h-screen flex w-full overflow-x-hidden">
             <MemoizedSidebar />
             <SidebarInset className="flex-1">
               <AppHeader
