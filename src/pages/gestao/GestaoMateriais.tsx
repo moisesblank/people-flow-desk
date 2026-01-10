@@ -155,7 +155,7 @@ const STATUS_MAP: Record<string, { label: string; color: string; icon: React.Ele
 };
 
 // ============================================
-// UPLOAD DIALOG COM TAXONOMIA
+// UPLOAD DIALOG COM TAXONOMIA — BATCH 50 PDFs
 // ============================================
 
 interface UploadDialogProps {
@@ -164,98 +164,140 @@ interface UploadDialogProps {
   onSuccess: () => void;
 }
 
+interface FileWithMeta {
+  file: File;
+  id: string;
+  title: string;
+  status: 'pending' | 'uploading' | 'success' | 'error';
+  progress: number;
+  error?: string;
+}
+
+const MAX_FILES = 50;
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB per file
+
 const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess }: UploadDialogProps) {
-  const [title, setTitle] = useState('');
+  const [files, setFiles] = useState<FileWithMeta[]>([]);
   const [description, setDescription] = useState('');
   const [contentType, setContentType] = useState('mapa_mental');
   const [selectedMacro, setSelectedMacro] = useState('');
   const [selectedMicro, setSelectedMicro] = useState('');
   const [watermarkEnabled, setWatermarkEnabled] = useState(true);
   const [isPremium, setIsPremium] = useState(true);
-  const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [overallProgress, setOverallProgress] = useState(0);
 
   const { macros, getMicrosForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
   const micros = selectedMacro ? getMicrosForSelect(selectedMacro) : [];
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] },
-    maxFiles: 1,
-    maxSize: 100 * 1024 * 1024,
-    onDrop: (acceptedFiles) => {
-      if (acceptedFiles.length > 0) {
-        const f = acceptedFiles[0];
-        setFile(f);
-        if (!title) {
-          setTitle(f.name.replace(/\.pdf$/i, ''));
+    maxFiles: MAX_FILES,
+    maxSize: MAX_FILE_SIZE,
+    onDrop: (acceptedFiles, rejectedFiles) => {
+      // Handle rejected files
+      if (rejectedFiles.length > 0) {
+        const tooMany = rejectedFiles.find(r => r.errors.some(e => e.code === 'too-many-files'));
+        if (tooMany) {
+          toast.error(`Máximo de ${MAX_FILES} arquivos permitidos`);
         }
+        rejectedFiles.forEach(r => {
+          r.errors.forEach(e => {
+            if (e.code === 'file-too-large') {
+              toast.error(`${r.file.name}: Arquivo muito grande (máx 100MB)`);
+            }
+          });
+        });
       }
+
+      // Add new files (respecting max limit)
+      const currentCount = files.length;
+      const availableSlots = MAX_FILES - currentCount;
+      const filesToAdd = acceptedFiles.slice(0, availableSlots);
+
+      if (acceptedFiles.length > availableSlots) {
+        toast.warning(`Apenas ${availableSlots} arquivos adicionados (limite de ${MAX_FILES})`);
+      }
+
+      const newFiles: FileWithMeta[] = filesToAdd.map(f => ({
+        file: f,
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        title: f.name.replace(/\.pdf$/i, ''),
+        status: 'pending' as const,
+        progress: 0,
+      }));
+
+      setFiles(prev => [...prev, ...newFiles]);
     }
   });
 
+  const handleRemoveFile = useCallback((id: string) => {
+    setFiles(prev => prev.filter(f => f.id !== id));
+  }, []);
+
+  const handleTitleChange = useCallback((id: string, newTitle: string) => {
+    setFiles(prev => prev.map(f => 
+      f.id === id ? { ...f, title: newTitle } : f
+    ));
+  }, []);
+
   const handleMacroChange = (value: string) => {
     setSelectedMacro(value);
-    setSelectedMicro(''); // Reset micro
+    setSelectedMicro('');
   };
 
-  const handleUpload = async () => {
-    if (!file || !title.trim()) {
-      toast.error('Título e arquivo são obrigatórios');
-      return;
-    }
-    if (!selectedMacro) {
-      toast.error('Selecione um Macro-assunto');
-      return;
-    }
-
-    setUploading(true);
-    setProgress(10);
-
+  const uploadSingleFile = async (
+    fileMeta: FileWithMeta, 
+    userId: string, 
+    now: Date
+  ): Promise<boolean> => {
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) throw new Error('Não autenticado');
+      setFiles(prev => prev.map(f => 
+        f.id === fileMeta.id ? { ...f, status: 'uploading', progress: 10 } : f
+      ));
 
-      const now = new Date();
       const ano = now.getFullYear();
       const mes = now.getMonth() + 1;
       const dia = now.getDate();
       const semana = Math.ceil((now.getDate() + new Date(now.getFullYear(), now.getMonth(), 1).getDay()) / 7);
 
-      // Organizar por: contentType/macro/micro/data
       const folder = `${contentType}/${selectedMacro}/${selectedMicro || 'geral'}/${ano}/${String(mes).padStart(2, '0')}`;
-      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const fileName = `${Date.now()}_${fileMeta.file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       const filePath = `${folder}/${fileName}`;
-      
-      setProgress(30);
-      
+
+      setFiles(prev => prev.map(f => 
+        f.id === fileMeta.id ? { ...f, progress: 30 } : f
+      ));
+
       const { error: uploadError } = await supabase.storage
         .from('materiais')
-        .upload(filePath, file, {
+        .upload(filePath, fileMeta.file, {
           cacheControl: '3600',
           upsert: false
         });
 
       if (uploadError) throw uploadError;
-      
-      setProgress(70);
+
+      setFiles(prev => prev.map(f => 
+        f.id === fileMeta.id ? { ...f, progress: 70 } : f
+      ));
 
       const { error: dbError } = await supabase
         .from('materials')
         .insert({
-          title: title.trim(),
+          title: fileMeta.title.trim(),
           description: description.trim() || null,
-          category: contentType, // Manter compatibilidade
+          category: contentType,
           content_type: contentType,
           macro: selectedMacro,
           micro: selectedMicro || null,
           status: 'ready',
           file_path: filePath,
-          file_name: file.name,
-          file_size_bytes: file.size,
+          file_name: fileMeta.file.name,
+          file_size_bytes: fileMeta.file.size,
           watermark_enabled: watermarkEnabled,
           is_premium: isPremium,
-          created_by: userData.user.id,
+          created_by: userId,
           ano,
           mes,
           semana,
@@ -265,96 +307,250 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
         });
 
       if (dbError) throw dbError;
-      
-      setProgress(100);
-      
-      toast.success('Material enviado com sucesso!');
-      onSuccess();
-      onOpenChange(false);
-      
-      // Reset form
-      setTitle('');
-      setDescription('');
-      setContentType('mapa_mental');
-      setSelectedMacro('');
-      setSelectedMicro('');
-      setFile(null);
-      setWatermarkEnabled(true);
-      setIsPremium(true);
 
+      setFiles(prev => prev.map(f => 
+        f.id === fileMeta.id ? { ...f, status: 'success', progress: 100 } : f
+      ));
+
+      return true;
     } catch (error: any) {
-      console.error('Erro no upload:', error);
-      toast.error(error.message || 'Erro ao enviar material');
-    } finally {
-      setUploading(false);
-      setProgress(0);
+      console.error(`Erro no upload de ${fileMeta.file.name}:`, error);
+      setFiles(prev => prev.map(f => 
+        f.id === fileMeta.id ? { ...f, status: 'error', error: error.message, progress: 0 } : f
+      ));
+      return false;
     }
   };
 
+  const handleUploadAll = async () => {
+    const pendingFiles = files.filter(f => f.status === 'pending' || f.status === 'error');
+    
+    if (pendingFiles.length === 0) {
+      toast.error('Nenhum arquivo para enviar');
+      return;
+    }
+    if (!selectedMacro) {
+      toast.error('Selecione um Macro-assunto');
+      return;
+    }
+
+    // Validate all titles
+    const emptyTitles = pendingFiles.filter(f => !f.title.trim());
+    if (emptyTitles.length > 0) {
+      toast.error(`${emptyTitles.length} arquivo(s) sem título`);
+      return;
+    }
+
+    setUploading(true);
+    setOverallProgress(0);
+
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) throw new Error('Não autenticado');
+
+      const now = new Date();
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Upload files in parallel batches of 5
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < pendingFiles.length; i += BATCH_SIZE) {
+        const batch = pendingFiles.slice(i, i + BATCH_SIZE);
+        const results = await Promise.all(
+          batch.map(f => uploadSingleFile(f, userData.user!.id, now))
+        );
+        
+        successCount += results.filter(r => r).length;
+        errorCount += results.filter(r => !r).length;
+        
+        setOverallProgress(Math.round(((i + batch.length) / pendingFiles.length) * 100));
+      }
+
+      if (successCount > 0) {
+        toast.success(`${successCount} material(is) enviado(s) com sucesso!`);
+        onSuccess();
+      }
+      if (errorCount > 0) {
+        toast.error(`${errorCount} arquivo(s) com erro`);
+      }
+
+      // Remove successful files from list
+      setFiles(prev => prev.filter(f => f.status !== 'success'));
+
+      // Close dialog if all succeeded
+      if (errorCount === 0) {
+        onOpenChange(false);
+        resetForm();
+      }
+
+    } catch (error: any) {
+      console.error('Erro geral no upload:', error);
+      toast.error(error.message || 'Erro no upload');
+    } finally {
+      setUploading(false);
+      setOverallProgress(0);
+    }
+  };
+
+  const resetForm = () => {
+    setFiles([]);
+    setDescription('');
+    setContentType('mapa_mental');
+    setSelectedMacro('');
+    setSelectedMicro('');
+    setWatermarkEnabled(true);
+    setIsPremium(true);
+  };
+
+  const pendingCount = files.filter(f => f.status === 'pending').length;
+  const successCount = files.filter(f => f.status === 'success').length;
+  const errorCount = files.filter(f => f.status === 'error').length;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="w-5 h-5" />
             Novo Material PDF
+            <Badge variant="outline" className="ml-2">
+              Até {MAX_FILES} arquivos
+            </Badge>
           </DialogTitle>
           <DialogDescription>
-            Organize por tipo de conteúdo e taxonomia
+            Arraste múltiplos PDFs ou clique para selecionar (máx {MAX_FILES})
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="flex-1 overflow-y-auto space-y-4 py-4">
           {/* Dropzone */}
           <div
             {...getRootProps()}
             className={cn(
               "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
-              isDragActive && "border-primary bg-primary/5",
-              file && "border-green-500 bg-green-500/5"
+              isDragActive && "border-primary bg-primary/5 scale-[1.02]",
+              files.length > 0 && "border-green-500/50 bg-green-500/5"
             )}
           >
             <input {...getInputProps()} />
-            {file ? (
-              <div className="flex items-center justify-center gap-3">
-                <FileText className="w-8 h-8 text-green-500" />
-                <div className="text-left">
-                  <p className="font-medium">{file.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            ) : (
-              <div>
-                <FileText className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
-                <p className="font-medium">Arraste um PDF aqui</p>
-                <p className="text-sm text-muted-foreground">ou clique para selecionar</p>
-              </div>
+            <FileText className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
+            <p className="font-medium">
+              {isDragActive ? 'Solte os arquivos aqui...' : 'Arraste PDFs aqui'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              ou clique para selecionar (máx 100MB cada)
+            </p>
+            {files.length > 0 && (
+              <Badge className="mt-2" variant="secondary">
+                {files.length}/{MAX_FILES} arquivos selecionados
+              </Badge>
             )}
           </div>
 
-          {/* Título */}
-          <div className="space-y-2">
-            <Label>Título *</Label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Mapa Mental - Química Orgânica"
-            />
-          </div>
+          {/* File List */}
+          {files.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Arquivos ({files.length})</Label>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setFiles([])}
+                  disabled={uploading}
+                >
+                  <X className="w-3 h-3 mr-1" />
+                  Limpar todos
+                </Button>
+              </div>
+              <ScrollArea className="h-[200px] border rounded-lg p-2">
+                <div className="space-y-2">
+                  {files.map((fileMeta) => (
+                    <div 
+                      key={fileMeta.id}
+                      className={cn(
+                        "flex items-center gap-2 p-2 rounded-lg border transition-colors",
+                        fileMeta.status === 'success' && "bg-green-500/10 border-green-500/30",
+                        fileMeta.status === 'error' && "bg-red-500/10 border-red-500/30",
+                        fileMeta.status === 'uploading' && "bg-blue-500/10 border-blue-500/30"
+                      )}
+                    >
+                      {/* Status Icon */}
+                      <div className="w-8 h-8 flex items-center justify-center">
+                        {fileMeta.status === 'pending' && (
+                          <FileText className="w-5 h-5 text-muted-foreground" />
+                        )}
+                        {fileMeta.status === 'uploading' && (
+                          <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                        )}
+                        {fileMeta.status === 'success' && (
+                          <CheckCircle className="w-5 h-5 text-green-500" />
+                        )}
+                        {fileMeta.status === 'error' && (
+                          <AlertCircle className="w-5 h-5 text-red-500" />
+                        )}
+                      </div>
+
+                      {/* Title Input */}
+                      <div className="flex-1 min-w-0">
+                        <Input
+                          value={fileMeta.title}
+                          onChange={(e) => handleTitleChange(fileMeta.id, e.target.value)}
+                          placeholder="Título do material"
+                          disabled={uploading || fileMeta.status === 'success'}
+                          className="h-8 text-sm"
+                        />
+                        {fileMeta.status === 'uploading' && (
+                          <Progress value={fileMeta.progress} className="h-1 mt-1" />
+                        )}
+                        {fileMeta.error && (
+                          <p className="text-xs text-red-500 mt-1 truncate">{fileMeta.error}</p>
+                        )}
+                      </div>
+
+                      {/* Size */}
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {(fileMeta.file.size / 1024 / 1024).toFixed(1)}MB
+                      </span>
+
+                      {/* Remove Button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleRemoveFile(fileMeta.id)}
+                        disabled={uploading || fileMeta.status === 'uploading'}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+
+              {/* Status Summary */}
+              {(successCount > 0 || errorCount > 0) && (
+                <div className="flex gap-2 text-sm">
+                  {successCount > 0 && (
+                    <Badge variant="secondary" className="bg-green-500/20 text-green-600">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      {successCount} enviado(s)
+                    </Badge>
+                  )}
+                  {errorCount > 0 && (
+                    <Badge variant="secondary" className="bg-red-500/20 text-red-600">
+                      <AlertCircle className="w-3 h-3 mr-1" />
+                      {errorCount} erro(s)
+                    </Badge>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Tipo de Conteúdo */}
           <div className="space-y-2">
             <Label>Tipo de Conteúdo *</Label>
-            <Select value={contentType} onValueChange={setContentType}>
+            <Select value={contentType} onValueChange={setContentType} disabled={uploading}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -371,7 +567,7 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
           {/* Macro-assunto */}
           <div className="space-y-2">
             <Label>Macro-assunto * (5 Áreas)</Label>
-            <Select value={selectedMacro} onValueChange={handleMacroChange} disabled={taxonomyLoading}>
+            <Select value={selectedMacro} onValueChange={handleMacroChange} disabled={taxonomyLoading || uploading}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o macro..." />
               </SelectTrigger>
@@ -389,7 +585,7 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
           {selectedMacro && (
             <div className="space-y-2">
               <Label>Micro-assunto</Label>
-              <Select value={selectedMicro} onValueChange={setSelectedMicro}>
+              <Select value={selectedMicro} onValueChange={setSelectedMicro} disabled={uploading}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o micro (opcional)..." />
                 </SelectTrigger>
@@ -407,12 +603,13 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
 
           {/* Descrição */}
           <div className="space-y-2">
-            <Label>Descrição</Label>
+            <Label>Descrição (aplicada a todos)</Label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Descrição do material..."
               rows={2}
+              disabled={uploading}
             />
           </div>
 
@@ -422,6 +619,7 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
               <Switch
                 checked={watermarkEnabled}
                 onCheckedChange={setWatermarkEnabled}
+                disabled={uploading}
               />
               <Label className="flex items-center gap-1 cursor-pointer">
                 <Shield className="w-4 h-4" />
@@ -432,6 +630,7 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
               <Switch
                 checked={isPremium}
                 onCheckedChange={setIsPremium}
+                disabled={uploading}
               />
               <Label className="flex items-center gap-1 cursor-pointer">
                 <Users className="w-4 h-4" />
@@ -440,22 +639,26 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
             </div>
           </div>
 
-          {/* Progress */}
+          {/* Overall Progress */}
           {uploading && (
             <div className="space-y-2">
-              <Progress value={progress} />
+              <Progress value={overallProgress} />
               <p className="text-sm text-center text-muted-foreground">
-                Enviando... {progress}%
+                Enviando... {overallProgress}%
               </p>
             </div>
           )}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="border-t pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={uploading}>
             Cancelar
           </Button>
-          <Button onClick={handleUpload} disabled={uploading || !file || !title.trim() || !selectedMacro}>
+          <Button 
+            onClick={handleUploadAll} 
+            disabled={uploading || pendingCount === 0 || !selectedMacro}
+            className="min-w-[140px]"
+          >
             {uploading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -464,7 +667,7 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
             ) : (
               <>
                 <Upload className="w-4 h-4 mr-2" />
-                Enviar Material
+                Enviar {pendingCount > 1 ? `${pendingCount} PDFs` : 'PDF'}
               </>
             )}
           </Button>
@@ -473,7 +676,6 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
     </Dialog>
   );
 });
-
 // ============================================
 // MATERIAL ROW
 // ============================================
