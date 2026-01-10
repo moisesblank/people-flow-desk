@@ -44,7 +44,7 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 // Componentes de edição inline e linha arrastável
-import { SortableBookRow } from '@/components/gestao/livros-web';
+import { SortableBookRow, PDFReplacementUploader } from '@/components/gestao/livros-web';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -110,6 +110,7 @@ interface WebBookAdmin {
   cover_url?: string;
   description?: string;
   tags?: string[];
+  original_filename?: string;
 }
 
 // ============================================
@@ -1061,6 +1062,23 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                 value={editForm.tags}
                 onChange={(tags) => setEditForm(f => ({ ...f, tags }))}
                 placeholder="Digite e pressione Enter..."
+                disabled={isSaving}
+              />
+            </div>
+
+            {/* Substituição de PDF */}
+            <div className="pt-4 border-t">
+              <Label className="flex items-center gap-2 mb-3">
+                <FileUp className="w-4 h-4" />
+                Substituir PDF
+              </Label>
+              <PDFReplacementUploader
+                bookId={editingBook?.id || ''}
+                currentFileName={editingBook?.original_filename}
+                onSuccess={() => {
+                  loadBooks();
+                  clearAllCache();
+                }}
                 disabled={isSaving}
               />
             </div>
