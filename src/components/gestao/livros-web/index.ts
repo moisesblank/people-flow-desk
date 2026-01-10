@@ -1,0 +1,6 @@
+// ============================================
+// 📚 LIVROS WEB COMPONENTS - BARREL EXPORT
+// ============================================
+
+export { InlineEditableCell } from './InlineEditableCell';
+export { InlinePositionEditor } from './InlinePositionEditor';
