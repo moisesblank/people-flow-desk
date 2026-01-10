@@ -36,15 +36,6 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
     if (bookId) setSelectedBookId(bookId);
   }, [location.search]);
 
-  // P0 anti-tela-preta: loader mínimo enquanto não está pronto
-  if (!isReady) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   const handleBookSelect = useCallback((bookId: string) => {
     setSelectedBookId(bookId);
   }, []);
@@ -56,6 +47,15 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
   const handleCategoryClick = useCallback((categoryId: string) => {
     setSelectedCategory(prev => prev === categoryId ? null : categoryId);
   }, []);
+
+  // P0 anti-tela-preta: loader mínimo enquanto não está pronto
+  if (!isReady) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <>
