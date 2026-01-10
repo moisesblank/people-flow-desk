@@ -351,7 +351,7 @@ function CourseSection({
   onToggleModule: (id: string) => void;
   onPlayLesson: (lesson: Lesson) => void;
 }) {
-  // ✅ COLLAPSIBLE: Inicia ABERTO por padrão (obrigatório conforme CONSTITUIÇÃO)
+  // ✅ COLLAPSIBLE: Cursos iniciam ABERTOS (exibe subcategorias)
   const [isOpen, setIsOpen] = useState(true);
   const totalModules = subcategoryGroups.reduce((acc, g) => acc + g.modules.length, 0);
   const totalLessons = subcategoryGroups.reduce((acc, g) => 
@@ -471,8 +471,8 @@ function SubcategorySection({
   onToggleModule: (id: string) => void;
   onPlayLesson: (lesson: Lesson) => void;
 }) {
-  // ✅ COLLAPSIBLE: Inicia ABERTO por padrão (obrigatório conforme CONSTITUIÇÃO)
-  const [isOpen, setIsOpen] = useState(true);
+  // ✅ COLLAPSIBLE: Subcategorias iniciam FECHADAS (módulos só aparecem após clique)
+  const [isOpen, setIsOpen] = useState(false);
   const totalLessons = modules.reduce((a, m) => a + (m._count?.lessons || 0), 0);
   
   // 📊 PROGRESS: Buscar progresso de todos os módulos desta subcategoria (UMA única query)
