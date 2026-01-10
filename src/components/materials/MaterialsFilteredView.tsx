@@ -2,9 +2,10 @@
 // 📂 MATERIALS FILTERED VIEW — NETFLIX ULTRA PREMIUM 2300
 // Exibe materiais filtrados por Book + Categoria
 // Year 2300 Cinematic Experience
+// VIRTUALIZAÇÃO ATIVA — Performance para 5000+ usuários
 // ============================================
 
-import { memo, useState, useMemo, useCallback, forwardRef } from 'react';
+import { memo, useState, useMemo, useCallback, forwardRef, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, 
@@ -29,6 +30,12 @@ import { useConstitutionPerformance } from '@/hooks/useConstitutionPerformance';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import '@/styles/dashboard-2300.css';
+
+// Configuração de virtualização
+const VIRTUALIZATION_THRESHOLD = 12; // Virtualiza apenas se > 12 itens
+const CARD_HEIGHT = 340; // Altura aproximada de cada card em px
+const CARDS_PER_ROW = { sm: 1, md: 2, lg: 3, xl: 4 };
+const OVERSCAN = 2; // Renderiza 2 linhas extras acima/abaixo
 
 // ============================================
 // TIPOS
@@ -198,6 +205,115 @@ const MaterialCard = memo(forwardRef<HTMLDivElement, {
     </motion.div>
   );
 }));
+
+// ============================================
+// 📊 VIRTUALIZED MATERIAL GRID — Performance
+// Renderiza apenas os cards visíveis na viewport
+// ============================================
+
+const VirtualizedMaterialGrid = memo(function VirtualizedMaterialGrid({
+  materials,
+  onSelect,
+  isHighEnd
+}: {
+  materials: MaterialItem[];
+  onSelect: (id: string) => void;
+  isHighEnd: boolean;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
+  const [cardsPerRow, setCardsPerRow] = useState(4);
+
+  // Detectar quantidade de colunas baseado na largura
+  useEffect(() => {
+    const updateLayout = () => {
+      const width = window.innerWidth;
+      if (width < 640) setCardsPerRow(CARDS_PER_ROW.sm);
+      else if (width < 1024) setCardsPerRow(CARDS_PER_ROW.md);
+      else if (width < 1280) setCardsPerRow(CARDS_PER_ROW.lg);
+      else setCardsPerRow(CARDS_PER_ROW.xl);
+    };
+    
+    updateLayout();
+    window.addEventListener('resize', updateLayout);
+    return () => window.removeEventListener('resize', updateLayout);
+  }, []);
+
+  // Observer para altura do container
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        setContainerHeight(entry.contentRect.height);
+      }
+    });
+    
+    resizeObserver.observe(containerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  // Se poucos itens, renderiza sem virtualização
+  if (materials.length <= VIRTUALIZATION_THRESHOLD) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <AnimatePresence mode="popLayout">
+          {materials.map((material, idx) => (
+            <MaterialCard
+              key={material.id}
+              material={material}
+              onSelect={onSelect}
+              isHighEnd={isHighEnd}
+              index={idx}
+            />
+          ))}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // Cálculos de virtualização
+  const totalRows = Math.ceil(materials.length / cardsPerRow);
+  const totalHeight = totalRows * CARD_HEIGHT;
+  const startRow = Math.max(0, Math.floor(scrollTop / CARD_HEIGHT) - OVERSCAN);
+  const endRow = Math.min(totalRows, Math.ceil((scrollTop + containerHeight) / CARD_HEIGHT) + OVERSCAN);
+  const startIndex = startRow * cardsPerRow;
+  const endIndex = Math.min(materials.length, endRow * cardsPerRow);
+  const visibleMaterials = materials.slice(startIndex, endIndex);
+  const offsetY = startRow * CARD_HEIGHT;
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop);
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      onScroll={handleScroll}
+      className="overflow-y-auto max-h-[calc(100vh-400px)] min-h-[400px] rounded-xl"
+      style={{ contain: 'strict' }}
+    >
+      <div style={{ height: totalHeight, position: 'relative' }}>
+        <div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 absolute left-0 right-0"
+          style={{ transform: `translateY(${offsetY}px)` }}
+        >
+          {visibleMaterials.map((material, idx) => (
+            <MaterialCard
+              key={material.id}
+              material={material}
+              onSelect={onSelect}
+              isHighEnd={isHighEnd}
+              index={idx}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+});
 
 // ============================================
 // 📂 MAIN COMPONENT
@@ -401,19 +517,11 @@ export const MaterialsFilteredView = memo(function MaterialsFilteredView({
           </Button>
         </motion.div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          <AnimatePresence mode="popLayout">
-            {filteredMaterials.map((material, idx) => (
-              <MaterialCard
-                key={material.id}
-                material={material}
-                onSelect={onSelectMaterial}
-                isHighEnd={isHighEnd}
-                index={idx}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
+        <VirtualizedMaterialGrid
+          materials={filteredMaterials}
+          onSelect={onSelectMaterial}
+          isHighEnd={isHighEnd}
+        />
       )}
     </motion.div>
   );
