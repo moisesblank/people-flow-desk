@@ -195,136 +195,150 @@ const NetflixBookCard = memo(function NetflixBookCard({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.97 }}
+      initial={isHighEnd ? { opacity: 0, y: 30, scale: 0.95 } : { opacity: 0 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ 
-        duration: 0.4, 
-        delay: index * 0.08,
+        duration: 0.5, 
+        delay: index * 0.1,
         ease: [0.25, 0.46, 0.45, 0.94]
       }}
       whileHover={isHighEnd ? { 
-        scale: 1.02, 
-        y: -6,
-        transition: { duration: 0.2 }
+        scale: 1.04, 
+        y: -10,
+        transition: { duration: 0.25, ease: "easeOut" }
       } : undefined}
       className="group relative flex flex-col"
     >
-      {/* Outer Glow Effect */}
+      {/* Outer Glow Effect — More Intense */}
       {isHighEnd && (
         <div 
-          className="absolute -inset-[2px] rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"
+          className="absolute -inset-3 rounded-3xl opacity-0 group-hover:opacity-60 transition-all duration-500 blur-2xl"
           style={{ backgroundColor: book.glowColor }}
         />
       )}
       
-      {/* Main Card — Netflix Style with Logo Background */}
+      {/* Main Card — Netflix Powerflix Ultra Premium Style */}
       <div 
         onClick={() => onSelect(book.id)}
         className={cn(
           "relative cursor-pointer overflow-hidden rounded-2xl",
-          "bg-gradient-to-br from-[#0a0b0f] via-[#0d0f14] to-[#12151c]",
-          "border-2 transition-all duration-400",
+          "bg-gradient-to-br from-[#0a0a0c] via-[#0c0d10] to-[#0f1015]",
+          "border-2 transition-all duration-300",
           book.borderColor,
-          "hover:border-opacity-80",
-          isHighEnd && "hover:shadow-[0_20px_60px_-15px_var(--card-glow)]"
+          "hover:border-opacity-100",
+          isHighEnd && "hover:shadow-[0_30px_80px_-20px_var(--card-glow)]"
         )}
         style={{ 
           '--card-glow': book.glowColor,
-          minHeight: '320px'
+          minHeight: '380px'
         } as React.CSSProperties}
       >
-        {/* Top Gradient Bar — Netflix Style */}
+        {/* Top Gradient Bar — Netflix Red Style */}
         <div className={cn(
-          "absolute top-0 left-0 right-0 h-[3px]",
-          "bg-gradient-to-r opacity-80 group-hover:opacity-100 transition-opacity"
+          "absolute top-0 left-0 right-0 h-1",
+          "bg-gradient-to-r opacity-90 group-hover:opacity-100 transition-opacity"
         )} style={{
-          backgroundImage: `linear-gradient(90deg, transparent, ${book.glowColor}, transparent)`
+          backgroundImage: `linear-gradient(90deg, transparent 5%, ${book.glowColor}, transparent 95%)`
         }} />
 
-        {/* Animated Background Gradient */}
+        {/* 🖼️ LOGO CENTERPIECE — BIG & PROMINENT — Powerflix Style */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+          {/* Radial glow behind logo */}
+          <div 
+            className="absolute w-64 h-64 md:w-80 md:h-80 rounded-full opacity-[0.08] group-hover:opacity-[0.15] transition-opacity duration-700 blur-3xl"
+            style={{ backgroundColor: book.glowColor }}
+          />
+          {/* Logo — Big & Centered */}
+          <img 
+            src={logoMoisesMedeiros} 
+            alt=""
+            className="w-40 md:w-52 lg:w-60 h-auto opacity-[0.12] group-hover:opacity-[0.22] group-hover:scale-105 transition-all duration-700 drop-shadow-2xl"
+            loading="lazy"
+          />
+        </div>
+
+        {/* Animated Background Gradient — More Dramatic */}
         <div className={cn(
-          "absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity duration-500",
+          "absolute inset-0 opacity-40 group-hover:opacity-70 transition-opacity duration-500",
           "bg-gradient-to-br",
           book.gradientFrom,
           book.gradientVia,
           book.gradientTo
         )} />
 
-        {/* 🖼️ LOGO BACKGROUND — Centered Watermark */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <img 
-            src={logoMoisesMedeiros} 
-            alt=""
-            className="w-24 md:w-32 h-auto opacity-[0.06] group-hover:opacity-[0.10] transition-opacity duration-500"
-            loading="lazy"
-          />
-        </div>
+        {/* Cinematic Vignette Effect */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_20%,rgba(0,0,0,0.6)_100%)] opacity-80 pointer-events-none" />
 
         {/* Cinematic Scan Line Effect */}
         {isHighEnd && (
           <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden pointer-events-none">
             <div 
-              className="absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-white/[0.03] to-transparent"
+              className="absolute inset-x-0 h-32 bg-gradient-to-b from-transparent via-white/[0.04] to-transparent"
               style={{
-                animation: 'netflix-scan 2.5s linear infinite',
+                animation: 'netflix-scan 2s linear infinite',
                 transform: 'translateY(-100%)'
               }}
             />
           </div>
         )}
 
-        {/* Grid Pattern Overlay */}
-        <div className="absolute inset-0 opacity-[0.02] group-hover:opacity-[0.04] transition-opacity"
-          style={{
-            backgroundImage: `repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(255,255,255,0.03) 50px, rgba(255,255,255,0.03) 51px),
-                              repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.03) 50px, rgba(255,255,255,0.03) 51px)`
-          }}
-        />
+        {/* Film Grain Effect */}
+        {isHighEnd && (
+          <div 
+            className="absolute inset-0 opacity-[0.015] pointer-events-none mix-blend-overlay"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+            }}
+          />
+        )}
 
         {/* Content Container */}
-        <div className="relative p-5 flex flex-col h-full justify-between" style={{ minHeight: '320px' }}>
-          {/* Header: Icon + Badge */}
-          <div className="flex items-start justify-between mb-4">
-            {/* Icon Container — Glowing */}
+        <div className="relative p-6 flex flex-col h-full justify-between" style={{ minHeight: '380px' }}>
+          {/* Header: Icon + Badge — Premium Positioning */}
+          <div className="flex items-start justify-between">
+            {/* Icon Container — Glowing Orb */}
             <div className={cn(
-              "relative p-3.5 rounded-xl",
-              "bg-gradient-to-br from-black/40 to-black/20",
-              "border",
+              "relative p-4 rounded-2xl",
+              "bg-gradient-to-br from-black/60 to-black/30",
+              "border-2",
               book.borderColor,
-              "group-hover:scale-105 transition-all duration-300"
+              "group-hover:scale-110 transition-all duration-400"
             )}>
               {/* Icon Inner Glow */}
               {isHighEnd && (
                 <div 
-                  className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-70 transition-opacity blur-lg"
+                  className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-80 transition-opacity blur-xl"
                   style={{ backgroundColor: book.glowColor }}
                 />
               )}
               {/* Pulsing Ring */}
-              <div 
-                className={cn(
-                  "absolute -inset-1 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity",
-                  "border",
-                  book.borderColor
-                )}
-                style={{ animation: isHighEnd ? 'pulse 2s ease-in-out infinite' : undefined }}
-              />
-              <span className={cn("relative z-10", book.accentColor)}>
+              {isHighEnd && (
+                <div 
+                  className={cn(
+                    "absolute -inset-1 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity",
+                    "border-2",
+                    book.borderColor
+                  )}
+                  style={{ animation: 'pulse 1.5s ease-in-out infinite' }}
+                />
+              )}
+              <span className={cn("relative z-10", book.accentColor)} style={{ filter: 'drop-shadow(0 0 8px currentColor)' }}>
                 {book.icon}
               </span>
             </div>
 
-            {/* Badge — Premium Style */}
+            {/* Badge — Cinematic Premium Style */}
             {book.badge && (
               <span 
                 className={cn(
-                  "text-[10px] font-bold tracking-wider px-2.5 py-1 rounded-md",
-                  "border",
+                  "text-[10px] font-black tracking-[0.15em] uppercase px-3 py-1.5 rounded-lg",
+                  "border-2 backdrop-blur-sm",
                   book.borderColor,
                   book.accentColor
                 )}
                 style={{
-                  background: `linear-gradient(135deg, ${book.glowColor.replace('0.4', '0.2')}, transparent)`
+                  background: `linear-gradient(135deg, ${book.glowColor.replace('0.4', '0.3')}, transparent)`,
+                  textShadow: `0 0 10px ${book.glowColor}`
                 }}
               >
                 {book.badge}
@@ -332,58 +346,67 @@ const NetflixBookCard = memo(function NetflixBookCard({
             )}
           </div>
 
-          {/* Spacer to push footer down */}
+          {/* Center Space — Logo Area */}
           <div className="flex-1" />
 
-          {/* Footer: Stats + Action */}
-          <div className="flex items-center justify-between pt-4 mt-auto border-t border-white/[0.06]">
-            {/* Filter Count — Chip */}
+          {/* Footer: Stats + Action — Netflix Premium */}
+          <div className="space-y-4">
+            {/* Categories Count */}
             <div className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1 rounded-lg",
-              "bg-white/[0.04] border border-white/[0.08]",
-              "group-hover:bg-white/[0.06] group-hover:border-white/[0.12] transition-all"
+              "flex items-center gap-2 px-3 py-2 rounded-xl w-fit",
+              "bg-black/40 backdrop-blur-sm border",
+              book.borderColor.replace('/30', '/20')
             )}>
-              <Filter className="w-3 h-3 text-muted-foreground/60" />
-              <span className="text-[11px] font-medium text-white/60">
+              <Filter className={cn("w-4 h-4", book.accentColor)} />
+              <span className="text-sm font-semibold text-white/80">
                 {book.filters.length} {book.filters.length === 1 ? 'categoria' : 'categorias'}
               </span>
             </div>
 
-            {/* Explore Button — Netflix Hover */}
+            {/* Action Button — Powerflix CTA */}
             <button className={cn(
-              "flex items-center gap-1 px-3 py-1.5 rounded-lg",
-              "border transition-all duration-300",
-              book.borderColor,
-              "group-hover:scale-105"
+              "w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl",
+              "border-2 transition-all duration-300",
+              "group-hover:scale-[1.02]",
+              book.borderColor
             )}
               style={{
-                background: `linear-gradient(135deg, ${book.glowColor.replace('0.4', '0.15')}, transparent)`
+                background: `linear-gradient(135deg, ${book.glowColor.replace('0.4', '0.2')}, ${book.glowColor.replace('0.4', '0.05')})`
               }}
             >
-              <span className={cn("text-xs font-semibold", book.accentColor)}>
+              <span className={cn("text-sm font-bold tracking-wide uppercase", book.accentColor)}>
                 Explorar
               </span>
-              <ChevronRight className={cn("w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform", book.accentColor)} />
+              <ChevronRight className={cn("w-5 h-5 group-hover:translate-x-1 transition-transform", book.accentColor)} />
             </button>
           </div>
         </div>
 
-        {/* Corner Accent Glow */}
+        {/* Corner Accent Glows — Dramatic */}
         <div 
-          className="absolute -bottom-16 -right-16 w-40 h-40 rounded-full opacity-10 group-hover:opacity-25 transition-opacity blur-2xl pointer-events-none"
+          className="absolute -bottom-20 -right-20 w-56 h-56 rounded-full opacity-15 group-hover:opacity-35 transition-opacity blur-3xl pointer-events-none"
+          style={{ backgroundColor: book.glowColor }}
+        />
+        <div 
+          className="absolute -top-10 -left-10 w-32 h-32 rounded-full opacity-10 group-hover:opacity-25 transition-opacity blur-2xl pointer-events-none"
           style={{ backgroundColor: book.glowColor }}
         />
       </div>
 
-      {/* 📖 TEXT BELOW CARD — Netflix Style */}
-      <div className="mt-3 px-1 space-y-1.5">
-        <h3 className={cn(
-          "text-base md:text-lg font-bold text-white/95 group-hover:text-white transition-colors",
-          "leading-tight line-clamp-2"
-        )}>
+      {/* 📖 TEXT BELOW CARD — Netflix Typography */}
+      <div className="mt-4 px-1 space-y-2">
+        <h3 
+          className={cn(
+            "text-lg md:text-xl font-black text-white tracking-tight",
+            "group-hover:text-opacity-100 transition-all duration-300"
+          )}
+          style={{ 
+            textShadow: isHighEnd ? `0 2px 20px ${book.glowColor}` : undefined
+          }}
+        >
           {book.name}
         </h3>
-        <p className="text-xs text-muted-foreground/70 line-clamp-2 leading-relaxed">
+        <p className="text-sm text-muted-foreground/80 line-clamp-2 leading-relaxed">
           {book.description}
         </p>
       </div>
@@ -799,22 +822,39 @@ export const MaterialBooksHub = memo(function MaterialBooksHub({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, x: -50 }}
           >
-            {/* Section Title */}
+            {/* 🎬 POWERFLIX HEADER — Cinematic Title */}
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-3 mb-6"
+              transition={{ duration: 0.5 }}
+              className="mb-8"
             >
-              <BookMarked className="w-5 h-5 text-primary" />
-              <h2 className="text-lg font-semibold text-white">Selecione uma Coleção</h2>
-              <div className="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent" />
-              <Badge variant="outline" className="border-white/20 text-white/60">
-                {MATERIAL_BOOKS.length} coleções
-              </Badge>
+              <div className="flex items-center gap-4 mb-2">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-rose-500/20 to-rose-900/10 border border-rose-500/30">
+                  <BookMarked className="w-6 h-6 text-rose-400" style={{ filter: 'drop-shadow(0 0 8px rgba(244, 63, 94, 0.6))' }} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-white tracking-tight">
+                    Biblioteca de Materiais
+                  </h2>
+                  <p className="text-sm text-muted-foreground/70 mt-0.5">
+                    Selecione uma coleção para explorar
+                  </p>
+                </div>
+                <div className="flex-1" />
+                <Badge 
+                  variant="outline" 
+                  className="border-rose-500/30 text-rose-400 bg-rose-500/10 px-3 py-1"
+                >
+                  {MATERIAL_BOOKS.length} coleções
+                </Badge>
+              </div>
+              {/* Gradient divider */}
+              <div className="h-px bg-gradient-to-r from-rose-500/40 via-rose-500/20 to-transparent" />
             </motion.div>
 
-            {/* 🎬 NETFLIX ULTRA GRID — 5 UNIFORM CARDS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 auto-rows-fr">
+            {/* 🎬 NETFLIX POWERFLIX GRID — Premium Cards with Gap */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 xl:gap-5">
               {MATERIAL_BOOKS.map((book, idx) => (
                 <NetflixBookCard
                   key={book.id}
