@@ -480,65 +480,36 @@ function SubcategorySection({
   const { progressMap } = useModulesProgress(isOpen ? moduleIds : []);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
-          {/* 🎬 SPIDER-MAN PREMIUM SUBCATEGORY HEADER */}
-          <div className="group relative flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer overflow-hidden bg-gradient-to-r from-[#1a1a2e] via-[#16213e] to-[#1a1a2e] border-2 border-[#E23636]/40 hover:border-[#E23636]/70 shadow-lg shadow-[#E23636]/10 hover:shadow-[#E23636]/30 transition-all duration-300">
-            {/* Background glow effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#E23636]/8 via-transparent to-[#E23636]/8 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+          {/* 🎬 NETFLIX SLIM SUBCATEGORY HEADER */}
+          <div className="group relative flex items-center gap-3 px-4 py-3 cursor-pointer overflow-hidden bg-black/40 hover:bg-black/60 border-l-4 border-l-[#E23636] rounded-r-lg transition-all duration-200">
+            {/* Netflix-style left accent bar glow on hover */}
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#E23636] opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300" />
             
-            {/* Icon with Spider-Man red glow */}
-            <div className="relative z-10">
-              <div className="absolute inset-0 bg-[#E23636]/50 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="relative p-3 rounded-xl bg-gradient-to-br from-[#E23636]/40 to-[#E23636]/25 border-2 border-[#E23636]/50 shadow-lg shadow-[#E23636]/30">
-                <FolderOpen className="h-5 w-5 text-[#FF6B6B]" />
-              </div>
+            {/* Chevron first - Netflix style */}
+            <div className="relative z-10 text-[#E23636] transition-transform duration-200 group-hover:scale-110">
+              {isOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
             </div>
             
-            {/* Subcategory Title */}
-            <span className="relative z-10 font-bold text-lg md:text-xl text-slate-100 group-hover:text-white flex-1 tracking-tight transition-colors duration-200">
-              {subcategory || '📁 Geral'}
+            {/* Subcategory Title - Bold Netflix style */}
+            <span className="relative z-10 font-semibold text-base md:text-lg text-gray-200 group-hover:text-white flex-1 tracking-wide transition-colors duration-200">
+              {subcategory || 'Geral'}
             </span>
             
-            {/* Stats Badges */}
-            <div className="relative z-10 flex items-center gap-3">
-              <Badge className="px-3 py-1.5 text-sm font-bold bg-[#E23636]/25 text-[#FF6B6B] border-2 border-[#E23636]/50 shadow-lg shadow-[#E23636]/20">
-                <Layers className="h-4 w-4 mr-1.5" />
-                {modules.length} módulos
-              </Badge>
-              <Badge className="px-3 py-1.5 text-sm font-bold bg-slate-500/20 text-slate-300 border-2 border-slate-500/30 shadow-md">
-                <PlayCircle className="h-4 w-4 mr-1.5" />
-                {totalLessons} aulas
-              </Badge>
-              <div className="p-2 rounded-xl bg-[#E23636]/25 border border-[#E23636]/40 shadow-inner">
-                {isOpen ? <ChevronUp className="h-5 w-5 text-[#E23636]" /> : <ChevronDown className="h-5 w-5 text-[#E23636]" />}
-              </div>
+            {/* Minimal Stats - Netflix style */}
+            <div className="relative z-10 flex items-center gap-2 text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
+              <span className="font-medium">{modules.length}</span>
+              <span className="text-gray-500">•</span>
+              <span>{totalLessons} aulas</span>
             </div>
           </div>
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          {/* 🎬 NETFLIX HORIZONTAL CAROUSEL — Scroll suave estilo streaming */}
-          <div className="mt-4 relative group/carousel">
-            {/* Header do carousel com contagem */}
-            <div className="flex items-center justify-between gap-3 mb-4 px-2">
-              <div className="flex items-center gap-3">
-                <Layers className="h-4 w-4 text-cyan-400" />
-                <span className="text-sm text-muted-foreground">
-                  <strong className="text-cyan-400">{modules.length}</strong> módulos
-                </span>
-              </div>
-              
-              {/* 🎮 Navigation hint */}
-              <span className="text-xs text-muted-foreground flex items-center gap-2 opacity-0 group-hover/carousel:opacity-100 transition-opacity">
-                <ChevronLeft className="h-3 w-3" />
-                <span>Arraste para navegar</span>
-                <ChevronRight className="h-3 w-3" />
-              </span>
-            </div>
-            
-            {/* 🎬 NETFLIX CAROUSEL ROW */}
+          {/* 🎬 NETFLIX MODULES LIST */}
+          <div className="mt-2 ml-4 border-l border-gray-800/50 pl-4 space-y-1">
             <NetflixCarouselRow
               modules={modules}
               expandedModules={expandedModules}
