@@ -344,7 +344,7 @@ interface BookSectionProps {
   books: WebBookListItem[];
   onBookSelect: (bookId: string) => void;
   isHighEnd: boolean;
-  accentColor: 'red' | 'amber' | 'emerald';
+  accentColor: 'red' | 'amber' | 'emerald' | 'cyan' | 'blue' | 'yellow';
   defaultOpen?: boolean;
 }
 
@@ -394,6 +394,39 @@ const BookSection = memo(function BookSection({
       badge: "bg-emerald-500/25 text-emerald-300 border-emerald-500/40",
       corner: "border-emerald-500/60",
       accent: "text-emerald-400"
+    },
+    cyan: {
+      border: "border-cyan-500/40 hover:border-cyan-500/70",
+      shadow: "shadow-cyan-500/15 hover:shadow-cyan-500/40",
+      headerBg: "from-cyan-500/20 via-[#0a0e14]/80 to-cyan-500/15",
+      iconBg: "from-cyan-500/50 to-cyan-500/35 border-cyan-500/60 shadow-cyan-500/40",
+      iconGlow: "bg-cyan-500/50",
+      iconColor: "text-cyan-300",
+      badge: "bg-cyan-500/25 text-cyan-300 border-cyan-500/40",
+      corner: "border-cyan-500/60",
+      accent: "text-cyan-400"
+    },
+    blue: {
+      border: "border-blue-600/40 hover:border-blue-600/70",
+      shadow: "shadow-blue-600/15 hover:shadow-blue-600/40",
+      headerBg: "from-blue-600/20 via-[#0a0e14]/80 to-blue-600/15",
+      iconBg: "from-blue-600/50 to-blue-600/35 border-blue-600/60 shadow-blue-600/40",
+      iconGlow: "bg-blue-600/50",
+      iconColor: "text-blue-300",
+      badge: "bg-blue-600/25 text-blue-300 border-blue-600/40",
+      corner: "border-blue-600/60",
+      accent: "text-blue-400"
+    },
+    yellow: {
+      border: "border-yellow-500/40 hover:border-yellow-500/70",
+      shadow: "shadow-yellow-500/15 hover:shadow-yellow-500/40",
+      headerBg: "from-yellow-500/20 via-[#0a0e14]/80 to-yellow-500/15",
+      iconBg: "from-yellow-500/50 to-yellow-500/35 border-yellow-500/60 shadow-yellow-500/40",
+      iconGlow: "bg-yellow-500/50",
+      iconColor: "text-yellow-300",
+      badge: "bg-yellow-500/25 text-yellow-300 border-yellow-500/40",
+      corner: "border-yellow-500/60",
+      accent: "text-yellow-400"
     }
   };
 
@@ -1104,7 +1137,7 @@ const WebBookLibrary = memo(function WebBookLibrary({
               books={booksByCategory.quimica_organica}
               onBookSelect={onBookSelect}
               isHighEnd={isHighEnd}
-              accentColor="red"
+              accentColor="cyan"
               defaultOpen={false}
             />
 
@@ -1114,7 +1147,7 @@ const WebBookLibrary = memo(function WebBookLibrary({
               books={booksByCategory.fisico_quimica}
               onBookSelect={onBookSelect}
               isHighEnd={isHighEnd}
-              accentColor="amber"
+              accentColor="emerald"
               defaultOpen={false}
             />
 
@@ -1124,7 +1157,7 @@ const WebBookLibrary = memo(function WebBookLibrary({
               books={booksByCategory.revisao_ciclica}
               onBookSelect={onBookSelect}
               isHighEnd={isHighEnd}
-              accentColor="amber"
+              accentColor="blue"
               defaultOpen={false}
             />
 
@@ -1134,7 +1167,7 @@ const WebBookLibrary = memo(function WebBookLibrary({
               books={booksByCategory.previsao_final}
               onBookSelect={onBookSelect}
               isHighEnd={isHighEnd}
-              accentColor="emerald"
+              accentColor="yellow"
               defaultOpen={false}
             />
           </div>
