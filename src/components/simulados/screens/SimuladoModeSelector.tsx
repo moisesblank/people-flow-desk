@@ -195,8 +195,12 @@ const ModeCard = memo(function ModeCard({
           </div>
         </div>
 
-        {/* Select Button */}
+        {/* Select Button - P0 FIX: onClick explícito no botão */}
         <Button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick();
+          }}
           className={cn(
             "w-full font-bold uppercase tracking-wider transition-all duration-300",
             isHard
