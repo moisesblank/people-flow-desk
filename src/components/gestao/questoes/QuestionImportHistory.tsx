@@ -1,9 +1,10 @@
 // ============================================
 // 📜 HISTÓRICO DE IMPORTAÇÕES DE QUESTÕES
 // Visualização completa de todas as importações
+// COM ANIQUILAÇÃO DE LOTES
 // ============================================
 
-import { memo, useState, useEffect } from 'react';
+import { memo, useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   History,
@@ -23,6 +24,9 @@ import {
   Sparkles,
   AlertOctagon,
   Target,
+  Trash2,
+  Skull,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -34,6 +38,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Tooltip,
@@ -41,10 +46,23 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useImportBatchAnnihilation } from '@/hooks/useImportBatchAnnihilation';
+import { toast } from 'sonner';
 
 interface ImportHistoryRecord {
   id: string;
@@ -74,6 +92,11 @@ export const QuestionImportHistory = memo(function QuestionImportHistory({
   const [history, setHistory] = useState<ImportHistoryRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  
+  // Estado de aniquilação
+  const [annihilateTarget, setAnnihilateTarget] = useState<ImportHistoryRecord | null>(null);
+  const [confirmText, setConfirmText] = useState('');
+  const { annihilateBatch, isAnnihilating } = useImportBatchAnnihilation();
 
   useEffect(() => {
     if (open) {
@@ -98,6 +121,18 @@ export const QuestionImportHistory = memo(function QuestionImportHistory({
       setIsLoading(false);
     }
   };
+
+  const handleAnnihilate = useCallback(async () => {
+    if (!annihilateTarget || confirmText !== 'EXCLUIR') return;
+    
+    const result = await annihilateBatch(annihilateTarget.id);
+    
+    if (result.success) {
+      setHistory(prev => prev.filter(h => h.id !== annihilateTarget.id));
+      setAnnihilateTarget(null);
+      setConfirmText('');
+    }
+  }, [annihilateTarget, confirmText, annihilateBatch]);
 
   const getStatusBadge = (status: string, imported: number, failed: number) => {
     if (status === 'completed') {
@@ -336,6 +371,25 @@ export const QuestionImportHistory = memo(function QuestionImportHistory({
                                     </div>
                                   </div>
                                 )}
+
+                                {/* BOTÃO DE ANIQUILAÇÃO */}
+                                <div className="pt-4 mt-4 border-t border-destructive/30">
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="w-full gap-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setAnnihilateTarget(record);
+                                    }}
+                                  >
+                                    <Skull className="h-4 w-4" />
+                                    Aniquilar {record.imported_count} questões deste lote
+                                  </Button>
+                                  <p className="text-xs text-muted-foreground mt-2 text-center">
+                                    Remove permanentemente todas as questões importadas neste arquivo
+                                  </p>
+                                </div>
                               </div>
                             </motion.div>
                           )}
@@ -348,6 +402,62 @@ export const QuestionImportHistory = memo(function QuestionImportHistory({
             </div>
           )}
         </ScrollArea>
+
+        {/* Dialog de confirmação de aniquilação */}
+        <AlertDialog open={!!annihilateTarget} onOpenChange={(open) => !open && setAnnihilateTarget(null)}>
+          <AlertDialogContent className="border-destructive/50">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                <Skull className="h-5 w-5" />
+                Aniquilar Lote de Importação
+              </AlertDialogTitle>
+              <AlertDialogDescription className="space-y-3">
+                <p>
+                  Esta ação irá <strong className="text-destructive">EXCLUIR PERMANENTEMENTE</strong> todas as{' '}
+                  <strong>{annihilateTarget?.imported_count}</strong> questões importadas neste lote.
+                </p>
+                <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3">
+                  <p className="text-sm font-medium text-destructive mb-2">Arquivos afetados:</p>
+                  <ul className="text-xs space-y-1">
+                    {annihilateTarget?.file_names.map((name, i) => (
+                      <li key={i} className="flex items-center gap-1">
+                        <FileSpreadsheet className="h-3 w-3" />
+                        {name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <p className="text-sm">
+                  Digite <strong className="text-destructive">EXCLUIR</strong> para confirmar:
+                </p>
+                <Input
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder="EXCLUIR"
+                  className="border-destructive/50 focus:border-destructive"
+                />
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => { setAnnihilateTarget(null); setConfirmText(''); }}>
+                Cancelar
+              </AlertDialogCancel>
+              <Button
+                variant="destructive"
+                onClick={handleAnnihilate}
+                disabled={confirmText !== 'EXCLUIR' || isAnnihilating}
+                className="gap-2"
+              >
+                {isAnnihilating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Skull className="h-4 w-4" />
+                )}
+                Aniquilar Permanentemente
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );

@@ -9383,6 +9383,7 @@ export type Database = {
           id: string
           image_url: string | null
           image_urls: Json | null
+          import_history_id: string | null
           indice_discriminacao: number | null
           is_active: boolean | null
           is_estilo_enem: boolean | null
@@ -9441,6 +9442,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           image_urls?: Json | null
+          import_history_id?: string | null
           indice_discriminacao?: number | null
           is_active?: boolean | null
           is_estilo_enem?: boolean | null
@@ -9499,6 +9501,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           image_urls?: Json | null
+          import_history_id?: string | null
           indice_discriminacao?: number | null
           is_active?: boolean | null
           is_estilo_enem?: boolean | null
@@ -9543,6 +9546,13 @@ export type Database = {
             columns: ["area_id"]
             isOneToOne: false
             referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_import_history_id_fkey"
+            columns: ["import_history_id"]
+            isOneToOne: false
+            referencedRelation: "question_import_history"
             referencedColumns: ["id"]
           },
           {
@@ -17743,6 +17753,10 @@ export type Database = {
         }[]
       }
       annihilate_all_questions: { Args: never; Returns: Json }
+      annihilate_import_batch: {
+        Args: { p_import_history_id: string }
+        Returns: Json
+      }
       apply_chat_timeout: {
         Args: {
           p_duration_minutes?: number
