@@ -33,8 +33,10 @@ interface ViewState {
   mode: 'hub' | 'filtered' | 'viewer';
   bookId?: string;
   bookName?: string;
-  filterValue?: string;
+  filterValue?: string;  // macro para questoes-mapas, tag para demais
   filterLabel?: string;
+  microValue?: string;   // micro para questoes-mapas
+  microLabel?: string;
   materialId?: string;
 }
 
@@ -64,8 +66,8 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
     enabled: !!viewState.materialId && viewState.mode === 'viewer',
   });
 
-  // Quando seleciona um Book e um filtro
-  const handleSelectBook = useCallback((bookId: string, filter?: string) => {
+  // Quando seleciona um Book e um filtro (com micro opcional para questoes-mapas)
+  const handleSelectBook = useCallback((bookId: string, filter?: string, micro?: string) => {
     if (!filter) return;
     
     const book = MATERIAL_BOOKS.find(b => b.id === bookId);
@@ -77,6 +79,8 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
       bookName: book?.name || bookId,
       filterValue: filter,
       filterLabel: filterObj?.label || filter,
+      microValue: micro,
+      microLabel: micro, // Label será resolvido no FilteredView se necessário
     });
   }, []);
 
@@ -309,6 +313,8 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
                 bookName={viewState.bookName || ''}
                 filterValue={viewState.filterValue}
                 filterLabel={viewState.filterLabel || ''}
+                microValue={viewState.microValue}
+                microLabel={viewState.microLabel}
                 onBack={handleBackToHub}
                 onSelectMaterial={handleSelectMaterial}
               />
