@@ -1,10 +1,10 @@
 // ============================================
-// 📂 MATERIALS FILTERED VIEW
+// 📂 MATERIALS FILTERED VIEW — NETFLIX ULTRA PREMIUM 2300
 // Exibe materiais filtrados por Book + Categoria
 // Year 2300 Cinematic Experience
 // ============================================
 
-import { memo, useState, useMemo, useCallback } from 'react';
+import { memo, useState, useMemo, useCallback, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, 
@@ -15,7 +15,10 @@ import {
   Search,
   Filter,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  Clock,
+  FileStack
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,87 +58,147 @@ interface MaterialsFilteredViewProps {
 }
 
 // ============================================
-// MATERIAL CARD
+// 🎬 NETFLIX MATERIAL CARD
 // ============================================
 
-const MaterialCard = memo(function MaterialCard({
-  material,
-  onSelect,
-  isHighEnd
-}: {
+const MaterialCard = memo(forwardRef<HTMLDivElement, {
   material: MaterialItem;
   onSelect: (id: string) => void;
   isHighEnd: boolean;
-}) {
+  index: number;
+}>(function MaterialCard({ material, onSelect, isHighEnd, index }, ref) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: isHighEnd ? 1.02 : 1 }}
-      transition={{ duration: 0.2 }}
+      ref={ref}
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ 
+        duration: 0.4, 
+        delay: index * 0.05,
+        ease: [0.25, 0.46, 0.45, 0.94]
+      }}
+      whileHover={isHighEnd ? { scale: 1.03, y: -5 } : undefined}
+      className="group relative"
     >
+      {/* Glow Behind Card */}
+      {isHighEnd && (
+        <div className="absolute -inset-1 rounded-2xl bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl" />
+      )}
+
       <Card
         onClick={() => onSelect(material.id)}
         className={cn(
-          "cursor-pointer overflow-hidden",
-          "bg-gradient-to-br from-[#0d1218] via-[#121922] to-[#1a1020]",
-          "border border-white/10 hover:border-primary/30",
-          "transition-all duration-300",
-          isHighEnd && "hover:shadow-[0_0_30px_-10px_rgba(229,9,20,0.3)]"
+          "relative cursor-pointer overflow-hidden rounded-2xl",
+          "bg-gradient-to-br from-[#0a0d12] via-[#0f1419] to-[#151a22]",
+          "border border-white/10 hover:border-primary/40",
+          "transition-all duration-500"
         )}
+        style={isHighEnd ? {
+          boxShadow: '0 0 0 1px transparent'
+        } : undefined}
+        onMouseEnter={(e) => {
+          if (isHighEnd) {
+            e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(229, 9, 20, 0.25)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (isHighEnd) {
+            e.currentTarget.style.boxShadow = '0 0 0 1px transparent';
+          }
+        }}
       >
+        {/* Top Gradient Bar */}
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
         {/* Cover / Thumbnail */}
-        <div className="relative h-40 bg-gradient-to-br from-primary/10 to-cyan-500/10 flex items-center justify-center">
+        <div className="relative h-44 bg-gradient-to-br from-primary/10 via-primary/5 to-cyan-500/10 flex items-center justify-center overflow-hidden">
           {material.cover_url ? (
             <img 
               src={material.cover_url} 
               alt={material.title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
             />
           ) : (
-            <FileText className="w-16 h-16 text-primary/30" />
+            <>
+              {/* Background Pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute inset-0" style={{
+                  backgroundImage: 'linear-gradient(rgba(229,9,20,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(229,9,20,0.1) 1px, transparent 1px)',
+                  backgroundSize: '20px 20px'
+                }} />
+              </div>
+              <FileText className="w-20 h-20 text-primary/30 group-hover:text-primary/50 transition-colors" />
+            </>
           )}
           
           {/* Premium badge */}
           {material.is_premium && (
-            <Badge className="absolute top-2 right-2 bg-amber-500/80 text-white">
-              Premium
-            </Badge>
+            <div className="absolute top-3 right-3">
+              <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 text-white border-0 text-[10px] font-bold">
+                <Sparkles className="w-3 h-3 mr-1" />
+                PREMIUM
+              </Badge>
+            </div>
           )}
+
+          {/* Hover Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0d12] via-transparent to-transparent opacity-60" />
         </div>
 
-        <CardContent className="p-4 space-y-3">
-          <h3 className="font-bold text-white line-clamp-2">{material.title}</h3>
+        <CardContent className="relative p-5 space-y-4">
+          {/* Title */}
+          <h3 className="text-lg font-bold text-white line-clamp-2 leading-tight group-hover:text-white/90 transition-colors">
+            {material.title}
+          </h3>
           
+          {/* Description */}
           {material.description && (
             <p className="text-sm text-muted-foreground line-clamp-2">
               {material.description}
             </p>
           )}
 
-          {/* Stats */}
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <BookOpen className="w-3 h-3" />
-              <span>{material.total_pages || '?'} págs</span>
+          {/* Stats Row */}
+          <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center gap-3">
+              {/* Pages */}
+              {material.total_pages > 0 && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <FileStack className="w-3.5 h-3.5" />
+                  <span>{material.total_pages} págs</span>
+                </div>
+              )}
+              
+              {/* Views */}
+              {material.view_count > 0 && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>{material.view_count}</span>
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-1">
-              <Eye className="w-3 h-3" />
-              <span>{material.view_count || 0}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Download className="w-3 h-3" />
-              <span>{material.download_count || 0}</span>
+
+            {/* View Button */}
+            <div className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-full",
+              "bg-gradient-to-r from-primary/20 to-primary/10",
+              "border border-primary/30",
+              "group-hover:from-primary/30 group-hover:to-primary/20 transition-all"
+            )}>
+              <span className="text-xs font-semibold text-primary">Abrir</span>
             </div>
           </div>
         </CardContent>
+
+        {/* Bottom Corner Glow */}
+        <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
       </Card>
     </motion.div>
   );
-});
+}));
 
 // ============================================
-// 📂 MAIN VIEW
+// 📂 MAIN COMPONENT
 // ============================================
 
 export const MaterialsFilteredView = memo(function MaterialsFilteredView({
@@ -150,34 +213,29 @@ export const MaterialsFilteredView = memo(function MaterialsFilteredView({
   const isHighEnd = tier === 'quantum' || tier === 'neural';
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Buscar materiais filtrados
-  const { data: materials = [], isLoading, error } = useQuery({
-    queryKey: ['materials', bookId, filterValue],
+  // Buscar materiais
+  const { data: materials, isLoading, error } = useQuery({
+    queryKey: ['materials-filtered', bookId, filterValue],
     queryFn: async () => {
-      // Mapeamento de book_id para campo de filtro
-      let query = supabase
+      const { data, error } = await supabase
         .from('materials')
         .select('*')
         .eq('status', 'ready')
-        .order('position', { ascending: true });
-
-      // Aplicar filtro baseado no book e categoria
-      // category do material = bookId (ex: 'questoes-mapas')
-      // macro/micro = filterValue (ex: 'quimica_geral' ou 'fuvest')
-      query = query
         .eq('category', bookId)
-        .eq('macro', filterValue);
+        .eq('macro', filterValue)
+        .order('created_at', { ascending: false });
 
-      const { data, error } = await query;
       if (error) throw error;
-      return data as MaterialItem[];
+      return (data || []) as MaterialItem[];
     },
-    staleTime: 1000 * 60 * 5, // 5 min
+    staleTime: 5 * 60 * 1000,
   });
 
   // Filtrar por busca local
   const filteredMaterials = useMemo(() => {
-    if (!searchTerm) return materials;
+    if (!materials) return [];
+    if (!searchTerm.trim()) return materials;
+    
     const term = searchTerm.toLowerCase();
     return materials.filter(m => 
       m.title.toLowerCase().includes(term) ||
@@ -186,98 +244,154 @@ export const MaterialsFilteredView = memo(function MaterialsFilteredView({
   }, [materials, searchTerm]);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          onClick={onBack}
-          className="rounded-full border border-white/10 hover:bg-white/10"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-2xl font-bold text-white">{filterLabel}</h2>
-            <Badge variant="outline" className="border-primary/30 text-primary">
-              {bookName}
-            </Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {filteredMaterials.length} {filteredMaterials.length === 1 ? 'material' : 'materiais'} disponíveis
-          </p>
-        </div>
-      </div>
+    <motion.div
+      initial={{ opacity: 0, x: 100 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -100 }}
+      transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className="space-y-6"
+    >
+      {/* 🎬 HEADER */}
+      <div className={cn(
+        "relative rounded-2xl overflow-hidden p-6",
+        "bg-gradient-to-br from-[#0a0d12] via-[#0f1419] to-[#151a22]",
+        "border border-primary/20"
+      )}>
+        {/* Top Gradient Line */}
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent" />
+        
+        {/* Background Orb */}
+        {isHighEnd && (
+          <div className="absolute -top-20 -right-20 w-60 h-60 bg-primary/10 rounded-full blur-[80px]" />
+        )}
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar material..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 bg-white/5 border-white/10 focus:border-primary/50"
-        />
-      </div>
-
-      {/* Loading */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-      )}
-
-      {/* Error */}
-      {error && (
-        <Card className="bg-red-500/10 border-red-500/20 p-6">
-          <div className="flex items-center gap-3 text-red-400">
-            <AlertCircle className="w-5 h-5" />
-            <p>Erro ao carregar materiais</p>
-          </div>
-        </Card>
-      )}
-
-      {/* Materials Grid */}
-      {!isLoading && !error && (
-        <AnimatePresence>
-          {filteredMaterials.length > 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+        <div className="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            {/* Back Button */}
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={onBack}
+              className={cn(
+                "rounded-xl h-12 w-12",
+                "bg-white/5 border border-white/10",
+                "hover:bg-white/10 hover:border-white/20 hover:scale-105",
+                "transition-all duration-300"
+              )}
             >
-              {filteredMaterials.map((material, idx) => (
-                <motion.div
-                  key={material.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                >
-                  <MaterialCard
-                    material={material}
-                    onSelect={onSelectMaterial}
-                    isHighEnd={isHighEnd}
-                  />
-                </motion.div>
-              ))}
-            </motion.div>
-          ) : (
-            <Card className="bg-gradient-to-br from-[#0d1218] to-[#1a1020] border border-white/10 p-12 text-center">
-              <FileText className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">
-                Nenhum material encontrado
-              </h3>
-              <p className="text-muted-foreground">
-                {searchTerm 
-                  ? 'Tente uma busca diferente' 
-                  : 'Os materiais serão adicionados em breve pela gestão'}
-              </p>
-            </Card>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+
+            {/* Icon + Labels */}
+            <div className="flex items-center gap-4">
+              <div className={cn(
+                "p-4 rounded-xl",
+                "bg-gradient-to-br from-primary/20 to-primary/5",
+                "border border-primary/30"
+              )}>
+                <BookOpen className="w-7 h-7 text-primary" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-xl md:text-2xl font-bold text-white">{filterLabel}</h2>
+                  <Badge variant="outline" className="border-white/20 text-white/60 text-xs">
+                    {bookName}
+                  </Badge>
+                </div>
+                <p className="text-muted-foreground text-sm mt-1">
+                  {isLoading ? 'Carregando...' : `${filteredMaterials.length} material(is) encontrado(s)`}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar material..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={cn(
+                "pl-11 h-11",
+                "bg-white/5 border-white/10",
+                "focus:border-primary/50 focus:ring-1 focus:ring-primary/20",
+                "rounded-xl"
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Corner Accents */}
+        <div className="absolute top-3 left-3 w-4 h-4 border-l border-t border-primary/30 rounded-tl" />
+        <div className="absolute bottom-3 right-3 w-4 h-4 border-r border-b border-primary/30 rounded-br" />
+      </div>
+
+      {/* 📚 CONTENT */}
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="relative">
+            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            {isHighEnd && (
+              <div className="absolute inset-0 w-12 h-12 bg-primary/30 rounded-full blur-xl animate-pulse" />
+            )}
+          </div>
+          <p className="text-muted-foreground mt-4">Carregando materiais...</p>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <AlertCircle className="w-12 h-12 text-destructive mb-4" />
+          <p className="text-destructive font-medium">Erro ao carregar materiais</p>
+          <p className="text-muted-foreground text-sm mt-1">Tente novamente mais tarde</p>
+        </div>
+      ) : filteredMaterials.length === 0 ? (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={cn(
+            "flex flex-col items-center justify-center py-20 rounded-2xl",
+            "bg-gradient-to-br from-[#0a0d12] to-[#151a22]",
+            "border border-white/10"
           )}
-        </AnimatePresence>
+        >
+          <div className="relative">
+            <FileText className="w-20 h-20 text-muted-foreground/20" />
+            {isHighEnd && (
+              <div className="absolute inset-0 bg-primary/10 rounded-full blur-2xl" />
+            )}
+          </div>
+          <h3 className="text-xl font-bold text-white mt-6">Nenhum material encontrado</h3>
+          <p className="text-muted-foreground mt-2 text-center max-w-md">
+            {searchTerm 
+              ? `Nenhum resultado para "${searchTerm}"`
+              : 'Os materiais desta categoria ainda não foram publicados'
+            }
+          </p>
+          <Button 
+            variant="outline" 
+            onClick={onBack}
+            className="mt-6 border-white/20 hover:bg-white/10"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar às categorias
+          </Button>
+        </motion.div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <AnimatePresence mode="popLayout">
+            {filteredMaterials.map((material, idx) => (
+              <MaterialCard
+                key={material.id}
+                material={material}
+                onSelect={onSelectMaterial}
+                isHighEnd={isHighEnd}
+                index={idx}
+              />
+            ))}
+          </AnimatePresence>
+        </div>
       )}
-    </div>
+    </motion.div>
   );
 });
 
