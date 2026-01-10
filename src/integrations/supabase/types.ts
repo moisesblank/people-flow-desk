@@ -6906,6 +6906,7 @@ export type Database = {
         Row: {
           bucket: string
           category: string
+          content_type: string | null
           course_id: string | null
           cover_path: string | null
           cover_url: string | null
@@ -6918,6 +6919,8 @@ export type Database = {
           file_size_bytes: number | null
           id: string
           is_premium: boolean
+          macro: string | null
+          micro: string | null
           position: number | null
           required_roles: string[]
           status: Database["public"]["Enums"]["material_status"]
@@ -6932,6 +6935,7 @@ export type Database = {
         Insert: {
           bucket?: string
           category?: string
+          content_type?: string | null
           course_id?: string | null
           cover_path?: string | null
           cover_url?: string | null
@@ -6944,6 +6948,8 @@ export type Database = {
           file_size_bytes?: number | null
           id?: string
           is_premium?: boolean
+          macro?: string | null
+          micro?: string | null
           position?: number | null
           required_roles?: string[]
           status?: Database["public"]["Enums"]["material_status"]
@@ -6958,6 +6964,7 @@ export type Database = {
         Update: {
           bucket?: string
           category?: string
+          content_type?: string | null
           course_id?: string | null
           cover_path?: string | null
           cover_url?: string | null
@@ -6970,6 +6977,8 @@ export type Database = {
           file_size_bytes?: number | null
           id?: string
           is_premium?: boolean
+          macro?: string | null
+          micro?: string | null
           position?: number | null
           required_roles?: string[]
           status?: Database["public"]["Enums"]["material_status"]
