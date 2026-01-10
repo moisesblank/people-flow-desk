@@ -420,7 +420,7 @@ export function useBookSecurityGuard({
     return () => {
       document.removeEventListener('contextmenu', handleContextMenu);
     };
-  }, []);
+  }, [enabled]);
 
   // ═══════════════════════════════════════════════════════════
   // M4 - DETECÇÃO DE PICTURE-IN-PICTURE
