@@ -39,11 +39,12 @@ import { SacredImage } from '@/components/performance/SacredImage';
 import { PdfPageViewer } from './PdfPageViewer';
 import { ReadingModeToolbar, ToolMode } from './ReadingModeToolbar';
 import { useBookAnnotations } from '@/hooks/useBookAnnotations';
-import { useBookPageOverlays } from '@/hooks/useBookPageOverlays';
+// useBookPageOverlays removido - substituído por useFabricOverlays
 import { CalculatorButton } from '@/components/Calculator';
 import { PeriodicTableButton } from '@/components/PeriodicTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { DrawingCanvas, DrawingStroke, TextAnnotation } from './DrawingCanvas';
+import { FabricDrawingCanvas, FabricDrawingCanvasHandle, FabricCanvasData } from './FabricDrawingCanvas';
+import { useFabricOverlays } from '@/hooks/useFabricOverlays';
 
 // ============================================
 // TIPOS
@@ -409,8 +410,19 @@ export const WebBookViewer = memo(function WebBookViewer({
   // Hook de anotações para salvar histórico (anotações/bmarks)
   const { refetch: refetchAnnotations } = useBookAnnotations(bookId);
 
-  // Hook de overlays (desenhos + texto do canvas) — persistência por aluno
-  const { getOverlayForPage, saveOverlays, refetchOverlays } = useBookPageOverlays(bookId);
+  // Hook de overlays Fabric.js — persistência por aluno (NOVO SISTEMA)
+  const { 
+    getOverlayForPage, 
+    registerChange, 
+    saveAllChanges, 
+    hasUnsavedChanges,
+    refetchOverlays,
+    isSavingOverlays: isFabricSaving,
+    dirtyPages: fabricDirtyPages
+  } = useFabricOverlays(bookId);
+  
+  // Ref para o canvas Fabric.js
+  const fabricCanvasRef = useRef<FabricDrawingCanvasHandle>(null);
 
   // ✅ STAGGER: Montagem escalonada para melhor TTI
   const stagger = useStaggeredMount(true, currentPage);
@@ -446,47 +458,19 @@ export const WebBookViewer = memo(function WebBookViewer({
   const [pdfPath, setPdfPath] = useState<string | null>(null);
   const [isSavingHistory, setIsSavingHistory] = useState(false);
   
-  
-  // Estado de ferramentas de desenho
+  // Estado de ferramentas de desenho (Fabric.js)
   const [activeTool, setActiveTool] = useState<ToolMode>('select');
   const [drawingColor, setDrawingColor] = useState('#fef08a'); // Amarelo padrão para marca-texto
   const [drawingSize, setDrawingSize] = useState(3);
-  const [drawingStrokes, setDrawingStrokes] = useState<DrawingStroke[]>([]);
-  const [textAnnotations, setTextAnnotations] = useState<TextAnnotation[]>([]);
-
-  // ✅ Dirty pages: evita sobrescrever edições locais quando o cache de overlays refetchar
-  const [dirtyOverlayPages, setDirtyOverlayPages] = useState<Set<number>>(() => new Set());
-  const markDirtyPage = useCallback((page: number) => {
-    setDirtyOverlayPages((prev) => {
-      const next = new Set(prev);
-      next.add(page);
-      return next;
+  // Handler para mudanças no canvas Fabric.js
+  const handleFabricCanvasChange = useCallback((data: FabricCanvasData) => {
+    console.log('[WebBookViewer] Canvas changed:', { 
+      pageNumber: data.pageNumber, 
+      objectCount: data.objects.length 
     });
-  }, []);
-  const clearDirtyPages = useCallback((pages: number[] | Set<number>) => {
-    const list = Array.isArray(pages) ? pages : Array.from(pages);
-    setDirtyOverlayPages((prev) => {
-      const next = new Set(prev);
-      list.forEach((p) => next.delete(p));
-      return next;
-    });
-  }, []);
+    registerChange(data.pageNumber, data);
+  }, [registerChange]);
 
-  const handleStrokesChange = useCallback(
-    (next: DrawingStroke[]) => {
-      setDrawingStrokes(next);
-      markDirtyPage(currentPage);
-    },
-    [currentPage, markDirtyPage]
-  );
-
-  const handleTextAnnotationsChange = useCallback(
-    (next: TextAnnotation[]) => {
-      setTextAnnotations(next);
-      markDirtyPage(currentPage);
-    },
-    [currentPage, markDirtyPage]
-  );
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Hook de renderização de PDF (quando necessário)
@@ -564,23 +548,15 @@ export const WebBookViewer = memo(function WebBookViewer({
   }, []);
 
   // Sincronizar estado com mudanças de fullscreen (ESC, clique fora, etc)
-  // ✅ Ao sair do modo leitura: desativar ferramentas; e limpar overlays locais SOMENTE se não estiver salvando
   useEffect(() => {
     const handleFullscreenChange = () => {
       const nowFullscreen = !!document.fullscreenElement;
 
-      // Se SAIU do fullscreen (estava true, agora false)
+      // Se SAIU do fullscreen
       if (isFullscreen && !nowFullscreen) {
         console.log('[WebBookViewer] Saindo do Modo Leitura - desativando ferramentas');
         setActiveTool('select');
-
-        // Evitar “limpar enquanto salva” (poderia zerar o payload)
-        if (!isSavingHistory) {
-          // Limpar estados locais (ao voltar, recarrega do banco)
-          setDrawingStrokes([]);
-          setTextAnnotations([]);
-          clearDirtyPages(dirtyOverlayPages);
-        }
+        // Fabric.js cuida automaticamente da limpeza quando o canvas é desmontado
       }
 
       setIsFullscreen(nowFullscreen);
@@ -588,39 +564,17 @@ export const WebBookViewer = memo(function WebBookViewer({
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, [isFullscreen, isSavingHistory, clearDirtyPages, dirtyOverlayPages]);
+  }, [isFullscreen]);
 
-  // Função para salvar histórico de anotações + overlays (desenhos/texto)
+  // Função para salvar histórico de anotações + overlays Fabric.js
   const handleSaveHistory = useCallback(async () => {
     setIsSavingHistory(true);
     try {
-      // 1) Salvar overlays do canvas por página (por aluno)
-      const pagesWithData = new Set<number>();
-      drawingStrokes.forEach((s) => pagesWithData.add(s.pageNumber));
-      textAnnotations.forEach((t) => pagesWithData.add(t.pageNumber));
-
-      const overlayPayload = Array.from(pagesWithData).map((page) => ({
-        book_id: bookId,
-        page_number: page,
-        strokes: (drawingStrokes.filter((s) => s.pageNumber === page) as unknown) as any,
-        texts: (textAnnotations.filter((t) => t.pageNumber === page) as unknown) as any,
-      }));
-
-      console.log('[WebBookViewer] handleSaveHistory()', {
-        bookId,
-        currentPage,
-        pagesWithData: Array.from(pagesWithData).sort((a, b) => a - b),
-        overlayPayloadLength: overlayPayload.length,
-        totalStrokes: drawingStrokes.length,
-        totalTexts: textAnnotations.length,
-      });
-
-      if (overlayPayload.length) {
-        await saveOverlays(overlayPayload as any);
-        // ✅ Garantir que os overlays em cache reflitam o que acabou de salvar
+      // 1) Salvar overlays Fabric.js pendentes
+      if (hasUnsavedChanges()) {
+        console.log('[WebBookViewer] Salvando overlays Fabric.js...');
+        await saveAllChanges();
         await refetchOverlays();
-        // ✅ Após salvar, liberar as páginas para serem sobrescritas pelo cache (agora é “fonte da verdade”)
-        clearDirtyPages(pagesWithData);
       }
 
       // 2) Refetch das anotações tradicionais (notes/bookmarks)
@@ -638,16 +592,7 @@ export const WebBookViewer = memo(function WebBookViewer({
     } finally {
       setIsSavingHistory(false);
     }
-  }, [
-    bookId,
-    currentPage,
-    drawingStrokes,
-    textAnnotations,
-    saveOverlays,
-    refetchOverlays,
-    refetchAnnotations,
-    clearDirtyPages,
-  ]);
+  }, [hasUnsavedChanges, saveAllChanges, refetchOverlays, refetchAnnotations]);
 
   useEffect(() => {
     if (isOwner) return; // Owner não tem bloqueios
@@ -742,78 +687,21 @@ export const WebBookViewer = memo(function WebBookViewer({
     setImageLoading(true);
   }, [currentPage]);
 
-  // ✅ P0-FIX: Carregar TODOS os overlays do banco ao ENTRAR no modo leitura
-  const [overlaysInitialized, setOverlaysInitialized] = useState(false);
+  // ✅ Estado para dados do overlay da página atual (Fabric.js)
+  const [currentPageOverlay, setCurrentPageOverlay] = useState<FabricCanvasData | null>(null);
   
+  // Carregar overlay da página atual quando mudar de página
   useEffect(() => {
-    // Quando ENTRAR no fullscreen, carregar TODOS os overlays de uma vez
-    if (isFullscreen && !overlaysInitialized) {
-      const allOverlays = Array.from({ length: effectiveTotalPages }, (_, i) => i + 1)
-        .map((page) => getOverlayForPage(page))
-        .filter(Boolean);
-      
-      const allStrokes: DrawingStroke[] = [];
-      const allTexts: TextAnnotation[] = [];
-      
-      allOverlays.forEach((overlay) => {
-        if (overlay) {
-          const strokes = (overlay.strokes as any[]) || [];
-          const texts = (overlay.texts as any[]) || [];
-          allStrokes.push(...strokes);
-          allTexts.push(...texts);
-        }
-      });
-      
-      if (allStrokes.length > 0 || allTexts.length > 0) {
-        console.log('[WebBookViewer] ✅ Carregando overlays do banco:', { 
-          strokes: allStrokes.length, 
-          texts: allTexts.length 
-        });
-        setDrawingStrokes(allStrokes);
-        setTextAnnotations(allTexts);
-      }
-      setOverlaysInitialized(true);
+    if (!isFullscreen) {
+      setCurrentPageOverlay(null);
+      return;
     }
-    
-    // Resetar flag ao sair do fullscreen
-    if (!isFullscreen && overlaysInitialized) {
-      setOverlaysInitialized(false);
-    }
-  }, [isFullscreen, overlaysInitialized, effectiveTotalPages, getOverlayForPage]);
 
-  // Carregar overlays da página atual quando navegar (para páginas não carregadas ainda)
-  useEffect(() => {
-    if (!isFullscreen || !overlaysInitialized) return;
-
-    // ✅ Se o usuário já mexeu nesta página e ainda não salvou, não sobrescrever pelo cache
-    if (dirtyOverlayPages.has(currentPage)) return;
-
-    // Verificar se já temos strokes desta página
-    const existingStrokes = drawingStrokes.filter((s) => s.pageNumber === currentPage);
-    const existingTexts = textAnnotations.filter((t) => t.pageNumber === currentPage);
-    
-    // Se já tem dados locais para esta página, não sobrescrever
-    if (existingStrokes.length > 0 || existingTexts.length > 0) return;
-
+    // Verificar se página atual tem dados pendentes ou salvos
     const overlay = getOverlayForPage(currentPage);
-    if (!overlay) return;
-
-    const strokes = (overlay.strokes as any[]) || [];
-    const texts = (overlay.texts as any[]) || [];
-
-    if (strokes.length > 0 || texts.length > 0) {
-      console.log('[WebBookViewer] Carregando overlay da página', currentPage);
-      setDrawingStrokes((prev) => [
-        ...prev.filter((s) => s.pageNumber !== currentPage),
-        ...strokes,
-      ]);
-
-      setTextAnnotations((prev) => [
-        ...prev.filter((t) => t.pageNumber !== currentPage),
-        ...texts,
-      ]);
-    }
-  }, [isFullscreen, overlaysInitialized, currentPage, getOverlayForPage, dirtyOverlayPages, drawingStrokes, textAnnotations]);
+    console.log('[WebBookViewer] Carregando overlay da página', currentPage, overlay ? 'encontrado' : 'vazio');
+    setCurrentPageOverlay(overlay);
+  }, [isFullscreen, currentPage, getOverlayForPage]);
 
   // Loading state (inclui loading do PDF)
   const isLoadingAnything = isLoading || (needsPdfMode && pdfRenderer.isLoading && !pdfRenderer.pdfLoaded);
@@ -1260,19 +1148,18 @@ export const WebBookViewer = memo(function WebBookViewer({
                     />
                   </div>
                   
-                  {/* 🎨 CANVAS DE DESENHO - Só ativo em Modo Leitura */}
+                  {/* 🎨 CANVAS DE DESENHO FABRIC.JS - Só ativo em Modo Leitura */}
                   {/* ✅ STAGGER: Overlays só montam após Frame 2 */}
                   {stagger.overlaysReady && isFullscreen && (
-                    <DrawingCanvas
+                    <FabricDrawingCanvas
+                      ref={fabricCanvasRef}
                       isActive={isFullscreen && activeTool !== 'select'}
                       activeTool={activeTool}
                       color={drawingColor}
                       size={drawingSize}
                       pageNumber={currentPage}
-                      strokes={drawingStrokes}
-                      onStrokesChange={handleStrokesChange}
-                      textAnnotations={textAnnotations}
-                      onTextAnnotationsChange={handleTextAnnotationsChange}
+                      initialData={currentPageOverlay}
+                      onCanvasChange={handleFabricCanvasChange}
                     />
                   )}
                 </>
