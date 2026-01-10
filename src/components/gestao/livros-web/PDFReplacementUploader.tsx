@@ -4,7 +4,7 @@
 // Reutiliza infraestrutura genesis-book-replace
 // ============================================
 
-import { memo, useState, useCallback } from 'react';
+import { useState, useCallback, forwardRef } from 'react';
 import { Upload, FileText, Loader2, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
@@ -21,13 +21,14 @@ interface PDFReplacementUploaderProps {
   disabled?: boolean;
 }
 
-export const PDFReplacementUploader = memo(function PDFReplacementUploader({
-  bookId,
-  currentFileName,
-  onSuccess,
-  onError,
-  disabled = false,
-}: PDFReplacementUploaderProps) {
+export const PDFReplacementUploader = forwardRef<HTMLDivElement, PDFReplacementUploaderProps>(
+  function PDFReplacementUploader({
+    bookId,
+    currentFileName,
+    onSuccess,
+    onError,
+    disabled = false,
+  }, ref) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
@@ -168,7 +169,7 @@ export const PDFReplacementUploader = memo(function PDFReplacementUploader({
   }, []);
 
   return (
-    <div className="space-y-3">
+    <div ref={ref} className="space-y-3">
       {/* Arquivo atual */}
       {currentFileName && uploadStatus === 'idle' && (
         <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg text-sm">
@@ -288,4 +289,4 @@ export const PDFReplacementUploader = memo(function PDFReplacementUploader({
   );
 });
 
-PDFReplacementUploader.displayName = 'PDFReplacementUploader';
+// forwardRef já aplica displayName automaticamente
