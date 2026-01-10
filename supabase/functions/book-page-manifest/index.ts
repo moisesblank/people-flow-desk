@@ -11,7 +11,7 @@ import { getCorsHeaders, handleCorsOptions, isOriginAllowed, corsBlockedResponse
 // ============================================
 // CONSTANTES (P1 FIX: OWNER_EMAIL removido)
 // ============================================
-const SIGNED_URL_TTL_SECONDS = 60;
+const SIGNED_URL_TTL_SECONDS = 3600; // 1 hora - URLs duráveis para leitura prolongada
 const TRANSMUTED_BUCKET = "ena-assets-transmuted";
 const MAX_PAGES_PER_REQUEST = 10;
 
