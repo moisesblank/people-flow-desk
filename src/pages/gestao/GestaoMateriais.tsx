@@ -432,7 +432,7 @@ const GestaoMateriais = memo(function GestaoMateriais() {
   }, [materials, searchQuery, categoryFilter, statusFilter]);
 
   // Ações
-  const handleStatusChange = async (id: string, newStatus: string) => {
+  const handleStatusChange = async (id: string, newStatus: 'draft' | 'processing' | 'ready' | 'archived') => {
     try {
       const { error } = await supabase
         .from('materials')

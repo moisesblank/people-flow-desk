@@ -280,9 +280,11 @@ const AlunoMateriaisPage = memo(function AlunoMateriaisPage() {
   const handleViewMaterial = useCallback(async (material: Material) => {
     setViewingMaterial(material);
     
-    // Log de acesso
+    // Log de acesso e incrementar view_count
     try {
       const { data: userData } = await supabase.auth.getUser();
+      
+      // Log de acesso
       await supabase.from('material_access_logs').insert({
         material_id: material.id,
         user_id: userData.user?.id,
@@ -290,18 +292,11 @@ const AlunoMateriaisPage = memo(function AlunoMateriaisPage() {
         user_email: userData.user?.email,
       });
 
-      // Incrementar view_count
-      await supabase.rpc('increment_counter', {
-        table_name: 'materials',
-        column_name: 'view_count',
-        row_id: material.id
-      }).catch(() => {
-        // Se a função RPC não existir, faz update direto
-        supabase
-          .from('materials')
-          .update({ view_count: (material.view_count || 0) + 1 })
-          .eq('id', material.id);
-      });
+      // Incrementar view_count diretamente
+      await supabase
+        .from('materials')
+        .update({ view_count: (material.view_count || 0) + 1 })
+        .eq('id', material.id);
     } catch (e) {
       console.error('Erro ao registrar visualização:', e);
     }
