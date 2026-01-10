@@ -3,7 +3,7 @@
 // Área do Owner para gerenciar livros
 // ============================================
 
-import { memo, useState, useCallback, useEffect } from 'react';
+import { memo, useState, useCallback, useEffect, useMemo } from 'react';
 import { 
   BookOpen, 
   Plus, 
@@ -25,17 +25,26 @@ import {
   Tag
 } from 'lucide-react';
 
-// Capas modelo (mesmas usadas em /alunos/livro-web)
-import capa1 from '@/assets/book-covers/capa-1-revisao-ciclica.png';
-import capa2 from '@/assets/book-covers/capa-2-fisico-quimica.png';
-import capa3 from '@/assets/book-covers/capa-3-previsao-final.png';
-import capa4 from '@/assets/book-covers/capa-4-quimica-organica.png';
-import capa5 from '@/assets/book-covers/capa-5-quimica-geral.png';
+// DnD Kit para arrastar e reordenar
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  KeyboardSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
-const COVER_MODELS = [capa1, capa2, capa3, capa4, capa5];
-
-// Componentes de edição inline
-import { InlineEditableCell, InlinePositionEditor } from '@/components/gestao/livros-web';
+// Componentes de edição inline e linha arrastável
+import { SortableBookRow } from '@/components/gestao/livros-web';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -620,6 +629,72 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
   };
 
   // ============================================
+  // DND SENSORS — Configuração de arrasto
+  // ============================================
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Mínimo para iniciar arrasto
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // ============================================
+  // DND HANDLER — Ao soltar, recalcula posições
+  // ============================================
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = filteredBooks.findIndex(b => b.id === active.id);
+    const newIndex = filteredBooks.findIndex(b => b.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Reordenar localmente para feedback imediato
+    const reordered = arrayMove(filteredBooks, oldIndex, newIndex);
+
+    // Atualizar posições: cada livro recebe position = index
+    const updates = reordered.map((book, idx) => ({
+      id: book.id,
+      position: idx,
+    }));
+
+    // Atualizar estado local imediatamente
+    setBooks(prev => {
+      const bookMap = new Map(prev.map(b => [b.id, b]));
+      updates.forEach(u => {
+        const book = bookMap.get(u.id);
+        if (book) {
+          (book as any).position = u.position;
+        }
+      });
+      return [...prev].sort((a, b) => ((a as any).position || 999) - ((b as any).position || 999));
+    });
+
+    // Persistir no banco
+    try {
+      for (const update of updates) {
+        await supabase
+          .from('web_books')
+          .update({ position: update.position, updated_at: new Date().toISOString() })
+          .eq('id', update.id);
+      }
+      
+      toast.success('Ordem dos livros atualizada!');
+      clearAllCache();
+    } catch (err) {
+      console.error('[DnD] Erro ao salvar ordem:', err);
+      toast.error('Erro ao salvar ordem');
+      loadBooks(); // Recarregar para reverter
+    }
+  }, [filteredBooks, clearAllCache, loadBooks]);
+
+  // ============================================
   // ATUALIZAÇÃO INLINE — Fonte da Verdade Absoluta
   // Salva campo individual no banco e recarrega lista
   // ============================================
@@ -821,188 +896,52 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-14">#</TableHead>
-                  <TableHead>Livro</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Páginas</TableHead>
-                  <TableHead>Leitores</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead className="w-12"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredBooks.map((book) => {
-                  const status = STATUS_MAP[book.status] || STATUS_MAP.draft;
-                  const StatusIcon = status.icon;
-                  const category = CATEGORIES.find(c => c.value === book.category);
-                  const bookPosition = (book as any).position || 999;
-
-                  return (
-                    <TableRow key={book.id}>
-                      {/* COLUNA POSIÇÃO — Editável */}
-                      <TableCell>
-                        <InlinePositionEditor
-                          position={bookPosition}
-                          coverIndex={coverIndexMap.get(book.id)}
-                          onSave={async (newPos) => {
-                            await handleInlineUpdate(book.id, 'position', newPos);
-                          }}
-                        />
-                      </TableCell>
-
-                      {/* COLUNA LIVRO — Título e Subtítulo Editáveis */}
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          {/* Miniatura da Capa Modelo (01-05) */}
-                          {coverIndexMap.has(book.id) ? (
-                            <div className="relative flex-shrink-0">
-                              <img
-                                src={COVER_MODELS[coverIndexMap.get(book.id)! - 1]}
-                                alt={`Capa ${coverIndexMap.get(book.id)!}`}
-                                className="w-12 h-16 object-cover rounded shadow-md ring-2 ring-red-500/50"
-                              />
-                            </div>
-                          ) : book.cover_url ? (
-                            <img
-                              src={book.cover_url}
-                              alt={book.title}
-                              className="w-10 h-14 object-cover rounded"
-                            />
-                          ) : (
-                            <div className="w-10 h-14 bg-muted rounded flex items-center justify-center">
-                              <BookOpen className="w-5 h-5 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="space-y-0.5 min-w-0 flex-1">
-                            {/* Título Editável */}
-                            <InlineEditableCell
-                              value={book.title}
-                              onSave={async (val) => {
-                                await handleInlineUpdate(book.id, 'title', val);
-                              }}
-                              placeholder="Título do livro"
-                              className="font-medium"
-                              minWidth="180px"
-                            />
-                            {/* Subtítulo Editável */}
-                            <InlineEditableCell
-                              value={book.subtitle || ''}
-                              onSave={async (val) => {
-                                await handleInlineUpdate(book.id, 'subtitle', val);
-                              }}
-                              placeholder="Adicionar subtítulo..."
-                              className="text-muted-foreground"
-                              minWidth="160px"
-                            />
-                          </div>
-                        </div>
-                      </TableCell>
-
-                      {/* COLUNA CATEGORIA — Editável via Select */}
-                      <TableCell>
-                        <InlineEditableCell
-                          value={book.category}
-                          displayValue={category?.label || book.category}
-                          onSave={async (val) => {
-                            await handleInlineUpdate(book.id, 'category', val);
-                          }}
-                          type="select"
-                          options={CATEGORIES}
-                          minWidth="140px"
-                        />
-                      </TableCell>
-
-                      {/* COLUNA STATUS — Editável via Select */}
-                      <TableCell>
-                        <InlineEditableCell
-                          value={book.status}
-                          displayValue={
-                            <Badge className={cn("gap-1", status.color)}>
-                              <StatusIcon className={cn("w-3 h-3", book.status === 'processing' && 'animate-spin')} />
-                              {status.label}
-                            </Badge>
-                          }
-                          onSave={async (val) => {
-                            await handleInlineUpdate(book.id, 'status', val);
-                          }}
-                          type="select"
-                          options={[
-                            { value: 'draft', label: '📝 Rascunho' },
-                            { value: 'queued', label: '⏳ Na fila' },
-                            { value: 'ready', label: '✅ Publicado' },
-                            { value: 'archived', label: '📦 Arquivado' },
-                          ]}
-                          minWidth="120px"
-                        />
-                      </TableCell>
-
-                      {/* COLUNA PÁGINAS — Apenas visualização */}
-                      <TableCell>{book.total_pages || 0}</TableCell>
-
-                      {/* COLUNA LEITORES — Apenas visualização */}
-                      <TableCell>{book.unique_readers || 0}</TableCell>
-
-                      {/* COLUNA DATA — Apenas visualização */}
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {format(new Date(book.created_at), "dd/MM/yy", { locale: ptBR })}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => {
-                                // ✅ Preview na mesma URL (/gestaofc/livros-web)
-                                // Evita abrir nova aba e cair no /auth por inconsistência de sessão entre contextos.
-                                setPreviewBookId(book.id);
-                                setPreviewOpen(true);
-                              }}
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              Visualizar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleOpenEdit(book)}>
-                              <Edit className="w-4 h-4 mr-2" />
-                              Editar
-                            </DropdownMenuItem>
-                            {(book.status === 'draft' || book.status === 'queued') && (
-                              <DropdownMenuItem onClick={() => handlePublish(book.id)}>
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                {book.status === 'queued' ? 'Forçar Publicação' : 'Publicar'}
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem 
-                              onClick={() => handleArchive(book.id)}
-                              className="text-amber-600"
-                            >
-                              <Archive className="w-4 h-4 mr-2" />
-                              Arquivar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => setAnnihilateBook(book)}
-                              className="text-destructive font-semibold"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              🔥 Aniquilar
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+              modifiers={[restrictToVerticalAxis]}
+            >
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-20">#</TableHead>
+                    <TableHead>Livro</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Páginas</TableHead>
+                    <TableHead>Leitores</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead className="w-12"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <SortableContext
+                    items={filteredBooks.map(b => b.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {filteredBooks.map((book) => (
+                      <SortableBookRow
+                        key={book.id}
+                        book={book as any}
+                        coverIndex={coverIndexMap.get(book.id)}
+                        categories={CATEGORIES}
+                        statusMap={STATUS_MAP}
+                        onInlineUpdate={handleInlineUpdate}
+                        onPreview={(id) => {
+                          setPreviewBookId(id);
+                          setPreviewOpen(true);
+                        }}
+                        onEdit={handleOpenEdit}
+                        onPublish={handlePublish}
+                        onArchive={handleArchive}
+                        onAnnihilate={setAnnihilateBook}
+                      />
+                    ))}
+                  </SortableContext>
+                </TableBody>
+              </Table>
+            </DndContext>
           )}
         </CardContent>
       </Card>
