@@ -1,10 +1,11 @@
 // ============================================
-// 📚🛡️ BOOK SECURITY GUARD v1.0
+// 📚🛡️ BOOK SECURITY GUARD v2.0
 // Proteção anti-PrintScreen/DevTools para Livros Web
+// M4: Escalonamento de resposta + Detecção gravação
 // OWNER BYPASS ALWAYS
 // ============================================
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -44,6 +45,22 @@ const BLOCKED_SHORTCUTS = [
   { key: '6', ctrl: false, shift: true, meta: true }, // Cmd+Shift+6
 ];
 
+// ═══════════════════════════════════════════════════════════
+// M4: CONFIGURAÇÃO DE ESCALONAMENTO
+// ═══════════════════════════════════════════════════════════
+const ESCALATION_CONFIG = {
+  // Janela de tempo para contar tentativas (5 minutos)
+  WINDOW_MS: 5 * 60 * 1000,
+  // Nível 1: Toast discreto (1ª tentativa)
+  LEVEL_1_TOAST: 1,
+  // Nível 2: Overlay severo (2ª tentativa)
+  LEVEL_2_OVERLAY: 2,
+  // Nível 3: Sessão encerrada (5ª tentativa)
+  LEVEL_3_SESSION_END: 5,
+  // Duração do overlay em ms
+  OVERLAY_DURATION_MS: 5000,
+};
+
 interface UseBookSecurityGuardOptions {
   bookId: string;
   bookTitle?: string;
@@ -52,6 +69,12 @@ interface UseBookSecurityGuardOptions {
   userEmail?: string;
   userName?: string;
   onViolation?: (type: string) => void;
+  onSessionEnd?: () => void;
+}
+
+interface ViolationAttempt {
+  timestamp: number;
+  type: string;
 }
 
 export function useBookSecurityGuard({
@@ -62,15 +85,43 @@ export function useBookSecurityGuard({
   userEmail,
   userName,
   onViolation,
+  onSessionEnd,
 }: UseBookSecurityGuardOptions) {
   const isOwnerRef = useRef(isOwner);
   const warningThrottleRef = useRef(false);
   const violationCountRef = useRef(0);
+  
+  // ✅ M4: Estado para overlay severo
+  const [showSevereOverlay, setShowSevereOverlay] = useState(false);
+  
+  // ✅ M4: Histórico de tentativas para escalonamento
+  const attemptsRef = useRef<ViolationAttempt[]>([]);
 
   // Atualizar ref quando isOwner mudar
   useEffect(() => {
     isOwnerRef.current = isOwner;
   }, [isOwner]);
+
+  // ═══════════════════════════════════════════════════════════
+  // M4: CONTAR TENTATIVAS NA JANELA DE TEMPO
+  // ═══════════════════════════════════════════════════════════
+  const getRecentAttempts = useCallback(() => {
+    const now = Date.now();
+    const windowStart = now - ESCALATION_CONFIG.WINDOW_MS;
+    
+    // Limpar tentativas antigas
+    attemptsRef.current = attemptsRef.current.filter(a => a.timestamp > windowStart);
+    
+    return attemptsRef.current.length;
+  }, []);
+
+  const addAttempt = useCallback((type: string) => {
+    attemptsRef.current.push({
+      timestamp: Date.now(),
+      type,
+    });
+    return getRecentAttempts();
+  }, [getRecentAttempts]);
 
   // ═══════════════════════════════════════════════════════════
   // LOG DE VIOLAÇÃO NO BACKEND
@@ -94,6 +145,7 @@ export function useBookSecurityGuard({
         metadata: {
           ...metadata,
           violation_count: violationCountRef.current,
+          attempts_in_window: getRecentAttempts(),
           timestamp: new Date().toISOString(),
           user_agent: navigator.userAgent,
         },
@@ -103,17 +155,57 @@ export function useBookSecurityGuard({
     }
 
     onViolation?.(violationType);
-  }, [bookId, bookTitle, userId, userEmail, userName, onViolation]);
+  }, [bookId, bookTitle, userId, userEmail, userName, onViolation, getRecentAttempts]);
 
   // ═══════════════════════════════════════════════════════════
-  // MOSTRAR AVISO (THROTTLED)
+  // M4: RESPOSTA ESCALONADA
   // ═══════════════════════════════════════════════════════════
-  const showWarning = useCallback((type: 'screenshot' | 'devtools' | 'print') => {
-    if (warningThrottleRef.current) return;
-    warningThrottleRef.current = true;
-
+  const handleEscalatedResponse = useCallback((type: 'screenshot' | 'devtools' | 'print') => {
+    if (isOwnerRef.current) return;
+    
+    // Registrar tentativa
+    const attemptCount = addAttempt(type);
+    
+    console.log(`[BookSecurityGuard] Tentativa #${attemptCount} de ${type}`);
+    
+    // ─────────────────────────────────────────────────────────
+    // NÍVEL 3: SESSÃO ENCERRADA (5+ tentativas)
+    // ─────────────────────────────────────────────────────────
+    if (attemptCount >= ESCALATION_CONFIG.LEVEL_3_SESSION_END) {
+      toast.error('Sessão encerrada por violações repetidas', {
+        duration: 5000,
+        icon: '🚫',
+        description: 'Você foi desconectado deste livro.',
+      });
+      logViolation(`${type}_session_end`, { attemptCount });
+      onSessionEnd?.();
+      return;
+    }
+    
+    // ─────────────────────────────────────────────────────────
+    // NÍVEL 2: OVERLAY SEVERO (2-4 tentativas)
+    // ─────────────────────────────────────────────────────────
+    if (attemptCount >= ESCALATION_CONFIG.LEVEL_2_OVERLAY) {
+      setShowSevereOverlay(true);
+      toast.error('⚠️ AVISO SEVERO: Capturas são proibidas!', {
+        duration: 5000,
+        icon: '🛡️',
+        description: `Tentativa ${attemptCount} de ${ESCALATION_CONFIG.LEVEL_3_SESSION_END}. Próximas tentativas encerrarão sua sessão.`,
+      });
+      logViolation(`${type}_overlay`, { attemptCount });
+      
+      // Remover overlay após duração
+      setTimeout(() => {
+        setShowSevereOverlay(false);
+      }, ESCALATION_CONFIG.OVERLAY_DURATION_MS);
+      return;
+    }
+    
+    // ─────────────────────────────────────────────────────────
+    // NÍVEL 1: TOAST DISCRETO (1ª tentativa)
+    // ─────────────────────────────────────────────────────────
     const messages = {
-      screenshot: 'Screenshot bloqueado! Conteúdo protegido.',
+      screenshot: 'Capturas de tela não são permitidas neste conteúdo.',
       devtools: 'Ferramentas de desenvolvedor detectadas!',
       print: 'Impressão bloqueada! Conteúdo protegido.',
     };
@@ -123,17 +215,14 @@ export function useBookSecurityGuard({
       icon: '🛡️',
       description: 'Esta ação foi registrada.'
     });
+    
+    logViolation(type, { attemptCount });
 
     // Limpar clipboard para prevenir captura
     if (type === 'screenshot' && navigator.clipboard?.writeText) {
       navigator.clipboard.writeText('').catch(() => {});
     }
-
-    // Throttle de 5 segundos
-    setTimeout(() => {
-      warningThrottleRef.current = false;
-    }, 5000);
-  }, []);
+  }, [addAttempt, logViolation, onSessionEnd]);
 
   // ═══════════════════════════════════════════════════════════
   // HANDLER DE KEYBOARD
@@ -157,8 +246,7 @@ export function useBookSecurityGuard({
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-        showWarning('screenshot');
-        logViolation('print_screen', { key });
+        handleEscalatedResponse('screenshot');
         return;
       }
 
@@ -169,8 +257,7 @@ export function useBookSecurityGuard({
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-        showWarning('screenshot');
-        logViolation('snipping_tool', { key });
+        handleEscalatedResponse('screenshot');
         return;
       }
 
@@ -181,8 +268,7 @@ export function useBookSecurityGuard({
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-        showWarning('print');
-        logViolation('print_attempt', { key });
+        handleEscalatedResponse('print');
         return;
       }
 
@@ -193,8 +279,7 @@ export function useBookSecurityGuard({
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
-        showWarning('devtools');
-        logViolation('devtools_f12', { key });
+        handleEscalatedResponse('devtools');
         return;
       }
 
@@ -214,8 +299,7 @@ export function useBookSecurityGuard({
           e.preventDefault();
           e.stopPropagation();
           e.stopImmediatePropagation();
-          showWarning('devtools');
-          logViolation('blocked_shortcut', { key, blocked });
+          handleEscalatedResponse('devtools');
           return;
         }
       }
@@ -227,7 +311,51 @@ export function useBookSecurityGuard({
     return () => {
       document.removeEventListener('keydown', handleKeyDown, { capture: true });
     };
-  }, [showWarning, logViolation]);
+  }, [handleEscalatedResponse]);
+
+  // ═══════════════════════════════════════════════════════════
+  // M4 - ITEM 1: DETECÇÃO DE GRAVAÇÃO DE TELA
+  // ═══════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (isOwnerRef.current) return;
+
+    let blurCount = 0;
+    let lastBlurTime = 0;
+    const BLUR_THRESHOLD = 5; // 5 blurs rápidos = suspeito
+    const BLUR_WINDOW = 10000; // 10 segundos
+
+    const handleBlur = () => {
+      if (isOwnerRef.current) return;
+
+      const now = Date.now();
+      
+      // Reset se fora da janela
+      if (now - lastBlurTime > BLUR_WINDOW) {
+        blurCount = 0;
+      }
+      
+      blurCount++;
+      lastBlurTime = now;
+      
+      // Muitos blurs rápidos = possível gravação de tela
+      if (blurCount >= BLUR_THRESHOLD) {
+        console.warn('[BookSecurityGuard] Possível gravação de tela detectada');
+        toast.warning('Atividade suspeita detectada', {
+          duration: 3000,
+          icon: '📹',
+          description: 'Gravação de tela pode estar ativa.',
+        });
+        logViolation('screen_recording_suspected', { blurCount });
+        blurCount = 0;
+      }
+    };
+
+    window.addEventListener('blur', handleBlur);
+
+    return () => {
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, [logViolation]);
 
   // ═══════════════════════════════════════════════════════════
   // DETECÇÃO DE DEVTOOLS POR DIMENSÕES
@@ -284,39 +412,33 @@ export function useBookSecurityGuard({
   }, []);
 
   // ═══════════════════════════════════════════════════════════
-  // DETECÇÃO DE WINDOW BLUR (possível screenshot externo)
+  // M4 - DETECÇÃO DE PICTURE-IN-PICTURE
   // ═══════════════════════════════════════════════════════════
   useEffect(() => {
     if (isOwnerRef.current) return;
 
-    let blurCount = 0;
-    let lastBlurTime = 0;
-
-    const handleBlur = () => {
-      if (isOwnerRef.current) return;
-
-      const now = Date.now();
-      // Se blur acontecer muito rápido seguido, pode ser screenshot tool
-      if (now - lastBlurTime < 2000) {
-        blurCount++;
-        if (blurCount >= 3) {
-          logViolation('suspicious_blur', { blurCount });
-          blurCount = 0;
-        }
-      } else {
-        blurCount = 1;
+    const checkPiP = () => {
+      if (document.pictureInPictureElement) {
+        console.warn('[BookSecurityGuard] PiP detectado');
+        logViolation('picture_in_picture', {});
+        toast.warning('Picture-in-Picture detectado', {
+          duration: 3000,
+          icon: '📺',
+        });
       }
-      lastBlurTime = now;
     };
 
-    window.addEventListener('blur', handleBlur);
+    // Verificar quando entra em PiP
+    document.addEventListener('enterpictureinpicture', checkPiP);
 
     return () => {
-      window.removeEventListener('blur', handleBlur);
+      document.removeEventListener('enterpictureinpicture', checkPiP);
     };
   }, [logViolation]);
 
   return {
     violationCount: violationCountRef.current,
+    showSevereOverlay, // ✅ M4: Expor estado do overlay
+    attemptsInWindow: getRecentAttempts(),
   };
 }
