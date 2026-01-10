@@ -9,7 +9,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { 
   useDueFlashcards, 
   useAllFlashcards, 
