@@ -394,9 +394,10 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
           description: description.trim() || null,
           category: selectedCard, // Card ID = category (para mapeamento com alunos)
           content_type: contentType,
-          macro: macroValue,
+          // Se for questoes-mapas, o filtro vai em macro (5 macros químicos)
+          // Para os demais cards, o filtro vai em tags (bancas, extras, etc.)
+          macro: isQuestoesMacro ? selectedFilter : null,
           micro: null,
-          // Filtro específico vai no campo 'folder' ou 'tags' para bancas
           tags: !isQuestoesMacro && selectedFilter ? [selectedFilter] : [],
           status: 'ready',
           file_path: filePath,
@@ -405,12 +406,6 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
           watermark_enabled: watermarkEnabled,
           is_premium: isPremium,
           created_by: userId,
-          ano,
-          mes,
-          semana,
-          dia,
-          folder: selectedFilter || 'geral',
-          upload_date: now.toISOString(),
         });
 
       if (dbError) throw dbError;
