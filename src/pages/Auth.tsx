@@ -2507,28 +2507,7 @@ export default function Auth() {
                   )}
                 </Button>
 
-                {/* Toggle Login/Signup */}
-                <div className="text-center mt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsLogin(!isLogin);
-                      setErrors({});
-                      setFormData({ nome: "", email: "", password: "" });
-                    }}
-                    className="text-sm text-gray-400 hover:text-white transition-colors"
-                  >
-                    {isLogin ? (
-                      <>
-                        Não tem conta? <span className="text-primary hover:underline">Criar conta</span>
-                      </>
-                    ) : (
-                      <>
-                        Já tem conta? <span className="text-primary hover:underline">Fazer login</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                {/* Toggle Login/Signup - REMOVIDO conforme solicitação */}
               </form>
             )}
 
