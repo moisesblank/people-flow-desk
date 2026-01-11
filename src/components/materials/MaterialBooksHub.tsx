@@ -99,11 +99,11 @@ const MATERIAL_BOOKS: MaterialBook[] = [
     borderColor: 'border-rose-500/30',
     badge: 'ESSENCIAL',
     filters: [
-      { value: 'quimica_geral', label: 'Química Geral' },
-      { value: 'fisico_quimica', label: 'Físico-Química' },
-      { value: 'quimica_organica', label: 'Química Orgânica' },
-      { value: 'quimica_ambiental', label: 'Química Ambiental' },
-      { value: 'bioquimica', label: 'Bioquímica' },
+      { value: 'quimica_geral', label: '⚗️ Química Geral' },
+      { value: 'fisico_quimica', label: '⚡ Físico-Química' },
+      { value: 'quimica_organica', label: '🧪 Química Orgânica' },
+      { value: 'quimica_ambiental', label: '🌿 Química Ambiental' },
+      { value: 'bioquimica', label: '🧬 Bioquímica' },
     ]
   },
   {
