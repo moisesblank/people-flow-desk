@@ -53,24 +53,8 @@ import { AdaptiveScheduler } from "./AdaptiveScheduler";
 // Widget de Ranking integrado no Dashboard
 import { DashboardRankingWidget } from "./DashboardRankingWidget";
 
-// Componentes de Análise por Áreas
-import {
-  PerformanceStatsCards,
-  PersonalizedTipsPanel,
-  TaxonomyHierarchyTable,
-  ComparisonWidget,
-  PerformanceCharts,
-} from "./performance";
-
-// Hooks de Performance
-import {
-  useStudentTaxonomyPerformance,
-  useStudentPerformanceStats,
-  useStudentTrends,
-  useGlobalComparison,
-  useStudentTips,
-  treeToArray,
-} from "@/hooks/student-performance";
+// Componente COMPLETO de Análise de Desempenho (idêntico ao /alunos/questoes)
+import StudentPerformanceAnalytics from "./questoes/StudentPerformanceAnalytics";
 
 // Tipos
 interface StudyStats {
@@ -180,32 +164,9 @@ export function BetaStudentDashboard() {
   const xpProgresso = (stats.xpTotal / stats.xpProximoNivel) * 100;
 
   // ============================================
-  // HOOKS DE ANÁLISE POR ÁREAS (DADOS REAIS)
+  // ANÁLISE POR ÁREAS - Usa o componente COMPLETO
+  // StudentPerformanceAnalytics (mesmo do /alunos/questoes)
   // ============================================
-  const { data: taxonomyData, isLoading: taxonomyLoading } = useStudentTaxonomyPerformance(user?.id);
-  const { data: performanceStats, isLoading: statsLoading } = useStudentPerformanceStats(user?.id);
-  const { data: trends, isLoading: trendsLoading } = useStudentTrends(user?.id);
-  
-  // Extrai array da árvore de taxonomia
-  const taxonomyArray = taxonomyData?.array || [];
-  
-  // Comparação global (depende de stats e taxonomy)
-  const { data: comparison, isLoading: comparisonLoading } = useGlobalComparison(
-    user?.id,
-    performanceStats,
-    taxonomyArray.map(n => ({ macro: n.name, accuracyPercent: n.accuracyPercent }))
-  );
-  
-  // Gera dicas personalizadas
-  const { tips, isLoading: tipsLoading } = useStudentTips({
-    stats: performanceStats,
-    trends,
-    taxonomyArray,
-    isLoading: statsLoading || trendsLoading || taxonomyLoading,
-  });
-  
-  // Loading combinado
-  const isPerformanceLoading = taxonomyLoading || statsLoading || trendsLoading;
 
   // Mensagem motivacional personalizada
   const getGreeting = () => {
@@ -511,7 +472,8 @@ export function BetaStudentDashboard() {
       </motion.div>
 
       {/* ============================================ */}
-      {/* SEÇÃO ANÁLISE POR ÁREAS - DADOS REAIS */}
+      {/* SEÇÃO ANÁLISE POR ÁREAS - COMPONENTE COMPLETO */}
+      {/* Mesmo que /alunos/questoes - SINCRONIZADO SEMPRE */}
       {/* ============================================ */}
       <motion.div
         id="performance-section"
@@ -519,51 +481,7 @@ export function BetaStudentDashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35 }}
       >
-        <Card className="border-primary/20 bg-gradient-to-r from-primary/5 via-transparent to-cyan-500/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-cyan-500">
-                <Layers className="w-5 h-5 text-white" />
-              </div>
-              📊 Análise por Áreas
-            </CardTitle>
-            <CardDescription>
-              Performance detalhada por macro, micro, tema e subtema (últimos 360 dias)
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Cards de estatísticas rápidas */}
-            <PerformanceStatsCards 
-              stats={performanceStats ?? null} 
-              isLoading={statsLoading} 
-            />
-
-            {/* Gráficos de performance */}
-            <PerformanceCharts
-              taxonomyData={taxonomyArray}
-              trends={trends ?? []}
-              isLoading={isPerformanceLoading}
-            />
-
-            {/* Grid 2 colunas: Dicas + Comparação */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <PersonalizedTipsPanel
-                tips={tips}
-                isLoading={tipsLoading}
-              />
-              <ComparisonWidget
-                comparison={comparison ?? null}
-                isLoading={comparisonLoading}
-              />
-            </div>
-
-            {/* Tabela hierárquica expandível */}
-            <TaxonomyHierarchyTable
-              data={taxonomyArray}
-              isLoading={taxonomyLoading}
-            />
-          </CardContent>
-        </Card>
+        <StudentPerformanceAnalytics />
       </motion.div>
 
       {/* ============================================ */}
