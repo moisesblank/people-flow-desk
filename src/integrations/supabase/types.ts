@@ -18681,6 +18681,7 @@ export type Database = {
           ultima_sessao: Json
         }[]
       }
+      get_alunos_contadores: { Args: never; Returns: Json }
       get_audit_logs: {
         Args: {
           p_action?: string
