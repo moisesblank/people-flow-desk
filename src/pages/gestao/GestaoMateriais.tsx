@@ -1298,54 +1298,121 @@ const GestaoMateriais = memo(function GestaoMateriais() {
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <FileText className="w-6 h-6 text-primary" />
+      {/* ============================================ */}
+      {/* 🏠 HEADER — GESTÃO DE MATERIAIS PDF */}
+      {/* ============================================ */}
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-primary/70">
+              <FileText className="w-6 h-6 text-primary-foreground" />
+            </div>
             Gestão de Materiais PDF
           </h1>
-          <p className="text-muted-foreground">
-            Organize por Hub Cards (5 Cards do Portal Aluno)
+          <p className="text-muted-foreground text-sm md:text-base">
+            Organização SUPREMA por <span className="font-semibold text-primary">5 Hub Cards</span> — 
+            Espelhamento perfeito do Portal Aluno
           </p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground/70">
+            <Badge variant="outline" className="bg-rose-500/10 text-rose-400 border-rose-500/30">🧠 Questões</Badge>
+            <Badge variant="outline" className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30">🎯 Direcion.</Badge>
+            <Badge variant="outline" className="bg-amber-500/10 text-amber-400 border-amber-500/30">🏆 Provas</Badge>
+            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30">📦 Extras</Badge>
+            <Badge variant="outline" className="bg-violet-500/10 text-violet-400 border-violet-500/30">⚡ Flush</Badge>
+          </div>
         </div>
-        <Button onClick={() => setUploadOpen(true)} className="gap-2">
-          <Plus className="w-4 h-4" />
+        <Button onClick={() => setUploadOpen(true)} size="lg" className="gap-2 shrink-0">
+          <Plus className="w-5 h-5" />
           Novo Material
         </Button>
       </div>
 
-      {/* Stats — Hub Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <Card className="p-3 bg-gradient-to-br from-primary/5 to-primary/10">
-          <div className="flex items-center gap-2">
-            <FileText className="w-6 h-6 text-primary" />
-            <div>
-              <p className="text-xl font-bold">{stats.total}</p>
-              <p className="text-xs text-muted-foreground">Total</p>
+      {/* ============================================ */}
+      {/* 📊 STATS DOS 5 HUB CARDS — VERDADE ABSOLUTA */}
+      {/* ============================================ */}
+      <div className="space-y-4">
+        {/* Card de TOTAL (destaque) */}
+        <Card className="p-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-primary/30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-3 rounded-xl bg-primary/20">
+                <FileText className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-3xl font-bold">{stats.total}</p>
+                <p className="text-sm text-muted-foreground">Total de Materiais</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">
+                {stats.published} publicados
+              </p>
+              <p className="text-xs text-muted-foreground/70">
+                {materials.filter(m => m.status === 'archived').length} arquivados
+              </p>
             </div>
           </div>
         </Card>
-        {HUB_CARDS.map(card => (
-          <Card key={card.id} className={cn(
-            "p-3 bg-gradient-to-br",
-            card.color === 'rose' && "from-rose-500/10 to-pink-500/10",
-            card.color === 'cyan' && "from-cyan-500/10 to-blue-500/10",
-            card.color === 'amber' && "from-amber-500/10 to-orange-500/10",
-            card.color === 'emerald' && "from-emerald-500/10 to-green-500/10",
-            card.color === 'violet' && "from-violet-500/10 to-purple-500/10",
-          )}>
-            <div className="flex items-center gap-2">
-              <span className="text-xl">{card.icon}</span>
-              <div>
-                <p className="text-xl font-bold">{stats.byCard[card.id] || 0}</p>
-                <p className="text-xs text-muted-foreground truncate max-w-[80px]" title={card.name}>
-                  {card.name.length > 10 ? card.name.substring(0, 10) + '...' : card.name}
-                </p>
-              </div>
-            </div>
-          </Card>
-        ))}
+
+        {/* 5 HUB CARDS — Grid Organizado */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {HUB_CARDS.map((card, index) => {
+            const count = stats.byCard[card.id] || 0;
+            const gradientClasses: Record<string, string> = {
+              'rose': 'from-rose-500/20 to-pink-500/10 border-rose-500/30 hover:border-rose-500/50',
+              'cyan': 'from-cyan-500/20 to-blue-500/10 border-cyan-500/30 hover:border-cyan-500/50',
+              'amber': 'from-amber-500/20 to-orange-500/10 border-amber-500/30 hover:border-amber-500/50',
+              'emerald': 'from-emerald-500/20 to-green-500/10 border-emerald-500/30 hover:border-emerald-500/50',
+              'violet': 'from-violet-500/20 to-purple-500/10 border-violet-500/30 hover:border-violet-500/50',
+            };
+            const textColors: Record<string, string> = {
+              'rose': 'text-rose-400',
+              'cyan': 'text-cyan-400',
+              'amber': 'text-amber-400',
+              'emerald': 'text-emerald-400',
+              'violet': 'text-violet-400',
+            };
+
+            return (
+              <Card 
+                key={card.id} 
+                className={cn(
+                  "p-4 bg-gradient-to-br transition-all cursor-pointer group",
+                  gradientClasses[card.color] || 'from-gray-500/20 to-slate-500/10 border-gray-500/30'
+                )}
+                onClick={() => handleCardFilterChange(card.id)}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{card.icon}</span>
+                      <p className={cn("text-3xl font-bold", textColors[card.color] || 'text-foreground')}>
+                        {count}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm leading-tight">
+                        {card.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        {card.description}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge 
+                    variant="outline" 
+                    className={cn(
+                      "text-xs shrink-0 opacity-0 group-hover:opacity-100 transition-opacity",
+                      textColors[card.color]
+                    )}
+                  >
+                    #{index + 1}
+                  </Badge>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
       </div>
 
       {/* Filters */}
