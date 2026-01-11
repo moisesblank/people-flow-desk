@@ -459,7 +459,7 @@ export const WebBookViewer = memo(function WebBookViewer({
   const [isSavingHistory, setIsSavingHistory] = useState(false);
   
   // Estado de ferramentas de desenho (Fabric.js)
-  const [activeTool, setActiveTool] = useState<ToolMode>('select');
+  const [activeTool, setActiveTool] = useState<ToolMode>('pencil');
   const [drawingColor, setDrawingColor] = useState('#fef08a'); // Amarelo padrão para marca-texto
   const [drawingSize, setDrawingSize] = useState(3);
   // Handler para mudanças no canvas Fabric.js
@@ -555,7 +555,7 @@ export const WebBookViewer = memo(function WebBookViewer({
       // Se SAIU do fullscreen
       if (isFullscreen && !nowFullscreen) {
         console.log('[WebBookViewer] Saindo do Modo Leitura - desativando ferramentas');
-        setActiveTool('select');
+        setActiveTool('pencil');
         // Fabric.js cuida automaticamente da limpeza quando o canvas é desmontado
       }
 
@@ -590,7 +590,7 @@ export const WebBookViewer = memo(function WebBookViewer({
         console.log('[WebBookViewer] Saindo do Modo Leitura após salvar...');
         await document.exitFullscreen();
         setIsFullscreen(false);
-        setActiveTool('select'); // Reset ferramenta
+        setActiveTool('pencil'); // Reset ferramenta
       }
     } catch (error) {
       console.error('[WebBookViewer] Erro ao salvar histórico:', error);
@@ -1161,7 +1161,7 @@ export const WebBookViewer = memo(function WebBookViewer({
                   {stagger.overlaysReady && isFullscreen && (
                     <FabricDrawingCanvas
                       ref={fabricCanvasRef}
-                      isActive={isFullscreen && activeTool !== 'select'}
+                      isActive={isFullscreen}
                       activeTool={activeTool}
                       color={drawingColor}
                       size={drawingSize}

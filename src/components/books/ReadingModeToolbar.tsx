@@ -28,7 +28,6 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  Eye,
   EyeOff,
   Copy,
   Share2,
@@ -54,7 +53,7 @@ import { toast } from 'sonner';
 // TIPOS
 // ============================================
 
-export type ToolMode = 'select' | 'highlight' | 'pencil' | 'eraser' | 'text' | 'ruler';
+export type ToolMode = 'highlight' | 'pencil' | 'eraser' | 'text';
 
 interface ReadingModeToolbarProps {
   bookId: string;
@@ -89,12 +88,10 @@ const HIGHLIGHT_COLORS = [
 ];
 
 const TOOL_BUTTONS: { id: ToolMode; icon: typeof Pencil; label: string; color: string }[] = [
-  { id: 'select', icon: Eye, label: 'Selecionar', color: '#6b7280' },
   { id: 'highlight', icon: Highlighter, label: 'Marca-texto', color: '#eab308' },
   { id: 'pencil', icon: Pencil, label: 'Lápis', color: '#3b82f6' },
   { id: 'eraser', icon: Eraser, label: 'Borracha', color: '#ef4444' },
   { id: 'text', icon: Type, label: 'Texto', color: '#22c55e' },
-  { id: 'ruler', icon: RulerIcon, label: 'Régua', color: '#8b5cf6' },
 ];
 
 // ============================================
@@ -117,7 +114,7 @@ export const ReadingModeToolbar = memo(function ReadingModeToolbar({
 }: ReadingModeToolbarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<'tools' | 'annotations' | 'bookmarks' | 'search'>('tools');
-  const [internalActiveTool, setInternalActiveTool] = useState<ToolMode>('select');
+  const [internalActiveTool, setInternalActiveTool] = useState<ToolMode>('pencil');
   const [newNoteType, setNewNoteType] = useState<AnnotationType>('note');
   const [newNoteContent, setNewNoteContent] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
