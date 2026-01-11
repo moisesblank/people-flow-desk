@@ -844,20 +844,29 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
                 )}
               </div>
 
-              {/* 🔽 Select tradicional (mantido) — só habilita após escolher Macro */}
+            </div>
+          )}
+
+          {/* 🔽 MICRO ASSUNTO — Aparece SOMENTE após selecionar Macro */}
+          {isQuestoesMapas && selectedFilter && (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <span>📚 Micro Assunto</span>
+                <Badge variant="outline" className="text-xs">Opcional</Badge>
+              </Label>
               <Select
                 value={selectedMicro || "__none__"}
                 onValueChange={(val) => setSelectedMicro(val === "__none__" ? "" : val)}
-                disabled={uploading || taxonomyLoading || !selectedFilter}
+                disabled={uploading || taxonomyLoading}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder={!selectedFilter ? 'Selecione um macro acima…' : 'Selecione o micro (opcional)…'} />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecione o micro assunto..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__none__">
                     <span className="text-muted-foreground">Nenhum (apenas macro)</span>
                   </SelectItem>
-                  {(selectedFilter ? getMicrosForSelect(selectedFilter) : []).map((micro) => (
+                  {getMicrosForSelect(selectedFilter).map((micro) => (
                     <SelectItem key={micro.value} value={micro.value || micro.label}>
                       {micro.label}
                     </SelectItem>
