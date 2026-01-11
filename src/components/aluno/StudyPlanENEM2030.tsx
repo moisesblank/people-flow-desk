@@ -1,10 +1,10 @@
 // ============================================
-// PLANO DE ESTUDOS ENEM 2030
-// Cronograma inteligente com DADOS REAIS + IA
+// PLANO DE ESTUDOS ENEM 2030 (FUSÃO v2)
+// Cronograma inteligente + Countdown + Quotes
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar,
   Clock,
@@ -19,7 +19,10 @@ import {
   Play,
   BarChart3,
   AlertCircle,
-  Zap
+  Zap,
+  Rocket,
+  Star,
+  Quote
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +35,40 @@ import { useNavigate } from "react-router-dom";
 // Hooks de dados reais
 import { useStudentDailyGoals, useLastWatchedLesson, usePendingFlashcards, useStudentInsights } from "@/hooks/useStudentDailyGoals";
 import { useGamification } from "@/hooks/useGamification";
+
+// ============================================
+// QUOTES MOTIVACIONAIS DO PROF. MOISÉS
+// ============================================
+const motivationalQuotes = [
+  { quote: "A química do sucesso é estudo + persistência!", author: "Prof. Moisés" },
+  { quote: "Cada questão resolvida te aproxima da aprovação!", author: "Prof. Moisés" },
+  { quote: "Você não precisa ser perfeito, só precisa não desistir!", author: "Prof. Moisés" },
+  { quote: "O ENEM não é sobre sorte, é sobre preparação!", author: "Prof. Moisés" },
+  { quote: "Transforme a ansiedade em foco!", author: "Prof. Moisés" },
+  { quote: "Cada átomo de esforço conta!", author: "Prof. Moisés" },
+  { quote: "Medicina te espera. Continue!", author: "Prof. Moisés" },
+  { quote: "A reação mais importante é a sua determinação!", author: "Prof. Moisés" },
+];
+
+// ============================================
+// MILESTONES DE URGÊNCIA
+// ============================================
+const milestones = [
+  { days: 365, message: "1 ano para o ENEM! Vamos começar forte! 🚀", color: "text-cyan-400" },
+  { days: 180, message: "6 meses! Hora de intensificar! 💪", color: "text-blue-400" },
+  { days: 90, message: "3 meses! Revisão intensa! 🔥", color: "text-amber-400" },
+  { days: 30, message: "1 mês! Sprint final! ⚡", color: "text-orange-400" },
+  { days: 7, message: "1 semana! Mantenha a calma! 🧘", color: "text-red-400" },
+  { days: 1, message: "Amanhã é o grande dia! Você está pronto! 🏆", color: "text-pink-400" },
+];
+
+interface TimeLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  percentage: number;
+}
 
 interface StudyBlock {
   id: string;
@@ -65,6 +102,50 @@ export function StudyPlanENEM2030() {
   const { gamification, levelInfo } = useGamification();
   
   const streak = gamification?.current_streak || 0;
+
+  // ============================================
+  // COUNTDOWN ENEM
+  // ============================================
+  const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
+  const [quote, setQuote] = useState(motivationalQuotes[0]);
+  
+  // Data do ENEM 2025 (primeiro domingo de novembro)
+  const enemDate = new Date('2025-11-02T13:00:00');
+  const startDate = new Date('2024-11-02T00:00:00'); // 1 ano antes
+
+  useEffect(() => {
+    // Quote do dia baseado no dia do ano
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+    setQuote(motivationalQuotes[dayOfYear % motivationalQuotes.length]);
+
+    const timer = setInterval(() => {
+      const now = new Date();
+      const diff = enemDate.getTime() - now.getTime();
+      const totalTime = enemDate.getTime() - startDate.getTime();
+      const elapsed = now.getTime() - startDate.getTime();
+      
+      if (diff <= 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, percentage: 100 });
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      const percentage = Math.min(100, Math.max(0, (elapsed / totalTime) * 100));
+
+      setTimeLeft({ days, hours, minutes, seconds, percentage });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const getMilestoneMessage = () => {
+    if (!timeLeft) return null;
+    const milestone = milestones.find(m => timeLeft.days <= m.days);
+    return milestone;
+  };
 
   // Gera plano híbrido: dados reais + sugestões IA
   const currentPlan = useMemo<DailyPlan | null>(() => {
@@ -316,9 +397,113 @@ export function StudyPlanENEM2030() {
     ? Math.round((dailyGoals.questoes.current / dailyGoals.questoes.target) * 100)
     : 0;
 
+  const milestone = getMilestoneMessage();
+
   return (
-    <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-cyan-500/5 overflow-hidden">
-      <CardHeader className="pb-2">
+    <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-transparent to-cyan-500/5 overflow-hidden relative">
+      {/* Background Glow Sutil */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-cyan-500/5 pointer-events-none" />
+      
+      <CardHeader className="pb-2 relative">
+        {/* ============================================ */}
+        {/* COUNTDOWN COMPACTO + QUOTE */}
+        {/* ============================================ */}
+        {timeLeft && (
+          <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-primary/10 via-cyan-500/10 to-primary/10 border border-primary/20">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              {/* Timer */}
+              <div className="flex items-center gap-4">
+                <motion.div
+                  animate={{ rotate: [0, 5, -5, 0] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className="p-2 rounded-lg bg-gradient-to-br from-red-500 to-orange-500"
+                >
+                  <Rocket className="w-5 h-5 text-white" />
+                </motion.div>
+                <div>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
+                    <Calendar className="w-3 h-3" />
+                    ENEM 2025 — 02 de Novembro
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {[
+                      { value: timeLeft.days, label: 'D' },
+                      { value: timeLeft.hours, label: 'H' },
+                      { value: timeLeft.minutes, label: 'M' },
+                      { value: timeLeft.seconds, label: 'S' },
+                    ].map((item, i) => (
+                      <div key={item.label} className="flex items-baseline gap-0.5">
+                        <span className={cn(
+                          "text-xl font-black tabular-nums",
+                          timeLeft.days <= 7 ? "text-red-500" :
+                          timeLeft.days <= 30 ? "text-amber-500" :
+                          "text-primary"
+                        )}>
+                          {String(item.value).padStart(2, '0')}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">{item.label}</span>
+                        {i < 3 && <span className="text-muted-foreground mx-0.5">:</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Quote do Dia */}
+              <div className="flex-1 max-w-md">
+                <div className="flex items-start gap-2 text-sm">
+                  <Quote className="w-4 h-4 text-primary/50 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-foreground/80 italic leading-tight">"{quote.quote}"</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">— {quote.author}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Milestone Alert */}
+            {milestone && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={cn(
+                  "mt-3 flex items-center gap-2 text-xs font-medium p-2 rounded-lg",
+                  timeLeft.days <= 7 ? "bg-red-500/10 text-red-400" :
+                  timeLeft.days <= 30 ? "bg-amber-500/10 text-amber-400" :
+                  "bg-primary/10 text-primary"
+                )}
+              >
+                <Star className="w-3 h-3" />
+                {milestone.message}
+              </motion.div>
+            )}
+
+            {/* Progress da Jornada */}
+            <div className="mt-3">
+              <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                <span>Jornada de Preparação</span>
+                <span>{timeLeft.percentage.toFixed(1)}% concluído</span>
+              </div>
+              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${timeLeft.percentage}%` }}
+                  className={cn(
+                    "h-full rounded-full",
+                    timeLeft.days > 90 ? "bg-gradient-to-r from-green-500 to-emerald-500" :
+                    timeLeft.days > 30 ? "bg-gradient-to-r from-blue-500 to-primary" :
+                    timeLeft.days > 7 ? "bg-gradient-to-r from-amber-500 to-orange-500" :
+                    "bg-gradient-to-r from-red-500 to-pink-500"
+                  )}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================ */}
+        {/* HEADER DO PLANO DE ESTUDOS */}
+        {/* ============================================ */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <motion.div
