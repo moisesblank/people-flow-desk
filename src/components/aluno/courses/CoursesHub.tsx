@@ -12,7 +12,17 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useConstitutionPerformance } from '@/hooks/useConstitutionPerformance';
-import logoMoisesMedeiros from '@/assets/logo-moises-medeiros.png';
+
+// Imagens de fundo para cada hub
+import hubImg1 from '@/assets/hub-1-extensivas.jpg';
+import hubImg2 from '@/assets/hub-2-por-assunto.jpg';
+import hubImg3 from '@/assets/hub-3-resolucao.jpg';
+import hubImg4 from '@/assets/hub-4-enem.jpg';
+import hubImg5 from '@/assets/hub-5-top10.jpg';
+import hubImg6 from '@/assets/hub-6-bonus.jpg';
+
+// Array de imagens por ordem de hub
+const HUB_IMAGES = [hubImg1, hubImg2, hubImg3, hubImg4, hubImg5, hubImg6];
 
 // ============================================
 // TIPOS
@@ -251,27 +261,23 @@ const NetflixCourseCard = memo(function NetflixCourseCard({
           <div className={cn("absolute bottom-0 right-0 w-[2px] h-full", card.borderColor.replace('border-', 'bg-').replace('/50', ''))} />
         </div>
 
-        {/* === HERO LOGO CENTERPIECE - ENHANCED VISIBILITY === */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+        {/* === HERO BACKGROUND IMAGE === */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {/* Multi-layer glow - ENHANCED */}
           <div 
-            className="absolute w-80 h-80 md:w-[450px] md:h-[450px] rounded-full opacity-25 group-hover:opacity-50 group-hover:scale-130 transition-all duration-700 blur-[100px]"
+            className="absolute w-80 h-80 md:w-[450px] md:h-[450px] rounded-full opacity-25 group-hover:opacity-50 group-hover:scale-130 transition-all duration-700 blur-[100px] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
             style={{ backgroundColor: card.glowColor }}
           />
-          <div 
-            className="absolute w-64 h-64 md:w-80 md:h-80 rounded-full opacity-20 group-hover:opacity-40 group-hover:scale-115 transition-all duration-500 blur-[60px]"
-            style={{ backgroundColor: card.glowColor }}
-          />
-          {/* Logo - MUCH MORE VISIBLE */}
+          {/* Background Image - CINEMATIC */}
           <img 
-            src={logoMoisesMedeiros} 
+            src={HUB_IMAGES[index]} 
             alt=""
             className={cn(
-              "w-52 md:w-64 lg:w-72 h-auto transform-gpu transition-all duration-500",
-              "opacity-20 group-hover:opacity-40 group-hover:scale-110"
+              "absolute inset-0 w-full h-full object-cover object-center transform-gpu transition-all duration-500",
+              "opacity-40 group-hover:opacity-60 group-hover:scale-110"
             )}
             style={{ 
-              filter: `drop-shadow(0 0 40px ${card.glowColor}) drop-shadow(0 0 80px ${card.glowColor.replace('0.6', '0.3')})` 
+              filter: `brightness(0.7) contrast(1.1) saturate(1.2)` 
             }}
             loading="lazy"
           />
