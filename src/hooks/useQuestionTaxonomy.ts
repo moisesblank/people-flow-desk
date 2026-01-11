@@ -75,21 +75,34 @@ export function useQuestionTaxonomy() {
 
       const items = (data || []) as TaxonomyItem[];
 
+      // Normalizador: aceita value "bonito" (com acento) e também slug (quimica_geral)
+      const slugify = (input: string) => input
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "_")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
+      const matchesTaxonomyKey = (item: TaxonomyItem, key: string) => {
+        if (!key) return false;
+        return item.value === key || item.label === key || slugify(item.value) === key || slugify(item.label) === key;
+      };
+
       // Construir árvore hierárquica com funções utilitárias
       const tree: TaxonomyTree = {
         macros: items.filter((i) => i.level === "macro"),
         getMicros: (macroValue: string) => {
-          const macro = items.find((i) => i.value === macroValue && i.level === "macro");
+          const macro = items.find((i) => i.level === "macro" && matchesTaxonomyKey(i, macroValue));
           if (!macro) return [];
           return items.filter((i) => i.parent_id === macro.id && i.level === "micro");
         },
         getTemas: (microValue: string) => {
-          const micro = items.find((i) => i.value === microValue && i.level === "micro");
+          const micro = items.find((i) => i.level === "micro" && matchesTaxonomyKey(i, microValue));
           if (!micro) return [];
           return items.filter((i) => i.parent_id === micro.id && i.level === "tema");
         },
         getSubtemas: (temaValue: string) => {
-          const tema = items.find((i) => i.value === temaValue && i.level === "tema");
+          const tema = items.find((i) => i.level === "tema" && matchesTaxonomyKey(i, temaValue));
           if (!tema) return [];
           return items.filter((i) => i.parent_id === tema.id && i.level === "subtema");
         },
