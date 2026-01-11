@@ -18494,6 +18494,7 @@ export type Database = {
         }[]
       }
       fn_list_books_for_category:
+        | { Args: { p_category?: string }; Returns: Json }
         | {
             Args: {
               p_category?: string
