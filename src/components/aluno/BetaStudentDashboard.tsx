@@ -56,6 +56,9 @@ import { DashboardRankingWidget } from "./DashboardRankingWidget";
 // Componente COMPLETO de Análise de Desempenho (idêntico ao /alunos/questoes)
 import StudentPerformanceAnalytics from "./questoes/StudentPerformanceAnalytics";
 
+// 📅 Plano de Estudos ENEM 2030 (Dados Reais + IA)
+import { StudyPlanENEM2030 } from "./StudyPlanENEM2030";
+
 // Tipos
 interface StudyStats {
   horasEstudadas: number;
@@ -209,6 +212,17 @@ export function BetaStudentDashboard() {
           riskScore={mockUserData.churnRiskScore} 
           userName={firstName} 
         />
+
+        {/* ============================================ */}
+        {/* 📅 PLANO DE ESTUDOS ENEM 2030 - DADOS REAIS + IA */}
+        {/* ============================================ */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <StudyPlanENEM2030 />
+        </motion.div>
 
         {/* ============================================ */}
         {/* 🚀 HERO SECTION - IRON MAN HUD ULTIMATE */}
