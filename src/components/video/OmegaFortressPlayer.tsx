@@ -139,6 +139,9 @@ export const OmegaFortressPlayer = memo(({
   
   // 🛡️ YOUTUBE HOTFIX v10.0 - Single-Call Guard para evitar chamadas múltiplas
   const sessionStartedRef = useRef(false);
+  
+  // 🚀 PATCH 5K: Ref para timeout de violação (cleanup no unmount)
+  const violationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Estados
   const [isPlaying, setIsPlaying] = useState(false);
@@ -263,7 +266,15 @@ export const OmegaFortressPlayer = memo(({
     }
   }, [sessionError]);
 
-  // ═══════════════════════════════════════════════════════════════════════════════
+  // 🚀 PATCH 5K: Cleanup do timeout de violação no unmount
+  useEffect(() => {
+    return () => {
+      if (violationTimeoutRef.current) {
+        clearTimeout(violationTimeoutRef.current);
+        violationTimeoutRef.current = null;
+      }
+    };
+  }, []);
   // 🔥 PART 3: SEGURANÇA MÁXIMA - Detecção de violações e overlay de tela preta
   // ═══════════════════════════════════════════════════════════════════════════════
   
@@ -285,9 +296,15 @@ export const OmegaFortressPlayer = memo(({
     // Reportar violação para o backend (usando tipo válido)
     reportViolation('keyboard_shortcut', 10);
     
-    // Auto-hide após 5 segundos
-    setTimeout(() => {
+    // 🚀 PATCH 5K: Limpar timeout anterior antes de criar novo
+    if (violationTimeoutRef.current) {
+      clearTimeout(violationTimeoutRef.current);
+    }
+    
+    // Auto-hide após 5 segundos - armazenar em ref para cleanup
+    violationTimeoutRef.current = setTimeout(() => {
       setSecurityViolation({ active: false, message: '' });
+      violationTimeoutRef.current = null;
     }, 5000);
   }, [isImmuneUser, reportViolation]);
   
