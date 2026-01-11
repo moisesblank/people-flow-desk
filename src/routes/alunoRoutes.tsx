@@ -32,7 +32,7 @@ const AlunoMateriais = lazy(() => import("@/pages/aluno/AlunoMateriaisNetflix"))
 const AlunoResumos = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoResumos })));
 const AlunoMapasMentais = lazy(() => import("@/pages/aluno/AlunoMapasMentais"));
 const AlunoRedacao = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoRedacao })));
-const AlunoDesempenho = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoDesempenho })));
+const AlunoDesempenho = lazy(() => import("@/pages/aluno/AlunoDesempenho"));
 const AlunoConquistas = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoConquistas })));
 const AlunoForum = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoForum })));
 const AlunoLives = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoLives })));
