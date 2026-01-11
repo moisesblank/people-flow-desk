@@ -168,8 +168,8 @@ export const AlunoCronograma = () => (
 
 export const AlunoMateriais = () => (
   <FuturisticPlaceholder 
-    title="Materiais PDF"
-    description="Biblioteca completa com resumos, apostilas e exercícios para download."
+    title="Materiais"
+    description="Biblioteca completa com resumos, apostilas, imagens e exercícios."
     icon={FileText}
     color="from-purple-500 to-pink-500"
     comingSoon="Lançamento: Janeiro 2025"

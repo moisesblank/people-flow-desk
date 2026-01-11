@@ -710,7 +710,7 @@ export function LessonFullConfigDialog({ lesson, open, onOpenChange }: LessonFul
                         <SelectItem value="texto">Texto</SelectItem>
                         <SelectItem value="quiz">Quiz</SelectItem>
                         <SelectItem value="exercicio">Exercício</SelectItem>
-                        <SelectItem value="material">Material PDF</SelectItem>
+                        <SelectItem value="material">Material</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

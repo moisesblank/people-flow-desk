@@ -1,8 +1,8 @@
 // ============================================
-// 📄 GESTÃO DE MATERIAIS PDF
+// 📄 GESTÃO DE MATERIAIS
 // Organização: CONTEUDISTA → 5 MACROS → MICROS
 // Tecnologia: PDF.js + Signed URLs + Watermarks
-// COMPRESSÃO DE PDF: ATIVO (pdf-lib)
+// Aceita QUALQUER tipo de arquivo (PDF, imagem, DOC, etc.)
 // ============================================
 
 import { memo, useState, useCallback, useEffect, useMemo } from 'react';
@@ -304,7 +304,7 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
   const availableMicros = isQuestoesMapas && selectedFilter ? getMicrosForSelect(selectedFilter) : [];
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: { 'application/pdf': ['.pdf'] },
+    // Aceita QUALQUER tipo de arquivo (não apenas PDF)
     maxFiles: MAX_FILES,
     maxSize: MAX_FILE_SIZE,
     onDrop: (acceptedFiles, rejectedFiles) => {
@@ -330,13 +330,17 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
         toast.warning(`Apenas ${availableSlots} arquivos adicionados (limite de ${MAX_FILES})`);
       }
 
-      const newFiles: FileWithMeta[] = filesToAdd.map(f => ({
-        file: f,
-        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        title: f.name.replace(/\.pdf$/i, ''),
-        status: 'pending' as const,
-        progress: 0,
-      }));
+      const newFiles: FileWithMeta[] = filesToAdd.map(f => {
+        // Remove extensão do título (qualquer extensão, não só .pdf)
+        const nameWithoutExt = f.name.replace(/\.[^/.]+$/, '');
+        return {
+          file: f,
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          title: nameWithoutExt,
+          status: 'pending' as const,
+          progress: 0,
+        };
+      });
 
       setFiles(prev => [...prev, ...newFiles]);
     }
@@ -558,13 +562,13 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="w-5 h-5" />
-            Novo Material PDF
+            Novo Material
             <Badge variant="outline" className="ml-2">
               Até {MAX_FILES} arquivos
             </Badge>
           </DialogTitle>
           <DialogDescription>
-            Selecione o Card e Filtro de destino — espelha /alunos/materiais
+            Aceita qualquer tipo de arquivo (PDF, imagem, DOC, etc.) — espelha /alunos/materiais
           </DialogDescription>
         </DialogHeader>
 
@@ -581,10 +585,10 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
             <input {...getInputProps()} />
             <FileText className="w-10 h-10 mx-auto text-muted-foreground mb-2" />
             <p className="font-medium">
-              {isDragActive ? 'Solte os arquivos aqui...' : 'Arraste PDFs aqui'}
+              {isDragActive ? 'Solte os arquivos aqui...' : 'Arraste arquivos aqui'}
             </p>
             <p className="text-sm text-muted-foreground">
-              ou clique para selecionar (máx 100MB cada)
+              PDF, imagens, documentos e mais (máx 100MB cada)
             </p>
             {files.length > 0 && (
               <Badge className="mt-2" variant="secondary">
@@ -1374,7 +1378,7 @@ const GestaoMateriais = memo(function GestaoMateriais() {
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
       {/* ============================================ */}
-      {/* 🏠 HEADER — GESTÃO DE MATERIAIS PDF */}
+      {/* 🏠 HEADER — GESTÃO DE MATERIAIS */}
       {/* ============================================ */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div className="space-y-1">
@@ -1382,7 +1386,7 @@ const GestaoMateriais = memo(function GestaoMateriais() {
             <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-primary/70">
               <FileText className="w-6 h-6 text-primary-foreground" />
             </div>
-            Gestão de Materiais PDF
+            Gestão de Materiais
           </h1>
           <p className="text-muted-foreground text-sm md:text-base">
             Organização SUPREMA por <span className="font-semibold text-primary">5 Hub Cards</span> — 
@@ -1631,7 +1635,7 @@ const GestaoMateriais = memo(function GestaoMateriais() {
             <FileText className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
             <h3 className="text-xl font-semibold mb-2">Nenhum material encontrado</h3>
             <p className="text-muted-foreground mb-4">
-              Comece enviando seu primeiro PDF
+              Comece enviando seu primeiro arquivo
             </p>
             <Button onClick={() => setUploadOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
