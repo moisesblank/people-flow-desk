@@ -31,8 +31,8 @@ interface ENEMCountdown2030Props {
 }
 
 export function ENEMCountdown2030({ 
-  examDate = new Date('2025-11-02T13:00:00'), // ENEM 2025 - Primeiro dia
-  className 
+  examDate = new Date('2026-11-15T13:00:00'), // ENEM 2026 - 15 de Novembro
+  className
 }: ENEMCountdown2030Props) {
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isUrgent, setIsUrgent] = useState(false);
