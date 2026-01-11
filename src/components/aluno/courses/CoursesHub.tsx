@@ -150,24 +150,17 @@ const NetflixCourseCard = memo(function NetflixCourseCard({
 }) {
   const [isHovered, setIsHovered] = useState(false);
 
+  // Performance: Use CSS transitions instead of framer-motion for hover
   return (
     <motion.div
-      initial={isHighEnd ? { opacity: 0, y: 50, scale: 0.85, rotateX: 15 } : { opacity: 0 }}
-      animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-      transition={{ 
-        duration: 0.7, 
-        delay: index * 0.1,
-        ease: [0.16, 1, 0.3, 1]
-      }}
-      whileHover={isHighEnd ? { 
-        scale: 1.06, 
-        y: -16,
-        rotateY: 2,
-        transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }
-      } : undefined}
-      whileTap={{ scale: 0.97 }}
-      className="group relative flex flex-col cursor-pointer perspective-1000"
-      style={{ transformStyle: 'preserve-3d' }}
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.08 }}
+      className={cn(
+        "group relative flex flex-col cursor-pointer",
+        "transform-gpu transition-all duration-300 ease-out",
+        "hover:scale-[1.04] hover:-translate-y-3 active:scale-[0.98]"
+      )}
       onClick={() => onSelect(card.id)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -258,30 +251,28 @@ const NetflixCourseCard = memo(function NetflixCourseCard({
           <div className={cn("absolute bottom-0 right-0 w-[2px] h-full", card.borderColor.replace('border-', 'bg-').replace('/50', ''))} />
         </div>
 
-        {/* === HERO LOGO CENTERPIECE === */}
+        {/* === HERO LOGO CENTERPIECE - ENHANCED VISIBILITY === */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-          {/* Multi-layer glow */}
+          {/* Multi-layer glow - ENHANCED */}
           <div 
-            className="absolute w-72 h-72 md:w-96 md:h-96 rounded-full opacity-[0.15] group-hover:opacity-[0.35] group-hover:scale-125 transition-all duration-1000 blur-[80px]"
+            className="absolute w-80 h-80 md:w-[450px] md:h-[450px] rounded-full opacity-25 group-hover:opacity-50 group-hover:scale-130 transition-all duration-700 blur-[100px]"
             style={{ backgroundColor: card.glowColor }}
           />
           <div 
-            className="absolute w-56 h-56 md:w-72 md:h-72 rounded-full opacity-[0.10] group-hover:opacity-[0.25] group-hover:scale-110 transition-all duration-700 blur-[50px]"
+            className="absolute w-64 h-64 md:w-80 md:h-80 rounded-full opacity-20 group-hover:opacity-40 group-hover:scale-115 transition-all duration-500 blur-[60px]"
             style={{ backgroundColor: card.glowColor }}
           />
-          {/* Logo */}
-          <motion.img 
+          {/* Logo - MUCH MORE VISIBLE */}
+          <img 
             src={logoMoisesMedeiros} 
             alt=""
-            className="w-44 md:w-52 lg:w-60 h-auto"
-            initial={{ opacity: 0.06, scale: 1 }}
-            animate={{ 
-              opacity: isHovered ? 0.2 : 0.08, 
-              scale: isHovered ? 1.15 : 1,
-              rotate: isHovered ? 3 : 0
+            className={cn(
+              "w-52 md:w-64 lg:w-72 h-auto transform-gpu transition-all duration-500",
+              "opacity-20 group-hover:opacity-40 group-hover:scale-110"
+            )}
+            style={{ 
+              filter: `drop-shadow(0 0 40px ${card.glowColor}) drop-shadow(0 0 80px ${card.glowColor.replace('0.6', '0.3')})` 
             }}
-            transition={{ duration: 0.6 }}
-            style={{ filter: 'drop-shadow(0 0 50px rgba(0,0,0,0.9))' }}
             loading="lazy"
           />
         </div>
@@ -322,31 +313,10 @@ const NetflixCourseCard = memo(function NetflixCourseCard({
           </div>
         )}
 
-        {/* === PARTICLE FIELD === */}
-        {isHighEnd && isHovered && (
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {[...Array(6)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-1 h-1 rounded-full"
-                style={{ backgroundColor: card.glowColor }}
-                initial={{ 
-                  x: Math.random() * 100 + '%', 
-                  y: '110%',
-                  opacity: 0 
-                }}
-                animate={{ 
-                  y: '-10%',
-                  opacity: [0, 1, 0]
-                }}
-                transition={{
-                  duration: 2 + Math.random() * 2,
-                  repeat: Infinity,
-                  delay: i * 0.3,
-                  ease: 'linear'
-                }}
-              />
-            ))}
+        {/* === PARTICLE FIELD - CSS ONLY for performance === */}
+        {isHighEnd && (
+          <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+            <div className="particle-field" style={{ '--particle-color': card.glowColor } as React.CSSProperties} />
           </div>
         )}
 
@@ -428,18 +398,22 @@ const NetflixCourseCard = memo(function NetflixCourseCard({
 
           {/* FOOTER */}
           <div className="space-y-5">
-            {/* Title with glow */}
+            {/* Title with MEGA GLOW - SUPER EVIDENT */}
             <h3 
-              className="text-2xl md:text-[1.7rem] font-black text-white leading-tight tracking-tight"
+              className={cn(
+                "text-2xl md:text-3xl lg:text-[2rem] font-black leading-tight tracking-tight",
+                card.accentColor
+              )}
               style={{ 
-                textShadow: `0 4px 30px rgba(0,0,0,0.8), 0 0 40px ${card.glowColor.replace('0.6', '0.3')}` 
+                textShadow: `0 0 30px ${card.glowColor}, 0 0 60px ${card.glowColor.replace('0.6', '0.4')}, 0 4px 20px rgba(0,0,0,0.9)`,
+                WebkitTextStroke: '0.5px rgba(255,255,255,0.1)'
               }}
             >
               {card.name}
             </h3>
 
             {/* Description */}
-            <p className="text-sm text-slate-300/90 leading-relaxed line-clamp-2">
+            <p className="text-sm text-slate-200/90 leading-relaxed line-clamp-2 font-medium">
               {card.description}
             </p>
 
@@ -650,14 +624,15 @@ export const CoursesHub = memo(function CoursesHub({ onSelectCard }: CoursesHubP
         ))}
       </div>
 
-      {/* === ANIMATIONS CSS === */}
+      {/* === ANIMATIONS CSS - GPU OPTIMIZED === */}
       <style>{`
         @keyframes scan-line {
-          0% { transform: translateY(-100%); }
-          100% { transform: translateY(400%); }
+          0% { transform: translateY(-100%) translateZ(0); }
+          100% { transform: translateY(400%) translateZ(0); }
         }
         .animate-scan-line {
           animation: scan-line 2s linear infinite;
+          will-change: transform;
         }
         
         @keyframes pulse-slow {
@@ -669,8 +644,8 @@ export const CoursesHub = memo(function CoursesHub({ onSelectCard }: CoursesHubP
         }
         
         @keyframes energy-flow {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(200%); }
+          0% { transform: translateX(-100%) translateZ(0); }
+          100% { transform: translateX(200%) translateZ(0); }
         }
         
         @keyframes holo-shift {
@@ -680,17 +655,44 @@ export const CoursesHub = memo(function CoursesHub({ onSelectCard }: CoursesHubP
         }
         
         @keyframes holographic-sweep {
-          0% { transform: translateX(-100%) rotate(15deg); }
-          100% { transform: translateX(200%) rotate(15deg); }
+          0% { transform: translateX(-100%) rotate(15deg) translateZ(0); }
+          100% { transform: translateX(200%) rotate(15deg) translateZ(0); }
         }
         
         @keyframes btn-shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
+          0% { transform: translateX(-100%) translateZ(0); }
+          100% { transform: translateX(100%) translateZ(0); }
         }
         
-        .perspective-1000 {
-          perspective: 1000px;
+        @keyframes particle-rise {
+          0% { transform: translateY(100%) translateZ(0); opacity: 0; }
+          20% { opacity: 1; }
+          80% { opacity: 1; }
+          100% { transform: translateY(-100%) translateZ(0); opacity: 0; }
+        }
+        
+        .particle-field {
+          position: absolute;
+          inset: 0;
+        }
+        .particle-field::before,
+        .particle-field::after {
+          content: '';
+          position: absolute;
+          width: 3px;
+          height: 3px;
+          border-radius: 50%;
+          background: var(--particle-color);
+          animation: particle-rise 3s linear infinite;
+          will-change: transform, opacity;
+        }
+        .particle-field::before {
+          left: 20%;
+          animation-delay: 0s;
+        }
+        .particle-field::after {
+          left: 70%;
+          animation-delay: 1.5s;
         }
       `}</style>
     </div>
