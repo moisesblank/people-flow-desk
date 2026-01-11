@@ -196,7 +196,7 @@ const gestaoMenuGroups: MenuGroup[] = [
       { title: "Finanças Empresa", url: "/gestaofc/financas-empresa", icon: Building2, area: "financas-empresa", badge: "CENTRAL" },
       // 🔑 IMPORTANTE: 'area' precisa bater com nav_sidebar_layout_v1 (editable_content)
       { title: "Flashcards", url: "/gestaofc/flashcards", icon: Brain, area: "flashcards" },
-      { title: "Materiais PDF", url: "/gestaofc/materiais", icon: FileDown, area: "materiais" },
+      { title: "Materiais", url: "/gestaofc/materiais", icon: FileDown, area: "materiais" },
       { title: "Mapas Mentais", url: "/gestaofc/mapas-mentais", icon: Network, area: "mapas-mentais" },
       { title: "Entradas", url: "/gestaofc/entradas", icon: TrendingUp, area: "entradas" },
       { title: "Contabilidade", url: "/gestaofc/contabilidade", icon: Calculator, area: "contabilidade" },
@@ -226,7 +226,7 @@ const gestaoMenuGroups: MenuGroup[] = [
       { title: "Site/Programador", url: "/gestaofc/site-programador", icon: Code, area: "site-programador" },
       // 🔑 IMPORTANTE: 'area' precisa bater com nav_sidebar_layout_v1 (editable_content)
       { title: "Flashcards", url: "/gestaofc/flashcards", icon: Brain, area: "flashcards" },
-      { title: "Materiais PDF", url: "/gestaofc/materiais", icon: FileDown, area: "materiais" },
+      { title: "Materiais", url: "/gestaofc/materiais", icon: FileDown, area: "materiais" },
       { title: "Cursos", url: "/gestaofc/cursos", icon: GraduationCap, area: "cursos", badge: "LMS" },
       { title: "Mapas Mentais", url: "/gestaofc/mapas-mentais", icon: Network, area: "mapas-mentais" },
       { title: "Livros Web", url: "/gestaofc/livros-web", icon: BookOpen, area: "livros-web" },
@@ -319,7 +319,7 @@ const alunoMenuGroups: MenuGroup[] = [
       // HIDDEN_ITEMS: Redação Química removida do menu (mantida no sistema)
       // { title: "Redação Química", url: "/alunos/redacao", icon: PenLine, area: "aluno-redacao" },
       { title: "Flashcards", url: "/alunos/flashcards", icon: Sparkles, area: "aluno-flashcards" },
-      { title: "Materiais PDF", url: "/alunos/materiais", icon: FileDown, area: "aluno-materiais", badge: "PDF" },
+      { title: "Materiais", url: "/alunos/materiais", icon: FileDown, area: "aluno-materiais" },
       // HIDDEN_ITEMS: Revisão Inteligente removida do menu (mantida no sistema)
       // { title: "Revisão Inteligente", url: "/alunos/revisao", icon: Eraser, area: "aluno-revisao", badge: "IA" },
     ],
