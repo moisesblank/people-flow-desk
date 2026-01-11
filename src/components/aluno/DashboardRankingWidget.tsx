@@ -1,7 +1,7 @@
 // ============================================
-// 🏆 DASHBOARD RANKING WIDGET
-// Integração do Panteão dos Campeões no Dashboard
-// Versão compacta para embedding
+// 🏆 DASHBOARD RANKING WIDGET - YEAR 2300 CINEMATIC
+// Panteão dos Campeões - Marvel/Iron Man HUD Experience
+// Ultra-Futuristic Competitive Arena
 // ============================================
 
 import { useState, useMemo } from 'react';
@@ -9,19 +9,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGlobalRanking, useWeeklyRanking, useGamification } from '@/hooks/useGamification';
 import { useSimuladoRanking } from '@/hooks/useSimuladoRanking';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { 
   Trophy, Medal, Award, Flame, Crown, Star,
   TrendingUp, Zap, Target, Users, Sparkles,
-  ChevronUp, ChevronDown, Minus, Activity
+  ChevronUp, ChevronDown, Minus, Activity,
+  Swords, Shield, Hexagon
 } from 'lucide-react';
+
+// Import 2300 ranking styles
+import "@/styles/ranking-2300.css";
 
 interface RankingEntry {
   id: string;
@@ -38,23 +39,23 @@ interface RankingEntry {
 }
 
 const ARENA_TABS = [
-  { id: 'xp', label: 'XP Total', icon: Zap, color: 'from-amber-500 to-orange-600' },
-  { id: 'simulados', label: 'Simulados', icon: Target, color: 'from-purple-500 to-pink-600' },
-  { id: 'weekly', label: 'Semanal', icon: Flame, color: 'from-red-500 to-orange-500' },
-  { id: 'streak', label: 'Streak', icon: Activity, color: 'from-green-500 to-emerald-600' },
+  { id: 'xp', label: 'XP Total', icon: Zap, color: 'amber', gradient: 'from-amber-500 to-orange-600' },
+  { id: 'simulados', label: 'Simulados', icon: Target, color: 'purple', gradient: 'from-purple-500 to-pink-600' },
+  { id: 'weekly', label: 'Semanal', icon: Flame, color: 'red', gradient: 'from-red-500 to-orange-500' },
+  { id: 'streak', label: 'Streak', icon: Activity, color: 'green', gradient: 'from-green-500 to-emerald-600' },
 ] as const;
 
 type ArenaTab = typeof ARENA_TABS[number]['id'];
 
 // Títulos épicos baseados no rank
-const getEpicTitle = (rank: number): { title: string; color: string } => {
-  if (rank === 1) return { title: 'ULTRAMAN SUPREMO', color: 'text-yellow-400' };
-  if (rank === 2) return { title: 'Guardião de Prata', color: 'text-slate-300' };
-  if (rank === 3) return { title: 'Cavaleiro de Bronze', color: 'text-amber-600' };
-  if (rank <= 10) return { title: 'Elite dos Campeões', color: 'text-purple-400' };
-  if (rank <= 50) return { title: 'Guerreiro Veterano', color: 'text-blue-400' };
-  if (rank <= 100) return { title: 'Aspirante', color: 'text-green-400' };
-  return { title: 'Iniciante', color: 'text-muted-foreground' };
+const getEpicTitle = (rank: number): { title: string; color: string; glow: string } => {
+  if (rank === 1) return { title: 'ULTRAMAN SUPREMO', color: 'text-yellow-400', glow: 'drop-shadow(0 0 8px hsl(43 80% 50%))' };
+  if (rank === 2) return { title: 'Guardião de Prata', color: 'text-slate-300', glow: 'drop-shadow(0 0 6px hsl(220 20% 70%))' };
+  if (rank === 3) return { title: 'Cavaleiro de Bronze', color: 'text-amber-600', glow: 'drop-shadow(0 0 6px hsl(25 70% 50%))' };
+  if (rank <= 10) return { title: 'Elite dos Campeões', color: 'text-purple-400', glow: '' };
+  if (rank <= 50) return { title: 'Guerreiro Veterano', color: 'text-blue-400', glow: '' };
+  if (rank <= 100) return { title: 'Aspirante', color: 'text-green-400', glow: '' };
+  return { title: 'Iniciante', color: 'text-muted-foreground', glow: '' };
 };
 
 // Ícone de mudança de rank
@@ -118,91 +119,131 @@ export function DashboardRankingWidget() {
   }, [ranking, user?.id]);
 
   return (
-    <Card className="border-2 border-amber-500/20 bg-gradient-to-br from-amber-500/5 via-transparent to-yellow-500/5 overflow-hidden">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-xl">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600">
-            <Trophy className="w-5 h-5 text-white" />
+    <div className="ranking-arena-2300">
+      {/* ============================================ */}
+      {/* HOLOGRAPHIC HEADER */}
+      {/* ============================================ */}
+      <div className="ranking-header-2300">
+        <div className="flex items-center gap-4">
+          <div className="trophy-icon">
+            <Trophy className="w-7 h-7 text-white" />
           </div>
-          🏆 Panteão dos Campeões
-        </CardTitle>
-        <CardDescription>
-          Arena de competição intelectual — Prove seu valor!
-        </CardDescription>
-      </CardHeader>
+          <div>
+            <h2 className="text-2xl font-black text-white flex items-center gap-2">
+              <span className="bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
+                PANTEÃO DOS CAMPEÕES
+              </span>
+              <Sparkles className="w-5 h-5 text-yellow-400 animate-pulse" />
+            </h2>
+            <p className="text-sm text-white/60 flex items-center gap-2 mt-0.5">
+              <Swords className="w-4 h-4" />
+              Arena de competição intelectual — Prove seu valor!
+            </p>
+          </div>
+        </div>
+        
+        {/* Live indicator */}
+        <div className="absolute top-4 right-4">
+          <Badge className="bg-green-500/20 text-green-400 border border-green-500/40 animate-pulse">
+            <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-ping" />
+            LIVE
+          </Badge>
+        </div>
+      </div>
 
-      <CardContent className="space-y-4">
-        {/* User Hero Card - Compacto */}
+      <div className="p-4 space-y-5">
+        {/* ============================================ */}
+        {/* USER HERO CARD - FEATURED PLAYER */}
+        {/* ============================================ */}
         {gamification && currentUserEntry && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative p-4 rounded-xl bg-gradient-to-r from-primary/10 via-purple-500/5 to-pink-500/10 border border-primary/20"
+            className="ranking-user-hero-2300"
           >
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4 relative z-10">
               {/* Avatar & Info */}
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Avatar className="w-14 h-14 border-2 border-primary/50">
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600 text-white text-lg font-bold">
+              <div className="flex items-center gap-4">
+                <div className="ranking-avatar-2300">
+                  <Avatar className="w-16 h-16 border-2 border-transparent">
+                    <AvatarFallback className="bg-gradient-to-br from-purple-600 via-pink-500 to-cyan-400 text-white text-xl font-bold">
                       {user?.email?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  <Badge className="absolute -bottom-1 -right-1 bg-gradient-to-r from-primary to-purple-600 text-white px-2 py-0.5 text-xs">
-                    Lv {levelInfo.level}
-                  </Badge>
                 </div>
                 <div>
-                  <p className={cn("font-bold text-sm", getEpicTitle(currentUserEntry.rank).color)}>
+                  <p className={cn(
+                    "font-black text-lg",
+                    getEpicTitle(currentUserEntry.rank).color
+                  )} style={{ filter: getEpicTitle(currentUserEntry.rank).glow }}>
                     {getEpicTitle(currentUserEntry.rank).title}
                   </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Flame className="w-3 h-3 text-orange-500" />
-                    <span className="text-xs text-muted-foreground">{gamification.current_streak} dias de streak</span>
+                  <div className="flex items-center gap-3 mt-1">
+                    <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 px-2.5 py-1">
+                      <Shield className="w-3 h-3 mr-1" />
+                      Lv {levelInfo.level}
+                    </Badge>
+                    <div className="flex items-center gap-1 text-sm text-white/70">
+                      <Flame className="w-4 h-4 text-orange-500" />
+                      <span className="font-semibold">{gamification.current_streak}</span>
+                      <span className="text-xs">dias</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Stats Compactos */}
-              <div className="flex items-center gap-4">
-                <div className="text-center">
+              {/* Stats */}
+              <div className="flex items-center gap-6">
+                <div className={cn(
+                  "ranking-position-badge-2300",
+                  currentUserEntry.rank <= 3 && "top-3"
+                )}>
                   <div className={cn(
-                    "text-2xl font-black",
-                    currentUserEntry.rank <= 3 ? "text-yellow-400" : "text-primary"
-                  )}>
+                    "text-3xl font-black",
+                    currentUserEntry.rank <= 3 ? "text-yellow-400" : "text-white"
+                  )} style={currentUserEntry.rank <= 3 ? { filter: 'drop-shadow(0 0 8px hsl(43 80% 50%))' } : {}}>
                     #{currentUserEntry.rank}
                   </div>
-                  <p className="text-xs text-muted-foreground">POSIÇÃO</p>
+                  <p className="text-[10px] uppercase tracking-widest text-white/50 font-medium text-center">
+                    POSIÇÃO
+                  </p>
                 </div>
                 <div className="text-center">
-                  <div className="text-xl font-bold text-amber-500">
+                  <div className="text-2xl font-black bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
                     {gamification.total_xp.toLocaleString()}
                   </div>
-                  <p className="text-xs text-muted-foreground">XP</p>
+                  <p className="text-[10px] uppercase tracking-widest text-white/50 font-medium">XP TOTAL</p>
                 </div>
               </div>
             </div>
 
             {/* Progress to next rank */}
             {currentUserEntry.rank > 1 && ranking && ranking[currentUserEntry.rank - 2] && (
-              <div className="mt-3 pt-3 border-t border-border/30">
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-muted-foreground">Para ultrapassar #{currentUserEntry.rank - 1}</span>
-                  <span className="font-bold text-primary">
+              <div className="mt-4 pt-4 border-t border-white/10 relative z-10">
+                <div className="flex items-center justify-between text-xs mb-2">
+                  <span className="text-white/60 flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3" />
+                    Para ultrapassar #{currentUserEntry.rank - 1}
+                  </span>
+                  <span className="font-bold text-cyan-400">
                     +{(ranking[currentUserEntry.rank - 2].xp - currentUserEntry.xp).toLocaleString()} XP
                   </span>
                 </div>
-                <Progress 
-                  value={(currentUserEntry.xp / ranking[currentUserEntry.rank - 2].xp) * 100} 
-                  className="h-1.5" 
-                />
+                <div className="ranking-progress-2300">
+                  <div 
+                    className="fill"
+                    style={{ width: `${Math.min((currentUserEntry.xp / ranking[currentUserEntry.rank - 2].xp) * 100, 100)}%` }}
+                  />
+                </div>
               </div>
             )}
           </motion.div>
         )}
 
-        {/* Arena Tabs */}
-        <div className="grid grid-cols-4 gap-1">
+        {/* ============================================ */}
+        {/* ARENA TABS */}
+        {/* ============================================ */}
+        <div className="ranking-tabs-2300">
           {ARENA_TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -212,85 +253,109 @@ export function DashboardRankingWidget() {
                 onClick={() => setActiveTab(tab.id)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={cn(
-                  'relative p-2 rounded-lg transition-all duration-300 overflow-hidden',
-                  isActive
-                    ? 'bg-gradient-to-br ' + tab.color + ' text-white shadow-md'
-                    : 'bg-muted/50 hover:bg-muted'
-                )}
+                className={cn('ranking-tab-2300', isActive && 'active')}
               >
-                <Icon className={cn('w-4 h-4 mx-auto mb-0.5', !isActive && 'text-muted-foreground')} />
-                <p className={cn('font-medium text-[10px]', !isActive && 'text-muted-foreground')}>{tab.label}</p>
+                <div className="relative z-10 flex flex-col items-center gap-1">
+                  <div className={cn(
+                    'p-1.5 rounded-lg transition-all',
+                    isActive 
+                      ? `bg-gradient-to-br ${tab.gradient}`
+                      : 'bg-muted/30'
+                  )}>
+                    <Icon className={cn('w-4 h-4', isActive ? 'text-white' : 'text-muted-foreground')} />
+                  </div>
+                  <span className={cn(
+                    'font-semibold text-[10px] uppercase tracking-wide',
+                    isActive ? 'text-white' : 'text-muted-foreground'
+                  )}>
+                    {tab.label}
+                  </span>
+                </div>
               </motion.button>
             );
           })}
         </div>
 
-        {/* Mini Podium */}
+        {/* ============================================ */}
+        {/* 3D PODIUM - CHAMPIONS */}
+        {/* ============================================ */}
         <AnimatePresence mode="wait">
           {!isLoading && podium && (
             <motion.div
               key={activeTab + '-podium'}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="grid grid-cols-3 gap-2 items-end"
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="ranking-podium-2300"
             >
-              <MiniPodiumHero entry={podium.second} position={2} activeTab={activeTab} />
-              <MiniPodiumHero entry={podium.first} position={1} activeTab={activeTab} />
-              <MiniPodiumHero entry={podium.third} position={3} activeTab={activeTab} />
+              {/* 2nd Place - Silver */}
+              <PodiumChampion entry={podium.second} position={2} activeTab={activeTab} />
+              
+              {/* 1st Place - Gold (center, tallest) */}
+              <PodiumChampion entry={podium.first} position={1} activeTab={activeTab} />
+              
+              {/* 3rd Place - Bronze */}
+              <PodiumChampion entry={podium.third} position={3} activeTab={activeTab} />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Top 10 List */}
-        <Card className="border border-border/50 bg-background/50">
-          <CardHeader className="py-2 px-3 border-b border-border/50">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-primary" />
-                <span className="font-medium text-sm">Top 10</span>
+        {/* ============================================ */}
+        {/* TOP 10 LIST - WARRIORS ROSTER */}
+        {/* ============================================ */}
+        <div className="ranking-list-2300">
+          <div className="ranking-list-header-2300">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600">
+                <Users className="w-4 h-4 text-white" />
               </div>
-              <Badge variant="outline" className="text-xs">
-                {ranking?.length || 0} guerreiros
-              </Badge>
+              <span className="font-bold text-white text-sm">Top 10 Guerreiros</span>
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="h-[240px]">
-              {isLoading ? (
-                <div className="space-y-2 p-3">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full rounded-lg" />
-                  ))}
+            <Badge className="bg-white/10 text-white/80 border-white/20 text-xs">
+              {ranking?.length || 0} competidores
+            </Badge>
+          </div>
+          
+          <ScrollArea className="h-[280px]">
+            {isLoading ? (
+              <div className="space-y-2 p-3">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-14 w-full rounded-lg bg-white/5" />
+                ))}
+              </div>
+            ) : ranking && ranking.length > 0 ? (
+              <div>
+                {ranking.slice(0, 10).map((entry, index) => (
+                  <RankingRow 
+                    key={entry.id} 
+                    entry={entry} 
+                    isCurrentUser={entry.id === user?.id}
+                    activeTab={activeTab}
+                    index={index}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="ranking-empty-2300">
+                <div className="icon-wrapper">
+                  <Trophy className="w-10 h-10 text-muted-foreground/30" />
                 </div>
-              ) : ranking && ranking.length > 0 ? (
-                <div className="divide-y divide-border/30">
-                  {ranking.slice(0, 10).map((entry) => (
-                    <MiniRankingRow 
-                      key={entry.id} 
-                      entry={entry} 
-                      isCurrentUser={entry.id === user?.id}
-                      activeTab={activeTab}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="p-8 text-center">
-                  <Trophy className="w-10 h-10 mx-auto mb-2 text-muted-foreground/30" />
-                  <p className="text-sm text-muted-foreground">A arena está vazia...</p>
-                </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </CardContent>
-    </Card>
+                <p className="text-white/60 font-medium">A arena está vazia...</p>
+                <p className="text-white/40 text-sm mt-1">Seja o primeiro a conquistar pontos!</p>
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+      </div>
+    </div>
   );
 }
 
-// Mini Podium Hero Component
-function MiniPodiumHero({ 
+// ============================================
+// PODIUM CHAMPION COMPONENT
+// ============================================
+function PodiumChampion({ 
   entry, 
   position, 
   activeTab 
@@ -299,30 +364,9 @@ function MiniPodiumHero({
   position: 1 | 2 | 3; 
   activeTab: ArenaTab;
 }) {
-  const configs = {
-    1: {
-      height: 'h-16',
-      avatarSize: 'w-10 h-10',
-      gradient: 'from-yellow-500 via-amber-500 to-yellow-600',
-      icon: <Crown className="w-5 h-5 text-yellow-400" />,
-    },
-    2: {
-      height: 'h-12',
-      avatarSize: 'w-8 h-8',
-      gradient: 'from-slate-400 via-slate-300 to-slate-400',
-      icon: <Medal className="w-4 h-4 text-slate-300" />,
-    },
-    3: {
-      height: 'h-10',
-      avatarSize: 'w-7 h-7',
-      gradient: 'from-amber-600 via-orange-500 to-amber-600',
-      icon: <Award className="w-4 h-4 text-amber-600" />,
-    },
-  };
-
-  const config = configs[position];
+  const positionClass = position === 1 ? 'gold' : position === 2 ? 'silver' : 'bronze';
   const epicTitle = getEpicTitle(position);
-
+  
   const displayValue = useMemo(() => {
     switch (activeTab) {
       case 'simulados':
@@ -334,44 +378,89 @@ function MiniPodiumHero({
     }
   }, [activeTab, entry]);
 
+  const displayLabel = useMemo(() => {
+    switch (activeTab) {
+      case 'streak':
+        return 'dias';
+      default:
+        return 'XP';
+    }
+  }, [activeTab]);
+
+  const CrownIcon = position === 1 ? Crown : position === 2 ? Medal : Award;
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+      initial={{ opacity: 0, y: 30, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      className="flex flex-col items-center"
+      transition={{ delay: position === 1 ? 0 : position === 2 ? 0.1 : 0.2 }}
+      className={cn('ranking-champion-2300', positionClass)}
     >
-      {config.icon}
-      <Avatar className={cn(config.avatarSize, 'border-2 border-background mt-1')}>
-        {entry.avatar && <AvatarImage src={entry.avatar} />}
-        <AvatarFallback className={cn('bg-gradient-to-br text-white font-bold text-xs', config.gradient)}>
-          {entry.name.charAt(0).toUpperCase()}
-        </AvatarFallback>
-      </Avatar>
-      <p className={cn('font-bold text-[10px] truncate max-w-[60px] mt-1', epicTitle.color)}>
+      {/* Crown/Medal Icon */}
+      <div className="crown-container">
+        <CrownIcon className={cn(
+          'w-7 h-7',
+          position === 1 ? 'text-yellow-400' : position === 2 ? 'text-slate-300' : 'text-amber-600'
+        )} />
+      </div>
+
+      {/* Avatar */}
+      <div className="avatar-wrapper">
+        <Avatar className={cn(
+          'border-0',
+          position === 1 ? 'w-14 h-14' : 'w-11 h-11'
+        )}>
+          {entry.avatar && <AvatarImage src={entry.avatar} />}
+          <AvatarFallback className={cn(
+            'text-white font-bold',
+            position === 1 
+              ? 'bg-gradient-to-br from-yellow-500 to-amber-600 text-lg' 
+              : position === 2
+                ? 'bg-gradient-to-br from-slate-400 to-slate-500 text-base'
+                : 'bg-gradient-to-br from-amber-600 to-orange-700 text-base'
+          )}>
+            {entry.name.charAt(0).toUpperCase()}
+          </AvatarFallback>
+        </Avatar>
+      </div>
+
+      {/* Name */}
+      <p className={cn(
+        'font-bold text-xs truncate max-w-[80px] text-center',
+        epicTitle.color
+      )}>
         {entry.name.split(' ')[0]}
       </p>
-      <p className="text-xs font-bold">{displayValue.toLocaleString()}</p>
-      <div className={cn(
-        'w-full mt-1 rounded-t-md flex items-center justify-center text-white font-bold text-sm',
-        'bg-gradient-to-t',
-        config.gradient,
-        config.height
-      )}>
-        {position}
+
+      {/* Score */}
+      <p className="text-sm font-black text-white flex items-center gap-1">
+        {displayValue.toLocaleString()}
+        <span className="text-[10px] text-white/50 font-medium">{displayLabel}</span>
+      </p>
+
+      {/* Podium Base */}
+      <div className="podium-base">
+        <span style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}>
+          {position}
+        </span>
       </div>
     </motion.div>
   );
 }
 
-// Mini Ranking Row Component
-function MiniRankingRow({ 
+// ============================================
+// RANKING ROW COMPONENT
+// ============================================
+function RankingRow({ 
   entry, 
   isCurrentUser, 
-  activeTab 
+  activeTab,
+  index
 }: { 
   entry: RankingEntry; 
   isCurrentUser: boolean; 
   activeTab: ArenaTab;
+  index: number;
 }) {
   const epicTitle = getEpicTitle(entry.rank);
 
@@ -380,58 +469,64 @@ function MiniRankingRow({
       case 'simulados':
         return { value: entry.simuladoScore || entry.xp, label: 'pts' };
       case 'streak':
-        return { value: entry.streak, label: 'd' };
+        return { value: entry.streak, label: 'dias' };
       default:
         return { value: entry.xp, label: 'xp' };
     }
   }, [activeTab, entry]);
 
   return (
-    <div className={cn(
-      'flex items-center gap-2 p-2 transition-all hover:bg-muted/30',
-      isCurrentUser && 'bg-primary/5 border-l-2 border-primary'
-    )}>
-      {/* Rank */}
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className={cn('ranking-row-2300', isCurrentUser && 'is-user')}
+    >
+      {/* Rank Badge */}
       <div className={cn(
-        'w-7 h-7 rounded-md flex items-center justify-center font-bold text-xs',
-        entry.rank <= 3 
-          ? 'bg-gradient-to-br from-yellow-500/20 to-amber-500/20 text-yellow-500'
-          : 'bg-muted text-muted-foreground'
+        'ranking-rank-badge-2300',
+        entry.rank <= 3 && 'top-3'
       )}>
         {entry.rank}
       </div>
 
       {/* Avatar */}
-      <Avatar className="w-7 h-7">
+      <Avatar className="w-10 h-10 border-2 border-white/10">
         {entry.avatar && <AvatarImage src={entry.avatar} />}
-        <AvatarFallback className="bg-gradient-to-br from-primary/50 to-purple-500/50 text-white font-bold text-xs">
+        <AvatarFallback className="bg-gradient-to-br from-purple-600/50 to-pink-600/50 text-white font-bold text-sm">
           {entry.name.charAt(0).toUpperCase()}
         </AvatarFallback>
       </Avatar>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1">
-          <span className={cn('font-medium text-xs truncate', epicTitle.color)}>{entry.name}</span>
+        <div className="flex items-center gap-2">
+          <span className={cn('font-semibold text-sm truncate', epicTitle.color)}>
+            {entry.name}
+          </span>
           {isCurrentUser && (
-            <Badge className="bg-primary/20 text-primary text-[8px] px-1 py-0">Você</Badge>
+            <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[9px] px-1.5 py-0 border-0">
+              VOCÊ
+            </Badge>
           )}
         </div>
-        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-          <span>Lv {entry.level}</span>
-          <Flame className="w-2.5 h-2.5 text-orange-500" />
-          <span>{entry.streak}d</span>
+        <div className="flex items-center gap-2 mt-0.5">
+          <span className="text-xs text-white/50">Lv {entry.level}</span>
+          <div className="flex items-center gap-0.5">
+            <Flame className="w-3 h-3 text-orange-500" />
+            <span className="text-xs text-white/50">{entry.streak}d</span>
+          </div>
         </div>
       </div>
 
-      {/* Score */}
-      <div className="text-right">
-        <div className="text-sm font-bold text-primary">
+      {/* XP Score */}
+      <div className="ranking-xp-display-2300">
+        <div className="value">
           {displayValue.value.toLocaleString()}
         </div>
-        <p className="text-[9px] text-muted-foreground uppercase">{displayValue.label}</p>
+        <p className="label">{displayValue.label}</p>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
