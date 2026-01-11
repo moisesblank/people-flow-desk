@@ -49,6 +49,7 @@ interface Material {
   title: string;
   description?: string;
   file_path: string;
+  file_name?: string;
   watermark_enabled: boolean;
   total_pages?: number;
 }
@@ -119,6 +120,20 @@ export const MaterialViewer = memo(function MaterialViewer({
   const [activeTool, setActiveTool] = useState<ToolMode>('pencil');
   const [drawingColor, setDrawingColor] = useState('#ef4444');
   const [drawingSize, setDrawingSize] = useState(3);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+
+  // Detectar tipo de arquivo (PDF, imagem, ou outro)
+  const fileType = useMemo(() => {
+    const fileName = material.file_name?.toLowerCase() || material.file_path.toLowerCase();
+    if (fileName.endsWith('.pdf')) return 'pdf';
+    if (/\.(jpg|jpeg|png|gif|webp|svg|bmp|ico)$/i.test(fileName)) return 'image';
+    return 'other';
+  }, [material.file_name, material.file_path]);
+
+  const isPdf = fileType === 'pdf';
+  const isImage = fileType === 'image';
 
   // PDF Renderer - usa hook específico para materiais (bucket público)
   const {
@@ -142,11 +157,37 @@ export const MaterialViewer = memo(function MaterialViewer({
     return `${name} • ${user.email} • ${timestamp}`;
   }, [material.watermark_enabled, isAdmin, user]);
 
-  // Carregar PDF ao montar
+  // Carregar imagem (non-PDF)
   useEffect(() => {
+    if (!isImage) return;
+    
+    const loadImage = async () => {
+      setImageLoading(true);
+      setImageError(null);
+      try {
+        const { data, error } = await supabase.storage
+          .from('materiais')
+          .createSignedUrl(material.file_path, 3600); // 1 hora
+        
+        if (error) throw error;
+        setImageUrl(data.signedUrl);
+      } catch (err: any) {
+        console.error('[MaterialViewer] Erro ao carregar imagem:', err);
+        setImageError(err.message || 'Erro ao carregar imagem');
+      } finally {
+        setImageLoading(false);
+      }
+    };
+    
+    loadImage();
+  }, [isImage, material.file_path]);
+
+  // Carregar PDF ao montar (apenas se for PDF)
+  useEffect(() => {
+    if (!isPdf) return;
     loadPdf();
     return () => cleanup();
-  }, [loadPdf, cleanup]);
+  }, [isPdf, loadPdf, cleanup]);
 
   // Renderizar página quando mudar
   useEffect(() => {
@@ -395,61 +436,135 @@ export const MaterialViewer = memo(function MaterialViewer({
 
       {/* Content */}
       <div className="flex-1 relative overflow-hidden flex items-center justify-center">
-        {pdfLoading && !currentPageData ? (
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-12 h-12 text-primary animate-spin" />
-            <p className="text-white/60">Carregando PDF...</p>
-          </div>
-        ) : pdfError ? (
-          <div className="text-center space-y-4">
-            <p className="text-red-400">{pdfError}</p>
-            <Button onClick={loadPdf} variant="outline">
-              Tentar novamente
-            </Button>
-          </div>
-        ) : (
-          <div 
-            className="relative overflow-auto max-h-full max-w-full"
-            style={{ 
-              transform: `scale(${zoom})`,
-              transformOrigin: 'center center',
-              transition: 'transform 0.2s ease'
-            }}
-          >
-            {/* PDF Page */}
-            {currentPageData?.dataUrl && (
-              <img
-                src={currentPageData.dataUrl}
-                alt={`Página ${currentPage}`}
-                className="max-w-full h-auto select-none"
-                draggable={false}
-                style={{ userSelect: 'none', pointerEvents: drawingMode ? 'none' : 'auto' }}
-              />
-            )}
+        {/* IMAGE VIEWER */}
+        {isImage && (
+          <>
+            {imageLoading ? (
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                <p className="text-white/60">Carregando imagem...</p>
+              </div>
+            ) : imageError ? (
+              <div className="text-center space-y-4">
+                <p className="text-red-400">{imageError}</p>
+                <Button onClick={() => window.location.reload()} variant="outline">
+                  Tentar novamente
+                </Button>
+              </div>
+            ) : imageUrl ? (
+              <div 
+                className="relative overflow-auto max-h-full max-w-full"
+                style={{ 
+                  transform: `scale(${zoom})`,
+                  transformOrigin: 'center center',
+                  transition: 'transform 0.2s ease'
+                }}
+              >
+                <img
+                  src={imageUrl}
+                  alt={material.title}
+                  className="max-w-full h-auto select-none"
+                  draggable={false}
+                  style={{ userSelect: 'none' }}
+                />
+                {/* Watermark Overlay */}
+                {material.watermark_enabled && !isAdmin && (
+                  <WatermarkOverlay text={watermarkText} />
+                )}
+              </div>
+            ) : null}
+          </>
+        )}
 
-            {/* Fabric.js Drawing Canvas - Anotações Temporárias */}
-            {currentPageData && (
-              <FabricDrawingCanvas
-                ref={fabricCanvasRef}
-                isActive={drawingMode}
-                activeTool={activeTool}
-                color={drawingColor}
-                size={drawingSize}
-                pageNumber={currentPage}
-                initialData={null}
-                onCanvasChange={() => {/* Temporário - não persiste */}}
-              />
-            )}
+        {/* PDF VIEWER */}
+        {isPdf && (
+          <>
+            {pdfLoading && !currentPageData ? (
+              <div className="flex flex-col items-center gap-4">
+                <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                <p className="text-white/60">Carregando PDF...</p>
+              </div>
+            ) : pdfError ? (
+              <div className="text-center space-y-4">
+                <p className="text-red-400">{pdfError}</p>
+                <Button onClick={loadPdf} variant="outline">
+                  Tentar novamente
+                </Button>
+              </div>
+            ) : (
+              <div 
+                className="relative overflow-auto max-h-full max-w-full"
+                style={{ 
+                  transform: `scale(${zoom})`,
+                  transformOrigin: 'center center',
+                  transition: 'transform 0.2s ease'
+                }}
+              >
+                {/* PDF Page */}
+                {currentPageData?.dataUrl && (
+                  <img
+                    src={currentPageData.dataUrl}
+                    alt={`Página ${currentPage}`}
+                    className="max-w-full h-auto select-none"
+                    draggable={false}
+                    style={{ userSelect: 'none', pointerEvents: drawingMode ? 'none' : 'auto' }}
+                  />
+                )}
 
-            {/* Watermark Overlay */}
-            {material.watermark_enabled && !isAdmin && (
-              <WatermarkOverlay text={watermarkText} />
+                {/* Fabric.js Drawing Canvas - Anotações Temporárias */}
+                {currentPageData && (
+                  <FabricDrawingCanvas
+                    ref={fabricCanvasRef}
+                    isActive={drawingMode}
+                    activeTool={activeTool}
+                    color={drawingColor}
+                    size={drawingSize}
+                    pageNumber={currentPage}
+                    initialData={null}
+                    onCanvasChange={() => {/* Temporário - não persiste */}}
+                  />
+                )}
+
+                {/* Watermark Overlay */}
+                {material.watermark_enabled && !isAdmin && (
+                  <WatermarkOverlay text={watermarkText} />
+                )}
+              </div>
             )}
+          </>
+        )}
+
+        {/* OTHER FILE TYPES */}
+        {fileType === 'other' && (
+          <div className="text-center space-y-4 p-8">
+            <div className="w-20 h-20 mx-auto rounded-full bg-white/10 flex items-center justify-center">
+              <Download className="w-10 h-10 text-white/60" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-2">Arquivo disponível para download</h3>
+              <p className="text-white/60 text-sm mb-4">
+                Este tipo de arquivo não pode ser visualizado diretamente.
+              </p>
+              <Button
+                onClick={async () => {
+                  const { data } = await supabase.storage
+                    .from('materiais')
+                    .createSignedUrl(material.file_path, 3600);
+                  if (data?.signedUrl) {
+                    window.open(data.signedUrl, '_blank');
+                  }
+                }}
+                className="gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Baixar Arquivo
+              </Button>
+            </div>
           </div>
         )}
 
-        {/* Navigation Arrows */}
-        {totalPages > 1 && (
+        {/* Navigation Arrows (PDF only) */}
+        {isPdf && totalPages > 1 && (
           <>
             <Button
               variant="ghost"
@@ -477,8 +592,8 @@ export const MaterialViewer = memo(function MaterialViewer({
         )}
       </div>
 
-      {/* Footer - Page Slider */}
-      {totalPages > 1 && (
+      {/* Footer - Page Slider (PDF only) */}
+      {isPdf && totalPages > 1 && (
         <div className="p-4 border-t border-white/10">
           <div className="max-w-md mx-auto flex items-center gap-4">
             <span className="text-white/60 text-sm w-8">{currentPage}</span>

@@ -135,6 +135,7 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
           id: viewingMaterial.id,
           title: viewingMaterial.title,
           file_path: viewingMaterial.file_path,
+          file_name: viewingMaterial.file_name,
           total_pages: viewingMaterial.total_pages,
           watermark_enabled: viewingMaterial.watermark_enabled,
         }}
