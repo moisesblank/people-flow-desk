@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { DateLock } from "@/components/ui/chronolock";
 import { 
   Construction, Rocket, Sparkles, Zap, Brain, 
   Calendar, FileText, Map, PenLine, Trophy, 
@@ -310,21 +311,23 @@ export const AlunoForum = () => (
 );
 
 export const AlunoLives = () => (
-  <FuturisticPlaceholder 
-    title="Lives Exclusivas"
-    description="Transmissões ao vivo com conteúdo exclusivo para assinantes."
-    icon={Video}
-    color="from-pink-500 to-rose-500"
-    comingSoon="Lançamento: Abril 2025"
-    features={[
-      "Lives semanais",
-      "Resolução de provas antigas",
-      "Dicas de prova",
-      "Interação ao vivo",
-      "Sorteios e prêmios",
-      "Replays disponíveis"
-    ]}
-  />
+  <DateLock releaseDate="31/01" variant="danger">
+    <FuturisticPlaceholder 
+      title="Lives Exclusivas"
+      description="Transmissões ao vivo com conteúdo exclusivo para assinantes."
+      icon={Video}
+      color="from-pink-500 to-rose-500"
+      comingSoon="Lançamento: Abril 2025"
+      features={[
+        "Lives semanais",
+        "Resolução de provas antigas",
+        "Dicas de prova",
+        "Interação ao vivo",
+        "Sorteios e prêmios",
+        "Replays disponíveis"
+      ]}
+    />
+  </DateLock>
 );
 
 export const AlunoDuvidas = () => (
