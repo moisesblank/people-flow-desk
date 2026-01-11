@@ -18,6 +18,7 @@ export { TrustedDevicesManager } from './TrustedDevicesManager';
 
 // DOGMA III - Proteção de Conteúdo
 export { ProtectedPDFViewer } from './ProtectedPDFViewer';
+export { ProtectedPDFViewerV2 } from './ProtectedPDFViewerV2';
 
 // Beta Access Guard
 export { BetaAccessGuard } from './BetaAccessGuard';

@@ -1,6 +1,7 @@
 // ============================================
 // 📄 MATERIAL VIEWER - Visualizador de PDF
-// Tecnologia de Ponta: PDF.js + Fabric.js + Signed URLs + Watermarks
+// Tecnologia de Ponta: PDF.js + Fabric.js + Watermarks
+// COM MODO LEITURA (Anotações Temporárias)
 // ============================================
 
 import { memo, useState, useCallback, useEffect, useMemo, useRef } from 'react';
@@ -19,7 +20,9 @@ import {
   Pencil,
   Eraser,
   RotateCcw,
-  Eye
+  Eye,
+  Highlighter,
+  Type
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -34,6 +37,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useMaterialPdfRenderer } from '@/hooks/useMaterialPdfRenderer';
 import { cn } from '@/lib/utils';
+import { FabricDrawingCanvas, type FabricDrawingCanvasHandle } from '@/components/books/FabricDrawingCanvas';
+import type { ToolMode } from '@/components/books/ReadingModeToolbar';
 
 // ============================================
 // TIPOS
@@ -104,12 +109,16 @@ export const MaterialViewer = memo(function MaterialViewer({
 }: MaterialViewerProps) {
   const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
+  const fabricCanvasRef = useRef<FabricDrawingCanvasHandle>(null);
   
   // Estados
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [drawingMode, setDrawingMode] = useState(false);
+  const [activeTool, setActiveTool] = useState<ToolMode>('pencil');
+  const [drawingColor, setDrawingColor] = useState('#ef4444');
+  const [drawingSize, setDrawingSize] = useState(3);
 
   // PDF Renderer - usa hook específico para materiais (bucket público)
   const {
@@ -259,23 +268,113 @@ export const MaterialViewer = memo(function MaterialViewer({
             </Button>
           </div>
 
-          {/* Drawing Mode */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "text-white hover:bg-white/10",
-                  drawingMode && "bg-primary text-primary-foreground"
-                )}
-                onClick={() => setDrawingMode(!drawingMode)}
-              >
-                <Pencil className="w-4 h-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Modo Desenho</TooltipContent>
-          </Tooltip>
+          {/* Drawing Toolbar */}
+          <div className="flex items-center gap-1 bg-white/10 rounded-lg px-2 py-1">
+            {/* Toggle Drawing */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-8 w-8 text-white hover:bg-white/20",
+                    drawingMode && "bg-primary text-primary-foreground"
+                  )}
+                  onClick={() => setDrawingMode(!drawingMode)}
+                >
+                  <Pencil className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{drawingMode ? 'Desativar Desenho' : 'Modo Desenho'}</TooltipContent>
+            </Tooltip>
+
+            {drawingMode && (
+              <>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn("h-8 w-8 text-white hover:bg-white/20", activeTool === 'pencil' && "bg-white/20")}
+                      onClick={() => setActiveTool('pencil')}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Lápis</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn("h-8 w-8 text-white hover:bg-white/20", activeTool === 'highlight' && "bg-white/20")}
+                      onClick={() => setActiveTool('highlight')}
+                    >
+                      <Highlighter className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Marca-texto</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn("h-8 w-8 text-white hover:bg-white/20", activeTool === 'text' && "bg-white/20")}
+                      onClick={() => setActiveTool('text')}
+                    >
+                      <Type className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Texto</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn("h-8 w-8 text-white hover:bg-white/20", activeTool === 'eraser' && "bg-white/20")}
+                      onClick={() => setActiveTool('eraser')}
+                    >
+                      <Eraser className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Borracha</TooltipContent>
+                </Tooltip>
+                
+                {/* Colors */}
+                <div className="flex items-center gap-1 ml-2">
+                  {['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6', '#000000'].map((c) => (
+                    <button
+                      key={c}
+                      className={cn(
+                        "w-5 h-5 rounded-full border-2 transition-transform",
+                        drawingColor === c ? "border-white scale-110" : "border-transparent"
+                      )}
+                      style={{ backgroundColor: c }}
+                      onClick={() => setDrawingColor(c)}
+                    />
+                  ))}
+                </div>
+
+                {/* Undo */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-white hover:bg-white/20 ml-2"
+                      onClick={() => fabricCanvasRef.current?.undo()}
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Desfazer</TooltipContent>
+                </Tooltip>
+              </>
+            )}
+          </div>
 
           {/* Fullscreen */}
           <Tooltip>
@@ -322,9 +421,23 @@ export const MaterialViewer = memo(function MaterialViewer({
               <img
                 src={currentPageData.dataUrl}
                 alt={`Página ${currentPage}`}
-                className="max-w-full h-auto select-none pointer-events-none"
+                className="max-w-full h-auto select-none"
                 draggable={false}
-                style={{ userSelect: 'none' }}
+                style={{ userSelect: 'none', pointerEvents: drawingMode ? 'none' : 'auto' }}
+              />
+            )}
+
+            {/* Fabric.js Drawing Canvas - Anotações Temporárias */}
+            {currentPageData && (
+              <FabricDrawingCanvas
+                ref={fabricCanvasRef}
+                isActive={drawingMode}
+                activeTool={activeTool}
+                color={drawingColor}
+                size={drawingSize}
+                pageNumber={currentPage}
+                initialData={null}
+                onCanvasChange={() => {/* Temporário - não persiste */}}
               />
             )}
 
