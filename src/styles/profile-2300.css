@@ -73,7 +73,7 @@
     hsl(var(--secondary)),
     hsl(var(--primary))
   );
-  animation: profile-ring-rotate 4s linear infinite;
+  /* animation removed */
 }
 
 .profile-avatar-ring-2300::after {
@@ -88,12 +88,7 @@
     hsl(var(--secondary) / 0.3),
     transparent
   );
-  animation: profile-ring-rotate 8s linear infinite reverse;
-}
-
-@keyframes profile-ring-rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  /* animation removed */
 }
 
 /* === STAT ORBS 2300 === */
@@ -289,23 +284,7 @@
   overflow: hidden;
 }
 
-.profile-xp-bar-fill-2300::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    hsl(var(--foreground) / 0.3) 50%,
-    transparent 100%
-  );
-  animation: profile-xp-shimmer 2s ease-in-out infinite;
-}
-
-@keyframes profile-xp-shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
+/* shimmer animation removed */
 
 /* === LEVEL BADGE FLOATING === */
 .profile-level-badge-2300 {
@@ -342,18 +321,7 @@
   border: 3px solid hsl(var(--background));
   box-shadow: 0 2px 12px hsl(25 100% 50% / 0.5);
   z-index: 10;
-  animation: profile-flame-pulse 2s ease-in-out infinite;
-}
-
-@keyframes profile-flame-pulse {
-  0%, 100% { 
-    box-shadow: 0 2px 12px hsl(25 100% 50% / 0.5);
-    transform: scale(1);
-  }
-  50% { 
-    box-shadow: 0 4px 20px hsl(25 100% 50% / 0.7);
-    transform: scale(1.05);
-  }
+  /* animation removed */
 }
 
 /* === SECTION DIVIDER 2300 === */
@@ -409,13 +377,7 @@
     hsl(var(--secondary)),
     hsl(var(--primary))
   );
-  background-size: 200% 100%;
-  animation: profile-gradient-shift 3s ease infinite;
-}
-
-@keyframes profile-gradient-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  /* animation removed */
 }
 
 /* === DISPATCH & ADDRESS CARDS === */
@@ -519,35 +481,12 @@
   }
 }
 
-/* === ENTRANCE ANIMATIONS === */
-.profile-fade-in {
-  animation: profile-fade-in 0.5s ease forwards;
-}
-
-.profile-fade-in-delay-1 {
-  animation: profile-fade-in 0.5s ease 0.1s forwards;
-  opacity: 0;
-}
-
-.profile-fade-in-delay-2 {
-  animation: profile-fade-in 0.5s ease 0.2s forwards;
-  opacity: 0;
-}
-
+/* === ENTRANCE ANIMATIONS REMOVED === */
+.profile-fade-in,
+.profile-fade-in-delay-1,
+.profile-fade-in-delay-2,
 .profile-fade-in-delay-3 {
-  animation: profile-fade-in 0.5s ease 0.3s forwards;
-  opacity: 0;
-}
-
-@keyframes profile-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  opacity: 1;
 }
 
 /* === HOLOGRAPHIC EFFECTS === */
@@ -563,23 +502,13 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: profile-holo-shift 5s ease infinite;
+  /* animation removed */
 }
 
-@keyframes profile-holo-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-/* === LEVEL ORB GLOW - HIGH-END ONLY === */
+/* === LEVEL ORB GLOW === */
 .profile-level-orb-glow {
-  animation: profile-level-pulse 3s ease-in-out infinite;
-  will-change: box-shadow;
-}
-
-@keyframes profile-level-pulse {
-  0%, 100% { box-shadow: 0 0 20px hsl(var(--primary) / 0.3); }
-  50% { box-shadow: 0 0 40px hsl(var(--primary) / 0.5); }
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  /* animation removed */
 }
 
 /* === AVATAR RING STATIC MODE === */
@@ -590,18 +519,6 @@
 
 /* === PERFORMANCE OPTIMIZATIONS === */
 @media (prefers-reduced-motion: reduce) {
-  .profile-hero-scanlines,
-  .profile-avatar-ring-2300,
-  .profile-avatar-ring-2300::before,
-  .profile-avatar-ring-2300::after,
-  .profile-xp-bar-fill-2300::after,
-  .profile-streak-badge-2300,
-  .profile-study-card-2300::before,
-  .profile-holo-text-2300,
-  .profile-level-orb-glow {
-    animation: none !important;
-  }
-  
   .profile-stat-orb-2300:hover,
   .profile-achievement-card-2300:hover {
     transform: none !important;
