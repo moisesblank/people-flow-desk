@@ -67,6 +67,7 @@ interface FileWithStatus {
   progress: number;
   error?: string;
   title: string;
+  position: number;
 }
 
 interface BulkUploadDialogProps {
@@ -94,15 +95,17 @@ export const BulkUploadDialog = memo(function BulkUploadDialog({
     accept: { 'application/pdf': ['.pdf'] },
     maxFiles: MAX_FILES,
     onDrop: (acceptedFiles) => {
-      const newFiles: FileWithStatus[] = acceptedFiles.slice(0, MAX_FILES - files.length).map(file => ({
-        file,
-        id: crypto.randomUUID(),
-        status: 'pending' as const,
-        progress: 0,
-        title: file.name.replace('.pdf', '').replace(/_/g, ' ').replace(/-/g, ' '),
-      }));
-      
       setFiles(prev => {
+        const startPosition = prev.length;
+        const newFiles: FileWithStatus[] = acceptedFiles.slice(0, MAX_FILES - prev.length).map((file, index) => ({
+          file,
+          id: crypto.randomUUID(),
+          status: 'pending' as const,
+          progress: 0,
+          title: file.name.replace('.pdf', '').replace(/_/g, ' ').replace(/-/g, ' '),
+          position: startPosition + index + 1,
+        }));
+        
         const combined = [...prev, ...newFiles];
         if (combined.length > MAX_FILES) {
           toast.warning(`Limite de ${MAX_FILES} arquivos atingido`);
@@ -123,6 +126,11 @@ export const BulkUploadDialog = memo(function BulkUploadDialog({
     setFiles(prev => prev.map(f => f.id === id ? { ...f, title } : f));
   }, []);
 
+  // Atualizar posição de um arquivo
+  const updatePosition = useCallback((id: string, position: number) => {
+    setFiles(prev => prev.map(f => f.id === id ? { ...f, position: Math.max(0, position) } : f));
+  }, []);
+
   // Upload de um único arquivo
   const uploadSingleFile = async (
     fileData: FileWithStatus,
@@ -141,6 +149,7 @@ export const BulkUploadDialog = memo(function BulkUploadDialog({
         title: fileData.title.trim() || fileData.file.name.replace('.pdf', ''),
         category,
         isPublished: true,
+        position: fileData.position,
         fileName: fileData.file.name,
         fileSize: fileData.file.size,
         mimeType: fileData.file.type || 'application/pdf',
@@ -341,8 +350,14 @@ export const BulkUploadDialog = memo(function BulkUploadDialog({
 
           {/* Lista de Arquivos */}
           {files.length > 0 && (
-            <ScrollArea className="h-[280px] rounded-md border">
+            <ScrollArea className="h-[300px] rounded-md border">
               <div className="p-3 space-y-2">
+                {/* Cabeçalho */}
+                <div className="flex items-center gap-3 px-3 py-1 text-xs text-muted-foreground font-medium border-b pb-2 mb-2">
+                  <span className="w-14 text-center">Posição</span>
+                  <span className="flex-1">Título do Livro</span>
+                  <span className="w-20 text-center">Status</span>
+                </div>
                 <AnimatePresence mode="popLayout">
                   {files.map((fileData, index) => (
                     <motion.div
@@ -357,9 +372,17 @@ export const BulkUploadDialog = memo(function BulkUploadDialog({
                         fileData.status === 'uploading' && "border-primary/50 bg-primary/5"
                       )}
                     >
-                      {/* Número */}
-                      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
-                        {index + 1}
+                      {/* Posição */}
+                      <div className="flex-shrink-0 w-14">
+                        <input
+                          type="number"
+                          value={fileData.position}
+                          onChange={(e) => updatePosition(fileData.id, parseInt(e.target.value) || 0)}
+                          disabled={isUploading || fileData.status === 'success'}
+                          className="w-full bg-muted/50 border border-border rounded px-2 py-1 text-center text-sm font-bold focus:outline-none focus:ring-1 focus:ring-primary"
+                          min={0}
+                          title="Posição na categoria"
+                        />
                       </div>
 
                       {/* Título Editável */}

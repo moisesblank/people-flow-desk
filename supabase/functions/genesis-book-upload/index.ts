@@ -141,7 +141,7 @@ serve(async (req: Request) => {
     // FASE 1: INIT - Gerar URL assinada para upload direto
     // ============================================
     if (phase === "init") {
-      const { title, subtitle, description, author, category, tags, isPublished, fileName, fileSize, mimeType } = body;
+      const { title, subtitle, description, author, category, tags, isPublished, position, fileName, fileSize, mimeType } = body;
 
       // Validações
       if (!title || title.trim().length === 0) {
@@ -231,6 +231,7 @@ serve(async (req: Request) => {
           author: author?.trim() || "Prof. Moisés Medeiros",
           category: finalCategory,
           tags: parsedTags,
+          position: typeof position === 'number' ? position : 0,
           original_path: uploadPath,
           original_filename: fileName,
           original_size_bytes: fileSize,
