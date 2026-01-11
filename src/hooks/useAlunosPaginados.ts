@@ -122,45 +122,45 @@ export function useAlunosPaginados(
   // QUERY 1: Contadores agregados (ZERO N+1)
   // Uma única query com COUNT + FILTER
   // ============================================
+  // ============================================
+  // 🚀 PATCH 5K: Query única para contadores
+  // ANTES: 7 queries paralelas (35.000 req/5K admins)
+  // DEPOIS: 1 RPC (5.000 req/5K admins) = -86% requisições
+  // ============================================
   const contadoresQuery = useQuery({
-    queryKey: ['alunos-contadores', statusFilter, roleFilter, searchTerm],
+    queryKey: ['alunos-contadores'],
     queryFn: async (): Promise<AlunosContadores> => {
-      // Query agregada - conta tudo de uma vez
-      const { count: total, error: totalError } = await supabase
-        .from('alunos')
-        .select('*', { count: 'exact', head: true });
+      // 🚀 Uma única RPC que retorna todos os contadores
+      const { data, error } = await supabase.rpc('get_alunos_contadores');
 
-      if (totalError) throw totalError;
+      if (error) {
+        console.error('[PATCH 5K] Erro ao buscar contadores:', error);
+        throw error;
+      }
 
-      // Buscar contadores por status em paralelo
-      const [
-        ativosResult,
-        concluidosResult,
-        pendentesResult,
-        canceladosResult,
-        betaResult,
-        gratuitoResult,
-      ] = await Promise.all([
-        supabase.from('alunos').select('*', { count: 'exact', head: true }).ilike('status', 'ativo'),
-        supabase.from('alunos').select('*', { count: 'exact', head: true }).ilike('status', 'concluído'),
-        supabase.from('alunos').select('*', { count: 'exact', head: true }).ilike('status', 'pendente'),
-        supabase.from('alunos').select('*', { count: 'exact', head: true }).ilike('status', 'cancelado'),
-        // Roles via user_roles
-        supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'beta'),
-        supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'aluno_gratuito'),
-      ]);
+      // Parse do JSON retornado pela RPC
+      const contadores = data as {
+        total: number;
+        ativos: number;
+        concluidos: number;
+        pendentes: number;
+        cancelados: number;
+        beta: number;
+        gratuito: number;
+      };
 
       return {
-        total: total || 0,
-        ativos: ativosResult.count || 0,
-        concluidos: concluidosResult.count || 0,
-        pendentes: pendentesResult.count || 0,
-        cancelados: canceladosResult.count || 0,
-        beta: betaResult.count || 0,
-        gratuito: gratuitoResult.count || 0,
+        total: contadores?.total || 0,
+        ativos: contadores?.ativos || 0,
+        concluidos: contadores?.concluidos || 0,
+        pendentes: contadores?.pendentes || 0,
+        cancelados: contadores?.cancelados || 0,
+        beta: contadores?.beta || 0,
+        gratuito: contadores?.gratuito || 0,
       };
     },
     staleTime: STALE_TIME,
+    refetchOnWindowFocus: false, // 🚀 PATCH 5K: Evita refetch desnecessário
   });
 
   // ============================================
