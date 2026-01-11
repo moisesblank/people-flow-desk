@@ -82,8 +82,8 @@ export function StorageWidget() {
   useEffect(() => {
     if (isOwner) {
       fetchStorageStats();
-      // Atualizar a cada 60 segundos
-      const interval = setInterval(fetchStorageStats, 60000);
+      // Atualizar a cada 2 horas (7.200.000ms)
+      const interval = setInterval(fetchStorageStats, 2 * 60 * 60 * 1000);
       return () => clearInterval(interval);
     }
   }, [isOwner]);
