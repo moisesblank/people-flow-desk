@@ -93,6 +93,7 @@ import { ptBR } from 'date-fns/locale';
 import { useDropzone } from 'react-dropzone';
 import { useCacheManager } from '@/hooks/useCacheManager';
 import { WebBookViewer } from '@/components/books';
+import { BulkUploadDialog } from '@/components/gestao/livros/BulkUploadDialog';
 
 // ============================================
 // TIPOS
@@ -1100,8 +1101,8 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
         </DialogContent>
       </Dialog>
 
-      {/* Upload Dialog */}
-      <UploadDialog
+      {/* Bulk Upload Dialog (até 20 PDFs) */}
+      <BulkUploadDialog
         open={showUploadDialog}
         onClose={() => setShowUploadDialog(false)}
         onSuccess={loadBooks}
