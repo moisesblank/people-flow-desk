@@ -22,8 +22,11 @@ import {
   Clock,
   AlertCircle,
   X,
-  Tag
+  Tag,
+  CheckSquare,
+  Square
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // DnD Kit para arrastar e reordenar
 import {
@@ -485,6 +488,13 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
   const [annihilateConfirm, setAnnihilateConfirm] = useState('');
   const [isAnnihilating, setIsAnnihilating] = useState(false);
 
+  // Seleção múltipla para aniquilação em lote
+  const [selectedBooks, setSelectedBooks] = useState<Set<string>>(new Set());
+  const [showBulkAnnihilateDialog, setShowBulkAnnihilateDialog] = useState(false);
+  const [bulkAnnihilateConfirm, setBulkAnnihilateConfirm] = useState('');
+  const [isBulkAnnihilating, setIsBulkAnnihilating] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
+
   const { clearAllCache } = useCacheManager();
 
   // Carregar livros
@@ -634,7 +644,95 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
   };
 
   // ============================================
-  // DND SENSORS — Configuração de arrasto
+  // SELEÇÃO MÚLTIPLA
+  // ============================================
+  const toggleBookSelection = useCallback((bookId: string) => {
+    setSelectedBooks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(bookId)) {
+        newSet.delete(bookId);
+      } else {
+        newSet.add(bookId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const toggleSelectAll = useCallback(() => {
+    if (selectedBooks.size === filteredBooks.length) {
+      setSelectedBooks(new Set());
+    } else {
+      setSelectedBooks(new Set(filteredBooks.map(b => b.id)));
+    }
+  }, [filteredBooks, selectedBooks.size]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedBooks(new Set());
+  }, []);
+
+  // ============================================
+  // ANIQUILAÇÃO EM LOTE
+  // ============================================
+  const handleBulkAnnihilate = async () => {
+    if (selectedBooks.size === 0 || bulkAnnihilateConfirm !== 'EXCLUIR') return;
+    
+    setIsBulkAnnihilating(true);
+    setBulkProgress({ current: 0, total: selectedBooks.size });
+    
+    const bookIds = Array.from(selectedBooks);
+    let successCount = 0;
+    let errorCount = 0;
+
+    try {
+      for (let i = 0; i < bookIds.length; i++) {
+        const bookId = bookIds[i];
+        setBulkProgress({ current: i + 1, total: bookIds.length });
+        
+        try {
+          // Deletar todos os dados associados
+          await supabase.from('book_user_annotations').delete().eq('book_id', bookId);
+          await supabase.from('book_user_bookmarks').delete().eq('book_id', bookId);
+          await supabase.from('book_user_page_overlays').delete().eq('book_id', bookId);
+          await supabase.from('book_chat_messages').delete().eq('book_id', bookId);
+          await supabase.from('book_chat_threads').delete().eq('book_id', bookId);
+          await supabase.from('book_reading_sessions').delete().eq('book_id', bookId);
+          await supabase.from('book_access_logs').delete().eq('book_id', bookId);
+          await supabase.from('book_ratings').delete().eq('book_id', bookId);
+          await supabase.from('book_import_jobs').delete().eq('book_id', bookId);
+          
+          // Deletar o livro (cascata para web_book_pages via FK)
+          const { error } = await supabase.from('web_books').delete().eq('id', bookId);
+          
+          if (error) throw error;
+          successCount++;
+        } catch (err) {
+          console.error(`[BulkAnnihilate] Erro no livro ${bookId}:`, err);
+          errorCount++;
+        }
+      }
+
+      // Limpar cache
+      clearAllCache();
+
+      if (successCount > 0) {
+        toast.success(`🔥 ${successCount} livro(s) aniquilado(s) permanentemente`);
+      }
+      if (errorCount > 0) {
+        toast.error(`Falha ao aniquilar ${errorCount} livro(s)`);
+      }
+
+      setShowBulkAnnihilateDialog(false);
+      setBulkAnnihilateConfirm('');
+      setSelectedBooks(new Set());
+      loadBooks();
+    } catch (err) {
+      console.error('[BulkAnnihilate] Erro geral:', err);
+      toast.error('Erro ao aniquilar livros em lote');
+    } finally {
+      setIsBulkAnnihilating(false);
+      setBulkProgress({ current: 0, total: 0 });
+    }
+  };
   // ============================================
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -1024,6 +1122,13 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10">
+                      <Checkbox
+                        checked={selectedBooks.size === filteredBooks.length && filteredBooks.length > 0}
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="Selecionar todos"
+                      />
+                    </TableHead>
                     <TableHead className="w-12"></TableHead>
                     <TableHead>Livro</TableHead>
                     <TableHead>Categoria</TableHead>
@@ -1046,6 +1151,8 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                         coverIndex={coverIndexMap.get(book.id)}
                         categories={CATEGORIES}
                         statusMap={STATUS_MAP}
+                        isSelected={selectedBooks.has(book.id)}
+                        onToggleSelect={toggleBookSelection}
                         onInlineUpdate={handleInlineUpdate}
                         onUploadCover={handleUploadCover}
                         onRemoveCover={handleRemoveCover}
@@ -1308,6 +1415,143 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de Aniquilação em Lote */}
+      <Dialog 
+        open={showBulkAnnihilateDialog} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowBulkAnnihilateDialog(false);
+            setBulkAnnihilateConfirm('');
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="w-5 h-5" />
+              🔥 Aniquilar {selectedBooks.size} Livro(s)
+            </DialogTitle>
+            <DialogDescription>
+              Esta ação é <strong className="text-destructive">IRREVERSÍVEL</strong>. 
+              Todos os livros selecionados e seus dados serão excluídos permanentemente.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Lista de livros selecionados */}
+            <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/30 max-h-40 overflow-y-auto">
+              {books.filter(b => selectedBooks.has(b.id)).map(book => (
+                <p key={book.id} className="text-sm py-1 border-b border-destructive/20 last:border-0">
+                  📕 {book.title}
+                </p>
+              ))}
+            </div>
+
+            {/* Lista do que será deletado */}
+            <div className="text-sm space-y-1 text-muted-foreground">
+              <p>Para cada livro será deletado:</p>
+              <p>• Todas as páginas do livro</p>
+              <p>• Anotações e marcações dos alunos</p>
+              <p>• Histórico de chat com IA</p>
+              <p>• Sessões de leitura e logs</p>
+              <p>• Avaliações e ratings</p>
+            </div>
+
+            {/* Progresso */}
+            {isBulkAnnihilating && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Aniquilando...</span>
+                  <span>{bulkProgress.current} / {bulkProgress.total}</span>
+                </div>
+                <Progress value={(bulkProgress.current / bulkProgress.total) * 100} />
+              </div>
+            )}
+
+            {/* Campo de confirmação */}
+            <div>
+              <Label htmlFor="confirm-bulk-annihilate" className="text-destructive">
+                Digite <strong>EXCLUIR</strong> para confirmar:
+              </Label>
+              <Input
+                id="confirm-bulk-annihilate"
+                value={bulkAnnihilateConfirm}
+                onChange={(e) => setBulkAnnihilateConfirm(e.target.value.toUpperCase())}
+                placeholder="EXCLUIR"
+                className="mt-2 font-mono"
+                disabled={isBulkAnnihilating}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowBulkAnnihilateDialog(false);
+                setBulkAnnihilateConfirm('');
+              }}
+              disabled={isBulkAnnihilating}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={handleBulkAnnihilate}
+              disabled={bulkAnnihilateConfirm !== 'EXCLUIR' || isBulkAnnihilating}
+            >
+              {isBulkAnnihilating ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Aniquilando...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  🔥 Aniquilar {selectedBooks.size} Livro(s)
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Barra de Ações Flutuante para Seleção Múltipla */}
+      {selectedBooks.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4">
+          <Card className="shadow-2xl border-2 border-primary/20 bg-background/95 backdrop-blur-sm">
+            <CardContent className="p-3 flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <CheckSquare className="w-5 h-5 text-primary" />
+                <span className="font-medium">
+                  {selectedBooks.size} livro(s) selecionado(s)
+                </span>
+              </div>
+              
+              <div className="h-6 w-px bg-border" />
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearSelection}
+              >
+                <X className="w-4 h-4 mr-1" />
+                Limpar
+              </Button>
+              
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowBulkAnnihilateDialog(true)}
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                🔥 Aniquilar Selecionados
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 });

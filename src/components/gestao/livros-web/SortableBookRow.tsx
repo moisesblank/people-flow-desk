@@ -9,6 +9,7 @@ import { GripVertical, BookOpen, Eye, Edit, Archive, Trash2, CheckCircle, MoreVe
 import { TableRow, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,6 +71,8 @@ interface SortableBookRowProps {
   coverIndex?: number;
   categories: CategoryOption[];
   statusMap: Record<string, StatusInfo>;
+  isSelected?: boolean;
+  onToggleSelect?: (bookId: string) => void;
   onInlineUpdate: (bookId: string, field: string, value: any) => Promise<void>;
   onPreview: (bookId: string) => void;
   onEdit: (book: WebBookAdmin) => void;
@@ -85,6 +88,8 @@ export const SortableBookRow = memo(function SortableBookRow({
   coverIndex,
   categories,
   statusMap,
+  isSelected = false,
+  onToggleSelect,
   onInlineUpdate,
   onPreview,
   onEdit,
@@ -122,9 +127,20 @@ export const SortableBookRow = memo(function SortableBookRow({
       style={style}
       className={cn(
         isDragging && 'opacity-50 bg-muted/50',
+        isSelected && 'bg-primary/5',
         'group'
       )}
     >
+      {/* COLUNA CHECKBOX */}
+      <TableCell className="w-10">
+        <Checkbox
+          checked={isSelected}
+          onCheckedChange={() => onToggleSelect?.(book.id)}
+          onClick={(e) => e.stopPropagation()}
+          aria-label={`Selecionar ${book.title}`}
+        />
+      </TableCell>
+
       {/* COLUNA DRAG HANDLE */}
       <TableCell className="w-12">
         <button
