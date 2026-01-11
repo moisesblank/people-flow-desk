@@ -1,7 +1,7 @@
 // ============================================
-// PÁGINA DE FLASHCARDS - Oráculo da Memória
-// Sistema FSRS v5 com Modo Cram
-// Lei I: Performance | Lei IV: Poder do Arquiteto
+// 🧠 FLASHCARDS - Oráculo da Memória
+// Year 2300 Cinematic Design + FSRS v5
+// Marvel/Iron Man HUD Aesthetic
 // ============================================
 
 import { useState, useCallback, useEffect } from 'react';
@@ -14,15 +14,11 @@ import {
   useAllFlashcards, 
   useRescheduleFlashcard,
   useFlashcardStats,
-  usePendingFlashcardsCount,
   useCreateFlashcard 
 } from '@/hooks/useFlashcards';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
@@ -34,28 +30,27 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import {
-  RotateCcw, Zap, Check, X, ThumbsUp, Brain, 
-  Sparkles, Trophy, Flame, Plus, BookOpen,
-  ChevronLeft, Target, Clock, TrendingUp,
-  AlertTriangle, PartyPopper, ChartBar
+  RotateCcw, Zap, Check, X, Brain, 
+  Sparkles, Plus,
+  ChevronLeft, Target, 
+  AlertTriangle, PartyPopper
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AnkiDashboard } from '@/components/aluno/flashcards/AnkiDashboard';
-import { FlashcardRenderer, processFlashcardText } from '@/components/aluno/flashcards/FlashcardRenderer';
+import { processFlashcardText } from '@/components/aluno/flashcards/FlashcardRenderer';
+
+// Import Year 2300 Cinematic CSS
+import '@/styles/flashcards-2300.css';
 
 type Rating = 1 | 2 | 3 | 4;
 
 const RATING_BUTTONS = [
-  { rating: 1 as Rating, label: 'Esqueci', emoji: '😓', color: 'border-red-500/30 hover:bg-red-500/10 hover:border-red-500 text-red-500', interval: '<1min' },
-  { rating: 2 as Rating, label: 'Difícil', emoji: '😅', color: 'border-orange-500/10 hover:bg-orange-500/10 hover:border-orange-500 text-orange-500', interval: '~1d' },
-  { rating: 3 as Rating, label: 'Bom', emoji: '😊', color: 'border-green-500/30 hover:bg-green-500/10 hover:border-green-500 text-green-500', interval: '~3d' },
-  { rating: 4 as Rating, label: 'Fácil', emoji: '🤩', color: 'border-blue-500/30 hover:bg-blue-500/10 hover:border-blue-500 text-blue-500', interval: '~7d' },
+  { rating: 1 as Rating, label: 'Esqueci', emoji: '😓', variant: 'rating-button-again', color: 'text-red-500', interval: '<1min' },
+  { rating: 2 as Rating, label: 'Difícil', emoji: '😅', variant: 'rating-button-hard', color: 'text-orange-500', interval: '~1d' },
+  { rating: 3 as Rating, label: 'Bom', emoji: '😊', variant: 'rating-button-good', color: 'text-green-500', interval: '~3d' },
+  { rating: 4 as Rating, label: 'Fácil', emoji: '🤩', variant: 'rating-button-easy', color: 'text-blue-500', interval: '~7d' },
 ];
-
-// Processa texto do Anki (Cloze, HTML, etc) para exibição limpa
-// Usa o processador centralizado do FlashcardRenderer
-const processAnkiText = processFlashcardText;
 
 export default function FlashcardsPage() {
   const navigate = useNavigate();
@@ -71,13 +66,11 @@ export default function FlashcardsPage() {
 
   const { data: dueCards, isLoading: isLoadingDue, refetch: refetchDue } = useDueFlashcards();
   const { data: allCards, isLoading: isLoadingAll, refetch: refetchAll } = useAllFlashcards();
-  const { data: stats } = useFlashcardStats();
   const rescheduleMutation = useRescheduleFlashcard();
   const createMutation = useCreateFlashcard();
 
   // ============================================
   // REALTIME: Sincronização em tempo real
-  // Atualiza automaticamente quando flashcards são criados/editados na gestão
   // ============================================
   useEffect(() => {
     if (!user?.id) return;
@@ -87,25 +80,19 @@ export default function FlashcardsPage() {
       .on(
         'postgres_changes',
         {
-          event: '*', // INSERT, UPDATE, DELETE
+          event: '*',
           schema: 'public',
           table: 'study_flashcards',
           filter: `user_id=eq.${user.id}`
         },
-        (payload) => {
-          console.log('[Realtime] Flashcard change:', payload.eventType);
-          
-          // Invalidar todas as queries de flashcards
+        () => {
           queryClient.invalidateQueries({ queryKey: ['flashcards-due'] });
           queryClient.invalidateQueries({ queryKey: ['flashcards-all'] });
           queryClient.invalidateQueries({ queryKey: ['flashcard-stats'] });
           queryClient.invalidateQueries({ queryKey: ['flashcard-analytics'] });
-          queryClient.invalidateQueries({ queryKey: ['pending-flashcards'] });
         }
       )
-      .subscribe((status) => {
-        console.log('[Realtime] Flashcards channel status:', status);
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -141,12 +128,10 @@ export default function FlashcardsPage() {
         xpEarned: prev.xpEarned + xpGained,
       }));
 
-      // Próximo card
       if (currentIndex < (cards?.length || 0) - 1) {
         setCurrentIndex(prev => prev + 1);
         setIsFlipped(false);
       } else {
-        // Sessão completa
         setCurrentIndex(cards?.length || 0);
         setIsFlipped(false);
       }
@@ -203,17 +188,22 @@ export default function FlashcardsPage() {
     }
   };
 
-  // Loading state
+  // ============================================
+  // LOADING STATE - Year 2300 Skeleton
+  // ============================================
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-4 md:p-8">
-        <div className="max-w-2xl mx-auto space-y-6">
-          <Skeleton className="h-12 w-64" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-80 w-full rounded-xl" />
+      <div className="min-h-screen bg-background">
+        <div className="flashcards-hero-header px-4 py-6 md:px-8">
+          <Skeleton className="h-10 w-64 mb-2" />
+          <Skeleton className="h-4 w-40" />
+        </div>
+        <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-6">
+          <Skeleton className="h-2 w-full rounded-full" />
+          <Skeleton className="h-80 w-full rounded-2xl" />
           <div className="grid grid-cols-4 gap-3">
             {[1, 2, 3, 4].map(i => (
-              <Skeleton key={i} className="h-20" />
+              <Skeleton key={i} className="h-24 rounded-xl" />
             ))}
           </div>
         </div>
@@ -221,65 +211,111 @@ export default function FlashcardsPage() {
     );
   }
 
-  // Session Complete state
+  // ============================================
+  // SESSION COMPLETE - Victory Screen
+  // ============================================
   if (isSessionComplete) {
     const accuracy = sessionStats.correct + sessionStats.incorrect > 0
       ? Math.round((sessionStats.correct / (sessionStats.correct + sessionStats.incorrect)) * 100)
       : 0;
 
     return (
-      <div className="min-h-screen bg-background p-4 md:p-8">
-        <div className="max-w-2xl mx-auto">
+      <div className="min-h-screen bg-background">
+        {/* Hero Header */}
+        <div className="flashcards-hero-header px-4 py-6 md:px-8">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="icon" onClick={() => navigate('/alunos/dashboard')} className="text-muted-foreground hover:text-foreground">
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <div>
+                <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+                  <Brain className="w-6 h-6 text-primary" />
+                  <span className="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+                    Oráculo da Memória
+                  </span>
+                </h1>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Victory Content */}
+        <div className="max-w-3xl mx-auto p-4 md:p-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-12"
+            className="session-complete-container"
           >
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: 'spring' }}
-              className="text-8xl mb-6"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+              className="victory-icon-container"
             >
-              <PartyPopper className="w-24 h-24 mx-auto text-primary" />
+              <PartyPopper className="w-16 h-16 text-primary" />
             </motion.div>
 
-            <h2 className="text-3xl font-bold mb-2">Sessão Completa!</h2>
-            <p className="text-muted-foreground mb-8">
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-purple-500 to-primary bg-clip-text text-transparent"
+            >
+              Sessão Completa!
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+              className="text-muted-foreground mb-8"
+            >
               {isCramMode ? 'Modo Cram finalizado' : 'Parabéns pela dedicação!'}
-            </p>
+            </motion.p>
 
-            <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-8">
-              <Card className="bg-green-500/10 border-green-500/30">
-                <CardContent className="p-4 text-center">
-                  <Check className="w-6 h-6 text-green-500 mx-auto mb-1" />
-                  <div className="text-2xl font-bold text-green-500">{sessionStats.correct}</div>
-                  <div className="text-xs text-muted-foreground">Corretos</div>
-                </CardContent>
-              </Card>
-              <Card className="bg-red-500/10 border-red-500/30">
-                <CardContent className="p-4 text-center">
-                  <RotateCcw className="w-6 h-6 text-red-500 mx-auto mb-1" />
-                  <div className="text-2xl font-bold text-red-500">{sessionStats.incorrect}</div>
-                  <div className="text-xs text-muted-foreground">Para revisar</div>
-                </CardContent>
-              </Card>
-              <Card className="bg-amber-500/10 border-amber-500/30">
-                <CardContent className="p-4 text-center">
-                  <Zap className="w-6 h-6 text-amber-500 mx-auto mb-1" />
-                  <div className="text-2xl font-bold text-amber-500">+{sessionStats.xpEarned}</div>
-                  <div className="text-xs text-muted-foreground">XP</div>
-                </CardContent>
-              </Card>
-            </div>
+            {/* Stats Orbs */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-8"
+            >
+              <div className="stats-orb orb-success">
+                <Check className="w-6 h-6 text-green-500 mb-2" />
+                <div className="text-3xl font-bold text-green-500">{sessionStats.correct}</div>
+                <div className="text-xs text-muted-foreground">Corretos</div>
+              </div>
+              <div className="stats-orb orb-danger">
+                <RotateCcw className="w-6 h-6 text-red-500 mb-2" />
+                <div className="text-3xl font-bold text-red-500">{sessionStats.incorrect}</div>
+                <div className="text-xs text-muted-foreground">Para revisar</div>
+              </div>
+              <div className="stats-orb orb-warning">
+                <Zap className="w-6 h-6 text-amber-500 mb-2" />
+                <div className="text-3xl font-bold text-amber-500">+{sessionStats.xpEarned}</div>
+                <div className="text-xs text-muted-foreground">XP</div>
+              </div>
+            </motion.div>
 
-            <div className="flex items-center justify-center gap-2 mb-8">
+            {/* Accuracy */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7 }}
+              className="flex items-center justify-center gap-2 mb-8 p-4 rounded-xl bg-primary/5 border border-primary/20 max-w-xs mx-auto"
+            >
               <Target className="w-5 h-5 text-primary" />
-              <span className="text-lg">Precisão: <strong className="text-primary">{accuracy}%</strong></span>
-            </div>
+              <span className="text-lg">Precisão: <strong className="text-primary text-2xl">{accuracy}%</strong></span>
+            </motion.div>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button onClick={restartSession} size="lg">
+            {/* Actions */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+              className="flex flex-col sm:flex-row gap-3 justify-center"
+            >
+              <Button onClick={restartSession} size="lg" className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Nova Sessão
               </Button>
@@ -292,52 +328,68 @@ export default function FlashcardsPage() {
                 <ChevronLeft className="w-4 h-4 mr-2" />
                 Dashboard
               </Button>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </div>
     );
   }
 
-  // Empty state
+  // ============================================
+  // EMPTY STATE - Year 2300 Design
+  // ============================================
   if (!cards || cards.length === 0) {
     return (
-      <div className="min-h-screen bg-background p-4 md:p-8">
-        <div className="max-w-2xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <Button variant="ghost" onClick={() => navigate('/alunos/dashboard')}>
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
-            <Button onClick={() => setIsCreateModalOpen(true)}>
+      <div className="min-h-screen bg-background">
+        {/* Hero Header */}
+        <div className="flashcards-hero-header px-4 py-6 md:px-8">
+          <div className="max-w-3xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="icon" onClick={() => navigate('/alunos/dashboard')} className="text-muted-foreground hover:text-foreground">
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <div>
+                <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+                  <Brain className="w-6 h-6 text-primary" />
+                  <span className="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+                    Oráculo da Memória
+                  </span>
+                </h1>
+              </div>
+            </div>
+            <Button onClick={() => setIsCreateModalOpen(true)} className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
               <Plus className="w-4 h-4 mr-2" />
-              Criar Flashcard
+              Criar
             </Button>
           </div>
+        </div>
 
+        {/* Empty State */}
+        <div className="max-w-3xl mx-auto p-4 md:p-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16"
+            className="empty-state-container"
           >
-            <div className="text-8xl mb-6">🎉</div>
-            <h2 className="text-2xl font-bold mb-2">
-              {isCramMode ? 'Nenhum flashcard disponível' : 'Parabéns! Nenhum card para revisar hoje.'}
+            <div className="empty-state-icon">
+              <div className="text-7xl">🎉</div>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+              {isCramMode ? 'Nenhum flashcard disponível' : 'Parabéns!'}
             </h2>
-            <p className="text-muted-foreground mb-8">
+            <p className="text-muted-foreground mb-8 max-w-md mx-auto">
               {isCramMode
                 ? 'Você ainda não criou nenhum flashcard. Crie agora!'
-                : 'Volte amanhã para continuar sua jornada de memorização.'}
+                : 'Nenhum card para revisar hoje. Volte amanhã para continuar sua jornada.'}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button onClick={() => setIsCreateModalOpen(true)} size="lg">
+              <Button onClick={() => setIsCreateModalOpen(true)} size="lg" className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
                 <Plus className="w-4 h-4 mr-2" />
                 Criar Flashcard
               </Button>
               {!isCramMode && allCards && allCards.length > 0 && (
-                <Button variant="outline" onClick={() => setIsCramModalOpen(true)} size="lg">
+                <Button variant="outline" onClick={() => setIsCramModalOpen(true)} size="lg" className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:border-amber-500">
                   <Zap className="w-4 h-4 mr-2" />
                   Modo Cram
                 </Button>
@@ -345,11 +397,13 @@ export default function FlashcardsPage() {
             </div>
           </motion.div>
 
-          {/* Dashboard Anki - Estatísticas Completas */}
-          <AnkiDashboard className="mt-8" defaultExpanded={true} />
+          {/* Anki Dashboard */}
+          <div className="mt-12 anki-dashboard-container p-4 md:p-6">
+            <AnkiDashboard className="!bg-transparent !border-0" defaultExpanded={true} />
+          </div>
         </div>
 
-        {/* Create Modal */}
+        {/* Modals */}
         <CreateFlashcardModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
@@ -358,8 +412,6 @@ export default function FlashcardsPage() {
           onCreate={handleCreateCard}
           isLoading={createMutation.isPending}
         />
-
-        {/* Cram Modal */}
         <CramModeModal
           isOpen={isCramModalOpen}
           onClose={() => setIsCramModalOpen(false)}
@@ -369,20 +421,24 @@ export default function FlashcardsPage() {
     );
   }
 
-  // Main review UI
+  // ============================================
+  // MAIN REVIEW UI - Year 2300 Cinematic
+  // ============================================
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-2xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-background">
+      {/* Hero Header */}
+      <div className="flashcards-hero-header px-4 py-6 md:px-8">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/alunos/dashboard')}>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/alunos/dashboard')} className="text-muted-foreground hover:text-foreground">
               <ChevronLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-xl font-bold flex items-center gap-2">
-                <Brain className="w-5 h-5 text-primary" />
-                Oráculo da Memória
+              <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+                <Brain className="w-6 h-6 text-primary" />
+                <span className="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+                  Oráculo da Memória
+                </span>
               </h1>
               <p className="text-sm text-muted-foreground">
                 {isCramMode ? (
@@ -399,11 +455,11 @@ export default function FlashcardsPage() {
 
           <div className="flex items-center gap-2">
             {isCramMode ? (
-              <Button variant="outline" size="sm" onClick={exitCramMode}>
+              <Button variant="outline" size="sm" onClick={exitCramMode} className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10">
                 Sair do Cram
               </Button>
             ) : (
-              <Button variant="outline" size="sm" onClick={() => setIsCramModalOpen(true)}>
+              <Button variant="outline" size="sm" onClick={() => setIsCramModalOpen(true)} className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10">
                 <Zap className="w-4 h-4 mr-1" />
                 Cram
               </Button>
@@ -413,83 +469,89 @@ export default function FlashcardsPage() {
             </Button>
           </div>
         </div>
+      </div>
 
+      {/* Main Content */}
+      <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-6">
         {/* Progress */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">
-              Card {currentIndex + 1} de {cards.length}
+              Card <span className="text-foreground font-medium">{currentIndex + 1}</span> de <span className="text-foreground font-medium">{cards.length}</span>
             </span>
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1 text-green-500">
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5 text-green-500">
                 <Check className="w-4 h-4" />
-                {sessionStats.correct}
+                <span className="font-medium">{sessionStats.correct}</span>
               </span>
-              <span className="flex items-center gap-1 text-red-500">
+              <span className="flex items-center gap-1.5 text-red-500">
                 <X className="w-4 h-4" />
-                {sessionStats.incorrect}
+                <span className="font-medium">{sessionStats.incorrect}</span>
               </span>
-              <span className="flex items-center gap-1 text-amber-500">
+              <span className="flex items-center gap-1.5 text-amber-500">
                 <Zap className="w-4 h-4" />
-                +{sessionStats.xpEarned}
+                <span className="font-medium">+{sessionStats.xpEarned}</span>
               </span>
             </div>
           </div>
-          <Progress value={((currentIndex) / cards.length) * 100} className="h-2" />
+          
+          {/* Progress Bar */}
+          <div className="progress-energy-bar">
+            <div 
+              className="progress-energy-fill" 
+              style={{ width: `${((currentIndex) / cards.length) * 100}%` }}
+            />
+          </div>
         </div>
 
-        {/* Flashcard */}
-        <div className="perspective-1000">
+        {/* Flashcard - 3D Holographic */}
+        <div className="flashcard-3d-container" onClick={handleFlip}>
           <motion.div
-            className="relative w-full min-h-[320px] cursor-pointer"
-            onClick={handleFlip}
+            className={cn(
+              "flashcard-holographic relative w-full min-h-[360px] md:min-h-[400px] cursor-pointer",
+              isFlipped && "is-flipped"
+            )}
             animate={{ rotateY: isFlipped ? 180 : 0 }}
             transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
-            style={{ transformStyle: 'preserve-3d' }}
           >
-            {/* Front */}
-            <Card 
-              className={cn(
-                "absolute inset-0 backface-hidden flex flex-col items-center justify-center p-8",
-                "bg-gradient-to-br from-card to-muted border-2"
-              )}
-              style={{ backfaceVisibility: 'hidden' }}
-            >
-              <Badge variant="outline" className="absolute top-4 left-4">
-                {currentCard?.state === 'new' ? 'Novo' : currentCard?.state}
+            {/* Corner Accents */}
+            <div className="flashcard-corner-accent top-left" />
+            <div className="flashcard-corner-accent top-right" />
+            <div className="flashcard-corner-accent bottom-left" />
+            <div className="flashcard-corner-accent bottom-right" />
+
+            {/* Front - Question */}
+            <div className="flashcard-face-front">
+              <Badge variant="outline" className="absolute top-4 left-4 text-xs bg-background/80">
+                {currentCard?.state === 'new' ? '✨ Novo' : currentCard?.state}
               </Badge>
-              <Badge variant="outline" className="absolute top-4 right-4">
+              <Badge variant="outline" className="absolute top-4 right-4 text-xs bg-background/80">
                 Reps: {currentCard?.reps || 0}
               </Badge>
               
-              <Brain className="w-12 h-12 text-primary/30 mb-4" />
-              <p className="text-sm text-muted-foreground uppercase tracking-wider mb-2">Pergunta</p>
-              <p className="text-xl md:text-2xl font-medium text-center leading-relaxed whitespace-pre-line">
-                {processAnkiText(currentCard?.question, false)}
+              <Brain className="w-14 h-14 text-primary/20 mb-4" />
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-3">Pergunta</p>
+              <p className="text-xl md:text-2xl font-medium text-center leading-relaxed whitespace-pre-line max-w-lg">
+                {processFlashcardText(currentCard?.question, false)}
               </p>
-              <p className="text-sm text-muted-foreground mt-8 animate-pulse">
-                👆 Clique para revelar
+              <p className="text-sm text-muted-foreground mt-8 animate-pulse flex items-center gap-2">
+                <span className="inline-block w-1.5 h-1.5 bg-primary rounded-full animate-ping" />
+                Clique para revelar
               </p>
-            </Card>
+            </div>
 
-            {/* Back */}
-            <Card 
-              className={cn(
-                "absolute inset-0 backface-hidden flex flex-col items-center justify-center p-8",
-                "bg-gradient-to-br from-primary/5 to-purple-500/10 border-2 border-primary/20"
-              )}
-              style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
-            >
-              <Sparkles className="w-12 h-12 text-primary/30 mb-4" />
-              <p className="text-sm text-muted-foreground uppercase tracking-wider mb-2">Resposta</p>
-              <p className="text-xl md:text-2xl font-medium text-center leading-relaxed whitespace-pre-line">
-                {processAnkiText(currentCard?.answer, true)}
+            {/* Back - Answer */}
+            <div className="flashcard-face-back">
+              <Sparkles className="w-14 h-14 text-primary/30 mb-4" />
+              <p className="text-xs text-primary/70 uppercase tracking-widest mb-3">Resposta</p>
+              <p className="text-xl md:text-2xl font-medium text-center leading-relaxed whitespace-pre-line max-w-lg">
+                {processFlashcardText(currentCard?.answer, true)}
               </p>
-            </Card>
+            </div>
           </motion.div>
         </div>
 
-        {/* Rating Buttons */}
+        {/* Rating Buttons - HUD Style */}
         <AnimatePresence>
           {isFlipped && (
             <motion.div
@@ -498,22 +560,21 @@ export default function FlashcardsPage() {
               exit={{ opacity: 0, y: 20 }}
               className="grid grid-cols-4 gap-2 md:gap-3"
             >
-              {RATING_BUTTONS.map(({ rating, label, emoji, color, interval }) => (
-                <Button
+              {RATING_BUTTONS.map(({ rating, label, emoji, variant, color, interval }) => (
+                <button
                   key={rating}
-                  variant="outline"
                   onClick={() => handleRating(rating)}
                   disabled={rescheduleMutation.isPending}
                   className={cn(
-                    'flex-col h-auto py-4 transition-all',
-                    color,
+                    'rating-button-hud flex flex-col items-center justify-center py-4 md:py-5 px-2 border border-border/50 bg-card/50 hover:bg-card transition-all',
+                    variant,
                     rescheduleMutation.isPending && 'opacity-50 cursor-not-allowed'
                   )}
                 >
-                  <span className="text-2xl mb-1">{emoji}</span>
-                  <span className="text-xs font-bold">{label}</span>
-                  <span className="text-[10px] opacity-70">{interval}</span>
-                </Button>
+                  <span className="text-2xl md:text-3xl mb-1">{emoji}</span>
+                  <span className={cn('text-xs font-bold', color)}>{label}</span>
+                  <span className="text-[10px] text-muted-foreground mt-0.5">{interval}</span>
+                </button>
               ))}
             </motion.div>
           )}
@@ -521,13 +582,19 @@ export default function FlashcardsPage() {
 
         {/* Tip */}
         {!isFlipped && (
-          <p className="text-center text-sm text-muted-foreground">
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center text-sm text-muted-foreground bg-primary/5 py-3 px-4 rounded-xl border border-primary/10"
+          >
             💡 Tente lembrar antes de revelar. A memória se fortalece com o esforço!
-          </p>
+          </motion.p>
         )}
 
-        {/* Dashboard Anki - Estatísticas Completas (visível durante revisão) */}
-        <AnkiDashboard className="mt-8" defaultExpanded={true} />
+        {/* Anki Dashboard */}
+        <div className="mt-8 anki-dashboard-container p-4 md:p-6">
+          <AnkiDashboard className="!bg-transparent !border-0" defaultExpanded={false} />
+        </div>
       </div>
 
       {/* Modals */}
@@ -539,7 +606,6 @@ export default function FlashcardsPage() {
         onCreate={handleCreateCard}
         isLoading={createMutation.isPending}
       />
-
       <CramModeModal
         isOpen={isCramModalOpen}
         onClose={() => setIsCramModalOpen(false)}
@@ -549,7 +615,9 @@ export default function FlashcardsPage() {
   );
 }
 
-// Componente: Modal de Criar Flashcard
+// ============================================
+// MODAL: Criar Flashcard - Year 2300 Design
+// ============================================
 function CreateFlashcardModal({
   isOpen,
   onClose,
@@ -567,33 +635,37 @@ function CreateFlashcardModal({
 }) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg border-primary/20">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Plus className="w-5 h-5 text-primary" />
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Plus className="w-5 h-5 text-primary" />
+            </div>
             Criar Novo Flashcard
           </DialogTitle>
           <DialogDescription>
             Adicione uma pergunta e resposta para memorizar
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-4 py-4">
           <div>
-            <label className="text-sm font-medium mb-2 block">Pergunta</label>
+            <label className="text-sm font-medium mb-2 block text-primary/80">Pergunta</label>
             <Textarea
               placeholder="Digite a pergunta..."
               value={newCard.question}
               onChange={(e) => setNewCard({ ...newCard, question: e.target.value })}
               rows={3}
+              className="border-primary/20 focus:border-primary/50"
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-2 block">Resposta</label>
+            <label className="text-sm font-medium mb-2 block text-primary/80">Resposta</label>
             <Textarea
               placeholder="Digite a resposta..."
               value={newCard.answer}
               onChange={(e) => setNewCard({ ...newCard, answer: e.target.value })}
               rows={3}
+              className="border-primary/20 focus:border-primary/50"
             />
           </div>
         </div>
@@ -601,7 +673,7 @@ function CreateFlashcardModal({
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={onCreate} disabled={isLoading}>
+          <Button onClick={onCreate} disabled={isLoading} className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
             {isLoading ? 'Criando...' : 'Criar Flashcard'}
           </Button>
         </DialogFooter>
@@ -610,7 +682,9 @@ function CreateFlashcardModal({
   );
 }
 
-// Componente: Modal de Modo Cram
+// ============================================
+// MODAL: Modo Cram - Year 2300 Design
+// ============================================
 function CramModeModal({
   isOpen,
   onClose,
@@ -622,27 +696,32 @@ function CramModeModal({
 }) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md border-amber-500/20">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5 text-amber-500" />
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="p-2 rounded-lg bg-amber-500/10">
+              <Zap className="w-5 h-5 text-amber-500" />
+            </div>
             Ativar Modo Cram?
           </DialogTitle>
         </DialogHeader>
-        <div className="text-muted-foreground">
+        <div className="text-muted-foreground py-4">
           <p className="mb-4">
             O Modo Cram ignora o agendamento do algoritmo FSRS e permite que você revise 
             <strong className="text-foreground"> todos os seus flashcards</strong> em sequência.
           </p>
-          <p className="text-sm text-amber-500">
-            ⚠️ Use com sabedoria — a repetição espaçada é mais eficiente para memorização de longo prazo.
-          </p>
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-500">
+              Use com sabedoria — a repetição espaçada é mais eficiente para memorização de longo prazo.
+            </p>
+          </div>
         </div>
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose}>
             Cancelar
           </Button>
-          <Button onClick={onConfirm} className="bg-amber-500 hover:bg-amber-600">
+          <Button onClick={onConfirm} className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-500/90 hover:to-orange-600/90">
             <Zap className="w-4 h-4 mr-2" />
             Ativar Cram
           </Button>
