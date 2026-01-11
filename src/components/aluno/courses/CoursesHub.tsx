@@ -274,7 +274,7 @@ const NetflixCourseCard = memo(function NetflixCourseCard({
             alt=""
             className={cn(
               "absolute inset-0 w-full h-full object-cover object-center transform-gpu transition-all duration-500",
-              "opacity-40 group-hover:opacity-60 group-hover:scale-110"
+              "opacity-30 group-hover:opacity-70 group-hover:scale-110"
             )}
             style={{ 
               filter: `brightness(0.7) contrast(1.1) saturate(1.2)` 
