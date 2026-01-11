@@ -229,8 +229,10 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
       return (data || []) as LogEntry[];
     },
     enabled: isOwner,
-    staleTime: 5000,
-    refetchInterval: 10000,
+    // 🚀 PATCH 5K: Aumentado de 10s para 30s (owner-only, baixo impacto mas boa prática)
+    staleTime: 15000,
+    refetchInterval: 30000,
+    refetchOnWindowFocus: false,
   });
   
   // Contar erros e detectar emergências
