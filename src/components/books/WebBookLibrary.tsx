@@ -212,222 +212,277 @@ const BookCard = memo(function BookCard({ book, index, coverUrl, onSelect, isHig
 
   // 🎨 CATEGORY-BASED COLORS — Primary hover color from Book-Web type
   const categoryColors = getCategoryColors(book.category);
-  
-  // Status-specific badge colors (secondary)
-  const statusBadge = isCompleted 
-    ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-    : isReading 
-    ? "bg-amber-500/20 text-amber-400 border-amber-500/40"
-    : categoryColors.badge;
 
   return (
-    <div className="group">
-      {/* 🎬 NETFLIX ULTRA PREMIUM CARD — +50% DIMENSION INCREASE */}
-      {/* 🎨 CLICK ANIMATION: Light gray for ALL books */}
+    <div className="group perspective-1000">
+      {/* 🎬 NETFLIX ULTRA PREMIUM 2300 BOOK CARD — CINEMATIC EXPERIENCE */}
       <div 
         className={cn(
           "relative flex rounded-2xl overflow-hidden cursor-pointer",
-          // 🎨 Strong background contrast
-          "bg-gradient-to-br from-[#0d1218] via-[#121922] to-[#1a1020]",
-          // Enhanced border
-          "border-2 transition-all duration-300 ease-out",
-          "hover:scale-[1.025] hover:-translate-y-3",
-          // Strong shadows and elevation
-          "shadow-[0_8px_32px_-8px_rgba(0,0,0,0.7),0_4px_16px_-4px_rgba(0,0,0,0.5)]",
-          "hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.8),0_8px_24px_-6px_rgba(0,0,0,0.6)]",
-          // Category-based border and glow (MANDATORY)
-          categoryColors.border.replace('/30', '/50'),
-          categoryColors.borderHover.replace('/70', '/90'),
-          isHighEnd && categoryColors.glow.replace('/0.45', '/0.6'),
-          // 🎨 CLICK ANIMATION: Light gray for ALL books
-          "active:scale-[0.98] active:bg-gray-300/20"
+          // 🌌 RICH GRADIENT BACKGROUND — Layered depth
+          "bg-gradient-to-br from-[#080c12] via-[#0f1520] to-[#15101f]",
+          // 🔥 ENHANCED BORDER with glow
+          "border transition-all duration-500 ease-out",
+          "hover:scale-[1.02] hover:-translate-y-2",
+          // 🎭 DRAMATIC SHADOWS — Netflix Premium depth
+          "shadow-[0_8px_40px_-10px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.05)]",
+          "hover:shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9),0_0_40px_-10px_var(--card-glow)]",
+          // Category-based border
+          categoryColors.border.replace('/30', '/40'),
+          categoryColors.borderHover.replace('/70', '/80'),
+          isHighEnd && categoryColors.glow,
+          // 🎨 CLICK FEEDBACK
+          "active:scale-[0.98] active:brightness-110"
         )}
+        style={{ 
+          '--card-glow': `${categoryColors.accent}40`
+        } as React.CSSProperties}
         onClick={onSelect}
       >
-        {/* 🖼️ POSTER — LADO ESQUERDO (Netflix Style) — +50% SIZE */}
-        <div className="relative w-48 md:w-64 lg:w-80 flex-shrink-0 overflow-hidden">
+        {/* 🌟 TOP EDGE GLOW — Cinematic highlight */}
+        <div 
+          className="absolute inset-x-0 top-0 h-px opacity-60 group-hover:opacity-100 transition-opacity duration-500"
+          style={{ background: `linear-gradient(90deg, transparent, ${categoryColors.accent}60, transparent)` }}
+        />
+
+        {/* 🖼️ POSTER — LADO ESQUERDO (Netflix Cinematic) */}
+        <div className="relative w-44 md:w-56 lg:w-72 flex-shrink-0 overflow-hidden">
+          {/* Cover Image with hover zoom */}
           <img 
             src={coverUrl} 
             alt={book.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-110 group-hover:brightness-110"
             loading="lazy"
             decoding="async"
           />
           
-          {/* Gradient blend to content */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#0a0e14]" />
+          {/* 🎬 CINEMATIC VIGNETTE — Darker corners */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.6)_100%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           
-          {/* Hover glow overlay — CATEGORY-BASED COLOR */}
+          {/* Gradient blend to content — smoother transition */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#0a0e14]" />
+          <div className="absolute inset-y-0 right-0 w-1/3 bg-gradient-to-r from-transparent to-[#0a0e14]" />
+          
+          {/* 🔥 Hover glow overlay — CATEGORY-BASED COLOR with animation */}
           {isHighEnd && (
-            <div className={cn(
-              "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none",
-              `bg-gradient-to-br via-transparent to-transparent`,
-              categoryColors.hoverBg
-            )} />
+            <div 
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none mix-blend-soft-light"
+              style={{ background: `linear-gradient(135deg, ${categoryColors.accent}30, transparent 60%)` }}
+            />
           )}
           
-          {/* 📍 NUMBER BADGE — Top Left — CATEGORY COLOR */}
-          <div className="absolute top-3 left-3">
-            <div className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center font-black text-base",
-              "border-2 backdrop-blur-md shadow-lg",
-              "bg-black/60",
-              categoryColors.text,
-              categoryColors.border.replace('/30', '/60')
-            )}>
+          {/* 📍 NUMBER BADGE — Premium glass morphism */}
+          <div className="absolute top-4 left-4">
+            <div 
+              className={cn(
+                "w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg",
+                "backdrop-blur-xl shadow-2xl transition-all duration-300",
+                "border-2 group-hover:scale-110 group-hover:rotate-3",
+                "bg-gradient-to-br from-black/70 via-black/50 to-black/70",
+                categoryColors.text,
+                categoryColors.border.replace('/30', '/70')
+              )}
+              style={{ 
+                boxShadow: `0 8px 32px -8px ${categoryColors.accent}50, inset 0 1px 0 rgba(255,255,255,0.1)` 
+              }}
+            >
               {String(index + 1).padStart(2, '0')}
             </div>
           </div>
+
+          {/* 🎬 PLAY OVERLAY — Appears on hover */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+            <div 
+              className="w-16 h-16 rounded-full flex items-center justify-center backdrop-blur-md border-2 border-white/30 shadow-2xl transform scale-75 group-hover:scale-100 transition-all duration-500"
+              style={{ 
+                background: `linear-gradient(135deg, ${categoryColors.accent}90, ${categoryColors.accent}60)`,
+                boxShadow: `0 0 40px ${categoryColors.accent}60`
+              }}
+            >
+              <Play className="w-7 h-7 text-white ml-1" fill="white" />
+            </div>
+          </div>
           
-          {/* Scanlines (High-End only) */}
+          {/* Scanlines (High-End only) — subtle texture */}
           {isHighEnd && (
             <div 
-              className="absolute inset-0 opacity-[0.03] pointer-events-none"
-              style={{ backgroundImage: `repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(255,255,255,0.08) 2px, rgba(255,255,255,0.08) 4px)` }}
+              className="absolute inset-0 opacity-[0.02] group-hover:opacity-[0.04] transition-opacity pointer-events-none"
+              style={{ backgroundImage: `repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)` }}
             />
           )}
         </div>
 
-        {/* 📋 CONTEÚDO — LADO DIREITO — +50% PADDING */}
-        <div className="flex-1 p-6 md:p-8 lg:p-10 flex flex-col justify-between min-w-0">
+        {/* 📋 CONTEÚDO — LADO DIREITO */}
+        <div className="flex-1 p-5 md:p-7 lg:p-8 flex flex-col justify-between min-w-0 relative">
           
-          {/* TOP: Status Badges — Status uses fixed colors, but category badge uses category color */}
-          <div className="flex items-center gap-2 flex-wrap mb-3">
+          {/* 🌟 AMBIENT GLOW behind content */}
+          {isHighEnd && (
+            <div 
+              className="absolute -top-20 -right-20 w-60 h-60 rounded-full opacity-0 group-hover:opacity-30 transition-opacity duration-700 blur-3xl pointer-events-none"
+              style={{ background: categoryColors.accent }}
+            />
+          )}
+          
+          {/* TOP: Status Badges — Enhanced pills */}
+          <div className="flex items-center gap-2 flex-wrap mb-4 relative z-10">
             {isCompleted ? (
-              <span className={cn(
-                "inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border",
-                "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-              )}>
-                <Crown className="w-3 h-3 mr-1" />
+              <span className="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider border shadow-lg bg-gradient-to-r from-emerald-500/30 to-cyan-500/20 text-emerald-300 border-emerald-500/50">
+                <Crown className="w-3.5 h-3.5 mr-1.5" />
                 Dominado
               </span>
             ) : isReading ? (
-              <span className={cn(
-                "inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border",
-                "bg-amber-500/20 text-amber-400 border-amber-500/40"
-              )}>
-                <Timer className="w-3 h-3 mr-1" />
+              <span className="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider border shadow-lg bg-gradient-to-r from-amber-500/30 to-orange-500/20 text-amber-300 border-amber-500/50">
+                <Timer className="w-3.5 h-3.5 mr-1.5 animate-pulse" />
                 Lendo • {progress.toFixed(0)}%
               </span>
             ) : (
-              <span className={cn(
-                "inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border",
-                categoryColors.badge
-              )}>
-                <Sparkles className="w-3 h-3 mr-1" />
+              <span 
+                className="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider border shadow-lg"
+                style={{ 
+                  background: `linear-gradient(135deg, ${categoryColors.accent}30, ${categoryColors.accent}15)`,
+                  color: categoryColors.accent,
+                  borderColor: `${categoryColors.accent}50`
+                }}
+              >
+                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                 Novo
               </span>
             )}
             
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-              <Star className="w-2.5 h-2.5 mr-1" />
+            {/* Premium badge with shimmer */}
+            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-gradient-to-r from-cyan-500/15 to-blue-500/10 text-cyan-300 border border-cyan-500/30 shadow-sm">
+              <Star className="w-3 h-3 mr-1" />
               Premium
             </span>
           </div>
 
-          {/* MIDDLE: Title & Author — CATEGORY-BASED HOVER */}
-          <div className="flex-1 min-w-0 mb-3 relative">
-            <h3 
-              className="text-lg md:text-xl lg:text-2xl font-black tracking-tight mb-1.5 transition-colors duration-200 line-clamp-2 text-white relative"
-            >
-              {/* Base title */}
-              <span className="transition-opacity duration-200 group-hover:opacity-0">
-                {book.title}
-              </span>
-              {/* Hover title with category color */}
+          {/* MIDDLE: Title & Author — ENHANCED TYPOGRAPHY */}
+          <div className="flex-1 min-w-0 mb-4 relative z-10">
+            <h3 className="text-lg md:text-xl lg:text-2xl font-black tracking-tight mb-2 transition-all duration-300 line-clamp-2">
+              {/* Title with category color on hover */}
               <span 
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 line-clamp-2"
-                style={{ color: categoryColors.accent }}
+                className="bg-gradient-to-r from-white to-white/90 bg-clip-text text-transparent group-hover:from-white group-hover:to-white/80 transition-all duration-300"
+                style={{ 
+                  '--tw-gradient-from': 'white',
+                  '--tw-gradient-to': 'rgba(255,255,255,0.9)'
+                } as React.CSSProperties}
               >
                 {book.title}
               </span>
+              {/* Underline accent on hover */}
+              <span 
+                className="block h-0.5 w-0 group-hover:w-full transition-all duration-500 mt-1 rounded-full"
+                style={{ background: `linear-gradient(90deg, ${categoryColors.accent}, transparent)` }}
+              />
             </h3>
             {book.author && (
-              <p className="text-sm text-muted-foreground/70 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5" />
-                {book.author}
+              <p className="text-sm text-muted-foreground/60 flex items-center gap-2 group-hover:text-muted-foreground/80 transition-colors">
+                <User className="w-4 h-4" />
+                <span>{book.author}</span>
               </p>
             )}
           </div>
 
-          {/* STATS: Compact HUD Row */}
-          <div className="flex items-center gap-3 md:gap-4 py-2.5 px-3 rounded-xl bg-white/[0.03] border border-white/[0.06] mb-3">
-            <div className="flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-sm font-bold text-white">{book.totalPages || 0}</span>
-              <span className="text-[9px] text-muted-foreground hidden md:inline uppercase">páginas</span>
+          {/* STATS: Premium HUD Row with glass effect */}
+          <div className="flex items-center gap-3 md:gap-4 py-3 px-4 rounded-xl mb-4 relative z-10 bg-gradient-to-r from-white/[0.04] to-white/[0.02] border border-white/[0.08] backdrop-blur-sm">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-slate-500/20">
+                <FileText className="w-4 h-4 text-slate-300" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-white leading-none">{book.totalPages || 0}</span>
+                <span className="text-[9px] text-muted-foreground/60 uppercase">páginas</span>
+              </div>
             </div>
             
-            <div className="w-px h-4 bg-white/10" />
+            <div className="w-px h-8 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
             
             {(book.viewCount || 0) > 0 && (
               <>
-                <div className="flex items-center gap-1.5">
-                  <Eye className="w-3.5 h-3.5 text-purple-400" />
-                  <span className="text-sm font-bold text-white">{book.viewCount}</span>
-                  <span className="text-[9px] text-muted-foreground hidden md:inline uppercase">views</span>
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-purple-500/20">
+                    <Eye className="w-4 h-4 text-purple-300" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-white leading-none">{book.viewCount}</span>
+                    <span className="text-[9px] text-muted-foreground/60 uppercase">views</span>
+                  </div>
                 </div>
-                <div className="w-px h-4 bg-white/10" />
+                <div className="w-px h-8 bg-gradient-to-b from-transparent via-white/10 to-transparent" />
               </>
             )}
             
-            <div className="flex items-center gap-1.5">
-              <BookMarked className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="text-sm font-bold text-cyan-400">Premium</span>
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-cyan-500/20">
+                <BookMarked className="w-4 h-4 text-cyan-300" />
+              </div>
+              <span className="text-sm font-bold text-cyan-300">Exclusivo</span>
             </div>
           </div>
 
-          {/* Progress Bar (If reading) */}
+          {/* Progress Bar (If reading) — Enhanced gradient */}
           {isReading && (
-            <div className="mb-3">
-              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+            <div className="mb-4 relative z-10">
+              <div className="h-2 bg-gradient-to-r from-white/5 to-white/10 rounded-full overflow-hidden shadow-inner">
                 <div 
-                  className="h-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-400 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 rounded-full transition-all duration-700 relative"
                   style={{ width: `${progress}%` }}
-                />
+                >
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                </div>
               </div>
             </div>
           )}
 
-          {/* BOTTOM: CTA Button */}
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider">
-              Material Exclusivo
+          {/* BOTTOM: CTA Button — Premium gradient with glow */}
+          <div className="flex items-center justify-between gap-3 relative z-10">
+            <span className="text-[10px] text-muted-foreground/40 uppercase tracking-widest hidden md:block">
+              ⚡ Material Exclusivo
             </span>
             
             <button 
               onClick={(e) => { e.stopPropagation(); onSelect(); }}
               className={cn(
-                "px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider",
-                "transition-all duration-200 flex items-center gap-2",
-                "text-white hover:scale-105 shadow-lg",
-                isCompleted 
-                  ? "bg-gradient-to-r from-emerald-600 to-cyan-500 hover:shadow-emerald-500/30"
-                  : isReading
-                  ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:shadow-amber-500/30"
-                  : "bg-gradient-to-r from-[#E50914] to-red-500 hover:shadow-[#E50914]/30"
+                "px-6 py-3 rounded-xl font-bold text-sm uppercase tracking-wider",
+                "transition-all duration-300 flex items-center gap-2",
+                "text-white shadow-xl hover:scale-105 hover:-translate-y-0.5",
+                "border border-white/10"
               )}
+              style={{
+                background: isCompleted 
+                  ? 'linear-gradient(135deg, #10B981 0%, #06B6D4 100%)'
+                  : isReading
+                  ? 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)'
+                  : `linear-gradient(135deg, ${categoryColors.accent} 0%, #EF4444 100%)`,
+                boxShadow: isCompleted 
+                  ? '0 10px 40px -10px rgba(16,185,129,0.5)'
+                  : isReading
+                  ? '0 10px 40px -10px rgba(245,158,11,0.5)'
+                  : `0 10px 40px -10px ${categoryColors.accent}80`
+              }}
             >
-              <Play className="w-4 h-4" />
+              <PlayCircle className="w-5 h-5" />
               <span>{isCompleted ? "Revisar" : isReading ? "Continuar" : "Ler Agora"}</span>
+              <ArrowRight className="w-4 h-4 opacity-0 -ml-2 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
             </button>
           </div>
         </div>
 
-        {/* ✨ CORNER ACCENTS — CATEGORY-BASED COLOR */}
+        {/* ✨ CORNER ACCENTS — Animated on hover */}
         <div 
-          className={cn(
-            "absolute top-0 left-0 w-10 h-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none",
-            "border-l-2 border-t-2 rounded-tl-2xl"
-          )}
-          style={{ borderColor: `${categoryColors.accent}80` }}
+          className="absolute top-0 left-0 w-12 h-12 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none border-l-2 border-t-2 rounded-tl-2xl"
+          style={{ borderColor: categoryColors.accent }}
         />
         <div 
-          className={cn(
-            "absolute bottom-0 right-0 w-10 h-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none",
-            "border-r-2 border-b-2 rounded-br-2xl"
-          )}
-          style={{ borderColor: `${categoryColors.accent}80` }}
+          className="absolute bottom-0 right-0 w-12 h-12 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none border-r-2 border-b-2 rounded-br-2xl"
+          style={{ borderColor: categoryColors.accent }}
+        />
+        
+        {/* 🌟 BOTTOM EDGE GLOW */}
+        <div 
+          className="absolute inset-x-0 bottom-0 h-px opacity-0 group-hover:opacity-60 transition-opacity duration-500"
+          style={{ background: `linear-gradient(90deg, transparent, ${categoryColors.accent}60, transparent)` }}
         />
       </div>
     </div>

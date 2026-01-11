@@ -498,6 +498,23 @@
 }
 
 /* ============================================
+   BOOK CARD SHIMMER ANIMATION
+   ============================================ */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* Perspective for 3D transforms */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* ============================================
    REDUCED MOTION SUPPORT
    ============================================ */
 @media (prefers-reduced-motion: reduce) {
@@ -508,7 +525,8 @@
   .progress-energy-2300 .fill::after,
   .rec-card-2300::before,
   .particles-2300 .particle,
-  .score-display-2300 .value {
+  .score-display-2300 .value,
+  .animate-shimmer {
     animation: none !important;
   }
 }
