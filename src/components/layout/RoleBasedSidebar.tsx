@@ -280,6 +280,16 @@ const gestaoMenuGroups: MenuGroup[] = [
 // MENUS DE ALUNO (visível em /alunos)
 // ============================================
 const alunoMenuGroups: MenuGroup[] = [
+  // 🔴 LIVES EXCLUSIVAS - ISOLADO NO TOPO (destaque máximo)
+  {
+    id: "aluno-lives-destaque",
+    label: "🔴 AO VIVO",
+    image: alunosCentralImg,
+    color: "from-red-600/80 via-red-500/80",
+    items: [
+      { title: "Lives Exclusivas", url: "/alunos/lives", icon: Radio, area: "aluno-lives", badge: "AO VIVO", textColor: "text-red-500" },
+    ],
+  },
   {
     id: "aluno-aprendizado",
     label: "📚 APRENDIZADO",
@@ -347,7 +357,7 @@ const alunoMenuGroups: MenuGroup[] = [
     items: [
       { title: "Tutoria ao Vivo", url: "/alunos/tutoria", icon: UserCheck, area: "aluno-tutoria", badge: "LIVE" },
       { title: "Fórum de Dúvidas", url: "/alunos/forum", icon: MessageCircle, area: "aluno-forum" },
-      { title: "Lives Exclusivas", url: "/alunos/lives", icon: Radio, area: "aluno-lives", badge: "AO VIVO", textColor: "text-red-500" },
+      // Lives Exclusivas movida para topo isolado (grupo aluno-lives-destaque)
       // HIDDEN_ITEMS: Tire suas Dúvidas removida do menu (mantida no sistema)
       // { title: "Tire suas Dúvidas", url: "/alunos/duvidas", icon: HelpCircle, area: "aluno-duvidas" },
     ],
