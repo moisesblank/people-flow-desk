@@ -219,8 +219,9 @@ serve(async (req: Request) => {
       }
 
       // ============================================
-      // CRIAR REGISTRO DO LIVRO (STATUS: pending_upload)
+      // CRIAR REGISTRO DO LIVRO (STATUS: draft)
       // O livro só ficará "ready" após a fase complete confirmar o arquivo no storage
+      // ENUM VÁLIDO: draft | queued | processing | ready | error | archived
       // ============================================
       const { error: bookError } = await supabase
         .from("web_books")
@@ -237,10 +238,10 @@ serve(async (req: Request) => {
           original_filename: fileName,
           original_size_bytes: fileSize,
           original_mime_type: mimeType,
-          // FIX: Status pendente até upload ser confirmado
-          status: "pending_upload",
+          // FIX: Usar status VÁLIDO do enum (draft), não "pending_upload" que não existe
+          status: "draft",
           status_message: "Aguardando upload do arquivo...",
-          is_published: false, // Só publica após confirmação
+          is_published: false, // Só publica após fase complete confirmar arquivo
           created_by: user.id,
           slug: `${slug}-${bookId.substring(0, 8)}`,
         });
