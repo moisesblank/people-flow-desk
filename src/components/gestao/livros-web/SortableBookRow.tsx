@@ -119,7 +119,8 @@ export const SortableBookRow = memo(function SortableBookRow({
   const status = statusMap[book.status] || statusMap.draft;
   const StatusIcon = status.icon;
   const category = categories.find(c => c.value === book.category);
-  const bookPosition = book.position ?? 999;
+  // Posição: null/undefined = não definida (usuário define manualmente)
+  const bookPosition = book.position ?? null;
 
   return (
     <TableRow
@@ -177,10 +178,10 @@ export const SortableBookRow = memo(function SortableBookRow({
         </button>
       </TableCell>
 
-      {/* COLUNA POSIÇÃO — Editável inline */}
+      {/* COLUNA POSIÇÃO — Editável inline (usuário define manualmente) */}
       <TableCell className="w-16 text-center">
         <InlinePositionEditor
-          position={bookPosition}
+          position={bookPosition as number}
           coverIndex={coverIndex}
           onSave={async (newPosition) => {
             await onInlineUpdate(book.id, 'position', newPosition);

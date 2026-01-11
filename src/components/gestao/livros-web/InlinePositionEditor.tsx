@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 // ============================================
 
 interface InlinePositionEditorProps {
-  position: number;
+  position: number | null; // null = não definida pelo usuário
   coverIndex?: number; // 1-5 se está nas 5 primeiras posições
   onSave: (newPosition: number) => Promise<void>;
   className?: string;
@@ -32,23 +32,25 @@ export const InlinePositionEditor = memo(function InlinePositionEditor({
   className,
 }: InlinePositionEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(position);
+  const [editValue, setEditValue] = useState(position ?? 1);
   const [isSaving, setIsSaving] = useState(false);
 
   const handleStartEdit = useCallback(() => {
-    setEditValue(position);
+    setEditValue(position ?? 1);
     setIsEditing(true);
   }, [position]);
 
   const handleCancel = useCallback(() => {
-    setEditValue(position);
+    setEditValue(position ?? 1);
     setIsEditing(false);
   }, [position]);
 
   const handleSave = useCallback(async () => {
     if (editValue === position || editValue < 1) {
-      setIsEditing(false);
-      return;
+      if (position !== null) {
+        setIsEditing(false);
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -57,7 +59,7 @@ export const InlinePositionEditor = memo(function InlinePositionEditor({
       setIsEditing(false);
     } catch (err) {
       console.error('[InlinePositionEditor] Erro ao salvar:', err);
-      setEditValue(position);
+      setEditValue(position ?? 1);
     } finally {
       setIsSaving(false);
     }
