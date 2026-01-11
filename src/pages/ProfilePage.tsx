@@ -12,6 +12,7 @@ import { useGamification, useUserAchievements, getLevelInfo } from '@/hooks/useG
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { StudentDispatchSection } from '@/components/aluno/StudentDispatchSection';
+import { StudentAddressSection } from '@/components/aluno/StudentAddressSection';
 import { ProfileAgendaWidget } from '@/components/aluno/ProfileAgendaWidget';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -229,6 +230,10 @@ const ProfilePage = () => {
     <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-5xl">
       {/* Seção de Envios - Aparece primeiro se houver envios pendentes */}
       <StudentDispatchSection />
+      
+      {/* Seção de Endereço - Sempre visível, com Realtime */}
+      <StudentAddressSection />
+      
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
