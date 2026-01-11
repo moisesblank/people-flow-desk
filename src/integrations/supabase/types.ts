@@ -18493,27 +18493,10 @@ export type Database = {
           risk_score: number
         }[]
       }
-      fn_list_books_for_category:
-        | { Args: { p_category?: string }; Returns: Json }
-        | {
-            Args: {
-              p_category?: string
-              p_limit?: number
-              p_offset?: number
-              p_search?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_category?: string
-              p_limit?: number
-              p_offset?: number
-              p_search?: string
-              p_user_id: string
-            }
-            Returns: Json
-          }
+      fn_list_books_for_category: {
+        Args: { p_category?: string }
+        Returns: Json
+      }
       fn_log_asset_access: {
         Args: {
           p_action: string
