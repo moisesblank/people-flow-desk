@@ -20,45 +20,33 @@ export function useTimelinePerformance(userId: string | undefined) {
     queryFn: async (): Promise<AttemptWithTaxonomy[]> => {
       if (!userId) return [];
 
-      // Buscar attempts do usuário
-      const { data: attempts, error: attemptsError } = await supabase
+      // 🚀 PATCH 5K: Query única com JOIN - elimina N+1 (2 queries → 1)
+      const { data: attempts, error } = await supabase
         .from('question_attempts')
-        .select('question_id, created_at, is_correct')
+        .select(`
+          question_id,
+          created_at,
+          is_correct,
+          quiz_questions!inner(macro, micro)
+        `)
         .eq('user_id', userId)
         .order('created_at', { ascending: true });
 
-      if (attemptsError) throw attemptsError;
+      if (error) throw error;
       if (!attempts || attempts.length === 0) return [];
-
-      // Buscar questões únicas para obter taxonomia
-      const questionIds = [...new Set(attempts.map(a => a.question_id))];
-      
-      const { data: questions, error: questionsError } = await supabase
-        .from('quiz_questions')
-        .select('id, macro, micro')
-        .in('id', questionIds);
-
-      if (questionsError) throw questionsError;
-
-      // Criar mapa de taxonomia
-      const taxonomyMap = new Map<string, { macro: string | null; micro: string | null }>();
-      questions?.forEach(q => {
-        taxonomyMap.set(q.id, { macro: q.macro, micro: q.micro });
-      });
 
       // Mesclar dados - manter apenas PRIMEIRA tentativa por questão
       const firstAttemptByQuestion = new Map<string, AttemptWithTaxonomy>();
       
-      attempts.forEach(attempt => {
+      attempts.forEach((attempt: any) => {
         const existing = firstAttemptByQuestion.get(attempt.question_id);
-        const taxonomy = taxonomyMap.get(attempt.question_id) || { macro: null, micro: null };
         
         const enrichedAttempt: AttemptWithTaxonomy = {
           question_id: attempt.question_id,
           created_at: attempt.created_at,
           is_correct: attempt.is_correct,
-          macro: taxonomy.macro,
-          micro: taxonomy.micro,
+          macro: attempt.quiz_questions?.macro || null,
+          micro: attempt.quiz_questions?.micro || null,
         };
 
         if (!existing) {
