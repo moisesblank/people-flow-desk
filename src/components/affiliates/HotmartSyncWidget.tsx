@@ -129,9 +129,12 @@ export function HotmartSyncWidget() {
     setSyncProgress(0);
     setStats(prev => ({ ...prev, syncStatus: "syncing" }));
 
+    // 🚀 PATCH 5K: Declarar interval fora do try para garantir cleanup
+    let progressInterval: NodeJS.Timeout | null = null;
+
     try {
       // Simulate sync progress
-      const progressInterval = setInterval(() => {
+      progressInterval = setInterval(() => {
         setSyncProgress(prev => Math.min(prev + 15, 85));
       }, 500);
 
@@ -147,10 +150,9 @@ export function HotmartSyncWidget() {
         }
       });
 
-      clearInterval(progressInterval);
-      setSyncProgress(100);
-
       if (error) throw error;
+
+      setSyncProgress(100);
 
       // Log sync event
       await supabase.from("integration_events").insert([{
@@ -173,6 +175,10 @@ export function HotmartSyncWidget() {
       toast.error("Erro na sincronização");
       setStats(prev => ({ ...prev, syncStatus: "error" }));
     } finally {
+      // 🚀 PATCH 5K: Cleanup GARANTIDO no finally (evita memory leak)
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
       setIsSyncing(false);
       setSyncProgress(0);
     }

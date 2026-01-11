@@ -86,6 +86,9 @@ export function YouTubePlayer({
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
+  // 🚀 PATCH 5K: Ref para armazenar intervalId e limpar no unmount
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
   // 🔒 DISCLAIMER OBRIGATÓRIO - VERDADE ABSOLUTA
   const { showDisclaimer, disclaimerCompleted, startDisclaimer, handleDisclaimerComplete } = useVideoDisclaimer();
   const [disclaimerShown, setDisclaimerShown] = useState(false);
@@ -129,6 +132,11 @@ export function YouTubePlayer({
     };
 
     return () => {
+      // 🚀 PATCH 5K: Limpar interval ao desmontar (evita memory leak)
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
       if (playerRef.current) {
         playerRef.current.destroy?.();
       }
@@ -173,8 +181,13 @@ export function YouTubePlayer({
     setIsReady(true);
     setDuration(event.target.getDuration());
     
-    // Iniciar tracking de tempo
-    const interval = setInterval(() => {
+    // 🚀 PATCH 5K: Limpar interval anterior antes de criar novo (evita duplicatas)
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+    
+    // Iniciar tracking de tempo - armazenar em ref para cleanup
+    progressIntervalRef.current = setInterval(() => {
       if (playerRef.current?.getCurrentTime) {
         const time = playerRef.current.getCurrentTime();
         setCurrentTime(time);
@@ -187,8 +200,6 @@ export function YouTubePlayer({
         }
       }
     }, 1000);
-
-    return () => clearInterval(interval);
   };
 
   const handleStateChange = (event: any) => {
