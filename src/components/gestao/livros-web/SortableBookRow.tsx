@@ -295,8 +295,6 @@ export const SortableBookRow = memo(function SortableBookRow({
           }}
           type="select"
           options={[
-            { value: 'draft', label: '📝 Rascunho' },
-            { value: 'queued', label: '⏳ Na fila' },
             { value: 'ready', label: '✅ Publicado' },
             { value: 'archived', label: '📦 Arquivado' },
           ]}
@@ -334,12 +332,6 @@ export const SortableBookRow = memo(function SortableBookRow({
               <Edit className="w-4 h-4 mr-2" />
               Editar
             </DropdownMenuItem>
-            {(book.status === 'draft' || book.status === 'queued') && (
-              <DropdownMenuItem onClick={() => onPublish(book.id)}>
-                <CheckCircle className="w-4 h-4 mr-2" />
-                {book.status === 'queued' ? 'Forçar Publicação' : 'Publicar'}
-              </DropdownMenuItem>
-            )}
             <DropdownMenuItem 
               onClick={() => onArchive(book.id)}
               className="text-amber-600"
