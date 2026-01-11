@@ -93,6 +93,7 @@ export interface WebBookListItem {
   totalPages: number;
   coverUrl?: string;
   viewCount?: number;
+  position?: number; // ✅ ADMIN_IS_TRUTH: Ordenação definida na gestão
   progress?: {
     currentPage: number;
     progressPercent: number;
@@ -660,6 +661,8 @@ export function useWebBook(bookId?: string) {
 
 // ============================================
 // HOOK: useWebBookLibrary
+// 🔄 REALTIME SYNC: Espelha /gestaofc/livros-web em tempo real
+// ADMIN_IS_TRUTH: Ordenação vem 100% do banco (position)
 // ============================================
 
 export function useWebBookLibrary() {
@@ -687,6 +690,8 @@ export function useWebBookLibrary() {
       const result = data as unknown as { success: boolean; books: WebBookListItem[]; error?: string };
 
       if (result?.success) {
+        // ✅ ADMIN_IS_TRUTH: Livros JÁ VÊM ordenados do banco
+        // NÃO reordenar aqui — a ordem é definida pela gestão
         setBooks(result.books || []);
       } else {
         console.error('[WebBookLibrary] RPC returned success=false:', result);
@@ -701,6 +706,37 @@ export function useWebBookLibrary() {
     }
   }, [user?.id]);
 
+  // 🔄 REALTIME SYNC: Atualiza imediatamente quando gestão modifica
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('web-books-realtime-sync')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'web_books',
+        },
+        (payload) => {
+          console.log('[WebBookLibrary] Realtime update detected:', payload.eventType);
+          // Recarrega lista completa para garantir ordem correta
+          loadBooks();
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[WebBookLibrary] ✅ Realtime sync ativo');
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, loadBooks]);
+
+  // Carrega ao montar
   useEffect(() => {
     if (user?.id) {
       loadBooks();

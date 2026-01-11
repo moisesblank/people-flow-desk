@@ -851,10 +851,15 @@ const WebBookLibrary = memo(function WebBookLibrary({
     setIsEditMode(false);
   }, [books]);
   
-  // Estatísticas + agrupamento por categoria (ordem canônica do Livro Web)
+  // ============================================
+  // 📊 ESTATÍSTICAS + AGRUPAMENTO POR CATEGORIA
+  // ⚠️ ADMIN_IS_TRUTH: A ordem dos livros DENTRO de cada categoria
+  // vem do banco (position). NÃO reordenar aqui!
+  // ============================================
   const { stats, booksByCategory } = useMemo(() => {
     const safeBooks = books ?? [];
 
+    // Inicializa categorias canônicas (ordem fixa das seções)
     const booksByCategory: Record<string, WebBookListItem[]> = {
       quimica_geral: [],
       quimica_organica: [],
@@ -866,6 +871,8 @@ const WebBookLibrary = memo(function WebBookLibrary({
     let readingCount = 0;
     let completedCount = 0;
 
+    // ⚠️ CRÍTICO: Mantém a ordem que veio do banco!
+    // Os livros JÁ chegam ordenados por position ASC do RPC
     safeBooks.forEach((book) => {
       const progress = book.progress?.progressPercent || 0;
       const isCompleted = book.progress?.isCompleted || false;
@@ -873,11 +880,14 @@ const WebBookLibrary = memo(function WebBookLibrary({
       if (isCompleted) completedCount += 1;
       else if (progress > 0) readingCount += 1;
 
-      // Só distribuímos nas 5 categorias canônicas; qualquer outra cai fora (não aparece na UI)
+      // Distribui nas 5 categorias canônicas; qualquer outra cai fora
       if (book.category in booksByCategory) {
+        // ✅ push preserva a ordem original (que já é por position)
         booksByCategory[book.category].push(book);
       }
     });
+
+    // ⛔ NÃO FAZER SORT AQUI! A ordem vem do backend (ADMIN_IS_TRUTH)
 
     return {
       booksByCategory,
