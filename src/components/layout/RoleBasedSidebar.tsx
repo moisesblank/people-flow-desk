@@ -362,14 +362,15 @@ const alunoMenuGroups: MenuGroup[] = [
       // { title: "Tire suas Dúvidas", url: "/alunos/duvidas", icon: HelpCircle, area: "aluno-duvidas" },
     ],
   },
-  // 🏆 RANKING - Botão isolado após COMUNIDADE
+  // 🏆 RANKING & DESEMPENHO - Métricas em tempo real
   {
-    id: "aluno-ranking",
-    label: "🏆 RANKING",
+    id: "aluno-ranking-performance",
+    label: "🏆 RANKING & DESEMPENHO",
     image: alunosCentralImg,
     color: "from-amber-500/80 via-yellow-500/80",
     items: [
-      { title: "Ranking Geral", url: "/alunos/ranking", icon: Trophy, area: "aluno-ranking", badge: "TOP" },
+      { title: "Ranking Geral", url: "/alunos/ranking", icon: Trophy, area: "aluno-ranking", badge: "LIVE" },
+      { title: "Meu Desempenho", url: "/alunos/desempenho", icon: BarChart3, area: "aluno-desempenho", badge: "LIVE" },
     ],
   },
   {
