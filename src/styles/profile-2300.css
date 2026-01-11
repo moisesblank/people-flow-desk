@@ -1,0 +1,551 @@
+/* ============================================
+ * 🏆 PROFILE PAGE — NETFLIX ULTRA PREMIUM 2300
+ * Estética cinematográfica Marvel/Spider-Man
+ * ============================================ */
+
+/* === HERO BANNER === */
+.profile-hero-2300 {
+  position: relative;
+  min-height: 360px;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--background)) 0%,
+    hsl(var(--muted) / 0.5) 50%,
+    hsl(var(--background)) 100%
+  );
+  border-radius: 1.5rem;
+  overflow: hidden;
+}
+
+.profile-hero-2300::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 20% 30%, hsl(var(--primary) / 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, hsl(var(--secondary) / 0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.profile-hero-2300::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 60%,
+    hsl(var(--background) / 0.8) 100%
+  );
+  pointer-events: none;
+}
+
+/* Scan lines cinematográficas */
+.profile-hero-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    hsl(var(--foreground) / 0.02) 2px,
+    hsl(var(--foreground) / 0.02) 4px
+  );
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* === AVATAR RING 2300 === */
+.profile-avatar-ring-2300 {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.profile-avatar-ring-2300::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    hsl(var(--primary)),
+    hsl(var(--secondary)),
+    hsl(var(--primary))
+  );
+  animation: profile-ring-rotate 4s linear infinite;
+}
+
+.profile-avatar-ring-2300::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 180deg,
+    hsl(var(--primary) / 0.3),
+    transparent,
+    hsl(var(--secondary) / 0.3),
+    transparent
+  );
+  animation: profile-ring-rotate 8s linear infinite reverse;
+}
+
+@keyframes profile-ring-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* === STAT ORBS 2300 === */
+.profile-stat-orb-2300 {
+  position: relative;
+  padding: 1.5rem;
+  background: hsl(var(--muted) / 0.3);
+  border: 1px solid hsl(var(--border) / 0.5);
+  border-radius: 1.25rem;
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.profile-stat-orb-2300:hover {
+  transform: translateY(-4px);
+  border-color: hsl(var(--primary) / 0.5);
+  box-shadow: 
+    0 8px 32px hsl(var(--primary) / 0.15),
+    inset 0 1px 0 hsl(var(--foreground) / 0.05);
+}
+
+.profile-stat-orb-2300::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--primary) / 0.5),
+    transparent
+  );
+}
+
+.profile-stat-orb-glow {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.profile-stat-orb-2300:hover .profile-stat-orb-glow {
+  opacity: 1;
+}
+
+/* === NETFLIX RAIL SECTION === */
+.profile-rail-2300 {
+  position: relative;
+  padding: 1.5rem 0;
+}
+
+.profile-rail-header-2300 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding: 0 0.25rem;
+}
+
+.profile-rail-title-2300 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+}
+
+.profile-rail-icon-2300 {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+}
+
+.profile-rail-content-2300 {
+  display: grid;
+  gap: 1rem;
+}
+
+/* === ACHIEVEMENT CARDS 2300 === */
+.profile-achievement-card-2300 {
+  position: relative;
+  padding: 1.25rem;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--muted) / 0.4) 0%,
+    hsl(var(--muted) / 0.2) 100%
+  );
+  border: 1px solid hsl(var(--border) / 0.5);
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.profile-achievement-card-2300:hover {
+  transform: scale(1.02);
+  border-color: hsl(var(--primary) / 0.5);
+}
+
+.profile-achievement-card-2300::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--achievement-color, hsl(var(--primary))),
+    transparent
+  );
+}
+
+/* Rarity glow effects */
+.profile-achievement-legendary {
+  --achievement-color: hsl(45 100% 50%);
+  background: linear-gradient(
+    135deg,
+    hsl(45 100% 50% / 0.1) 0%,
+    hsl(var(--muted) / 0.2) 100%
+  );
+}
+
+.profile-achievement-epic {
+  --achievement-color: hsl(280 80% 60%);
+  background: linear-gradient(
+    135deg,
+    hsl(280 80% 60% / 0.1) 0%,
+    hsl(var(--muted) / 0.2) 100%
+  );
+}
+
+.profile-achievement-rare {
+  --achievement-color: hsl(200 90% 50%);
+  background: linear-gradient(
+    135deg,
+    hsl(200 90% 50% / 0.1) 0%,
+    hsl(var(--muted) / 0.2) 100%
+  );
+}
+
+.profile-achievement-common {
+  --achievement-color: hsl(var(--muted-foreground));
+}
+
+/* === XP PROGRESS BAR 2300 === */
+.profile-xp-bar-2300 {
+  position: relative;
+  height: 12px;
+  background: hsl(var(--muted) / 0.5);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.profile-xp-bar-fill-2300 {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary)),
+    hsl(var(--secondary))
+  );
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-xp-bar-fill-2300::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--foreground) / 0.3) 50%,
+    transparent 100%
+  );
+  animation: profile-xp-shimmer 2s ease-in-out infinite;
+}
+
+@keyframes profile-xp-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* === LEVEL BADGE FLOATING === */
+.profile-level-badge-2300 {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+  border-radius: 50%;
+  border: 4px solid hsl(var(--background));
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: hsl(var(--primary-foreground));
+  box-shadow: 0 4px 16px hsl(var(--primary) / 0.4);
+  z-index: 10;
+}
+
+/* === STREAK FLAME BADGE === */
+.profile-streak-badge-2300 {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, hsl(25 100% 50%), hsl(0 85% 55%));
+  border-radius: 50%;
+  border: 3px solid hsl(var(--background));
+  box-shadow: 0 2px 12px hsl(25 100% 50% / 0.5);
+  z-index: 10;
+  animation: profile-flame-pulse 2s ease-in-out infinite;
+}
+
+@keyframes profile-flame-pulse {
+  0%, 100% { 
+    box-shadow: 0 2px 12px hsl(25 100% 50% / 0.5);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 4px 20px hsl(25 100% 50% / 0.7);
+    transform: scale(1.05);
+  }
+}
+
+/* === SECTION DIVIDER 2300 === */
+.profile-divider-2300 {
+  position: relative;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--border)),
+    transparent
+  );
+  margin: 2rem 0;
+}
+
+.profile-divider-2300::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: hsl(var(--primary));
+  border-radius: 50%;
+  box-shadow: 0 0 12px hsl(var(--primary) / 0.5);
+}
+
+/* === STUDY PROGRESS CARD 2300 === */
+.profile-study-card-2300 {
+  position: relative;
+  padding: 1.5rem;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--muted) / 0.3) 0%,
+    hsl(var(--background)) 100%
+  );
+  border: 1px solid hsl(var(--border) / 0.5);
+  border-radius: 1.25rem;
+  overflow: hidden;
+}
+
+.profile-study-card-2300::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary)),
+    hsl(var(--secondary)),
+    hsl(var(--primary))
+  );
+  background-size: 200% 100%;
+  animation: profile-gradient-shift 3s ease infinite;
+}
+
+@keyframes profile-gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* === DISPATCH & ADDRESS CARDS === */
+.profile-feature-card-2300 {
+  position: relative;
+  background: hsl(var(--muted) / 0.2);
+  border: 1px solid hsl(var(--border) / 0.5);
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.profile-feature-card-2300:hover {
+  border-color: hsl(var(--primary) / 0.3);
+}
+
+.profile-feature-card-header-2300 {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted) / 0.4),
+    transparent
+  );
+  border-bottom: 1px solid hsl(var(--border) / 0.3);
+}
+
+/* === AGENDA COMING SOON CARD === */
+.profile-agenda-card-2300 {
+  position: relative;
+  padding: 2rem;
+  background: linear-gradient(
+    135deg,
+    hsl(200 90% 50% / 0.05) 0%,
+    hsl(var(--muted) / 0.2) 100%
+  );
+  border: 1px solid hsl(200 90% 50% / 0.2);
+  border-radius: 1.25rem;
+  overflow: hidden;
+}
+
+.profile-agenda-card-2300::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    hsl(200 90% 50%),
+    hsl(220 90% 60%),
+    hsl(200 90% 50%)
+  );
+}
+
+/* === RESPONSIVE GRID === */
+@media (min-width: 768px) {
+  .profile-stats-grid-2300 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+  
+  .profile-two-col-grid-2300 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+  
+  .profile-achievements-grid-2300 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .profile-stats-grid-2300 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  
+  .profile-two-col-grid-2300 {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .profile-achievements-grid-2300 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  
+  .profile-hero-2300 {
+    min-height: 280px;
+  }
+}
+
+/* === ENTRANCE ANIMATIONS === */
+.profile-fade-in {
+  animation: profile-fade-in 0.5s ease forwards;
+}
+
+.profile-fade-in-delay-1 {
+  animation: profile-fade-in 0.5s ease 0.1s forwards;
+  opacity: 0;
+}
+
+.profile-fade-in-delay-2 {
+  animation: profile-fade-in 0.5s ease 0.2s forwards;
+  opacity: 0;
+}
+
+.profile-fade-in-delay-3 {
+  animation: profile-fade-in 0.5s ease 0.3s forwards;
+  opacity: 0;
+}
+
+@keyframes profile-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === HOLOGRAPHIC EFFECTS === */
+.profile-holo-text-2300 {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--foreground)),
+    hsl(var(--primary)),
+    hsl(var(--secondary)),
+    hsl(var(--foreground))
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: profile-holo-shift 5s ease infinite;
+}
+
+@keyframes profile-holo-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
