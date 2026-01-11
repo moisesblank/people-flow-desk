@@ -18819,6 +18819,19 @@ export type Database = {
         Args: { p_limit?: number; p_simulado_id: string }
         Returns: Json
       }
+      get_student_address_by_auth: {
+        Args: never
+        Returns: {
+          aluno_id: string
+          bairro: string
+          cep: string
+          cidade: string
+          complemento: string
+          estado: string
+          logradouro: string
+          numero: string
+        }[]
+      }
       get_student_performance_stats: {
         Args: { p_days_back?: number; p_user_id: string }
         Returns: {
@@ -19004,6 +19017,7 @@ export type Database = {
       is_beta_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_beta_v2: { Args: { p_user_id?: string }; Returns: boolean }
       is_domain_authorized: { Args: { p_domain: string }; Returns: boolean }
+      is_envio_owner: { Args: { envio_aluno_id: string }; Returns: boolean }
       is_funcionario: { Args: { p_user_id?: string }; Returns: boolean }
       is_funcionario_or_owner: { Args: { _user_id?: string }; Returns: boolean }
       is_funcionario_user: { Args: { p_user_id?: string }; Returns: boolean }
