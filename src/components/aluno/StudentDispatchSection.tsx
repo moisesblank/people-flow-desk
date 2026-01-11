@@ -44,16 +44,36 @@ export function StudentDispatchSection() {
   const queryClient = useQueryClient();
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
+  // Buscar o aluno_id real via RPC (match por email)
+  const { data: studentData } = useQuery({
+    queryKey: ['student-address-data', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      
+      const { data, error } = await supabase.rpc('get_student_address_by_auth');
+      if (error) {
+        console.error('[StudentDispatch] Error fetching student data:', error);
+        return null;
+      }
+      return data?.[0] || null;
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
+
+  const realAlunoId = studentData?.aluno_id;
+
   // Buscar envios do aluno logado
+  // RLS garante que o usuário só vê seus próprios envios (via email match)
   const { data: dispatches, isLoading } = useQuery({
     queryKey: ['student-dispatches', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       
+      // RLS policy is_envio_owner() faz o match por email automaticamente
       const { data, error } = await supabase
         .from('envios_correios')
         .select('id, codigo_rastreio, servico_correios, data_postagem, dispatch_state, student_seen_at, descricao_conteudo, created_at')
-        .eq('aluno_id', user.id)
         .eq('dispatch_state', 'sent_confirmed')
         .not('codigo_rastreio', 'is', null)
         .order('created_at', { ascending: false });
@@ -62,10 +82,11 @@ export function StudentDispatchSection() {
       return (data || []) as Dispatch[];
     },
     enabled: !!user?.id,
-    staleTime: 30 * 1000, // 30 segundos
+    staleTime: 30 * 1000,
   });
 
   // Buscar envios já vistos também
+  // RLS garante isolamento por usuário automaticamente
   const { data: seenDispatches } = useQuery({
     queryKey: ['student-seen-dispatches', user?.id],
     queryFn: async () => {
@@ -74,7 +95,6 @@ export function StudentDispatchSection() {
       const { data, error } = await supabase
         .from('envios_correios')
         .select('id, codigo_rastreio, servico_correios, data_postagem, dispatch_state, student_seen_at, descricao_conteudo, created_at')
-        .eq('aluno_id', user.id)
         .eq('dispatch_state', 'seen_by_student')
         .not('codigo_rastreio', 'is', null)
         .order('created_at', { ascending: false })
@@ -87,24 +107,24 @@ export function StudentDispatchSection() {
     staleTime: 60 * 1000,
   });
 
-  // Realtime: escutar novos envios
+  // Realtime: escutar novos envios (usando aluno_id real)
   useEffect(() => {
-    if (!user?.id) return;
+    if (!realAlunoId) return;
 
     const channel = supabase
-      .channel('student-dispatches-realtime')
+      .channel(`student-dispatches-${realAlunoId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'envios_correios',
-          filter: `aluno_id=eq.${user.id}`,
+          filter: `aluno_id=eq.${realAlunoId}`,
         },
         (payload) => {
           console.log('[StudentDispatch] Realtime update:', payload);
-          queryClient.invalidateQueries({ queryKey: ['student-dispatches', user.id] });
-          queryClient.invalidateQueries({ queryKey: ['student-seen-dispatches', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['student-dispatches', user?.id] });
+          queryClient.invalidateQueries({ queryKey: ['student-seen-dispatches', user?.id] });
           
           // Se for um novo envio confirmado, mostrar toast
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
@@ -123,7 +143,7 @@ export function StudentDispatchSection() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, queryClient]);
+  }, [realAlunoId, user?.id, queryClient]);
 
   // Marcar como visto
   const markAsSeen = useCallback(async (envioId: string, via: 'tracking_click' | 'code_copy') => {
