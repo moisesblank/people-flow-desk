@@ -6,6 +6,7 @@
 // ============================================
 
 import React, { memo, useState, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useWebBookLibrary, WebBookListItem } from '@/hooks/useWebBook';
 import { DateLock } from '@/components/ui/chronolock';
 import { 
@@ -513,30 +514,34 @@ const BookSection = memo(function BookSection({
   onBookSelect, 
   isHighEnd,
   accentColor,
-  defaultOpen = true,
+  defaultOpen = false, // 🎯 FECHADO por padrão — aluno clica para abrir
   targetBookId,
   categoryKey
 }: BookSectionProps) {
-  // 🏛️ P0 FIX: Seções SEMPRE abertas na página de alunos — sem click necessário
   // Auto-open if this section contains the target book
   const containsTargetBook = targetBookId ? books.some(b => b.id === targetBookId) : false;
   
-  // 🎯 DOGMA: isOpen SEMPRE true para /alunos/livro-web — cards visíveis instantaneamente
-  const isOpen = true; // Forçado permanentemente aberto
-  const setIsOpen = () => {}; // No-op para manter compatibilidade
+  // 🎯 Estado collapsible — fechado por padrão, abre ao clicar no header
+  const [isOpen, setIsOpen] = React.useState(containsTargetBook || defaultOpen);
   
   // Ref for scroll-to-view
   const sectionRef = React.useRef<HTMLDivElement>(null);
   
-  // Effect to scroll when targetBookId changes (isOpen já é sempre true)
+  // Auto-open when target book is in this section
   React.useEffect(() => {
-    // Scroll into view after opening
-    if (containsTargetBook && sectionRef.current) {
+    if (containsTargetBook && !isOpen) {
+      setIsOpen(true);
+    }
+  }, [containsTargetBook]);
+  
+  // Effect to scroll when section opens with target book
+  React.useEffect(() => {
+    if (containsTargetBook && isOpen && sectionRef.current) {
       setTimeout(() => {
         sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
     }
-  }, [containsTargetBook, targetBookId]);
+  }, [containsTargetBook, isOpen, targetBookId]);
   
   if (books.length === 0) return null;
 
@@ -593,10 +598,11 @@ const BookSection = memo(function BookSection({
       className="relative"
       data-category={categoryKey}
     >
-      {/* 🎬 FUTURISTIC SECTION HEADER — Year 2300 Cinematic Design */}
+      {/* 🎬 FUTURISTIC SECTION HEADER — Year 2300 Cinematic Design — CLICÁVEL */}
       <div 
+        onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "relative flex items-center gap-3 px-4 py-3 mb-4 rounded-xl",
+          "relative flex items-center gap-3 px-4 py-3 mb-4 rounded-xl cursor-pointer select-none",
           "border border-white/10",
           // 🌌 Futuristic gradient background
           "bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-yellow-500/10",
@@ -605,7 +611,9 @@ const BookSection = memo(function BookSection({
           // 🎯 Glow effect
           "shadow-[0_0_30px_-5px_rgba(245,158,11,0.3),inset_0_1px_1px_rgba(255,255,255,0.1)]",
           // 📏 Overflow hidden for pseudo-elements
-          "overflow-hidden"
+          "overflow-hidden",
+          // 🖱️ Hover effect
+          "hover:border-amber-400/40 hover:shadow-[0_0_40px_-5px_rgba(245,158,11,0.5)] transition-all duration-200"
         )}
       >
         {/* 🌟 Animated gradient line at top */}
@@ -647,42 +655,63 @@ const BookSection = memo(function BookSection({
           {books.length}
         </Badge>
         
+        {/* 🔽 Chevron indicator — rotates when open */}
+        <div className="ml-auto">
+          <ChevronDown 
+            className={cn(
+              "w-5 h-5 text-amber-400 transition-transform duration-300",
+              isOpen && "rotate-180"
+            )} 
+          />
+        </div>
+        
         {/* ⚡ Scan line animation */}
         <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent pointer-events-none" />
       </div>
 
-      {/* 📚 BOOK CARDS — Sempre visíveis */}
-      <div className="space-y-4 pl-2 pb-3">
-        {books.map((book, idx) => {
-          const isPrevisaoFinal = book.category === 'previsao_final';
-          const bookCard = (
-            <BookCard
-              key={book.id}
-              book={book}
-              index={idx}
-              coverUrl={book.coverUrl || BOOK_COVERS_BY_CATEGORY[book.category || ''] || BOOK_COVERS_BY_INDEX[idx] || '/placeholder.svg'}
-              onSelect={() => onBookSelect(book.id)}
-              isHighEnd={isHighEnd}
-            />
-          );
-          
-          // 🔒 CHRONOLOCK: Previsão Final bloqueado até 28/09
-          if (isPrevisaoFinal) {
-            return (
-              <DateLock 
-                key={book.id}
-                releaseDate="28/09"
-                variant="danger"
-                subtitle="Este material será liberado em breve"
-              >
-                {bookCard}
-              </DateLock>
-            );
-          }
-          
-          return bookCard;
-        })}
-      </div>
+      {/* 📚 BOOK CARDS — Visíveis apenas quando seção aberta */}
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div 
+            key="book-cards"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="space-y-4 pl-2 pb-3 overflow-hidden"
+          >
+            {books.map((book, idx) => {
+              const isPrevisaoFinal = book.category === 'previsao_final';
+              const bookCard = (
+                <BookCard
+                  key={book.id}
+                  book={book}
+                  index={idx}
+                  coverUrl={book.coverUrl || BOOK_COVERS_BY_CATEGORY[book.category || ''] || BOOK_COVERS_BY_INDEX[idx] || '/placeholder.svg'}
+                  onSelect={() => onBookSelect(book.id)}
+                  isHighEnd={isHighEnd}
+                />
+              );
+              
+              // 🔒 CHRONOLOCK: Previsão Final bloqueado até 28/09
+              if (isPrevisaoFinal) {
+                return (
+                  <DateLock 
+                    key={book.id}
+                    releaseDate="28/09"
+                    variant="danger"
+                    subtitle="Este material será liberado em breve"
+                  >
+                    {bookCard}
+                  </DateLock>
+                );
+              }
+              
+              return bookCard;
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 });
