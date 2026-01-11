@@ -236,10 +236,10 @@ serve(async (req: Request) => {
           original_filename: fileName,
           original_size_bytes: fileSize,
           original_mime_type: mimeType,
-          // Enum permitido: draft | queued | processing | ready | error | archived
-          status: "draft",
-          status_message: "Aguardando upload do arquivo",
-          is_published: isPublished || false,
+          // DOGMA: Livro importado = PUBLICADO imediatamente (sem rascunho/fila)
+          status: "ready",
+          status_message: "Publicado",
+          is_published: true,
           created_by: user.id,
           slug: `${slug}-${bookId.substring(0, 8)}`,
         });
