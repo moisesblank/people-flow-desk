@@ -81,7 +81,7 @@ export const COURSE_HUB_CARDS: CourseHubCard[] = [
   },
   {
     id: 'resolucao-questoes',
-    name: 'Resolução de questões',
+    name: 'Resolução de questões (GERAL, ORGÂNICA E FÍSICO QUÍMICA)',
     description: 'Questões resolvidas e comentadas em vídeo',
     icon: <FileQuestion className="w-9 h-9" />,
     accentColor: 'text-amber-400',
