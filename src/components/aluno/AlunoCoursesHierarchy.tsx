@@ -1831,6 +1831,22 @@ function AlunoCoursesHierarchy() {
     };
   }, [modules]);
 
+  // Auto-expand first module when entering filtered mode
+  useEffect(() => {
+    if (viewState.mode === 'filtered' && groupedData.length > 0) {
+      const firstCourse = groupedData[0];
+      if (firstCourse?.subcategoryGroups?.length > 0) {
+        const firstSubcat = firstCourse.subcategoryGroups[0];
+        if (firstSubcat?.modules?.length > 0) {
+          const firstModule = firstSubcat.modules[0];
+          if (firstModule?.id) {
+            setExpandedModules(new Set([firstModule.id]));
+          }
+        }
+      }
+    }
+  }, [viewState.mode, groupedData]);
+
   const toggleModule = (id: string) => {
     setExpandedModules(prev => {
       const next = new Set(prev);
