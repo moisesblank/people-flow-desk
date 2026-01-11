@@ -419,7 +419,7 @@ const NetflixCourseCard = memo(function NetflixCourseCard({
             </h3>
 
             {/* Description */}
-            <p className="text-sm text-slate-200/90 leading-relaxed line-clamp-2 font-medium">
+            <p className="text-sm text-white leading-relaxed line-clamp-2 font-bold">
               {card.description}
             </p>
 
@@ -431,7 +431,7 @@ const NetflixCourseCard = memo(function NetflixCourseCard({
                 card.borderColor.replace('/50', '/30')
               )}>
                 <Sparkles className={cn("w-4 h-4", card.accentColor)} style={{ filter: 'drop-shadow(0 0 5px currentColor)' }} />
-                <span className="text-sm font-bold text-white">
+                <span className="text-sm font-black text-white">
                   {card.subcategories.length} {card.subcategories.length === 1 ? 'subcategoria' : 'subcategorias'}
                 </span>
               </div>
