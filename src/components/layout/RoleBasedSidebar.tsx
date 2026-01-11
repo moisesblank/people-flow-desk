@@ -107,6 +107,9 @@ import personalLifeImg from "@/assets/personal-life-cover.jpg";
 import godModeImg from "@/assets/god-mode-cover.jpg";
 import alunosCentralImg from "@/assets/alunos-central-cover.jpg";
 
+// 🏛️ CONSTITUIÇÃO: OWNER EMAIL (IMUTÁVEL)
+const OWNER_EMAIL = "moisesblank@gmail.com";
+
 interface MenuItem {
   title: string;
   url: string;
@@ -578,7 +581,10 @@ export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>
         </SidebarContent>
 
         <SidebarFooter className="p-2">
-          <StorageAndBackupWidget collapsed={collapsed} />
+          {/* 🏛️ REGRA: Armazenamento/Backup é exclusivo do OWNER e SOMENTE em /gestaofc */}
+          {isGestaoArea && user?.email?.toLowerCase() === OWNER_EMAIL ? (
+            <StorageAndBackupWidget collapsed={collapsed} />
+          ) : null}
 
           <div className={`flex items-center gap-3 p-2 ${collapsed ? "justify-center" : ""}`}>
             <Avatar className="h-10 w-10 border-2 border-primary/30">
