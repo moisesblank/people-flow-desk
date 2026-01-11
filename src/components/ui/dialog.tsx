@@ -69,6 +69,23 @@ const DialogContent = React.forwardRef<
   const startPos = React.useRef({ x: 0, y: 0 });
   const startSize = React.useRef({ width: 0, height: 0 });
 
+  // ✅ P0 FIX (Modo Leitura / Fullscreen): em fullscreen, Portals no <body> podem não ser exibidos.
+  // Radix permite definir o container do Portal; aqui redirecionamos para o elemento fullscreen.
+  const [portalContainer, setPortalContainer] = React.useState<HTMLElement | undefined>(undefined);
+
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const update = () => {
+      const el = document.fullscreenElement;
+      setPortalContainer(el instanceof HTMLElement ? el : undefined);
+    };
+
+    update();
+    document.addEventListener('fullscreenchange', update);
+    return () => document.removeEventListener('fullscreenchange', update);
+  }, []);
+
   const maxSize = React.useMemo(() => ({
     width: typeof window !== 'undefined' ? window.innerWidth * 0.98 : 1200,
     height: typeof window !== 'undefined' ? window.innerHeight * 0.98 : 800,
@@ -124,7 +141,7 @@ const DialogContent = React.forwardRef<
   };
 
   return (
-    <DialogPortal>
+    <DialogPortal container={portalContainer}>
       <DialogOverlay />
       <DialogPrimitive.Content
         ref={ref}
