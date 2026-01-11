@@ -17970,6 +17970,10 @@ export type Database = {
         }
         Returns: Json
       }
+      batch_update_lesson_positions: {
+        Args: { updates: Json }
+        Returns: undefined
+      }
       block_ip_auto: {
         Args: {
           p_duration_hours?: number
