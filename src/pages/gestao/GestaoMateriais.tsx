@@ -199,15 +199,15 @@ const BANCAS_FILTERS: CardFilter[] = [
   { value: 'ufgd', label: 'UFGD', category: 'centro-oeste' },
 ];
 
-// 5 MACROS Químicos — Valores EXATOS do banco de dados (question_taxonomy)
+// 5 MACROS Químicos — valores CANÔNICOS (slug) para espelhar /alunos/materiais
+// (o label exibido segue humano; o value precisa bater com MaterialsFilteredView.eq('macro', filterValue))
 const MACRO_FILTERS: CardFilter[] = [
-  { value: 'Química Geral', label: '⚗️ Química Geral' },
-  { value: 'Físico-Química', label: '⚡ Físico-Química' },
-  { value: 'Química Orgânica', label: '🧪 Química Orgânica' },
-  { value: 'Química Ambiental', label: '🌿 Química Ambiental' },
-  { value: 'Bioquímica', label: '🧬 Bioquímica' },
+  { value: 'quimica_geral', label: '⚗️ Química Geral' },
+  { value: 'fisico_quimica', label: '⚡ Físico-Química' },
+  { value: 'quimica_organica', label: '🧪 Química Orgânica' },
+  { value: 'quimica_ambiental', label: '🌿 Química Ambiental' },
+  { value: 'bioquimica', label: '🧬 Bioquímica' },
 ];
-
 // 5 HUB CARDS — Exatamente igual a /alunos/materiais
 const HUB_CARDS: HubCard[] = [
   {
@@ -767,35 +767,101 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
             </div>
           )}
 
-          {/* MICRO SELECTION — Apenas para card questoes-mapas quando macro selecionado */}
-          {isQuestoesMapas && selectedFilter && (
-            <div className="space-y-2">
+          {/* MICRO SELECTION — Questões e Mapas Mentais */}
+          {isQuestoesMapas && (
+            <div className="space-y-3">
               <Label className="flex items-center gap-2">
                 <Tag className="w-4 h-4" />
-                Micro{' '}
+                Micro-assuntos
                 <span className="text-xs text-muted-foreground">
-                  (opcional{taxonomyLoading ? ', carregando…' : `, ${availableMicros.length} opções`})
+                  (por macro — espelha /alunos/materiais{taxonomyLoading ? ', carregando…' : ''})
                 </span>
               </Label>
-              <Select value={selectedMicro} onValueChange={setSelectedMicro} disabled={uploading || taxonomyLoading}>
+
+              {/* ✅ Seleção rápida: 5 macros + TODOS os micros associados */}
+              <div className="rounded-lg border bg-card/30 p-3 space-y-3">
+                {taxonomyLoading ? (
+                  <div className="text-sm text-muted-foreground">Carregando taxonomia…</div>
+                ) : (
+                  <div className="space-y-4">
+                    {MACRO_FILTERS.map((macro) => {
+                      const micros = getMicrosForSelect(macro.value);
+                      const isSelectedMacro = selectedFilter === macro.value;
+
+                      return (
+                        <div key={macro.value} className="space-y-2">
+                          <button
+                            type="button"
+                            onClick={() => handleFilterChange(macro.value)}
+                            className={cn(
+                              "w-full flex items-center justify-between gap-3 rounded-md px-3 py-2 text-left",
+                              "border transition-colors",
+                              isSelectedMacro ? "bg-accent/30 border-accent" : "bg-background/20 border-border hover:bg-accent/20"
+                            )}
+                          >
+                            <span className="font-medium text-sm">{macro.label}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {micros.length} micros
+                            </Badge>
+                          </button>
+
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              type="button"
+                              variant={isSelectedMacro && !selectedMicro ? 'secondary' : 'outline'}
+                              size="sm"
+                              onClick={() => {
+                                handleFilterChange(macro.value);
+                                setSelectedMicro('');
+                              }}
+                            >
+                              Apenas macro
+                            </Button>
+
+                            {micros.map((micro) => (
+                              <Button
+                                key={micro.value}
+                                type="button"
+                                variant={isSelectedMacro && selectedMicro === micro.value ? 'secondary' : 'outline'}
+                                size="sm"
+                                onClick={() => {
+                                  handleFilterChange(macro.value);
+                                  setSelectedMicro(micro.value);
+                                }}
+                              >
+                                {micro.label}
+                              </Button>
+                            ))}
+
+                            {micros.length === 0 && (
+                              <span className="text-xs text-muted-foreground">Nenhum micro cadastrado para este macro.</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* 🔽 Select tradicional (mantido) — só habilita após escolher Macro */}
+              <Select
+                value={selectedMicro}
+                onValueChange={setSelectedMicro}
+                disabled={uploading || taxonomyLoading || !selectedFilter}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder={taxonomyLoading ? 'Carregando micros…' : 'Selecione o micro (opcional)…'} />
+                  <SelectValue placeholder={!selectedFilter ? 'Selecione um macro acima…' : 'Selecione o micro (opcional)…'} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">
                     <span className="text-muted-foreground">Nenhum (apenas macro)</span>
                   </SelectItem>
-                  {availableMicros.length === 0 && !taxonomyLoading ? (
-                    <SelectItem value="__empty" disabled>
-                      <span className="text-muted-foreground">Nenhum micro cadastrado para este macro</span>
+                  {(selectedFilter ? getMicrosForSelect(selectedFilter) : []).map((micro) => (
+                    <SelectItem key={micro.value} value={micro.value}>
+                      {micro.label}
                     </SelectItem>
-                  ) : (
-                    availableMicros.map((micro) => (
-                      <SelectItem key={micro.value} value={micro.value}>
-                        {micro.label}
-                      </SelectItem>
-                    ))
-                  )}
+                  ))}
                 </SelectContent>
               </Select>
             </div>
