@@ -409,94 +409,126 @@ export function StudyPlanENEM2030() {
         {/* COUNTDOWN COMPACTO + QUOTE */}
         {/* ============================================ */}
         {timeLeft && (
-          <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-primary/10 via-cyan-500/10 to-primary/10 border border-primary/20">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              {/* Timer */}
-              <div className="flex items-center gap-4">
-                <motion.div
-                  animate={{ rotate: [0, 5, -5, 0] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                  className="p-2 rounded-lg bg-gradient-to-br from-red-500 to-orange-500"
-                >
-                  <Rocket className="w-5 h-5 text-white" />
-                </motion.div>
-                <div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                    <Calendar className="w-3 h-3" />
-                    ENEM 2026 — 15 de Novembro
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {[
-                      { value: timeLeft.days, label: 'D' },
-                      { value: timeLeft.hours, label: 'H' },
-                      { value: timeLeft.minutes, label: 'M' },
-                      { value: timeLeft.seconds, label: 'S' },
-                    ].map((item, i) => (
-                      <div key={item.label} className="flex items-baseline gap-0.5">
-                        <span className={cn(
-                          "text-xl font-black tabular-nums",
-                          timeLeft.days <= 7 ? "text-red-500" :
-                          timeLeft.days <= 30 ? "text-amber-500" :
-                          "text-primary"
-                        )}>
-                          {String(item.value).padStart(2, '0')}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">{item.label}</span>
-                        {i < 3 && <span className="text-muted-foreground mx-0.5">:</span>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Quote do Dia */}
-              <div className="flex-1 max-w-md">
-                <div className="flex items-start gap-2 text-sm">
-                  <Quote className="w-4 h-4 text-primary/50 flex-shrink-0 mt-0.5" />
+          <div className="mb-4 relative overflow-hidden">
+            {/* ============================================ */}
+            {/* COUNTDOWN HERO - YEAR 2300 CINEMATIC */}
+            {/* ============================================ */}
+            <div className="relative p-4 md:p-6 rounded-2xl bg-gradient-to-br from-red-950/80 via-black/90 to-orange-950/60 border border-red-500/30 shadow-[0_0_40px_rgba(239,68,68,0.15)]">
+              {/* Glow Effects */}
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 via-transparent to-orange-500/5 pointer-events-none" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
+              
+              <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                {/* Countdown Principal */}
+                <div className="flex items-center gap-4 md:gap-6">
+                  {/* Ícone Animado */}
+                  <motion.div
+                    animate={{ 
+                      scale: [1, 1.1, 1],
+                      rotate: [0, 5, -5, 0],
+                    }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    className="relative p-3 md:p-4 rounded-xl bg-gradient-to-br from-red-600 to-orange-600 shadow-lg shadow-red-500/30"
+                  >
+                    <Rocket className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-white/10 to-transparent pointer-events-none" />
+                  </motion.div>
+                  
+                  {/* Timer Display */}
                   <div>
-                    <p className="text-foreground/80 italic leading-tight">"{quote.quote}"</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">— {quote.author}</p>
+                    <div className="flex items-center gap-2 text-xs md:text-sm text-red-400/80 font-medium mb-2 uppercase tracking-wider">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>ENEM 2026 — 15 de Novembro</span>
+                    </div>
+                    
+                    {/* DIAS E HORAS - APENAS */}
+                    <div className="flex items-center gap-3 md:gap-4">
+                      {/* DIAS */}
+                      <div className="flex flex-col items-center">
+                        <div className={cn(
+                          "text-4xl md:text-6xl font-black tabular-nums tracking-tight leading-none",
+                          "bg-gradient-to-b from-white via-red-100 to-red-300 bg-clip-text text-transparent",
+                          "drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]"
+                        )}>
+                          {String(timeLeft.days).padStart(3, '0')}
+                        </div>
+                        <span className="text-[10px] md:text-xs text-red-400/70 font-semibold uppercase tracking-widest mt-1">
+                          Dias
+                        </span>
+                      </div>
+                      
+                      {/* Separador */}
+                      <div className="flex flex-col gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-lg shadow-red-500/50" />
+                        <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-lg shadow-red-500/50" />
+                      </div>
+                      
+                      {/* HORAS */}
+                      <div className="flex flex-col items-center">
+                        <div className={cn(
+                          "text-4xl md:text-6xl font-black tabular-nums tracking-tight leading-none",
+                          "bg-gradient-to-b from-white via-orange-100 to-orange-300 bg-clip-text text-transparent",
+                          "drop-shadow-[0_0_15px_rgba(249,115,22,0.5)]"
+                        )}>
+                          {String(timeLeft.hours).padStart(2, '0')}
+                        </div>
+                        <span className="text-[10px] md:text-xs text-orange-400/70 font-semibold uppercase tracking-widest mt-1">
+                          Horas
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quote do Dia */}
+                <div className="flex-1 max-w-sm lg:max-w-md lg:text-right">
+                  <div className="flex items-start gap-2 lg:justify-end">
+                    <Quote className="w-4 h-4 text-red-500/40 flex-shrink-0 mt-0.5 lg:order-2" />
+                    <div className="lg:text-right">
+                      <p className="text-foreground/70 italic leading-tight text-sm">"{quote.quote}"</p>
+                      <p className="text-xs text-muted-foreground mt-1">— {quote.author}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Milestone Alert */}
-            {milestone && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={cn(
-                  "mt-3 flex items-center gap-2 text-xs font-medium p-2 rounded-lg",
-                  timeLeft.days <= 7 ? "bg-red-500/10 text-red-400" :
-                  timeLeft.days <= 30 ? "bg-amber-500/10 text-amber-400" :
-                  "bg-primary/10 text-primary"
-                )}
-              >
-                <Star className="w-3 h-3" />
-                {milestone.message}
-              </motion.div>
-            )}
-
-            {/* Progress da Jornada */}
-            <div className="mt-3">
-              <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                <span>Jornada de Preparação</span>
-                <span>{timeLeft.percentage.toFixed(1)}% concluído</span>
+              {/* Progress da Jornada - Barra Holográfica */}
+              <div className="mt-4 pt-4 border-t border-red-500/20">
+                <div className="flex justify-between text-[10px] md:text-xs text-muted-foreground mb-2">
+                  <span className="flex items-center gap-1.5">
+                    <Zap className="w-3 h-3 text-amber-500" />
+                    Jornada de Preparação
+                  </span>
+                  <span className="font-mono text-red-400">{timeLeft.percentage.toFixed(1)}%</span>
+                </div>
+                <div className="h-2 md:h-2.5 bg-black/50 rounded-full overflow-hidden border border-red-500/20">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${timeLeft.percentage}%` }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className="h-full rounded-full bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
+                  />
+                </div>
               </div>
-              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+
+              {/* Milestone Alert */}
+              {milestone && (
                 <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${timeLeft.percentage}%` }}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
                   className={cn(
-                    "h-full rounded-full",
-                    timeLeft.days > 90 ? "bg-gradient-to-r from-green-500 to-emerald-500" :
-                    timeLeft.days > 30 ? "bg-gradient-to-r from-blue-500 to-primary" :
-                    timeLeft.days > 7 ? "bg-gradient-to-r from-amber-500 to-orange-500" :
-                    "bg-gradient-to-r from-red-500 to-pink-500"
+                    "mt-3 flex items-center gap-2 text-xs font-semibold p-2.5 rounded-lg border",
+                    timeLeft.days <= 7 
+                      ? "bg-red-500/10 text-red-400 border-red-500/30" 
+                      : timeLeft.days <= 30 
+                        ? "bg-amber-500/10 text-amber-400 border-amber-500/30" 
+                        : "bg-primary/10 text-primary border-primary/30"
                   )}
-                />
-              </div>
+                >
+                  <Star className="w-4 h-4" />
+                  {milestone.message}
+                </motion.div>
+              )}
             </div>
           </div>
         )}
