@@ -143,7 +143,9 @@ export const FabricDrawingCanvas = memo(forwardRef<FabricDrawingCanvasHandle, Fa
       const canvas = fabricRef.current;
       if (!canvas || !isReady) return;
 
-      const isDrawingTool = activeTool === 'pencil' || activeTool === 'highlight' || activeTool === 'eraser';
+      // Borracha NÃO é modo de desenho - é modo de clique para deletar objetos
+      const isDrawingTool = activeTool === 'pencil' || activeTool === 'highlight';
+      const isEraserMode = activeTool === 'eraser';
       
       canvas.isDrawingMode = isActive && isDrawingTool;
       canvas.selection = false; // Sem modo seleção - todas as ferramentas são de desenho/edição
@@ -157,11 +159,6 @@ export const FabricDrawingCanvas = memo(forwardRef<FabricDrawingCanvasHandle, Fa
             brush.color = color + '59'; // ~35% opacity via hex alpha
             brush.width = size * 8;
             break;
-          case 'eraser':
-            // Fabric.js v6 não tem EraserBrush nativo, usar cor de "apagar"
-            brush.color = '#ffffff';
-            brush.width = size * 3;
-            break;
           case 'pencil':
           default:
             brush.color = color;
@@ -174,6 +171,70 @@ export const FabricDrawingCanvas = memo(forwardRef<FabricDrawingCanvasHandle, Fa
 
       canvas.renderAll();
     }, [isActive, activeTool, color, size, isReady]);
+
+    // ============================================
+    // BORRACHA: DELETAR OBJETOS AO CLICAR/ARRASTAR
+    // ============================================
+    useEffect(() => {
+      const canvas = fabricRef.current;
+      if (!canvas || !isReady) return;
+
+      const isEraserActive = isActive && activeTool === 'eraser';
+      
+      if (!isEraserActive) return;
+
+      console.log('[FabricCanvas] Eraser mode ACTIVATED');
+
+      // Handler para deletar objeto ao clicar
+      const handleMouseDown = (opt: any) => {
+        if (!isActive || activeTool !== 'eraser') return;
+        
+        const target = opt.target;
+        if (target && target !== canvas.backgroundImage) {
+          console.log('[FabricCanvas] Eraser: removing object', target.type);
+          canvas.remove(target);
+          canvas.renderAll();
+        }
+      };
+
+      // Handler para deletar objetos ao arrastar (brush de borracha)
+      const handleMouseMove = (opt: any) => {
+        if (!isActive || activeTool !== 'eraser') return;
+        if (!opt.e.buttons) return; // Só se estiver pressionando
+
+        const pointer = canvas.getPointer(opt.e);
+        const objects = canvas.getObjects();
+        
+        // Verificar cada objeto se o pointer está dentro
+        for (const obj of objects) {
+          if (obj === canvas.backgroundImage) continue;
+          
+          const objBounds = obj.getBoundingRect();
+          const eraserRadius = size * 3;
+          
+          // Check if pointer is near the object
+          if (
+            pointer.x >= objBounds.left - eraserRadius &&
+            pointer.x <= objBounds.left + objBounds.width + eraserRadius &&
+            pointer.y >= objBounds.top - eraserRadius &&
+            pointer.y <= objBounds.top + objBounds.height + eraserRadius
+          ) {
+            console.log('[FabricCanvas] Eraser drag: removing object', obj.type);
+            canvas.remove(obj);
+          }
+        }
+        
+        canvas.renderAll();
+      };
+
+      canvas.on('mouse:down', handleMouseDown);
+      canvas.on('mouse:move', handleMouseMove);
+
+      return () => {
+        canvas.off('mouse:down', handleMouseDown);
+        canvas.off('mouse:move', handleMouseMove);
+      };
+    }, [isActive, activeTool, size, isReady]);
 
     // ============================================
     // HANDLERS DE TEXTO
