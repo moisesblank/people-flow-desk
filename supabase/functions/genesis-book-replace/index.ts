@@ -202,12 +202,12 @@ serve(async (req: Request) => {
       }
 
       // ============================================
-      // ATUALIZAR STATUS DO LIVRO PARA "queued"
+      // ATUALIZAR STATUS DO LIVRO PARA "processing"
       // ============================================
       const { error: updateError } = await supabase
         .from("web_books")
         .update({
-          status: "queued",
+          status: "processing",
           status_message: "Substituição de PDF em andamento",
           original_path: uploadPath,
           original_filename: fileName,
@@ -318,13 +318,13 @@ serve(async (req: Request) => {
       const jobId = crypto.randomUUID();
 
       // ============================================
-      // ATUALIZAR LIVRO: queued, reset total_pages
+      // ATUALIZAR LIVRO: processing, reset total_pages
       // ============================================
       const { error: updateError } = await supabase
         .from("web_books")
         .update({
-          status: "queued",
-          status_message: "Aguardando reprocessamento",
+          status: "processing",
+          status_message: "Reprocessando páginas...",
           job_id: jobId,
           total_pages: 0,
           updated_at: new Date().toISOString(),
@@ -410,7 +410,7 @@ serve(async (req: Request) => {
         success: true,
         bookId,
         title: book.title,
-        status: "queued",
+        status: "processing",
         jobId,
         message: "PDF substituído com sucesso! Reprocessamento iniciado.",
       };
