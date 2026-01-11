@@ -53,12 +53,12 @@ export const CalculatorButton = forwardRef<HTMLButtonElement, CalculatorButtonPr
             size="icon"
             title="Calculadora Científica"
             className={cn(
-              "h-9 w-9 hover:bg-blue-500/20 transition-all duration-200 group",
+              "h-9 w-9 hover:bg-red-500/20 transition-all duration-200 group",
               className,
             )}
             {...buttonProps}
           >
-            <CalculatorIcon className="h-5 w-5 text-blue-400 group-hover:text-blue-300 group-hover:scale-110 transition-all duration-300" />
+            <CalculatorIcon className="h-5 w-5 text-red-400 group-hover:text-red-300 group-hover:scale-110 transition-all duration-300" />
           </Button>
         </DialogTrigger>
 
