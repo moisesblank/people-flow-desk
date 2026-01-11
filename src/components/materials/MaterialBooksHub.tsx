@@ -449,8 +449,19 @@ const BookDetailView = memo(function BookDetailView({
     f.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Micros ocultos do /alunos/materiais (Constituição v10.4)
+  const HIDDEN_MICROS_MATERIALS = [
+    'Direcionamento Vestibulares Específicos',
+    'direcionamento vestibulares específicos',
+    'DIRECIONAMENTO VESTIBULARES ESPECÍFICOS',
+  ];
+
   const filteredMicros = microsForMacro.filter(m =>
-    m.label.toLowerCase().includes(searchTerm.toLowerCase())
+    m.label.toLowerCase().includes(searchTerm.toLowerCase()) &&
+    !HIDDEN_MICROS_MATERIALS.some(hidden => 
+      m.label.toLowerCase() === hidden.toLowerCase() ||
+      m.value.toLowerCase() === hidden.toLowerCase().replace(/\s+/g, '_')
+    )
   );
 
   // Agrupar filtros por categoria
