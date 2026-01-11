@@ -199,13 +199,13 @@ const BANCAS_FILTERS: CardFilter[] = [
   { value: 'ufgd', label: 'UFGD', category: 'centro-oeste' },
 ];
 
-// 5 MACROS Químicos
+// 5 MACROS Químicos — Valores EXATOS do banco de dados (question_taxonomy)
 const MACRO_FILTERS: CardFilter[] = [
-  { value: 'quimica_geral', label: 'Química Geral' },
-  { value: 'fisico_quimica', label: 'Físico-Química' },
-  { value: 'quimica_organica', label: 'Química Orgânica' },
-  { value: 'quimica_ambiental', label: 'Química Ambiental' },
-  { value: 'bioquimica', label: 'Bioquímica' },
+  { value: 'Química Geral', label: '⚗️ Química Geral' },
+  { value: 'Físico-Química', label: '⚡ Físico-Química' },
+  { value: 'Química Orgânica', label: '🧪 Química Orgânica' },
+  { value: 'Química Ambiental', label: '🌿 Química Ambiental' },
+  { value: 'Bioquímica', label: '🧬 Bioquímica' },
 ];
 
 // 5 HUB CARDS — Exatamente igual a /alunos/materiais
