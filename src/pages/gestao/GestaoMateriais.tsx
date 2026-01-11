@@ -1061,6 +1061,7 @@ const HubCardSection = memo(function HubCardSection({
   onView, 
   onStatusChange, 
   onDelete,
+  getMicroLabel,
   defaultOpen = false 
 }: HubCardSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
