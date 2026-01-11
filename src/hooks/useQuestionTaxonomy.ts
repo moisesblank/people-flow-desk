@@ -88,7 +88,20 @@ export function useQuestionTaxonomy() {
 
       const matchesTaxonomyKey = (item: TaxonomyItem, key: string) => {
         if (!key) return false;
-        return item.value === key || item.label === key || slugify(item.value) === key || slugify(item.label) === key;
+        const keySlug = slugify(key);
+        const itemValueSlug = slugify(item.value);
+        const itemLabelSlug = slugify(item.label);
+        // Match bidirecional: aceita qualquer combinação de value/label/slug de ambos os lados
+        return (
+          item.value === key ||
+          item.label === key ||
+          itemValueSlug === key ||
+          itemLabelSlug === key ||
+          item.value === keySlug ||
+          item.label === keySlug ||
+          itemValueSlug === keySlug ||
+          itemLabelSlug === keySlug
+        );
       };
 
       // Construir árvore hierárquica com funções utilitárias
