@@ -146,7 +146,7 @@ export const FabricDrawingCanvas = memo(forwardRef<FabricDrawingCanvasHandle, Fa
       const isDrawingTool = activeTool === 'pencil' || activeTool === 'highlight' || activeTool === 'eraser';
       
       canvas.isDrawingMode = isActive && isDrawingTool;
-      canvas.selection = isActive && activeTool === 'select';
+      canvas.selection = false; // Sem modo seleção - todas as ferramentas são de desenho/edição
 
       if (canvas.isDrawingMode) {
         // Configurar brush baseado na ferramenta
@@ -356,7 +356,7 @@ export const FabricDrawingCanvas = memo(forwardRef<FabricDrawingCanvasHandle, Fa
     // CURSOR
     // ============================================
     const getCursor = () => {
-      if (!isActive || activeTool === 'select') return 'default';
+      if (!isActive) return 'default';
       
       switch (activeTool) {
         case 'highlight':
@@ -377,21 +377,21 @@ export const FabricDrawingCanvas = memo(forwardRef<FabricDrawingCanvasHandle, Fa
         ref={containerRef}
         className={cn(
           "absolute inset-0 z-25",
-          isActive && activeTool !== 'select' && activeTool !== 'ruler' 
+          isActive 
             ? "pointer-events-auto" 
             : "pointer-events-none",
           className
         )}
         style={{ 
           cursor: getCursor(),
-          touchAction: isActive && activeTool !== 'select' ? 'none' : 'auto'
+          touchAction: isActive ? 'none' : 'auto'
         }}
         onClick={activeTool === 'text' ? handleCanvasClick : undefined}
       >
         <canvas ref={canvasRef} />
         
         {/* Indicador visual de ferramenta ativa */}
-        {isActive && activeTool !== 'select' && (
+        {isActive && (
           <div className="absolute top-2 left-2 px-2 py-1 rounded bg-black/70 text-white text-xs font-medium flex items-center gap-1.5 pointer-events-none">
             <span 
               className="w-3 h-3 rounded-full"
