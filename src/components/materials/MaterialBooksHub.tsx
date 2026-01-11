@@ -30,6 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useConstitutionPerformance } from '@/hooks/useConstitutionPerformance';
 import { useQuestionTaxonomy } from '@/hooks/useQuestionTaxonomy';
+import { stripTaxonomyEmoji } from '@/lib/taxonomyLabelConverter';
 import '@/styles/dashboard-2300.css';
 
 // Logo para fundo dos cards
@@ -173,7 +174,7 @@ const MATERIAL_BOOKS: MaterialBook[] = [
 // ============================================
 
 interface MaterialBooksHubProps {
-  onSelectBook: (bookId: string, filter?: string) => void;
+  onSelectBook: (bookId: string, filter?: string, microValue?: string, microLabel?: string) => void;
   className?: string;
 }
 
@@ -422,7 +423,7 @@ const NetflixBookCard = memo(function NetflixBookCard({
 interface BookDetailViewProps {
   book: MaterialBook;
   onBack: () => void;
-  onSelectFilter: (bookId: string, filter: string, micro?: string) => void;
+  onSelectFilter: (bookId: string, filter: string, microValue?: string, microLabel?: string) => void;
   isHighEnd: boolean;
 }
 
@@ -480,12 +481,15 @@ const BookDetailView = memo(function BookDetailView({
       setSearchTerm('');
     } else if (isQuestoesMapas && selectedMacro) {
       // Segundo nível: selecionar micro - passa macro + micro
-      onSelectFilter(book.id, selectedMacro, filterValue);
+      const micro = microsForMacro.find(m => m.value === filterValue);
+      // LEI SUPREMA: nunca vazar value se label não existir
+      const safeMicroLabel = stripTaxonomyEmoji(micro?.label) || '';
+      onSelectFilter(book.id, selectedMacro, filterValue, safeMicroLabel);
     } else {
       // Cards normais: ir direto para materiais
       onSelectFilter(book.id, filterValue);
     }
-  }, [isQuestoesMapas, selectedMacro, book.id, onSelectFilter]);
+  }, [isQuestoesMapas, selectedMacro, book.id, onSelectFilter, microsForMacro]);
 
   // Handler para voltar do micro para macro
   const handleBackFromMicro = useCallback(() => {
@@ -796,8 +800,13 @@ export const MaterialBooksHub = memo(function MaterialBooksHub({
     }
   }, []);
 
-  const handleSelectFilter = useCallback((bookId: string, filter: string) => {
-    onSelectBook(bookId, filter);
+  const handleSelectFilter = useCallback((
+    bookId: string,
+    filter: string,
+    microValue?: string,
+    microLabel?: string
+  ) => {
+    onSelectBook(bookId, filter, microValue, microLabel);
   }, [onSelectBook]);
 
   const handleBack = useCallback(() => {

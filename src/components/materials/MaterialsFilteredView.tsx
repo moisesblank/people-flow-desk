@@ -395,9 +395,10 @@ export const MaterialsFilteredView = memo(function MaterialsFilteredView({
   }, [materials, searchTerm]);
 
   // Label para exibir no header (inclui micro se presente)
-  const displayLabel = microLabel || microValue 
-    ? `${filterLabel} → ${microLabel || microValue}` 
-    : filterLabel;
+  const displayLabel = useMemo(() => {
+    const microPart = (microLabel || microValue) ? (microLabel || microValue) : '';
+    return microPart ? `${filterLabel} → ${microPart}` : filterLabel;
+  }, [filterLabel, microLabel, microValue]);
 
   return (
     <motion.div

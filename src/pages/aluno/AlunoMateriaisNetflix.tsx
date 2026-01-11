@@ -67,20 +67,25 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
   });
 
   // Quando seleciona um Book e um filtro (com micro opcional para questoes-mapas)
-  const handleSelectBook = useCallback((bookId: string, filter?: string, micro?: string) => {
+  const handleSelectBook = useCallback((
+    bookId: string,
+    filter?: string,
+    microValue?: string,
+    microLabel?: string
+  ) => {
     if (!filter) return;
-    
+
     const book = MATERIAL_BOOKS.find(b => b.id === bookId);
     const filterObj = book?.filters.find(f => f.value === filter);
-    
+
     setViewState({
       mode: 'filtered',
       bookId,
       bookName: book?.name || bookId,
       filterValue: filter,
       filterLabel: filterObj?.label || filter,
-      microValue: micro,
-      microLabel: micro, // Label será resolvido no FilteredView se necessário
+      microValue,
+      microLabel,
     });
   }, []);
 
