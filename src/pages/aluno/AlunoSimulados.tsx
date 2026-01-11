@@ -76,19 +76,25 @@ export default function AlunoSimulados() {
 
   // Handler: Clicou em um card de simulado
   const handleSelectSimulado = useCallback((id: string) => {
+    console.log('[handleSelectSimulado] Selected ID:', id);
+    
     // Encontrar o simulado
     const simulado = [...(simuladosData?.available || []), ...(simuladosData?.completed || []), ...(simuladosData?.upcoming || [])]
       .find(s => s.id === id);
     
     if (!simulado) {
+      console.log('[handleSelectSimulado] Simulado not found, using fallback');
       // Fallback: abrir direto
       setSelectedSimuladoId(id);
       setSearchParams({ s: id });
       return;
     }
 
+    console.log('[handleSelectSimulado] Found simulado:', simulado.title, 'is_hard_mode:', simulado.is_hard_mode);
+
     // Se JÁ é hard mode nativo → abrir direto (sem seletor)
     if (simulado.is_hard_mode) {
+      console.log('[handleSelectSimulado] Hard mode native, opening directly');
       setSelectedMode('hard');
       setSelectedSimuladoId(id);
       setSearchParams({ s: id });
@@ -96,19 +102,32 @@ export default function AlunoSimulados() {
     }
 
     // Se é NORMAL → mostrar seletor de modo
+    console.log('[handleSelectSimulado] Normal mode, showing selector');
     setPendingSimuladoId(id);
     setShowModeSelector(true);
   }, [simuladosData, setSearchParams]);
 
   // Handler: Modo selecionado
   const handleModeSelected = useCallback((mode: 'treino' | 'hard') => {
-    if (!pendingSimuladoId) return;
+    console.log('[SimuladoModeSelected] Mode:', mode, 'pendingSimuladoId:', pendingSimuladoId);
     
-    setSelectedMode(mode);
+    if (!pendingSimuladoId) {
+      console.error('[SimuladoModeSelected] ABORT: pendingSimuladoId is null');
+      return;
+    }
+    
+    const simuladoIdToStart = pendingSimuladoId;
+    
+    // P0 FIX: Limpar selector ANTES de setar o simulado para evitar race condition
     setShowModeSelector(false);
-    setSelectedSimuladoId(pendingSimuladoId);
-    setSearchParams({ s: pendingSimuladoId });
     setPendingSimuladoId(null);
+    
+    // Setar modo e ID para iniciar o player
+    setSelectedMode(mode);
+    setSelectedSimuladoId(simuladoIdToStart);
+    setSearchParams({ s: simuladoIdToStart });
+    
+    console.log('[SimuladoModeSelected] SUCCESS: Starting simulado', simuladoIdToStart, 'in mode', mode);
   }, [pendingSimuladoId, setSearchParams]);
 
   // Handler: Fechou mode selector
@@ -128,8 +147,18 @@ export default function AlunoSimulados() {
     refetch();
   }, [refetch]);
 
+  // DEBUG: Log do estado atual para debugging
+  console.log('[AlunoSimulados Render]', {
+    showModeSelector,
+    pendingSimuladoId,
+    pendingSimulado: pendingSimulado?.title || null,
+    selectedSimuladoId,
+    selectedMode
+  });
+
   // 🎮 Mode Selector Modal
   if (showModeSelector && pendingSimulado) {
+    console.log('[AlunoSimulados] Rendering ModeSelector');
     return (
       <SimuladoModeSelector
         isOpen={true}
