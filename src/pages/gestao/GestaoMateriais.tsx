@@ -93,6 +93,7 @@ import { ptBR } from 'date-fns/locale';
 import { useDropzone } from 'react-dropzone';
 import { MaterialViewer } from '@/components/materials/MaterialViewer';
 import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
+import { convertMicroValueToLabel } from '@/lib/taxonomyLabelConverter';
 import { compressPdf, formatBytes } from '@/lib/pdfCompression';
 
 // ============================================
@@ -894,6 +895,7 @@ interface MaterialRowProps {
   onView: () => void;
   onStatusChange: (id: string, status: 'draft' | 'processing' | 'ready' | 'archived') => void;
   onDelete: (id: string) => void;
+  getMicroLabel: (microValue: string, macroValue: string) => string;
 }
 
 // Helper para obter info do Hub Card
@@ -920,7 +922,8 @@ const MaterialRow = memo(function MaterialRow({
   material, 
   onView, 
   onStatusChange, 
-  onDelete 
+  onDelete,
+  getMicroLabel,
 }: MaterialRowProps) {
   const cardInfo = getHubCardInfo(material.category);
   const isQuestoesMapas = material.category === 'questoes-mapas';
@@ -971,7 +974,9 @@ const MaterialRow = memo(function MaterialRow({
       {/* Micro (apenas para questoes-mapas) */}
       <TableCell>
         <span className="text-xs text-muted-foreground">
-          {isQuestoesMapas && material.micro ? material.micro : '-'}
+          {isQuestoesMapas && material.micro
+            ? (getMicroLabel(material.micro, material.macro || '') || '-')
+            : '-'}
         </span>
       </TableCell>
       
@@ -1037,6 +1042,7 @@ interface HubCardSectionProps {
   onView: (m: Material) => void;
   onStatusChange: (id: string, status: 'draft' | 'processing' | 'ready' | 'archived') => void;
   onDelete: (id: string) => void;
+  getMicroLabel: (microValue: string, macroValue: string) => string;
   defaultOpen?: boolean;
 }
 
@@ -1110,6 +1116,7 @@ const HubCardSection = memo(function HubCardSection({
                   onView={() => onView(m)}
                   onStatusChange={onStatusChange}
                   onDelete={onDelete}
+                  getMicroLabel={getMicroLabel}
                 />
               ))}
             </TableBody>
@@ -1140,6 +1147,11 @@ const GestaoMateriais = memo(function GestaoMateriais() {
 
   const { macros, getMicrosForSelect } = useTaxonomyForSelects();
   const microsForFilter = macroFilter && macroFilter !== 'all' ? getMicrosForSelect(macroFilter) : [];
+
+  // Converter micro value → label (NUNCA expor value se label não existir)
+  const getMicroLabel = useCallback((microValue: string, macroValue: string) => {
+    return convertMicroValueToLabel(microValue, macroValue, getMicrosForSelect);
+  }, [getMicrosForSelect]);
 
   // Reset filters when card changes
   const handleCardFilterChange = (value: string) => {
@@ -1513,6 +1525,7 @@ const GestaoMateriais = memo(function GestaoMateriais() {
                         onView={() => setViewingMaterial(m)}
                         onStatusChange={handleStatusChange}
                         onDelete={handleDelete}
+                        getMicroLabel={getMicroLabel}
                       />
                     ))}
                   </TableBody>
@@ -1529,6 +1542,7 @@ const GestaoMateriais = memo(function GestaoMateriais() {
                 onView={setViewingMaterial}
                 onStatusChange={handleStatusChange}
                 onDelete={handleDelete}
+                getMicroLabel={getMicroLabel}
                 defaultOpen={materialsByCard['sem_card']?.length === 0 && index === 0}
               />
             ))}
