@@ -481,36 +481,80 @@ function SubcategorySection({
   const { progressMap } = useModulesProgress(isOpen ? moduleIds : []);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
-          {/* 🎬 NETFLIX SLIM SUBCATEGORY HEADER */}
-          <div className="group relative flex items-center gap-3 px-4 py-3 cursor-pointer overflow-hidden bg-black/40 hover:bg-black/60 border-l-4 border-l-[#E50914] rounded-r-lg transition-all duration-200">
-            {/* Netflix-style left accent bar glow on hover */}
-            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#E50914] opacity-0 group-hover:opacity-100 blur-sm transition-opacity duration-300" />
-            
-            {/* Chevron first - Netflix style */}
-            <div className="relative z-10 text-[#E50914] transition-transform duration-200 group-hover:scale-110">
-              {isOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+          {/* 🎬 NETFLIX PREMIUM SUBCATEGORY BUTTON — Gradient Design */}
+          <button
+            type="button"
+            className={cn(
+              "group relative w-full flex items-center gap-4 px-5 py-4 cursor-pointer overflow-hidden",
+              "rounded-xl transition-all duration-300 transform-gpu",
+              // 🎨 GRADIENT BACKGROUND — Netflix Premium Dark Red
+              "bg-gradient-to-r from-[#1a0505]/90 via-[#0d0d0d]/95 to-[#1a0505]/90",
+              // 🔥 HOVER: Gradient shifts to brighter red
+              "hover:from-[#2d0a0a]/95 hover:via-[#1a0808]/98 hover:to-[#2d0a0a]/95",
+              // 📐 BORDER — Gradient border simulation with ring
+              "ring-1 ring-[#E50914]/40 hover:ring-[#E50914]/70",
+              // ✨ SHADOW — Cinematic glow
+              "shadow-lg shadow-[#E50914]/10 hover:shadow-xl hover:shadow-[#E50914]/25",
+              // 🚀 SCALE on hover
+              "hover:scale-[1.01] active:scale-[0.995]",
+              // STATE: Open
+              isOpen && "ring-[#E50914]/60 from-[#2d0a0a]/95 via-[#1a0808]/98 to-[#2d0a0a]/95 shadow-xl shadow-[#E50914]/20"
+            )}
+          >
+            {/* 🌟 Animated glow border overlay */}
+            <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#E50914]/0 via-[#E50914]/10 to-[#E50914]/0" />
             </div>
             
-            {/* Subcategory Title - Bold Netflix style */}
-            <span className="relative z-10 font-semibold text-base md:text-lg text-gray-200 group-hover:text-white flex-1 tracking-wide transition-colors duration-200">
+            {/* 🔴 LEFT ACCENT — Netflix Red Bar with glow */}
+            <div className="absolute left-0 top-2 bottom-2 w-1 rounded-full bg-gradient-to-b from-[#E50914] via-[#FF4B4B] to-[#E50914] shadow-lg shadow-[#E50914]/50" />
+            <div className="absolute left-0 top-2 bottom-2 w-1 rounded-full bg-[#E50914] blur-md opacity-60 group-hover:opacity-100 transition-opacity" />
+            
+            {/* 📁 FOLDER ICON — Gradient orb */}
+            <div className="relative z-10 flex-shrink-0 p-2.5 rounded-lg bg-gradient-to-br from-[#E50914]/30 to-[#E50914]/10 border border-[#E50914]/30 group-hover:from-[#E50914]/40 group-hover:to-[#E50914]/20 group-hover:border-[#E50914]/50 transition-all duration-300">
+              <FolderOpen className="h-5 w-5 text-[#FF6B6B] group-hover:text-[#FF8080] transition-colors" />
+            </div>
+            
+            {/* ▶️ CHEVRON — Smooth rotation */}
+            <div className={cn(
+              "relative z-10 text-[#E50914] transition-all duration-300",
+              "group-hover:text-[#FF4B4B]",
+              isOpen && "rotate-90"
+            )}>
+              <ChevronRight className="h-5 w-5" />
+            </div>
+            
+            {/* 📝 TITLE — Netflix bold typography */}
+            <span className="relative z-10 flex-1 text-left font-bold text-base md:text-lg text-gray-100 group-hover:text-white tracking-wide transition-colors duration-200 truncate">
               {subcategory || 'Geral'}
             </span>
             
-            {/* Minimal Stats - Netflix style */}
-            <div className="relative z-10 flex items-center gap-2 text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
-              <span className="font-medium">{modules.length}</span>
-              <span className="text-gray-500">•</span>
-              <span>{totalLessons} aulas</span>
+            {/* 📊 STATS BADGES — Netflix pill style */}
+            <div className="relative z-10 flex items-center gap-2 flex-shrink-0">
+              {/* Módulos count */}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-slate-800/80 to-slate-700/60 border border-slate-600/40 text-sm">
+                <Layers className="h-3.5 w-3.5 text-slate-400" />
+                <span className="font-bold text-white">{modules.length}</span>
+              </div>
+              
+              {/* Aulas count — Red accent */}
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#E50914]/25 to-[#E50914]/15 border border-[#E50914]/40 text-sm">
+                <PlayCircle className="h-3.5 w-3.5 text-[#E50914]" />
+                <span className="font-bold text-[#FF6B6B]">{totalLessons}</span>
+              </div>
             </div>
-          </div>
+            
+            {/* 🎭 Bottom highlight line */}
+            <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-[#E50914]/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </button>
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          {/* 🎬 NETFLIX MODULES LIST */}
-          <div className="mt-2 ml-4 border-l border-gray-800/50 pl-4 space-y-1">
+          {/* 🎬 NETFLIX MODULES LIST — Refined container */}
+          <div className="mt-3 ml-3 pl-4 border-l-2 border-gradient-to-b border-[#E50914]/20 space-y-2">
             <NetflixCarouselRow
               modules={modules}
               expandedModules={expandedModules}
