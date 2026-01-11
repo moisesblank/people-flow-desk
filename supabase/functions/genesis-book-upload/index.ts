@@ -219,7 +219,8 @@ serve(async (req: Request) => {
       }
 
       // ============================================
-      // CRIAR REGISTRO DO LIVRO (STATUS: draft)
+      // CRIAR REGISTRO DO LIVRO (STATUS: pending_upload)
+      // O livro só ficará "ready" após a fase complete confirmar o arquivo no storage
       // ============================================
       const { error: bookError } = await supabase
         .from("web_books")
@@ -236,10 +237,10 @@ serve(async (req: Request) => {
           original_filename: fileName,
           original_size_bytes: fileSize,
           original_mime_type: mimeType,
-          // DOGMA: Livro importado = PUBLICADO imediatamente (sem rascunho/fila)
-          status: "ready",
-          status_message: "Publicado",
-          is_published: true,
+          // FIX: Status pendente até upload ser confirmado
+          status: "pending_upload",
+          status_message: "Aguardando upload do arquivo...",
+          is_published: false, // Só publica após confirmação
           created_by: user.id,
           slug: `${slug}-${bookId.substring(0, 8)}`,
         });
@@ -323,12 +324,14 @@ serve(async (req: Request) => {
 
       const jobId = crypto.randomUUID();
 
-      // Atualizar status do livro para processamento
+      // FIX: Atualizar status para READY (arquivo confirmado no storage) + PUBLICAR
+      // Não cria job de processamento pois o PDF está pronto para uso direto
       const { error: updateError } = await supabase
         .from("web_books")
         .update({
-          status: "processing",
-          status_message: "Processando páginas...",
+          status: "ready",
+          status_message: "Publicado",
+          is_published: true,
           job_id: jobId,
           original_checksum: checksum || null,
         })
