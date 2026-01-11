@@ -58,6 +58,8 @@ export function SimuladoPlayer({
   onExit,
   forcedMode = null,
 }: SimuladoPlayerProps) {
+  console.log('[SimuladoPlayer] MOUNT - simuladoId:', simuladoId, 'forcedMode:', forcedMode);
+  
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -218,31 +220,45 @@ export function SimuladoPlayer({
 
   // Handler: Iniciar tentativa (COM PROTEÇÃO DE LOCK)
   const handleStart = useCallback(async () => {
-    if (!simulado) return;
+    console.log('[SimuladoPlayer handleStart] Called, simulado:', simulado?.title, 'effectiveHardMode:', effectiveHardMode);
+    
+    if (!simulado) {
+      console.error('[SimuladoPlayer handleStart] ABORT: simulado is null');
+      return;
+    }
     
     // Hard Mode (efetivo) precisa de consentimento
     if (effectiveHardMode && !showHardModeConsent) {
+      console.log('[SimuladoPlayer handleStart] Showing HardMode consent');
       setShowHardModeConsent(true);
       return;
     }
 
     // Proteger contra duplo clique
+    console.log('[SimuladoPlayer handleStart] Starting attempt via withStartLock');
     await withStartLock(async () => {
       setIsStarting(true);
       try {
+        console.log('[SimuladoPlayer handleStart] Calling startAttempt RPC...');
         const success = await startAttempt(simuladoId);
+        console.log('[SimuladoPlayer handleStart] startAttempt result:', success);
+        
         if (success) {
           logger.logStart(simuladoId, false);
           setShowHardModeConsent(false);
           
           // Se hard mode efetivo com câmera, solicitar
           if (effectiveHardMode && simulado.requires_camera) {
+            console.log('[SimuladoPlayer handleStart] Requesting camera...');
             await antiCheat.camera.requestCamera();
           }
           
+          console.log('[SimuladoPlayer handleStart] Calling refresh...');
           refresh();
+          console.log('[SimuladoPlayer handleStart] SUCCESS - attempt started');
         }
       } catch (error) {
+        console.error('[SimuladoPlayer handleStart] ERROR:', error);
         logger.logError("START", error instanceof Error ? error : String(error));
       } finally {
         setIsStarting(false);
@@ -374,6 +390,25 @@ export function SimuladoPlayer({
     );
   }
 
+  // P0 FIX: Simulado sem questões = erro amigável (não crashar)
+  if (!simulado.question_ids || simulado.question_ids.length === 0) {
+    console.error('[SimuladoPlayer] ABORT: Simulado has no questions', simulado.id);
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-md">
+          <p className="text-amber-500 text-lg font-bold mb-2">⚠️ Simulado Incompleto</p>
+          <p className="text-muted-foreground mb-4">
+            Este simulado ainda não possui questões cadastradas. 
+            Entre em contato com a coordenação.
+          </p>
+          <button onClick={handleExit} className="text-primary underline">
+            Voltar aos simulados
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Hard Mode Consent Screen
   if (showHardModeConsent && simulado.is_hard_mode) {
     return (
@@ -431,6 +466,17 @@ export function SimuladoPlayer({
       </AlertDialogContent>
     </AlertDialog>
   );
+
+  // DEBUG: Estado atual para troubleshooting
+  console.log('[SimuladoPlayer] RENDER STATE:', {
+    currentState,
+    simuladoId,
+    attemptId: attemptState.attemptId,
+    isStarting,
+    isFinishing,
+    effectiveHardMode,
+    hasQuestions: questions.length,
+  });
 
   // Renderizar tela baseada no estado
   switch (currentState) {
