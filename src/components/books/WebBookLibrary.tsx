@@ -1252,107 +1252,72 @@ const WebBookLibrary = memo(function WebBookLibrary({
             </div>
           </DndContext>
         ) : (
-          // 📚 NORMAL MODE — NETFLIX STYLE ROWS
+          // 📚 NORMAL MODE — NETFLIX STYLE ROWS (SEM DUPLICAÇÃO DE HEADERS)
           <div className="space-y-8">
-            {/* 🎬 NETFLIX SECTION TITLE — "Química Geral" */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 px-2">
-                <span className="text-lg md:text-xl font-bold text-white">Química Geral</span>
-                <span className="text-[#E50914] text-lg">⚗️</span>
-                <div className="h-px flex-1 bg-gradient-to-r from-amber-500/30 to-transparent" />
-              </div>
-              <BookSection
-                title="Química Geral"
-                icon={<span className="text-lg">⚗️</span>}
-                books={booksByCategory.quimica_geral}
-                onBookSelect={onBookSelect}
-                isHighEnd={isHighEnd}
-                accentColor="amber"
-                defaultOpen={!targetBookId}
-                targetBookId={targetBookId}
-                categoryKey="quimica_geral"
-              />
-            </div>
+            {/* 🎬 Química Geral */}
+            <BookSection
+              title="Química Geral"
+              icon={<span className="text-lg">⚗️</span>}
+              books={booksByCategory.quimica_geral}
+              onBookSelect={onBookSelect}
+              isHighEnd={isHighEnd}
+              accentColor="amber"
+              defaultOpen={!targetBookId}
+              targetBookId={targetBookId}
+              categoryKey="quimica_geral"
+            />
 
-            {/* 🎬 NETFLIX SECTION TITLE — "Química Orgânica" */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 px-2">
-                <span className="text-lg md:text-xl font-bold text-white">Química Orgânica</span>
-                <span className="text-purple-400 text-lg">🧪</span>
-                <div className="h-px flex-1 bg-gradient-to-r from-purple-500/30 to-transparent" />
-              </div>
-              <BookSection
-                title="Química Orgânica"
-                icon={<span className="text-lg">🧪</span>}
-                books={booksByCategory.quimica_organica}
-                onBookSelect={onBookSelect}
-                isHighEnd={isHighEnd}
-                accentColor="purple"
-                defaultOpen={false}
-                targetBookId={targetBookId}
-                categoryKey="quimica_organica"
-              />
-            </div>
+            {/* 🎬 Química Orgânica */}
+            <BookSection
+              title="Química Orgânica"
+              icon={<span className="text-lg">🧪</span>}
+              books={booksByCategory.quimica_organica}
+              onBookSelect={onBookSelect}
+              isHighEnd={isHighEnd}
+              accentColor="purple"
+              defaultOpen={false}
+              targetBookId={targetBookId}
+              categoryKey="quimica_organica"
+            />
 
-            {/* 🎬 NETFLIX SECTION TITLE — "Físico-Química" */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 px-2">
-                <span className="text-lg md:text-xl font-bold text-white">Físico-Química</span>
-                <span className="text-cyan-400 text-lg">📊</span>
-                <div className="h-px flex-1 bg-gradient-to-r from-cyan-500/30 to-transparent" />
-              </div>
-              <BookSection
-                title="Físico-Química"
-                icon={<span className="text-lg">📊</span>}
-                books={booksByCategory.fisico_quimica}
-                onBookSelect={onBookSelect}
-                isHighEnd={isHighEnd}
-                accentColor="cyan"
-                defaultOpen={false}
-                targetBookId={targetBookId}
-                categoryKey="fisico_quimica"
-              />
-            </div>
+            {/* 🎬 Físico-Química */}
+            <BookSection
+              title="Físico-Química"
+              icon={<span className="text-lg">📊</span>}
+              books={booksByCategory.fisico_quimica}
+              onBookSelect={onBookSelect}
+              isHighEnd={isHighEnd}
+              accentColor="cyan"
+              defaultOpen={false}
+              targetBookId={targetBookId}
+              categoryKey="fisico_quimica"
+            />
 
-            {/* 🎬 NETFLIX SECTION TITLE — "Revisão Cíclica" */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 px-2">
-                <span className="text-lg md:text-xl font-bold text-white">Revisão Cíclica</span>
-                <span className="text-emerald-400 text-lg">🔄</span>
-                <div className="h-px flex-1 bg-gradient-to-r from-emerald-500/30 to-transparent" />
-              </div>
-              <BookSection
-                title="Revisão Cíclica"
-                icon={<span className="text-lg">🔄</span>}
-                books={booksByCategory.revisao_ciclica}
-                onBookSelect={onBookSelect}
-                isHighEnd={isHighEnd}
-                accentColor="emerald"
-                defaultOpen={false}
-                targetBookId={targetBookId}
-                categoryKey="revisao_ciclica"
-              />
-            </div>
+            {/* 🎬 Revisão Cíclica */}
+            <BookSection
+              title="Revisão Cíclica"
+              icon={<span className="text-lg">🔄</span>}
+              books={booksByCategory.revisao_ciclica}
+              onBookSelect={onBookSelect}
+              isHighEnd={isHighEnd}
+              accentColor="emerald"
+              defaultOpen={false}
+              targetBookId={targetBookId}
+              categoryKey="revisao_ciclica"
+            />
 
-            {/* 🎬 NETFLIX SECTION TITLE — "Previsão Final" */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 px-2">
-                <span className="text-lg md:text-xl font-bold text-white">Previsão Final</span>
-                <span className="text-blue-400 text-lg">🎯</span>
-                <div className="h-px flex-1 bg-gradient-to-r from-blue-500/30 to-transparent" />
-              </div>
-              <BookSection
-                title="Previsão Final"
-                icon={<span className="text-lg">🎯</span>}
-                books={booksByCategory.previsao_final}
-                onBookSelect={onBookSelect}
-                isHighEnd={isHighEnd}
-                accentColor="blue"
-                defaultOpen={false}
-                targetBookId={targetBookId}
-                categoryKey="previsao_final"
-              />
-            </div>
+            {/* 🎬 Previsão Final */}
+            <BookSection
+              title="Previsão Final"
+              icon={<span className="text-lg">🎯</span>}
+              books={booksByCategory.previsao_final}
+              onBookSelect={onBookSelect}
+              isHighEnd={isHighEnd}
+              accentColor="blue"
+              defaultOpen={false}
+              targetBookId={targetBookId}
+              categoryKey="previsao_final"
+            />
           </div>
         )}
 
