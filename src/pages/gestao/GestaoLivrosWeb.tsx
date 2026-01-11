@@ -1127,6 +1127,7 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                       />
                     </TableHead>
                     <TableHead className="w-12"></TableHead>
+                    <TableHead className="w-16 text-center">Pos.</TableHead>
                     <TableHead>Livro</TableHead>
                     <TableHead>Categoria</TableHead>
                     <TableHead>Status</TableHead>

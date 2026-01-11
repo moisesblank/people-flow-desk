@@ -19,7 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { InlineEditableCell } from './index';
+import { InlineEditableCell, InlinePositionEditor } from './index';
 
 // ============================================
 // 🖼️ CAPAS PERMANENTES DOS LIVROS (por CATEGORIA)
@@ -175,6 +175,17 @@ export const SortableBookRow = memo(function SortableBookRow({
         >
           <GripVertical className="w-4 h-4 text-muted-foreground" />
         </button>
+      </TableCell>
+
+      {/* COLUNA POSIÇÃO — Editável inline */}
+      <TableCell className="w-16 text-center">
+        <InlinePositionEditor
+          position={bookPosition}
+          coverIndex={coverIndex}
+          onSave={async (newPosition) => {
+            await onInlineUpdate(book.id, 'position', newPosition);
+          }}
+        />
       </TableCell>
 
       {/* COLUNA LIVRO — Título e Subtítulo Editáveis */}
