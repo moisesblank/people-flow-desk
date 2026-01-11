@@ -199,6 +199,7 @@ const ModeCard = memo(function ModeCard({
         <Button
           onClick={(e) => {
             e.stopPropagation();
+            console.log('[ModeCard Button] Direct click, mode:', mode);
             onClick();
           }}
           className={cn(
@@ -294,14 +295,20 @@ export const SimuladoModeSelector = memo(function SimuladoModeSelector({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <ModeCard
               mode="treino"
-              onClick={() => onSelectMode('treino')}
+              onClick={() => {
+                console.log('[ModeCard] Treino clicked, calling onSelectMode');
+                onSelectMode('treino');
+              }}
               durationMinutes={durationMinutes}
               questionCount={questionCount}
               isHighEnd={isHighEnd}
             />
             <ModeCard
               mode="hard"
-              onClick={() => onSelectMode('hard')}
+              onClick={() => {
+                console.log('[ModeCard] Hard clicked, calling onSelectMode');
+                onSelectMode('hard');
+              }}
               durationMinutes={durationMinutes}
               questionCount={questionCount}
               requiresCamera={requiresCamera}
