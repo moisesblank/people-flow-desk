@@ -105,7 +105,8 @@
   border-radius: 1.25rem;
   backdrop-filter: blur(8px);
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  contain: layout style paint;
 }
 
 .profile-stat-orb-2300:hover {
@@ -114,6 +115,16 @@
   box-shadow: 
     0 8px 32px hsl(var(--primary) / 0.15),
     inset 0 1px 0 hsl(var(--foreground) / 0.05);
+}
+
+/* Static mode - no backdrop-filter */
+.profile-stat-orb-static {
+  backdrop-filter: none !important;
+  transition: none !important;
+}
+
+.profile-stat-orb-static:hover {
+  transform: none !important;
 }
 
 .profile-stat-orb-2300::before {
@@ -135,7 +146,7 @@
   position: absolute;
   inset: 0;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.2s ease;
   pointer-events: none;
 }
 
@@ -193,12 +204,22 @@
   border: 1px solid hsl(var(--border) / 0.5);
   border-radius: 1rem;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  contain: layout style paint;
 }
 
 .profile-achievement-card-2300:hover {
   transform: scale(1.02);
   border-color: hsl(var(--primary) / 0.5);
+}
+
+/* Static mode for low-end */
+.profile-achievement-card-static {
+  transition: none !important;
+}
+
+.profile-achievement-card-static:hover {
+  transform: none !important;
 }
 
 .profile-achievement-card-2300::before {
@@ -548,4 +569,41 @@
 @keyframes profile-holo-shift {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
+}
+
+/* === LEVEL ORB GLOW - HIGH-END ONLY === */
+.profile-level-orb-glow {
+  animation: profile-level-pulse 3s ease-in-out infinite;
+  will-change: box-shadow;
+}
+
+@keyframes profile-level-pulse {
+  0%, 100% { box-shadow: 0 0 20px hsl(var(--primary) / 0.3); }
+  50% { box-shadow: 0 0 40px hsl(var(--primary) / 0.5); }
+}
+
+/* === AVATAR RING STATIC MODE === */
+.profile-avatar-ring-static::before,
+.profile-avatar-ring-static::after {
+  animation: none !important;
+}
+
+/* === PERFORMANCE OPTIMIZATIONS === */
+@media (prefers-reduced-motion: reduce) {
+  .profile-hero-scanlines,
+  .profile-avatar-ring-2300,
+  .profile-avatar-ring-2300::before,
+  .profile-avatar-ring-2300::after,
+  .profile-xp-bar-fill-2300::after,
+  .profile-streak-badge-2300,
+  .profile-study-card-2300::before,
+  .profile-holo-text-2300,
+  .profile-level-orb-glow {
+    animation: none !important;
+  }
+  
+  .profile-stat-orb-2300:hover,
+  .profile-achievement-card-2300:hover {
+    transform: none !important;
+  }
 }
