@@ -1,13 +1,10 @@
 // ============================================
 // 🏆 PANTEÃO DOS CAMPEÕES - RANKING ULTRAMAN 🏆
 // Arena Épica de Competição Intelectual
-// Design Futurista + Gamificação Extrema
-// Lei I: Performance | Lei IV: Glória Eterna
+// PERFORMANCE OPTIMIZED - NO ANIMATIONS
 // ============================================
 
-import { useState, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
+import { useState, useMemo } from 'react';
 import { useGlobalRanking, useWeeklyRanking, useGamification } from '@/hooks/useGamification';
 import { useSimuladoRanking } from '@/hooks/useSimuladoRanking';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,11 +17,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { 
-  Trophy, Medal, Award, Flame, Crown, Star,
+  Trophy, Medal, Award, Flame, Crown,
   ChevronLeft, TrendingUp, Zap, Target, Users,
-  Sword, Shield, Sparkles, Brain, Timer,
-  ChevronUp, ChevronDown, Minus, Activity,
-  Rocket, Gem, CircleDot, Hexagon
+  Sword, Sparkles,
+  ChevronUp, ChevronDown, Minus, Activity
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -110,9 +106,8 @@ const RankChangeIndicator = ({ current, previous }: { current: number; previous?
 export default function RankingPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ArenaTab>('xp');
-  const [showParticles, setShowParticles] = useState(true);
   const { user } = useAuth();
-  const { gamification, levelInfo, userRank } = useGamification();
+  const { gamification, levelInfo } = useGamification();
 
   const { data: globalRanking, isLoading: isLoadingGlobal } = useGlobalRanking();
   const { data: weeklyRanking, isLoading: isLoadingWeekly } = useWeeklyRanking();
@@ -153,11 +148,11 @@ export default function RankingPage() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Background Effects */}
+      {/* Background Effects (static) */}
       <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-purple-500/5" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
       
-      {/* Animated Grid */}
+      {/* Static Grid */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
           backgroundImage: 'linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)',
@@ -165,40 +160,9 @@ export default function RankingPage() {
         }} />
       </div>
 
-      {/* Floating Particles */}
-      {showParticles && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {[...Array(20)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 bg-primary/30 rounded-full"
-              initial={{ 
-                x: Math.random() * window.innerWidth, 
-                y: window.innerHeight + 10,
-                opacity: 0 
-              }}
-              animate={{ 
-                y: -10,
-                opacity: [0, 1, 0]
-              }}
-              transition={{ 
-                duration: 5 + Math.random() * 5,
-                repeat: Infinity,
-                delay: Math.random() * 5,
-                ease: 'linear'
-              }}
-            />
-          ))}
-        </div>
-      )}
-
       <div className="relative z-10 p-4 md:p-8 max-w-6xl mx-auto space-y-6">
         {/* Epic Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center space-y-4"
-        >
+        <div className="text-center space-y-4">
           <Button 
             variant="ghost" 
             onClick={() => navigate('/alunos/dashboard')}
@@ -208,25 +172,14 @@ export default function RankingPage() {
             Voltar
           </Button>
 
-          <motion.div
-            animate={{ 
-              scale: [1, 1.02, 1],
-              rotate: [0, 1, -1, 0]
-            }}
-            transition={{ duration: 4, repeat: Infinity }}
-            className="inline-block"
-          >
+          <div className="inline-block">
             <div className="relative">
               <Trophy className="w-16 h-16 md:w-20 md:h-20 text-yellow-500 mx-auto drop-shadow-lg" />
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                className="absolute inset-0 flex items-center justify-center"
-              >
+              <div className="absolute inset-0 flex items-center justify-center">
                 <div className="w-24 h-24 md:w-28 md:h-28 border-2 border-dashed border-yellow-500/30 rounded-full" />
-              </motion.div>
+              </div>
             </div>
-          </motion.div>
+          </div>
 
           <h1 className="text-3xl md:text-5xl font-black bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 bg-clip-text text-transparent">
             PANTEÃO DOS CAMPEÕES
@@ -234,226 +187,190 @@ export default function RankingPage() {
           <p className="text-muted-foreground text-lg">
             ⚔️ Arena onde lendas são forjadas ⚔️
           </p>
-        </motion.div>
+        </div>
 
         {/* User Hero Card */}
         {gamification && currentUserEntry && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Card className={cn(
-              "relative overflow-hidden border-2",
-              currentUserEntry.rank <= 3 
-                ? "border-yellow-500/50 bg-gradient-to-r from-yellow-500/10 via-amber-500/5 to-orange-500/10" 
-                : "border-primary/30 bg-gradient-to-r from-primary/10 via-purple-500/5 to-pink-500/10"
-            )}>
-              {/* Glow Effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-purple-500/20 blur-xl" />
-              
-              <CardContent className="relative p-6">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                  {/* Avatar & Info */}
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-                        className="absolute -inset-2 bg-gradient-to-r from-primary via-purple-500 to-pink-500 rounded-full opacity-50 blur-sm"
-                      />
-                      <Avatar className="w-20 h-20 border-4 border-background relative">
-                        <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600 text-white text-2xl font-bold">
-                          {user?.email?.[0]?.toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <Badge className="absolute -bottom-2 -right-2 bg-gradient-to-r from-primary to-purple-600 text-white px-3 py-1">
-                        Lv {levelInfo.level}
-                      </Badge>
-                    </div>
-                    <div>
-                      <p className={cn("font-black text-xl", getEpicTitle(currentUserEntry.rank).color)}>
-                        {getEpicTitle(currentUserEntry.rank).title}
-                      </p>
-                      <p className="text-muted-foreground">{levelInfo.title}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Flame className="w-4 h-4 text-orange-500" />
-                        <span className="text-sm font-medium">{gamification.current_streak} dias de streak</span>
-                      </div>
-                    </div>
+          <Card className={cn(
+            "relative overflow-hidden border-2",
+            currentUserEntry.rank <= 3 
+              ? "border-yellow-500/50 bg-gradient-to-r from-yellow-500/10 via-amber-500/5 to-orange-500/10" 
+              : "border-primary/30 bg-gradient-to-r from-primary/10 via-purple-500/5 to-pink-500/10"
+          )}>
+            {/* Glow Effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-transparent to-purple-500/20 blur-xl" />
+            
+            <CardContent className="relative p-6">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                {/* Avatar & Info */}
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="absolute -inset-2 bg-gradient-to-r from-primary via-purple-500 to-pink-500 rounded-full opacity-50 blur-sm" />
+                    <Avatar className="w-20 h-20 border-4 border-background relative">
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600 text-white text-2xl font-bold">
+                        {user?.email?.[0]?.toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Badge className="absolute -bottom-2 -right-2 bg-gradient-to-r from-primary to-purple-600 text-white px-3 py-1">
+                      Lv {levelInfo.level}
+                    </Badge>
                   </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-6 text-center">
-                    <div>
-                      <div className="flex items-center justify-center gap-1 mb-1">
-                        <RankChangeIndicator current={currentUserEntry.rank} previous={'previousRank' in currentUserEntry ? currentUserEntry.previousRank : undefined} />
-                      </div>
-                      <div className={cn(
-                        "text-4xl font-black",
-                        currentUserEntry.rank <= 3 ? "text-yellow-400" : "text-primary"
-                      )}>
-                        #{currentUserEntry.rank}
-                      </div>
-                      <p className="text-xs text-muted-foreground">POSIÇÃO</p>
-                    </div>
-                    <div>
-                      <Zap className="w-5 h-5 text-amber-500 mx-auto mb-1" />
-                      <div className="text-3xl font-bold text-amber-500">
-                        {gamification.total_xp.toLocaleString()}
-                      </div>
-                      <p className="text-xs text-muted-foreground">XP TOTAL</p>
-                    </div>
-                    <div>
-                      <Target className="w-5 h-5 text-purple-500 mx-auto mb-1" />
-                      <div className="text-3xl font-bold text-purple-500">
-                        {'simuladoScore' in currentUserEntry ? currentUserEntry.simuladoScore?.toLocaleString() : 0}
-                      </div>
-                      <p className="text-xs text-muted-foreground">PTS SIMULADO</p>
+                  <div>
+                    <p className={cn("font-black text-xl", getEpicTitle(currentUserEntry.rank).color)}>
+                      {getEpicTitle(currentUserEntry.rank).title}
+                    </p>
+                    <p className="text-muted-foreground">{levelInfo.title}</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Flame className="w-4 h-4 text-orange-500" />
+                      <span className="text-sm font-medium">{gamification.current_streak} dias de streak</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Progress to next rank */}
-                {currentUserEntry.rank > 1 && ranking && ranking[currentUserEntry.rank - 2] && (
-                  <div className="mt-4 pt-4 border-t border-border/50">
-                    <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-muted-foreground">Para ultrapassar #{currentUserEntry.rank - 1}</span>
-                      <span className="font-bold text-primary">
-                        +{(ranking[currentUserEntry.rank - 2].xp - currentUserEntry.xp).toLocaleString()} XP
-                      </span>
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-6 text-center">
+                  <div>
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <RankChangeIndicator current={currentUserEntry.rank} previous={'previousRank' in currentUserEntry ? currentUserEntry.previousRank : undefined} />
                     </div>
-                    <Progress 
-                      value={(currentUserEntry.xp / ranking[currentUserEntry.rank - 2].xp) * 100} 
-                      className="h-2" 
-                    />
+                    <div className={cn(
+                      "text-4xl font-black",
+                      currentUserEntry.rank <= 3 ? "text-yellow-400" : "text-primary"
+                    )}>
+                      #{currentUserEntry.rank}
+                    </div>
+                    <p className="text-xs text-muted-foreground">POSIÇÃO</p>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
+                  <div>
+                    <Zap className="w-5 h-5 text-amber-500 mx-auto mb-1" />
+                    <div className="text-3xl font-bold text-amber-500">
+                      {gamification.total_xp.toLocaleString()}
+                    </div>
+                    <p className="text-xs text-muted-foreground">XP TOTAL</p>
+                  </div>
+                  <div>
+                    <Target className="w-5 h-5 text-purple-500 mx-auto mb-1" />
+                    <div className="text-3xl font-bold text-purple-500">
+                      {'simuladoScore' in currentUserEntry ? currentUserEntry.simuladoScore?.toLocaleString() : 0}
+                    </div>
+                    <p className="text-xs text-muted-foreground">PTS SIMULADO</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress to next rank */}
+              {currentUserEntry.rank > 1 && ranking && ranking[currentUserEntry.rank - 2] && (
+                <div className="mt-4 pt-4 border-t border-border/50">
+                  <div className="flex items-center justify-between text-sm mb-2">
+                    <span className="text-muted-foreground">Para ultrapassar #{currentUserEntry.rank - 1}</span>
+                    <span className="font-bold text-primary">
+                      +{(ranking[currentUserEntry.rank - 2].xp - currentUserEntry.xp).toLocaleString()} XP
+                    </span>
+                  </div>
+                  <Progress 
+                    value={(currentUserEntry.xp / ranking[currentUserEntry.rank - 2].xp) * 100} 
+                    className="h-2" 
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
 
         {/* Arena Tabs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-2"
-        >
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {ARENA_TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
-              <motion.button
+              <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
                 className={cn(
-                  'relative p-4 rounded-xl transition-all duration-300 overflow-hidden',
+                  'relative p-4 rounded-xl transition-all duration-150 overflow-hidden',
                   isActive
                     ? 'bg-gradient-to-br ' + tab.color + ' text-white shadow-lg'
                     : 'bg-card border border-border hover:border-primary/50'
                 )}
               >
                 {isActive && (
-                  <motion.div
-                    layoutId="activeTabGlow"
-                    className="absolute inset-0 bg-white/10"
-                  />
+                  <div className="absolute inset-0 bg-white/10" />
                 )}
                 <Icon className={cn('w-6 h-6 mx-auto mb-2', !isActive && 'text-muted-foreground')} />
                 <p className={cn('font-bold text-sm', !isActive && 'text-foreground')}>{tab.label}</p>
                 <p className={cn('text-xs mt-1 opacity-80', !isActive && 'text-muted-foreground')}>
                   {tab.description}
                 </p>
-              </motion.button>
+              </button>
             );
           })}
-        </motion.div>
+        </div>
 
         {/* Epic Podium */}
-        <AnimatePresence mode="wait">
-          {!isLoading && podium && (
-            <motion.div
-              key={activeTab + '-podium'}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.5 }}
-              className="relative"
-            >
-              {/* Podium Glow */}
-              <div className="absolute inset-0 flex justify-center">
-                <div className="w-96 h-40 bg-gradient-to-t from-yellow-500/20 via-amber-500/10 to-transparent blur-3xl" />
-              </div>
+        {!isLoading && podium && (
+          <div className="relative">
+            {/* Podium Glow */}
+            <div className="absolute inset-0 flex justify-center">
+              <div className="w-96 h-40 bg-gradient-to-t from-yellow-500/20 via-amber-500/10 to-transparent blur-3xl" />
+            </div>
 
-              <div className="grid grid-cols-3 gap-2 md:gap-4 items-end relative z-10">
-                {/* 2nd Place */}
-                <PodiumHero entry={podium.second} position={2} activeTab={activeTab} />
-                {/* 1st Place */}
-                <PodiumHero entry={podium.first} position={1} activeTab={activeTab} />
-                {/* 3rd Place */}
-                <PodiumHero entry={podium.third} position={3} activeTab={activeTab} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            <div className="grid grid-cols-3 gap-2 md:gap-4 items-end relative z-10">
+              {/* 2nd Place */}
+              <PodiumHero entry={podium.second} position={2} activeTab={activeTab} />
+              {/* 1st Place */}
+              <PodiumHero entry={podium.first} position={1} activeTab={activeTab} />
+              {/* 3rd Place */}
+              <PodiumHero entry={podium.third} position={3} activeTab={activeTab} />
+            </div>
+          </div>
+        )}
 
         {/* Full Ranking List */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Card className="border-2 border-border/50 bg-card/80 backdrop-blur-sm">
-            <CardHeader className="border-b border-border/50">
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" />
-                  <span>Classificação Completa</span>
+        <Card className="border-2 border-border/50 bg-card/80 backdrop-blur-sm">
+          <CardHeader className="border-b border-border/50">
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                <span>Classificação Completa</span>
+              </div>
+              <Badge variant="outline" className="font-mono">
+                {ranking?.length || 0} guerreiros
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <ScrollArea className="h-[500px]">
+              {isLoading ? (
+                <div className="space-y-2 p-4">
+                  {Array.from({ length: 10 }).map((_, i) => (
+                    <Skeleton key={i} className="h-20 w-full rounded-lg" />
+                  ))}
                 </div>
-                <Badge variant="outline" className="font-mono">
-                  {ranking?.length || 0} guerreiros
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <ScrollArea className="h-[500px]">
-                {isLoading ? (
-                  <div className="space-y-2 p-4">
-                    {Array.from({ length: 10 }).map((_, i) => (
-                      <Skeleton key={i} className="h-20 w-full rounded-lg" />
-                    ))}
-                  </div>
-                ) : ranking && ranking.length > 0 ? (
-                  <div className="divide-y divide-border/50">
-                    {ranking.map((entry, index) => (
-                      <RankingRow 
-                        key={entry.id} 
-                        entry={entry} 
-                        isCurrentUser={entry.id === user?.id}
-                        activeTab={activeTab}
-                        animationDelay={index * 0.02}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-12 text-center">
-                    <Sword className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
-                    <p className="text-lg font-medium text-muted-foreground">
-                      A arena está vazia...
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Seja o primeiro a conquistar sua posição!
-                    </p>
-                  </div>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </motion.div>
+              ) : ranking && ranking.length > 0 ? (
+                <div className="divide-y divide-border/50">
+                  {ranking.map((entry) => (
+                    <RankingRow 
+                      key={entry.id} 
+                      entry={entry} 
+                      isCurrentUser={entry.id === user?.id}
+                      activeTab={activeTab}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="p-12 text-center">
+                  <Sword className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
+                  <p className="text-lg font-medium text-muted-foreground">
+                    A arena está vazia...
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Seja o primeiro a conquistar sua posição!
+                  </p>
+                </div>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -511,19 +428,11 @@ function PodiumHero({
   }, [activeTab, entry]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 50, scale: 0.8 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: position === 1 ? 0 : position === 2 ? 0.1 : 0.2, type: 'spring' }}
-      className="flex flex-col items-center"
-    >
+    <div className="flex flex-col items-center">
       {/* Champion Icon */}
-      <motion.div
-        animate={{ y: [0, -5, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
+      <div>
         {config.icon}
-      </motion.div>
+      </div>
 
       {/* Avatar */}
       <div className={cn('relative mt-2', config.glow)}>
@@ -534,11 +443,7 @@ function PodiumHero({
           </AvatarFallback>
         </Avatar>
         {position === 1 && (
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-            className="absolute -inset-3 border-2 border-dashed border-yellow-400/30 rounded-full"
-          />
+          <div className="absolute -inset-3 border-2 border-dashed border-yellow-400/30 rounded-full" />
         )}
       </div>
 
@@ -563,7 +468,7 @@ function PodiumHero({
       )}>
         <span className="drop-shadow-lg">{position}</span>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -571,13 +476,11 @@ function PodiumHero({
 function RankingRow({ 
   entry, 
   isCurrentUser, 
-  activeTab,
-  animationDelay 
+  activeTab
 }: { 
   entry: RankingEntry; 
   isCurrentUser: boolean; 
   activeTab: ArenaTab;
-  animationDelay: number;
 }) {
   const epicTitle = getEpicTitle(entry.rank);
 
@@ -593,15 +496,10 @@ function RankingRow({
   }, [activeTab, entry]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: animationDelay }}
-      className={cn(
-        'flex items-center gap-4 p-4 transition-all hover:bg-muted/50',
-        isCurrentUser && 'bg-primary/5 border-l-4 border-primary'
-      )}
-    >
+    <div className={cn(
+      'flex items-center gap-4 p-4 transition-colors hover:bg-muted/50',
+      isCurrentUser && 'bg-primary/5 border-l-4 border-primary'
+    )}>
       {/* Rank */}
       <div className={cn(
         'w-12 h-12 rounded-xl flex flex-col items-center justify-center font-bold',
@@ -656,6 +554,6 @@ function RankingRow({
         </div>
         <p className="text-xs text-muted-foreground uppercase">{displayValue.label}</p>
       </div>
-    </motion.div>
+    </div>
   );
 }

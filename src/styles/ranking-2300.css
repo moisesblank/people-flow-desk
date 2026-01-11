@@ -1,7 +1,7 @@
 /* ============================================
    🏆 RANKING 2300 - PANTEÃO DOS CAMPEÕES
    Year 2300 Ultra-Futuristic Ranking Experience
-   Marvel/Iron Man HUD Cinematic Design
+   PERFORMANCE OPTIMIZED - NO ANIMATIONS
    ============================================ */
 
 /* ============================================
@@ -26,13 +26,13 @@
     inset 0 -1px 0 hsl(43 80% 50% / 0.1);
 }
 
-/* Animated Border Glow */
+/* Static Border Glow (no animation) */
 .ranking-arena-2300::before {
   content: '';
   position: absolute;
   inset: -2px;
   border-radius: 1.625rem;
-  background: conic-gradient(from 0deg,
+  background: conic-gradient(from 45deg,
     hsl(43 80% 50% / 0) 0%,
     hsl(43 80% 60% / 0.6) 10%,
     hsl(43 80% 50% / 0) 20%,
@@ -44,16 +44,10 @@
     hsl(43 80% 50% / 0) 100%
   );
   z-index: -1;
-  animation: ranking-border-rotate 8s linear infinite;
   filter: blur(4px);
 }
 
-@keyframes ranking-border-rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Top Golden Line */
+/* Top Golden Line (static) */
 .ranking-arena-2300::after {
   content: '';
   position: absolute;
@@ -70,12 +64,6 @@
     hsl(43 80% 50% / 0.6) 85%,
     transparent 100%
   );
-  animation: ranking-top-glow 3s ease-in-out infinite;
-}
-
-@keyframes ranking-top-glow {
-  0%, 100% { opacity: 0.8; filter: brightness(1) blur(0); }
-  50% { opacity: 1; filter: brightness(1.5) blur(1px); }
 }
 
 /* ============================================
@@ -108,14 +96,9 @@
     0 0 40px hsl(43 80% 50% / 0.5),
     0 8px 32px hsl(43 80% 50% / 0.3),
     inset 0 2px 4px hsl(0 0% 100% / 0.3);
-  animation: trophy-pulse 4s ease-in-out infinite;
 }
 
-@keyframes trophy-pulse {
-  0%, 100% { box-shadow: 0 0 40px hsl(43 80% 50% / 0.5), 0 8px 32px hsl(43 80% 50% / 0.3), inset 0 2px 4px hsl(0 0% 100% / 0.3); }
-  50% { box-shadow: 0 0 60px hsl(43 80% 50% / 0.7), 0 12px 48px hsl(43 80% 50% / 0.5), inset 0 2px 4px hsl(0 0% 100% / 0.4); }
-}
-
+/* Static ring (no animation) */
 .ranking-header-2300 .trophy-icon::before {
   content: '';
   position: absolute;
@@ -128,13 +111,7 @@
     hsl(43 80% 70% / 0.5) 75%,
     hsl(43 80% 50% / 0) 100%
   );
-  animation: trophy-ring-spin 6s linear infinite;
   z-index: -1;
-}
-
-@keyframes trophy-ring-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 /* ============================================
@@ -151,7 +128,7 @@
   );
   border: 1px solid hsl(280 80% 60% / 0.3);
   overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .ranking-user-hero-2300:hover {
@@ -161,26 +138,7 @@
     inset 0 0 30px hsl(280 80% 60% / 0.05);
 }
 
-/* Scan Line Effect */
-.ranking-user-hero-2300::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg,
-    transparent 0%,
-    hsl(280 80% 60% / 0.08) 50%,
-    transparent 100%
-  );
-  animation: user-scan 5s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes user-scan {
-  0%, 100% { transform: translateY(-100%); }
-  50% { transform: translateY(100%); }
-}
-
-/* Avatar Glow Ring */
+/* Avatar Glow Ring (static) */
 .ranking-avatar-2300 {
   position: relative;
   border-radius: 50%;
@@ -197,13 +155,7 @@
     hsl(185 100% 50%) 66%,
     hsl(43 80% 50%) 100%
   );
-  animation: avatar-ring-spin 4s linear infinite;
   z-index: -1;
-}
-
-@keyframes avatar-ring-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
 }
 
 /* Position Badge - Holographic */
@@ -228,26 +180,6 @@
   box-shadow: 0 0 20px hsl(43 80% 50% / 0.3);
 }
 
-.ranking-position-badge-2300::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    hsl(0 0% 100% / 0.2) 50%,
-    transparent 100%
-  );
-  animation: badge-shine 3s ease-in-out infinite;
-}
-
-@keyframes badge-shine {
-  0%, 100% { left: -100%; }
-  50% { left: 150%; }
-}
-
 /* ============================================
    ARENA TABS - MODE SELECTOR
    ============================================ */
@@ -269,7 +201,7 @@
   border: 1px solid transparent;
   cursor: pointer;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .ranking-tab-2300:hover {
@@ -339,19 +271,11 @@
   align-items: center;
   gap: 0.5rem;
   position: relative;
-  transform-style: preserve-3d;
-  perspective: 1000px;
 }
 
 /* Champion Crown/Medal */
 .ranking-champion-2300 .crown-container {
   position: relative;
-  animation: crown-float 3s ease-in-out infinite;
-}
-
-@keyframes crown-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
 }
 
 .ranking-champion-2300.gold .crown-container {
@@ -448,27 +372,6 @@
   );
 }
 
-/* Podium Shine */
-.ranking-champion-2300 .podium-base::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    hsl(0 0% 100% / 0.3) 50%,
-    transparent 100%
-  );
-  animation: podium-shine 4s ease-in-out infinite;
-}
-
-@keyframes podium-shine {
-  0%, 100% { left: -100%; }
-  50% { left: 150%; }
-}
-
 /* ============================================
    TOP 10 LIST - WARRIORS ROSTER
    ============================================ */
@@ -497,7 +400,7 @@
   gap: 0.75rem;
   padding: 0.875rem 1rem;
   border-bottom: 1px solid hsl(220 40% 15% / 0.3);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease;
   position: relative;
   overflow: hidden;
 }
@@ -520,22 +423,6 @@
     transparent 100%
   );
   border-left: 3px solid hsl(280 80% 60%);
-}
-
-.ranking-row-2300.is-user::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg,
-    hsl(280 80% 60% / 0.1) 0%,
-    transparent 50%
-  );
-  animation: user-row-pulse 3s ease-in-out infinite;
-}
-
-@keyframes user-row-pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
 }
 
 /* Rank Number Badge */
@@ -612,24 +499,7 @@
     hsl(43 80% 55%) 100%
   );
   position: relative;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.ranking-progress-2300 .fill::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    hsl(0 0% 100% / 0.4) 50%,
-    transparent 100%
-  );
-  animation: progress-shine 2s ease-in-out infinite;
-}
-
-@keyframes progress-shine {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(200%); }
+  transition: width 0.3s ease;
 }
 
 /* ============================================
@@ -704,20 +574,10 @@
 }
 
 /* ============================================
-   REDUCED MOTION
+   NO ANIMATIONS CLASS (PERFORMANCE MODE)
    ============================================ */
-@media (prefers-reduced-motion: reduce) {
-  .ranking-arena-2300::before,
-  .ranking-arena-2300::after,
-  .ranking-header-2300 .trophy-icon,
-  .ranking-header-2300 .trophy-icon::before,
-  .ranking-avatar-2300::before,
-  .ranking-user-hero-2300::before,
-  .ranking-position-badge-2300::before,
-  .ranking-champion-2300 .crown-container,
-  .ranking-champion-2300 .podium-base::before,
-  .ranking-row-2300.is-user::before,
-  .ranking-progress-2300 .fill::after {
-    animation: none !important;
-  }
+.ranking-no-animations,
+.ranking-no-animations * {
+  animation: none !important;
+  transition-duration: 0.15s !important;
 }

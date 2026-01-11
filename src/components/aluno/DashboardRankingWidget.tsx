@@ -1,11 +1,10 @@
 // ============================================
 // 🏆 DASHBOARD RANKING WIDGET - YEAR 2300 CINEMATIC
-// Panteão dos Campeões - Marvel/Iron Man HUD Experience
-// Ultra-Futuristic Competitive Arena
+// Panteão dos Campeões - Performance Optimized
+// NO ANIMATIONS - Pure CSS Static Design
 // ============================================
 
 import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useGlobalRanking, useWeeklyRanking, useGamification } from '@/hooks/useGamification';
 import { useSimuladoRanking } from '@/hooks/useSimuladoRanking';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,13 +14,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { 
-  Trophy, Medal, Award, Flame, Crown, Star,
+  Trophy, Medal, Award, Flame, Crown,
   TrendingUp, Zap, Target, Users, Sparkles,
   ChevronUp, ChevronDown, Minus, Activity,
-  Swords, Shield, Hexagon
+  Swords, Shield
 } from 'lucide-react';
 
-// Import 2300 ranking styles
+// Import 2300 ranking styles (optimized)
 import "@/styles/ranking-2300.css";
 
 interface RankingEntry {
@@ -119,7 +118,7 @@ export function DashboardRankingWidget() {
   }, [ranking, user?.id]);
 
   return (
-    <div className="ranking-arena-2300">
+    <div className="ranking-arena-2300 ranking-no-animations">
       {/* ============================================ */}
       {/* HOLOGRAPHIC HEADER */}
       {/* ============================================ */}
@@ -133,7 +132,7 @@ export function DashboardRankingWidget() {
               <span className="bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
                 PANTEÃO DOS CAMPEÕES
               </span>
-              <Sparkles className="w-5 h-5 text-yellow-400 animate-pulse" />
+              <Sparkles className="w-5 h-5 text-yellow-400" />
             </h2>
             <p className="text-sm text-white/60 flex items-center gap-2 mt-0.5">
               <Swords className="w-4 h-4" />
@@ -144,8 +143,8 @@ export function DashboardRankingWidget() {
         
         {/* Live indicator */}
         <div className="absolute top-4 right-4">
-          <Badge className="bg-green-500/20 text-green-400 border border-green-500/40 animate-pulse">
-            <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-ping" />
+          <Badge className="bg-green-500/20 text-green-400 border border-green-500/40">
+            <span className="w-2 h-2 bg-green-400 rounded-full mr-2" />
             LIVE
           </Badge>
         </div>
@@ -156,11 +155,7 @@ export function DashboardRankingWidget() {
         {/* USER HERO CARD - FEATURED PLAYER */}
         {/* ============================================ */}
         {gamification && currentUserEntry && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="ranking-user-hero-2300"
-          >
+          <div className="ranking-user-hero-2300">
             <div className="flex items-center justify-between gap-4 relative z-10">
               {/* Avatar & Info */}
               <div className="flex items-center gap-4">
@@ -237,7 +232,7 @@ export function DashboardRankingWidget() {
                 </div>
               </div>
             )}
-          </motion.div>
+          </div>
         )}
 
         {/* ============================================ */}
@@ -248,16 +243,14 @@ export function DashboardRankingWidget() {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
-              <motion.button
+              <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
                 className={cn('ranking-tab-2300', isActive && 'active')}
               >
                 <div className="relative z-10 flex flex-col items-center gap-1">
                   <div className={cn(
-                    'p-1.5 rounded-lg transition-all',
+                    'p-1.5 rounded-lg transition-colors',
                     isActive 
                       ? `bg-gradient-to-br ${tab.gradient}`
                       : 'bg-muted/30'
@@ -271,7 +264,7 @@ export function DashboardRankingWidget() {
                     {tab.label}
                   </span>
                 </div>
-              </motion.button>
+              </button>
             );
           })}
         </div>
@@ -279,27 +272,18 @@ export function DashboardRankingWidget() {
         {/* ============================================ */}
         {/* 3D PODIUM - CHAMPIONS */}
         {/* ============================================ */}
-        <AnimatePresence mode="wait">
-          {!isLoading && podium && (
-            <motion.div
-              key={activeTab + '-podium'}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="ranking-podium-2300"
-            >
-              {/* 2nd Place - Silver */}
-              <PodiumChampion entry={podium.second} position={2} activeTab={activeTab} />
-              
-              {/* 1st Place - Gold (center, tallest) */}
-              <PodiumChampion entry={podium.first} position={1} activeTab={activeTab} />
-              
-              {/* 3rd Place - Bronze */}
-              <PodiumChampion entry={podium.third} position={3} activeTab={activeTab} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {!isLoading && podium && (
+          <div className="ranking-podium-2300">
+            {/* 2nd Place - Silver */}
+            <PodiumChampion entry={podium.second} position={2} activeTab={activeTab} />
+            
+            {/* 1st Place - Gold (center, tallest) */}
+            <PodiumChampion entry={podium.first} position={1} activeTab={activeTab} />
+            
+            {/* 3rd Place - Bronze */}
+            <PodiumChampion entry={podium.third} position={3} activeTab={activeTab} />
+          </div>
+        )}
 
         {/* ============================================ */}
         {/* TOP 10 LIST - WARRIORS ROSTER */}
@@ -326,13 +310,12 @@ export function DashboardRankingWidget() {
               </div>
             ) : ranking && ranking.length > 0 ? (
               <div>
-                {ranking.slice(0, 10).map((entry, index) => (
+                {ranking.slice(0, 10).map((entry) => (
                   <RankingRow 
                     key={entry.id} 
                     entry={entry} 
                     isCurrentUser={entry.id === user?.id}
                     activeTab={activeTab}
-                    index={index}
                   />
                 ))}
               </div>
@@ -390,12 +373,7 @@ function PodiumChampion({
   const CrownIcon = position === 1 ? Crown : position === 2 ? Medal : Award;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ delay: position === 1 ? 0 : position === 2 ? 0.1 : 0.2 }}
-      className={cn('ranking-champion-2300', positionClass)}
-    >
+    <div className={cn('ranking-champion-2300', positionClass)}>
       {/* Crown/Medal Icon */}
       <div className="crown-container">
         <CrownIcon className={cn(
@@ -444,7 +422,7 @@ function PodiumChampion({
           {position}
         </span>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -454,13 +432,11 @@ function PodiumChampion({
 function RankingRow({ 
   entry, 
   isCurrentUser, 
-  activeTab,
-  index
+  activeTab
 }: { 
   entry: RankingEntry; 
   isCurrentUser: boolean; 
   activeTab: ArenaTab;
-  index: number;
 }) {
   const epicTitle = getEpicTitle(entry.rank);
 
@@ -476,12 +452,7 @@ function RankingRow({
   }, [activeTab, entry]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className={cn('ranking-row-2300', isCurrentUser && 'is-user')}
-    >
+    <div className={cn('ranking-row-2300', isCurrentUser && 'is-user')}>
       {/* Rank Badge */}
       <div className={cn(
         'ranking-rank-badge-2300',
@@ -526,7 +497,7 @@ function RankingRow({
         </div>
         <p className="label">{displayValue.label}</p>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
