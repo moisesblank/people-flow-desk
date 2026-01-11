@@ -75,13 +75,16 @@ export function useQuestionTaxonomy() {
 
       const items = (data || []) as TaxonomyItem[];
 
-      // Normalizador: aceita value "bonito" (com acento) e também slug (quimica_geral)
+      // Normalizador: aceita value/label (com acento/hífen) e também slug (quimica_geral)
+      // Importante: converte QUALQUER separador (espaço, hífen, pontuação) em "_" para evitar mismatch
+      // Ex: "Físico-Química" -> "fisico_quimica"
       const slugify = (input: string) => input
         .toLowerCase()
         .trim()
-        .replace(/\s+/g, "_")
         .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "");
 
       const matchesTaxonomyKey = (item: TaxonomyItem, key: string) => {
         if (!key) return false;
