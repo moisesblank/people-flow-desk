@@ -280,10 +280,10 @@ const gestaoMenuGroups: MenuGroup[] = [
 // MENUS DE ALUNO (visível em /alunos)
 // ============================================
 const alunoMenuGroups: MenuGroup[] = [
-  // 🔴 LIVES EXCLUSIVAS - ISOLADO NO TOPO (destaque máximo)
+  // 🔴 LIVES EXCLUSIVAS - Item direto no topo (sem grupo wrapper)
   {
-    id: "aluno-lives-destaque",
-    label: "🔴 AO VIVO",
+    id: "aluno-lives",
+    label: "Lives Exclusivas",
     image: alunosCentralImg,
     color: "from-red-600/80 via-red-500/80",
     items: [
