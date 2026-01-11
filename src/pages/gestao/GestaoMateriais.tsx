@@ -768,25 +768,34 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
           )}
 
           {/* MICRO SELECTION — Apenas para card questoes-mapas quando macro selecionado */}
-          {isQuestoesMapas && selectedFilter && availableMicros.length > 0 && (
+          {isQuestoesMapas && selectedFilter && (
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Tag className="w-4 h-4" />
-                Micro <span className="text-xs text-muted-foreground">(opcional, {availableMicros.length} opções)</span>
+                Micro{' '}
+                <span className="text-xs text-muted-foreground">
+                  (opcional{taxonomyLoading ? ', carregando…' : `, ${availableMicros.length} opções`})
+                </span>
               </Label>
               <Select value={selectedMicro} onValueChange={setSelectedMicro} disabled={uploading || taxonomyLoading}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o micro (opcional)..." />
+                  <SelectValue placeholder={taxonomyLoading ? 'Carregando micros…' : 'Selecione o micro (opcional)…'} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">
                     <span className="text-muted-foreground">Nenhum (apenas macro)</span>
                   </SelectItem>
-                  {availableMicros.map(micro => (
-                    <SelectItem key={micro.value} value={micro.value}>
-                      {micro.label}
+                  {availableMicros.length === 0 && !taxonomyLoading ? (
+                    <SelectItem value="__empty" disabled>
+                      <span className="text-muted-foreground">Nenhum micro cadastrado para este macro</span>
                     </SelectItem>
-                  ))}
+                  ) : (
+                    availableMicros.map((micro) => (
+                      <SelectItem key={micro.value} value={micro.value}>
+                        {micro.label}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
