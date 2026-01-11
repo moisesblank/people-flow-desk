@@ -131,14 +131,30 @@ export const SortableBookRow = memo(function SortableBookRow({
         'group'
       )}
     >
-      {/* COLUNA CHECKBOX */}
-      <TableCell className="w-10">
-        <Checkbox
-          checked={isSelected}
-          onCheckedChange={() => onToggleSelect?.(book.id)}
-          onClick={(e) => e.stopPropagation()}
+      {/* COLUNA CHECKBOX - Ícone clicável */}
+      <TableCell className="w-10 pr-0">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelect?.(book.id);
+          }}
+          className={cn(
+            "p-1.5 rounded-md transition-all duration-150",
+            "hover:bg-primary/10 focus:outline-none focus:ring-2 focus:ring-primary/30",
+            isSelected 
+              ? "text-primary bg-primary/10" 
+              : "text-muted-foreground/50 hover:text-muted-foreground"
+          )}
           aria-label={`Selecionar ${book.title}`}
-        />
+          title={isSelected ? "Desmarcar" : "Marcar para aniquilação"}
+        >
+          {isSelected ? (
+            <CheckCircle className="w-5 h-5" />
+          ) : (
+            <div className="w-5 h-5 rounded-full border-2 border-current" />
+          )}
+        </button>
       </TableCell>
 
       {/* COLUNA DRAG HANDLE */}
