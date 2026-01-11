@@ -101,7 +101,7 @@ serve(async (req: Request) => {
         original_path: filePath,
         original_filename: file.name,
         original_size_bytes: file.size,
-        status: "queued",
+        status: "published",
         created_by: user.id,
       })
       .select()
