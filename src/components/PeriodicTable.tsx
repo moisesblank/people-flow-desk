@@ -287,10 +287,10 @@ export const PeriodicTableButton = forwardRef<HTMLDivElement, React.HTMLAttribut
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 hover:bg-red-600/20 transition-all duration-200 group"
+              className="h-9 w-9 hover:bg-red-600/30 transition-all duration-200 group"
               title="Tabela Periódica"
             >
-              <Atom className="h-5 w-5 text-red-500 group-hover:text-red-400 group-hover:scale-110 group-hover:rotate-180 transition-all duration-500" />
+              <Atom className="h-5 w-5 text-red-600 group-hover:text-red-500 group-hover:scale-110 group-hover:rotate-180 transition-all duration-500" />
             </Button>
           </DialogTrigger>
           <DialogContent className="dark max-w-[98vw] w-[1500px] max-h-[95vh] p-0 gap-0 overflow-hidden bg-slate-900 text-slate-50 border-primary/30">
