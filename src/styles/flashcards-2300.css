@@ -1,0 +1,535 @@
+/* ============================================
+   🧠 FLASHCARDS 2300 - Oráculo da Memória
+   Year 2300 Cinematic Design System
+   Marvel/Spider-Man Aesthetic + Iron Man HUD
+   ============================================ */
+
+/* ============================================
+   HERO HEADER - Entrance Animation
+   ============================================ */
+.flashcards-hero-header {
+  position: relative;
+  background: linear-gradient(135deg, 
+    hsl(var(--background)) 0%, 
+    hsl(var(--card)) 50%,
+    hsl(var(--background)) 100%
+  );
+  border-bottom: 1px solid hsl(var(--primary) / 0.2);
+  overflow: hidden;
+}
+
+.flashcards-hero-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 50% at 50% -20%,
+    hsl(var(--primary) / 0.15) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* Scan line effect */
+.flashcards-hero-header::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    hsl(var(--primary)) 50%, 
+    transparent 100%
+  );
+  animation: flashcards-scan 4s ease-in-out infinite;
+  opacity: 0.5;
+}
+
+@keyframes flashcards-scan {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(60px); opacity: 0.2; }
+}
+
+/* ============================================
+   FLASHCARD - 3D Holographic Card
+   ============================================ */
+.flashcard-3d-container {
+  perspective: 1500px;
+  perspective-origin: center center;
+}
+
+.flashcard-holographic {
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.flashcard-holographic::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, 
+    hsl(var(--primary) / 0.3) 0%,
+    transparent 25%,
+    transparent 75%,
+    hsl(var(--primary) / 0.3) 100%
+  );
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.flashcard-holographic:hover::before {
+  opacity: 1;
+}
+
+/* Card Face - Front (Question) */
+.flashcard-face-front {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, 
+    hsl(var(--card)) 0%, 
+    hsl(var(--card) / 0.95) 100%
+  );
+  border: 1px solid hsl(var(--border) / 0.5);
+  box-shadow: 
+    0 0 30px hsl(var(--primary) / 0.05),
+    inset 0 1px 0 hsl(var(--primary) / 0.1);
+}
+
+/* Card Face - Back (Answer) */
+.flashcard-face-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, 
+    hsl(var(--primary) / 0.1) 0%, 
+    hsl(var(--card)) 100%
+  );
+  border: 1px solid hsl(var(--primary) / 0.3);
+  box-shadow: 
+    0 0 40px hsl(var(--primary) / 0.15),
+    inset 0 1px 0 hsl(var(--primary) / 0.2);
+}
+
+/* Flipped state */
+.flashcard-holographic.is-flipped {
+  transform: rotateY(180deg);
+}
+
+/* Corner accents */
+.flashcard-corner-accent {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border: 2px solid hsl(var(--primary) / 0.4);
+  z-index: 10;
+}
+
+.flashcard-corner-accent.top-left {
+  top: 8px;
+  left: 8px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.flashcard-corner-accent.top-right {
+  top: 8px;
+  right: 8px;
+  border-left: none;
+  border-bottom: none;
+}
+
+.flashcard-corner-accent.bottom-left {
+  bottom: 8px;
+  left: 8px;
+  border-right: none;
+  border-top: none;
+}
+
+.flashcard-corner-accent.bottom-right {
+  bottom: 8px;
+  right: 8px;
+  border-left: none;
+  border-top: none;
+}
+
+/* ============================================
+   RATING BUTTONS - Holographic HUD
+   ============================================ */
+.rating-button-hud {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.rating-button-hud::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, 
+    transparent 0%, 
+    hsl(var(--primary) / 0.05) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.rating-button-hud:hover::before {
+  opacity: 1;
+}
+
+/* Rating button variants */
+.rating-button-again {
+  --rating-color: 239 68 68; /* red-500 */
+}
+
+.rating-button-hard {
+  --rating-color: 249 115 22; /* orange-500 */
+}
+
+.rating-button-good {
+  --rating-color: 34 197 94; /* green-500 */
+}
+
+.rating-button-easy {
+  --rating-color: 59 130 246; /* blue-500 */
+}
+
+.rating-button-hud.rating-button-again:hover {
+  border-color: rgb(var(--rating-color)) !important;
+  box-shadow: 0 0 20px rgb(var(--rating-color) / 0.3);
+}
+
+.rating-button-hud.rating-button-hard:hover {
+  border-color: rgb(var(--rating-color)) !important;
+  box-shadow: 0 0 20px rgb(var(--rating-color) / 0.3);
+}
+
+.rating-button-hud.rating-button-good:hover {
+  border-color: rgb(var(--rating-color)) !important;
+  box-shadow: 0 0 20px rgb(var(--rating-color) / 0.3);
+}
+
+.rating-button-hud.rating-button-easy:hover {
+  border-color: rgb(var(--rating-color)) !important;
+  box-shadow: 0 0 20px rgb(var(--rating-color) / 0.3);
+}
+
+/* ============================================
+   PROGRESS BAR - Energy Flow
+   ============================================ */
+.progress-energy-bar {
+  position: relative;
+  height: 6px;
+  background: hsl(var(--muted));
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-energy-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, 
+    hsl(var(--primary)) 0%,
+    hsl(var(--primary) / 0.8) 50%,
+    hsl(var(--primary)) 100%
+  );
+  border-radius: 9999px;
+  transform-origin: left;
+  animation: progress-glow 2s ease-in-out infinite;
+}
+
+@keyframes progress-glow {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.3); }
+}
+
+.progress-energy-fill {
+  position: relative;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    hsl(var(--primary)) 0%,
+    hsl(var(--primary) / 0.9) 100%
+  );
+  border-radius: 9999px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 10px hsl(var(--primary) / 0.5);
+}
+
+/* ============================================
+   STATS ORBS - Holographic Indicators
+   ============================================ */
+.stats-orb {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, 
+    hsl(var(--card)) 0%, 
+    hsl(var(--muted) / 0.5) 100%
+  );
+  border: 1px solid hsl(var(--border) / 0.5);
+  transition: all 0.3s ease;
+}
+
+.stats-orb::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 1rem;
+  background: radial-gradient(
+    ellipse 100% 100% at center,
+    hsl(var(--primary) / 0.1) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.stats-orb:hover::before {
+  opacity: 1;
+}
+
+.stats-orb:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px hsl(var(--primary) / 0.15);
+}
+
+/* Color variants */
+.stats-orb.orb-success {
+  --orb-color: 34 197 94;
+}
+
+.stats-orb.orb-danger {
+  --orb-color: 239 68 68;
+}
+
+.stats-orb.orb-warning {
+  --orb-color: 245 158 11;
+}
+
+.stats-orb.orb-primary {
+  --orb-color: var(--primary);
+}
+
+.stats-orb.orb-success {
+  border-color: rgb(var(--orb-color) / 0.3);
+}
+
+.stats-orb.orb-danger {
+  border-color: rgb(var(--orb-color) / 0.3);
+}
+
+.stats-orb.orb-warning {
+  border-color: rgb(var(--orb-color) / 0.3);
+}
+
+/* ============================================
+   SESSION COMPLETE - Victory Screen
+   ============================================ */
+.session-complete-container {
+  position: relative;
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.session-complete-container::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 300px;
+  height: 300px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    hsl(var(--primary) / 0.15) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  animation: victory-pulse 2s ease-in-out infinite;
+}
+
+@keyframes victory-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.3; }
+}
+
+.victory-icon-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 1.5rem;
+}
+
+.victory-icon-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid hsl(var(--primary) / 0.3);
+  animation: victory-ring 3s linear infinite;
+}
+
+.victory-icon-container::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 1px solid hsl(var(--primary) / 0.2);
+  animation: victory-ring 3s linear infinite reverse;
+}
+
+@keyframes victory-ring {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ============================================
+   ANKI DASHBOARD - HUD Panels
+   ============================================ */
+.anki-dashboard-container {
+  position: relative;
+  border-radius: 1rem;
+  background: hsl(var(--card) / 0.5);
+  border: 1px solid hsl(var(--border) / 0.5);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.anki-dashboard-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    hsl(var(--primary) / 0.5) 50%, 
+    transparent 100%
+  );
+}
+
+.anki-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .anki-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ============================================
+   EMPTY STATE - Holographic Message
+   ============================================ */
+.empty-state-container {
+  position: relative;
+  text-align: center;
+  padding: 4rem 1.5rem;
+}
+
+.empty-state-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 1.5rem;
+  animation: float-gentle 3s ease-in-out infinite;
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* ============================================
+   CLOZE DELETIONS - Styled Blanks
+   ============================================ */
+.cloze-blank-2300 {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  margin: 0 0.25rem;
+  background: hsl(var(--primary) / 0.15);
+  border: 1px solid hsl(var(--primary) / 0.3);
+  border-radius: 0.375rem;
+  font-family: ui-monospace, monospace;
+  color: hsl(var(--primary));
+  box-shadow: 0 0 10px hsl(var(--primary) / 0.1);
+}
+
+.cloze-answer-2300 {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  margin: 0 0.25rem;
+  background: linear-gradient(135deg, 
+    hsl(142 76% 36% / 0.2) 0%,
+    hsl(142 76% 36% / 0.1) 100%
+  );
+  border: 1px solid hsl(142 76% 36% / 0.4);
+  border-radius: 0.375rem;
+  font-weight: 600;
+  color: hsl(142 76% 36%);
+  box-shadow: 0 0 12px hsl(142 76% 36% / 0.15);
+}
+
+/* ============================================
+   MOBILE OPTIMIZATIONS
+   ============================================ */
+@media (max-width: 640px) {
+  .flashcard-face-front,
+  .flashcard-face-back {
+    padding: 1.5rem;
+  }
+  
+  .rating-button-hud {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .stats-orb {
+    padding: 0.75rem;
+  }
+}
+
+/* ============================================
+   GPU ACCELERATION
+   ============================================ */
+.flashcard-3d-container,
+.flashcard-holographic,
+.rating-button-hud,
+.stats-orb {
+  transform: translateZ(0);
+  will-change: transform;
+}
