@@ -8,7 +8,7 @@ import {
   BookOpen, 
   Plus, 
   Upload, 
-  Edit, 
+  Edit,
   Archive, 
   Eye, 
   Trash2,
@@ -19,7 +19,6 @@ import {
   FileUp,
   RefreshCw,
   CheckCircle,
-  Clock,
   AlertCircle,
   X,
   Tag,
@@ -138,8 +137,6 @@ const CATEGORIES = [
 ];
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  draft: { label: 'Rascunho', color: 'bg-muted', icon: Edit },
-  queued: { label: 'Na fila', color: 'bg-amber-500', icon: Clock },
   processing: { label: 'Processando', color: 'bg-blue-500', icon: Loader2 },
   ready: { label: 'Publicado', color: 'bg-green-500', icon: CheckCircle },
   error: { label: 'Erro', color: 'bg-red-500', icon: AlertCircle },
@@ -508,7 +505,7 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
         .order('created_at', { ascending: false });
 
       if (statusFilter) {
-        query = query.eq('status', statusFilter as "archived" | "draft" | "error" | "processing" | "queued" | "ready");
+        query = query.eq('status', statusFilter as "archived" | "error" | "processing" | "ready");
       }
       if (categoryFilter) {
         query = query.eq('category', categoryFilter as "exercicios" | "fisico_quimica" | "mapas_mentais" | "outros" | "previsao_final" | "quimica_geral" | "quimica_organica" | "resumos" | "revisao_ciclica" | "simulados");
@@ -1044,7 +1041,7 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
         <Card>
           <CardContent className="pt-4">
             <div className="text-2xl font-bold text-amber-500">
-              {books.filter(b => ['queued', 'processing'].includes(b.status)).length}
+              {books.filter(b => b.status === 'processing').length}
             </div>
             <p className="text-sm text-muted-foreground">Processando</p>
           </CardContent>

@@ -135,7 +135,7 @@ serve(async (req: Request) => {
         success: true,
         bookId,
         title,
-        status: "queued",
+        status: "processing",
         message: "Livro enviado para processamento",
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }

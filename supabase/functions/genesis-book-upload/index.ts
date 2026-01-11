@@ -323,12 +323,12 @@ serve(async (req: Request) => {
 
       const jobId = crypto.randomUUID();
 
-      // Atualizar status do livro
+      // Atualizar status do livro para processamento
       const { error: updateError } = await supabase
         .from("web_books")
         .update({
-          status: "queued",
-          status_message: "Aguardando processamento",
+          status: "processing",
+          status_message: "Processando páginas...",
           job_id: jobId,
           original_checksum: checksum || null,
         })
@@ -406,7 +406,7 @@ serve(async (req: Request) => {
         success: true,
         bookId,
         title: book.title,
-        status: "queued",
+        status: "processing",
         jobId,
         message: "Livro enviado para processamento com sucesso!",
       };
