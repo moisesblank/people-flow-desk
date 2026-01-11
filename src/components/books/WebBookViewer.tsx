@@ -566,7 +566,7 @@ export const WebBookViewer = memo(function WebBookViewer({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
   }, [isFullscreen]);
 
-  // Função para salvar histórico de anotações + overlays Fabric.js
+  // Função para salvar histórico de anotações + overlays Fabric.js + SAIR DO FULLSCREEN
   const handleSaveHistory = useCallback(async () => {
     setIsSavingHistory(true);
     try {
@@ -584,6 +584,14 @@ export const WebBookViewer = memo(function WebBookViewer({
         description: 'Anotações, marcações e desenhos foram persistidos.',
         icon: <Save className="w-4 h-4 text-green-500" />,
       });
+
+      // 3) ✅ P0 FIX: SAIR DO MODO LEITURA (fullscreen) após salvar
+      if (document.fullscreenElement) {
+        console.log('[WebBookViewer] Saindo do Modo Leitura após salvar...');
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+        setActiveTool('select'); // Reset ferramenta
+      }
     } catch (error) {
       console.error('[WebBookViewer] Erro ao salvar histórico:', error);
       toast.error('Erro ao salvar histórico', {
