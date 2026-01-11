@@ -561,14 +561,14 @@ export function LessonFullConfigDialog({ lesson, open, onOpenChange }: LessonFul
                       Módulo
                     </Label>
                     <Select
-                      value={formData.module_id || ""}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, module_id: value || null }))}
+                      value={formData.module_id || "__none__"}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, module_id: value === "__none__" ? null : value }))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione um módulo" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Sem módulo</SelectItem>
+                        <SelectItem value="__none__">Sem módulo</SelectItem>
                         {modules.map((mod) => (
                           <SelectItem key={mod.id} value={mod.id}>
                             {mod.title}
@@ -590,14 +590,14 @@ export function LessonFullConfigDialog({ lesson, open, onOpenChange }: LessonFul
                       Área
                     </Label>
                     <Select
-                      value={formData.area_id || ""}
-                      onValueChange={(value) => setFormData(prev => ({ ...prev, area_id: value || null }))}
+                      value={formData.area_id || "__none__"}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, area_id: value === "__none__" ? null : value }))}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione uma área" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Sem área</SelectItem>
+                        <SelectItem value="__none__">Sem área</SelectItem>
                         {areas.map((area) => (
                           <SelectItem key={area.id} value={area.id}>
                             {area.name}
