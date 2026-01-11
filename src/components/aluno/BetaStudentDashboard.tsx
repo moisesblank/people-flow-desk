@@ -365,16 +365,7 @@ export function BetaStudentDashboard() {
         />
       </motion.div>
 
-      {/* INSIGHTS DE IA SOBRE O ALUNO */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="grid md:grid-cols-2 gap-4"
-      >
-        <LearningStyleInsight learningStyle={mockUserData.learningStyle} />
-        <BestStudyTimeInsight bestTime={mockUserData.bestStudyTime} />
-      </motion.div>
+      {/* INSIGHTS DE IA SOBRE O ALUNO - Removido: LearningStyleInsight e BestStudyTimeInsight */}
 
       {/* Recomendações da IA (mantido do original) */}
       <motion.div
