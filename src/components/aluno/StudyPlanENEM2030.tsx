@@ -109,9 +109,9 @@ export function StudyPlanENEM2030() {
   const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
   const [quote, setQuote] = useState(motivationalQuotes[0]);
   
-  // Data do ENEM 2025 (primeiro domingo de novembro)
-  const enemDate = new Date('2025-11-02T13:00:00');
-  const startDate = new Date('2024-11-02T00:00:00'); // 1 ano antes
+  // Data do ENEM 2026 (15 de Novembro)
+  const enemDate = new Date('2026-11-15T13:00:00');
+  const startDate = new Date('2025-11-15T00:00:00'); // 1 ano antes
 
   useEffect(() => {
     // Quote do dia baseado no dia do ano
@@ -423,7 +423,7 @@ export function StudyPlanENEM2030() {
                 <div>
                   <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
                     <Calendar className="w-3 h-3" />
-                    ENEM 2025 — 02 de Novembro
+                    ENEM 2026 — 15 de Novembro
                   </div>
                   <div className="flex items-center gap-2">
                     {[
