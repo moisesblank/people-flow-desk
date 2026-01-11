@@ -846,19 +846,19 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
 
               {/* 🔽 Select tradicional (mantido) — só habilita após escolher Macro */}
               <Select
-                value={selectedMicro}
-                onValueChange={setSelectedMicro}
+                value={selectedMicro || "__none__"}
+                onValueChange={(val) => setSelectedMicro(val === "__none__" ? "" : val)}
                 disabled={uploading || taxonomyLoading || !selectedFilter}
               >
                 <SelectTrigger>
                   <SelectValue placeholder={!selectedFilter ? 'Selecione um macro acima…' : 'Selecione o micro (opcional)…'} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">
+                  <SelectItem value="__none__">
                     <span className="text-muted-foreground">Nenhum (apenas macro)</span>
                   </SelectItem>
                   {(selectedFilter ? getMicrosForSelect(selectedFilter) : []).map((micro) => (
-                    <SelectItem key={micro.value} value={micro.value}>
+                    <SelectItem key={micro.value} value={micro.value || micro.label}>
                       {micro.label}
                     </SelectItem>
                   ))}
@@ -1550,7 +1550,7 @@ const GestaoMateriais = memo(function GestaoMateriais() {
             <SelectContent>
               <SelectItem value="all">Todos os Micros</SelectItem>
               {microsForFilter.map(m => (
-                <SelectItem key={m.value} value={m.value}>
+                <SelectItem key={m.value || m.label} value={m.value || m.label}>
                   {m.label}
                 </SelectItem>
               ))}
