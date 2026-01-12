@@ -1885,9 +1885,14 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           : isMicroTodos
             ? (filteredMicros.length > 0 ? filteredMicros[0].value : q.micro || '') // Usa primeiro micro como âncora
             : (selectedMicro || q.micro || '');
-        // P0 FIX: Buscar label do micro no array filteredMicros
-        const microFromList = filteredMicros.find(m => m.value === microValue);
-        const micro = microFromList?.label || microValue; // Se não encontrar, usa o valor original
+        // P0 FIX v2: Buscar por VALUE ou por LABEL (flexibilidade para Excel/IA)
+        const microFromList = filteredMicros.find(m => 
+          m.value === microValue || m.label === microValue || 
+          m.value?.toLowerCase() === microValue?.toLowerCase() ||
+          m.label?.toLowerCase() === microValue?.toLowerCase()
+        );
+        // DOGMA: Se encontrou → usa label. Se não encontrou E parece slug (tem underscore) → RECUSAR
+        const micro = microFromList?.label || (microValue.includes('_') ? '' : microValue);
         if (!q.micro && isMicroAutoAI) camposInferidos.push('micro:auto_ai_mode');
         if (isMicroTodos) camposInferidos.push(`micro:TODOS(${filteredMicros.length})`);
         if (!isMicroAutoAI && !isMicroTodos && selectedMicro && selectedMicro !== q.micro) camposInferidos.push('micro:pre_selected');
@@ -1907,9 +1912,14 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           : isTemaTodos
             ? (filteredTemas.length > 0 ? filteredTemas[0].value : q.tema || '') // Usa primeiro tema como âncora
             : (selectedTema || q.tema || '');
-        // P0 FIX: Buscar label do tema no array filteredTemas
-        const temaFromList = filteredTemas.find(t => t.value === temaValue);
-        const tema = temaFromList?.label || temaValue; // Se não encontrar, usa o valor original
+        // P0 FIX v2: Buscar por VALUE ou por LABEL (flexibilidade para Excel/IA)
+        const temaFromList = filteredTemas.find(t => 
+          t.value === temaValue || t.label === temaValue ||
+          t.value?.toLowerCase() === temaValue?.toLowerCase() ||
+          t.label?.toLowerCase() === temaValue?.toLowerCase()
+        );
+        // DOGMA: Se encontrou → usa label. Se não encontrou E parece slug (tem underscore) → RECUSAR
+        const tema = temaFromList?.label || (temaValue.includes('_') ? '' : temaValue);
         if (!q.tema && isTemaAutoAI) camposInferidos.push('tema:auto_ai_mode');
         if (isTemaTodos) camposInferidos.push(`tema:TODOS(${filteredTemas.length})`);
         if (!isTemaAutoAI && !isTemaTodos && selectedTema && selectedTema !== q.tema) camposInferidos.push('tema:pre_selected');
@@ -1922,9 +1932,14 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         const subtemaValue = isSubtemaAutoAI 
           ? (q.subtema || '') // Respeita o que já tem no Excel ou inferido pela IA
           : (selectedSubtema || q.subtema || '');
-        // P0 FIX: Buscar label do subtema no array filteredSubtemas
-        const subtemaFromList = filteredSubtemas.find(s => s.value === subtemaValue);
-        const subtema = subtemaFromList?.label || subtemaValue; // Se não encontrar, usa o valor original
+        // P0 FIX v2: Buscar por VALUE ou por LABEL (flexibilidade para Excel/IA)
+        const subtemaFromList = filteredSubtemas.find(s => 
+          s.value === subtemaValue || s.label === subtemaValue ||
+          s.value?.toLowerCase() === subtemaValue?.toLowerCase() ||
+          s.label?.toLowerCase() === subtemaValue?.toLowerCase()
+        );
+        // DOGMA: Se encontrou → usa label. Se não encontrou E parece slug (tem underscore) → RECUSAR
+        const subtema = subtemaFromList?.label || (subtemaValue.includes('_') ? '' : subtemaValue);
         if (!q.subtema && isSubtemaAutoAI) camposInferidos.push('subtema:auto_ai_mode');
         if (!isSubtemaAutoAI && selectedSubtema && selectedSubtema !== q.subtema) camposInferidos.push('subtema:pre_selected');
         
