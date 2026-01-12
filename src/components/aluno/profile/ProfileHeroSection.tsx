@@ -61,8 +61,9 @@ export const ProfileHeroSection = memo(function ProfileHeroSection({
     const file = event.target.files?.[0];
     if (!file || !profile.id) return;
 
-    if (file.type !== 'image/png') {
-      toast.error('Formato inválido', { description: 'Apenas arquivos PNG são permitidos.' });
+    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Formato inválido', { description: 'Use PNG, JPG, WEBP ou GIF.' });
       return;
     }
 
@@ -74,7 +75,8 @@ export const ProfileHeroSection = memo(function ProfileHeroSection({
     onAvatarUploadStart();
 
     try {
-      const fileName = `${profile.id}/avatar-${Date.now()}.png`;
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+      const fileName = `${profile.id}/avatar-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { upsert: true });
@@ -126,7 +128,7 @@ export const ProfileHeroSection = memo(function ProfileHeroSection({
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/png"
+              accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
               onChange={handleAvatarUpload}
               className="hidden"
               aria-label="Upload de foto de perfil"
@@ -144,6 +146,7 @@ export const ProfileHeroSection = memo(function ProfileHeroSection({
                   src={profile.avatar_url || ''} 
                   alt={profile.nome}
                   loading="lazy"
+                  className="object-contain"
                 />
                 <AvatarFallback className="text-3xl bg-muted">
                   {profile.nome?.charAt(0)?.toUpperCase() || 'U'}
