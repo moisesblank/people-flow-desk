@@ -138,8 +138,7 @@ export const COURSE_HUB_CARDS: CourseHubCard[] = [
     borderColor: 'border-pink-500/50',
     badge: 'EXTRA',
     subcategories: [
-      'Tópico Bônus',
-      'Direcionamento Vestibulares Específicos'
+      'Tópico Bônus'
     ]
   }
 ];
