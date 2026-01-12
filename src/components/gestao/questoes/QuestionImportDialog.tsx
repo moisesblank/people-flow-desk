@@ -2189,8 +2189,97 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 exit={{ opacity: 0, x: -20 }}
                 className="min-h-full flex flex-col items-center justify-start p-8 pt-4"
               >
-                {/* SELEÇÃO OBRIGATÓRIA: ESTILO + MACRO + MICRO */}
+                {/* SELEÇÃO OBRIGATÓRIA: MODO + ESTILO + TAXONOMIA */}
                 <div className="w-full max-w-2xl mb-6 space-y-4">
+                  {/* ═══════════════════════════════════════════════════════════════════
+                      CARD DE MODO — TREINO vs SIMULADOS (OBRIGATÓRIO)
+                      Define pontuação (0 ou 10 XP) e visibilidade em /alunos/questoes
+                      DOGMA: Esta seleção é SOBERANA e reflete diretamente no portal do aluno
+                      ═══════════════════════════════════════════════════════════════════ */}
+                  <Card className={cn(
+                    "border-2 transition-all",
+                    "border-purple-500/50 bg-purple-500/5"
+                  )}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Zap className="h-5 w-5 text-purple-500" />
+                        Modo de Uso
+                        <Badge variant="default" className="ml-auto bg-purple-600">
+                          ✓ Obrigatório
+                        </Badge>
+                      </CardTitle>
+                      <CardDescription>
+                        Define onde as questões aparecerão e a pontuação XP
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* MODO TREINO */}
+                        <div
+                          onClick={() => setSelectedGroup('MODO_TREINO')}
+                          className={cn(
+                            "p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-purple-500/50",
+                            selectedGroup === 'MODO_TREINO' 
+                              ? "border-purple-500 bg-purple-500/20 ring-2 ring-purple-500/30" 
+                              : "border-muted-foreground/20"
+                          )}
+                        >
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="text-2xl">🎯</div>
+                            <div>
+                              <h4 className="font-semibold text-base">Modo Treino</h4>
+                              <p className="text-xs text-muted-foreground">Prática livre • 0 XP</p>
+                            </div>
+                            {selectedGroup === 'MODO_TREINO' && (
+                              <CheckCircle className="h-5 w-5 text-purple-500 ml-auto" />
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Questões para prática em <strong>/alunos/questoes</strong>. Sem limite de tentativas, feedback imediato.
+                          </p>
+                        </div>
+                        
+                        {/* MODO SIMULADOS */}
+                        <div
+                          onClick={() => setSelectedGroup('SIMULADOS')}
+                          className={cn(
+                            "p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-red-500/50",
+                            selectedGroup === 'SIMULADOS' 
+                              ? "border-red-500 bg-red-500/20 ring-2 ring-red-500/30" 
+                              : "border-muted-foreground/20"
+                          )}
+                        >
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="text-2xl">🏆</div>
+                            <div>
+                              <h4 className="font-semibold text-base">Simulados</h4>
+                              <p className="text-xs text-muted-foreground">Provas oficiais • 10 XP</p>
+                            </div>
+                            {selectedGroup === 'SIMULADOS' && (
+                              <CheckCircle className="h-5 w-5 text-red-500 ml-auto" />
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Questões para simulados em <strong>/alunos/simulados</strong>. Ranking, cronômetro, anti-cheat.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Preview do modo selecionado */}
+                      <div className="mt-4 p-3 rounded-lg bg-muted/30 border flex items-center gap-3">
+                        <Badge className={cn(
+                          "text-sm px-3 py-1",
+                          selectedGroup === 'SIMULADOS' ? "bg-red-600" : "bg-purple-600"
+                        )}>
+                          {selectedGroup === 'SIMULADOS' ? '🏆 Simulados (10 XP)' : '🎯 Treino (0 XP)'}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          Todas as questões importadas terão esta classificação
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
                   {/* Card de Estilo */}
                   <Card className={cn(
                     "border-2 transition-all",
@@ -2518,6 +2607,13 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                         <div className="mt-4 p-3 rounded-lg bg-muted/30 border">
                           <p className="text-xs text-muted-foreground mb-1">Classificação aplicada:</p>
                           <div className="flex flex-wrap gap-2">
+                            {/* MODO - Sempre visível no preview */}
+                            <Badge className={cn(
+                              "gap-1",
+                              selectedGroup === 'SIMULADOS' ? "bg-red-600" : "bg-purple-600"
+                            )}>
+                              {selectedGroup === 'SIMULADOS' ? '🏆 Simulados' : '🎯 Treino'}
+                            </Badge>
                             {selectedMacro && (
                               <Badge variant="secondary" className={cn("gap-1", selectedMacro === '__AUTO_AI__' && "bg-primary/20 text-primary border-primary/30")}>
                                 {selectedMacro === '__AUTO_AI__' ? (
