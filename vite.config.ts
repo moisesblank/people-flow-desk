@@ -36,10 +36,11 @@ export default defineConfig(({ mode }) => ({
     exclude: ["@vite/client", "@vite/env"],
   },
   
-  // ⚡ DOGMA II + VIII: Build otimizado + ☢️ NUCLEAR SHIELD
+  // ⚡ DOGMA II + VIII: Build otimizado + ☢️ NUCLEAR SHIELD MAXIMUM
   build: {
     target: "esnext",
-    minify: "esbuild",
+    // ☢️ TERSER: Ofuscação REAL - transforma código em letras aleatórias
+    minify: mode === "production" ? "terser" : "esbuild",
     // ☢️ SOURCE MAPS PERMANENTEMENTE DESABILITADOS
     sourcemap: false,
     cssCodeSplit: true,
@@ -48,131 +49,56 @@ export default defineConfig(({ mode }) => ({
     // ⚡ Limites de chunk para performance
     chunkSizeWarningLimit: 500,
     
+    // ☢️ TERSER OPTIONS: Destruição total da legibilidade
+    terserOptions: mode === "production" ? {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        dead_code: true,
+        passes: 3,
+        pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
+        unsafe: true,
+        unsafe_arrows: true,
+        unsafe_methods: true,
+      },
+      mangle: {
+        eval: true,
+        keep_classnames: false,
+        keep_fnames: false,
+        toplevel: true,
+        safari10: true,
+        properties: {
+          regex: /^_/,
+        },
+      },
+      format: {
+        comments: false,
+        ascii_only: true,
+      },
+    } : undefined,
+    
     rollupOptions: {
       output: {
-        // ⚠️ ESTABILIDADE DE PRODUÇÃO (ANTI-DEPLOY-RASGADO)
-        // Em produção, evitamos manualChunks agressivo para reduzir risco de
-        // interdependências entre muitos vendor chunks (e erros tipo "Cannot access 'w'").
-        // Em desenvolvimento mantemos o split granular para debug/perf.
-        manualChunks:
-          mode === "production"
-            ? undefined
-            : (id) => {
-                // React core - crítico, carrega primeiro
-                if (
-                  id.includes("node_modules/react/") ||
-                  id.includes("node_modules/react-dom/") ||
-                  id.includes("node_modules/scheduler/")
-                ) {
-                  return "vendor-react-core";
-                }
-
-                // React Router - necessário para navegação inicial
-                if (id.includes("react-router")) {
-                  return "vendor-react-router";
-                }
-
-                // Radix UI - dividir por uso
-                if (
-                  id.includes("@radix-ui/react-dialog") ||
-                  id.includes("@radix-ui/react-dropdown-menu") ||
-                  id.includes("@radix-ui/react-popover")
-                ) {
-                  return "vendor-ui-overlays";
-                }
-
-                if (
-                  id.includes("@radix-ui/react-tooltip") ||
-                  id.includes("@radix-ui/react-slot") ||
-                  id.includes("@radix-ui/react-primitive")
-                ) {
-                  return "vendor-ui-primitives";
-                }
-
-                if (id.includes("@radix-ui/")) {
-                  return "vendor-ui-radix";
-                }
-
-                // React Query - defer até necessário
-                if (id.includes("@tanstack/react-query")) {
-                  return "vendor-query";
-                }
-
-                // Zustand - leve, pode ficar junto
-                if (id.includes("zustand")) {
-                  return "vendor-state";
-                }
-
-                // Framer Motion - pesado, defer
-                if (id.includes("framer-motion")) {
-                  return "vendor-motion";
-                }
-
-                // Charts - muito pesado, sempre lazy
-                if (id.includes("recharts") || id.includes("d3-")) {
-                  return "vendor-charts";
-                }
-
-                // Forms - defer
-                if (
-                  id.includes("react-hook-form") ||
-                  id.includes("@hookform/") ||
-                  id.includes("zod")
-                ) {
-                  return "vendor-forms";
-                }
-
-                // Date utilities
-                if (id.includes("date-fns")) {
-                  return "vendor-date";
-                }
-
-                // Supabase
-                if (id.includes("@supabase/")) {
-                  return "vendor-supabase";
-                }
-
-                // PDF generation - muito pesado
-                if (id.includes("jspdf")) {
-                  return "vendor-pdf";
-                }
-
-                // Outras utilidades
-                if (
-                  id.includes("clsx") ||
-                  id.includes("tailwind-merge") ||
-                  id.includes("class-variance-authority")
-                ) {
-                  return "vendor-css-utils";
-                }
-
-                // Lucide icons - grande bundle
-                if (id.includes("lucide-react")) {
-                  return "vendor-icons";
-                }
-
-                return undefined;
-              },
-
-        // ⚡ Naming otimizado com hash para cache
-        chunkFileNames: (chunkInfo) => {
-          const facadeModuleId = chunkInfo.facadeModuleId || "";
-          if (facadeModuleId.includes("node_modules")) {
-            return "assets/vendor-[name]-[hash].js";
-          }
-          return "assets/[name]-[hash].js";
-        },
-        entryFileNames: "assets/[name]-[hash].js",
+        // ☢️ NOMES DE ARQUIVOS 100% HASH - SEM PREFIXOS LEGÍVEIS
+        // Arquivos como: x9k2m.js, a8f3.js (NÃO Alunos.js)
+        chunkFileNames: "assets/[hash].js",
+        entryFileNames: "assets/[hash].js",
         assetFileNames: (assetInfo) => {
           const extType = assetInfo.name?.split(".").pop() || "";
           if (/png|jpe?g|svg|gif|tiff|bmp|ico|webp|avif/i.test(extType)) {
-            return "assets/images/[name]-[hash][extname]";
+            return "assets/[hash][extname]";
           }
           if (/woff2?|eot|ttf|otf/i.test(extType)) {
-            return "assets/fonts/[name]-[hash][extname]";
+            return "assets/[hash][extname]";
           }
-          return "assets/[name]-[hash][extname]";
+          if (/css/i.test(extType)) {
+            return "assets/[hash][extname]";
+          }
+          return "assets/[hash][extname]";
         },
+        
+        // ⚠️ ESTABILIDADE DE PRODUÇÃO (ANTI-DEPLOY-RASGADO)
+        manualChunks: undefined,
       },
     },
   },
@@ -183,7 +109,7 @@ export default defineConfig(({ mode }) => ({
     "process.env.NODE_ENV": JSON.stringify(mode),
   },
   
-  // ⚡ Otimização de CSS
+  // ☢️ CSS: Source maps DESABILITADOS
   css: {
     devSourcemap: false,
   },
@@ -194,16 +120,9 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
   },
   
-  // ⚡ Esbuild config + ☢️ NUCLEAR SHIELD: Drop console e debugger em produção
-  esbuild: {
+  // ⚡ Esbuild config (usado apenas em DEV)
+  esbuild: mode === "development" ? {
     legalComments: "none",
     treeShaking: true,
-    minifyIdentifiers: mode === "production",
-    minifySyntax: mode === "production",
-    minifyWhitespace: mode === "production",
-    // ☢️ REMOVER console.log e debugger em produção
-    drop: mode === "production" ? ["console", "debugger"] : [],
-    // ☢️ Mangle de nomes para ofuscação
-    mangleProps: mode === "production" ? /^_/ : undefined,
-  },
+  } : undefined,
 }));
