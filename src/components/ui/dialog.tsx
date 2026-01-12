@@ -260,7 +260,21 @@ const DialogBody = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div 
     ref={ref} 
-    className={cn("flex-1 min-h-0 overflow-y-auto p-4", className)} 
+    className={cn(
+      // Flex-1 com min-h-0 permite que o body seja o container de scroll
+      "flex-1 min-h-0 p-4",
+      // RESPONSIVE SCROLL: garantir scroll em todos os dispositivos
+      "overflow-y-auto overscroll-contain",
+      // Touch scroll suave para mobile/tablet
+      "touch-pan-y",
+      // Webkit scroll para iOS
+      "[&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full",
+      className
+    )} 
+    style={{ 
+      WebkitOverflowScrolling: 'touch',
+      scrollbarGutter: 'stable',
+    }}
     {...props} 
   />
 ));
