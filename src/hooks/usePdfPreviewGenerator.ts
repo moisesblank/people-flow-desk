@@ -201,22 +201,24 @@ export function usePdfPreviewGenerator() {
 
   /**
    * Atualiza o preview_url e preview_status de um registro
-   * @param table Nome da tabela ('web_books' ou 'arquivos_universal')
+   * @param table Nome da tabela ('web_books', 'arquivos_universal' ou 'materials')
    * @param recordId ID do registro
    * @param previewUrl URL da preview gerada
    */
   const updateRecordPreview = useCallback(async (
-    table: 'web_books' | 'arquivos_universal',
+    table: 'web_books' | 'arquivos_universal' | 'materials',
     recordId: string,
     previewUrl: string | null,
     status: 'ready' | 'error' | 'skipped' = 'ready'
   ) => {
+    // Para 'materials', usamos cover_url ao invés de preview_url
+    const updateData = table === 'materials' 
+      ? { cover_url: previewUrl, preview_status: status }
+      : { preview_url: previewUrl, preview_status: status };
+
     const { error } = await supabase
       .from(table)
-      .update({ 
-        preview_url: previewUrl,
-        preview_status: status,
-      })
+      .update(updateData)
       .eq('id', recordId);
 
     if (error) {

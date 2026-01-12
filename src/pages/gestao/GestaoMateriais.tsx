@@ -95,6 +95,7 @@ import { MaterialViewer } from '@/components/materials/MaterialViewer';
 import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
 import { convertMicroValueToLabel } from '@/lib/taxonomyLabelConverter';
 import { compressPdf, formatBytes } from '@/lib/pdfCompression';
+import { usePdfPreviewGenerator } from '@/hooks/usePdfPreviewGenerator';
 
 // ============================================
 // TIPOS
@@ -292,6 +293,9 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
   const [uploading, setUploading] = useState(false);
   const [overallProgress, setOverallProgress] = useState(0);
 
+  // PDF Preview Generator
+  const { generatePreviewFromFile, updateRecordPreview } = usePdfPreviewGenerator();
+
   // Get taxonomy for micro selection
   const { getMicrosForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
 
@@ -435,7 +439,10 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
       const isQuestoesMacro = selectedCard === 'questoes-mapas';
       const macroValue = isQuestoesMacro ? selectedFilter : null;
 
-      const { error: dbError } = await supabase
+      // Determinar se é PDF para gerar preview
+      const isPdf = fileMeta.file.type === 'application/pdf' || fileMeta.file.name.toLowerCase().endsWith('.pdf');
+
+      const { data: insertedData, error: dbError } = await supabase
         .from('materials')
         .insert({
           title: fileMeta.title.trim(),
@@ -454,9 +461,39 @@ const UploadDialog = memo(function UploadDialog({ open, onOpenChange, onSuccess 
           watermark_enabled: watermarkEnabled,
           is_premium: isPremium,
           created_by: userId,
-        });
+          preview_status: isPdf ? 'processing' : 'skipped', // Marca status inicial
+        })
+        .select('id')
+        .single();
 
       if (dbError) throw dbError;
+
+      setFiles(prev => prev.map(f => 
+        f.id === fileMeta.id ? { ...f, progress: 80 } : f
+      ));
+
+      // ============================================
+      // GERAR PREVIEW DO PDF (ASSÍNCRONO)
+      // ============================================
+      if (isPdf && insertedData?.id) {
+        // Gerar preview em background (não bloqueia o upload)
+        const previewPath = `materials/${insertedData.id}.webp`;
+        
+        generatePreviewFromFile(fileToUpload, previewPath)
+          .then(async (result) => {
+            if (result.success && result.previewUrl) {
+              await updateRecordPreview('materials', insertedData.id, result.previewUrl, 'ready');
+              console.log(`[Materiais] Preview gerada: ${fileMeta.title}`);
+            } else {
+              await updateRecordPreview('materials', insertedData.id, null, 'error');
+              console.warn(`[Materiais] Falha ao gerar preview: ${result.error}`);
+            }
+          })
+          .catch((err) => {
+            console.error(`[Materiais] Erro ao gerar preview:`, err);
+            updateRecordPreview('materials', insertedData.id, null, 'error');
+          });
+      }
 
       setFiles(prev => prev.map(f => 
         f.id === fileMeta.id ? { ...f, status: 'success', progress: 100 } : f
