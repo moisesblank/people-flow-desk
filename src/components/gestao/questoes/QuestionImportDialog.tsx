@@ -2900,7 +2900,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                         Estes valores <strong>NÃO serão aplicados automaticamente</strong>. Use "Aplicar Padrões" na próxima tela.
                       </p>
                       
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {/* Apenas Banca e Ano - Macro/Micro/Dificuldade já foram selecionados na Step 1 */}
+                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label className="text-xs">Banca</Label>
                           <Select
@@ -2945,43 +2946,6 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                             }}
                             className="h-9 text-xs"
                           />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-xs">Dificuldade</Label>
-                          <Select
-                            value={globalDefaults.difficulty || '_none'}
-                            onValueChange={(v) => setGlobalDefaults(prev => ({ ...prev, difficulty: v === '_none' ? '' : v as any }))}
-                          >
-                            <SelectTrigger className="h-9 text-xs">
-                              <SelectValue placeholder="— Não definir —" />
-                            </SelectTrigger>
-                            <SelectContent className="z-[9999]">
-                              <SelectItem value="_none">— Não definir —</SelectItem>
-                              <SelectItem value="facil">🟢 Fácil</SelectItem>
-                              <SelectItem value="medio">🟡 Médio</SelectItem>
-                              <SelectItem value="dificil">🔴 Difícil</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label className="text-xs">Macro</Label>
-                          <Select
-                            value={globalDefaults.macro || '_none'}
-                            onValueChange={(v) => setGlobalDefaults(prev => ({ ...prev, macro: v === '_none' ? '' : v, micro: '', tema: '', subtema: '' }))}
-                            disabled={taxonomyLoading}
-                          >
-                            <SelectTrigger className="h-9 text-xs">
-                              <SelectValue placeholder="— Não definir —" />
-                            </SelectTrigger>
-                            <SelectContent className="z-[9999]">
-                              <SelectItem value="_none">— Não definir —</SelectItem>
-                              {macros.map(m => (
-                                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
                         </div>
                       </div>
                     </div>
