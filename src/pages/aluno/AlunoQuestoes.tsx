@@ -445,16 +445,26 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
     const isCorrect = selectedOption === currentQuestion.correct_answer;
 
     // BLOCK_10: Scoring SERVER_SIDE - Registrar tentativa
+    // P0 FIX: Verificar error retornado pelo Supabase (não lança exceção!)
     try {
-      await supabase.from('question_attempts').insert({
+      const { error: insertError } = await supabase.from('question_attempts').insert({
         user_id: user.id,
         question_id: currentQuestion.id,
         selected_answer: selectedOption,
         is_correct: isCorrect,
         xp_earned: 0, // MODO_TREINO: 0 XP
+        time_spent_seconds: 0, // P0 FIX: Campo opcional mas útil
       });
+      
+      if (insertError) {
+        console.error('[TREINO] Erro ao registrar tentativa:', insertError);
+        toast.error('Erro ao salvar resposta. Tente novamente.');
+      } else {
+        console.log('[TREINO] ✅ Tentativa registrada:', { questionId: currentQuestion.id, isCorrect });
+      }
     } catch (err) {
-      console.error('Erro ao registrar tentativa:', err);
+      console.error('[TREINO] Exceção ao registrar tentativa:', err);
+      toast.error('Erro inesperado ao salvar resposta.');
     }
 
     setAnswers(prev => ({
@@ -475,7 +485,13 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
     if (currentIndex + 1 >= questions.length) {
       // Sessão completa - BLOCK_11: Atualizar métricas e passar para revisão
       const correct = Object.values(finalAnswers).filter(a => a.isCorrect).length;
+      
+      // P0 FIX: Invalidar TODAS as queries de performance para atualização em tempo real
       queryClient.invalidateQueries({ queryKey: ['student-question-attempts'] });
+      queryClient.invalidateQueries({ queryKey: ['student-taxonomy-performance'] });
+      queryClient.invalidateQueries({ queryKey: ['student-performance-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['student-trends'] });
+      
       onComplete({ correct, total: questions.length }, finalAnswers);
       return;
     }
@@ -1044,8 +1060,11 @@ export default function AlunoQuestoes() {
       return { isCorrect };
     },
     onSuccess: (result) => {
-      // BLOCK_11: Atualizar métricas imediatamente
+      // BLOCK_11: Atualizar TODAS as métricas imediatamente - P0 FIX
       queryClient.invalidateQueries({ queryKey: ['student-question-attempts'] });
+      queryClient.invalidateQueries({ queryKey: ['student-taxonomy-performance'] });
+      queryClient.invalidateQueries({ queryKey: ['student-performance-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['student-trends'] });
       
       if (result.isCorrect) {
         toast.success("Você acertou! 🎯 (Modo Treino)");
