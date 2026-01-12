@@ -1,11 +1,10 @@
 // ============================================
-// REALTIME METRICS BAR v3.0 - DADOS REAIS
-// Métricas em tempo real do banco de dados
-// Conexão Supabase + Animações avançadas
+// REALTIME METRICS BAR v3.1 - OPTIMIZED
+// Métricas em tempo real - SEM ANIMAÇÕES PESADAS
+// Conexão Supabase + Performance Otimizada
 // ============================================
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { 
   Activity, 
   Users, 
@@ -157,10 +156,9 @@ export function RealTimeMetricsBar({ className }: RealTimeMetricsBarProps) {
       return metricsArray;
     },
     {
-      profile: 'dashboard', // PATCH-LOOP: Mudado de 'realtime' para 'dashboard'
+      profile: 'dashboard',
       persistKey: 'realtime_metrics_bar_v1',
-      staleTime: 120_000, // 2 minutos - métricas não mudam a cada segundo
-      // REMOVIDO: refetchInterval - evitar LOOP DE AUTOMAÇÃO
+      staleTime: 120_000,
     }
   );
 
@@ -182,13 +180,13 @@ export function RealTimeMetricsBar({ className }: RealTimeMetricsBarProps) {
     }
   }, [metrics?.length]);
 
-  // Subscription para atualizações em tempo real com debounce 10s (métricas financeiras)
+  // Subscription para atualizações em tempo real com debounce 10s
   const metricsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debouncedRefetch = useCallback(() => {
     if (metricsTimeoutRef.current) clearTimeout(metricsTimeoutRef.current);
     metricsTimeoutRef.current = setTimeout(() => {
       refetch();
-    }, 10000); // 10s debounce para métricas de dashboard
+    }, 10000);
   }, [refetch]);
 
   useEffect(() => {
@@ -211,63 +209,30 @@ export function RealTimeMetricsBar({ className }: RealTimeMetricsBarProps) {
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className={cn(
         "relative overflow-hidden rounded-xl border border-border/50 backdrop-blur-xl",
         "bg-gradient-to-r from-background/80 via-card/50 to-background/80",
         className
       )}
     >
-      {/* Animated Border Glow */}
-      <motion.div
-        className="absolute inset-0 rounded-xl"
-        style={{
-          background: `linear-gradient(90deg, transparent, hsl(var(--primary) / 0.2), transparent)`,
-          backgroundSize: "200% 100%",
-        }}
-        animate={{
-          backgroundPosition: ["0% 0%", "200% 0%"],
-        }}
-        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-      />
-
-      {/* Background Pulse */}
-      <motion.div
-        className="absolute inset-0 bg-primary/5"
-        animate={{ opacity: [0, 0.3, 0] }}
-        transition={{ duration: 4, repeat: Infinity }}
-      />
-
-      {/* Scan Line */}
-      <motion.div
-        className="absolute top-0 bottom-0 w-20 bg-gradient-to-r from-transparent via-primary/20 to-transparent"
-        animate={{ left: ["-20%", "120%"] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-      />
-
       <div className="relative z-10 flex items-center justify-between gap-4 px-4 py-2.5">
         {/* Left: Live Indicator & Time */}
         <div className="flex items-center gap-3">
           {/* Live Badge */}
-          <motion.div
+          <div
             className={cn(
               "flex items-center gap-1.5 px-2.5 py-1 rounded-full border",
               isConnected 
                 ? "bg-emerald-500/10 border-emerald-500/30" 
                 : "bg-red-500/10 border-red-500/30"
             )}
-            animate={{ scale: [1, 1.02, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
           >
-            <motion.div
+            <div
               className={cn(
                 "w-2 h-2 rounded-full",
                 isConnected ? "bg-emerald-400" : "bg-red-400"
               )}
-              animate={{ opacity: [1, 0.4, 1], scale: [1, 1.2, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
               style={{ boxShadow: isConnected ? "0 0 8px rgba(16, 185, 129, 0.8)" : "0 0 8px rgba(239, 68, 68, 0.8)" }}
             />
             <span className={cn(
@@ -276,7 +241,7 @@ export function RealTimeMetricsBar({ className }: RealTimeMetricsBarProps) {
             )}>
               {isConnected ? "Live" : "Offline"}
             </span>
-          </motion.div>
+          </div>
 
           {/* Connection Status */}
           <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-background/50 border border-border/50">
@@ -297,14 +262,11 @@ export function RealTimeMetricsBar({ className }: RealTimeMetricsBarProps) {
 
         {/* Center/Right: Real Metrics */}
         <div className="hidden md:flex items-center gap-4">
-          {displayMetrics.slice(0, 6).map((metric, index) => {
+          {displayMetrics.slice(0, 6).map((metric) => {
             const MetricIcon = metric.icon;
             return (
-              <motion.div
+              <div
                 key={metric.id}
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
                 className="flex items-center gap-2 group"
               >
                 <div className={cn(
@@ -328,100 +290,71 @@ export function RealTimeMetricsBar({ className }: RealTimeMetricsBarProps) {
                       <TrendingUp className="h-3 w-3 text-emerald-400" />
                     )}
                     {metric.pulse && (
-                      <motion.div
+                      <div
                         className="w-1.5 h-1.5 rounded-full bg-emerald-400"
-                        animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
                       />
                     )}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
         </div>
 
-        {/* Mobile: Single Metric Carousel */}
+        {/* Mobile: Single Metric Display */}
         <div className="md:hidden flex-1 mx-2">
-          <AnimatePresence mode="wait">
-            {displayMetrics[activeIndex] && (
-              <motion.div
-                key={displayMetrics[activeIndex].id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex items-center justify-center gap-2"
-              >
-                {(() => {
-                  const CurrentIcon = displayMetrics[activeIndex].icon;
-                  return (
-                    <div className={cn(
-                      "p-1.5 rounded-lg bg-muted/50",
-                      displayMetrics[activeIndex].color || "text-primary"
-                    )}>
-                      <CurrentIcon className="h-3.5 w-3.5" />
-                    </div>
-                  );
-                })()}
-                <span className="text-xs text-muted-foreground">
-                  {displayMetrics[activeIndex].label}:
-                </span>
-                <span className={cn(
-                  "text-sm font-semibold",
-                  displayMetrics[activeIndex].color || "text-foreground"
-                )}>
-                  {displayMetrics[activeIndex].value}
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {displayMetrics[activeIndex] && (
+            <div className="flex items-center justify-center gap-2">
+              {(() => {
+                const CurrentIcon = displayMetrics[activeIndex].icon;
+                return (
+                  <div className={cn(
+                    "p-1.5 rounded-lg bg-muted/50",
+                    displayMetrics[activeIndex].color || "text-primary"
+                  )}>
+                    <CurrentIcon className="h-3.5 w-3.5" />
+                  </div>
+                );
+              })()}
+              <span className="text-xs text-muted-foreground">
+                {displayMetrics[activeIndex].label}:
+              </span>
+              <span className={cn(
+                "text-sm font-semibold",
+                displayMetrics[activeIndex].color || "text-foreground"
+              )}>
+                {displayMetrics[activeIndex].value}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Right: Activity Indicator + Refresh */}
         <div className="flex items-center gap-2">
           {isLoading && (
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            >
-              <RefreshCw className="h-3 w-3 text-muted-foreground" />
-            </motion.div>
+            <RefreshCw className="h-3 w-3 text-muted-foreground animate-spin" />
           )}
           
-          <motion.div
-            className="flex items-center gap-1"
-            animate={{ opacity: [0.6, 1, 0.6] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
+          <div className="flex items-center gap-1">
             <Zap className="h-4 w-4 text-primary" />
             <div className="flex gap-0.5">
-              {[1, 2, 3, 4].map((i) => (
-                <motion.div
+              {[6, 10, 14, 8].map((h, i) => (
+                <div
                   key={`bar-${i}`}
                   className="w-1 bg-primary rounded-full"
-                  animate={{ height: [6, 14, 6] }}
-                  transition={{ 
-                    duration: 0.6, 
-                    repeat: Infinity, 
-                    delay: i * 0.1,
-                    ease: "easeInOut"
-                  }}
+                  style={{ height: `${h}px` }}
                 />
               ))}
             </div>
-          </motion.div>
+          </div>
           
           {/* Status Dot */}
           <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30">
-            <motion.div
-              className="w-1.5 h-1.5 rounded-full bg-emerald-400"
-              animate={{ opacity: [1, 0.5, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-            />
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             <span className="text-[10px] font-medium text-emerald-400">Sincronizado</span>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

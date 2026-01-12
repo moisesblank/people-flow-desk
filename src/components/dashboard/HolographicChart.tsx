@@ -1,9 +1,9 @@
 // ============================================
-// HOLOGRAPHIC CHART - Gráficos Futuristas 2050
-// Com efeitos visuais avançados e animações
+// HOLOGRAPHIC CHART v2.0 - OPTIMIZED
+// Gráficos Futuristas - SEM ANIMAÇÕES PESADAS
+// Mantém visual, remove overhead
 // ============================================
 
-import { motion } from "framer-motion";
 import { useState } from "react";
 import { 
   AreaChart, 
@@ -36,14 +36,12 @@ interface HolographicChartProps {
   showComparison?: boolean;
 }
 
-// Custom Tooltip
+// Custom Tooltip - STATIC (no motion)
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload || !payload.length) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
+    <div
       className="bg-background/95 backdrop-blur-xl border border-primary/30 rounded-xl p-4 shadow-2xl"
       style={{
         boxShadow: "0 0 30px rgba(139, 0, 0, 0.3)",
@@ -61,7 +59,7 @@ function CustomTooltip({ active, payload, label }: any) {
           </span>
         </div>
       ))}
-    </motion.div>
+    </div>
   );
 }
 
@@ -109,15 +107,13 @@ export function HolographicChart({
 
   return (
     <Card className="relative overflow-hidden bg-gradient-to-br from-background via-background to-muted/20 border-primary/20">
-      {/* Background Effects */}
+      {/* Background Effects - STATIC */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute -top-20 -right-20 w-60 h-60 rounded-full"
+        <div
+          className="absolute -top-20 -right-20 w-60 h-60 rounded-full opacity-40"
           style={{
             background: `radial-gradient(circle, ${config.main}20 0%, transparent 70%)`,
           }}
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 5, repeat: Infinity }}
         />
         <div 
           className="absolute inset-0 opacity-5"
@@ -175,12 +171,7 @@ export function HolographicChart({
       </CardHeader>
 
       <CardContent className="relative z-10 pt-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="h-64"
-        >
+        <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             {chartType === "area" ? (
               <AreaChart data={data}>
@@ -270,7 +261,7 @@ export function HolographicChart({
               </BarChart>
             )}
           </ResponsiveContainer>
-        </motion.div>
+        </div>
       </CardContent>
     </Card>
   );

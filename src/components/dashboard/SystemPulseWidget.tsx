@@ -1,11 +1,10 @@
 // ============================================
-// SYSTEM PULSE WIDGET v1.0 - YEAR 2090
-// Monitoramento avançado em tempo real
-// Visual cyberpunk com hologramas e dados
+// SYSTEM PULSE WIDGET v1.1 - OPTIMIZED
+// Monitoramento em tempo real - SEM motion.div
+// Visual cyberpunk com performance otimizada
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity,
   Cpu,
@@ -40,36 +39,21 @@ interface SystemPulseWidgetProps {
   className?: string;
 }
 
-// Animated Wave Background
+// Static Wave Background - CSS only
 function WaveBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <motion.path
-          d="M0,50 Q25,30 50,50 T100,50 L100,100 L0,100 Z"
-          fill="url(#waveGradient)"
-          animate={{
-            d: [
-              "M0,50 Q25,30 50,50 T100,50 L100,100 L0,100 Z",
-              "M0,50 Q25,70 50,50 T100,50 L100,100 L0,100 Z",
-              "M0,50 Q25,30 50,50 T100,50 L100,100 L0,100 Z",
-            ],
-          }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <defs>
-          <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
-            <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity="0.1" />
-            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
-          </linearGradient>
-        </defs>
-      </svg>
+      <div 
+        className="absolute inset-0 opacity-10"
+        style={{
+          background: `linear-gradient(180deg, hsl(var(--primary) / 0.1) 0%, transparent 50%, hsl(var(--primary) / 0.05) 100%)`,
+        }}
+      />
     </div>
   );
 }
 
-// Animated Ring Meter
+// Static Ring Meter - CSS-based progress
 function RingMeter({ value, maxValue, status, size = 60 }: { value: number; maxValue: number; status: string; size?: number }) {
   const percentage = (value / maxValue) * 100;
   const circumference = 2 * Math.PI * 20;
@@ -83,7 +67,6 @@ function RingMeter({ value, maxValue, status, size = 60 }: { value: number; maxV
 
   return (
     <svg width={size} height={size} viewBox="0 0 50 50" className="transform -rotate-90">
-      {/* Background Circle */}
       <circle
         cx="25"
         cy="25"
@@ -92,19 +75,16 @@ function RingMeter({ value, maxValue, status, size = 60 }: { value: number; maxV
         stroke="hsl(var(--border))"
         strokeWidth="3"
       />
-      {/* Progress Circle */}
-      <motion.circle
+      <circle
         cx="25"
         cy="25"
         r="20"
         fill="none"
-        className={statusColors[status as keyof typeof statusColors]}
+        className={cn(statusColors[status as keyof typeof statusColors], "transition-all duration-500")}
         strokeWidth="3"
         strokeLinecap="round"
         strokeDasharray={circumference}
-        initial={{ strokeDashoffset: circumference }}
-        animate={{ strokeDashoffset }}
-        transition={{ duration: 1, ease: "easeOut" }}
+        strokeDashoffset={strokeDashoffset}
         style={{
           filter: `drop-shadow(0 0 6px ${status === 'optimal' ? 'rgba(16,185,129,0.5)' : status === 'warning' ? 'rgba(245,158,11,0.5)' : 'rgba(239,68,68,0.5)'})`,
         }}
@@ -113,28 +93,16 @@ function RingMeter({ value, maxValue, status, size = 60 }: { value: number; maxV
   );
 }
 
-// Pulse Animation Circle
+// Static Pulse Indicator
 function PulseIndicator({ active }: { active: boolean }) {
   return (
     <div className="relative">
-      <motion.div
+      <div
         className={cn(
           "w-3 h-3 rounded-full",
           active ? "bg-emerald-500" : "bg-red-500"
         )}
-        animate={{
-          scale: active ? [1, 1.2, 1] : 1,
-          opacity: active ? [1, 0.6, 1] : 1,
-        }}
-        transition={{ duration: 1.5, repeat: Infinity }}
       />
-      {active && (
-        <motion.div
-          className="absolute inset-0 rounded-full bg-emerald-500"
-          animate={{ scale: [1, 2.5], opacity: [0.5, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
-      )}
     </div>
   );
 }
@@ -187,9 +155,7 @@ export function SystemPulseWidget({ className }: SystemPulseWidgetProps) {
   const config = statusConfig[overallStatus];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className={cn(
         "relative overflow-hidden rounded-2xl border border-border/50 backdrop-blur-xl bg-card/50",
         className
@@ -201,13 +167,9 @@ export function SystemPulseWidget({ className }: SystemPulseWidgetProps) {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <motion.div
-              className="p-2.5 rounded-xl bg-primary/20"
-              animate={{ rotate: [0, 360] }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            >
+            <div className="p-2.5 rounded-xl bg-primary/20">
               <Activity className="h-5 w-5 text-primary" />
-            </motion.div>
+            </div>
             <div>
               <h3 className="font-semibold text-foreground">System Pulse</h3>
               <p className="text-xs text-muted-foreground">Monitoramento em tempo real</p>
@@ -222,12 +184,9 @@ export function SystemPulseWidget({ className }: SystemPulseWidgetProps) {
 
         {/* Metrics Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {metrics.map((metric, index) => (
-            <motion.div
+          {metrics.map((metric) => (
+            <div
               key={metric.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.1 }}
               className="relative flex flex-col items-center p-4 rounded-xl bg-background/50 border border-border/30 group hover:border-primary/30 transition-all"
             >
               <div className="relative">
@@ -248,7 +207,7 @@ export function SystemPulseWidget({ className }: SystemPulseWidgetProps) {
               )}>
                 {metric.value}{metric.unit}
               </span>
-            </motion.div>
+            </div>
           ))}
         </div>
 
@@ -260,14 +219,9 @@ export function SystemPulseWidget({ className }: SystemPulseWidgetProps) {
             </div>
             <div>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Conexões</p>
-              <motion.p 
-                className="text-lg font-bold text-blue-400 font-mono"
-                key={activeConnections}
-                initial={{ scale: 1.1 }}
-                animate={{ scale: 1 }}
-              >
+              <p className="text-lg font-bold text-blue-400 font-mono">
                 {activeConnections}
-              </motion.p>
+              </p>
             </div>
           </div>
           
@@ -277,14 +231,9 @@ export function SystemPulseWidget({ className }: SystemPulseWidgetProps) {
             </div>
             <div>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Req/s</p>
-              <motion.p 
-                className="text-lg font-bold text-purple-400 font-mono"
-                key={requestsPerSecond}
-                initial={{ scale: 1.1 }}
-                animate={{ scale: 1 }}
-              >
+              <p className="text-lg font-bold text-purple-400 font-mono">
                 {requestsPerSecond}
-              </motion.p>
+              </p>
             </div>
           </div>
           
@@ -302,7 +251,7 @@ export function SystemPulseWidget({ className }: SystemPulseWidgetProps) {
         {/* Footer with timestamp */}
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/20">
           <div className="flex items-center gap-2">
-            <Radio className="h-3 w-3 text-emerald-400 animate-pulse" />
+            <Radio className="h-3 w-3 text-emerald-400" />
             <span className="text-[10px] text-muted-foreground">Dados atualizados em tempo real</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -313,6 +262,6 @@ export function SystemPulseWidget({ className }: SystemPulseWidgetProps) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
