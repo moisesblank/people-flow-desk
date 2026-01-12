@@ -60,12 +60,20 @@ export function useSingleSession() {
     try {
       const deviceInfo = detectDeviceInfo();
       
+      // 🔐 P0 FIX: SEMPRE usar hash do servidor (com pepper)
+      const serverDeviceHash = localStorage.getItem('matriz_device_server_hash');
+      if (!serverDeviceHash) {
+        console.error('[SESSÃO ÚNICA] ❌ P0 VIOLATION: Sem hash do servidor!');
+        return null;
+      }
+      
       const { data, error } = await supabase.rpc('create_single_session', {
-        _ip_address: null, // IP será capturado pelo servidor se necessário
+        _ip_address: null,
         _user_agent: navigator.userAgent.slice(0, 255),
         _device_type: deviceInfo.device_type,
         _browser: deviceInfo.browser,
         _os: deviceInfo.os,
+        _device_hash_from_server: serverDeviceHash, // 🔐 P0 FIX: Hash do SERVIDOR
       });
       
       if (error) {

@@ -543,15 +543,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         else if (ua.includes("Android")) os = "Android";
         else if (ua.includes("iPhone")) os = "iOS";
 
-        // 🔐 BLOCO 6: Criar sessão (useAuth - fallback sem device_hash do servidor)
-        // Nota: O fluxo principal passa pelo Auth.tsx que usa device_hash do servidor
+        // 🔐 BLOCO 6: Criar sessão (useAuth - P0 FIX: usar hash do SERVIDOR)
+        // CRÍTICO: SEMPRE usar o hash do servidor salvo no localStorage
+        const serverDeviceHash = localStorage.getItem('matriz_device_server_hash');
+        
+        if (!serverDeviceHash) {
+          console.warn('[AUTH][SESSAO] ⚠️ Hash do servidor não encontrado - dispositivo não registrado. Abortando criação de sessão.');
+          return; // Não criar sessão sem hash válido do servidor
+        }
+        
         const { data, error } = await supabase.rpc("create_single_session", {
           _ip_address: null,
           _user_agent: navigator.userAgent.slice(0, 255),
           _device_type: device_type,
           _browser: browser,
           _os: os,
-          _device_hash_from_server: null, // Fallback - usa hash local calculado pela função SQL
+          _device_hash_from_server: serverDeviceHash, // 🔐 P0 FIX: Hash do SERVIDOR (com pepper)
         });
 
         if (error) {
