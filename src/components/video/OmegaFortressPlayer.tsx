@@ -1910,7 +1910,7 @@ const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
           <span 
             className="font-mono tracking-wider text-sm sm:text-base whitespace-nowrap"
             style={{ 
-              color: 'rgba(255, 255, 255, 0.20)', // Reduzido 35% (era 0.30)
+              color: 'rgba(255, 255, 255, 0.10)', // 🔧 Opacidade 10% conforme solicitado
               textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 0, 0, 0.3)'
             }}
           >
@@ -1935,7 +1935,7 @@ const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
           <span 
             className="font-mono tracking-[0.3em] text-base sm:text-lg whitespace-nowrap"
             style={{ 
-              color: 'rgba(255, 255, 255, 0.14)', // Reduzido 35% (era 0.22)
+              color: 'rgba(255, 255, 255, 0.10)', // 🔧 Opacidade 10% conforme solicitado
               textShadow: '0 1px 3px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 0, 0, 0.3)'
             }}
           >
@@ -1959,7 +1959,7 @@ const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
         <span 
           className="font-mono tracking-[0.15em] text-sm sm:text-base whitespace-nowrap"
           style={{ 
-            color: 'rgba(255, 255, 255, 0.23)', // Reduzido 35% (era 0.35)
+            color: 'rgba(255, 255, 255, 0.10)', // 🔧 Opacidade 10% conforme solicitado
             textShadow: '0 2px 4px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 0, 0, 0.4)'
           }}
         >
