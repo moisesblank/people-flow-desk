@@ -1,8 +1,9 @@
 // ============================================
-// 📚🛡️ BOOK SECURITY GUARD v3.0
+// 📚🛡️ BOOK SECURITY GUARD v3.1
 // Proteção anti-PrintScreen/DevTools para Livros Web
 // M4: Escalonamento de resposta + Detecção gravação
 // P0-1: Revogação de sessão via RPC + Redirect /auth
+// v3.1: Anti-Debugger agressivo + Console flooding
 // OWNER BYPASS ALWAYS
 // ============================================
 
@@ -10,6 +11,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { antiDebugger } from '@/lib/security/antiDebugger';
 
 const OWNER_EMAIL = 'moisesblank@gmail.com';
 
@@ -101,11 +103,35 @@ export function useBookSecurityGuard({
   
   // ✅ M4: Histórico de tentativas para escalonamento
   const attemptsRef = useRef<ViolationAttempt[]>([]);
+  const antiDebugCleanupRef = useRef<(() => void) | null>(null);
 
   // Atualizar ref quando isOwner mudar
   useEffect(() => {
     isOwnerRef.current = isOwner;
   }, [isOwner]);
+
+  // ═══════════════════════════════════════════════════════════
+  // v3.1: ANTI-DEBUGGER AGRESSIVO
+  // ═══════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (!enabled) return;
+    if (isOwner) {
+      antiDebugger.setOwnerMode(userEmail);
+      return;
+    }
+    
+    // Inicializar anti-debugger
+    antiDebugCleanupRef.current = antiDebugger.init(userEmail);
+    
+    // Ativar modo agressivo para páginas de conteúdo
+    antiDebugger.enableAggressiveMode();
+    
+    return () => {
+      if (antiDebugCleanupRef.current) {
+        antiDebugCleanupRef.current();
+      }
+    };
+  }, [enabled, isOwner, userEmail]);
 
   // ═══════════════════════════════════════════════════════════
   // M4: CONTAR TENTATIVAS NA JANELA DE TEMPO

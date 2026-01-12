@@ -16,6 +16,7 @@ import {
   detectSuspiciousActivity,
   checkSecurityHealth,
 } from "@/lib/constitution/LEI_III_SEGURANCA";
+import { antiDebugger } from "@/lib/security/antiDebugger";
 
 interface LeiVIIEnforcerProps {
   children: React.ReactNode;
@@ -41,6 +42,20 @@ export const LeiVIIEnforcer = memo(({ children }: LeiVIIEnforcerProps) => {
       console.warn("[LEI III/VII] ⚠️ Issues detected:", health.issues);
     }
   }, []);
+
+  // ═══════════════════════════════════════════════════════════
+  // v2.1: ANTI-DEBUGGER GLOBAL
+  // ═══════════════════════════════════════════════════════════
+  useEffect(() => {
+    // Configurar owner mode para o anti-debugger
+    antiDebugger.setOwnerMode(user?.email);
+    
+    // Se não for owner, inicializar anti-debugger
+    if (!isOwner()) {
+      const cleanup = antiDebugger.init(user?.email);
+      return cleanup;
+    }
+  }, [user?.email, isOwner]);
 
   // Executar LEI VII quando usuário mudar
   useEffect(() => {
