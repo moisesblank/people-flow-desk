@@ -14,6 +14,10 @@ import { SessionRevokedOverlay } from "./SessionRevokedOverlay";
 const SESSION_TOKEN_KEY = "matriz_session_token";
 const SESSION_CHECK_INTERVAL = 30000; // 30s
 
+// 🕐 JANELA DE SUPRESSÃO: Revogações mais antigas que 2 horas não mostram overlay
+// Isso evita "ecos" de sessões revogadas ontem aparecerem hoje
+const REVOCATION_STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000; // 2 horas
+
 // 🎯 Rotas onde NÃO devemos mostrar conflito de sessão (primeiro acesso)
 const ONBOARDING_ROUTES = [
   '/primeiro-acesso',
@@ -342,10 +346,11 @@ export function SessionGuard({ children }: SessionGuardProps) {
         await handleBackendRevocation("Sua conta foi removida.");
       })
       // 🚀 Broadcast direto para revogação de sessão (conflito)
-      // Só mostra overlay se NÃO for logout manual
+      // Só mostra overlay se NÃO for logout manual E se for recente (< 2h)
       .on("broadcast", { event: "session-revoked" }, async (msg) => {
         const reason = msg?.payload?.reason;
-        console.error("[SessionGuard] 📡 SESSION REVOKED BROADCAST recebido!", { reason });
+        const revokedAt = msg?.payload?.revoked_at;
+        console.error("[SessionGuard] 📡 SESSION REVOKED BROADCAST recebido!", { reason, revokedAt });
 
         // Ignora se for logout manual do próprio usuário
         if (reason === "user_logout") {
@@ -353,7 +358,17 @@ export function SessionGuard({ children }: SessionGuardProps) {
           return;
         }
 
-        // Conflito real: mostrar overlay
+        // 🕐 JANELA DE 2 HORAS: Ignorar revogações antigas
+        if (revokedAt) {
+          const revokedTime = new Date(revokedAt).getTime();
+          const age = Date.now() - revokedTime;
+          if (age > REVOCATION_STALE_THRESHOLD_MS) {
+            console.log(`[SessionGuard] ✅ Revogação antiga (${Math.round(age / 60000)} min) - ignorando overlay`);
+            return;
+          }
+        }
+
+        // Conflito real E recente: mostrar overlay
         handleDeviceRevocation();
       })
       .subscribe();
@@ -392,11 +407,13 @@ export function SessionGuard({ children }: SessionGuardProps) {
           const newStatus = payload.new?.status;
           const payloadToken = payload.new?.session_token;
           const revokedReason = payload.new?.revoked_reason;
+          const revokedAt = payload.new?.revoked_at;
           const currentToken = localStorage.getItem(SESSION_TOKEN_KEY);
 
           console.log("[SessionGuard] 📡 Realtime UPDATE active_sessions:", {
             newStatus,
             revokedReason,
+            revokedAt,
             payloadToken: payloadToken?.slice(0, 8) + "...",
             currentToken: currentToken?.slice(0, 8) + "...",
             match: payloadToken === currentToken,
@@ -422,7 +439,20 @@ export function SessionGuard({ children }: SessionGuardProps) {
               sessionStorage.clear();
               await signOut();
             } else {
-              // Conflito de sessão real: mostrar overlay
+              // 🕐 JANELA DE 2 HORAS: Ignorar revogações antigas
+              if (revokedAt) {
+                const revokedTime = new Date(revokedAt).getTime();
+                const age = Date.now() - revokedTime;
+                if (age > REVOCATION_STALE_THRESHOLD_MS) {
+                  console.log(`[SessionGuard] ✅ Revogação antiga (${Math.round(age / 60000)} min) - ignorando overlay`);
+                  // Limpar token local para forçar relogin, mas SEM overlay dramático
+                  localStorage.removeItem(SESSION_TOKEN_KEY);
+                  await signOut();
+                  return;
+                }
+              }
+              
+              // Conflito de sessão real E recente: mostrar overlay
               console.error("[SessionGuard] 🔴 Conflito de sessão detectado:", revokedReason);
               handleDeviceRevocation();
             }
