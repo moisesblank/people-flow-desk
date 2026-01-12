@@ -35,6 +35,7 @@ import { SanctumProtectedContent } from "@/components/security/SanctumProtectedC
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useContentSecurityGuard } from "@/hooks/useContentSecurityGuard";
 
 // ============================================
 // TIPOS E INTERFACES
@@ -154,6 +155,20 @@ export const SecurePdfViewerOmega = memo(({
 
   // P1-2 FIX: Role-first, email como fallback UX
   const isOwner = role === "owner";
+
+  // ═══════════════════════════════════════════════════════════
+  // 🛡️ UNIVERSAL CONTENT SECURITY GUARD - PROTEÇÃO TOTAL
+  // ═══════════════════════════════════════════════════════════
+  const { SevereOverlay } = useContentSecurityGuard({
+    contentId: assetId,
+    contentType: 'pdf',
+    contentTitle: title,
+    isOwner,
+    userId: user?.id,
+    userEmail: user?.email,
+    userName: user?.user_metadata?.name,
+    enabled: true,
+  });
 
   // ============================================
   // BUSCAR MANIFEST
@@ -395,19 +410,21 @@ export const SecurePdfViewerOmega = memo(({
   // RENDER PRINCIPAL
   // ============================================
   return (
-    <SanctumProtectedContent
-      resourceId={assetId}
-      resourceType="pdf"
-      className={cn("secure-pdf-viewer", className)}
-      config={{
-        watermark: !isOwner,
-        blockCopy: true,
-        blockPrint: true,
-        blockDrag: true,
-        blockSelection: true,
-        blurOnInactive: true,
-      }}
-    >
+    <>
+      <SevereOverlay />
+      <SanctumProtectedContent
+        resourceId={assetId}
+        resourceType="pdf"
+        className={cn("secure-pdf-viewer", className)}
+        config={{
+          watermark: !isOwner,
+          blockCopy: true,
+          blockPrint: true,
+          blockDrag: true,
+          blockSelection: true,
+          blurOnInactive: true,
+        }}
+      >
       <div
         ref={containerRef}
         className={cn(
@@ -552,6 +569,7 @@ export const SecurePdfViewerOmega = memo(({
         />
       </div>
     </SanctumProtectedContent>
+    </>
   );
 });
 
