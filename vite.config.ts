@@ -80,25 +80,27 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         // ☢️ NOMES DE ARQUIVOS 100% HASH - SEM PREFIXOS LEGÍVEIS
-        // Arquivos como: x9k2m.js, a8f3.js (NÃO Alunos.js)
+        // Arquivos como: x9k2m.js, a8f3.js (NÃO GodModePanel.js)
         chunkFileNames: "assets/[hash].js",
         entryFileNames: "assets/[hash].js",
-        assetFileNames: (assetInfo) => {
-          const extType = assetInfo.name?.split(".").pop() || "";
-          if (/png|jpe?g|svg|gif|tiff|bmp|ico|webp|avif/i.test(extType)) {
-            return "assets/[hash][extname]";
-          }
-          if (/woff2?|eot|ttf|otf/i.test(extType)) {
-            return "assets/[hash][extname]";
-          }
-          if (/css/i.test(extType)) {
-            return "assets/[hash][extname]";
-          }
-          return "assets/[hash][extname]";
-        },
+        assetFileNames: "assets/[hash][extname]",
         
-        // ⚠️ ESTABILIDADE DE PRODUÇÃO (ANTI-DEPLOY-RASGADO)
+        // ☢️ FORÇA NOMES HASH-ONLY PARA DYNAMIC IMPORTS
         manualChunks: undefined,
+        
+        // ☢️ SANITIZA NOMES PARA REMOVER QUALQUER PADRÃO LEGÍVEL
+        sanitizeFileName: (name: string) => {
+          // Remove qualquer caractere que não seja alfanumérico
+          // Isso força o Rollup a usar apenas o hash
+          return name.replace(/[^a-zA-Z0-9]/g, '');
+        },
+      },
+    },
+    
+    // ☢️ EXPERIMENTAL: Anonimiza completamente URLs de chunks
+    experimental: {
+      renderBuiltUrl(filename: string) {
+        return { relative: true };
       },
     },
   },
