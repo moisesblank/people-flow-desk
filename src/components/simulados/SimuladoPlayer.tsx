@@ -501,12 +501,24 @@ export function SimuladoPlayer({
       );
 
     case SimuladoState.RUNNING:
+      // P0 FIX: Aguardar attempt e questions antes de renderizar
+      if (!attempt || questions.length === 0) {
+        console.log('[SimuladoPlayer] RUNNING state but missing data:', { attempt: !!attempt, questionsCount: questions.length });
+        return (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              <p className="text-muted-foreground">Carregando questões...</p>
+            </div>
+          </div>
+        );
+      }
       return (
         <>
           {NavigationConfirmDialog}
           <SimuladoRunningScreen
             simulado={simulado}
-            attempt={attempt!}
+            attempt={attempt}
             questions={questions}
             answers={answersMap}
             remainingSeconds={remainingSeconds}
