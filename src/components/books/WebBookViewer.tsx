@@ -1140,24 +1140,23 @@ export const WebBookViewer = memo(function WebBookViewer({
               )}
               
               {currentPageUrl ? (
-                <>
-                  <div 
-                    className="max-h-[calc(100vh-180px)] max-w-[95vw] lg:max-w-[85vw] xl:max-w-[80vw] 2xl:max-w-[75vw] w-auto h-auto rounded-lg shadow-2xl pointer-events-none select-none"
-                    draggable={false}
-                    onContextMenu={(e) => e.preventDefault()}
-                  >
-                    <SacredImage
-                      src={currentPageUrl}
-                      alt={`Página ${currentPage}`}
-                      className="w-full h-full rounded-lg"
-                      objectFit="contain"
-                      onLoad={() => setImageLoading(false)}
-                      onError={() => setImageLoading(false)}
-                    />
-                  </div>
+                <div 
+                  className="relative max-h-[calc(100vh-180px)] max-w-[95vw] lg:max-w-[85vw] xl:max-w-[80vw] 2xl:max-w-[75vw] w-auto h-auto rounded-lg shadow-2xl select-none"
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                >
+                  {/* Imagem do PDF */}
+                  <SacredImage
+                    src={currentPageUrl}
+                    alt={`Página ${currentPage}`}
+                    className="w-full h-full rounded-lg pointer-events-none"
+                    objectFit="contain"
+                    onLoad={() => setImageLoading(false)}
+                    onError={() => setImageLoading(false)}
+                  />
                   
-                  {/* 🎨 CANVAS DE DESENHO FABRIC.JS - Só ativo em Modo Leitura */}
-                  {/* ✅ STAGGER: Overlays só montam após Frame 2 */}
+                  {/* 🎨 CANVAS DE DESENHO FABRIC.JS - Wrapper Unificado */}
+                  {/* ✅ FIX: Canvas agora é FILHO do mesmo container da imagem */}
                   {stagger.overlaysReady && isFullscreen && (
                     <FabricDrawingCanvas
                       ref={fabricCanvasRef}
@@ -1170,7 +1169,7 @@ export const WebBookViewer = memo(function WebBookViewer({
                       onCanvasChange={handleFabricCanvasChange}
                     />
                   )}
-                </>
+                </div>
               ) : (
                 <div className="flex flex-col items-center justify-center bg-muted rounded-lg min-w-[300px] min-h-[400px] gap-3">
                   <BookOpen className="w-12 h-12 text-muted-foreground" />
