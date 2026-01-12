@@ -303,20 +303,37 @@ export function useLeaderboard(limit = 10) {
   return useSubspaceQuery<LeaderboardEntry[]>(
     ['leaderboard', limit.toString()],
     async () => {
-      const { data, error } = await supabase
+      // 1. Buscar dados de gamificação
+      const { data: gamificationData, error: gamError } = await supabase
         .from('user_gamification')
-        .select(`
-          user_id,
-          total_xp,
-          current_level,
-          current_streak,
-          profile:profiles!user_gamification_user_id_fkey(nome, avatar_url)
-        `)
+        .select('user_id, total_xp, current_level, current_streak')
         .order('total_xp', { ascending: false })
         .limit(limit);
 
-      if (error) throw error;
-      return data as LeaderboardEntry[];
+      if (gamError) throw gamError;
+      if (!gamificationData || gamificationData.length === 0) return [];
+
+      // 2. Buscar perfis separadamente (evita problema de FK/RLS)
+      const userIds = gamificationData.map(g => g.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, nome, avatar_url')
+        .in('id', userIds);
+
+      // 3. Criar mapa de perfis
+      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+      // 4. Combinar dados
+      return gamificationData.map(g => ({
+        user_id: g.user_id,
+        total_xp: g.total_xp,
+        current_level: g.current_level,
+        current_streak: g.current_streak,
+        profile: profileMap.get(g.user_id) ? {
+          nome: profileMap.get(g.user_id)!.nome || 'Anônimo',
+          avatar_url: profileMap.get(g.user_id)!.avatar_url,
+        } : undefined,
+      }));
     },
     {
       profile: 'semiStatic',
