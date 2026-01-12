@@ -6928,6 +6928,7 @@ export type Database = {
           macro: string | null
           micro: string | null
           position: number | null
+          preview_status: string | null
           required_roles: string[]
           status: Database["public"]["Enums"]["material_status"]
           tags: string[] | null
@@ -6957,6 +6958,7 @@ export type Database = {
           macro?: string | null
           micro?: string | null
           position?: number | null
+          preview_status?: string | null
           required_roles?: string[]
           status?: Database["public"]["Enums"]["material_status"]
           tags?: string[] | null
@@ -6986,6 +6988,7 @@ export type Database = {
           macro?: string | null
           micro?: string | null
           position?: number | null
+          preview_status?: string | null
           required_roles?: string[]
           status?: Database["public"]["Enums"]["material_status"]
           tags?: string[] | null
