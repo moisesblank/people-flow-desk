@@ -282,7 +282,7 @@ export function useBookSecurityGuard({
   }, [addAttempt, logViolation, onSessionEnd]);
 
   // ═══════════════════════════════════════════════════════════
-  // HANDLER DE KEYBOARD
+  // HANDLER DE KEYBOARD (keydown + keyup para PrintScreen)
   // ═══════════════════════════════════════════════════════════
   useEffect(() => {
     // ✅ STAGGER: Se não habilitado, não ativa listeners
@@ -299,13 +299,18 @@ export function useBookSecurityGuard({
       const keyUpper = key.toUpperCase();
 
       // ───────────────────────────────────────────────────────
-      // PRINT SCREEN (Windows)
+      // PRINT SCREEN (Windows) - keydown
       // ───────────────────────────────────────────────────────
       if (PRINT_SCREEN_KEYS.includes(key) || PRINT_SCREEN_KEYS.includes(keyUpper)) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
+        console.warn('[BookSecurityGuard] 🚨 PrintScreen detectado via keydown');
         handleEscalatedResponse('screenshot');
+        // Limpar clipboard imediatamente
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText('⚠️ Captura bloqueada').catch(() => {});
+        }
         return;
       }
 
@@ -316,6 +321,7 @@ export function useBookSecurityGuard({
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
+        console.warn('[BookSecurityGuard] 🚨 Win+Shift+S detectado');
         handleEscalatedResponse('screenshot');
         return;
       }
@@ -364,13 +370,38 @@ export function useBookSecurityGuard({
       }
     };
 
-    // Listener com capture para interceptar antes
+    // ═══════════════════════════════════════════════════════════
+    // 🚨 P0 FIX: KEYUP HANDLER para PrintScreen
+    // Chrome NÃO dispara keydown para PrintScreen em muitos casos
+    // Mas SEMPRE dispara keyup após a captura
+    // ═══════════════════════════════════════════════════════════
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (isOwnerRef.current) return;
+      
+      const key = e.key;
+      if (!key) return;
+      
+      // PrintScreen via keyup (mais confiável no Chrome)
+      if (PRINT_SCREEN_KEYS.includes(key) || PRINT_SCREEN_KEYS.includes(key.toUpperCase())) {
+        console.warn('[BookSecurityGuard] 🚨 PrintScreen detectado via KEYUP');
+        handleEscalatedResponse('screenshot');
+        
+        // Limpar clipboard após a captura
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText('⚠️ Captura bloqueada').catch(() => {});
+        }
+      }
+    };
+
+    // Listeners com capture para interceptar antes de qualquer outro handler
     document.addEventListener('keydown', handleKeyDown, { capture: true });
+    document.addEventListener('keyup', handleKeyUp, { capture: true });
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown, { capture: true });
+      document.removeEventListener('keyup', handleKeyUp, { capture: true });
     };
-  }, [handleEscalatedResponse]);
+  }, [enabled, handleEscalatedResponse]);
 
   // ═══════════════════════════════════════════════════════════
   // M4 - ITEM 1: DETECÇÃO DE GRAVAÇÃO DE TELA
