@@ -169,14 +169,24 @@ export function generateDeviceName(): string {
 export function detectDeviceType(): "desktop" | "mobile" | "tablet" {
   const ua = navigator.userAgent;
 
-  // iPad / explicit tablet
-  if (/iPad|Tablet/i.test(ua)) return "tablet";
+  // 🖥️ DESKTOP FIRST: macOS/Windows/Linux detection ANTES de Mobi check
+  // Safari no macOS às vezes tem "Mobi" no UA, mas É desktop
+  if (/Mac OS X|Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua)) {
+    return "desktop";
+  }
+  if (/Windows NT/i.test(ua) && !/Phone/i.test(ua)) {
+    return "desktop";
+  }
+  if (/Linux/i.test(ua) && !/Android/i.test(ua)) {
+    return "desktop";
+  }
 
-  // Android tablets normalmente NÃO possuem "Mobile" no UA
+  // 📱 Tablet detection
+  if (/iPad|Tablet/i.test(ua)) return "tablet";
   if (/Android/i.test(ua) && !/Mobile/i.test(ua)) return "tablet";
 
-  // Phones
-  if (/Mobi|iPhone/i.test(ua)) return "mobile";
+  // 📲 Mobile detection
+  if (/Mobi|iPhone|Android.*Mobile/i.test(ua)) return "mobile";
 
   // Fallback por capacidade (touch + largura)
   const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
