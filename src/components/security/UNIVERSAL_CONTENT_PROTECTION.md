@@ -1,8 +1,26 @@
 # 🛡️ PROTEÇÃO UNIVERSAL DE CONTEÚDO - CONSTITUIÇÃO PERPÉTUA
 
-**Data:** 2026-01-12  
+**Data:** 2026-01-12 (Atualizado após incidente)  
 **Status:** VIGENTE E IMUTÁVEL  
+**Versão:** 1.1.0  
 **Regra:** TODO PDF/Conteúdo Protegido DEVE usar `useContentSecurityGuard`
+
+---
+
+## 🚨 ATUALIZAÇÃO 2026-01-12 — PÓS-INCIDENTE
+
+Após o incidente onde usuário conseguiu tirar screenshots e acessar código via DevTools:
+
+### Correções Aplicadas:
+1. **PrintScreen via keyup** — Chrome não dispara keydown, agora capturamos keyup
+2. **Clipboard clearing** — Limpeza imediata do clipboard
+3. **F12/DevTools reativados** — Proteções que estavam comentadas foram reativadas
+4. **CSS blur** — Conteúdo fica borrado quando DevTools detectado
+5. **Infinite debugger** — Loop infinito de breakpoints
+
+### Limitação Reconhecida:
+> JavaScript no navegador é **intrinsecamente auditável**. Atacante determinado SEMPRE pode ver código.
+> Foco é em **PUNIÇÃO** (revogação de sessão) e **RASTREABILIDADE** (watermark forense).
 
 ---
 
@@ -30,29 +48,33 @@ Esta regra é PERPÉTUA e aplica-se a:
 
 ---
 
-## 🔐 CAMADAS DE PROTEÇÃO ATIVAS
+## 🔐 CAMADAS DE PROTEÇÃO ATIVAS (v1.1.0)
 
 ### 1. Anti-Debugger Agressivo
 - `antiDebugger.init()` + `enableAggressiveMode()`
 - Console flooding (inunda console com warnings)
 - Infinite debugger loop (pausa DevTools)
 - Detecção via timing attack, dimensões, elemento
-- Ocultação de código fonte
+- Ocultação de código fonte (Function.prototype.toString override)
+- **NOVO:** CSS blur quando DevTools detectado
 
-### 2. Bloqueio de Teclas
-- F12 (DevTools)
-- Ctrl+Shift+I/J/C (DevTools)
+### 2. Bloqueio de Teclas (REATIVADO)
+- F12 (DevTools) ✅
+- Ctrl+Shift+I/J/C/K (DevTools) ✅
 - Ctrl+P (Print)
 - Ctrl+S (Save)
-- PrintScreen (todas variantes)
+- Ctrl+U (View Source)
+- PrintScreen (todas variantes) ✅
 - Win+Shift+S (Snipping Tool)
-- Cmd+Shift+3/4/5/6 (macOS Screenshots)
+- Cmd+Shift+3/4/5/6 (macOS Screenshots) ✅
+- **NOVO:** Detecção via `keyup` para PrintScreen
 
 ### 3. Bloqueio de Interações
 - Context menu (botão direito)
 - Seleção de texto
 - Arrastar e soltar
 - Long-press (mobile)
+- **NOVO:** Limpeza imediata do clipboard
 
 ### 4. Escalonamento de Resposta
 1. **1ª tentativa:** Toast discreto
@@ -115,4 +137,23 @@ Isso é detectado automaticamente via:
 
 ---
 
-**Assinatura:** SYNAPSE Ω v10.4 - CONSTITUIÇÃO DE SEGURANÇA
+## 📜 LIMITAÇÕES TÉCNICAS RECONHECIDAS (NOVO)
+
+```yaml
+REALIDADE:
+  - JavaScript no navegador é intrinsecamente auditável
+  - Atacante determinado SEMPRE pode ver código-fonte
+  - Extensions podem capturar em camadas abaixo do JS
+  - Gravação de tela via software externo (OBS) não é detectável
+  - Foto com celular não é detectável
+
+FOCO:
+  - PUNIÇÃO: Revogar sessão após violações
+  - RASTREABILIDADE: Watermark forense (CPF/email/timestamp)
+  - EVIDÊNCIA: Logs para ação legal (Lei 9.610/98)
+```
+
+---
+
+**Assinatura:** SYNAPSE Ω v10.4.1 - CONSTITUIÇÃO DE SEGURANÇA  
+**Atualizado:** 2026-01-12 após incidente de segurança

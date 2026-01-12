@@ -153,7 +153,7 @@ function detectViaDimensions(): boolean {
 }
 
 // ============================================
-// 8. OVERRIDE toString PARA ESCONDER CÓDIGO
+// 8. OVERRIDE toString PARA ESCONDER CÓDIGO (REFORÇADO 2026-01-12)
 // ============================================
 function hideSourceCode(): void {
   if (isOwnerMode) return;
@@ -166,11 +166,17 @@ function hideSourceCode(): void {
       // Se é uma função nossa, retornar mensagem genérica
       const original = originalFunctionToString.call(this);
       
-      if (original.includes('sanctum') || 
-          original.includes('protect') || 
-          original.includes('security') ||
-          original.includes('violation')) {
-        return 'function() { [protected code] }';
+      // Palavras-chave que indicam código de segurança
+      const protectedKeywords = [
+        'sanctum', 'protect', 'security', 'violation', 'screenshot',
+        'devtools', 'debugger', 'watermark', 'fingerprint', 'keydown',
+        'keyup', 'clipboard', 'printscreen', 'detection', 'guard',
+        'shield', 'fortress', 'lei_vii', 'leiVII', 'anti'
+      ];
+      
+      const lowerOriginal = original.toLowerCase();
+      if (protectedKeywords.some(kw => lowerOriginal.includes(kw))) {
+        return 'function() { [CONTEÚDO PROTEGIDO - Lei 9.610/98] }';
       }
       
       return original;
@@ -178,6 +184,67 @@ function hideSourceCode(): void {
   } catch {
     // Já protegido
   }
+}
+
+// ============================================
+// 9. BLOQUEAR DEBUGGER STATEMENT (NOVO 2026-01-12)
+// ============================================
+function blockDebuggerStatement(): void {
+  if (isOwnerMode) return;
+  
+  // Injetar CSS que oculta conteúdo quando DevTools está aberto
+  const style = document.createElement('style');
+  style.id = 'anti-debug-css';
+  style.textContent = `
+    @media (min-width: 0px) {
+      body.devtools-detected [data-sanctum-protected] {
+        filter: blur(50px) !important;
+        opacity: 0.1 !important;
+        pointer-events: none !important;
+      }
+      body.devtools-detected::after {
+        content: "⚠️ DEVTOOLS DETECTADO - CONTEÚDO BLOQUEADO" !important;
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        background: #dc2626 !important;
+        color: white !important;
+        padding: 40px !important;
+        font-size: 24px !important;
+        font-weight: bold !important;
+        z-index: 999999999 !important;
+        border-radius: 16px !important;
+        box-shadow: 0 0 100px rgba(220, 38, 38, 0.8) !important;
+      }
+    }
+  `;
+  
+  if (!document.getElementById('anti-debug-css')) {
+    document.head.appendChild(style);
+  }
+}
+
+// ============================================
+// 10. DETECTAR E RESPONDER A DEVTOOLS (REFORÇADO)
+// ============================================
+function aggressiveDevToolsResponse(): void {
+  if (isOwnerMode) return;
+  
+  // Marcar body como detectado
+  document.body.classList.add('devtools-detected');
+  
+  // Limpar clipboard
+  try {
+    navigator.clipboard.writeText('© Prof. Moisés Medeiros - Conteúdo Protegido por Lei');
+  } catch {
+    // Clipboard não disponível
+  }
+  
+  // Disparar evento de violação
+  window.dispatchEvent(new CustomEvent('sanctum-violation', {
+    detail: { type: 'devtools_aggressive', severity: 10 }
+  }));
 }
 
 // ============================================
@@ -243,29 +310,56 @@ export function initAntiDebugger(userEmail?: string | null): () => void {
 }
 
 // ============================================
-// ATIVAR MODO AGRESSIVO (para páginas de conteúdo)
+// ATIVAR MODO AGRESSIVO (para páginas de conteúdo) - REFORÇADO 2026-01-12
 // ============================================
 export function enableAggressiveMode(): void {
   if (isOwnerMode) return;
   
+  // Injetar CSS de bloqueio
+  blockDebuggerStatement();
+  
   // Verificação imediata
   if (detectDevToolsViaElement() || detectViaDimensions()) {
     handleDevToolsDetected();
+    aggressiveDevToolsResponse();
   }
   
   // Adicionar listener de resize (detecta abertura do DevTools)
   window.addEventListener('resize', () => {
     if (detectViaDimensions()) {
       handleDevToolsDetected();
+      aggressiveDevToolsResponse();
     }
   });
   
-  // Verificação via timing a cada 5s (menos intrusivo)
+  // Verificação via timing a cada 3s (mais agressivo)
   setInterval(() => {
-    if (!isOwnerMode && detectViaTimingAttack()) {
-      handleDevToolsDetected();
+    if (!isOwnerMode) {
+      const detected = detectViaTimingAttack() || detectViaDimensions();
+      if (detected) {
+        handleDevToolsDetected();
+        aggressiveDevToolsResponse();
+      }
     }
-  }, 5000);
+  }, 3000);
+  
+  // Listener para keyboard shortcuts de DevTools
+  window.addEventListener('keydown', (e) => {
+    if (isOwnerMode) return;
+    
+    const key = e.key?.toLowerCase();
+    const ctrl = e.ctrlKey || e.metaKey;
+    const shift = e.shiftKey;
+    
+    // Detectar abertura de DevTools
+    if (key === 'f12' || (ctrl && shift && ['i', 'j', 'c', 'k'].includes(key))) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleDevToolsDetected();
+      aggressiveDevToolsResponse();
+      return false;
+    }
+  }, { capture: true, passive: false });
 }
 
 // ============================================
@@ -277,6 +371,8 @@ export const antiDebugger = {
   enableAggressiveMode,
   detectDevTools: detectDevToolsViaElement,
   detectDimensions: detectViaDimensions,
+  aggressiveResponse: aggressiveDevToolsResponse,
+  blockDebugger: blockDebuggerStatement,
 };
 
 export default antiDebugger;
