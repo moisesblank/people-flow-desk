@@ -86,13 +86,10 @@ export const CategoryPieChart = memo(function CategoryPieChart({
   data, 
   title 
 }: CategoryPieChartProps) {
-  const { motionProps, isLowEnd } = useConstitutionPerformance();
+  const { motionProps } = useConstitutionPerformance();
   const chartConfig = useChartSimplification();
   
-  // 🏛️ LEI I: Versão simplificada em 3G
-  if (chartConfig.shouldSimplify) {
-    return <SimplifiedPieChart data={data} title={title} />;
-  }
+  // 🏛️ PREMIUM GARANTIDO: Sempre versão completa (sem simplificação)
   
   return (
     <motion.div

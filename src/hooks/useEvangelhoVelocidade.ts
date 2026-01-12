@@ -50,36 +50,29 @@ export function useDeferredRender<T>(value: T): T {
 }
 
 export function useOptimizedAnimation(enabled: boolean = true) {
-  const { tier, recommendations } = usePerformanceTier();
+  // 🏛️ PREMIUM GARANTIDO: Animações sempre ativas (respeita apenas prefers-reduced-motion)
+  const reducedMotion = typeof window !== 'undefined' 
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches 
+    : false;
+  
   return useMemo(() => {
-    const reducedMotion = recommendations.some(r => r.includes('Animações'));
-    if (!enabled || reducedMotion || tier === 'legacy') {
+    if (!enabled || reducedMotion) {
       return { shouldAnimate: false, duration: 0, easing: 'linear' };
     }
-    // v3.0 tier mapping
-    const durationMap = { quantum: 150, neural: 200, enhanced: 250, standard: 300, legacy: 0 };
-    return { shouldAnimate: true, duration: durationMap[tier], easing: 'cubic-bezier(0.4, 0, 0.2, 1)' };
-  }, [tier, enabled, recommendations]);
+    // Premium: duração quantum para todos
+    return { shouldAnimate: true, duration: 150, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' };
+  }, [enabled, reducedMotion]);
 }
 
 export function useRenderPriority(priority: 'critical' | 'high' | 'normal' | 'low') {
-  const { tier } = usePerformanceTier();
+  // 🏛️ PREMIUM GARANTIDO: Renderização imediata para todos (tier quantum)
   const [shouldRender, setShouldRender] = useState(priority === 'critical');
 
   useEffect(() => {
     if (priority === 'critical') { setShouldRender(true); return; }
-    // v3.0 tier mapping
-    const delays = {
-      quantum: { high: 0, normal: 0, low: 0 },
-      neural: { high: 0, normal: 0, low: 50 },
-      enhanced: { high: 0, normal: 50, low: 100 },
-      standard: { high: 0, normal: 100, low: 200 },
-      legacy: { high: 50, normal: 200, low: 500 },
-    };
-    const delay = delays[tier][priority as 'high' | 'normal' | 'low'];
-    const timer = setTimeout(() => startTransition(() => setShouldRender(true)), delay);
-    return () => clearTimeout(timer);
-  }, [priority, tier]);
+    // Premium: sem delays, renderização imediata
+    setShouldRender(true);
+  }, [priority]);
 
-  return { shouldRender, renderImmediately: priority === 'critical' };
+  return { shouldRender: true, renderImmediately: priority === 'critical' };
 }
