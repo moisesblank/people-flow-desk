@@ -14,7 +14,9 @@ import {
   useAllFlashcards, 
   useRescheduleFlashcard,
   useFlashcardStats,
-  useCreateFlashcard 
+  useCreateFlashcard,
+  useReadyFlashcards,
+  useReadyFlashcardsCount
 } from '@/hooks/useFlashcards';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +35,8 @@ import {
   RotateCcw, Zap, Check, X, Brain, 
   Sparkles, Plus,
   ChevronLeft, Target, 
-  AlertTriangle, PartyPopper
+  AlertTriangle, PartyPopper,
+  BookOpen
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -58,7 +61,9 @@ export default function FlashcardsPage() {
   const { user } = useAuth();
   const [isFlipped, setIsFlipped] = useState(false);
   const [isCramMode, setIsCramMode] = useState(false);
+  const [isReadyMode, setIsReadyMode] = useState(false);
   const [isCramModalOpen, setIsCramModalOpen] = useState(false);
+  const [isReadyModalOpen, setIsReadyModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionStats, setSessionStats] = useState({ correct: 0, incorrect: 0, xpEarned: 0 });
@@ -66,6 +71,8 @@ export default function FlashcardsPage() {
 
   const { data: dueCards, isLoading: isLoadingDue, refetch: refetchDue } = useDueFlashcards();
   const { data: allCards, isLoading: isLoadingAll, refetch: refetchAll } = useAllFlashcards();
+  const { data: readyCards, isLoading: isLoadingReady, refetch: refetchReady } = useReadyFlashcards();
+  const { data: readyCount } = useReadyFlashcardsCount();
   const rescheduleMutation = useRescheduleFlashcard();
   const createMutation = useCreateFlashcard();
 
@@ -99,8 +106,8 @@ export default function FlashcardsPage() {
     };
   }, [user?.id, queryClient]);
 
-  const cards = isCramMode ? allCards : dueCards;
-  const isLoading = isCramMode ? isLoadingAll : isLoadingDue;
+  const cards = isReadyMode ? readyCards : (isCramMode ? allCards : dueCards);
+  const isLoading = isReadyMode ? isLoadingReady : (isCramMode ? isLoadingAll : isLoadingDue);
   const currentCard = cards?.[currentIndex];
   const isSessionComplete = currentIndex >= (cards?.length || 0) && (cards?.length || 0) > 0;
 
@@ -151,6 +158,25 @@ export default function FlashcardsPage() {
 
   const exitCramMode = () => {
     setIsCramMode(false);
+    setIsReadyMode(false);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setSessionStats({ correct: 0, incorrect: 0, xpEarned: 0 });
+    refetchDue();
+  };
+
+  const startReadyMode = () => {
+    setIsReadyMode(true);
+    setIsCramMode(false);
+    setIsReadyModalOpen(false);
+    setCurrentIndex(0);
+    setIsFlipped(false);
+    setSessionStats({ correct: 0, incorrect: 0, xpEarned: 0 });
+    refetchReady();
+  };
+
+  const exitReadyMode = () => {
+    setIsReadyMode(false);
     setCurrentIndex(0);
     setIsFlipped(false);
     setSessionStats({ correct: 0, incorrect: 0, xpEarned: 0 });
@@ -161,7 +187,9 @@ export default function FlashcardsPage() {
     setCurrentIndex(0);
     setIsFlipped(false);
     setSessionStats({ correct: 0, incorrect: 0, xpEarned: 0 });
-    if (isCramMode) {
+    if (isReadyMode) {
+      refetchReady();
+    } else if (isCramMode) {
       refetchAll();
     } else {
       refetchDue();
@@ -383,15 +411,27 @@ export default function FlashcardsPage() {
                 : 'Nenhum card para revisar hoje. Volte amanhã para continuar sua jornada.'}
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
+              {/* Flashcards Prontos - NOVO */}
+              {readyCount && readyCount > 0 && !isReadyMode && (
+                <Button onClick={startReadyMode} size="lg" className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700">
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Flashcards Prontos ({readyCount})
+                </Button>
+              )}
               <Button onClick={() => setIsCreateModalOpen(true)} size="lg" className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
                 <Plus className="w-4 h-4 mr-2" />
                 Criar Flashcard
               </Button>
-              {!isCramMode && allCards && allCards.length > 0 && (
+              {!isCramMode && !isReadyMode && allCards && allCards.length > 0 && (
                 <Button variant="outline" onClick={() => setIsCramModalOpen(true)} size="lg" className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10 hover:border-amber-500">
                   <Zap className="w-4 h-4 mr-2" />
                   Modo Cram
+                </Button>
+              )}
+              {isReadyMode && (
+                <Button variant="outline" onClick={exitReadyMode} size="lg" className="border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10">
+                  Sair dos Prontos
                 </Button>
               )}
             </div>
@@ -441,28 +481,45 @@ export default function FlashcardsPage() {
                 </span>
               </h1>
               <p className="text-sm text-muted-foreground">
-                {isCramMode ? (
+                {isReadyMode ? (
+                  <span className="flex items-center gap-1 text-emerald-500">
+                    <BookOpen className="w-3 h-3" />
+                    Flashcards Prontos ({cards?.length || 0})
+                  </span>
+                ) : isCramMode ? (
                   <span className="flex items-center gap-1 text-amber-500">
                     <Zap className="w-3 h-3" />
                     Modo Cram ativado
                   </span>
                 ) : (
-                  `${cards.length} cards para revisar`
+                  `${cards?.length || 0} cards para revisar`
                 )}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            {isCramMode ? (
+            {isReadyMode ? (
+              <Button variant="outline" size="sm" onClick={exitReadyMode} className="border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10">
+                Sair dos Prontos
+              </Button>
+            ) : isCramMode ? (
               <Button variant="outline" size="sm" onClick={exitCramMode} className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10">
                 Sair do Cram
               </Button>
             ) : (
-              <Button variant="outline" size="sm" onClick={() => setIsCramModalOpen(true)} className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10">
-                <Zap className="w-4 h-4 mr-1" />
-                Cram
-              </Button>
+              <>
+                {readyCount && readyCount > 0 && (
+                  <Button variant="outline" size="sm" onClick={startReadyMode} className="border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/10">
+                    <BookOpen className="w-4 h-4 mr-1" />
+                    Prontos ({readyCount})
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={() => setIsCramModalOpen(true)} className="border-amber-500/30 text-amber-500 hover:bg-amber-500/10">
+                  <Zap className="w-4 h-4 mr-1" />
+                  Cram
+                </Button>
+              </>
             )}
             <Button variant="ghost" size="icon" onClick={() => setIsCreateModalOpen(true)}>
               <Plus className="w-5 h-5" />

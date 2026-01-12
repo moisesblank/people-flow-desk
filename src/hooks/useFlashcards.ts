@@ -328,6 +328,65 @@ export function useDeleteFlashcard() {
   });
 }
 
+// 🌌 Hook: Flashcards Prontos (públicos) - para todos os alunos
+export function useReadyFlashcards() {
+  const { user } = useAuth();
+
+  return useSubspaceQuery<Flashcard[]>(
+    ['flashcards-ready'],
+    async (): Promise<Flashcard[]> => {
+      const { data, error } = await supabase
+        .from('study_flashcards')
+        .select('*')
+        .eq('is_public', true)
+        .not('question', 'ilike', '%atualize para a versão%')
+        .order('created_at', { ascending: false })
+        .limit(1000);
+
+      if (error) throw error;
+
+      return (data || []).map(card => ({
+        ...card,
+        stability: card.stability ?? 1.0,
+        difficulty: card.difficulty ?? 0.3,
+        elapsed_days: card.elapsed_days ?? 0,
+        scheduled_days: card.scheduled_days ?? 0,
+        reps: card.reps ?? 0,
+        lapses: card.lapses ?? 0,
+        state: (card.state as Flashcard['state']) ?? 'new',
+      }));
+    },
+    {
+      profile: 'user',
+      persistKey: 'flashcards_ready',
+      enabled: !!user?.id,
+    }
+  );
+}
+
+// 🌌 Hook: Contagem de Flashcards Prontos
+export function useReadyFlashcardsCount() {
+  const { user } = useAuth();
+
+  return useSubspaceQuery<number>(
+    ['flashcards-ready-count'],
+    async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from('study_flashcards')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_public', true);
+
+      if (error) throw error;
+      return count || 0;
+    },
+    {
+      profile: 'dashboard',
+      persistKey: 'flashcards_ready_count',
+      enabled: !!user?.id,
+    }
+  );
+}
+
 // 🌌 Hook: Estatísticas de flashcards - useSubspaceQuery
 export function useFlashcardStats() {
   const { user } = useAuth();

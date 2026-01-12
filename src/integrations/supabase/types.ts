@@ -12430,6 +12430,7 @@ export type Database = {
           due_date: string
           elapsed_days: number | null
           id: string
+          is_public: boolean | null
           lapses: number | null
           last_review: string | null
           lesson_id: string | null
@@ -12450,6 +12451,7 @@ export type Database = {
           due_date?: string
           elapsed_days?: number | null
           id?: string
+          is_public?: boolean | null
           lapses?: number | null
           last_review?: string | null
           lesson_id?: string | null
@@ -12470,6 +12472,7 @@ export type Database = {
           due_date?: string
           elapsed_days?: number | null
           id?: string
+          is_public?: boolean | null
           lapses?: number | null
           last_review?: string | null
           lesson_id?: string | null
