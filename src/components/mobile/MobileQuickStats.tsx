@@ -107,8 +107,9 @@ export const MobileQuickStats = memo(function MobileQuickStats({
   pendingPayments,
   students,
 }: MobileQuickStatsProps) {
-  const { shouldReduceMotion, isLowEndDevice, animationDuration } = usePerformance();
-  const skipAnimations = shouldReduceMotion || isLowEndDevice;
+  const { shouldReduceMotion, animationDuration } = usePerformance();
+  // 🏛️ PREMIUM GARANTIDO: Apenas prefers-reduced-motion desativa animações
+  const skipAnimations = shouldReduceMotion;
   
   // Memoize stats calculation
   const stats = useMemo(() => [

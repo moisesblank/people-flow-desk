@@ -107,10 +107,7 @@ export const RevenueChart = memo(function RevenueChart({ data }: RevenueChartPro
   const { motionProps } = useConstitutionPerformance();
   const chartConfig = useChartSimplification();
   
-  // 🏛️ LEI I: Versão simplificada em 3G
-  if (chartConfig.shouldSimplify) {
-    return <SimplifiedRevenueChart data={data} />;
-  }
+  // 🏛️ PREMIUM GARANTIDO: Sempre versão completa
   
   return (
     <motion.div

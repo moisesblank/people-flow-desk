@@ -191,9 +191,7 @@ export const PerformanceIndicator = memo(function PerformanceIndicator() {
       <div className="text-muted-foreground">
         {isMobile ? 'Mobile' : 'Desktop'} | {connectionType}
       </div>
-      {isLowEndDevice && (
-        <div className="text-warning">Low-end mode</div>
-      )}
+      {/* 🏛️ PREMIUM GARANTIDO: Removido indicador low-end */}
     </div>
   );
 });

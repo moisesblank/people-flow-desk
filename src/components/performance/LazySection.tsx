@@ -30,12 +30,11 @@ interface LazySectionProps {
 
 export const LazySection = memo(forwardRef<HTMLDivElement, LazySectionProps>(
   ({ children, className = "", minHeight = 100, priority = false }, forwardedRef) => {
-    const { isSlowConnection, isMobile } = usePerformance();
     const internalRef = useRef<HTMLDivElement>(null);
     const [isVisible, setIsVisible] = useState(priority);
     
-    // Adjust rootMargin based on connection - load earlier on slow connections
-    const rootMargin = isSlowConnection ? "800px" : isMobile ? "500px" : "300px";
+    // 🏛️ PREMIUM GARANTIDO: Margem máxima para todos
+    const rootMargin = "1000px";
 
     useEffect(() => {
       if (isVisible || priority) return;

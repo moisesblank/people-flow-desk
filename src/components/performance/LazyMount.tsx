@@ -33,18 +33,8 @@ export const LazyMount = memo(function LazyMount({
   minHeight = 100,
   priority = false,
 }: LazyMountProps) {
-  const { isSlowConnection, isMobile, saveData } = useNetworkInfo();
-  
-  // Ajusta rootMargin baseado na conexão (LEI I - Artigo 5)
-  // 3G/saveData = carrega MUITO mais cedo (800px) para compensar latência
-  // Mobile 4G = carrega cedo (500px)
-  // Desktop = pode esperar (300px)
-  const effectiveMargin = rootMargin ?? (
-    saveData ? "1000px" : // Data saver = máximo prefetch
-    isSlowConnection ? "800px" : // 3G = prefetch agressivo
-    isMobile ? "500px" : // Mobile 4G = balanceado
-    "300px" // Desktop = normal
-  );
+  // 🏛️ PREMIUM GARANTIDO: Margem máxima para todos (preload agressivo)
+  const effectiveMargin = rootMargin ?? "1000px";
   
   const { ref, isIntersecting } = useLazyLoad({ 
     rootMargin: effectiveMargin, 
