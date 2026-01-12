@@ -764,28 +764,51 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   // ============================================
   // LEI SUPREMA: Funções para converter VALUE → LABEL (NUNCA expor VALUE)
   // ============================================
+  // P0 FIX v3: Busca flexível por VALUE, LABEL ou case-insensitive
+  // Se parece slug (tem underscore) e não encontrou → retorna '' (REJEITAR)
   const getMacroLabel = useCallback((value: string): string => {
     if (!value || value === '__AUTO_AI__' || value === '__TODOS__') return '';
-    const found = macros.find(m => m.value === value);
-    return found?.label || 'Carregando...';
+    const found = macros.find(m => 
+      m.value === value || 
+      m.label === value ||
+      m.value?.toLowerCase() === value?.toLowerCase() ||
+      m.label?.toLowerCase() === value?.toLowerCase()
+    );
+    // DOGMA: Se encontrou → label. Se não encontrou E parece slug → RECUSAR
+    return found?.label || (value.includes('_') ? '' : value);
   }, [macros]);
 
   const getMicroLabel = useCallback((value: string): string => {
     if (!value || value === '__AUTO_AI__' || value === '__TODOS__') return '';
-    const found = filteredMicros.find(m => m.value === value);
-    return found?.label || 'Carregando...';
+    const found = filteredMicros.find(m => 
+      m.value === value || 
+      m.label === value ||
+      m.value?.toLowerCase() === value?.toLowerCase() ||
+      m.label?.toLowerCase() === value?.toLowerCase()
+    );
+    return found?.label || (value.includes('_') ? '' : value);
   }, [filteredMicros]);
 
   const getTemaLabel = useCallback((value: string): string => {
     if (!value || value === '__AUTO_AI__' || value === '__TODOS__') return '';
-    const found = filteredTemas.find(t => t.value === value);
-    return found?.label || 'Carregando...';
+    const found = filteredTemas.find(t => 
+      t.value === value || 
+      t.label === value ||
+      t.value?.toLowerCase() === value?.toLowerCase() ||
+      t.label?.toLowerCase() === value?.toLowerCase()
+    );
+    return found?.label || (value.includes('_') ? '' : value);
   }, [filteredTemas]);
 
   const getSubtemaLabel = useCallback((value: string): string => {
     if (!value || value === '__AUTO_AI__' || value === '__TODOS__') return '';
-    const found = filteredSubtemas.find(s => s.value === value);
-    return found?.label || 'Carregando...';
+    const found = filteredSubtemas.find(s => 
+      s.value === value || 
+      s.label === value ||
+      s.value?.toLowerCase() === value?.toLowerCase() ||
+      s.label?.toLowerCase() === value?.toLowerCase()
+    );
+    return found?.label || (value.includes('_') ? '' : value);
   }, [filteredSubtemas]);
   
   // Hook para registrar intervenções de IA
@@ -1865,9 +1888,14 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         const macroValue = isMacroAutoAI 
           ? (q.macro || 'Química Geral') // Respeita Excel, fallback se vazio
           : (selectedMacro || q.macro || 'Química Geral');
-        // CONVERSÃO CRÍTICA: value → label (se for um value conhecido)
-        const macroLabel = getMacroLabel(macroValue);
-        const macro = macroLabel || macroValue; // Se não encontrar label, usa o valor original
+        // P0 FIX v3: Buscar por VALUE ou por LABEL (flexibilidade para Excel/IA)
+        const macroFromList = macros.find(m => 
+          m.value === macroValue || m.label === macroValue || 
+          m.value?.toLowerCase() === macroValue?.toLowerCase() ||
+          m.label?.toLowerCase() === macroValue?.toLowerCase()
+        );
+        // DOGMA: Se encontrou → usa label. Se não encontrou E parece slug (tem underscore) → RECUSAR (usa fallback Química Geral)
+        const macro = macroFromList?.label || (macroValue.includes('_') ? 'Química Geral' : macroValue);
         if (!q.macro && isMacroAutoAI) camposInferidos.push('macro:auto_ai_mode');
         if (!isMacroAutoAI && selectedMacro && selectedMacro !== q.macro) camposInferidos.push('macro:pre_selected');
         
