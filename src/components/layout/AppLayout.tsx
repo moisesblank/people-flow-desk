@@ -154,19 +154,22 @@ const AppHeader = memo(
             </Tooltip>
           )}
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsTeamChatOpen(true)}
-                className="header-btn-glow micro-hover"
-              >
-                <MessageSquare className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Chat da Equipe</TooltipContent>
-          </Tooltip>
+          {/* 🔒 Chat da Equipe - APENAS OWNER (CONSTITUIÇÃO v10.4) */}
+          {isGodMode && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsTeamChatOpen(true)}
+                  className="header-btn-glow micro-hover"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Chat da Equipe (OWNER)</TooltipContent>
+            </Tooltip>
+          )}
 
           <div className="flex-1" />
 
