@@ -45,8 +45,8 @@ import { AdaptiveScheduler } from "./AdaptiveScheduler";
 // Widget de Ranking integrado no Dashboard
 import { DashboardRankingWidget } from "./DashboardRankingWidget";
 
-// Componente COMPLETO de Análise de Desempenho (idêntico ao /alunos/questoes)
-import StudentPerformanceAnalytics from "./questoes/StudentPerformanceAnalytics";
+// Componente de Análise de Desempenho REMOVIDO do Dashboard (mantido em /alunos/questoes)
+// import StudentPerformanceAnalytics from "./questoes/StudentPerformanceAnalytics";
 
 // 📅 Plano de Estudos ENEM 2030 (Dados Reais + IA)
 import { StudyPlanENEM2030 } from "./StudyPlanENEM2030";
@@ -466,17 +466,9 @@ export function BetaStudentDashboard() {
       </motion.div>
 
       {/* ============================================ */}
-      {/* SEÇÃO ANÁLISE POR ÁREAS - COMPONENTE COMPLETO */}
-      {/* Mesmo que /alunos/questoes - SINCRONIZADO SEMPRE */}
+      {/* SEÇÃO ANÁLISE POR ÁREAS - REMOVIDA DO DASHBOARD */}
+      {/* Disponível em /alunos/questoes */}
       {/* ============================================ */}
-      <motion.div
-        id="performance-section"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.35 }}
-      >
-        <StudentPerformanceAnalytics />
-      </motion.div>
 
       {/* ============================================ */}
       {/* SEÇÃO RANKING INTEGRADO - PANTEÃO DOS CAMPEÕES */}
@@ -667,10 +659,7 @@ export function BetaStudentDashboard() {
                 size="lg" 
                 variant="outline"
                 className="gap-2"
-                onClick={() => {
-                  // Scroll para seção de performance integrada
-                  document.getElementById('performance-section')?.scrollIntoView({ behavior: 'smooth' });
-                }}
+                onClick={() => navigate('/alunos/questoes')}
               >
                 <TrendingUp className="w-4 h-4" />
                 Ver Evolução
