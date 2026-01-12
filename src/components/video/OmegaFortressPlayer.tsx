@@ -146,7 +146,9 @@ export const OmegaFortressPlayer = memo(({
   // Estados
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [showThumbnail, setShowThumbnail] = useState(!autoplay);
+  // 🔥 FIX v16.0: SEMPRE mostrar thumbnail primeiro para garantir disclaimer
+  // O autoplay só acontece APÓS o disclaimer de 3 segundos
+  const [showThumbnail, setShowThumbnail] = useState(true);
   const [currentSpeed, setCurrentSpeed] = useState(1);
   const [currentQuality, setCurrentQuality] = useState("hd1080");
   const [isMuted, setIsMuted] = useState(false);
@@ -159,7 +161,8 @@ export const OmegaFortressPlayer = memo(({
   const progressBarRef = useRef<HTMLDivElement>(null);
   
   // 🆕 DISCLAIMER OVERLAY - Exibe aviso legal por 3 segundos antes do vídeo
-  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  // 🔥 FIX v16.0: Se autoplay=true, iniciar disclaimer automaticamente
+  const [showDisclaimer, setShowDisclaimer] = useState(autoplay);
   const [disclaimerCompleted, setDisclaimerCompleted] = useState(false);
   const [violationWarning, setViolationWarning] = useState<string | null>(null);
   const [showSecurityInfo, setShowSecurityInfo] = useState(false);
@@ -265,6 +268,23 @@ export const OmegaFortressPlayer = memo(({
       setIsLoading(false);
     }
   }, [sessionError]);
+
+  // 🔥 FIX v16.0: AUTOPLAY COM DISCLAIMER OBRIGATÓRIO
+  // Se autoplay=true, o disclaimer inicia automaticamente
+  // Após 3 segundos, libera o vídeo para tocar
+  useEffect(() => {
+    if (autoplay && showDisclaimer && !disclaimerCompleted) {
+      console.log('[OmegaFortress] 🔒 Disclaimer automático iniciado (autoplay=true)');
+      const timer = setTimeout(() => {
+        console.log('[OmegaFortress] ✅ Disclaimer concluído - liberando autoplay');
+        setShowDisclaimer(false);
+        setDisclaimerCompleted(true);
+        setShowThumbnail(false);
+        setIsLoading(true);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [autoplay, showDisclaimer, disclaimerCompleted]);
 
   // 🚀 PATCH 5K: Cleanup do timeout de violação no unmount
   useEffect(() => {
@@ -1103,8 +1123,8 @@ export const OmegaFortressPlayer = memo(({
       <div className="aspect-video relative">
         
         {/* 🆕 THUMBNAIL STATE - AGORA FUNCIONA MESMO SEM THUMBNAIL (PANDA) */}
-        {/* O disclaimer deve aparecer SEMPRE, independente de ter thumbnail */}
-        {showThumbnail && (
+        {/* 🔥 FIX v16.0: Não mostrar thumbnail/play button durante disclaimer */}
+        {showThumbnail && !showDisclaimer && (
           <div className="absolute inset-0 cursor-pointer z-10" onClick={handlePlayPause}>
             {/* Background: Thumbnail se existir, senão gradiente */}
             {thumbnailUrl ? (
