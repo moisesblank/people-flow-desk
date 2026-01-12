@@ -457,6 +457,7 @@ export const WebBookViewer = memo(function WebBookViewer({
   const [imageLoading, setImageLoading] = useState(true);
   const [pdfPath, setPdfPath] = useState<string | null>(null);
   const [isSavingHistory, setIsSavingHistory] = useState(false);
+  const [imageHeight, setImageHeight] = useState<number>(0); // P0 FIX: altura real da imagem
   
   // Estado de ferramentas de desenho (Fabric.js)
   const [activeTool, setActiveTool] = useState<ToolMode>('pencil');
@@ -1151,7 +1152,14 @@ export const WebBookViewer = memo(function WebBookViewer({
                     alt={`Página ${currentPage}`}
                     className="w-full h-full rounded-lg pointer-events-none"
                     objectFit="contain"
-                    onLoad={() => setImageLoading(false)}
+                    onLoad={() => {
+                      setImageLoading(false);
+                      // P0 FIX: Capturar altura da imagem via DOM query
+                      requestAnimationFrame(() => {
+                        const img = containerRef.current?.querySelector('img');
+                        if (img?.offsetHeight) setImageHeight(img.offsetHeight);
+                      });
+                    }}
                     onError={() => setImageLoading(false)}
                   />
                   
@@ -1167,6 +1175,7 @@ export const WebBookViewer = memo(function WebBookViewer({
                       pageNumber={currentPage}
                       initialData={currentPageOverlay}
                       onCanvasChange={handleFabricCanvasChange}
+                      imageHeight={imageHeight}
                     />
                   )}
                 </div>

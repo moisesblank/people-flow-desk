@@ -30,6 +30,8 @@ export interface FabricDrawingCanvasProps {
   onCanvasChange?: (data: FabricCanvasData) => void;
   initialData?: FabricCanvasData | null;
   className?: string;
+  /** P0 FIX: Altura real da imagem para garantir que o canvas cubra toda a área */
+  imageHeight?: number;
 }
 
 export interface FabricDrawingCanvasHandle {
@@ -52,7 +54,8 @@ export const FabricDrawingCanvas = memo(forwardRef<FabricDrawingCanvasHandle, Fa
     pageNumber,
     onCanvasChange,
     initialData,
-    className
+    className,
+    imageHeight
   }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -70,16 +73,21 @@ export const FabricDrawingCanvas = memo(forwardRef<FabricDrawingCanvasHandle, Fa
 
       const container = containerRef.current;
       const rect = container.getBoundingClientRect();
+      
+      // P0 FIX: Usar imageHeight se disponível, senão usar altura do container
+      const canvasHeight = imageHeight && imageHeight > rect.height ? imageHeight : rect.height;
 
       console.log('[FabricCanvas] Inicializando canvas', { 
         width: rect.width, 
-        height: rect.height,
+        height: canvasHeight,
+        imageHeight,
+        containerHeight: rect.height,
         pageNumber 
       });
 
       const canvas = new FabricCanvas(canvasRef.current, {
         width: rect.width || 800,
-        height: rect.height || 600,
+        height: canvasHeight || 600,
         backgroundColor: 'transparent',
         isDrawingMode: false,
         selection: false,
@@ -106,11 +114,12 @@ export const FabricDrawingCanvas = memo(forwardRef<FabricDrawingCanvasHandle, Fa
       canvas.on('object:removed', handleModified);
       canvas.on('path:created', handleModified);
 
-      // Resize handler
+      // Resize handler - P0 FIX: considerar imageHeight
       const handleResize = () => {
         const newRect = container.getBoundingClientRect();
-        if (newRect.width > 0 && newRect.height > 0) {
-          canvas.setDimensions({ width: newRect.width, height: newRect.height });
+        const newHeight = imageHeight && imageHeight > newRect.height ? imageHeight : newRect.height;
+        if (newRect.width > 0 && newHeight > 0) {
+          canvas.setDimensions({ width: newRect.width, height: newHeight });
           canvas.renderAll();
         }
       };
@@ -123,7 +132,7 @@ export const FabricDrawingCanvas = memo(forwardRef<FabricDrawingCanvasHandle, Fa
         canvas.dispose();
         fabricRef.current = null;
       };
-    }, [pageNumber]);
+    }, [pageNumber, imageHeight]);
 
     // ============================================
     // CARREGAR DADOS INICIAIS
