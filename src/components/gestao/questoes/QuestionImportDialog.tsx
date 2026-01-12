@@ -1858,9 +1858,16 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         const isMicroAutoAI = selectedMicro === '__AUTO_AI__';
         
         // MACRO: Se modo automático, usar o que veio do Excel/inferência. Se não, usar pré-seleção.
-        const macro = isMacroAutoAI 
+        // ═══════════════════════════════════════════════════════════════════
+        // P0 FIX: Salvar SEMPRE como LABEL (nunca como slug/value)
+        // O banco usa LABELS como fonte da verdade
+        // ═══════════════════════════════════════════════════════════════════
+        const macroValue = isMacroAutoAI 
           ? (q.macro || 'Química Geral') // Respeita Excel, fallback se vazio
           : (selectedMacro || q.macro || 'Química Geral');
+        // CONVERSÃO CRÍTICA: value → label (se for um value conhecido)
+        const macroLabel = getMacroLabel(macroValue);
+        const macro = macroLabel || macroValue; // Se não encontrar label, usa o valor original
         if (!q.macro && isMacroAutoAI) camposInferidos.push('macro:auto_ai_mode');
         if (!isMacroAutoAI && selectedMacro && selectedMacro !== q.macro) camposInferidos.push('macro:pre_selected');
         
@@ -1873,11 +1880,14 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         const isMicroTodos = selectedMicro === '__TODOS__';
         
         // Se TODOS, o micro será o primeiro da lista como "âncora", mas a questão terá associação multi-micro
-        const micro = isMicroAutoAI 
+        const microValue = isMicroAutoAI 
           ? (q.micro || '') // Respeita o que já tem no Excel ou inferido pela IA
           : isMicroTodos
             ? (filteredMicros.length > 0 ? filteredMicros[0].value : q.micro || '') // Usa primeiro micro como âncora
             : (selectedMicro || q.micro || '');
+        // P0 FIX: Buscar label do micro no array filteredMicros
+        const microFromList = filteredMicros.find(m => m.value === microValue);
+        const micro = microFromList?.label || microValue; // Se não encontrar, usa o valor original
         if (!q.micro && isMicroAutoAI) camposInferidos.push('micro:auto_ai_mode');
         if (isMicroTodos) camposInferidos.push(`micro:TODOS(${filteredMicros.length})`);
         if (!isMicroAutoAI && !isMicroTodos && selectedMicro && selectedMicro !== q.micro) camposInferidos.push('micro:pre_selected');
@@ -1892,11 +1902,14 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         const isTemaTodos = selectedTema === '__TODOS__';
         
         // Se TODOS, o tema será o primeiro da lista como "âncora", mas a questão terá associação multi-tema
-        const tema = isTemaAutoAI 
+        const temaValue = isTemaAutoAI 
           ? (q.tema || '') // Respeita o que já tem no Excel ou inferido pela IA
           : isTemaTodos
             ? (filteredTemas.length > 0 ? filteredTemas[0].value : q.tema || '') // Usa primeiro tema como âncora
             : (selectedTema || q.tema || '');
+        // P0 FIX: Buscar label do tema no array filteredTemas
+        const temaFromList = filteredTemas.find(t => t.value === temaValue);
+        const tema = temaFromList?.label || temaValue; // Se não encontrar, usa o valor original
         if (!q.tema && isTemaAutoAI) camposInferidos.push('tema:auto_ai_mode');
         if (isTemaTodos) camposInferidos.push(`tema:TODOS(${filteredTemas.length})`);
         if (!isTemaAutoAI && !isTemaTodos && selectedTema && selectedTema !== q.tema) camposInferidos.push('tema:pre_selected');
@@ -1906,9 +1919,12 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         // CORREÇÃO CONSTITUCIONAL: selectedSubtema tem prioridade absoluta (exceto __AUTO_AI__)
         // ═══════════════════════════════════════════════════════════════════
         const isSubtemaAutoAI = selectedSubtema === '__AUTO_AI__' || selectedTema === '__AUTO_AI__' || selectedMicro === '__AUTO_AI__';
-        const subtema = isSubtemaAutoAI 
+        const subtemaValue = isSubtemaAutoAI 
           ? (q.subtema || '') // Respeita o que já tem no Excel ou inferido pela IA
           : (selectedSubtema || q.subtema || '');
+        // P0 FIX: Buscar label do subtema no array filteredSubtemas
+        const subtemaFromList = filteredSubtemas.find(s => s.value === subtemaValue);
+        const subtema = subtemaFromList?.label || subtemaValue; // Se não encontrar, usa o valor original
         if (!q.subtema && isSubtemaAutoAI) camposInferidos.push('subtema:auto_ai_mode');
         if (!isSubtemaAutoAI && selectedSubtema && selectedSubtema !== q.subtema) camposInferidos.push('subtema:pre_selected');
         
