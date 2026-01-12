@@ -91,6 +91,44 @@ serve(async (req: Request) => {
     }
 
     // ============================================
+    // 🛡️ P0-4: VERIFICAR is_banned ANTES DE TUDO
+    // ============================================
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("is_banned")
+      .eq("id", user.id)
+      .single();
+    
+    if (profileData?.is_banned === true) {
+      console.warn(`[Book Manifest] 🚫 USUÁRIO BANIDO: ${user.email}`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Acesso bloqueado", errorCode: "USER_BANNED" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    // ============================================
+    // 🛡️ P0-2: VERIFICAR mfa_verified NA SESSÃO
+    // ============================================
+    const { data: sessionData } = await supabase
+      .from("active_sessions")
+      .select("mfa_verified")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    const isOwner = user.email?.toLowerCase() === "moisesblank@gmail.com";
+    if (sessionData && sessionData.mfa_verified === false && !isOwner) {
+      console.warn(`[Book Manifest] 🚫 MFA NÃO VERIFICADO: ${user.email}`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Verificação 2FA pendente", errorCode: "MFA_REQUIRED" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============================================
     // 2) OBTER PARÂMETROS
     // ============================================
     const url = new URL(req.url);
@@ -172,7 +210,7 @@ serve(async (req: Request) => {
     // ============================================
     // 5) BUSCAR INFORMAÇÕES DAS PÁGINAS
     // ============================================
-    const isOwner = bookData.isOwner; // P1 FIX: role-based only
+    const isOwnerFromRpc = bookData.isOwner; // P1 FIX: role-based only (usando RPC)
     const allPages = bookData.pages || [];
 
     if (requestedPages.length === 0) {
@@ -255,14 +293,14 @@ serve(async (req: Request) => {
       bookId,
       pages: signedPages,
       watermark: {
-        enabled: bookData.watermark?.enabled && !isOwner,
+        enabled: bookData.watermark?.enabled && !isOwnerFromRpc,
         seed: watermarkSeed,
         userEmail: bookData.watermark?.userEmail,
         userCpf: bookData.watermark?.userCpf,
         userName: bookData.watermark?.userName,
       },
       expiresAt,
-      isOwner,
+      isOwner: isOwnerFromRpc,
     };
 
     return new Response(

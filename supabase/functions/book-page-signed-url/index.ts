@@ -71,6 +71,46 @@ serve(async (req: Request) => {
       );
     }
     
+    // ============================================
+    // 🛡️ P0-4: VERIFICAR is_banned ANTES DE TUDO
+    // ============================================
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("is_banned")
+      .eq("id", user.id)
+      .single();
+    
+    if (profileData?.is_banned === true) {
+      console.warn(`[Book Page URL] 🚫 USUÁRIO BANIDO: ${user.email}`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Acesso bloqueado", code: "USER_BANNED" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    // ============================================
+    // 🛡️ P0-2: VERIFICAR mfa_verified NA SESSÃO
+    // ============================================
+    const { data: sessionData } = await supabase
+      .from("active_sessions")
+      .select("mfa_verified")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    // Se existe sessão ativa mas MFA não verificado, bloquear
+    // EXCETO Owner que tem bypass
+    const isOwner = user.email?.toLowerCase() === "moisesblank@gmail.com";
+    if (sessionData && sessionData.mfa_verified === false && !isOwner) {
+      console.warn(`[Book Page URL] 🚫 MFA NÃO VERIFICADO: ${user.email}`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Verificação 2FA pendente", code: "MFA_REQUIRED" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
     // Rate limit por usuário
     const rateCheck = checkRateLimit(user.id);
     if (!rateCheck.allowed) {

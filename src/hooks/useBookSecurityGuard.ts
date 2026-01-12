@@ -1,13 +1,15 @@
 // ============================================
-// 📚🛡️ BOOK SECURITY GUARD v2.0
+// 📚🛡️ BOOK SECURITY GUARD v3.0
 // Proteção anti-PrintScreen/DevTools para Livros Web
 // M4: Escalonamento de resposta + Detecção gravação
+// P0-1: Revogação de sessão via RPC + Redirect /auth
 // OWNER BYPASS ALWAYS
 // ============================================
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 const OWNER_EMAIL = 'moisesblank@gmail.com';
 
@@ -172,16 +174,42 @@ export function useBookSecurityGuard({
     console.log(`[BookSecurityGuard] Tentativa #${attemptCount} de ${type}`);
     
     // ─────────────────────────────────────────────────────────
-    // NÍVEL 3: SESSÃO ENCERRADA (5+ tentativas)
+    // NÍVEL 3: SESSÃO ENCERRADA (5+ tentativas) — P0-1 FIX
+    // Revoga sessão NO BACKEND + força redirect para /auth
     // ─────────────────────────────────────────────────────────
     if (attemptCount >= ESCALATION_CONFIG.LEVEL_3_SESSION_END) {
       toast.error('Sessão encerrada por violações repetidas', {
         duration: 5000,
         icon: '🚫',
-        description: 'Você foi desconectado deste livro.',
+        description: 'Você será redirecionado para login.',
       });
       logViolation(`${type}_session_end`, { attemptCount });
+      
+      // 🛡️ P0-1: REVOGAR SESSÃO NO BACKEND VIA RPC
+      if (userId) {
+        console.error(`[BookSecurityGuard] 🚨 REVOGANDO SESSÃO: ${type} após ${attemptCount} violações`);
+        supabase.rpc('revoke_session_on_violation', {
+          p_user_id: userId,
+          p_reason: 'security_violation_escalated',
+          p_violation_type: type,
+          p_auto_ban: attemptCount >= 10, // Auto-ban após 10 violações
+        }).then(({ data, error }) => {
+          if (error) {
+            console.error('[BookSecurityGuard] Erro ao revogar sessão:', error);
+          } else {
+            console.log('[BookSecurityGuard] ✅ Sessão revogada:', data);
+          }
+        });
+      }
+      
+      // Callback local + redirect forçado
       onSessionEnd?.();
+      
+      // 🛡️ P0-1: HARD REDIRECT para /auth após 1s
+      setTimeout(() => {
+        window.location.href = '/auth?reason=security_violation';
+      }, 1000);
+      
       return;
     }
     
