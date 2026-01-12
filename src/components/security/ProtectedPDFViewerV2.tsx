@@ -667,46 +667,47 @@ export const ProtectedPDFViewerV2 = memo(({
               transition: 'transform 0.2s ease'
             }}
           >
-            {/* PDF Page Image */}
+            {/* Wrapper Unificado - Imagem + Canvas no mesmo container relative */}
             {currentPageData?.dataUrl && (
-              <img
-                src={currentPageData.dataUrl}
-                alt={`Página ${currentPage}`}
-                className="max-w-full h-auto select-none"
-                draggable={false}
-                style={{ userSelect: 'none', pointerEvents: drawingMode ? 'none' : 'auto' }}
-              />
-            )}
+              <div className="relative">
+                {/* PDF Page Image */}
+                <img
+                  src={currentPageData.dataUrl}
+                  alt={`Página ${currentPage}`}
+                  className="max-w-full h-auto select-none"
+                  draggable={false}
+                  style={{ userSelect: 'none', pointerEvents: drawingMode ? 'none' : 'auto' }}
+                />
 
-            {/* Fabric.js Drawing Canvas */}
-            {currentPageData && (
-              <FabricDrawingCanvas
-                ref={fabricCanvasRef}
-                isActive={drawingMode}
-                activeTool={activeTool}
-                color={drawingColor}
-                size={drawingSize}
-                pageNumber={currentPage}
-                initialData={null}
-                onCanvasChange={() => {
-                  // Temporário - não persiste
-                }}
-              />
-            )}
+                {/* Fabric.js Drawing Canvas - Agora FILHO do mesmo container */}
+                <FabricDrawingCanvas
+                  ref={fabricCanvasRef}
+                  isActive={drawingMode}
+                  activeTool={activeTool}
+                  color={drawingColor}
+                  size={drawingSize}
+                  pageNumber={currentPage}
+                  initialData={null}
+                  onCanvasChange={() => {
+                    // Temporário - não persiste
+                  }}
+                />
 
-            {/* Watermark Overlay */}
-            {userData && !disableWatermark && (
-              <PDFWatermark userData={userData} />
-            )}
+                {/* Watermark Overlay */}
+                {userData && !disableWatermark && (
+                  <PDFWatermark userData={userData} />
+                )}
 
-            {/* Anti-screenshot pattern */}
-            <div 
-              className="absolute inset-0 pointer-events-none z-40"
-              style={{
-                background: 'linear-gradient(45deg, transparent 49%, rgba(0,0,0,0.01) 50%, transparent 51%)',
-                backgroundSize: '3px 3px'
-              }}
-            />
+                {/* Anti-screenshot pattern */}
+                <div 
+                  className="absolute inset-0 pointer-events-none z-40"
+                  style={{
+                    background: 'linear-gradient(45deg, transparent 49%, rgba(0,0,0,0.01) 50%, transparent 51%)',
+                    backgroundSize: '3px 3px'
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
 
