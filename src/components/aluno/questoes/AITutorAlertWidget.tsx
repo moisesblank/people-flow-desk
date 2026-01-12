@@ -109,7 +109,7 @@ function AITutorAlertWidget({
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <h3 className="text-lg font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-                QUIMIA - Sua Tutora IA
+                Oi, sou a TRAMON... sua TUTORIA IA
               </h3>
               <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px]">
                 <Sparkles className="w-3 h-3 mr-1" />
@@ -235,7 +235,7 @@ function AITutorAlertWidget({
                   ? "bg-gradient-to-r from-rose-400 to-orange-400" 
                   : "bg-gradient-to-r from-amber-400 to-orange-400"
               )}>
-                QUIMIA - Sua Tutora IA
+                Oi, sou a TRAMON... sua TUTORIA IA
               </h3>
               <Badge className={cn(
                 "text-[10px]",
@@ -355,7 +355,7 @@ function AITutorAlertWidget({
           </div>
           <Badge variant="outline" className="text-[10px] text-muted-foreground">
             <MessageCircle className="w-3 h-3 mr-1" />
-            Powered by QUIMIA
+            Powered by TRAMON
           </Badge>
         </div>
       </div>
