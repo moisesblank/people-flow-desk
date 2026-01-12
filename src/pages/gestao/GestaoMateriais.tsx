@@ -127,6 +127,8 @@ interface Material {
   mes?: number;
   folder?: string;
   position?: number;
+  bucket?: string;
+  preview_status?: 'pending' | 'processing' | 'ready' | 'error' | 'skipped';
 }
 
 // ============================================
@@ -1270,6 +1272,11 @@ const GestaoMateriais = memo(function GestaoMateriais() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [viewingMaterial, setViewingMaterial] = useState<Material | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  
+  // Batch preview generation state
+  const [generatingPreviews, setGeneratingPreviews] = useState(false);
+  const [previewProgress, setPreviewProgress] = useState({ current: 0, total: 0 });
+  const { generatePreview, updateRecordPreview } = usePdfPreviewGenerator();
 
   const { macros, getMicrosForSelect } = useTaxonomyForSelects();
   const microsForFilter = macroFilter && macroFilter !== 'all' ? getMicrosForSelect(macroFilter) : [];
@@ -1402,7 +1409,87 @@ const GestaoMateriais = memo(function GestaoMateriais() {
       return acc;
     }, {} as Record<string, number>),
     published: materials.filter(m => m.status === 'ready').length,
+    pendingPreviews: materials.filter(m => 
+      (!m.cover_url || m.preview_status === 'pending' || m.preview_status === 'error') &&
+      (m.file_path?.toLowerCase().endsWith('.pdf'))
+    ).length,
   }), [materials]);
+
+  // ============================================
+  // GERAR PREVIEWS EM LOTE
+  // ============================================
+  const handleBatchGeneratePreviews = useCallback(async () => {
+    // Filtrar materiais PDF sem preview
+    const pendingMaterials = materials.filter(m => 
+      (!m.cover_url || m.preview_status === 'pending' || m.preview_status === 'error') &&
+      (m.file_path?.toLowerCase().endsWith('.pdf')) &&
+      m.bucket
+    );
+
+    if (pendingMaterials.length === 0) {
+      toast.info('Todos os materiais já possuem preview!');
+      return;
+    }
+
+    setGeneratingPreviews(true);
+    setPreviewProgress({ current: 0, total: pendingMaterials.length });
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < pendingMaterials.length; i++) {
+      const material = pendingMaterials[i];
+      setPreviewProgress({ current: i + 1, total: pendingMaterials.length });
+
+      try {
+        // Marcar como processing
+        await supabase
+          .from('materials')
+          .update({ preview_status: 'processing' })
+          .eq('id', material.id);
+
+        // Obter signed URL do PDF
+        const { data: signedData, error: signedError } = await supabase.storage
+          .from(material.bucket!)
+          .createSignedUrl(material.file_path!, 300); // 5 minutos
+
+        if (signedError || !signedData?.signedUrl) {
+          throw new Error(`Falha ao obter URL assinada: ${signedError?.message}`);
+        }
+
+        // Gerar preview
+        const previewPath = `materials/${material.id}.webp`;
+        const result = await generatePreview(signedData.signedUrl, previewPath);
+
+        if (result.success && result.previewUrl) {
+          await updateRecordPreview('materials', material.id, result.previewUrl, 'ready');
+          successCount++;
+        } else {
+          await updateRecordPreview('materials', material.id, null, 'error');
+          errorCount++;
+        }
+      } catch (error: any) {
+        console.error(`[Batch Preview] Erro em ${material.title}:`, error);
+        await updateRecordPreview('materials', material.id, null, 'error');
+        errorCount++;
+      }
+
+      // Pequeno delay para não sobrecarregar
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
+
+    setGeneratingPreviews(false);
+    setPreviewProgress({ current: 0, total: 0 });
+    fetchMaterials();
+
+    if (successCount > 0 && errorCount === 0) {
+      toast.success(`${successCount} previews gerados com sucesso!`);
+    } else if (successCount > 0 && errorCount > 0) {
+      toast.warning(`${successCount} previews gerados, ${errorCount} erros`);
+    } else {
+      toast.error(`Falha ao gerar previews: ${errorCount} erros`);
+    }
+  }, [materials, generatePreview, updateRecordPreview, fetchMaterials]);
 
   if (loading) {
     return (
@@ -1437,10 +1524,34 @@ const GestaoMateriais = memo(function GestaoMateriais() {
             <Badge variant="outline" className="bg-violet-500/10 text-violet-400 border-violet-500/30">⚡ Flush</Badge>
           </div>
         </div>
-        <Button onClick={() => setUploadOpen(true)} size="lg" className="gap-2 shrink-0">
-          <Plus className="w-5 h-5" />
-          Novo Material
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+          {/* Botão de Gerar Previews em Lote */}
+          {stats.pendingPreviews > 0 && (
+            <Button 
+              onClick={handleBatchGeneratePreviews} 
+              variant="outline"
+              size="lg" 
+              className="gap-2"
+              disabled={generatingPreviews}
+            >
+              {generatingPreviews ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Gerando {previewProgress.current}/{previewProgress.total}
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  Gerar Previews ({stats.pendingPreviews})
+                </>
+              )}
+            </Button>
+          )}
+          <Button onClick={() => setUploadOpen(true)} size="lg" className="gap-2">
+            <Plus className="w-5 h-5" />
+            Novo Material
+          </Button>
+        </div>
       </div>
 
       {/* ============================================ */}
