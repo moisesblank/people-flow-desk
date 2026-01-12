@@ -1,11 +1,10 @@
 // ============================================
-// NEURAL NETWORK BACKGROUND v1.0 - YEAR 2090
-// Fundo animado com rede neural interativa
-// Visual de inteligência artificial avançada
+// NEURAL NETWORK BACKGROUND v1.1 - OPTIMIZED
+// Fundo com rede neural - CANVAS ONLY (sem motion)
+// Performance otimizada com pause quando inativo
 // ============================================
 
 import { useEffect, useRef, useMemo } from "react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface NeuralNetworkBackgroundProps {
@@ -34,7 +33,7 @@ export function NeuralNetworkBackground({
   const mouseRef = useRef({ x: 0, y: 0 });
   const isPausedRef = useRef(false);
   
-  // 🏛️ LEI I Art. 19-21: Pausar quando tab inativa (proibido JS infinito)
+  // 🏛️ LEI I Art. 19-21: Pausar quando tab inativa
   useEffect(() => {
     const handleVisibility = () => {
       isPausedRef.current = document.hidden;
@@ -42,6 +41,7 @@ export function NeuralNetworkBackground({
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
+
   const config = useMemo(() => ({
     low: { nodes: 30, speed: 0.3, maxDistance: 100 },
     medium: { nodes: 50, speed: 0.5, maxDistance: 150 },
@@ -49,10 +49,10 @@ export function NeuralNetworkBackground({
   }), []);
 
   const colorMap = useMemo(() => ({
-    primary: { r: 220, g: 38, b: 38 },     // Red
-    blue: { r: 59, g: 130, b: 246 },       // Blue
-    purple: { r: 168, g: 85, b: 247 },     // Purple
-    green: { r: 16, g: 185, b: 129 },      // Green
+    primary: { r: 220, g: 38, b: 38 },
+    blue: { r: 59, g: 130, b: 246 },
+    purple: { r: 168, g: 85, b: 247 },
+    green: { r: 16, g: 185, b: 129 },
   }), []);
 
   useEffect(() => {
@@ -99,26 +99,21 @@ export function NeuralNetworkBackground({
       canvas.addEventListener("mousemove", handleMouseMove);
     }
 
-    // Animation loop - 🏛️ LEI I: Pause quando tab inativa
+    // Animation loop - Pause quando tab inativa
     const animate = () => {
-      // Skip frame se tab não está visível
       if (isPausedRef.current) {
         animationRef.current = requestAnimationFrame(animate);
         return;
       }
       ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
 
-      // Update and draw nodes
       nodes.forEach((node, i) => {
-        // Move node
         node.x += node.vx;
         node.y += node.vy;
 
-        // Bounce off walls
         if (node.x < 0 || node.x > canvas.offsetWidth) node.vx *= -1;
         if (node.y < 0 || node.y > canvas.offsetHeight) node.vy *= -1;
 
-        // Mouse interaction - attract nodes
         if (interactive) {
           const dx = mouseRef.current.x - node.x;
           const dy = mouseRef.current.y - node.y;
@@ -129,7 +124,6 @@ export function NeuralNetworkBackground({
           }
         }
 
-        // Draw node with glow
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.8)`;
@@ -138,7 +132,6 @@ export function NeuralNetworkBackground({
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // Draw connections
         nodes.slice(i + 1).forEach((otherNode) => {
           const dx = node.x - otherNode.x;
           const dy = node.y - otherNode.y;
@@ -183,7 +176,7 @@ export function NeuralNetworkBackground({
   );
 }
 
-// Simplified SVG version for lighter usage
+// Simplified static SVG version - NO ANIMATIONS
 export function NeuralNetworkSVG({ className }: { className?: string }) {
   const nodes = useMemo(() => 
     [...Array(12)].map((_, i) => ({
@@ -218,9 +211,9 @@ export function NeuralNetworkSVG({ className }: { className?: string }) {
         </filter>
       </defs>
       
-      {/* Connections */}
+      {/* Connections - STATIC */}
       {connections.map((conn, i) => (
-        <motion.line
+        <line
           key={`line-${i}`}
           x1={nodes[conn.from].cx}
           y1={nodes[conn.from].cy}
@@ -229,29 +222,19 @@ export function NeuralNetworkSVG({ className }: { className?: string }) {
           stroke="hsl(var(--primary))"
           strokeWidth="0.5"
           opacity="0.3"
-          animate={{ opacity: [0.2, 0.5, 0.2] }}
-          transition={{ duration: 2 + Math.random() * 2, repeat: Infinity, delay: i * 0.1 }}
         />
       ))}
       
-      {/* Nodes */}
+      {/* Nodes - STATIC */}
       {nodes.map((node) => (
-        <motion.circle
+        <circle
           key={`node-${node.id}`}
           cx={node.cx}
           cy={node.cy}
           r={node.r}
           fill="hsl(var(--primary))"
           filter="url(#glow)"
-          animate={{ 
-            r: [node.r, node.r * 1.3, node.r],
-            opacity: [0.6, 1, 0.6]
-          }}
-          transition={{ 
-            duration: 1.5 + Math.random() * 2, 
-            repeat: Infinity,
-            delay: node.id * 0.15
-          }}
+          opacity="0.8"
         />
       ))}
     </svg>
