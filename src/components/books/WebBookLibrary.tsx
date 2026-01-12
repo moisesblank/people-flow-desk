@@ -788,9 +788,8 @@ const WebBookLibrary = memo(function WebBookLibrary({
   const { books, isLoading, error, refreshBooks } = useWebBookLibrary();
   const { isOwner } = useRolePermissions();
   
-  // ⚡ Performance flags - LEI I
-  const { shouldShowParticles, isLowEnd, tier } = useConstitutionPerformance();
-  const isHighEnd = tier === 'enhanced' || tier === 'standard' || !isLowEnd;
+  // 🏛️ PREMIUM GARANTIDO: experiência máxima para todos
+  const isHighEnd = true;
   
   // 🔀 Owner reorder state
   const [isEditMode, setIsEditMode] = useState(false);

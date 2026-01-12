@@ -185,16 +185,15 @@ export function usePerformanceTierSimple(): UltraTier {
  * Hook para componentes de gráfico - retorna se deve simplificar
  */
 export function useChartSimplification() {
-  const { isLowEnd, isCritical, tier } = useConstitutionPerformance();
-  
+  // 🏛️ PREMIUM GARANTIDO: Charts completos para todos
   return useMemo(() => ({
-    shouldSimplify: isLowEnd,
-    showLegend: !isCritical,
-    showGrid: !isCritical,
-    showTooltip: !isCritical,
-    animationDuration: isCritical ? 0 : isLowEnd ? 200 : 400,
-    strokeWidth: isCritical ? 1 : 2,
-  }), [isLowEnd, isCritical, tier]);
+    shouldSimplify: false,  // NUNCA simplificar
+    showLegend: true,       // Sempre mostrar
+    showGrid: true,         // Sempre mostrar
+    showTooltip: true,      // Sempre mostrar
+    animationDuration: 400, // Duração premium
+    strokeWidth: 2,         // Stroke premium
+  }), []);
 }
 
 // 🏛️ LEI I: Log apenas em dev

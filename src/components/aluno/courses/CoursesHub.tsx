@@ -529,8 +529,8 @@ interface CoursesHubProps {
 }
 
 export const CoursesHub = memo(function CoursesHub({ onSelectCard }: CoursesHubProps) {
-  const { tier, isLowEnd } = useConstitutionPerformance();
-  const isHighEnd = !isLowEnd && (tier === 'neural' || tier === 'quantum' || tier === 'enhanced');
+  // 🏛️ PREMIUM GARANTIDO: experiência máxima para todos
+  const isHighEnd = true;
 
   const handleSelect = (cardId: string) => {
     const card = COURSE_HUB_CARDS.find(c => c.id === cardId);
