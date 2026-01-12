@@ -51,8 +51,8 @@ export const MaterialBookLibrary = memo(function MaterialBookLibrary({
   onItemSelect,
   className
 }: MaterialBookLibraryProps) {
-  // 🏛️ PREMIUM GARANTIDO: experiência máxima para todos (sem tiering visual)
-  const isHighEnd = true;
+  const { tier, isLowEnd } = useConstitutionPerformance();
+  const isHighEnd = tier === 'quantum' || tier === 'neural';
 
   // Agrupar por categoria
   const itemsByCategory = useMemo(() => {
@@ -73,8 +73,8 @@ export const MaterialBookLibrary = memo(function MaterialBookLibrary({
 
   return (
     <div className={cn("relative min-h-screen", className)}>
-      {/* 🌌 CYBER BACKGROUND — 🏛️ PREMIUM GARANTIDO */}
-      <CyberBackground variant="grid" intensity="medium" />
+      {/* 🌌 CYBER BACKGROUND — Year 2300 */}
+      {isHighEnd && <CyberBackground variant="grid" />}
 
       <div className="relative z-10 space-y-8">
         {/* 📊 STATS HEADER — HUD Style */}

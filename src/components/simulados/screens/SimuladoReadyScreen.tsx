@@ -123,8 +123,10 @@ export function SimuladoReadyScreen({
           </div>
         )}
         
-        {/* Holographic scan lines — 🏛️ PREMIUM GARANTIDO */}
-        <div className="absolute inset-0 opacity-[0.03] simulado-scanlines bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.03)_2px,rgba(255,255,255,0.03)_4px)]" />
+        {/* Holographic scan lines — CSS animation */}
+        {!isLowEnd && (
+          <div className="absolute inset-0 opacity-[0.03] simulado-scanlines bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.03)_2px,rgba(255,255,255,0.03)_4px)]" />
+        )}
         
         {/* Corner HUD elements */}
         <div className={cn(
@@ -362,7 +364,7 @@ export function SimuladoReadyScreen({
             className={cn(
               "relative overflow-hidden rounded-2xl",
               "border-2",
-              shouldBlur && "backdrop-blur-xl",
+              shouldBlur && !isLowEnd && "backdrop-blur-xl",
               isHardMode 
                 ? "bg-gradient-to-br from-red-500/10 via-black/40 to-orange-500/5 border-red-500/30"
                 : "bg-gradient-to-br from-indigo-500/10 via-black/40 to-violet-500/5 border-indigo-500/30"
@@ -371,11 +373,13 @@ export function SimuladoReadyScreen({
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.6 }}
           >
-            {/* Animated glow — 🏛️ PREMIUM GARANTIDO */}
-            <div className={cn(
-              "absolute -top-10 -right-10 w-60 h-60 rounded-full blur-3xl simulado-glow-pulse transform-gpu",
-              isHardMode ? "bg-red-500/20" : "bg-indigo-500/20"
-            )} />
+            {/* Animated glow — CSS animation */}
+            {!isLowEnd && (
+              <div className={cn(
+                "absolute -top-10 -right-10 w-60 h-60 rounded-full blur-3xl simulado-glow-pulse",
+                isHardMode ? "bg-red-500/20" : "bg-indigo-500/20"
+              )} />
+            )}
             
             <div className="relative p-6">
               {/* Header */}

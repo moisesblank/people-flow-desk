@@ -24,8 +24,7 @@ export function SimuladoWaitingScreen({
   simulado,
   startsIn,
 }: SimuladoWaitingScreenProps) {
-  const { shouldAnimate, shouldBlur } = useConstitutionPerformance();
-  const isLowEnd = false; // 🏛️ PREMIUM GARANTIDO: nunca degradar UI por hardware
+  const { shouldAnimate, shouldBlur, isLowEnd } = useConstitutionPerformance();
   const startsAt = simulado.starts_at ? new Date(simulado.starts_at) : null;
 
   // Parse time for epic display
@@ -42,11 +41,13 @@ export function SimuladoWaitingScreen({
 
   return (
     <div className="relative flex flex-col items-center min-h-[80vh] p-6 md:p-8 overflow-y-auto">
-      {/* Background glow effects - 🏛️ PREMIUM GARANTIDO */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] animate-pulse transform-gpu" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-500/10 rounded-full blur-[100px] animate-pulse transform-gpu" style={{ animationDelay: '1s' }} />
-      </div>
+      {/* Background glow effects - only on high-end */}
+      {!isLowEnd && (
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+      )}
 
       {/* Header with Status Badge */}
       <div className={cn("relative text-center mb-6", shouldAnimate && "animate-fade-in")}>
@@ -106,11 +107,12 @@ export function SimuladoWaitingScreen({
 
       {/* Epic Countdown Display */}
       <div className={cn("relative mb-6 w-full max-w-2xl", shouldAnimate && "animate-fade-in")}>
-        {/* Glowing background — 🏛️ PREMIUM GARANTIDO */}
-        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 rounded-2xl blur-xl transform-gpu" />
+        {/* Glowing background - only on high-end */}
+        {!isLowEnd && <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 rounded-2xl blur-xl" />}
         <div className={cn(
-          "relative bg-card/80 border border-amber-500/30 rounded-2xl p-6 shadow-2xl",
-          shouldBlur && "backdrop-blur-xl"
+          "relative bg-card/80 border border-amber-500/30 rounded-2xl p-6",
+          shouldBlur && "backdrop-blur-xl",
+          !isLowEnd && "shadow-2xl"
         )}>
           <p className="text-sm text-amber-400 mb-4 flex items-center justify-center gap-2 font-medium">
             <Zap className="h-4 w-4" />
@@ -150,8 +152,7 @@ export function SimuladoWaitingScreen({
           "relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500/10 via-violet-500/5 to-indigo-500/10 border border-indigo-500/30 p-6",
           shouldBlur && "backdrop-blur-sm"
         )}>
-          {/* 🏛️ PREMIUM GARANTIDO: Glow sempre visível */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl transform-gpu" />
+          {!isLowEnd && <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />}
           
           <div className="relative">
             <div className="flex items-center gap-3 mb-4">

@@ -190,17 +190,17 @@ export function SimuladoRunningScreen({
 
   return (
     <div className="flex flex-col h-full bg-zinc-950 relative overflow-hidden">
-      {/* === BACKGROUND EFFECTS ULTRA — 🏛️ PREMIUM GARANTIDO === */}
-      {shouldShowGradients && (
+      {/* === BACKGROUND EFFECTS ULTRA === */}
+      {!isLowEnd && shouldShowGradients && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {/* Nebula effect */}
           <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-cyan-950/20 via-transparent to-transparent" />
           <div className="absolute bottom-0 right-0 w-full h-1/2 bg-gradient-to-t from-green-950/15 via-transparent to-transparent" />
           
-          {/* Floating orbs - GPU optimized */}
-          <div className="absolute top-[10%] left-[5%] w-[400px] h-[400px] bg-cyan-500/8 rounded-full blur-[120px] animate-pulse transform-gpu" style={{ animationDuration: '4s' }} />
-          <div className="absolute bottom-[10%] right-[10%] w-[300px] h-[300px] bg-green-500/8 rounded-full blur-[100px] animate-pulse transform-gpu" style={{ animationDuration: '6s', animationDelay: '2s' }} />
-          <div className="absolute top-[40%] right-[20%] w-[200px] h-[200px] bg-purple-500/5 rounded-full blur-[80px] animate-pulse transform-gpu" style={{ animationDuration: '8s', animationDelay: '1s' }} />
+          {/* Floating orbs */}
+          <div className="absolute top-[10%] left-[5%] w-[400px] h-[400px] bg-cyan-500/8 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '4s' }} />
+          <div className="absolute bottom-[10%] right-[10%] w-[300px] h-[300px] bg-green-500/8 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
+          <div className="absolute top-[40%] right-[20%] w-[200px] h-[200px] bg-purple-500/5 rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '8s', animationDelay: '1s' }} />
           
           {/* Grid overlay */}
           <div 
@@ -438,8 +438,8 @@ export function SimuladoRunningScreen({
       <div className="flex-1 flex overflow-hidden p-4 gap-4 relative z-10">
         <div className="flex-1 overflow-y-auto">
           <div className="relative">
-            {/* Card Glow Border ULTRA - 🏛️ PREMIUM GARANTIDO */}
-            {shouldShowShadows && (
+            {/* Card Glow Border ULTRA */}
+            {!isLowEnd && shouldShowShadows && (
               <div className="absolute -inset-[2px] rounded-3xl bg-gradient-to-br from-cyan-500/40 via-green-500/30 to-purple-500/40 opacity-70 blur-md" />
             )}
             
@@ -467,12 +467,14 @@ export function SimuladoRunningScreen({
                       )}>
                         <span className="text-2xl font-black text-white drop-shadow-lg">{currentIndex + 1}</span>
                       </div>
-                      {/* Outer glow ring - 🏛️ PREMIUM GARANTIDO */}
-                      {shouldShowShadows && (
+                      {/* Outer glow ring */}
+                      {!isLowEnd && shouldShowShadows && (
                         <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-green-400/30 to-cyan-400/30 blur-md -z-10" />
                       )}
-                      {/* Corner sparkle - 🏛️ PREMIUM GARANTIDO */}
-                      <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-yellow-400" />
+                      {/* Corner sparkle */}
+                      {!isLowEnd && (
+                        <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-yellow-400" />
+                      )}
                     </div>
                     
                     <div>

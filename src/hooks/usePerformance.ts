@@ -271,12 +271,10 @@ export function usePerformance(): UsePerformanceReturn {
     return perfFlags.shouldLoadHeavyFeature(feature);
   }, []);
 
-  // 🏛️ PREMIUM GARANTIDO: Forçar valores para consistência visual
-  // isSlowConnection ainda calculado para lazy load, mas NUNCA para decisões visuais
+  // Computed backward compatibility values
   const isSlowConnection = capabilities.connection === '3g' || capabilities.connection === '2g' || capabilities.connection === 'slow';
-  // disableAnimations APENAS respeita reduced motion do SO, nunca hardware
-  const disableAnimations = capabilities.reducedMotion;
-  const shouldReduceMotion = capabilities.reducedMotion;
+  const disableAnimations = !config.enableMotion || capabilities.reducedMotion || isSlowConnection;
+  const shouldReduceMotion = capabilities.reducedMotion || isSlowConnection;
 
   return {
     // Config
@@ -495,16 +493,15 @@ export function usePerformanceMode() {
   const viewport = useViewport();
   const config = getPerformanceConfig();
 
-  // 🏛️ PREMIUM GARANTIDO: Forçar valores para consistência visual
   return useMemo(() => ({
-    isLightMode: false, // NUNCA lite mode para UI
-    disableAnimations: reducedMotion, // APENAS respeitar prefers-reduced-motion
-    shouldReduceMotion: reducedMotion, // APENAS respeitar prefers-reduced-motion
-    useLowQualityImages: network.saveData, // APENAS save-data explícito
+    isLightMode: config.liteMode || network.isSlowConnection || network.saveData || reducedMotion,
+    disableAnimations: !config.enableMotion || reducedMotion || network.isSlowConnection,
+    shouldReduceMotion: reducedMotion || network.isSlowConnection,
+    useLowQualityImages: network.isSlowConnection || network.saveData,
     isMobile: viewport.isMobile,
     isTablet: viewport.isTablet,
     isDesktop: viewport.isDesktop,
-    isLowEndDevice: false, // NUNCA marcar como low-end para UI
+    isLowEndDevice: network.isSlowConnection || network.saveData,
     animationDuration: config.animationDuration,
     connectionType: network.effectiveType,
     metrics: { fps: 60 },
@@ -514,16 +511,15 @@ export function usePerformanceMode() {
 
 // Optimized Animations hook
 export function useOptimizedAnimations() {
-  const { shouldReduceMotion, isMobile } = usePerformanceMode();
+  const { shouldReduceMotion, isMobile, isLowEndDevice } = usePerformanceMode();
   const config = getPerformanceConfig();
   
-  // 🏛️ PREMIUM GARANTIDO: Animações sempre habilitadas (exceto prefers-reduced-motion)
   return useMemo(() => ({
-    skipAnimations: shouldReduceMotion,
-    duration: shouldReduceMotion ? 0 : isMobile ? 0.15 : 0.25,
+    skipAnimations: shouldReduceMotion || isLowEndDevice || !config.enableMotion,
+    duration: shouldReduceMotion || !config.enableMotion ? 0 : isMobile ? 0.15 : 0.25,
     ease: [0.25, 0.1, 0.25, 1] as const,
-    stagger: shouldReduceMotion ? 0 : 0.03,
-  }), [shouldReduceMotion, isMobile]);
+    stagger: shouldReduceMotion || !config.enableMotion ? 0 : 0.03,
+  }), [shouldReduceMotion, isMobile, isLowEndDevice, config.enableMotion]);
 }
 
 export default usePerformance;

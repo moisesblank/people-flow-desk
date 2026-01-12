@@ -1,6 +1,6 @@
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║   🏛️ CONSTITUIÇÃO SYNAPSE - HOOK UNIFICADO DE PERFORMANCE v10.5             ║
-// ║   LEI I: Performance máxima | PREMIUM GARANTIDO para todos                  ║
+// ║   🏛️ CONSTITUIÇÃO SYNAPSE - HOOK UNIFICADO DE PERFORMANCE v5.0             ║
+// ║   LEI I: Performance máxima em 3G                                           ║
 // ║   Centraliza TODAS as flags de performance para uso simples nos componentes ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
 
@@ -13,20 +13,22 @@ import {
 } from '@/lib/performance/ultraPerformance3G';
 
 /**
- * 🏛️ CONSTITUIÇÃO SYNAPSE v10.5 - PREMIUM GARANTIDO
+ * 🏛️ CONSTITUIÇÃO SYNAPSE - Hook unificado de performance
  * 
- * TODOS os usuários recebem a mesma experiência visual premium.
- * O sistema detecta hardware/conexão apenas para otimizações internas,
- * mas NUNCA degrada a experiência visual.
+ * Retorna todas as flags e configurações de performance em um único objeto.
+ * Reage automaticamente a mudanças de conexão/hardware.
  * 
  * @example
- * const { tier, shouldAnimate, shouldBlur, motionProps } = useConstitutionPerformance();
+ * const { tier, shouldAnimate, shouldBlur, isLowEnd, motionProps } = useConstitutionPerformance();
  * 
  * // Em componentes com animação:
  * <motion.div {...motionProps}>
  * 
  * // Em componentes com blur:
  * className={shouldBlur ? 'backdrop-blur-xl' : 'bg-background/90'}
+ * 
+ * // Em partículas/efeitos pesados:
+ * {!isLowEnd && <ParticlesEffect />}
  */
 export function useConstitutionPerformance() {
   const [state, setState] = useState<UltraPerformanceState>(() => 
@@ -44,21 +46,17 @@ export function useConstitutionPerformance() {
   return useMemo(() => {
     const { tier, flags, animation, image, lazy, connection, device } = state;
     
-    // 🏛️ v10.5 PREMIUM GARANTIDO: isLowEnd apenas para métricas internas
-    // NÃO usar para degradar experiência visual
-    const isLowEndInternal = tier === 'critical' || tier === 'legacy' || tier === 'standard';
+    // Flags simplificadas - usando tiers oficiais LEI I v2.0
+    const isLowEnd = tier === 'critical' || tier === 'legacy' || tier === 'standard';
     const isCritical = tier === 'critical';
-    
-    // 🏛️ PREMIUM GARANTIDO: Sempre habilitar features visuais
-    // Exceção: respeitar prefers-reduced-motion do sistema
-    const shouldAnimate = !flags.reduceMotion; // Sempre true, exceto se sistema pedir
-    const shouldBlur = true;  // Sempre true para todos
-    const shouldShowParticles = false; // Partículas desabilitadas (muito pesado)
-    const shouldShowShadows = true;  // Sempre true para todos
-    const shouldShowGradients = true; // Sempre true para todos
+    const shouldAnimate = flags.enableAnimations && !flags.reduceMotion;
+    const shouldBlur = flags.enableBlur;
+    const shouldShowParticles = flags.enableParticles;
+    const shouldShowShadows = flags.enableShadows;
+    const shouldShowGradients = flags.enableGradients;
     const shouldPrefetch = flags.enablePrefetch;
     const shouldAutoplayVideo = flags.enableVideoAutoplay;
-    const shouldShowHDImages = !connection.saveData; // Respeitar save-data apenas para imagens
+    const shouldShowHDImages = flags.enableHDImages;
     
     // Props prontas para motion.div (ease como tipo correto)
     const motionProps = shouldAnimate
@@ -107,7 +105,7 @@ export function useConstitutionPerformance() {
     
     // Classes CSS baseadas no tier
     const perfClasses = {
-      container: `perf-tier-${tier}`, // 🏛️ v10.5: Sem degradação visual
+      container: isLowEnd ? 'perf-tier-low' : `perf-tier-${tier}`,
       particles: 'perf-ambient-only',
       blur: shouldBlur ? '' : 'perf-no-blur',
       shadows: shouldShowShadows ? '' : 'perf-no-shadows',
@@ -119,10 +117,9 @@ export function useConstitutionPerformance() {
       tier,
       state,
       
-      // 🏛️ v10.5 PREMIUM GARANTIDO: isLowEnd sempre false para UI
-      // Mantido para compatibilidade, mas sempre retorna false
-      isLowEnd: false,
-      isCritical: false,
+      // Flags booleanas simples
+      isLowEnd,
+      isCritical,
       shouldAnimate,
       shouldBlur,
       shouldShowParticles,
@@ -159,8 +156,12 @@ export function useConstitutionPerformance() {
       getBlurClass: (blurClass: string, fallback: string = 'bg-background/90') =>
         shouldBlur ? blurClass : fallback,
         
-      // 🏛️ v10.5: Partículas sempre 0 (muito pesado)
-      getParticleCount: (_baseCount: number) => 0,
+      getParticleCount: (baseCount: number) => {
+        if (isCritical) return 0;
+        if (isLowEnd) return Math.floor(baseCount * 0.3);
+        if (tier === 'enhanced') return Math.floor(baseCount * 0.6);
+        return baseCount;
+      },
     };
   }, [state]);
 }
@@ -185,15 +186,16 @@ export function usePerformanceTierSimple(): UltraTier {
  * Hook para componentes de gráfico - retorna se deve simplificar
  */
 export function useChartSimplification() {
-  // 🏛️ PREMIUM GARANTIDO: Charts completos para todos
+  const { isLowEnd, isCritical, tier } = useConstitutionPerformance();
+  
   return useMemo(() => ({
-    shouldSimplify: false,  // NUNCA simplificar
-    showLegend: true,       // Sempre mostrar
-    showGrid: true,         // Sempre mostrar
-    showTooltip: true,      // Sempre mostrar
-    animationDuration: 400, // Duração premium
-    strokeWidth: 2,         // Stroke premium
-  }), []);
+    shouldSimplify: isLowEnd,
+    showLegend: !isCritical,
+    showGrid: !isCritical,
+    showTooltip: !isCritical,
+    animationDuration: isCritical ? 0 : isLowEnd ? 200 : 400,
+    strokeWidth: isCritical ? 1 : 2,
+  }), [isLowEnd, isCritical, tier]);
 }
 
 // 🏛️ LEI I: Log apenas em dev

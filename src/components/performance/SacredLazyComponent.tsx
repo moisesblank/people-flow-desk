@@ -69,8 +69,24 @@ export function createLazyComponent<T extends ComponentType<any>>(
     loader();
   }
   
-  // 🏛️ PREMIUM GARANTIDO: Carregamento imediato para todos (tier quantum)
   return memo(function WrappedLazyComponent(props: React.ComponentProps<T>) {
+    const { tier } = usePerformanceTier();
+    const [shouldLoad, setShouldLoad] = useState(tier === 'quantum');
+    
+    // Delay de carregamento para dispositivos lentos (v3.0 tiers)
+    useEffect(() => {
+      if (shouldLoad) return;
+      
+      const delayMap = { quantum: 0, neural: 25, enhanced: 50, standard: 100, legacy: 200 };
+      const timer = setTimeout(() => setShouldLoad(true), delayMap[tier]);
+      
+      return () => clearTimeout(timer);
+    }, [tier, shouldLoad]);
+    
+    if (!shouldLoad) {
+      return options?.fallback ?? <ComponentSkeleton minHeight={options?.minHeight} />;
+    }
+    
     return (
       <Suspense fallback={options?.fallback ?? <ComponentSkeleton minHeight={options?.minHeight} />}>
         <LazyComponent {...props} />
@@ -117,8 +133,21 @@ export function withLazyLoading<P extends object>(
     delay?: number;
   }
 ) {
-  // 🏛️ PREMIUM GARANTIDO: Renderização imediata (sem delay)
   return memo(function LazyLoadedComponent(props: P) {
+    const [isVisible, setIsVisible] = useState(false);
+    const { tier } = usePerformanceTier();
+    
+    useEffect(() => {
+      // v3.0 tier mapping
+      const delay = options?.delay ?? (tier === 'legacy' ? 200 : 50);
+      const timer = setTimeout(() => setIsVisible(true), delay);
+      return () => clearTimeout(timer);
+    }, [tier]);
+    
+    if (!isVisible) {
+      return options?.fallback ?? <ComponentSkeleton minHeight={options?.minHeight} />;
+    }
+    
     return <WrappedComponent {...props} />;
   });
 }

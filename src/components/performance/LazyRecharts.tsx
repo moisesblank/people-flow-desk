@@ -74,11 +74,30 @@ export const SmartChartWrapper = memo(function SmartChartWrapper({
   );
 });
 
-// 🏛️ PREMIUM GARANTIDO: Hook sempre retorna isLowEnd = false
+// Hook para detectar se deve mostrar gráficos simplificados
 export function useChartPerformance() {
+  const [isLowEnd, setIsLowEnd] = useState(false);
+  
+  useEffect(() => {
+    // Detectar conexão lenta
+    const connection = (navigator as any).connection;
+    if (connection) {
+      const isSlowConnection = ['slow-2g', '2g', '3g'].includes(connection.effectiveType);
+      const saveData = connection.saveData || false;
+      setIsLowEnd(isSlowConnection || saveData);
+    }
+    
+    // Detectar dispositivo fraco
+    const cores = navigator.hardwareConcurrency || 4;
+    const memory = (navigator as any).deviceMemory || 4;
+    if (cores <= 2 || memory <= 2) {
+      setIsLowEnd(true);
+    }
+  }, []);
+  
   return {
-    isLowEnd: false,
-    shouldSimplify: false,
+    isLowEnd,
+    shouldSimplify: isLowEnd,
     preload: preloadRecharts
   };
 }

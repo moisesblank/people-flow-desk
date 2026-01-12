@@ -30,9 +30,15 @@ export const CyberBackground = memo(function CyberBackground({
 
   const opacity = intensityConfig[intensity];
   
-  // 🏛️ PREMIUM GARANTIDO: Sempre renderiza o mesmo visual
-  // isLowEnd é SEMPRE false agora (forçado em useConstitutionPerformance)
-  // Mantendo código apenas para backwards compatibility, nunca executa
+  // 🏛️ LEI I: Não renderiza backgrounds pesados em conexões lentas
+  if (isLowEnd) {
+    return (
+      <div 
+        className={cn("fixed inset-0 pointer-events-none z-0 bg-gradient-to-br from-background to-background/80", className)} 
+        style={{ opacity: opacity * 0.5 }}
+      />
+    );
+  }
 
   return (
     <div className={cn("fixed inset-0 pointer-events-none z-0 perf-ambient-only", className)} style={{ opacity }}>

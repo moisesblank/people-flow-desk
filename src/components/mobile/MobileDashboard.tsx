@@ -118,11 +118,10 @@ export function MobileDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: stats, isLoading, refetch } = useDashboardStats();
-  const { shouldReduceMotion, animationDuration } = usePerformance();
+  const { shouldReduceMotion, isLowEndDevice, animationDuration } = usePerformance();
   const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // 🏛️ PREMIUM GARANTIDO: Apenas reduced motion do SO é respeitado
-  const skipAnimations = shouldReduceMotion;
+  const skipAnimations = shouldReduceMotion || isLowEndDevice;
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);

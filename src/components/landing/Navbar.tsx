@@ -108,8 +108,64 @@ export const Navbar = memo(() => {
     setMobileOpen(false);
   }, []);
 
-  // 🏛️ PREMIUM GARANTIDO: Todos recebem a experiência premium com animações
-  // Apenas prefers-reduced-motion do sistema operacional é respeitado
+  // Versão sem animações
+  if (disableAnimations) {
+    return (
+      <>
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled 
+            ? "bg-black/95 backdrop-blur-md border-b border-red-900/30 py-3" 
+            : "bg-transparent py-4"
+        }`}>
+          <div className="container mx-auto px-4 flex items-center justify-between">
+            <Link to="/">
+              <img src={logoMoises} alt="Moisés Medeiros" width={115} height={48} className="h-10 md:h-12" decoding="async" />
+            </Link>
+            
+            {/* Desktop */}
+            <div className="hidden lg:flex items-center gap-8">
+              {navLinks.map((link) => (
+                <a 
+                  key={link.href} 
+                  href={link.href} 
+                  className="group nav-link-2300 flex items-center gap-2 text-sm font-bold text-gray-300 hover:text-white"
+                >
+                  <link.icon className="w-4 h-4 nav-icon-2300 text-gray-500" />
+                  {link.label}
+                </a>
+              ))}
+            </div>
+            
+            <div className="hidden lg:flex items-center gap-3">
+              <Link to="/area-gratuita">
+                <Button className="btn-cta-secondary-2300 text-foreground font-semibold rounded-lg">
+                  <Gift className="w-4 h-4 mr-2" />
+                  Área Gratuita
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button className="btn-cta-2300 text-white font-bold rounded-lg">
+                  <Rocket className="w-4 h-4 mr-2" />
+                  Área do Aluno
+                </Button>
+              </Link>
+            </div>
+            
+            {/* Mobile button */}
+            <button 
+              onClick={toggleMobile}
+              className="lg:hidden p-2 text-gray-300"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+          </div>
+        </nav>
+        
+        <MobileMenu isOpen={mobileOpen} onClose={closeMobile} />
+      </>
+    );
+  }
+
   return (
     <>
       <motion.nav 

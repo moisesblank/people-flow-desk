@@ -141,8 +141,8 @@ function AITutorAlertWidget({
           : "border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-background to-background"
       )}
     >
-      {/* Animated Alert Background - 🏛️ PREMIUM GARANTIDO */}
-      {isActivated && (
+      {/* Animated Alert Background */}
+      {isActivated && !isLowEnd && (
         <>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(244,63,94,0.12),transparent_50%)] animate-pulse" />
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500/50 via-orange-500/50 to-rose-500/50 animate-pulse" />
@@ -161,8 +161,8 @@ function AITutorAlertWidget({
         <div className="flex items-start gap-6 mb-5">
           {/* Avatar Humanóide com Alarme */}
           <div className="relative shrink-0">
-            {/* Pulsing Ring - 🏛️ PREMIUM GARANTIDO */}
-            {isActivated && (
+            {/* Pulsing Ring */}
+            {isActivated && !isLowEnd && (
               <div className="absolute -inset-3 rounded-2xl border-2 border-rose-500/40 animate-ping opacity-30" />
             )}
             <div className={cn(
@@ -170,7 +170,7 @@ function AITutorAlertWidget({
               isActivated 
                 ? "from-rose-500/20 to-orange-500/10 border-rose-500/40 shadow-rose-500/20" 
                 : "from-amber-500/20 to-orange-500/10 border-amber-500/30 shadow-amber-500/10",
-              isActivated && "animate-pulse"
+              isActivated && !isLowEnd && "animate-pulse"
             )}>
               <div className="relative">
                 {/* Cabeça */}

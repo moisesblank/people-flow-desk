@@ -236,8 +236,8 @@ export const SimuladoModeSelector = memo(function SimuladoModeSelector({
   questionCount,
   requiresCamera = false,
 }: SimuladoModeSelectorProps) {
-  // 🏛️ PREMIUM GARANTIDO: experiência máxima para todos
-  const isHighEnd = true;
+  const { isLowEnd } = useConstitutionPerformance();
+  const isHighEnd = !isLowEnd;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

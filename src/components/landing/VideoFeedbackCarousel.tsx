@@ -303,9 +303,9 @@ export const VideoFeedbackCarousel = () => {
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-950/50 to-black" />
       
-      {/* 🏛️ PREMIUM GARANTIDO: Glow sempre visível (blur otimizado para GPU) */}
-      {shouldAnimate && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-pink-500/10 blur-[100px] pointer-events-none transform-gpu will-change-transform" />
+      {/* Glow Effects - Disabled on slow connections (blur-[150px] is CPU-heavy) */}
+      {!isSlowConnection && shouldAnimate && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-pink-500/10 blur-[150px] pointer-events-none" />
       )}
 
       <div className="relative z-10">

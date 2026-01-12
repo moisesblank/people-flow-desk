@@ -26,12 +26,13 @@ interface SacredLazySectionProps {
 
 export const SacredLazySection = memo(forwardRef<HTMLDivElement, SacredLazySectionProps>(
   ({ children, className = "", minHeight = 100, priority = 'normal', skeleton, id }, forwardedRef) => {
-    // 🏛️ PREMIUM GARANTIDO: Margem máxima para preload agressivo
+    const { tier } = usePerformanceTier();
+    const { shouldRender: priorityShouldRender } = useRenderPriority(priority);
     const internalRef = useRef<HTMLDivElement>(null);
     const [isVisible, setIsVisible] = useState(priority === 'critical');
     
-    // Premium: margem máxima (1000px) para todos
-    const effectiveMargin = '1000px';
+    const margins = { divine: '250px', blessed: '500px', mortal: '750px', challenged: '1000px' };
+    const effectiveMargin = margins[tier];
 
     useEffect(() => {
       if (isVisible || priority === 'critical') return;
@@ -46,8 +47,7 @@ export const SacredLazySection = memo(forwardRef<HTMLDivElement, SacredLazySecti
       return () => observer.disconnect();
     }, [isVisible, effectiveMargin, priority]);
 
-    // Premium: sempre renderiza conteúdo quando visível
-    const shouldRenderContent = isVisible;
+    const shouldRenderContent = isVisible && priorityShouldRender;
 
     return (
       <section

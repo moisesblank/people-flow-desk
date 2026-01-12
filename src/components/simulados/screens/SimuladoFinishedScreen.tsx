@@ -108,9 +108,9 @@ export function SimuladoFinishedScreen({
     <div className="relative flex flex-col items-center justify-start min-h-full overflow-hidden">
       
       {/* ═══════════════════════════════════════════════════════════════════════════
-          🌌 BACKGROUND EFFECTS — Victory Celebration (🏛️ PREMIUM GARANTIDO)
+          🌌 BACKGROUND EFFECTS — Victory Celebration (Performance Tiered)
       ═══════════════════════════════════════════════════════════════════════════ */}
-      {/* Sempre visível para todos */}
+      {!isLowEnd && (
         <div className="fixed inset-0 pointer-events-none overflow-hidden">
           {/* Ambient celebration glows */}
           <div className={cn(
@@ -155,9 +155,10 @@ export function SimuladoFinishedScreen({
                 linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
               `,
               backgroundSize: '60px 60px'
-          }}
-        />
-      </div>
+            }}
+          />
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════════════════════════════════════
           🏆 VICTORY HERO SECTION — Trophy + Score
@@ -172,10 +173,10 @@ export function SimuladoFinishedScreen({
           shouldBlur ? "bg-card/60 backdrop-blur-xl" : "bg-card/90"
         )}>
           
-          {/* Card glow border effect - 🏛️ PREMIUM GARANTIDO: Sempre visível */}
-          {shouldShowGradients && (
+          {/* Card glow border effect */}
+          {!isLowEnd && shouldShowGradients && (
             <div className={cn(
-              "absolute inset-0 rounded-3xl opacity-30 transform-gpu",
+              "absolute inset-0 rounded-3xl opacity-30",
               `bg-gradient-to-br ${performance.gradient}`
             )} style={{ padding: '1px' }}>
               <div className="absolute inset-[1px] bg-card rounded-3xl" />
@@ -263,8 +264,7 @@ export function SimuladoFinishedScreen({
                     shouldShowGradients 
                       ? `bg-gradient-to-b ${result.passed ? "from-emerald-300 via-emerald-400 to-emerald-600" : "from-amber-300 via-amber-400 to-amber-600"}`
                       : result.passed ? "text-emerald-400" : "text-amber-400",
-                    // 🏛️ PREMIUM GARANTIDO: Sombra sempre visível
-                    result.passed ? "drop-shadow-[0_0_20px_rgba(52,211,153,0.5)]" : "drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]"
+                    !isLowEnd && (result.passed ? "drop-shadow-[0_0_20px_rgba(52,211,153,0.5)]" : "drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]")
                   )}>
                     {result.percentage}
                   </span>

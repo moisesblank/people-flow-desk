@@ -83,8 +83,7 @@ SectionLoader.displayName = "SectionLoader";
 // MAIN HOME COMPONENT - ULTRA OPTIMIZED
 // ============================================
 const Home = () => {
-  // 🏛️ PREMIUM GARANTIDO: Apenas reduced motion do SO é respeitado
-  const { disableAnimations } = usePerformance();
+  const { isSlowConnection, disableAnimations } = usePerformance();
   
   // 🛡️ FIX TELA PRETA: Verificar sessionStorage ANTES de qualquer estado
   const introAlreadySeen = typeof window !== 'undefined' && sessionStorage.getItem("intro_seen_v33") === "true";
@@ -92,8 +91,15 @@ const Home = () => {
   const [showIntro, setShowIntro] = useState(!introAlreadySeen);
   const [isLoaded, setIsLoaded] = useState(introAlreadySeen);
 
-  // 🏛️ PREMIUM GARANTIDO: NÃO skip intro baseado em conexão
-  // Todos recebem a experiência completa (apenas reduced motion respeitado)
+  // 🛡️ SAFETY: Se conexão lenta detectada, skip intro imediatamente
+  useEffect(() => {
+    if (isSlowConnection && showIntro) { 
+      console.log('[Home] Slow connection detected, skipping intro');
+      sessionStorage.setItem("intro_seen_v33", "true");
+      setShowIntro(false); 
+      setIsLoaded(true); 
+    }
+  }, [isSlowConnection, showIntro]);
 
   // 🛡️ EMERGENCY TIMEOUT: Garante que NUNCA ficará em tela preta
   useEffect(() => {
@@ -132,32 +138,61 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
-      {/* 🏛️ PREMIUM GARANTIDO: Mesma experiência para todos */}
-      <div className={disableAnimations ? "will-change-auto" : "transform-gpu"}>
-        <UltraBackground />
-        <Navbar />
-        <HeroSection />
-        
-        <Suspense fallback={<SectionLoader />}>
-          <RealtimeStats variant="section" />
-        </Suspense>
-        
-        <LazySection><MainApprovedArt /></LazySection>
-        <LazySection><VideoSection /></LazySection>
-        <LazySection><ProfessorSection /></LazySection>
-        <LazySection><AppExclusivoSection /></LazySection>
-        <LazySection><FirstPlaceShowcase /></LazySection>
-        <LazySection><ApprovedCarousel /></LazySection>
-        <LazySection><VideoFeedbackCarousel /></LazySection>
-        <LazySection><TestimonialsSection /></LazySection>
-        <LazySection><FeaturesSection /></LazySection>
-        <LazySection><MaterialSection /></LazySection>
+      {disableAnimations ? (
+        <div className="will-change-auto">
+          <UltraBackground />
+          <Navbar />
+          <HeroSection />
+          
+          <Suspense fallback={<SectionLoader />}>
+            <RealtimeStats variant="section" />
+          </Suspense>
+          
+          <LazySection><MainApprovedArt /></LazySection>
+          <LazySection><VideoSection /></LazySection>
+          <LazySection><ProfessorSection /></LazySection>
+          <LazySection><AppExclusivoSection /></LazySection>
+          <LazySection><FirstPlaceShowcase /></LazySection>
+          <LazySection><ApprovedCarousel /></LazySection>
+          <LazySection><VideoFeedbackCarousel /></LazySection>
+          <LazySection><TestimonialsSection /></LazySection>
+          <LazySection><FeaturesSection /></LazySection>
+          <LazySection><MaterialSection /></LazySection>
           <LazySection><AIAutomationsSection /></LazySection>
           <LazySection><CoursesSection /></LazySection>
           <LazySection><FAQSection /></LazySection>
           <LazySection><EpicCTASection /></LazySection>
           <LazySection><FuturisticFooter /></LazySection>
         </div>
+      ) : (
+        <motion.div 
+          initial={{ opacity: 0 }} 
+          animate={{ opacity: isLoaded ? 1 : 0 }} 
+          transition={{ duration: 0.3 }}
+          className="will-change-auto"
+        >
+          <UltraBackground />
+          <Navbar />
+          <HeroSection />
+          
+          <LazySection><RealtimeStats variant="section" /></LazySection>
+          <LazySection><MainApprovedArt /></LazySection>
+          <LazySection><VideoSection /></LazySection>
+          <LazySection><ProfessorSection /></LazySection>
+          <LazySection><AppExclusivoSection /></LazySection>
+          <LazySection><FirstPlaceShowcase /></LazySection>
+          <LazySection><ApprovedCarousel /></LazySection>
+          <LazySection><VideoFeedbackCarousel /></LazySection>
+          <LazySection><TestimonialsSection /></LazySection>
+          <LazySection><FeaturesSection /></LazySection>
+          <LazySection><MaterialSection /></LazySection>
+          <LazySection><AIAutomationsSection /></LazySection>
+          <LazySection><CoursesSection /></LazySection>
+          <LazySection><FAQSection /></LazySection>
+          <LazySection><EpicCTASection /></LazySection>
+          <LazySection><FuturisticFooter /></LazySection>
+        </motion.div>
+      )}
     </div>
   );
 };

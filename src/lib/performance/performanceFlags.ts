@@ -124,73 +124,100 @@ const DEFAULT_CONFIG: PerformanceConfig = {
 };
 
 // ============================================
-// 🏛️ CONSTITUIÇÃO v10.5 - PREMIUM GARANTIDO
-// Todos os tiers recebem experiência NEURAL (premium)
-// com otimizações CSS para dispositivos fracos
+// CONFIGURAÇÕES POR TIER
 // ============================================
-
-/**
- * ESTRATÉGIA "PREMIUM GARANTIDO":
- * 
- * 1. VISUAL UNIFICADO: Todos veem a mesma UI premium (tier neural)
- * 2. OTIMIZAÇÕES INTELIGENTES:
- *    - CSS will-change e transform-gpu para animações
- *    - Particles desabilitadas (muito pesado)
- *    - Ultra effects desabilitados (muito pesado)
- *    - Blur usa CSS optimizado (não backdrop-filter pesado)
- * 3. FALLBACK AUTOMÁTICO: Se FPS < 30, desativa motion temporariamente
- */
-
-// Config PREMIUM que TODOS recebem (baseada em neural)
-const PREMIUM_UNIVERSAL_CONFIG: Partial<PerformanceConfig> = {
-  liteMode: false,
-  enableMotion: true,           // ✅ Animações ON para todos
-  enableAmbientFx: true,        // ✅ Glows e efeitos ON para todos  
-  enableUltraEffects: false,    // ❌ Muito pesado - desabilitado
-  enableBlur: true,             // ✅ Blur ON (CSS optimizado)
-  enableShadows: true,          // ✅ Sombras ON
-  enableGradients: true,        // ✅ Gradientes ON
-  enableParticles: false,       // ❌ Partículas OFF (muito pesado)
-  imageQuality: 80,             // Balanceado
-  chartsSimplified: false,      // ✅ Charts completos
-  prefetchMargin: '300px',      // Lazy load otimizado
-  animationDuration: 280,       // Duração balanceada
-  animationStagger: 45,
-};
-
-// Todos os tiers recebem config PREMIUM (diferença só em métricas internas)
 const TIER_CONFIGS: Record<PerformanceTier, Partial<PerformanceConfig>> = {
   quantum: {
-    ...PREMIUM_UNIVERSAL_CONFIG,
-    // Quantum: pode ter um pouco mais de qualidade de imagem
+    liteMode: false,
+    enableMotion: true,
+    enableAmbientFx: true,
+    enableUltraEffects: true,
+    enableBlur: true,
+    enableShadows: true,
+    enableGradients: true,
+    enableParticles: true,
     imageQuality: 90,
+    chartsSimplified: false,
     prefetchMargin: '200px',
+    animationDuration: 300,
+    animationStagger: 50,
   },
   neural: {
-    ...PREMIUM_UNIVERSAL_CONFIG,
+    liteMode: false,
+    enableMotion: true,
+    enableAmbientFx: true,
+    enableUltraEffects: false,
+    enableBlur: true,
+    enableShadows: true,
+    enableGradients: true,
+    enableParticles: false,
+    imageQuality: 80,
+    chartsSimplified: false,
+    prefetchMargin: '300px',
+    animationDuration: 280,
+    animationStagger: 45,
   },
   enhanced: {
-    ...PREMIUM_UNIVERSAL_CONFIG,
-    // Enhanced: mesma experiência visual, lazy load mais agressivo
+    liteMode: false,
+    enableMotion: true,
+    enableAmbientFx: false,
+    enableUltraEffects: false,
+    enableBlur: true,
+    enableShadows: true,
+    enableGradients: true,
+    enableParticles: false,
+    imageQuality: 75,
+    chartsSimplified: false,
     prefetchMargin: '400px',
+    animationDuration: 250,
+    animationStagger: 40,
   },
   standard: {
-    ...PREMIUM_UNIVERSAL_CONFIG,
-    // Standard: mesma experiência visual, lazy load mais agressivo
+    liteMode: false,
+    enableMotion: true,
+    enableAmbientFx: false,
+    enableUltraEffects: false,
+    enableBlur: false,
+    enableShadows: true,
+    enableGradients: true,
+    enableParticles: false,
+    imageQuality: 70,
+    chartsSimplified: false,
     prefetchMargin: '500px',
-    imageQuality: 75,
+    animationDuration: 200,
+    animationStagger: 30,
   },
   legacy: {
-    ...PREMIUM_UNIVERSAL_CONFIG,
-    // Legacy: MESMA experiência visual! Só lazy load diferente
-    prefetchMargin: '600px',
-    imageQuality: 70,
+    liteMode: true,
+    enableMotion: false,
+    enableAmbientFx: false,
+    enableUltraEffects: false,
+    enableBlur: false,
+    enableShadows: false,
+    enableGradients: false,
+    enableParticles: false,
+    imageQuality: 60,
+    chartsSimplified: true,
+    prefetchMargin: '800px',
+    animationDuration: 0,
+    animationStagger: 0,
+    prefetchEnabled: false,
   },
   critical: {
-    ...PREMIUM_UNIVERSAL_CONFIG,
-    // Critical: MESMA experiência visual! Só lazy load mais agressivo
-    prefetchMargin: '800px',
-    imageQuality: 65,
+    liteMode: true,
+    enableMotion: false,
+    enableAmbientFx: false,
+    enableUltraEffects: false,
+    enableBlur: false,
+    enableShadows: false,
+    enableGradients: false,
+    enableParticles: false,
+    imageQuality: 50,
+    chartsSimplified: true,
+    prefetchMargin: '1000px',
+    animationDuration: 0,
+    animationStagger: 0,
+    prefetchEnabled: false,
   },
 };
 
@@ -494,15 +521,12 @@ class PerformanceFlagsManager {
     if (this.initialized) return;
     this.initialized = true;
 
-    // 🏛️ v10.5 - PREMIUM GARANTIDO: NÃO ativar lite mode automaticamente
-    // Todos recebem experiência premium, apenas logs de diagnóstico
-    if (this.capabilities.isLowEnd) {
+    // Auto-aplicar lite mode se necessário
+    if (this.config.autoLiteMode && this.capabilities.isLowEnd) {
+      this.enableLiteMode();
       if (import.meta.env.DEV) {
-        console.log('[PERF] 📱 Dispositivo detectado como low-end, mas PREMIUM GARANTIDO está ativo');
-        console.log('[PERF] ⚡ Aplicando otimizações CSS de GPU para garantir fluidez');
+        console.log('[PERF] 🔋 Lite Mode ativado automaticamente');
       }
-      // Aplicar otimizações CSS em vez de degradar experiência
-      this.applyPremiumOptimizations();
     }
 
     // Observar mudanças de conexão
@@ -614,62 +638,6 @@ class PerformanceFlagsManager {
     }
   }
 
-  // 🏛️ v10.5 - PREMIUM GARANTIDO: Otimizações CSS para dispositivos fracos
-  // Mantém experiência visual premium, mas otimiza renderização
-  private applyPremiumOptimizations(): void {
-    if (typeof document === 'undefined') return;
-
-    const existingStyle = document.getElementById('perf-premium-optimizations');
-    if (existingStyle) return; // Já aplicado
-
-    const style = document.createElement('style');
-    style.id = 'perf-premium-optimizations';
-    style.textContent = `
-      /* 🏛️ PREMIUM GARANTIDO - Otimizações para Dispositivos Fracos */
-      
-      /* GPU Acceleration para todas as animações */
-      .animate-pulse, .animate-spin, .animate-bounce, 
-      [class*="animate-"], [data-animate] {
-        will-change: transform, opacity;
-        transform: translateZ(0);
-        backface-visibility: hidden;
-      }
-      
-      /* Otimizar blur para usar filter em vez de backdrop-filter (mais leve) */
-      .backdrop-blur-sm { backdrop-filter: blur(2px) !important; }
-      .backdrop-blur-md { backdrop-filter: blur(6px) !important; }
-      .backdrop-blur-lg { backdrop-filter: blur(10px) !important; }
-      .backdrop-blur-xl { backdrop-filter: blur(16px) !important; }
-      
-      /* Reduzir complexidade de sombras em elementos animados */
-      [class*="animate-"].shadow-lg,
-      [class*="animate-"].shadow-xl {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-      }
-      
-      /* Forçar GPU em elementos com motion */
-      .motion-reduce *, [data-motion] {
-        transform: translate3d(0, 0, 0);
-      }
-      
-      /* Otimizar orbs e glows decorativos */
-      .ambient-orb, .glow-effect, [data-glow] {
-        contain: paint layout;
-        will-change: opacity;
-      }
-      
-      /* Reduzir re-renders em elementos estáticos */
-      .static-element, [data-static] {
-        contain: strict;
-      }
-    `;
-    document.head.appendChild(style);
-
-    if (import.meta.env.DEV) {
-      console.log('[PERF] ✅ Premium optimizations CSS aplicado');
-    }
-  }
-
   // Notificar listeners
   private notify(): void {
     this.listeners.forEach(fn => fn(this.config));
@@ -681,22 +649,18 @@ class PerformanceFlagsManager {
     return () => this.listeners.delete(fn);
   }
 
-  // 🏛️ v10.5 - PREMIUM GARANTIDO: Todas as features visuais habilitadas para todos
+  // Checar se deve carregar feature pesada
   shouldLoadHeavyFeature(feature: 'charts' | 'motion' | 'ambient' | 'ultra'): boolean {
-    // Se liteMode foi MANUALMENTE ativado pelo usuário, respeitar
     if (this.config.liteMode) return false;
 
     switch (feature) {
       case 'charts':
         return this.config.chartsEnabled;
       case 'motion':
-        // Motion habilitado para todos, exceto se reduced-motion do sistema
         return this.config.enableMotion && !this.capabilities.reducedMotion;
       case 'ambient':
-        // 🏛️ PREMIUM GARANTIDO: Ambient FX para TODOS (não checar isLowEnd)
-        return this.config.enableAmbientFx;
+        return this.config.enableAmbientFx && !this.capabilities.isLowEnd;
       case 'ultra':
-        // Ultra effects continuam desabilitados (muito pesado)
         return this.config.enableUltraEffects && this.capabilities.tier === 'quantum';
       default:
         return true;

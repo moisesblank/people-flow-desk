@@ -68,13 +68,18 @@ export const ProfileStatsOrbs = memo(function ProfileStatsOrbs({
             animate: { opacity: 1, y: 0 },
             transition: { delay: index * 0.05 }
           } : {})}
-          className="profile-stat-orb-2300"
+          className={cn(
+            "profile-stat-orb-2300",
+            isLowEnd && "profile-stat-orb-static"
+          )}
         >
-          {/* Glow Effect — 🏛️ PREMIUM GARANTIDO */}
-          <div className={cn(
-            "profile-stat-orb-glow absolute inset-0 rounded-xl transform-gpu",
-            `bg-gradient-to-br ${stat.gradient} opacity-10`
-          )} />
+          {/* Glow Effect - só em high-end */}
+          {!isLowEnd && (
+            <div className={cn(
+              "profile-stat-orb-glow absolute inset-0 rounded-xl",
+              `bg-gradient-to-br ${stat.gradient} opacity-10`
+            )} />
+          )}
 
           <div className="relative z-10 flex flex-col items-center text-center">
             <div className={cn(

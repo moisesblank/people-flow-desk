@@ -45,9 +45,9 @@ interface ViewState {
 // ============================================
 
 const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
-  // 🏛️ PREMIUM GARANTIDO: experiência máxima para todos (sem tiering visual)
-  const isHighEnd = true;
-
+  const { tier } = useConstitutionPerformance();
+  const isHighEnd = tier === 'quantum' || tier === 'neural';
+  
   const [viewState, setViewState] = useState<ViewState>({ mode: 'hub' });
 
   // Buscar material para viewer
@@ -154,8 +154,8 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
       </Helmet>
 
       <div className="relative min-h-screen bg-[#030508]">
-        {/* 🌌 CYBER BACKGROUND — 🏛️ PREMIUM GARANTIDO */}
-        <CyberBackground variant="grid" intensity="medium" />
+        {/* 🌌 CYBER BACKGROUND */}
+        {isHighEnd && <CyberBackground variant="grid" />}
         
         <div className="relative z-10 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
           

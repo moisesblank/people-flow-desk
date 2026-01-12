@@ -92,7 +92,8 @@ const AchievementCard = memo(function AchievementCard({
       } : {})}
       className={cn(
         "profile-achievement-card-2300", 
-        config.className
+        config.className,
+        isLowEnd && "profile-achievement-card-static"
       )}
     >
       <div className="flex items-start gap-3">

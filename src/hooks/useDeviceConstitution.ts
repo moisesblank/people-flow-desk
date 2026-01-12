@@ -165,12 +165,11 @@ export function useDeviceConstitution() {
     // Touch targets
     minTouchTarget: LEI_II_DISPOSITIVOS.TOUCH.MIN_TOUCH_TARGET,
     
-    // 🏛️ PREMIUM GARANTIDO: NUNCA desabilitar efeitos visuais
-    // Única exceção: prefers-reduced-motion do sistema operacional
-    shouldDisableBlur: false, // SEMPRE false para garantir consistência
-    shouldDisableAnimations: prefersReducedMotion, // Apenas respeitar preferência do SO
-    shouldDisableHDImages: isDataSaver, // Apenas save-data explícito
-    shouldSimplifyUI: false, // NUNCA simplificar UI
+    // Adaptations
+    shouldDisableBlur: isLowEnd || isSlowConnection,
+    shouldDisableAnimations: prefersReducedMotion || isLowEnd,
+    shouldDisableHDImages: isDataSaver || isSlowConnection,
+    shouldSimplifyUI: isLowEnd || connection === '2g',
     
     // CSS classes helpers
     touchClass: isTouch ? 'touch-device' : 'mouse-device',

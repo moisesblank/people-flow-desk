@@ -858,8 +858,8 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
           "bg-gradient-to-br from-purple-900/50 to-slate-900",
           "border-2 border-white/10",
           "shadow-[0_20px_60px_-10px_rgba(0,0,0,0.9),0_0_40px_-10px_rgba(139,92,246,0.3)]",
-          "transition-all duration-500 ease-out",
-          isHovered && "scale-[1.03] shadow-[0_25px_80px_-10px_rgba(0,0,0,0.95),0_0_60px_-10px_rgba(139,92,246,0.5)]"
+          !isLowEnd && "transition-all duration-500 ease-out",
+          !isLowEnd && isHovered && "scale-[1.03] shadow-[0_25px_80px_-10px_rgba(0,0,0,0.95),0_0_60px_-10px_rgba(139,92,246,0.5)]"
         )}>
           {module.thumbnail_url ? (
             <img

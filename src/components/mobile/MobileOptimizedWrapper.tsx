@@ -24,12 +24,12 @@ export const MobileOptimizedWrapper = memo(function MobileOptimizedWrapper({
   delay = 0,
   direction = 'fade'
 }: MobileOptimizedWrapperProps) {
-  const { shouldReduceMotion, animationDuration, isMobile } = usePerformance();
+  const { shouldReduceMotion, isLowEndDevice, animationDuration, isMobile } = usePerformance();
   
-  // 🏛️ PREMIUM GARANTIDO: Apenas reduced motion do SO é respeitado
-  if (shouldReduceMotion || !animate) {
+  // Skip animation entirely for reduced motion or low-end devices
+  if (shouldReduceMotion || isLowEndDevice || !animate) {
     return (
-      <div className={cn('gpu-accelerate transform-gpu', className)}>
+      <div className={cn('gpu-accelerate', className)}>
         {children}
       </div>
     );
@@ -191,7 +191,9 @@ export const PerformanceIndicator = memo(function PerformanceIndicator() {
       <div className="text-muted-foreground">
         {isMobile ? 'Mobile' : 'Desktop'} | {connectionType}
       </div>
-      {/* 🏛️ PREMIUM GARANTIDO: Removido indicador low-end */}
+      {isLowEndDevice && (
+        <div className="text-warning">Low-end mode</div>
+      )}
     </div>
   );
 });

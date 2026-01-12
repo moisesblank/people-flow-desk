@@ -788,8 +788,9 @@ const WebBookLibrary = memo(function WebBookLibrary({
   const { books, isLoading, error, refreshBooks } = useWebBookLibrary();
   const { isOwner } = useRolePermissions();
   
-  // 🏛️ PREMIUM GARANTIDO: experiência máxima para todos
-  const isHighEnd = true;
+  // ⚡ Performance flags - LEI I
+  const { shouldShowParticles, isLowEnd, tier } = useConstitutionPerformance();
+  const isHighEnd = tier === 'enhanced' || tier === 'standard' || !isLowEnd;
   
   // 🔀 Owner reorder state
   const [isEditMode, setIsEditMode] = useState(false);
@@ -948,8 +949,8 @@ const WebBookLibrary = memo(function WebBookLibrary({
 
   return (
     <div className={cn("relative min-h-screen", className)}>
-      {/* 🌌 Cinematic Background - 🏛️ PREMIUM GARANTIDO: Sempre medium */}
-      <CyberBackground variant="grid" intensity="medium" />
+      {/* 🌌 Cinematic Background */}
+      {shouldShowParticles && <CyberBackground variant="grid" intensity={isLowEnd ? "low" : "medium"} />}
       
       <div className="relative z-10 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
         
