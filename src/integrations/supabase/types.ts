@@ -710,6 +710,8 @@ export type Database = {
           nome_storage: string
           pasta: string | null
           path: string
+          preview_status: string | null
+          preview_url: string | null
           semana: number
           tags: string[] | null
           tamanho: number
@@ -743,6 +745,8 @@ export type Database = {
           nome_storage: string
           pasta?: string | null
           path: string
+          preview_status?: string | null
+          preview_url?: string | null
           semana: number
           tags?: string[] | null
           tamanho: number
@@ -776,6 +780,8 @@ export type Database = {
           nome_storage?: string
           pasta?: string | null
           path?: string
+          preview_status?: string | null
+          preview_url?: string | null
           semana?: number
           tags?: string[] | null
           tamanho?: number
@@ -15879,6 +15885,8 @@ export type Database = {
           original_path: string
           original_size_bytes: number | null
           position: number | null
+          preview_status: string | null
+          preview_url: string | null
           processed_at: string | null
           rating_average: number | null
           rating_count: number | null
@@ -15921,6 +15929,8 @@ export type Database = {
           original_path: string
           original_size_bytes?: number | null
           position?: number | null
+          preview_status?: string | null
+          preview_url?: string | null
           processed_at?: string | null
           rating_average?: number | null
           rating_count?: number | null
@@ -15963,6 +15973,8 @@ export type Database = {
           original_path?: string
           original_size_bytes?: number | null
           position?: number | null
+          preview_status?: string | null
+          preview_url?: string | null
           processed_at?: string | null
           rating_average?: number | null
           rating_count?: number | null
