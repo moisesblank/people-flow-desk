@@ -1206,6 +1206,18 @@ export const OmegaFortressPlayer = memo(({
                       initial={{ width: "0%" }}
                       animate={{ width: "100%" }}
                       transition={{ duration: 3, ease: "linear" }}
+                      onAnimationComplete={() => {
+                        // 🔥 FIX UNIVERSAL v17.0: Garantia dupla para disclaimer
+                        // Funciona para YouTube, Panda, Vimeo - TODOS os tipos
+                        // Se o setTimeout falhar por qualquer razão, a animação garante
+                        if (!disclaimerCompleted) {
+                          console.log('[OmegaFortress] ✅ Disclaimer concluído via onAnimationComplete (fallback universal)');
+                          setShowDisclaimer(false);
+                          setDisclaimerCompleted(true);
+                          setShowThumbnail(false);
+                          setIsLoading(true);
+                        }
+                      }}
                     />
                   </div>
                   <span className="text-white/60 text-xs">Iniciando...</span>
