@@ -500,6 +500,18 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
     setShowResult(false);
   };
 
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      const prevIndex = currentIndex - 1;
+      const prevQuestion = questions[prevIndex];
+      const prevAnswer = answers[prevQuestion.id];
+      
+      setCurrentIndex(prevIndex);
+      setSelectedOption(prevAnswer?.answer || null);
+      setShowResult(!!prevAnswer);
+    }
+  };
+
   if (!currentQuestion || isComplete) return null;
 
   return (
@@ -807,26 +819,41 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
               CONFIRMAR
             </Button>
           ) : (
-            <Button 
-              onClick={handleNext} 
-              size="lg"
-              className={cn(
-                "w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black",
-                isHighEnd ? "shadow-lg shadow-amber-500/20 transition-all duration-200" : "transition-colors duration-100"
-              )}
-            >
-              {currentIndex + 1 >= questions.length ? (
-                <>
-                  <Trophy className="h-5 w-5 mr-2" />
-                  FINALIZAR
-                </>
-              ) : (
-                <>
-                  PRÓXIMA
-                  <ArrowRight className="h-5 w-5 ml-2" />
-                </>
-              )}
-            </Button>
+            <div className="flex gap-3">
+              <Button 
+                onClick={handlePrevious}
+                disabled={currentIndex === 0}
+                size="lg"
+                variant="outline"
+                className={cn(
+                  "flex-1 h-12 text-base font-bold border-amber-500/30 text-amber-400 hover:bg-amber-500/10 hover:border-amber-500/50 disabled:opacity-40",
+                  isHighEnd ? "transition-all duration-200" : "transition-colors duration-100"
+                )}
+              >
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                ANTERIOR
+              </Button>
+              <Button 
+                onClick={handleNext} 
+                size="lg"
+                className={cn(
+                  "flex-1 h-12 text-base font-bold bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black",
+                  isHighEnd ? "shadow-lg shadow-amber-500/20 transition-all duration-200" : "transition-colors duration-100"
+                )}
+              >
+                {currentIndex + 1 >= questions.length ? (
+                  <>
+                    <Trophy className="h-5 w-5 mr-2" />
+                    FINALIZAR
+                  </>
+                ) : (
+                  <>
+                    PRÓXIMA
+                    <ArrowRight className="h-5 w-5 ml-2" />
+                  </>
+                )}
+              </Button>
+            </div>
           )}
         </div>
       </DialogContent>
