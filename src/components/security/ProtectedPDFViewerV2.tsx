@@ -312,6 +312,7 @@ export const ProtectedPDFViewerV2 = memo(({
   const [activeTool, setActiveTool] = useState<ToolMode>('pencil');
   const [drawingColor, setDrawingColor] = useState('#ef4444');
   const [drawingSize, setDrawingSize] = useState(3);
+  const [imageHeight, setImageHeight] = useState<number>(0); // P0 FIX: altura real da imagem
 
   // PDF Renderer (PDF.js)
   const {
@@ -677,6 +678,11 @@ export const ProtectedPDFViewerV2 = memo(({
                   className="max-w-full h-auto select-none"
                   draggable={false}
                   style={{ userSelect: 'none', pointerEvents: drawingMode ? 'none' : 'auto' }}
+                  onLoad={(e) => {
+                    // P0 FIX: Capturar altura real da imagem para o canvas
+                    const img = e.currentTarget;
+                    setImageHeight(img.offsetHeight);
+                  }}
                 />
 
                 {/* Fabric.js Drawing Canvas - Agora FILHO do mesmo container */}
@@ -691,6 +697,7 @@ export const ProtectedPDFViewerV2 = memo(({
                   onCanvasChange={() => {
                     // Temporário - não persiste
                   }}
+                  imageHeight={imageHeight}
                 />
 
                 {/* Watermark Overlay */}

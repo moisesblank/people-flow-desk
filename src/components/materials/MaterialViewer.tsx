@@ -123,6 +123,7 @@ export const MaterialViewer = memo(function MaterialViewer({
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [imageHeight, setImageHeight] = useState<number>(0); // P0 FIX: altura real da imagem
 
   // Detectar tipo de arquivo (PDF, imagem, ou outro)
   const fileType = useMemo(() => {
@@ -511,6 +512,11 @@ export const MaterialViewer = memo(function MaterialViewer({
                       className="max-w-full h-auto select-none"
                       draggable={false}
                       style={{ userSelect: 'none', pointerEvents: drawingMode ? 'none' : 'auto' }}
+                      onLoad={(e) => {
+                        // P0 FIX: Capturar altura real da imagem para o canvas
+                        const img = e.currentTarget;
+                        setImageHeight(img.offsetHeight);
+                      }}
                     />
 
                     {/* Fabric.js Drawing Canvas - Anotações Temporárias */}
@@ -523,6 +529,7 @@ export const MaterialViewer = memo(function MaterialViewer({
                       pageNumber={currentPage}
                       initialData={null}
                       onCanvasChange={() => {/* Temporário - não persiste */}}
+                      imageHeight={imageHeight}
                     />
 
                     {/* Watermark Overlay */}
