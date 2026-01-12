@@ -17,12 +17,20 @@ interface SessionInfo {
 function detectSessionInfo(): SessionInfo {
   const ua = navigator.userAgent;
   
-  // Detectar tipo de dispositivo
+  // 🖥️ DESKTOP FIRST: macOS/Windows/Linux detection ANTES de Mobi check
   let deviceType: 'mobile' | 'tablet' | 'desktop' = 'desktop';
-  if (/Mobile|Android|iPhone|iPod/i.test(ua)) {
-    deviceType = 'mobile';
-  } else if (/iPad|Tablet/i.test(ua)) {
-    deviceType = 'tablet';
+  
+  const isDesktopOS = 
+    (/Mac OS X|Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua)) ||
+    (/Windows NT/i.test(ua) && !/Phone/i.test(ua)) ||
+    (/Linux/i.test(ua) && !/Android/i.test(ua));
+  
+  if (!isDesktopOS) {
+    if (/iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua))) {
+      deviceType = 'tablet';
+    } else if (/Mobile|Android.*Mobile|iPhone|iPod|Mobi/i.test(ua)) {
+      deviceType = 'mobile';
+    }
   }
   
   // Detectar navegador

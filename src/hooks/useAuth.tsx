@@ -64,11 +64,18 @@ async function collectFingerprint(): Promise<{ hash: string; data: Record<string
       language: navigator.language,
       platform: navigator.platform,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      deviceType: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
-        ? /iPad|Tablet/i.test(navigator.userAgent)
-          ? "tablet"
-          : "mobile"
-        : "desktop",
+      deviceType: (() => {
+        const ua = navigator.userAgent;
+        // 🖥️ DESKTOP FIRST
+        if (/Mac OS X|Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua)) return "desktop";
+        if (/Windows NT/i.test(ua) && !/Phone/i.test(ua)) return "desktop";
+        if (/Linux/i.test(ua) && !/Android/i.test(ua)) return "desktop";
+        // 📱 Tablet
+        if (/iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua))) return "tablet";
+        // 📲 Mobile
+        if (/Mobi|Android.*Mobile|iPhone/i.test(ua)) return "mobile";
+        return "desktop";
+      })(),
       browser: navigator.userAgent.includes("Firefox")
         ? "Firefox"
         : navigator.userAgent.includes("Edg")

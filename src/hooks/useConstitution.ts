@@ -123,9 +123,20 @@ function detectDevice() {
   }
   
   const ua = navigator.userAgent;
-  const isMobile = /iPhone|iPod|Android.*Mobile/i.test(ua);
-  const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua);
-  const isDesktop = !isMobile && !isTablet;
+  
+  // 🖥️ DESKTOP FIRST: macOS/Windows/Linux detection ANTES de Mobi check
+  const isMacDesktop = /Mac OS X|Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua);
+  const isWindowsDesktop = /Windows NT/i.test(ua) && !/Phone/i.test(ua);
+  const isLinuxDesktop = /Linux/i.test(ua) && !/Android/i.test(ua);
+  const isDesktopOS = isMacDesktop || isWindowsDesktop || isLinuxDesktop;
+  
+  // 📱 Tablet detection
+  const isTablet = !isDesktopOS && (/iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua)));
+  
+  // 📲 Mobile detection
+  const isMobile = !isDesktopOS && !isTablet && /iPhone|iPod|Android.*Mobile|Mobi/i.test(ua);
+  
+  const isDesktop = isDesktopOS || (!isMobile && !isTablet);
   const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   
   return { isMobile, isTablet, isDesktop, isTouch };

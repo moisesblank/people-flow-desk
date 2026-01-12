@@ -44,8 +44,19 @@ export function clearFingerprintCache(): void {
 // Funções auxiliares para metadata básica
 function detectDeviceType(): 'desktop' | 'mobile' | 'tablet' {
   const ua = navigator.userAgent;
+  
+  // 🖥️ DESKTOP FIRST: macOS/Windows/Linux detection ANTES de Mobi check
+  if (/Mac OS X|Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua)) return 'desktop';
+  if (/Windows NT/i.test(ua) && !/Phone/i.test(ua)) return 'desktop';
+  if (/Linux/i.test(ua) && !/Android/i.test(ua)) return 'desktop';
+  
+  // 📱 Tablet detection
   if (/iPad|Tablet/i.test(ua)) return 'tablet';
-  if (/Mobi|Android|iPhone/i.test(ua)) return 'mobile';
+  if (/Android/i.test(ua) && !/Mobile/i.test(ua)) return 'tablet';
+  
+  // 📲 Mobile detection
+  if (/Mobi|iPhone|Android.*Mobile/i.test(ua)) return 'mobile';
+  
   return 'desktop';
 }
 
