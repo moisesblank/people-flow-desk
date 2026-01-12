@@ -564,10 +564,8 @@ export default function FlashcardsPage() {
         {/* Flashcard - 3D Holographic */}
         <div className="flashcard-3d-container" onClick={handleFlip}>
           <motion.div
-            className={cn(
-              "flashcard-holographic relative w-full min-h-[360px] md:min-h-[400px] cursor-pointer",
-              isFlipped && "is-flipped"
-            )}
+            className="flashcard-holographic relative w-full min-h-[360px] md:min-h-[400px] cursor-pointer"
+            style={{ transformStyle: 'preserve-3d' }}
             animate={{ rotateY: isFlipped ? 180 : 0 }}
             transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
           >
@@ -578,7 +576,10 @@ export default function FlashcardsPage() {
             <div className="flashcard-corner-accent bottom-right" />
 
             {/* Front - Question */}
-            <div className="flashcard-face-front">
+            <div 
+              className="flashcard-face-front"
+              style={{ backfaceVisibility: 'hidden' }}
+            >
               <Badge variant="outline" className="absolute top-4 left-4 text-xs bg-background/80">
                 {currentCard?.state === 'new' ? '✨ Novo' : currentCard?.state}
               </Badge>
@@ -598,7 +599,13 @@ export default function FlashcardsPage() {
             </div>
 
             {/* Back - Answer */}
-            <div className="flashcard-face-back">
+            <div 
+              className="flashcard-face-back"
+              style={{ 
+                backfaceVisibility: 'hidden',
+                transform: 'rotateY(180deg)'
+              }}
+            >
               <Sparkles className="w-14 h-14 text-primary/30 mb-4" />
               <p className="text-xs text-primary/70 uppercase tracking-widest mb-3">Resposta</p>
               <p className="text-xl md:text-2xl font-medium text-center leading-relaxed whitespace-pre-line max-w-lg">
