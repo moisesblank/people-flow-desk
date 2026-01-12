@@ -1,20 +1,20 @@
 // ============================================
-// MOISÉS MEDEIROS v3.0 - GLOBAL DEVTOOLS BLOCK + ANTI-COPY
+// ☢️ MOISÉS MEDEIROS v4.0 - NUCLEAR SHIELD EDITION
 // Bloqueio Global de DevTools + Print Screen + Cópia de Conteúdo
 // EXCETO para o OWNER: moisesblank@gmail.com
 // ============================================
-// 🚨 PROTEÇÃO DESATIVADA GLOBALMENTE POR ORDEM DO OWNER (2026-01-06)
-// Para reativar, mude DEVTOOLS_PROTECTION_ENABLED para true
+// ☢️ NUCLEAR SHIELD v3.0 INTEGRADO (2026-01-12)
 // ============================================
 
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { initNuclearShield } from "@/lib/security/nuclearShield";
 
 // ═══════════════════════════════════════════════════════════
 // 🔧 MASTER KILL SWITCH - PROTEÇÃO DE DEVTOOLS
 // ═══════════════════════════════════════════════════════════
-// 🔥 v14.0-PART-3: ATIVADO por ordem MODO AGENTE (2026-01-08)
+// ☢️ NUCLEAR SHIELD: ATIVO (2026-01-12)
 const DEVTOOLS_PROTECTION_ENABLED = true;
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
@@ -93,12 +93,17 @@ export function useGlobalDevToolsBlock() {
     }
 
     // Verificar se usuário é owner
+    let nuclearCleanup: (() => void) | null = null;
+    
     const checkOwner = async () => {
       try {
         const {
           data: { user },
         } = await supabase.auth.getUser();
         isOwnerRef.current = (user?.email || "").toLowerCase() === OWNER_EMAIL;
+
+        // ☢️ NUCLEAR SHIELD: Inicializar com email do usuário
+        nuclearCleanup = initNuclearShield(user?.email);
 
         // Se for owner, remover restrições de CSS
         if (isOwnerRef.current) {
@@ -108,6 +113,8 @@ export function useGlobalDevToolsBlock() {
         }
       } catch {
         isOwnerRef.current = false;
+        // ☢️ Inicializar Nuclear Shield sem email (proteção máxima)
+        nuclearCleanup = initNuclearShield(null);
       }
     };
 
