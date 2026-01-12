@@ -1,11 +1,12 @@
 // ============================================
-// 🎫 useSessionManager — Gerenciador de Sessões
+// 🎫 useSessionManager — Gerenciador de Sessões v3.0
+// REFINAMENTO SISTÊMICO P0: Usa SEMPRE hash do servidor
 // Extraído do useAuth para Single Responsibility
 // ============================================
 
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useDeviceFingerprint } from "./useDeviceFingerprint";
+import { getServerDeviceHash, generateDeviceName, detectDeviceType } from "@/lib/deviceFingerprint";
 
 const SESSION_TOKEN_KEY = 'matriz_session_token';
 
@@ -16,15 +17,27 @@ interface SessionRegistration {
 }
 
 export function useSessionManager() {
-  const { collect: collectFingerprint } = useDeviceFingerprint();
-
   /**
-   * Registra uma nova sessão (DOGMA I: Sessão Única)
+   * 🔐 REFINAMENTO P0: Registra sessão usando hash do SERVIDOR
+   * O hash do servidor é a fonte da verdade (com pepper)
+   * DEVE ser chamado DEPOIS de registerDeviceBeforeSession()
    */
-  const registerSession = useCallback(async (userId: string): Promise<SessionRegistration> => {
+  const registerSession = useCallback(async (userId: string, serverDeviceHash?: string): Promise<SessionRegistration> => {
     try {
-      const fingerprint = await collectFingerprint();
+      // 🔐 P0: Usar hash do servidor passado como parâmetro OU buscar do localStorage
+      const deviceHash = serverDeviceHash || getServerDeviceHash();
+      
+      if (!deviceHash) {
+        console.error('[SessionManager] ❌ P0 VIOLATION: Sem hash do servidor! Dispositivo deve ser registrado ANTES da sessão.');
+        return { 
+          success: false, 
+          error: 'DEVICE_NOT_REGISTERED - Hash do servidor não encontrado' 
+        };
+      }
+
       const sessionToken = crypto.randomUUID();
+      const deviceName = generateDeviceName();
+      const deviceType = detectDeviceType();
       
       // 🗑️ DELETAR sessões anteriores deste usuário (EXCLUSÃO DEFINITIVA)
       await supabase
@@ -42,19 +55,20 @@ export function useSessionManager() {
       
       const currentEpoch = guardData?.auth_epoch ?? 1;
 
-      // Criar nova sessão DO ZERO
+      // 🔐 P0: Criar sessão com hash do SERVIDOR (mesmo hash usado em user_devices)
       const { error } = await supabase
         .from('active_sessions')
         .insert({
           user_id: userId,
           session_token: sessionToken,
-          device_hash: fingerprint.hash,
-          device_type: fingerprint.data.deviceType as string,
-          device_name: `${fingerprint.data.browser} on ${fingerprint.data.os}`,
+          device_hash: deviceHash, // 🔐 HASH DO SERVIDOR - mesmo de user_devices!
+          device_type: deviceType,
+          device_name: deviceName,
           user_agent: navigator.userAgent,
           status: 'active',
           expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           auth_epoch_at_login: currentEpoch,
+          mfa_verified: false, // Será atualizado após 2FA
         });
 
       if (error) {
@@ -63,12 +77,13 @@ export function useSessionManager() {
       }
 
       localStorage.setItem(SESSION_TOKEN_KEY, sessionToken);
+      console.log('[SessionManager] ✅ Sessão criada com hash do SERVIDOR:', deviceHash.slice(0, 8) + '...');
       return { success: true, sessionToken };
     } catch (err) {
       console.error('[SessionManager] Erro inesperado:', err);
       return { success: false, error: 'Erro ao registrar sessão' };
     }
-  }, [collectFingerprint]);
+  }, []);
 
   /**
    * 🗑️ DELETA a sessão atual (EXCLUSÃO DEFINITIVA - não revoga, DELETA)
@@ -116,9 +131,38 @@ export function useSessionManager() {
     }
   }, []);
 
+  /**
+   * 🔐 P0: Sincroniza hash da sessão atual com user_devices
+   * Útil para corrigir sessões órfãs criadas antes do refinamento
+   */
+  const syncSessionWithDevice = useCallback(async (): Promise<boolean> => {
+    const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
+    const serverHash = getServerDeviceHash();
+    
+    if (!sessionToken || !serverHash) return false;
+
+    try {
+      const { error } = await supabase
+        .from('active_sessions')
+        .update({ device_hash: serverHash })
+        .eq('session_token', sessionToken);
+
+      if (error) {
+        console.warn('[SessionManager] Erro ao sincronizar hash:', error);
+        return false;
+      }
+
+      console.log('[SessionManager] ✅ Hash da sessão sincronizado com servidor');
+      return true;
+    } catch {
+      return false;
+    }
+  }, []);
+
   return {
     registerSession,
     revokeCurrentSession,
     validateSession,
+    syncSessionWithDevice,
   };
 }
