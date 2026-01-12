@@ -133,6 +133,16 @@ export type {
 } from "./cloudflareIntegration";
 
 // ============================================
+// ANTI-DEBUGGER LAYER v2.0
+// ============================================
+export {
+  antiDebugger,
+  initAntiDebugger,
+  setOwnerMode as setAntiDebuggerOwnerMode,
+  enableAggressiveMode,
+} from "./antiDebugger";
+
+// ============================================
 // CLOUDFLARE MODULE (STANDALONE)
 // ============================================
 export * from "@/lib/cloudflare";
