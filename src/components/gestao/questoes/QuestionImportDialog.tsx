@@ -92,8 +92,15 @@ import { parseWordFile, isWordFile } from '@/lib/parsers/wordQuestionParser';
 import { FileType } from 'lucide-react';
 
 // ============================================
-// TIPOS
+// TIPOS E CONSTANTES CRÍTICAS
 // ============================================
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONFIDENCE GATE v1.0 — THRESHOLD ABSOLUTO
+// A IA SÓ pode preencher campos NULL se confidence >= 0.80
+// Se confidence < 0.80, o campo DEVE permanecer NULL forever
+// ═══════════════════════════════════════════════════════════════════════════════
+const AI_CONFIDENCE_THRESHOLD = 0.80;
 
 type NivelCognitivo = 'memorizar' | 'compreender' | 'aplicar' | 'analisar' | 'avaliar';
 type OrigemQuestao = 'oficial' | 'adaptada' | 'autoral_prof_moises';
@@ -146,6 +153,11 @@ interface ParsedQuestion {
   // RASTREABILIDADE
   campos_inferidos: string[];
   campos_null: string[];
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // CONFIDENCE TRACKING: Score de confiança da IA (0-1)
+  // Usado para auditoria e para aplicar o CONFIDENCE GATE (>= 0.80)
+  // ═══════════════════════════════════════════════════════════════════════════════
+  ai_confidence?: number;
   // Status de Validação
   status: 'pending' | 'valid' | 'warning' | 'error';
   errors: string[];
@@ -1076,22 +1088,33 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         throw error;
       }
       
-      if (data?.results) {
+        if (data?.results) {
         for (const result of data.results) {
+          const confidence = result.confidence || 0;
+          const meetsThreshold = confidence >= AI_CONFIDENCE_THRESHOLD;
+          
+          // ═══════════════════════════════════════════════════════════════════
+          // CONFIDENCE GATE: Só aplicar valores inferidos se confidence >= 0.80
+          // Campos com confidence < 0.80 ficam UNDEFINED (serão NULL no banco)
+          // ═══════════════════════════════════════════════════════════════════
           results.set(result.id, {
-            macro: result.macro,
-            micro: result.micro,
-            tema: result.tema,
-            subtema: result.subtema,
-            difficulty: result.difficulty,
-            banca: result.banca,
-            ano: result.ano,
-            explanation: result.explanation,
-            confidence: result.confidence || 0.7,
+            macro: meetsThreshold ? result.macro : undefined,
+            micro: meetsThreshold ? result.micro : undefined,
+            tema: meetsThreshold ? result.tema : undefined,
+            subtema: meetsThreshold ? result.subtema : undefined,
+            difficulty: meetsThreshold ? result.difficulty : undefined,
+            banca: meetsThreshold ? result.banca : undefined,
+            ano: meetsThreshold ? result.ano : undefined,
+            explanation: meetsThreshold ? result.explanation : undefined,
+            confidence: confidence,
             reasoning: result.reasoning || '',
-            fields_inferred: result.fields_inferred || [],
+            fields_inferred: meetsThreshold ? (result.fields_inferred || []) : [],
             corrections: result.corrections || [],
           });
+          
+          if (!meetsThreshold) {
+            console.log(`⚠️ [CONFIDENCE GATE] Questão ${result.id}: confidence ${(confidence * 100).toFixed(1)}% < 80% — inferência BLOQUEADA, campos ficam NULL`);
+          }
         }
         
         const stats = data.stats || {};
@@ -1385,94 +1408,115 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           const newInferidos = [...q.campos_inferidos];
           
           // ═══════════════════════════════════════════════════════════════════
-          // APLICAR TODOS OS CAMPOS DO MODO AGENTE
-          // THRESHOLD DE CONFIANÇA: 80% para correções de MICRO/TEMA/SUBTEMA
+          // SOBERANIA DO USUÁRIO v1.0 — CONFIDENCE GATE ABSOLUTO
+          // IA SÓ preenche campos NULL se confidence >= 80%
+          // Se confidence < 80%, o campo fica NULL forever
           // ═══════════════════════════════════════════════════════════════════
           
-          const CONFIDENCE_THRESHOLD = 0.80;
           const confidence = aiResult.confidence || 0;
-          const highConfidence = confidence >= CONFIDENCE_THRESHOLD;
+          const meetsThreshold = confidence >= AI_CONFIDENCE_THRESHOLD;
           
-          // MACRO (apenas se vazio - IA não altera MACRO existente)
-          if (aiResult.macro && !q.macro) {
+          // SALVAR CONFIDENCE NO OBJETO PARA AUDITORIA
+          updated.ai_confidence = confidence;
+          
+          // Log do gate
+          if (!meetsThreshold) {
+            console.log(`⚠️ [CONFIDENCE GATE] Questão ${q.id}: ${(confidence * 100).toFixed(1)}% < 80% — campos ficam NULL`);
+          }
+          
+          // ═══════════════════════════════════════════════════════════════════
+          // MACRO (apenas se vazio E confidence >= 80%)
+          // ═══════════════════════════════════════════════════════════════════
+          if (!q.macro && aiResult.macro && meetsThreshold) {
             updated.macro = aiResult.macro;
             newInferidos.push('macro:ai_inference');
+          } else if (!q.macro && aiResult.macro && !meetsThreshold) {
+            // NULL PRESERVATION: Confidence baixo, não preenche
+            updated.warnings.push(`⚠️ MACRO sugerido pela IA: ${aiResult.macro} (confidence ${(confidence * 100).toFixed(0)}% < 80% — NÃO APLICADO)`);
           }
           
-          // MICRO - correção apenas com confiança ≥ 80%
-          if (aiResult.micro) {
-            if (!q.micro) {
-              // Campo vazio: sempre preenche
-              updated.micro = aiResult.micro;
-              newInferidos.push('micro:ai_inference');
-            } else if (q.micro !== aiResult.micro && highConfidence) {
-              // Campo existente + confiança alta: corrige
-              updated.warnings.push(`IA corrigiu MICRO: ${q.micro} → ${aiResult.micro}`);
-              updated.micro = aiResult.micro;
-            } else if (q.micro !== aiResult.micro && !highConfidence) {
-              // Campo existente + confiança baixa: avisa mas NÃO corrige
-              updated.warnings.push(`⚠️ IA sugeriu MICRO: ${aiResult.micro} (mas confidence baixo: ${(confidence * 100).toFixed(0)}% < 80%)`);
-            }
+          // ═══════════════════════════════════════════════════════════════════
+          // MICRO (apenas se vazio E confidence >= 80%)
+          // ═══════════════════════════════════════════════════════════════════
+          if (!q.micro && aiResult.micro && meetsThreshold) {
+            updated.micro = aiResult.micro;
+            newInferidos.push('micro:ai_inference');
+          } else if (!q.micro && aiResult.micro && !meetsThreshold) {
+            updated.warnings.push(`⚠️ MICRO sugerido pela IA: ${aiResult.micro} (confidence ${(confidence * 100).toFixed(0)}% < 80% — NÃO APLICADO)`);
+          } else if (q.micro && aiResult.micro && q.micro !== aiResult.micro && meetsThreshold) {
+            // Correção de valor existente APENAS com confidence alto
+            updated.warnings.push(`IA corrigiu MICRO: ${q.micro} → ${aiResult.micro}`);
+            updated.micro = aiResult.micro;
           }
           
-          // TEMA - correção apenas com confiança ≥ 80%
-          if (aiResult.tema) {
-            if (!q.tema) {
-              // Campo vazio: sempre preenche
-              updated.tema = aiResult.tema;
-              newInferidos.push('tema:ai_inference');
-            } else if (q.tema !== aiResult.tema && highConfidence) {
-              // Campo existente + confiança alta: corrige
-              updated.warnings.push(`IA corrigiu TEMA: ${q.tema} → ${aiResult.tema}`);
-              updated.tema = aiResult.tema;
-            } else if (q.tema !== aiResult.tema && !highConfidence) {
-              // Campo existente + confiança baixa: avisa mas NÃO corrige
-              updated.warnings.push(`⚠️ IA sugeriu TEMA: ${aiResult.tema} (mas confidence baixo: ${(confidence * 100).toFixed(0)}% < 80%)`);
-            }
+          // ═══════════════════════════════════════════════════════════════════
+          // TEMA (apenas se vazio E confidence >= 80%)
+          // ═══════════════════════════════════════════════════════════════════
+          if (!q.tema && aiResult.tema && meetsThreshold) {
+            updated.tema = aiResult.tema;
+            newInferidos.push('tema:ai_inference');
+          } else if (!q.tema && aiResult.tema && !meetsThreshold) {
+            updated.warnings.push(`⚠️ TEMA sugerido pela IA: ${aiResult.tema} (confidence ${(confidence * 100).toFixed(0)}% < 80% — NÃO APLICADO)`);
+          } else if (q.tema && aiResult.tema && q.tema !== aiResult.tema && meetsThreshold) {
+            updated.warnings.push(`IA corrigiu TEMA: ${q.tema} → ${aiResult.tema}`);
+            updated.tema = aiResult.tema;
           }
           
-          // SUBTEMA - correção apenas com confiança ≥ 80%
-          if (aiResult.subtema) {
-            if (!q.subtema) {
-              // Campo vazio: sempre preenche
-              updated.subtema = aiResult.subtema;
-              newInferidos.push('subtema:ai_inference');
-            } else if (q.subtema !== aiResult.subtema && highConfidence) {
-              // Campo existente + confiança alta: corrige
-              updated.warnings.push(`IA corrigiu SUBTEMA: ${q.subtema} → ${aiResult.subtema}`);
-              updated.subtema = aiResult.subtema;
-            } else if (q.subtema !== aiResult.subtema && !highConfidence) {
-              // Campo existente + confiança baixa: avisa mas NÃO corrige
-              updated.warnings.push(`⚠️ IA sugeriu SUBTEMA: ${aiResult.subtema} (mas confidence baixo: ${(confidence * 100).toFixed(0)}% < 80%)`);
-            }
+          // ═══════════════════════════════════════════════════════════════════
+          // SUBTEMA (apenas se vazio E confidence >= 80%)
+          // ═══════════════════════════════════════════════════════════════════
+          if (!q.subtema && aiResult.subtema && meetsThreshold) {
+            updated.subtema = aiResult.subtema;
+            newInferidos.push('subtema:ai_inference');
+          } else if (!q.subtema && aiResult.subtema && !meetsThreshold) {
+            updated.warnings.push(`⚠️ SUBTEMA sugerido pela IA: ${aiResult.subtema} (confidence ${(confidence * 100).toFixed(0)}% < 80% — NÃO APLICADO)`);
+          } else if (q.subtema && aiResult.subtema && q.subtema !== aiResult.subtema && meetsThreshold) {
+            updated.warnings.push(`IA corrigiu SUBTEMA: ${q.subtema} → ${aiResult.subtema}`);
+            updated.subtema = aiResult.subtema;
           }
           
-          // DIFICULDADE
-          if (aiResult.difficulty && !q.difficulty) {
+          // ═══════════════════════════════════════════════════════════════════
+          // DIFICULDADE (apenas se vazio E confidence >= 80%)
+          // ═══════════════════════════════════════════════════════════════════
+          if (!q.difficulty && aiResult.difficulty && meetsThreshold) {
             updated.difficulty = aiResult.difficulty as 'facil' | 'medio' | 'dificil';
             newInferidos.push('difficulty:ai_inference');
+          } else if (!q.difficulty && aiResult.difficulty && !meetsThreshold) {
+            updated.warnings.push(`⚠️ DIFICULDADE sugerida pela IA: ${aiResult.difficulty} (confidence ${(confidence * 100).toFixed(0)}% < 80% — NÃO APLICADO)`);
           }
           
-          // BANCA
-          if (aiResult.banca && !q.banca) {
+          // ═══════════════════════════════════════════════════════════════════
+          // BANCA (apenas se vazio E confidence >= 80%)
+          // ═══════════════════════════════════════════════════════════════════
+          if (!q.banca && aiResult.banca && meetsThreshold) {
             updated.banca = aiResult.banca;
             newInferidos.push('banca:ai_inference');
+          } else if (!q.banca && aiResult.banca && !meetsThreshold) {
+            updated.warnings.push(`⚠️ BANCA sugerida pela IA: ${aiResult.banca} (confidence ${(confidence * 100).toFixed(0)}% < 80% — NÃO APLICADO)`);
           }
           
-          // ANO
-          if (aiResult.ano && !q.ano) {
+          // ═══════════════════════════════════════════════════════════════════
+          // ANO (apenas se vazio E confidence >= 80%)
+          // ═══════════════════════════════════════════════════════════════════
+          if (!q.ano && aiResult.ano && meetsThreshold) {
             updated.ano = aiResult.ano;
             newInferidos.push('ano:ai_inference');
+          } else if (!q.ano && aiResult.ano && !meetsThreshold) {
+            updated.warnings.push(`⚠️ ANO sugerido pela IA: ${aiResult.ano} (confidence ${(confidence * 100).toFixed(0)}% < 80% — NÃO APLICADO)`);
           }
           
-          // EXPLICAÇÃO (gerar se ausente)
-          if (aiResult.explanation && !q.explanation) {
+          // ═══════════════════════════════════════════════════════════════════
+          // EXPLICAÇÃO (apenas se vazio E confidence >= 80%)
+          // ═══════════════════════════════════════════════════════════════════
+          if (!q.explanation && aiResult.explanation && meetsThreshold) {
             updated.explanation = aiResult.explanation;
             newInferidos.push('explanation:ai_generated');
+          } else if (!q.explanation && aiResult.explanation && !meetsThreshold) {
+            updated.warnings.push(`⚠️ EXPLICAÇÃO gerada pela IA (confidence ${(confidence * 100).toFixed(0)}% < 80% — NÃO APLICADO)`);
           }
           
           // Adicionar campos inferidos pela IA ao tracking
-          if (aiResult.fields_inferred?.length > 0) {
+          if (aiResult.fields_inferred?.length > 0 && meetsThreshold) {
             for (const field of aiResult.fields_inferred) {
               const key = `${field.toLowerCase()}:ai_inference`;
               if (!newInferidos.includes(key)) {
@@ -1863,32 +1907,59 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         if (!q.subtema && isSubtemaAutoAI) camposInferidos.push('subtema:auto_ai_mode');
         if (!isSubtemaAutoAI && selectedSubtema && selectedSubtema !== q.subtema) camposInferidos.push('subtema:pre_selected');
         
-        const difficulty = q.difficulty || 'medio';
-        if (!q.difficulty) camposInferidos.push('difficulty:fallback_final');
+        // ═══════════════════════════════════════════════════════════════════
+        // DIFICULDADE: SOBERANIA ABSOLUTA DO USUÁRIO
+        // 1. Se usuário selecionou dificuldade → USA ESSA (prioridade máxima)
+        // 2. Se __AUTO_AI__ → usa do Excel/inferência SE existir
+        // 3. Se nenhum dos dois → NULL (não força fallback)
+        // ═══════════════════════════════════════════════════════════════════
+        const isDifficultyAutoAI = selectedDifficulty === '__AUTO_AI__' || !selectedDifficulty;
+        let difficulty: 'facil' | 'medio' | 'dificil' | null;
         
-        const banca = q.banca || 'Autoral';
-        if (!q.banca) camposInferidos.push('banca:fallback_autoral');
+        if (!isDifficultyAutoAI && selectedDifficulty) {
+          // Usuário selecionou explicitamente → SOBERANIA ABSOLUTA
+          difficulty = selectedDifficulty as 'facil' | 'medio' | 'dificil';
+          if (selectedDifficulty !== q.difficulty) camposInferidos.push('difficulty:user_selected');
+        } else if (q.difficulty) {
+          // Veio do Excel ou inferência com confidence >= 80%
+          difficulty = q.difficulty;
+        } else {
+          // NULL PRESERVATION: Sem valor definido = NULL (não força fallback)
+          difficulty = null;
+        }
         
-        // NOVA REGRA: Questões sem ano ficam SEM ANO (null) - NUNCA forçar ano
+        // ═══════════════════════════════════════════════════════════════════
+        // BANCA: SOBERANIA ABSOLUTA DO USUÁRIO
+        // Se usuário não selecionou e não há no Excel → NULL (não força "Autoral")
+        // ═══════════════════════════════════════════════════════════════════
+        const banca = q.banca || null; // Removido fallback forçado
+        
+        // REGRA: Questões sem ano ficam SEM ANO (null) - NUNCA forçar ano
         const ano = q.ano || null;
         
-        const explanation = q.explanation || 'Resolução comentada não disponível. Consulte o material de apoio.';
-        if (!q.explanation) camposInferidos.push('explanation:fallback_default');
+        // ═══════════════════════════════════════════════════════════════════
+        // EXPLANATION: NULL PRESERVATION
+        // Se não há explicação → NULL (não força texto genérico)
+        // ═══════════════════════════════════════════════════════════════════
+        const explanation = q.explanation || null;
         
-        // PAYLOAD COMPLETO (sem nulls em campos obrigatórios)
+        // ═══════════════════════════════════════════════════════════════════
+        // PAYLOAD FINAL: RESPEITO TOTAL ÀS SELEÇÕES DO USUÁRIO
+        // Campos null são aceitos — melhor null que dado inventado
+        // ═══════════════════════════════════════════════════════════════════
         const payload = {
           question_text: q.question_text,
           question_type: selectedStyle || 'multiple_choice',
           options: q.options.filter(o => o.text.trim() || o.image_url).map(o => ({ id: o.id, text: o.text, ...(o.image_url && { image_url: o.image_url }) })),
           correct_answer: q.correct_answer,
-          explanation: explanation,           // OBRIGATÓRIO
-          difficulty: difficulty,             // OBRIGATÓRIO
-          banca: banca,                       // OBRIGATÓRIO
-          ano: ano,                           // OPCIONAL: null se não informado
-          macro: macro,                       // OBRIGATÓRIO (identidade)
-          micro: micro,                       // OBRIGATÓRIO
-          tema: tema,                         // OBRIGATÓRIO
-          subtema: subtema,                   // OBRIGATÓRIO
+          explanation: explanation,           // NULL se não informado
+          difficulty: difficulty,             // NULL se não definido
+          banca: banca,                       // NULL se não informado
+          ano: ano,                           // NULL se não informado
+          macro: macro,                       // Seleção do usuário ou Excel
+          micro: micro,                       // Seleção do usuário ou Excel
+          tema: tema,                         // Seleção do usuário ou Excel
+          subtema: subtema,                   // Seleção do usuário ou Excel
           tags: [...new Set([...(q.tags || []), selectedGroup])], // QUESTION_DOMAIN: Deduplicado
           points: selectedGroup === 'MODO_TREINO' ? 0 : 10, // MODO_TREINO: 0 pts, SIMULADOS: 10 pts
           // IMPORTAÇÃO DIRETA - Questões já entram ATIVAS e PUBLICADAS
@@ -1959,7 +2030,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 action_description: `Campo "${field}" inferido como "${String(finalValue).slice(0, 50)}"`,
                 source_type: 'import' as const,
                 source_file: files[0]?.name || 'importação',
-                ai_confidence_score: 0.85,
+                ai_confidence_score: q.ai_confidence ?? null, // Usa o confidence real da IA
                 has_real_value: !!finalValue && String(finalValue).trim() !== '',
               };
             })
