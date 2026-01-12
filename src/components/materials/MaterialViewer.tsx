@@ -2,6 +2,7 @@
 // 📄 MATERIAL VIEWER - Visualizador de PDF
 // Tecnologia de Ponta: PDF.js + Fabric.js + Watermarks
 // COM MODO LEITURA (Anotações Temporárias)
+// v2.1: Integração com useContentSecurityGuard
 // ============================================
 
 import { memo, useState, useCallback, useEffect, useMemo, useRef } from 'react';
@@ -39,6 +40,7 @@ import { useMaterialPdfRenderer } from '@/hooks/useMaterialPdfRenderer';
 import { cn } from '@/lib/utils';
 import { FabricDrawingCanvas, type FabricDrawingCanvasHandle } from '@/components/books/FabricDrawingCanvas';
 import type { ToolMode } from '@/components/books/ReadingModeToolbar';
+import { useContentSecurityGuard } from '@/hooks/useContentSecurityGuard';
 
 // ============================================
 // TIPOS
@@ -124,6 +126,17 @@ export const MaterialViewer = memo(function MaterialViewer({
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [imageHeight, setImageHeight] = useState<number>(0); // P0 FIX: altura real da imagem
+
+  // 🛡️ UNIVERSAL SECURITY GUARD - Anti-Debugger + Escalation
+  const { showSevereOverlay, SevereOverlay } = useContentSecurityGuard({
+    contentId: material.id,
+    contentType: 'material',
+    contentTitle: material.title,
+    userId: user?.id,
+    userEmail: user?.email,
+    userName: user?.user_metadata?.name,
+    enabled: !isAdmin, // Admin bypassa proteção
+  });
 
   // Detectar tipo de arquivo (PDF, imagem, ou outro)
   const fileType = useMemo(() => {
@@ -258,13 +271,17 @@ export const MaterialViewer = memo(function MaterialViewer({
   }, [isAdmin]);
 
   return (
-    <motion.div
-      ref={containerRef}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/95 flex flex-col"
-    >
+    <>
+      {/* 🛡️ Overlay de Violação Severa */}
+      <SevereOverlay />
+      
+      <motion.div
+        ref={containerRef}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/95 flex flex-col"
+      >
       {/* Header */}
       <div className="flex items-center justify-between p-3 md:p-4 border-b border-white/10">
         <div className="flex items-center gap-3">
@@ -621,6 +638,7 @@ export const MaterialViewer = memo(function MaterialViewer({
         </div>
       )}
     </motion.div>
+    </>
   );
 });
 
