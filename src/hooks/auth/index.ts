@@ -5,6 +5,7 @@
 
 export { useHeartbeat } from './useHeartbeat';
 export { useDeviceFingerprint, type FingerprintResult } from './useDeviceFingerprint';
+// 🔐 v3.0: useSessionManager agora usa hash do servidor (refinamento P0)
 export { useSessionManager } from './useSessionManager';
 
 // 🛡️ NUCLEAR LOCKDOWN SYSTEM v1.0
@@ -22,7 +23,16 @@ export {
 } from './use2FADecision';
 
 // 🔐 BLOCO 1 FIX: Fingerprint raw data (para servidor gerar hash)
-export { collectFingerprintRawData, generateDeviceName, type FingerprintRawData } from '@/lib/deviceFingerprintRaw';
+export { collectFingerprintRawData, type FingerprintRawData } from '@/lib/deviceFingerprintRaw';
 
 // 🔐 BLOCO 3: Registro de dispositivo antes da sessão
 export { registerDeviceBeforeSession, getDeviceErrorMessage, type DeviceRegistrationResult } from '@/lib/deviceRegistration';
+
+// 🔐 Fingerprint utilities exportados para uso direto
+export { 
+  getServerDeviceHash, 
+  saveServerDeviceHash, 
+  clearServerDeviceHash,
+  generateDeviceName,
+  detectDeviceType 
+} from '@/lib/deviceFingerprint';
