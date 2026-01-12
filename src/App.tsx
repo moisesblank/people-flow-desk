@@ -8,6 +8,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import "@/styles/performance.css";
+import "@/styles/optimized-animations.css";
 import { BrowserRouter, Routes } from "react-router-dom";
 import { VisualEditMode } from "@/components/editor/VisualEditMode";
 // SessionTracker REMOVIDO - heartbeat já existe em useAuth (DOGMA I)
