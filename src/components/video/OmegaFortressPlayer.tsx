@@ -382,26 +382,87 @@ export const OmegaFortressPlayer = memo(({
       showSecurityViolationOverlay('Menu de contexto bloqueado');
     };
     
-    // Detecção de perda de foco (Snipping Tool, Alt+Tab, etc.)
+    // ═══════════════════════════════════════════════════════════════════
+    // 🛡️ DETECÇÃO DE BLUR ANTI-FALSO-POSITIVO v2.0
+    // ═══════════════════════════════════════════════════════════════════
+    // PROBLEMA: Quando o iframe do vídeo carrega, ele rouba o foco da
+    // janela principal, disparando 'blur' ANTES do usuário interagir.
+    // SOLUÇÃO: Grace period + debounce + detecção de iframe focus
+    // ═══════════════════════════════════════════════════════════════════
+    
+    let blurDebounceTimer: NodeJS.Timeout | null = null;
+    let videoStartGracePeriod = true; // Grace period inicial de 3s
+    
+    // Desativar grace period após 3 segundos do mount
+    const graceTimeout = setTimeout(() => {
+      videoStartGracePeriod = false;
+      console.log('[OMEGA] ✅ Grace period de blur expirado - monitoramento ativo');
+    }, 3000);
+    
     const handleWindowBlur = () => {
       if (isImmuneUser) return;
-      if (!isPlaying) return; // Só pausa se estiver tocando
+      if (!isPlaying) return; // Só monitora se estiver tocando
+      if (videoStartGracePeriod) {
+        console.log('[OMEGA] ⏳ Blur ignorado - dentro do grace period inicial');
+        return;
+      }
       
-      // Pausar vídeo quando perde foco
-      pauseVideo();
-      setIsPlaying(false);
-      showSecurityViolationOverlay('Janela perdeu foco - possível tentativa de captura');
+      // Verificar se o foco foi para o iframe do vídeo (não é violação)
+      const activeElement = document.activeElement;
+      if (activeElement?.tagName === 'IFRAME') {
+        console.log('[OMEGA] 🎬 Blur ignorado - foco transferido para iframe do vídeo');
+        return;
+      }
+      
+      // Debounce de 800ms - se o foco retornar rapidamente, cancela
+      if (blurDebounceTimer) {
+        clearTimeout(blurDebounceTimer);
+      }
+      
+      blurDebounceTimer = setTimeout(() => {
+        // Verificar novamente após debounce
+        if (document.hasFocus()) {
+          console.log('[OMEGA] ✅ Blur cancelado - foco retornou');
+          return;
+        }
+        
+        // Verificar se iframe ainda está focado
+        const currentActive = document.activeElement;
+        if (currentActive?.tagName === 'IFRAME') {
+          console.log('[OMEGA] 🎬 Blur pós-debounce ignorado - iframe focado');
+          return;
+        }
+        
+        // Violação real detectada
+        console.warn('[OMEGA] 🚨 Violação de blur confirmada após debounce');
+        pauseVideo();
+        setIsPlaying(false);
+        showSecurityViolationOverlay('Janela perdeu foco - possível tentativa de captura');
+      }, 800);
+    };
+    
+    // Cancelar debounce quando foco retorna
+    const handleWindowFocus = () => {
+      if (blurDebounceTimer) {
+        clearTimeout(blurDebounceTimer);
+        blurDebounceTimer = null;
+        console.log('[OMEGA] ✅ Focus retornou - debounce cancelado');
+      }
     };
     
     // Adicionar listeners
     document.addEventListener('keydown', handleSecurityKeydown, { capture: true });
     containerRef.current?.addEventListener('contextmenu', handleContextMenu);
     window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('focus', handleWindowFocus);
     
     return () => {
       document.removeEventListener('keydown', handleSecurityKeydown, { capture: true });
       containerRef.current?.removeEventListener('contextmenu', handleContextMenu);
       window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('focus', handleWindowFocus);
+      clearTimeout(graceTimeout);
+      if (blurDebounceTimer) clearTimeout(blurDebounceTimer);
     };
   }, [session, showThumbnail, isImmuneUser, isPlaying, showSecurityViolationOverlay]);
 
