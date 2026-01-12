@@ -279,7 +279,7 @@ export function useContentSecurityGuard({
   }, [addAttempt, logViolation, onSessionEnd, userId, user?.id]);
 
   // ═══════════════════════════════════════════════════════════
-  // HANDLER DE KEYBOARD
+  // HANDLER DE KEYBOARD (keydown + keyup para PrintScreen)
   // ═══════════════════════════════════════════════════════════
   useEffect(() => {
     if (!enabled) return;
@@ -293,12 +293,17 @@ export function useContentSecurityGuard({
 
       const keyUpper = key.toUpperCase();
 
-      // PRINT SCREEN
+      // PRINT SCREEN (keydown)
       if (PRINT_SCREEN_KEYS.includes(key) || PRINT_SCREEN_KEYS.includes(keyUpper)) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
+        console.warn('[ContentSecurityGuard] 🚨 PrintScreen detectado via keydown');
         handleEscalatedResponse('screenshot');
+        // Limpar clipboard imediatamente
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText('⚠️ Captura bloqueada').catch(() => {});
+        }
         return;
       }
 
@@ -307,6 +312,7 @@ export function useContentSecurityGuard({
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
+        console.warn('[ContentSecurityGuard] 🚨 Win+Shift+S detectado');
         handleEscalatedResponse('screenshot');
         return;
       }
@@ -349,10 +355,35 @@ export function useContentSecurityGuard({
       }
     };
 
+    // ═══════════════════════════════════════════════════════════
+    // 🚨 P0 FIX: KEYUP HANDLER para PrintScreen
+    // Chrome NÃO dispara keydown para PrintScreen em muitos casos
+    // Mas SEMPRE dispara keyup após a captura
+    // ═══════════════════════════════════════════════════════════
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (isOwnerRef.current) return;
+      
+      const key = e.key;
+      if (!key) return;
+      
+      // PrintScreen via keyup (mais confiável no Chrome)
+      if (PRINT_SCREEN_KEYS.includes(key) || PRINT_SCREEN_KEYS.includes(key.toUpperCase())) {
+        console.warn('[ContentSecurityGuard] 🚨 PrintScreen detectado via KEYUP');
+        handleEscalatedResponse('screenshot');
+        
+        // Limpar clipboard após a captura
+        if (navigator.clipboard?.writeText) {
+          navigator.clipboard.writeText('⚠️ Captura bloqueada').catch(() => {});
+        }
+      }
+    };
+
     document.addEventListener('keydown', handleKeyDown, { capture: true });
+    document.addEventListener('keyup', handleKeyUp, { capture: true });
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown, { capture: true });
+      document.removeEventListener('keyup', handleKeyUp, { capture: true });
     };
   }, [enabled, handleEscalatedResponse]);
 
