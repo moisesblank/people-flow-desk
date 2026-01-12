@@ -210,6 +210,13 @@ export function SessionGuard({ children }: SessionGuardProps) {
     try {
       console.warn("[SessionGuard] ⚠️ Token ausente — bootstrap de sessão única (RPC)");
       const meta = detectClientDeviceMeta();
+      
+      // 🔐 P0 FIX: SEMPRE usar hash do servidor (com pepper)
+      const serverDeviceHash = localStorage.getItem('matriz_device_server_hash');
+      if (!serverDeviceHash) {
+        console.warn("[SessionGuard] ⚠️ Sem hash do servidor - dispositivo não registrado. Abortando bootstrap.");
+        return;
+      }
 
       const { data, error } = await supabase.rpc("create_single_session", {
         _ip_address: null,
@@ -217,7 +224,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
         _device_type: meta.device_type,
         _browser: meta.browser,
         _os: meta.os,
-        _device_hash_from_server: null,
+        _device_hash_from_server: serverDeviceHash, // 🔐 P0 FIX: Hash do SERVIDOR
       });
 
       const token = data?.[0]?.session_token;

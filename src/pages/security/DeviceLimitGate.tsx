@@ -335,13 +335,21 @@ export default function DeviceLimitGate() {
         else if (ua.includes('Android')) os = 'Android';
         else if (ua.includes('iPhone')) os = 'iOS';
 
+        // 🔐 P0 FIX: Garantir hash do servidor mesmo se result.deviceHash vier vazio
+        const serverDeviceHash = result.deviceHash || localStorage.getItem('matriz_device_server_hash');
+        if (!serverDeviceHash) {
+          console.error('[DeviceLimitGate] ❌ P0 VIOLATION: Sem hash do servidor!');
+          toast.error('Erro de segurança', { description: 'Dispositivo não registrado corretamente.' });
+          return;
+        }
+        
         const { data, error: sessError } = await supabase.rpc('create_single_session', {
           _ip_address: null,
           _user_agent: navigator.userAgent.slice(0, 255),
           _device_type: device_type,
           _browser: browser,
           _os: os,
-          _device_hash_from_server: result.deviceHash || null,
+          _device_hash_from_server: serverDeviceHash, // 🔐 P0 FIX: Hash do SERVIDOR
         });
 
         if (sessError) {
