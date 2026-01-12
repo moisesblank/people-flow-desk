@@ -1,7 +1,8 @@
 // ============================================
 // 🔥 PROTECTED PDF VIEWER V2 - DOGMA III EVOLVED
-// PDF.js + Fabric.js + Full Security
+// PDF.js + Fabric.js + Full Security + Universal Anti-Debugger
 // Todas proteções V1 + Modo Leitura (Anotações Temporárias)
+// v2.1: Integração com useContentSecurityGuard
 // ============================================
 
 import { useState, useEffect, useRef, useCallback, memo, forwardRef, useImperativeHandle } from "react";
@@ -37,6 +38,8 @@ import { cn } from "@/lib/utils";
 import { useMaterialPdfRenderer } from "@/hooks/useMaterialPdfRenderer";
 import { FabricDrawingCanvas, type FabricDrawingCanvasHandle, type FabricCanvasData } from "@/components/books/FabricDrawingCanvas";
 import type { ToolMode } from "@/components/books/ReadingModeToolbar";
+import { useContentSecurityGuard } from "@/hooks/useContentSecurityGuard";
+import { useAuth } from "@/hooks/useAuth";
 
 // ============================================
 // TIPOS
@@ -299,6 +302,7 @@ export const ProtectedPDFViewerV2 = memo(({
   isModal = true,
   disableWatermark = false,
 }: ProtectedPDFViewerV2Props) => {
+  const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const fabricCanvasRef = useRef<FabricDrawingCanvasHandle>(null);
   
@@ -313,6 +317,18 @@ export const ProtectedPDFViewerV2 = memo(({
   const [drawingColor, setDrawingColor] = useState('#ef4444');
   const [drawingSize, setDrawingSize] = useState(3);
   const [imageHeight, setImageHeight] = useState<number>(0); // P0 FIX: altura real da imagem
+
+  // 🛡️ UNIVERSAL SECURITY GUARD - Anti-Debugger + Escalation
+  const { showSevereOverlay, SevereOverlay } = useContentSecurityGuard({
+    contentId: filePath || pdfUrl || 'unknown-pdf',
+    contentType: 'pdf',
+    contentTitle: title,
+    userId: user?.id,
+    userEmail: user?.email,
+    userName: user?.user_metadata?.name,
+    enabled: true,
+    onViolation: onDownloadAttempt,
+  });
 
   // PDF Renderer (PDF.js)
   const {
