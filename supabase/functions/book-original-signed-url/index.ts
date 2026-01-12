@@ -52,6 +52,55 @@ serve(async (req: Request) => {
     // Cliente SERVICE ROLE puro - para operações de storage que precisam bypassar RLS
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
+    // Obter usuário para verificações
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Token inválido" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // ============================================
+    // 🛡️ P0-4: VERIFICAR is_banned ANTES DE TUDO
+    // ============================================
+    const { data: profileData } = await supabaseAdmin
+      .from("profiles")
+      .select("is_banned")
+      .eq("id", user.id)
+      .single();
+    
+    if (profileData?.is_banned === true) {
+      console.warn(`[Book Original URL] 🚫 USUÁRIO BANIDO: ${user.email}`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Acesso bloqueado" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    
+    // ============================================
+    // 🛡️ P0-2: VERIFICAR mfa_verified NA SESSÃO
+    // ============================================
+    const { data: sessionData } = await supabaseAdmin
+      .from("active_sessions")
+      .select("mfa_verified")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    const isOwner = user.email?.toLowerCase() === "moisesblank@gmail.com";
+    if (sessionData && sessionData.mfa_verified === false && !isOwner) {
+      console.warn(`[Book Original URL] 🚫 MFA NÃO VERIFICADO: ${user.email}`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Verificação 2FA pendente" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // 1) Validar acesso via RPC (usa contexto do usuário para checar permissões)
     const { data: bookData, error: bookError } = await supabaseWithAuth.rpc(
       "fn_get_book_for_reader",

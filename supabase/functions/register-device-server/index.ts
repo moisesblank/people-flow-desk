@@ -388,6 +388,43 @@ Deno.serve(async (req) => {
         .eq('is_active', true)
         .order('last_seen_at', { ascending: true }); // Mais antigo primeiro = recomendado desconectar
 
+      // ============================================
+      // 🛡️ P1-4: AUTO-DESATIVAR DISPOSITIVO MAIS ANTIGO
+      // Se limite excedido e não é same-type-replacement,
+      // desativa automaticamente o dispositivo mais antigo
+      // ============================================
+      const oldestDevice = devices?.[0];
+      if (oldestDevice) {
+        console.log(`[register-device-server] 🔄 P1-4: Auto-desativando dispositivo mais antigo: ${oldestDevice.id}`);
+        
+        await supabase
+          .from('user_devices')
+          .update({ 
+            is_active: false, 
+            revoked_at: new Date().toISOString(),
+            revoked_reason: 'AUTO_DEACTIVATED_ON_LIMIT_EXCEEDED'
+          })
+          .eq('id', oldestDevice.id);
+        
+        // Registrar evento de segurança
+        await supabase.from('security_events').insert({
+          user_id: userId,
+          event_type: 'DEVICE_AUTO_DEACTIVATED',
+          severity: 'warning',
+          description: `Dispositivo mais antigo desativado automaticamente: ${oldestDevice.device_name}`,
+          metadata: {
+            deactivated_device_id: oldestDevice.id,
+            deactivated_device_name: oldestDevice.device_name,
+            new_device_type: deviceType,
+            reason: 'LIMIT_EXCEEDED_AUTO_CLEANUP'
+          },
+          ip_address: null,
+        });
+        
+        // Continuar com o registro do novo dispositivo (não retornar erro)
+        // A lógica abaixo de registro será executada
+      }
+
       console.warn(`[register-device-server] ⚠️ LIMITE EXCEDIDO: ${currentCount}/3 dispositivos`);
       
       // ============================================

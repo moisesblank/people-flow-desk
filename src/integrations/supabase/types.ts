@@ -19441,6 +19441,15 @@ export type Database = {
             Args: { p_current_session_token: string; p_user_id: string }
             Returns: number
           }
+      revoke_session_on_violation: {
+        Args: {
+          p_auto_ban?: boolean
+          p_reason?: string
+          p_user_id: string
+          p_violation_type?: string
+        }
+        Returns: Json
+      }
       revoke_specific_session: { Args: { p_session_id: string }; Returns: Json }
       revoke_user_session: {
         Args: { p_reason?: string; p_session_id: string }
