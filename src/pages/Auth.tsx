@@ -347,16 +347,14 @@ function ApprovalHeroText() {
   
   return (
     <div className="relative text-center mt-6 w-full overflow-visible">
-      {/* 🔥 GLOW BACKGROUND - Apenas em high-end */}
-      {!isLowEnd && (
-        <div 
-          className="absolute inset-0 -z-10 opacity-60 auth-hero-glow-bg"
-          style={{
-            background: "radial-gradient(ellipse 80% 50% at 50% 50%, hsl(320 90% 50% / 0.15), transparent 70%)",
-            filter: shouldBlur ? "blur(40px)" : "blur(20px)",
-          }}
-        />
-      )}
+      {/* 🔥 GLOW BACKGROUND - 🏛️ PREMIUM GARANTIDO: Sempre visível */}
+      <div 
+        className="absolute inset-0 -z-10 opacity-60 auth-hero-glow-bg transform-gpu will-change-transform"
+        style={{
+          background: "radial-gradient(ellipse 80% 50% at 50% 50%, hsl(320 90% 50% / 0.15), transparent 70%)",
+          filter: "blur(40px)",
+        }}
+      />
       
       {/* ⚡ MAIN TITLE - CSS-only animations for stability */}
       <div className={shouldAnimate ? "auth-hero-title-animated" : ""}>
