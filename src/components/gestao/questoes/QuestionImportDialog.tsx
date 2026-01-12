@@ -2123,24 +2123,61 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    // ATUALIZAR HISTÓRICO COM RESULTADOS FINAIS
+    // ATUALIZAR HISTÓRICO COM RESULTADOS FINAIS (CRÍTICO - SEMPRE EXECUTAR)
+    // P0 FIX: Usar .select() para confirmar que o update foi aplicado
+    // P0 FIX: Logar detalhadamente para debug
     // ═══════════════════════════════════════════════════════════════════
     if (importHistoryId) {
+      const durationMs = Date.now() - startTime;
+      const finalStatus = failed === 0 ? 'completed' : imported > 0 ? 'partial' : 'failed';
+      
+      console.log('[IMPORT] Tentando atualizar histórico:', { 
+        importHistoryId, 
+        imported, 
+        failed, 
+        durationMs,
+        finalStatus 
+      });
+      
       try {
-        const durationMs = Date.now() - startTime;
-        await supabase
+        const { data: updateResult, error: updateError } = await supabase
           .from('question_import_history')
           .update({
             imported_count: imported,
             failed_count: failed,
             duration_ms: durationMs,
-            status: failed === 0 ? 'completed' : imported > 0 ? 'partial' : 'failed',
+            status: finalStatus,
           })
-          .eq('id', importHistoryId);
-        console.log('[IMPORT] Histórico atualizado:', { imported, failed, durationMs });
+          .eq('id', importHistoryId)
+          .select('id, imported_count, status')
+          .single();
+        
+        if (updateError) {
+          console.error('[IMPORT] ERRO ao atualizar histórico:', updateError);
+          // Segunda tentativa sem .single() (pode ser que RLS esteja bloqueando)
+          const { error: retryError } = await supabase
+            .from('question_import_history')
+            .update({
+              imported_count: imported,
+              failed_count: failed,
+              duration_ms: durationMs,
+              status: finalStatus,
+            })
+            .eq('id', importHistoryId);
+          
+          if (retryError) {
+            console.error('[IMPORT] Segunda tentativa também falhou:', retryError);
+          } else {
+            console.log('[IMPORT] Histórico atualizado na segunda tentativa');
+          }
+        } else {
+          console.log('[IMPORT] ✅ Histórico atualizado com sucesso:', updateResult);
+        }
       } catch (historyErr) {
-        console.error('Erro ao atualizar histórico:', historyErr);
+        console.error('[IMPORT] Exceção ao atualizar histórico:', historyErr);
       }
+    } else {
+      console.warn('[IMPORT] importHistoryId é null - histórico não será atualizado');
     }
 
     // Consolidar campos para resultado (recalcular aqui)
