@@ -391,19 +391,55 @@ export function SimuladoPlayer({
   }
 
   // P0 FIX: Simulado sem questões = erro amigável (não crashar)
+  // CASE 1: question_ids array is empty or null
   if (!simulado.question_ids || simulado.question_ids.length === 0) {
-    console.error('[SimuladoPlayer] ABORT: Simulado has no questions', simulado.id);
+    console.error('[SimuladoPlayer] ABORT: Simulado has no question_ids', simulado.id);
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center max-w-md">
-          <p className="text-amber-500 text-lg font-bold mb-2">⚠️ Simulado Incompleto</p>
+        <div className="text-center max-w-md p-6 bg-amber-500/10 border border-amber-500/30 rounded-2xl">
+          <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+          <p className="text-amber-500 text-lg font-bold mb-2">Simulado Incompleto</p>
           <p className="text-muted-foreground mb-4">
             Este simulado ainda não possui questões cadastradas. 
             Entre em contato com a coordenação.
           </p>
-          <button onClick={handleExit} className="text-primary underline">
-            Voltar aos simulados
+          <button onClick={handleExit} className="text-primary underline font-medium">
+            ← Voltar aos simulados
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // P0 FIX: CASE 2: question_ids exist but questions couldn't be loaded (RLS or deleted questions)
+  // Only check this AFTER loading is complete and we're not in RUNNING state (which has its own check)
+  if (!isLoadingState && questions.length === 0 && simulado.question_ids.length > 0 && currentState !== SimuladoState.RUNNING) {
+    console.error('[SimuladoPlayer] ABORT: Simulado has question_ids but questions not loaded', {
+      simuladoId: simulado.id,
+      declaredQuestions: simulado.question_ids.length,
+      loadedQuestions: questions.length,
+    });
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center max-w-md p-6 bg-red-500/10 border border-red-500/30 rounded-2xl">
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-500 text-lg font-bold mb-2">Erro ao Carregar Questões</p>
+          <p className="text-muted-foreground mb-4">
+            As questões deste simulado não puderam ser carregadas. 
+            Isso pode indicar um problema de configuração.
+            <br />
+            <span className="text-xs text-zinc-500 mt-2 block">
+              Código: QST_NOT_FOUND ({simulado.question_ids.length} declaradas, 0 carregadas)
+            </span>
+          </p>
+          <div className="flex gap-4 justify-center">
+            <button onClick={refresh} className="text-cyan-400 underline font-medium">
+              Tentar novamente
+            </button>
+            <button onClick={handleExit} className="text-primary underline font-medium">
+              ← Voltar aos simulados
+            </button>
+          </div>
         </div>
       </div>
     );
