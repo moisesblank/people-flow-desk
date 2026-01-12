@@ -119,7 +119,7 @@ const MaterialCard = memo(forwardRef<HTMLDivElement, {
             <img 
               src={logoMoisesMedeiros} 
               alt=""
-              className="w-32 md:w-40 h-auto opacity-[0.25] group-hover:opacity-[0.35] transition-opacity duration-500 drop-shadow-lg"
+              className="w-32 md:w-40 h-auto opacity-[0.60] group-hover:opacity-[0.70] transition-opacity duration-500 drop-shadow-lg"
               loading="lazy"
             />
           </div>
