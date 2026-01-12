@@ -215,6 +215,28 @@ const AlertDialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDiv
 );
 AlertDialogHeader.displayName = "AlertDialogHeader";
 
+// Body scrollável para AlertDialog (consistente com Dialog)
+const AlertDialogBody = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div 
+    ref={ref} 
+    className={cn(
+      "flex-1 min-h-0 p-4",
+      "overflow-y-auto overscroll-contain touch-pan-y",
+      "[&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full",
+      className
+    )} 
+    style={{ 
+      WebkitOverflowScrolling: 'touch',
+      scrollbarGutter: 'stable',
+    }}
+    {...props} 
+  />
+));
+AlertDialogBody.displayName = "AlertDialogBody";
+
 const AlertDialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 p-4 pt-2 shrink-0", className)} {...props} />
 );
@@ -232,7 +254,17 @@ const AlertDialogDescription = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Description>
 >(({ className, ...props }, ref) => (
-  <AlertDialogPrimitive.Description ref={ref} className={cn("text-sm text-muted-foreground flex-1 overflow-y-auto", className)} {...props} />
+  <AlertDialogPrimitive.Description 
+    ref={ref} 
+    className={cn(
+      "text-sm text-muted-foreground",
+      // RESPONSIVE SCROLL: garantir scroll em todos os dispositivos
+      "flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y",
+      className
+    )} 
+    style={{ WebkitOverflowScrolling: 'touch' }}
+    {...props} 
+  />
 ));
 AlertDialogDescription.displayName = AlertDialogPrimitive.Description.displayName;
 
@@ -263,6 +295,7 @@ export {
   AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
+  AlertDialogBody,
   AlertDialogFooter,
   AlertDialogTitle,
   AlertDialogDescription,
