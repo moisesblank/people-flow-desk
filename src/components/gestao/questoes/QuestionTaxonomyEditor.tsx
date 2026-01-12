@@ -112,16 +112,23 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
   }, []);
   
   // Save to database
+  // P0 FIX UNIVERSAL: Converter VALUE → LABEL antes de salvar (LEI SUPREMA)
   const handleSave = useCallback(async () => {
     setIsSaving(true);
     try {
+      // Buscar labels correspondentes aos values selecionados
+      const macroLabel = macros.find(m => m.value === macro)?.label || macro || null;
+      const microLabel = microOptions.find(m => m.value === micro)?.label || micro || null;
+      const temaLabel = allTemas.find(t => t.value === tema)?.label || tema || null;
+      const subtemaLabel = allSubtemas.find(s => s.value === subtema)?.label || subtema || null;
+      
       const { error } = await supabase
         .from('quiz_questions')
         .update({
-          macro: macro || null,
-          micro: micro || null,
-          tema: tema || null,
-          subtema: subtema || null,
+          macro: macroLabel,
+          micro: microLabel,
+          tema: temaLabel,
+          subtema: subtemaLabel,
           updated_at: new Date().toISOString(),
         })
         .eq('id', questionId);
@@ -137,7 +144,7 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
     } finally {
       setIsSaving(false);
     }
-  }, [questionId, macro, micro, tema, subtema, onUpdate]);
+  }, [questionId, macro, micro, tema, subtema, macros, microOptions, allTemas, allSubtemas, onUpdate]);
   
   // Check if there are changes
   const hasChanges = 
