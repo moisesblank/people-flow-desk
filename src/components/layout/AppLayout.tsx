@@ -2,6 +2,7 @@ import { ReactNode, useState, useCallback, useEffect, memo, forwardRef } from "r
 // OTIMIZAÇÃO: Removido framer-motion (~50KB) - usar CSS puro
 import { Search, Command, Crown, MessageSquare, RefreshCw } from "lucide-react";
 import { AIAssistant, AIAssistantTrigger } from "@/components/ai/AIAssistant";
+import { OwnerAIModelsPanel } from "@/components/ai/OwnerAIModelsPanel";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { RoleBasedSidebar } from "./RoleBasedSidebar";
 import { ThemeToggle } from "./ThemeToggle";
@@ -314,7 +315,13 @@ export const AppLayout = memo(
           {/* Modais lazy-loaded */}
           {isSearchOpen && <GlobalSearch isOpen={isSearchOpen} onClose={closeSearch} />}
 
-          <AIAssistantTrigger onClick={openAI} />
+          {/* 🔒 AI Assistente e Painel de Modelos - APENAS OWNER */}
+          {isGodMode && (
+            <>
+              <AIAssistantTrigger onClick={openAI} />
+              <OwnerAIModelsPanel />
+            </>
+          )}
           {isAIAssistantOpen && <AIAssistant isOpen={isAIAssistantOpen} onClose={closeAI} context="dashboard" />}
 
           {isTeamChatOpen && <TeamChat isOpen={isTeamChatOpen} onClose={closeChat} />}
