@@ -9,7 +9,7 @@ import { useAuth } from './useAuth';
 import { useSubspaceQuery, useOptimisticMutation, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 import { toast } from 'sonner';
 
-// Tipos
+// Tipos - Atualizados para usar quiz_questions (P0 FIX 2026-01-12)
 export interface ErrorNotebookEntry {
   user_id: string;
   question_id: string;
@@ -17,21 +17,16 @@ export interface ErrorNotebookEntry {
   last_error_at: string;
   mastered: boolean;
   mastered_at: string | null;
-  // Dados da questão (join)
+  // Dados da questão (join com quiz_questions)
   question?: {
     id: string;
-    text: string;
+    question_text: string;
     options: any;
     correct_answer: string;
     explanation: string | null;
     difficulty: string | null;
-    area_id: string;
-    area?: {
-      id: string;
-      name: string;
-      icon: string | null;
-      color: string | null;
-    };
+    macro: string | null;
+    micro: string | null;
   };
 }
 
@@ -40,9 +35,8 @@ export interface ErrorNotebookStats {
   masteredCount: number;
   pendingCount: number;
   masteryRate: number;
-  byArea: {
-    areaId: string;
-    areaName: string;
+  byMacro: {
+    macro: string;
     count: number;
     mastered: number;
   }[];
@@ -82,15 +76,15 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
         .from('error_notebook')
         .select(`
           *,
-          question:sanctuary_questions(
+          question:quiz_questions(
             id,
-            text,
+            question_text,
             options,
             correct_answer,
             explanation,
             difficulty,
-            area_id,
-            area:study_areas(id, name, icon, color)
+            macro,
+            micro
           )
         `)
         .eq('user_id', user.id)
@@ -109,11 +103,11 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
 
       if (error) throw error;
 
-      // Filtrar por área se especificado
+      // Filtrar por macro se especificado (P0 FIX: usa macro em vez de area_id)
       let filteredData = data as ErrorNotebookEntry[];
       if (areaId && filteredData) {
         filteredData = filteredData.filter(
-          entry => entry.question?.area_id === areaId
+          entry => entry.question?.macro === areaId
         );
       }
 
@@ -136,7 +130,7 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
           masteredCount: 0,
           pendingCount: 0,
           masteryRate: 0,
-          byArea: [],
+          byMacro: [],
           recentErrors: []
         };
       }
@@ -145,9 +139,8 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
         .from('error_notebook')
         .select(`
           *,
-          question:sanctuary_questions(
-            id, text, area_id,
-            area:study_areas(id, name)
+          question:quiz_questions(
+            id, question_text, macro, micro
           )
         `)
         .eq('user_id', user.id);
@@ -159,24 +152,22 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
       const masteredCount = entries.filter(e => e.mastered).length;
       const pendingCount = totalErrors - masteredCount;
 
-      // Agrupar por área
-      const areaMap = new Map<string, { name: string; count: number; mastered: number }>();
+      // Agrupar por macro (P0 FIX: quiz_questions usa macro, não area_id)
+      const macroMap = new Map<string, { count: number; mastered: number }>();
       entries.forEach(entry => {
-        const areaId = entry.question?.area_id || 'unknown';
-        const areaName = entry.question?.area?.name || 'Sem área';
+        const macro = entry.question?.macro || 'Sem classificação';
         
-        if (!areaMap.has(areaId)) {
-          areaMap.set(areaId, { name: areaName, count: 0, mastered: 0 });
+        if (!macroMap.has(macro)) {
+          macroMap.set(macro, { count: 0, mastered: 0 });
         }
         
-        const area = areaMap.get(areaId)!;
-        area.count++;
-        if (entry.mastered) area.mastered++;
+        const macroData = macroMap.get(macro)!;
+        macroData.count++;
+        if (entry.mastered) macroData.mastered++;
       });
 
-      const byArea = Array.from(areaMap.entries()).map(([areaId, data]) => ({
-        areaId,
-        areaName: data.name,
+      const byMacro = Array.from(macroMap.entries()).map(([macro, data]) => ({
+        macro,
         count: data.count,
         mastered: data.mastered
       }));
@@ -192,7 +183,7 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
         masteredCount,
         pendingCount,
         masteryRate: totalErrors > 0 ? (masteredCount / totalErrors) * 100 : 0,
-        byArea,
+        byMacro,
         recentErrors
       };
     },
@@ -265,9 +256,9 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
   // Helpers
   const getPendingCount = () => stats?.pendingCount || 0;
   const getMasteryRate = () => stats?.masteryRate || 0;
-  const getAreaWithMostErrors = () => {
-    if (!stats?.byArea.length) return null;
-    return stats.byArea.reduce((prev, curr) => 
+  const getMacroWithMostErrors = () => {
+    if (!stats?.byMacro.length) return null;
+    return stats.byMacro.reduce((prev, curr) => 
       (curr.count - curr.mastered) > (prev.count - prev.mastered) ? curr : prev
     );
   };
@@ -290,7 +281,7 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
     // Helpers
     getPendingCount,
     getMasteryRate,
-    getAreaWithMostErrors,
+    getMacroWithMostErrors,
     refetch,
     
     // Computed
