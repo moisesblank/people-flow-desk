@@ -190,17 +190,17 @@ export function SimuladoRunningScreen({
 
   return (
     <div className="flex flex-col h-full bg-zinc-950 relative overflow-hidden">
-      {/* === BACKGROUND EFFECTS ULTRA === */}
-      {!isLowEnd && shouldShowGradients && (
+      {/* === BACKGROUND EFFECTS ULTRA — 🏛️ PREMIUM GARANTIDO === */}
+      {shouldShowGradients && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {/* Nebula effect */}
           <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-cyan-950/20 via-transparent to-transparent" />
           <div className="absolute bottom-0 right-0 w-full h-1/2 bg-gradient-to-t from-green-950/15 via-transparent to-transparent" />
           
-          {/* Floating orbs */}
-          <div className="absolute top-[10%] left-[5%] w-[400px] h-[400px] bg-cyan-500/8 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '4s' }} />
-          <div className="absolute bottom-[10%] right-[10%] w-[300px] h-[300px] bg-green-500/8 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
-          <div className="absolute top-[40%] right-[20%] w-[200px] h-[200px] bg-purple-500/5 rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '8s', animationDelay: '1s' }} />
+          {/* Floating orbs - GPU optimized */}
+          <div className="absolute top-[10%] left-[5%] w-[400px] h-[400px] bg-cyan-500/8 rounded-full blur-[120px] animate-pulse transform-gpu" style={{ animationDuration: '4s' }} />
+          <div className="absolute bottom-[10%] right-[10%] w-[300px] h-[300px] bg-green-500/8 rounded-full blur-[100px] animate-pulse transform-gpu" style={{ animationDuration: '6s', animationDelay: '2s' }} />
+          <div className="absolute top-[40%] right-[20%] w-[200px] h-[200px] bg-purple-500/5 rounded-full blur-[80px] animate-pulse transform-gpu" style={{ animationDuration: '8s', animationDelay: '1s' }} />
           
           {/* Grid overlay */}
           <div 

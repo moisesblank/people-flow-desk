@@ -949,8 +949,8 @@ const WebBookLibrary = memo(function WebBookLibrary({
 
   return (
     <div className={cn("relative min-h-screen", className)}>
-      {/* 🌌 Cinematic Background */}
-      {shouldShowParticles && <CyberBackground variant="grid" intensity={isLowEnd ? "low" : "medium"} />}
+      {/* 🌌 Cinematic Background - 🏛️ PREMIUM GARANTIDO: Sempre medium */}
+      <CyberBackground variant="grid" intensity="medium" />
       
       <div className="relative z-10 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
         
