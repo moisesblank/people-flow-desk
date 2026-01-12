@@ -89,26 +89,26 @@ serve(async (req: Request) => {
     }
     
     // ============================================
-    // 🛡️ P0-2: VERIFICAR mfa_verified NA SESSÃO
+    // 🛡️ PLANO A NUCLEAR: MFA CHECK DESATIVADO
+    // Constituição SYNAPSE Ω v10.4 - PARTE XIV
+    // Status: FAIL-OPEN para não bloquear aplicação
     // ============================================
-    const { data: sessionData } = await supabase
-      .from("active_sessions")
-      .select("mfa_verified")
-      .eq("user_id", user.id)
-      .eq("status", "active")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    
-    // Se existe sessão ativa mas MFA não verificado, bloquear
-    // EXCETO Owner que tem bypass
     const isOwner = user.email?.toLowerCase() === "moisesblank@gmail.com";
-    if (sessionData && sessionData.mfa_verified === false && !isOwner) {
-      console.warn(`[Book Page URL] 🚫 MFA NÃO VERIFICADO: ${user.email}`);
-      return new Response(
-        JSON.stringify({ success: false, error: "Verificação 2FA pendente", code: "MFA_REQUIRED" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    
+    // Log para auditoria (mas não bloqueia)
+    if (!isOwner) {
+      const { data: sessionData } = await supabase
+        .from("active_sessions")
+        .select("mfa_verified")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (sessionData?.mfa_verified === false) {
+        console.log(`[Book Page URL] ⚠️ MFA pendente (BYPASS NUCLEAR): ${user.email}`);
+      }
     }
     
     // Rate limit por usuário
