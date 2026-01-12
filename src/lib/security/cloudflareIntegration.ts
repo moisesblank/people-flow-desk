@@ -494,7 +494,16 @@ export function useCloudflareContext(): CloudflareContext | null {
     botScore: 100, // Assumir humano no frontend
     isVerifiedBot: false,
     threatScore: 0,
-    deviceType: /Mobi|Android/i.test(navigator.userAgent) ? "mobile" : "desktop",
+    deviceType: (() => {
+      const ua = navigator.userAgent;
+      // 🖥️ DESKTOP FIRST
+      if (/Mac OS X|Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua)) return "desktop";
+      if (/Windows NT/i.test(ua) && !/Phone/i.test(ua)) return "desktop";
+      if (/Linux/i.test(ua) && !/Android/i.test(ua)) return "desktop";
+      // 📲 Mobile
+      if (/Mobi|Android/i.test(ua)) return "mobile";
+      return "desktop";
+    })(),
     isSuspicious: false,
     riskLevel: "low",
   };

@@ -1687,12 +1687,21 @@ export default function Auth() {
   // Detectar tipo de dispositivo atual
   const detectCurrentDevice = () => {
     const ua = navigator.userAgent;
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
-    const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua);
-
+    
+    // 🖥️ DESKTOP FIRST: macOS/Windows/Linux detection ANTES de Mobi check
+    const isDesktopOS = 
+      (/Mac OS X|Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua)) ||
+      (/Windows NT/i.test(ua) && !/Phone/i.test(ua)) ||
+      (/Linux/i.test(ua) && !/Android/i.test(ua));
+    
     let deviceType: "desktop" | "tablet" | "mobile" = "desktop";
-    if (isTablet) deviceType = "tablet";
-    else if (isMobile) deviceType = "mobile";
+    
+    if (!isDesktopOS) {
+      const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua);
+      const isMobile = /iPhone|iPod|Android.*Mobile|Mobi/i.test(ua);
+      if (isTablet) deviceType = "tablet";
+      else if (isMobile) deviceType = "mobile";
+    }
 
     let browser = "Navegador";
     if (ua.includes("Chrome")) browser = "Google Chrome";

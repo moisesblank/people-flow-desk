@@ -334,7 +334,14 @@ export function detectPerformanceTier3500(): DeviceMetrics3500 {
   const saveData = connection?.saveData === true;
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
   const isOffline = !navigator.onLine;
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const isMobile = (() => {
+    const ua = navigator.userAgent;
+    // 🖥️ DESKTOP FIRST: Safari no macOS NÃO é mobile
+    if (/Mac OS X|Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua)) return false;
+    if (/Windows NT/i.test(ua) && !/Phone/i.test(ua)) return false;
+    if (/Linux/i.test(ua) && !/Android/i.test(ua)) return false;
+    return /iPhone|iPad|iPod|Android/i.test(ua);
+  })();
   
   // Detectar velocidade de conexão
   let connSpeed: ConnectionSpeed3500 = '4g';
