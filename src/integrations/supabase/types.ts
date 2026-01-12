@@ -4969,7 +4969,7 @@ export type Database = {
             foreignKeyName: "error_notebook_question_id_fkey"
             columns: ["question_id"]
             isOneToOne: false
-            referencedRelation: "sanctuary_questions"
+            referencedRelation: "quiz_questions"
             referencedColumns: ["id"]
           },
           {
