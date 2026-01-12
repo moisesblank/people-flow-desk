@@ -926,6 +926,15 @@ export const OmegaFortressPlayer = memo(({
   // ============================================
   const handlePlayPause = useCallback(() => {
     if (showThumbnail) {
+      // 🎬 FULLSCREEN AUTOMÁTICO: Ativar ANTES do disclaimer (resposta direta ao clique)
+      // ⚠️ iOS/Safari NÃO suporta Fullscreen API - detectamos e ignoramos
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      if (!isIOS && containerRef.current && !document.fullscreenElement) {
+        containerRef.current.requestFullscreen?.().catch(() => {
+          // Silencioso se falhar (ex: permissão negada)
+        });
+      }
+      
       // 🆕 DISCLAIMER: Exibir aviso legal por 3 segundos antes de iniciar
       // ⚠️ OWNER PARTICIPARÁ DE TODAS AS REGRAS - Sem bypass para disclaimer
       if (!disclaimerCompleted) {
