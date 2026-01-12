@@ -1438,15 +1438,20 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           // ═══════════════════════════════════════════════════════════════════
           // MICRO (apenas se vazio E confidence >= 80%)
           // ═══════════════════════════════════════════════════════════════════
+          // ═══════════════════════════════════════════════════════════════════
+          // SOBERANIA DO USUÁRIO v2.0 — IA NUNCA SOBRESCREVE VALOR EXISTENTE
+          // A IA SÓ pode preencher campos que estão VAZIOS (NULL/undefined)
+          // Se o campo já tem valor (do Excel ou seleção prévia), é INTOCÁVEL
+          // ═══════════════════════════════════════════════════════════════════
           if (!q.micro && aiResult.micro && meetsThreshold) {
             updated.micro = aiResult.micro;
             newInferidos.push('micro:ai_inference');
           } else if (!q.micro && aiResult.micro && !meetsThreshold) {
             updated.warnings.push(`⚠️ MICRO sugerido pela IA: ${aiResult.micro} (confidence ${(confidence * 100).toFixed(0)}% < 80% — NÃO APLICADO)`);
-          } else if (q.micro && aiResult.micro && q.micro !== aiResult.micro && meetsThreshold) {
-            // Correção de valor existente APENAS com confidence alto
-            updated.warnings.push(`IA corrigiu MICRO: ${q.micro} → ${aiResult.micro}`);
-            updated.micro = aiResult.micro;
+          } else if (q.micro && aiResult.micro && q.micro !== aiResult.micro) {
+            // PROIBIDO: IA detectou divergência mas NÃO PODE ALTERAR
+            // Apenas registra para auditoria, valor do usuário permanece
+            updated.warnings.push(`ℹ️ IA sugeriu MICRO diferente: ${aiResult.micro} (valor atual "${q.micro}" MANTIDO — SOBERANIA DO USUÁRIO)`);
           }
           
           // ═══════════════════════════════════════════════════════════════════
@@ -1457,9 +1462,9 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             newInferidos.push('tema:ai_inference');
           } else if (!q.tema && aiResult.tema && !meetsThreshold) {
             updated.warnings.push(`⚠️ TEMA sugerido pela IA: ${aiResult.tema} (confidence ${(confidence * 100).toFixed(0)}% < 80% — NÃO APLICADO)`);
-          } else if (q.tema && aiResult.tema && q.tema !== aiResult.tema && meetsThreshold) {
-            updated.warnings.push(`IA corrigiu TEMA: ${q.tema} → ${aiResult.tema}`);
-            updated.tema = aiResult.tema;
+          } else if (q.tema && aiResult.tema && q.tema !== aiResult.tema) {
+            // PROIBIDO: IA NÃO PODE ALTERAR — SOBERANIA DO USUÁRIO
+            updated.warnings.push(`ℹ️ IA sugeriu TEMA diferente: ${aiResult.tema} (valor atual "${q.tema}" MANTIDO — SOBERANIA DO USUÁRIO)`);
           }
           
           // ═══════════════════════════════════════════════════════════════════
@@ -1470,9 +1475,9 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             newInferidos.push('subtema:ai_inference');
           } else if (!q.subtema && aiResult.subtema && !meetsThreshold) {
             updated.warnings.push(`⚠️ SUBTEMA sugerido pela IA: ${aiResult.subtema} (confidence ${(confidence * 100).toFixed(0)}% < 80% — NÃO APLICADO)`);
-          } else if (q.subtema && aiResult.subtema && q.subtema !== aiResult.subtema && meetsThreshold) {
-            updated.warnings.push(`IA corrigiu SUBTEMA: ${q.subtema} → ${aiResult.subtema}`);
-            updated.subtema = aiResult.subtema;
+          } else if (q.subtema && aiResult.subtema && q.subtema !== aiResult.subtema) {
+            // PROIBIDO: IA NÃO PODE ALTERAR — SOBERANIA DO USUÁRIO
+            updated.warnings.push(`ℹ️ IA sugeriu SUBTEMA diferente: ${aiResult.subtema} (valor atual "${q.subtema}" MANTIDO — SOBERANIA DO USUÁRIO)`);
           }
           
           // ═══════════════════════════════════════════════════════════════════
