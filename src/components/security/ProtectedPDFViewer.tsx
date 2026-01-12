@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useContentSecurityGuard } from "@/hooks/useContentSecurityGuard";
+import { useAuth } from "@/hooks/useAuth";
 
 interface UserWatermarkData {
   nome?: string;
@@ -113,12 +115,27 @@ export const ProtectedPDFViewer = memo(({
   className,
   onDownloadAttempt,
 }: ProtectedPDFViewerProps) => {
+  const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [zoom, setZoom] = useState(100);
   const [error, setError] = useState<string | null>(null);
+
+  // ═══════════════════════════════════════════════════════════
+  // 🛡️ UNIVERSAL CONTENT SECURITY GUARD - PROTEÇÃO TOTAL
+  // ═══════════════════════════════════════════════════════════
+  const { SevereOverlay } = useContentSecurityGuard({
+    contentId: pdfUrl || 'unknown-pdf',
+    contentType: 'pdf',
+    contentTitle: title,
+    userId: user?.id,
+    userEmail: user?.email,
+    userName: user?.user_metadata?.name || userData?.nome,
+    enabled: true,
+    onViolation: () => onDownloadAttempt?.(),
+  });
 
   // ============================================
   // BLOQUEIO DE INTERAÇÕES - TODOS OS DISPOSITIVOS
@@ -293,22 +310,24 @@ export const ProtectedPDFViewer = memo(({
   // RENDER
   // ============================================
   return (
-    <div
-      ref={containerRef}
-      className={cn(
-        "protected-pdf-viewer relative flex flex-col bg-background rounded-xl overflow-hidden border border-border",
-        className
-      )}
-      style={{
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-        MozUserSelect: 'none',
-        msUserSelect: 'none',
-        WebkitTouchCallout: 'none',
-        WebkitTapHighlightColor: 'transparent',
-        touchAction: 'manipulation',
-      } as React.CSSProperties}
-    >
+    <>
+      <SevereOverlay />
+      <div
+        ref={containerRef}
+        className={cn(
+          "protected-pdf-viewer relative flex flex-col bg-background rounded-xl overflow-hidden border border-border",
+          className
+        )}
+        style={{
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          MozUserSelect: 'none',
+          msUserSelect: 'none',
+          WebkitTouchCallout: 'none',
+          WebkitTapHighlightColor: 'transparent',
+          touchAction: 'manipulation',
+        } as React.CSSProperties}
+      >
       {/* Header com controles */}
       <div className="flex items-center justify-between p-3 bg-muted/50 border-b border-border">
         <div className="flex items-center gap-2">
@@ -441,6 +460,7 @@ export const ProtectedPDFViewer = memo(({
         </span>
       </div>
     </div>
+    </>
   );
 });
 
