@@ -123,10 +123,8 @@ export function SimuladoReadyScreen({
           </div>
         )}
         
-        {/* Holographic scan lines — CSS animation */}
-        {!isLowEnd && (
-          <div className="absolute inset-0 opacity-[0.03] simulado-scanlines bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.03)_2px,rgba(255,255,255,0.03)_4px)]" />
-        )}
+        {/* Holographic scan lines — 🏛️ PREMIUM GARANTIDO */}
+        <div className="absolute inset-0 opacity-[0.03] simulado-scanlines bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(255,255,255,0.03)_2px,rgba(255,255,255,0.03)_4px)]" />
         
         {/* Corner HUD elements */}
         <div className={cn(

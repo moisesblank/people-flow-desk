@@ -310,9 +310,8 @@ export function VirtualizedStudentQuestionList({
   onResetAttempt,
   isResetting,
 }: VirtualizedStudentQuestionListProps) {
-  // Performance Tiering - Adapta efeitos visuais ao dispositivo
-  const perf = useConstitutionPerformance();
-  const isHighEnd = !perf.isLowEnd;
+  // 🏛️ PREMIUM GARANTIDO: Sempre high-end
+  const isHighEnd = true;
   
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);

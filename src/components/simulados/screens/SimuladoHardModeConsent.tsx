@@ -46,13 +46,11 @@ export function SimuladoHardModeConsent({
 
   return (
     <div className="relative flex flex-col items-center min-h-[80vh] p-6 md:p-8 overflow-y-auto">
-      {/* Background danger effects - only on high-end */}
-      {!isLowEnd && (
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-orange-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '0.5s' }} />
-        </div>
-      )}
+      {/* Background danger effects - 🏛️ PREMIUM GARANTIDO */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-orange-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '0.5s' }} />
+      </div>
 
       {/* Header with Danger Badge */}
       <div className={cn("relative text-center mb-6", shouldAnimate && "animate-fade-in")}>

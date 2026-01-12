@@ -438,8 +438,8 @@ export function SimuladoRunningScreen({
       <div className="flex-1 flex overflow-hidden p-4 gap-4 relative z-10">
         <div className="flex-1 overflow-y-auto">
           <div className="relative">
-            {/* Card Glow Border ULTRA */}
-            {!isLowEnd && shouldShowShadows && (
+            {/* Card Glow Border ULTRA - 🏛️ PREMIUM GARANTIDO */}
+            {shouldShowShadows && (
               <div className="absolute -inset-[2px] rounded-3xl bg-gradient-to-br from-cyan-500/40 via-green-500/30 to-purple-500/40 opacity-70 blur-md" />
             )}
             
@@ -467,14 +467,12 @@ export function SimuladoRunningScreen({
                       )}>
                         <span className="text-2xl font-black text-white drop-shadow-lg">{currentIndex + 1}</span>
                       </div>
-                      {/* Outer glow ring */}
-                      {!isLowEnd && shouldShowShadows && (
+                      {/* Outer glow ring - 🏛️ PREMIUM GARANTIDO */}
+                      {shouldShowShadows && (
                         <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-green-400/30 to-cyan-400/30 blur-md -z-10" />
                       )}
-                      {/* Corner sparkle */}
-                      {!isLowEnd && (
-                        <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-yellow-400" />
-                      )}
+                      {/* Corner sparkle - 🏛️ PREMIUM GARANTIDO */}
+                      <Sparkles className="absolute -top-1 -right-1 w-4 h-4 text-yellow-400" />
                     </div>
                     
                     <div>

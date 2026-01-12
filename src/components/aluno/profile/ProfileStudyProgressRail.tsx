@@ -103,10 +103,7 @@ export const ProfileStudyProgressRail = memo(function ProfileStudyProgressRail({
 
           <div className="text-center p-6 rounded-xl bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 mb-4">
             <div 
-              className={cn(
-                "w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-3 shadow-lg",
-                !isLowEnd && "profile-level-orb-glow"
-              )}
+              className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center mb-3 shadow-lg profile-level-orb-glow"
             >
               <span className="text-4xl font-bold text-primary-foreground">{currentLevel}</span>
             </div>

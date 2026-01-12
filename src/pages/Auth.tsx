@@ -367,16 +367,14 @@ function ApprovalHeroText() {
         
         {/* 🌟 HIGHLIGHT - "Mais Aprova" com GLOW otimizado */}
         <div className={`relative inline-block py-2 ${shouldAnimate ? "auth-hero-highlight-animated" : ""}`}>
-          {/* Glow Layer - só em high-end */}
-          {!isLowEnd && (
-            <div 
-              className="absolute inset-0 -z-10 rounded-lg auth-glow-layer"
-              style={{
-                background: "linear-gradient(90deg, hsl(280 90% 60% / 0.4), hsl(320 95% 55% / 0.5), hsl(0 90% 55% / 0.4))",
-                filter: shouldBlur ? "blur(25px)" : "blur(15px)",
-              }}
-            />
-          )}
+          {/* Glow Layer - 🏛️ PREMIUM GARANTIDO */}
+          <div 
+            className="absolute inset-0 -z-10 rounded-lg auth-glow-layer"
+            style={{
+              background: "linear-gradient(90deg, hsl(280 90% 60% / 0.4), hsl(320 95% 55% / 0.5), hsl(0 90% 55% / 0.4))",
+              filter: shouldBlur ? "blur(25px)" : "blur(15px)",
+            }}
+          />
           
           <span 
             className="relative text-4xl sm:text-5xl xl:text-6xl font-black"

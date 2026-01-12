@@ -115,8 +115,8 @@ export const ProfileHeroSection = memo(function ProfileHeroSection({
       {...(shouldAnimate ? motionProps : {})}
       className="profile-hero-2300"
     >
-      {/* Scanlines - só em high-end */}
-      {!isLowEnd && <div className="profile-hero-scanlines" />}
+      {/* Scanlines - 🏛️ PREMIUM GARANTIDO: sempre visíveis */}
+      <div className="profile-hero-scanlines" />
 
       <div className="relative z-10 p-6 md:p-8 lg:p-10">
         <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-start">
@@ -132,11 +132,9 @@ export const ProfileHeroSection = memo(function ProfileHeroSection({
               aria-label="Upload de foto de perfil"
             />
 
+            {/* 🏛️ PREMIUM GARANTIDO: sempre animado */}
             <div
-              className={cn(
-                "profile-avatar-ring-2300 cursor-pointer group",
-                isLowEnd && "profile-avatar-ring-static"
-              )}
+              className="profile-avatar-ring-2300 cursor-pointer group"
               onClick={() => !isUploadingAvatar && fileInputRef.current?.click()}
             >
               <Avatar className="w-full h-full relative z-10 border-4 border-background">

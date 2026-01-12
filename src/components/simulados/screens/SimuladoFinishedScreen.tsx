@@ -108,9 +108,9 @@ export function SimuladoFinishedScreen({
     <div className="relative flex flex-col items-center justify-start min-h-full overflow-hidden">
       
       {/* ═══════════════════════════════════════════════════════════════════════════
-          🌌 BACKGROUND EFFECTS — Victory Celebration (Performance Tiered)
+          🌌 BACKGROUND EFFECTS — Victory Celebration (🏛️ PREMIUM GARANTIDO)
       ═══════════════════════════════════════════════════════════════════════════ */}
-      {!isLowEnd && (
+      {/* Sempre visível para todos */}
         <div className="fixed inset-0 pointer-events-none overflow-hidden">
           {/* Ambient celebration glows */}
           <div className={cn(
@@ -155,10 +155,9 @@ export function SimuladoFinishedScreen({
                 linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
               `,
               backgroundSize: '60px 60px'
-            }}
-          />
-        </div>
-      )}
+          }}
+        />
+      </div>
 
       {/* ═══════════════════════════════════════════════════════════════════════════
           🏆 VICTORY HERO SECTION — Trophy + Score
