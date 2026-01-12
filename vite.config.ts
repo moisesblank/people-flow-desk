@@ -36,10 +36,11 @@ export default defineConfig(({ mode }) => ({
     exclude: ["@vite/client", "@vite/env"],
   },
   
-  // ⚡ DOGMA II + VIII: Build otimizado
+  // ⚡ DOGMA II + VIII: Build otimizado + ☢️ NUCLEAR SHIELD
   build: {
     target: "esnext",
     minify: "esbuild",
+    // ☢️ SOURCE MAPS PERMANENTEMENTE DESABILITADOS
     sourcemap: false,
     cssCodeSplit: true,
     cssMinify: true,
@@ -193,12 +194,16 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,
   },
   
-  // ⚡ Esbuild config
+  // ⚡ Esbuild config + ☢️ NUCLEAR SHIELD: Drop console e debugger em produção
   esbuild: {
     legalComments: "none",
     treeShaking: true,
     minifyIdentifiers: mode === "production",
     minifySyntax: mode === "production",
     minifyWhitespace: mode === "production",
+    // ☢️ REMOVER console.log e debugger em produção
+    drop: mode === "production" ? ["console", "debugger"] : [],
+    // ☢️ Mangle de nomes para ofuscação
+    mangleProps: mode === "production" ? /^_/ : undefined,
   },
 }));

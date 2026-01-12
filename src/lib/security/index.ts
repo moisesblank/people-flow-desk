@@ -133,6 +133,15 @@ export type {
 } from "./cloudflareIntegration";
 
 // ============================================
+// ☢️ NUCLEAR SHIELD v3.0 — OPÇÃO NUCLEAR
+// ============================================
+export {
+  nuclearShield,
+  initNuclearShield,
+  setOwnerMode as setNuclearOwnerMode,
+} from "./nuclearShield";
+
+// ============================================
 // ANTI-DEBUGGER LAYER v2.0
 // ============================================
 export {
