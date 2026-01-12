@@ -500,34 +500,36 @@ export const MaterialViewer = memo(function MaterialViewer({
                   transition: 'transform 0.2s ease'
                 }}
               >
-                {/* PDF Page */}
+                {/* Wrapper Unificado - Imagem + Canvas no mesmo container relative */}
+                {/* ✅ FIX: Canvas agora é FILHO do mesmo container da imagem */}
                 {currentPageData?.dataUrl && (
-                  <img
-                    src={currentPageData.dataUrl}
-                    alt={`Página ${currentPage}`}
-                    className="max-w-full h-auto select-none"
-                    draggable={false}
-                    style={{ userSelect: 'none', pointerEvents: drawingMode ? 'none' : 'auto' }}
-                  />
-                )}
+                  <div className="relative">
+                    {/* PDF Page */}
+                    <img
+                      src={currentPageData.dataUrl}
+                      alt={`Página ${currentPage}`}
+                      className="max-w-full h-auto select-none"
+                      draggable={false}
+                      style={{ userSelect: 'none', pointerEvents: drawingMode ? 'none' : 'auto' }}
+                    />
 
-                {/* Fabric.js Drawing Canvas - Anotações Temporárias */}
-                {currentPageData && (
-                  <FabricDrawingCanvas
-                    ref={fabricCanvasRef}
-                    isActive={drawingMode}
-                    activeTool={activeTool}
-                    color={drawingColor}
-                    size={drawingSize}
-                    pageNumber={currentPage}
-                    initialData={null}
-                    onCanvasChange={() => {/* Temporário - não persiste */}}
-                  />
-                )}
+                    {/* Fabric.js Drawing Canvas - Anotações Temporárias */}
+                    <FabricDrawingCanvas
+                      ref={fabricCanvasRef}
+                      isActive={drawingMode}
+                      activeTool={activeTool}
+                      color={drawingColor}
+                      size={drawingSize}
+                      pageNumber={currentPage}
+                      initialData={null}
+                      onCanvasChange={() => {/* Temporário - não persiste */}}
+                    />
 
-                {/* Watermark Overlay */}
-                {material.watermark_enabled && !isAdmin && (
-                  <WatermarkOverlay text={watermarkText} />
+                    {/* Watermark Overlay */}
+                    {material.watermark_enabled && !isAdmin && (
+                      <WatermarkOverlay text={watermarkText} />
+                    )}
+                  </div>
                 )}
               </div>
             )}
