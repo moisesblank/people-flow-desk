@@ -159,6 +159,9 @@ export function useMotion(): MotionConfig {
       transition: { duration: fast / 1000 },
     } : noAnimation;
     
+    // 🏛️ PREMIUM GARANTIDO: isLiteMode sempre false
+    const isLiteMode = false;
+    
     return {
       canAnimate,
       isLiteMode,
