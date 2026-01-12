@@ -24,7 +24,8 @@ export function SimuladoWaitingScreen({
   simulado,
   startsIn,
 }: SimuladoWaitingScreenProps) {
-  const { shouldAnimate, shouldBlur, isLowEnd } = useConstitutionPerformance();
+  const { shouldAnimate, shouldBlur } = useConstitutionPerformance();
+  const isLowEnd = false; // 🏛️ PREMIUM GARANTIDO: nunca degradar UI por hardware
   const startsAt = simulado.starts_at ? new Date(simulado.starts_at) : null;
 
   // Parse time for epic display
@@ -41,13 +42,11 @@ export function SimuladoWaitingScreen({
 
   return (
     <div className="relative flex flex-col items-center min-h-[80vh] p-6 md:p-8 overflow-y-auto">
-      {/* Background glow effects - only on high-end */}
-      {!isLowEnd && (
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
-        </div>
-      )}
+      {/* Background glow effects - 🏛️ PREMIUM GARANTIDO */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px] animate-pulse transform-gpu" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-violet-500/10 rounded-full blur-[100px] animate-pulse transform-gpu" style={{ animationDelay: '1s' }} />
+      </div>
 
       {/* Header with Status Badge */}
       <div className={cn("relative text-center mb-6", shouldAnimate && "animate-fade-in")}>
