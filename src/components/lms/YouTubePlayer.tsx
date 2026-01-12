@@ -111,9 +111,17 @@ export function YouTubePlayer({
     }
   }, [videoId, disclaimerShown, disclaimerCompleted, startDisclaimer]);
 
-  // Carregar YouTube IFrame API
+  // Carregar YouTube IFrame API - 🔥 FIX v16.0: SÓ após disclaimer completar
   useEffect(() => {
     if (!videoId) return;
+    
+    // 🔒 DISCLAIMER OBRIGATÓRIO: Não inicializar player antes do disclaimer
+    if (!disclaimerCompleted) {
+      console.log('[YouTubePlayer] ⏳ Aguardando disclaimer antes de inicializar player...');
+      return;
+    }
+    
+    console.log('[YouTubePlayer] ✅ Disclaimer concluído - inicializando player');
 
     // Se já existe a API, inicializar player
     if (window.YT && window.YT.Player) {
@@ -141,7 +149,7 @@ export function YouTubePlayer({
         playerRef.current.destroy?.();
       }
     };
-  }, [videoId]);
+  }, [videoId, disclaimerCompleted]);
 
   const initPlayer = () => {
     if (!containerRef.current || !videoId) return;

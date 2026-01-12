@@ -130,12 +130,23 @@ export const FortressVideoPlayer = memo(({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
-  const [showThumbnail, setShowThumbnail] = useState(!autoplay);
+  // 🔥 FIX v16.0: SEMPRE mostrar thumbnail primeiro para garantir disclaimer
+  // O autoplay só acontece APÓS o disclaimer de 3 segundos
+  const [showThumbnail, setShowThumbnail] = useState(true);
   const [currentSpeed, setCurrentSpeed] = useState(1);
   const [currentQuality, setCurrentQuality] = useState("hd1080");
   const [isMuted, setIsMuted] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
+
+  // 🔥 FIX v16.0: AUTOPLAY COM DISCLAIMER OBRIGATÓRIO
+  // Se autoplay=true, iniciar disclaimer automaticamente
+  useEffect(() => {
+    if (autoplay && !disclaimerCompleted) {
+      console.log('[FortressVideoPlayer] 🔒 Disclaimer automático iniciado (autoplay=true)');
+      startDisclaimer();
+    }
+  }, [autoplay, disclaimerCompleted, startDisclaimer]);
 
   // URL do thumbnail
   const thumbnailUrl = thumbnail || 
