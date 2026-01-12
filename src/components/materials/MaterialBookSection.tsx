@@ -94,8 +94,8 @@ export const MaterialBookSection = memo(forwardRef<HTMLDivElement, MaterialBookS
   onItemSelect,
   defaultOpen = true
 }, ref) {
-  const { tier } = useConstitutionPerformance();
-  const isHighEnd = tier === 'quantum' || tier === 'neural';
+  // 🏛️ PREMIUM GARANTIDO: experiência máxima para todos
+  const isHighEnd = true;
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const config = CATEGORY_CONFIG[categoryKey] || {

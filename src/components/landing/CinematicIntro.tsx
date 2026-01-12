@@ -52,10 +52,11 @@ const SimpleRings = memo(({ show }: { show: boolean }) => {
 SimpleRings.displayName = "SimpleRings";
 
 export const CinematicIntro = memo(({ onComplete }: CinematicIntroProps) => {
-  const { isMobile, isSlowConnection, disableAnimations } = usePerformance();
+  // 🏛️ PREMIUM GARANTIDO: Apenas reduced motion do SO é respeitado
+  const { disableAnimations } = usePerformance();
   const [phase, setPhase] = useState(0);
 
-  // Skip intro em conexões lentas + SAFETY TIMEOUT
+  // 🏛️ PREMIUM GARANTIDO + SAFETY TIMEOUT
   useEffect(() => {
     // 🛡️ SAFETY: Garante que a intro SEMPRE complete em no máximo 5s
     const safetyTimer = setTimeout(() => {
@@ -63,8 +64,8 @@ export const CinematicIntro = memo(({ onComplete }: CinematicIntroProps) => {
       onComplete();
     }, 5000);
 
-    if (disableAnimations || isSlowConnection) {
-      // Skip direto em 3G/conexões lentas
+    // 🏛️ PREMIUM GARANTIDO: Só respeita prefers-reduced-motion do sistema operacional
+    if (disableAnimations) {
       const timer = setTimeout(onComplete, 500);
       return () => {
         clearTimeout(timer);
@@ -72,7 +73,7 @@ export const CinematicIntro = memo(({ onComplete }: CinematicIntroProps) => {
       };
     }
 
-    // Timeline otimizada - mais rápida
+    // Timeline premium - experiência completa para todos
     const timers = [
       setTimeout(() => setPhase(1), 100),
       setTimeout(() => setPhase(2), 800),
@@ -85,10 +86,11 @@ export const CinematicIntro = memo(({ onComplete }: CinematicIntroProps) => {
       timers.forEach(clearTimeout);
       clearTimeout(safetyTimer);
     };
-  }, [onComplete, disableAnimations, isSlowConnection]);
+  }, [onComplete, disableAnimations]);
 
-  // Versão ultra-lite para mobile
-  if (isMobile || isSlowConnection) {
+  // 🏛️ PREMIUM GARANTIDO: Experiência premium para TODOS (incluindo mobile)
+  // Apenas reduced motion do SO pula a animação
+  if (disableAnimations) {
     return (
       <motion.div
         className="fixed inset-0 z-[100] bg-black flex items-center justify-center"

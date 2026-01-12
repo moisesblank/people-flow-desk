@@ -53,11 +53,11 @@ export function useMotion(): MotionConfig {
   } = usePerformance();
   
   return useMemo(() => {
-    const isLiteMode = isLowEndDevice || isSlowConnection;
-    const canAnimate = !shouldReduceMotion && !isLiteMode;
+    // 🏛️ PREMIUM GARANTIDO: Apenas reduced motion do SO é respeitado
+    const canAnimate = !shouldReduceMotion;
     
-    // Duration multipliers based on device
-    const durationMultiplier = shouldReduceMotion ? 0 : isLiteMode ? 0.5 : 1;
+    // Duration multipliers - sempre 1x (premium)
+    const durationMultiplier = shouldReduceMotion ? 0 : 1;
     
     // Base durations (ms)
     const instant = 100 * durationMultiplier;

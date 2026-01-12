@@ -24,12 +24,12 @@ export const MobileOptimizedWrapper = memo(function MobileOptimizedWrapper({
   delay = 0,
   direction = 'fade'
 }: MobileOptimizedWrapperProps) {
-  const { shouldReduceMotion, isLowEndDevice, animationDuration, isMobile } = usePerformance();
+  const { shouldReduceMotion, animationDuration, isMobile } = usePerformance();
   
-  // Skip animation entirely for reduced motion or low-end devices
-  if (shouldReduceMotion || isLowEndDevice || !animate) {
+  // 🏛️ PREMIUM GARANTIDO: Apenas reduced motion do SO é respeitado
+  if (shouldReduceMotion || !animate) {
     return (
-      <div className={cn('gpu-accelerate', className)}>
+      <div className={cn('gpu-accelerate transform-gpu', className)}>
         {children}
       </div>
     );
