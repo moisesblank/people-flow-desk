@@ -18,17 +18,12 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useOptimizedAnimation, STAGGER_DISABLED } from "@/hooks/useOptimizedAnimation";
 
-// Animações
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.08 } }
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 }
-};
+// 🎬 OPTIMIZED: Removed stagger animations per strategy
+// Using static rendering for list items
+const container = STAGGER_DISABLED.container;
+const item = STAGGER_DISABLED.item;
 
 // Mock data - será substituído por dados reais do Supabase
 const ownerStats = {

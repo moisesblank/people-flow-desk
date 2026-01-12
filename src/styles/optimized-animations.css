@@ -1,0 +1,200 @@
+/* ============================================
+   🎬 OPTIMIZED ANIMATIONS CSS v1.0
+   ============================================
+   Strategy:
+   - Essential animations only (loaders, toasts, page fade)
+   - Max 150ms duration for transitions
+   - GPU-accelerated (transform, opacity only)
+   - Respects prefers-reduced-motion
+   ============================================ */
+
+/* ============================================
+   ESSENTIAL: Page Fade (150ms max)
+   ============================================ */
+@keyframes optimized-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes optimized-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.animate-optimized-fade-in {
+  animation: optimized-fade-in 150ms ease-out forwards;
+}
+
+.animate-optimized-fade-out {
+  animation: optimized-fade-out 150ms ease-out forwards;
+}
+
+/* ============================================
+   ESSENTIAL: Toast Entrance (150ms)
+   ============================================ */
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-toast-enter {
+  animation: toast-enter 150ms ease-out forwards;
+}
+
+/* ============================================
+   ESSENTIAL: Loading Spinner (always enabled)
+   ============================================ */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ============================================
+   ESSENTIAL: Button Press Feedback
+   Using CSS transitions (no JS needed)
+   ============================================ */
+.btn-press-feedback {
+  transition: transform 100ms ease-out;
+}
+
+.btn-press-feedback:active {
+  transform: scale(0.98);
+}
+
+/* ============================================
+   ESSENTIAL: Quick Transitions (150ms max)
+   ============================================ */
+.transition-quick {
+  transition-property: color, background-color, border-color, opacity, transform;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+/* ============================================
+   DECORATIVE: Glow Effect (conditional)
+   Only rendered on high-end devices via JS
+   ============================================ */
+.shadow-glow-sm {
+  box-shadow: 0 0 15px hsl(var(--primary) / 0.3);
+}
+
+.shadow-glow-md {
+  box-shadow: 0 0 25px hsl(var(--primary) / 0.4);
+}
+
+/* ============================================
+   DECORATIVE: Scanlines (conditional)
+   ============================================ */
+.scanline-effect::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    hsl(var(--foreground) / 0.03) 2px,
+    hsl(var(--foreground) / 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ============================================
+   PERFORMANCE: Disable all animations on
+   reduced motion OR low-end devices
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .animate-optimized-fade-in,
+  .animate-optimized-fade-out,
+  .animate-toast-enter,
+  .animate-spin {
+    animation: none !important;
+  }
+}
+
+/* Low-end mode class (added via JS) */
+.perf-critical *,
+.perf-legacy * {
+  animation-duration: 0.001ms !important;
+  transition-duration: 0.001ms !important;
+}
+
+.perf-critical .animate-spin,
+.perf-legacy .animate-spin {
+  /* Keep spinners working on low-end */
+  animation: spin 1s linear infinite !important;
+}
+
+/* ============================================
+   REMOVED ANIMATIONS (replaced with static)
+   These classes now do nothing
+   ============================================ */
+
+/* Stagger animations - REMOVED */
+.stagger-item {
+  /* No animation - renders immediately */
+}
+
+/* Scroll reveal - REMOVED */
+.scroll-reveal {
+  /* No animation - always visible */
+}
+
+/* Background gradients animation - REMOVED */
+.animate-gradient {
+  /* Static gradient */
+}
+
+/* Complex entrance - REMOVED */
+.animate-entrance {
+  /* No animation */
+}
+
+/* ============================================
+   GPU ACCELERATION HINTS
+   ============================================ */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Promote to GPU layer for smooth animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}

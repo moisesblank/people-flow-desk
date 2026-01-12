@@ -20,23 +20,15 @@ import {
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { usePerformanceFlags } from "@/hooks/usePerformanceFlags";
+import { useOptimizedAnimation, STAGGER_DISABLED } from "@/hooks/useOptimizedAnimation";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { cn } from "@/lib/utils";
 
-// GPU-ONLY variants
+// 🎬 OPTIMIZED: Removed stagger animations per strategy
+// GPU-ONLY variants - NO stagger, simple fade only
 const getGpuVariants = (shouldAnimate: boolean) => ({
-  container: {
-    hidden: shouldAnimate ? { opacity: 0 } : {},
-    show: shouldAnimate ? {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    } : {}
-  },
-  item: {
-    hidden: shouldAnimate ? { opacity: 0, y: 20 } : {},
-    show: shouldAnimate ? { opacity: 1, y: 0 } : {}
-  }
+  container: STAGGER_DISABLED.container,
+  item: STAGGER_DISABLED.item,
 });
 
 // Import 2300 styles
@@ -144,24 +136,13 @@ const conquistas = [
 export function BetaStudentDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const flags = usePerformanceFlags();
+  const { canUseDecorative, fadeProps, canUsePageTransitions } = useOptimizedAnimation();
   const [stats] = useState<StudyStats>(mockStats);
   
-  // Animation variants for staggered children
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
+  // 🎬 OPTIMIZED: Stagger animations REMOVED per strategy
+  // Using static rendering - all items appear at once
+  const container = STAGGER_DISABLED.container;
+  const item = STAGGER_DISABLED.item;
   
   const progressoGeral = 65;
   const xpProgresso = (stats.xpTotal / stats.xpProximoNivel) * 100;
@@ -227,18 +208,17 @@ export function BetaStudentDashboard() {
         {/* ============================================ */}
         {/* 🚀 HERO SECTION - IRON MAN HUD ULTIMATE */}
         {/* ============================================ */}
-        <div className="dashboard-hero-2300 p-6 md:p-8 animate-fade-in">
-          {/* Floating Particles - CSS Only */}
-          {flags.ui_ambient_fx && (
+        <div className="dashboard-hero-2300 p-6 md:p-8 animate-optimized-fade-in">
+          {/* 🎬 OPTIMIZED: Particles only on high-end devices */}
+          {canUseDecorative && (
             <div className="particles-2300">
-              {[...Array(6)].map((_, i) => (
+              {[...Array(3)].map((_, i) => (
                 <div
                   key={i}
                   className="particle"
                   style={{
-                    left: `${15 + i * 15}%`,
-                    animationDuration: `${4 + i * 0.5}s`,
-                    animationDelay: `${i * 0.3}s`,
+                    left: `${20 + i * 25}%`,
+                    animationDuration: `${5 + i}s`,
                     background: i % 2 === 0 ? 'hsl(185 100% 70%)' : 'hsl(280 100% 70%)',
                   }}
                 />
