@@ -2,36 +2,39 @@
 // 📚 ALUNO MATERIAIS — NETFLIX ULTRA PREMIUM 2300
 // Year 2300 Cinematic Experience
 // 5 Hub Cards Fixos
+// Flash Cards integrado
 // ============================================
 
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, lazy, Suspense } from 'react';
 import { Helmet } from 'react-helmet';
-// ANIMAÇÕES REMOVIDAS: motion não mais usado
-// import { motion } from 'framer-motion';
 import { MaterialBooksHub, MATERIAL_BOOKS } from '@/components/materials/MaterialBooksHub';
 import { MaterialsFilteredView } from '@/components/materials/MaterialsFilteredView';
 import { MaterialViewer } from '@/components/materials/MaterialViewer';
 import { 
   Library, 
-  Sparkles,
   BookOpen,
   Shield,
   Zap,
-  FileText
+  FileText,
+  ArrowLeft
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useConstitutionPerformance } from '@/hooks/useConstitutionPerformance';
 import { CyberBackground } from '@/components/ui/cyber-background';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
 import '@/styles/dashboard-2300.css';
+
+// Lazy load do sistema de flashcards
+const FlashcardsEmbedded = lazy(() => import('@/components/materials/FlashcardsEmbedded'));
 
 // ============================================
 // TIPOS
 // ============================================
 
 interface ViewState {
-  mode: 'hub' | 'filtered' | 'viewer';
+  mode: 'hub' | 'filtered' | 'viewer' | 'flashcards';
   bookId?: string;
   bookName?: string;
   filterValue?: string;  // macro para questoes-mapas, tag para demais
@@ -74,6 +77,12 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
     microValue?: string,
     microLabel?: string
   ) => {
+    // FLASH CARDS: Renderiza sistema de flashcards embedido
+    if (bookId === 'flash-cards') {
+      setViewState({ mode: 'flashcards', bookId, bookName: 'Flash Cards' });
+      return;
+    }
+
     if (!filter) return;
 
     const book = MATERIAL_BOOKS.find(b => b.id === bookId);
@@ -280,6 +289,28 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
           <div>
             {viewState.mode === 'hub' && (
               <MaterialBooksHub onSelectBook={handleSelectBook} />
+            )}
+
+            {viewState.mode === 'flashcards' && (
+              <div className="space-y-6">
+                {/* Header com botão voltar */}
+                <div className="flex items-center gap-4">
+                  <Button variant="ghost" size="icon" onClick={handleBackToHub} className="text-muted-foreground hover:text-foreground">
+                    <ArrowLeft className="w-5 h-5" />
+                  </Button>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                      <Zap className="w-6 h-6 text-violet-400" />
+                      Flash Cards
+                    </h2>
+                    <p className="text-muted-foreground text-sm">Sistema de memorização com repetição espaçada</p>
+                  </div>
+                </div>
+                
+                <Suspense fallback={<div className="h-96 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div></div>}>
+                  <FlashcardsEmbedded onBack={handleBackToHub} />
+                </Suspense>
+              </div>
             )}
 
             {viewState.mode === 'filtered' && viewState.bookId && viewState.filterValue && (
