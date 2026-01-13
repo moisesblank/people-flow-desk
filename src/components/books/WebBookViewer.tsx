@@ -453,7 +453,7 @@ export const WebBookViewer = memo(function WebBookViewer({
   // Estado local
   const [zoom, setZoom] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showToc, setShowToc] = useState(false);
+  const [showToc, setShowToc] = useState(true); // ✅ Sumário aberto por padrão
   const [imageLoading, setImageLoading] = useState(true);
   const [pdfPath, setPdfPath] = useState<string | null>(null);
   const [isSavingHistory, setIsSavingHistory] = useState(false);
