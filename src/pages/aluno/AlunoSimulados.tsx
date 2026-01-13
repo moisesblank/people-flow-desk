@@ -17,7 +17,7 @@ import {
   Brain, Clock, Target, Trophy, Play, 
   Calendar, CheckCircle2, Lock, FileText, Zap,
   Shield, Camera, Timer, Rocket,
-  Flame, TrendingUp, Star, BookOpen
+  Flame, TrendingUp, Star, BookOpen, RotateCcw
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -106,6 +106,14 @@ export default function AlunoSimulados() {
     setPendingSimuladoId(id);
     setShowModeSelector(true);
   }, [simuladosData, setSearchParams]);
+
+  // Handler: Retake (Tente Novamente) - abre direto em modo treino sem XP
+  const handleRetakeSimulado = useCallback((id: string) => {
+    console.log('[handleRetakeSimulado] Retaking simulado ID:', id, 'in TREINO mode (0 XP)');
+    setSelectedMode('treino');
+    setSelectedSimuladoId(id);
+    setSearchParams({ s: id });
+  }, [setSearchParams]);
 
   // Handler: Modo selecionado
   const handleModeSelected = useCallback((mode: 'treino' | 'hard') => {
@@ -313,6 +321,7 @@ export default function AlunoSimulados() {
                     key={simulado.id}
                     simulado={simulado}
                     onReview={() => handleSelectSimulado(simulado.id)}
+                    onRetake={() => handleRetakeSimulado(simulado.id)}
                     index={index}
                   />
                 ))}
@@ -607,10 +616,11 @@ const AvailableSimuladosGrouped = memo(function AvailableSimuladosGrouped({
 interface SimuladoCompletedCardProps {
   simulado: SimuladoListItem;
   onReview: () => void;
+  onRetake: () => void;
   index?: number;
 }
 
-const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, onReview, index = 0 }: SimuladoCompletedCardProps) {
+const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, onReview, onRetake, index = 0 }: SimuladoCompletedCardProps) {
   const attempt = simulado.user_attempt;
   const percentage = attempt 
     ? calculatePercentage(attempt.correct_answers, simulado.total_questions) 
@@ -715,18 +725,29 @@ const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, on
               </div>
             </div>
 
-            <Button 
-              variant="outline" 
-              onClick={onReview}
-              disabled={!isGabaritoReleased}
-              className={cn(
-                "border-purple-500/50 hover:bg-purple-500/10 hover:border-purple-500 transition-colors",
-                !isGabaritoReleased && "opacity-50"
-              )}
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              {isGabaritoReleased ? "Ver Gabarito" : "Aguardando"}
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button 
+                variant="outline" 
+                onClick={onReview}
+                disabled={!isGabaritoReleased}
+                className={cn(
+                  "border-purple-500/50 hover:bg-purple-500/10 hover:border-purple-500 transition-colors",
+                  !isGabaritoReleased && "opacity-50"
+                )}
+              >
+                <FileText className="w-4 h-4 mr-2" />
+                {isGabaritoReleased ? "Ver Gabarito" : "Aguardando"}
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                onClick={onRetake}
+                className="border-cyan-500/50 hover:bg-cyan-500/10 hover:border-cyan-500 transition-colors text-cyan-400"
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Tente Novamente
+              </Button>
+            </div>
           </div>
         </div>
       </div>
