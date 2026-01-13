@@ -1339,7 +1339,7 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
             </div>
           </div>
           
-          {/* Lessons Content */}
+          {/* Lessons Content — UNIFIED GRID (NO SERIES SPLIT) */}
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
               <div className="flex flex-col items-center gap-4 text-slate-400">
@@ -1351,19 +1351,26 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
               </div>
             </div>
           ) : lessons && lessons.length > 0 ? (
-            <div className="py-6 space-y-6">
-              {/* Split lessons into rows of 7 - using pre-calculated lessonRows */}
-              {lessonRows.map(({ rowIndex, totalRows }) => (
-                <LazyVideoRow
-                  key={`row-${rowIndex}`}
-                  lessons={lessons}
-                  rowIndex={rowIndex}
-                  totalRows={totalRows}
-                  onPlayLesson={onPlayLesson}
-                  isLowEnd={isLowEnd}
-                  scrollRef={rowIndex === 0 ? scrollRef : undefined}
-                />
-              ))}
+            <div className="py-6 px-4 sm:px-6">
+              {/* 
+                GRID ÚNICO E FLUIDO — LEI IMUTÁVEL
+                Todas as aulas em um único grid responsivo, sem divisão por séries
+                Auto-ajuste em qualquer dispositivo, sem espaços vazios
+              */}
+              <div 
+                ref={scrollRef}
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 sm:gap-4"
+              >
+                {lessons.map((lesson, idx) => (
+                  <NetflixEpisodeCard
+                    key={lesson.id}
+                    lesson={lesson}
+                    index={idx}
+                    onPlay={() => onPlayLesson(lesson)}
+                    isLowEnd={isLowEnd}
+                  />
+                ))}
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-slate-500">
