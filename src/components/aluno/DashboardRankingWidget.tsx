@@ -123,28 +123,28 @@ export function DashboardRankingWidget() {
       {/* HOLOGRAPHIC HEADER */}
       {/* ============================================ */}
       <div className="ranking-header-2300">
-        <div className="flex items-center gap-4">
-          <div className="trophy-icon">
-            <Trophy className="w-7 h-7 text-white" />
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <div className="trophy-icon flex-shrink-0">
+            <Trophy className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
           </div>
-          <div>
-            <h2 className="text-2xl font-black text-white flex items-center gap-2">
-              <span className="bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg sm:text-2xl font-black text-white flex items-center gap-2 flex-wrap">
+              <span className="bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 bg-clip-text text-transparent truncate">
                 PANTEÃO DOS CAMPEÕES
               </span>
-              <Sparkles className="w-5 h-5 text-yellow-400" />
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 flex-shrink-0" />
             </h2>
-            <p className="text-sm text-white/60 flex items-center gap-2 mt-0.5">
-              <Swords className="w-4 h-4" />
-              Arena de competição intelectual — Prove seu valor!
+            <p className="text-xs sm:text-sm text-white/60 flex items-center gap-2 mt-0.5 truncate">
+              <Swords className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="truncate">Arena de competição intelectual</span>
             </p>
           </div>
         </div>
         
         {/* Live indicator */}
-        <div className="absolute top-4 right-4">
-          <Badge className="bg-green-500/20 text-green-400 border border-green-500/40">
-            <span className="w-2 h-2 bg-green-400 rounded-full mr-2" />
+        <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
+          <Badge className="bg-green-500/20 text-green-400 border border-green-500/40 text-[10px] sm:text-xs">
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full mr-1 sm:mr-2" />
             LIVE
           </Badge>
         </div>
@@ -156,58 +156,58 @@ export function DashboardRankingWidget() {
         {/* ============================================ */}
         {gamification && currentUserEntry && (
           <div className="ranking-user-hero-2300">
-            <div className="flex items-center justify-between gap-4 relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 relative z-10">
               {/* Avatar & Info */}
-              <div className="flex items-center gap-4">
-                <div className="ranking-avatar-2300">
-                  <Avatar className="w-16 h-16 border-2 border-transparent">
-                    <AvatarFallback className="bg-gradient-to-br from-purple-600 via-pink-500 to-cyan-400 text-white text-xl font-bold">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                <div className="ranking-avatar-2300 flex-shrink-0">
+                  <Avatar className="w-12 h-12 sm:w-16 sm:h-16 border-2 border-transparent">
+                    <AvatarFallback className="bg-gradient-to-br from-purple-600 via-pink-500 to-cyan-400 text-white text-lg sm:text-xl font-bold">
                       {user?.email?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className={cn(
-                    "font-black text-lg",
+                    "font-black text-base sm:text-lg truncate",
                     getEpicTitle(currentUserEntry.rank).color
                   )} style={{ filter: getEpicTitle(currentUserEntry.rank).glow }}>
                     {getEpicTitle(currentUserEntry.rank).title}
                   </p>
-                  <div className="flex items-center gap-3 mt-1">
-                    <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 px-2.5 py-1">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1">
+                    <Badge className="bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs">
                       <Shield className="w-3 h-3 mr-1" />
                       Lv {levelInfo.level}
                     </Badge>
-                    <div className="flex items-center gap-1 text-sm text-white/70">
-                      <Flame className="w-4 h-4 text-orange-500" />
+                    <div className="flex items-center gap-1 text-xs sm:text-sm text-white/70">
+                      <Flame className="w-3 h-3 sm:w-4 sm:h-4 text-orange-500" />
                       <span className="font-semibold">{gamification.current_streak}</span>
-                      <span className="text-xs">dias</span>
+                      <span className="text-[10px] sm:text-xs">dias</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Stats */}
-              <div className="flex items-center gap-6">
+              <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6">
                 <div className={cn(
                   "ranking-position-badge-2300",
                   currentUserEntry.rank <= 3 && "top-3"
                 )}>
                   <div className={cn(
-                    "text-3xl font-black",
+                    "text-2xl sm:text-3xl font-black",
                     currentUserEntry.rank <= 3 ? "text-yellow-400" : "text-white"
                   )} style={currentUserEntry.rank <= 3 ? { filter: 'drop-shadow(0 0 8px hsl(43 80% 50%))' } : {}}>
                     #{currentUserEntry.rank}
                   </div>
-                  <p className="text-[10px] uppercase tracking-widest text-white/50 font-medium text-center">
+                  <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-white/50 font-medium text-center">
                     POSIÇÃO
                   </p>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-black bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
+                  <div className="text-xl sm:text-2xl font-black bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
                     {gamification.total_xp.toLocaleString()}
                   </div>
-                  <p className="text-[10px] uppercase tracking-widest text-white/50 font-medium">XP TOTAL</p>
+                  <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-white/50 font-medium">XP TOTAL</p>
                 </div>
               </div>
             </div>
