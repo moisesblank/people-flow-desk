@@ -450,7 +450,8 @@ export function useBookSecurityGuard({
   }, [logViolation]);
 
   // ═══════════════════════════════════════════════════════════
-  // DETECÇÃO DE DEVTOOLS POR DIMENSÕES
+  // 🚨 DETECÇÃO DE DEVTOOLS VIA MENU CHROME (polling agressivo)
+  // Detecta DevTools aberto via menu 3 pontinhos (não dispara keydown)
   // ═══════════════════════════════════════════════════════════
   useEffect(() => {
     // ✅ STAGGER: Se não habilitado, não ativa listeners
@@ -458,6 +459,7 @@ export function useBookSecurityGuard({
     if (isOwnerRef.current) return;
 
     let lastDevToolsDetection = 0;
+    let consecutiveDetections = 0;
 
     const checkDevToolsDimensions = () => {
       if (isOwnerRef.current) return;
@@ -470,21 +472,30 @@ export function useBookSecurityGuard({
       
       // Se diferença grande, provavelmente DevTools aberto
       if (widthDiff > widthThreshold || heightDiff > heightThreshold) {
-        const now = Date.now();
-        // Throttle de 30 segundos para não logar muito
-        if (now - lastDevToolsDetection > 30000) {
-          lastDevToolsDetection = now;
-          logViolation('devtools_dimensions', { widthDiff, heightDiff });
-          // Não mostrar toast para dimensões (muito intrusivo)
+        consecutiveDetections++;
+        
+        // Se detectou 2x consecutivas (2s), é DevTools real
+        if (consecutiveDetections >= 2) {
+          const now = Date.now();
+          // Throttle de 10 segundos entre logs
+          if (now - lastDevToolsDetection > 10000) {
+            lastDevToolsDetection = now;
+            console.error('[BookSecurityGuard] 🚨 DevTools detectado via MENU CHROME!');
+            
+            // 🛡️ ESCALONAR COMO VIOLAÇÃO REAL
+            handleEscalatedResponse('devtools');
+          }
         }
+      } else {
+        consecutiveDetections = 0;
       }
     };
 
-    // Verificar a cada 10 segundos
-    const interval = setInterval(checkDevToolsDimensions, 10000);
+    // ⚡ Verificar a cada 1 segundo (mais agressivo)
+    const interval = setInterval(checkDevToolsDimensions, 1000);
 
     return () => clearInterval(interval);
-  }, [logViolation]);
+  }, [enabled, handleEscalatedResponse]);
 
   // ═══════════════════════════════════════════════════════════
   // BLOQUEIO DE CONTEXT MENU (Right-click)

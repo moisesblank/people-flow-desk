@@ -751,8 +751,10 @@ export const WebBookViewer = memo(function WebBookViewer({
   return (
     <div 
       ref={containerRef}
+      // 🛡️ SANCTUM PROTECTED: Obrigatório para ativar proteções da LEI VII
+      data-sanctum-protected="true"
       className={cn(
-        "relative flex flex-col h-full min-h-[600px] bg-background",
+        "relative flex flex-col h-full min-h-[600px] bg-background sanctum-protected-surface",
         isFullscreen && "fixed inset-0 z-50",
         className
       )}
@@ -760,6 +762,8 @@ export const WebBookViewer = memo(function WebBookViewer({
         // Anti-screenshot CSS
         WebkitUserSelect: 'none',
         userSelect: 'none',
+        WebkitTouchCallout: 'none',
+        MozUserSelect: 'none',
       }}
     >
       {/* ═══════════════════════════════════════════════════════════ */}
