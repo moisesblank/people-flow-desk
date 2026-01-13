@@ -979,7 +979,7 @@ export default function AlunoQuestoes() {
   
   // BLOCK_PAGINATION: Paginação server-side (ESCALA 5000+)
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 3;
   
   // Reset página ao mudar filtros
   useEffect(() => {
