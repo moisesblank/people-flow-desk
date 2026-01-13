@@ -33,21 +33,28 @@ export function setOwnerMode(email: string | null | undefined): void {
 function isPreviewEnvironment(): boolean {
   const hostname = window.location.hostname.toLowerCase();
   
-  // 🛡️ PRODUÇÃO: NUNCA bypass em domínios de produção (2026-01-13 FIX)
+  // ✅ P0 FIX 2026-01-13: Preview do Lovable (id-preview--*) deve ser tratado como DESENVOLVIMENTO
+  // id-preview--*.lovable.app = PREVIEW (ambiente de teste)
+  // *.lovable.app SEM "id-preview--" = PRODUÇÃO (app publicado)
+  if (hostname.includes('id-preview--') && hostname.includes('.lovable.app')) {
+    return true; // É preview, bypass ativo
+  }
+  
+  // 🛡️ PRODUÇÃO: NUNCA bypass em domínios de produção
   if (
     hostname === 'pro.moisesmedeiros.com.br' ||
     hostname === 'moisesmedeiros.com.br' ||
     hostname === 'gestao.moisesmedeiros.com.br' ||
-    hostname.includes('.lovable.app') // Domínios custom publicados = PRODUÇÃO
+    (hostname.includes('.lovable.app') && !hostname.includes('id-preview--')) // Apps publicados = PRODUÇÃO
   ) {
     return false; // PROTEÇÃO ATIVA
   }
   
-  // Preview/desenvolvimento: bypass apenas para testes
+  // Preview/desenvolvimento: bypass para testes
   return (
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
-    hostname.includes('lovableproject.com') // Preview do Lovable apenas
+    hostname.includes('lovableproject.com') // Preview do Lovable
   );
 }
 
