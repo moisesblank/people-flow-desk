@@ -398,9 +398,15 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
 }) {
   const [selectedMacro, setSelectedMacro] = useState<string | null>(null);
   
-  // Filtra módulos por range de número
+  // 🛡️ CRÍTICO: Filtra apenas módulos da subcategoria EXATA "Resolução de Questões"
+  // NÃO inclui "Revisão Cíclica" ou "Previsão Final"
+  const resolucaoOnlyModules = useMemo(() => {
+    return allModules.filter(m => m.subcategory === 'Resolução de Questões');
+  }, [allModules]);
+  
+  // Filtra módulos por range de número (somente da subcategoria correta)
   const getModulesForMacro = useCallback((moduleRange: number[]) => {
-    return allModules.filter(m => {
+    return resolucaoOnlyModules.filter(m => {
       const num = extractModuleNumber(m.title);
       return num !== null && moduleRange.includes(num);
     }).sort((a, b) => {
@@ -408,7 +414,7 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
       const numB = extractModuleNumber(b.title) || 0;
       return numA - numB;
     });
-  }, [allModules]);
+  }, [resolucaoOnlyModules]);
   
   // Módulos filtrados para o macro selecionado
   const filteredModules = useMemo(() => {
@@ -2251,7 +2257,7 @@ function AlunoCoursesHierarchy() {
             </>
           )}
 
-          {/* 🧪 RESOLUÇÃO DE QUESTÕES — MACRO CARDS VIEW */}
+          {/* 🧪 RESOLUÇÃO DE QUESTÕES — MACRO CARDS VIEW + outras subcategorias */}
           {viewState.selectedCardId === 'resolucao-questoes' ? (
             <div className="space-y-6">
               {/* Header com voltar */}
@@ -2273,7 +2279,7 @@ function AlunoCoursesHierarchy() {
                 </div>
               </div>
               
-              {/* Macro Cards */}
+              {/* Macro Cards — APENAS para subcategoria exata "Resolução de Questões" */}
               {loadingModules ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {[1, 2, 3].map(i => (
@@ -2288,6 +2294,30 @@ function AlunoCoursesHierarchy() {
                   onPlayLesson={handlePlayLesson}
                   progressMap={new Map()}
                 />
+              )}
+              
+              {/* 🎯 Outras subcategorias do Hub (Revisão Cíclica, Previsão Final) — VIEW NORMAL */}
+              {!loadingModules && groupedData.length > 0 && (
+                <div className="space-y-6 pt-4 border-t border-slate-700/50">
+                  {groupedData.map(({ courseId, course, subcategoryGroups }) => {
+                    // Filtra APENAS subcategorias que NÃO são "Resolução de Questões"
+                    const otherSubcats = subcategoryGroups.filter(
+                      sg => sg.subcategory !== 'Resolução de Questões'
+                    );
+                    if (otherSubcats.length === 0) return null;
+                    
+                    return (
+                      <CourseSection
+                        key={courseId}
+                        course={course}
+                        subcategoryGroups={otherSubcats}
+                        expandedModules={expandedModules}
+                        onToggleModule={toggleModule}
+                        onPlayLesson={handlePlayLesson}
+                      />
+                    );
+                  })}
+                </div>
               )}
             </div>
           ) : (
