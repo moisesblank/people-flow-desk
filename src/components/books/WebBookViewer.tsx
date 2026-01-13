@@ -40,9 +40,8 @@ import { PdfPageViewer } from './PdfPageViewer';
 import { ReadingModeToolbar, ToolMode } from './ReadingModeToolbar';
 import { useBookAnnotations } from '@/hooks/useBookAnnotations';
 // useBookPageOverlays removido - substituído por useFabricOverlays
-import { CalculatorButton } from '@/components/Calculator';
-import { PeriodicTableButton } from '@/components/PeriodicTable';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+// CalculatorButton e PeriodicTableButton removidos - substituídos por ReadingModeToolPanels
+import { ReadingModeToolPanels } from './ReadingModeToolPanels';
 import { FabricDrawingCanvas, FabricDrawingCanvasHandle, FabricCanvasData } from './FabricDrawingCanvas';
 import { useFabricOverlays } from '@/hooks/useFabricOverlays';
 
@@ -1054,64 +1053,8 @@ export const WebBookViewer = memo(function WebBookViewer({
           </div>
         </button>
 
-        {/* 🔶 FERRAMENTAS RÁPIDAS - Calculadora e Tabela Periódica (APENAS EM MODO LEITURA) */}
-        {isFullscreen && (
-          <motion.div 
-            initial={{ x: 50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="fixed right-3 top-[calc(50%+80px)] z-[70] pointer-events-auto"
-            onPointerDownCapture={(e) => e.stopPropagation()}
-            onClickCapture={(e) => e.stopPropagation()}
-          >
-            {/* Container principal com glow */}
-            <div className="relative">
-              {/* Glow externo */}
-              <div className="absolute -inset-2 rounded-2xl opacity-40 blur-lg bg-gradient-to-b from-blue-600 via-teal-500 to-emerald-600 animate-pulse pointer-events-none" />
-              
-              {/* Painel de ferramentas */}
-              <div className="relative flex flex-col gap-2 p-3 rounded-xl bg-gradient-to-br from-black via-gray-900 to-black border-2 border-cyan-500/50 shadow-[0_0_25px_rgba(6,182,212,0.4),inset_0_0_15px_rgba(6,182,212,0.1)]">
-                {/* Efeito scanline */}
-                <div 
-                  className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none opacity-20"
-                  style={{
-                    background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.02) 2px, rgba(255,255,255,0.02) 4px)"
-                  }}
-                />
-                
-                {/* Brilho superior */}
-                <div className="absolute top-0 left-2 right-2 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
-                
-                {/* Label */}
-                <span 
-                  className="text-[9px] font-bold tracking-widest uppercase text-cyan-400 text-center"
-                  style={{ textShadow: "0 0 8px rgba(6,182,212,0.6)" }}
-                >
-                  QUÍMICA
-                </span>
-                
-                {/* Calculadora - Usando diretamente o componente com portal container */}
-                <div className="relative">
-                  <div className="absolute -inset-0.5 rounded-lg opacity-0 hover:opacity-60 blur-sm bg-blue-500 transition-all duration-300 pointer-events-none" />
-                  <div className="relative rounded-lg bg-blue-600/20 border border-blue-500/40 hover:bg-blue-600/40 hover:border-blue-400 transition-all">
-                    <CalculatorButton portalContainer={containerRef.current} />
-                  </div>
-                </div>
-                
-                {/* Separador */}
-                <div className="w-full h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
-                
-                {/* Tabela Periódica - Usando diretamente o componente com portal container */}
-                <div className="relative">
-                  <div className="absolute -inset-0.5 rounded-lg opacity-0 hover:opacity-60 blur-sm bg-teal-500 transition-all duration-300 pointer-events-none" />
-                  <div className="relative rounded-lg bg-teal-600/20 border border-teal-500/40 hover:bg-teal-600/40 hover:border-teal-400 transition-all">
-                    <PeriodicTableButton portalContainer={containerRef.current} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {/* 🔶 FERRAMENTAS RÁPIDAS - Calculadora e Tabela Periódica (PAINÉIS INLINE) */}
+        <ReadingModeToolPanels isFullscreen={isFullscreen} />
 
         {/* Página */}
         <div 
