@@ -34,27 +34,19 @@ import {
   RotateCcw, Zap, Check, X, Brain, 
   Sparkles, Plus, Target, 
   AlertTriangle, PartyPopper,
-  BookOpen, Atom, FlaskConical, Leaf, Dna, Beaker,
+  BookOpen,
   HelpCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AnkiDashboard } from '@/components/aluno/flashcards/AnkiDashboard';
 import FlashcardRenderer from '@/components/aluno/flashcards/FlashcardRenderer';
 import { FlashcardsTutorial } from '@/components/aluno/flashcards/FlashcardsTutorial';
+import { FlashcardsTaxonomyFilter, MACRO_CONFIG, type MacroValue, type MicroValue } from '@/components/aluno/flashcards/FlashcardsTaxonomyFilter';
 
 import '@/styles/flashcards-2300.css';
 
 // 🎓 Tutorial localStorage key
 const TUTORIAL_STORAGE_KEY = 'flashcards_tutorial_completed';
-
-// 🎯 5 MACROS SOBERANOS — Taxonomia Questões (Constituição v10.4)
-const MACRO_TAXONOMY = [
-  { value: 'quimica_geral', label: 'Química Geral', icon: Beaker, color: 'text-amber-500', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/30' },
-  { value: 'fisico_quimica', label: 'Físico-Química', icon: Atom, color: 'text-cyan-500', bgColor: 'bg-cyan-500/10', borderColor: 'border-cyan-500/30' },
-  { value: 'quimica_organica', label: 'Química Orgânica', icon: FlaskConical, color: 'text-purple-500', bgColor: 'bg-purple-500/10', borderColor: 'border-purple-500/30' },
-  { value: 'quimica_ambiental', label: 'Química Ambiental', icon: Leaf, color: 'text-green-500', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30' },
-  { value: 'bioquimica', label: 'Bioquímica', icon: Dna, color: 'text-pink-500', bgColor: 'bg-pink-500/10', borderColor: 'border-pink-500/30' },
-] as const;
 
 type Rating = 1 | 2 | 3 | 4;
 
@@ -98,8 +90,9 @@ export default function FlashcardsEmbedded({ onBack }: FlashcardsEmbeddedProps) 
     setShowTutorial(false);
   }, []);
 
-  // Organização inteligente (macro/tags)
-  const [topicFilter, setTopicFilter] = useState<string>('all');
+  // 🎯 Organização inteligente (macro/micro taxonomia)
+  const [selectedMacro, setSelectedMacro] = useState<MacroValue>('all');
+  const [selectedMicro, setSelectedMicro] = useState<MicroValue>(null);
 
   const { data: dueCards, isLoading: isLoadingDue, refetch: refetchDue } = useDueFlashcards();
   const { data: allCards, isLoading: isLoadingAll, refetch: refetchAll } = useAllFlashcards();
@@ -138,66 +131,160 @@ export default function FlashcardsEmbedded({ onBack }: FlashcardsEmbeddedProps) 
   const baseCards = isReadyMode ? readyCards : (isCramMode ? allCards : dueCards);
   const isLoading = isReadyMode ? isLoadingReady : (isCramMode ? isLoadingAll : isLoadingDue);
 
-  // 🎯 Organização por 5 MACROS (Taxonomia Questões - Constituição v10.4)
-  // Usa as tags dos flashcards para mapear para os macros canônicos
-  const macroStats = useMemo(() => {
+  // 🎯 Organização por 5 MACROS + MICROS (Taxonomia Questões - Constituição v10.4)
+  // Usa as tags dos flashcards para mapear para os macros/micros canônicos
+  const { macroStats, microStats } = useMemo(() => {
     const list = baseCards || [];
-    const stats = new Map<string, number>();
+    const mStats = new Map<string, number>();
+    const miStats = new Map<string, number>();
+
+    // Mapeamento de tags para micros específicos
+    const microMappings: Record<string, string[]> = {
+      // Química Geral
+      'propriedades_materia': ['propriedade', 'matéria', 'estados', 'mudança'],
+      'atomistica': ['átomo', 'atomística', 'atômico', 'rutherford', 'bohr'],
+      'tabela_periodica': ['tabela', 'periódica', 'período', 'família', 'grupo'],
+      'ligacoes_quimicas': ['ligação', 'ligações', 'iônica', 'covalente', 'metálica'],
+      'estequiometria': ['estequiometria', 'mol', 'massa molar', 'avogadro'],
+      'balanceamento': ['balanceamento', 'balancear', 'coeficiente'],
+      'conceitos_modernos': ['hibridização', 'orbital', 'quântico'],
+      // Físico-Química
+      'termoquimica': ['termoquímica', 'entalpia', 'calor', 'hess'],
+      'cinetica_quimica': ['cinética', 'velocidade', 'catalisador'],
+      'equilibrio_quimico': ['equilíbrio', 'le chatelier', 'kc', 'kp'],
+      'eletroquimica': ['eletroquímica', 'pilha', 'eletrólise', 'oxirredução', 'redox'],
+      'solucoes': ['solução', 'soluções', 'concentração', 'diluição', 'titulação'],
+      'propriedades_coligativas': ['coligativa', 'osmose', 'ebulição', 'crioscopia'],
+      'radioatividade': ['radioatividade', 'radioativo', 'meia-vida', 'fissão', 'fusão'],
+      'calculos_quimicos': ['cálculo', 'cálculos', 'pureza', 'rendimento'],
+      // Química Orgânica
+      'funcoes_organicas': ['função orgânica', 'álcool', 'aldeído', 'cetona', 'ácido', 'éster', 'amina', 'amida'],
+      'isomeria': ['isomeria', 'isômero', 'plana', 'espacial', 'óptica'],
+      'reacoes_organicas': ['reação orgânica', 'substituição', 'adição', 'eliminação'],
+      'polimeros': ['polímero', 'polimerização', 'plástico', 'borracha'],
+      // Química Ambiental
+      'poluicao': ['poluição', 'poluente', 'contaminação'],
+      'ciclos_biogeoquimicos': ['ciclo', 'biogeoquímico', 'carbono', 'nitrogênio'],
+      'chuva_acida': ['chuva ácida', 'ácido sulfúrico', 'ácido nítrico'],
+      'efeito_estufa': ['estufa', 'aquecimento', 'co2', 'metano'],
+      // Bioquímica
+      'proteinas': ['proteína', 'aminoácido', 'peptídeo'],
+      'carboidratos': ['carboidrato', 'glicose', 'sacarose', 'amido'],
+      'lipidios': ['lipídio', 'gordura', 'ácido graxo', 'triglicerídeo'],
+      'acidos_nucleicos': ['ácido nucleico', 'dna', 'rna', 'nucleotídeo'],
+      'metabolismo': ['metabolismo', 'atp', 'respiração celular', 'fotossíntese'],
+    };
 
     for (const c of list) {
       const tags = (c as any)?.tags as string[] | null | undefined;
-      for (const t of tags || []) {
-        const tagLower = String(t).toLowerCase();
-        // Mapear tags para macros canônicos
-        if (tagLower.includes('geral') || tagLower.includes('inorg')) {
-          stats.set('quimica_geral', (stats.get('quimica_geral') || 0) + 1);
-        } else if (tagLower.includes('orgânica') || tagLower.includes('organica')) {
-          stats.set('quimica_organica', (stats.get('quimica_organica') || 0) + 1);
-        } else if (tagLower.includes('físico') || tagLower.includes('fisico') || tagLower.includes('eletro')) {
-          stats.set('fisico_quimica', (stats.get('fisico_quimica') || 0) + 1);
-        } else if (tagLower.includes('ambiental') || tagLower.includes('chuva') || tagLower.includes('polu')) {
-          stats.set('quimica_ambiental', (stats.get('quimica_ambiental') || 0) + 1);
-        } else if (tagLower.includes('bio') || tagLower.includes('proteína') || tagLower.includes('lipíd')) {
-          stats.set('bioquimica', (stats.get('bioquimica') || 0) + 1);
+      const tagString = (tags || []).join(' ').toLowerCase();
+      
+      // Macro detection
+      if (tagString.includes('geral') || tagString.includes('inorg')) {
+        mStats.set('quimica_geral', (mStats.get('quimica_geral') || 0) + 1);
+      }
+      if (tagString.includes('orgânica') || tagString.includes('organica')) {
+        mStats.set('quimica_organica', (mStats.get('quimica_organica') || 0) + 1);
+      }
+      if (tagString.includes('físico') || tagString.includes('fisico') || tagString.includes('eletro')) {
+        mStats.set('fisico_quimica', (mStats.get('fisico_quimica') || 0) + 1);
+      }
+      if (tagString.includes('ambiental') || tagString.includes('chuva') || tagString.includes('polu')) {
+        mStats.set('quimica_ambiental', (mStats.get('quimica_ambiental') || 0) + 1);
+      }
+      if (tagString.includes('bio') || tagString.includes('proteína') || tagString.includes('lipíd')) {
+        mStats.set('bioquimica', (mStats.get('bioquimica') || 0) + 1);
+      }
+
+      // Micro detection
+      for (const [microKey, keywords] of Object.entries(microMappings)) {
+        if (keywords.some(kw => tagString.includes(kw))) {
+          miStats.set(microKey, (miStats.get(microKey) || 0) + 1);
         }
       }
     }
 
-    return stats;
+    return { macroStats: mStats, microStats: miStats };
   }, [baseCards]);
 
-  // Filtrar cards por macro selecionado
+  // Filtrar cards por macro E micro selecionado
   const cards = useMemo(() => {
     if (!baseCards) return baseCards;
-    if (!topicFilter || topicFilter === 'all') return baseCards;
+    if (selectedMacro === 'all' && !selectedMicro) return baseCards;
 
     return baseCards.filter((c: any) => {
       const tags = (c.tags || []) as string[];
-      return tags.some((t: string) => {
-        const tagLower = String(t).toLowerCase();
-        switch (topicFilter) {
+      const tagString = tags.join(' ').toLowerCase();
+
+      // Verificar macro
+      let matchesMacro = selectedMacro === 'all';
+      if (!matchesMacro) {
+        switch (selectedMacro) {
           case 'quimica_geral':
-            return tagLower.includes('geral') || tagLower.includes('inorg');
+            matchesMacro = tagString.includes('geral') || tagString.includes('inorg');
+            break;
           case 'quimica_organica':
-            return tagLower.includes('orgânica') || tagLower.includes('organica');
+            matchesMacro = tagString.includes('orgânica') || tagString.includes('organica');
+            break;
           case 'fisico_quimica':
-            return tagLower.includes('físico') || tagLower.includes('fisico') || tagLower.includes('eletro');
+            matchesMacro = tagString.includes('físico') || tagString.includes('fisico') || tagString.includes('eletro');
+            break;
           case 'quimica_ambiental':
-            return tagLower.includes('ambiental') || tagLower.includes('chuva') || tagLower.includes('polu');
+            matchesMacro = tagString.includes('ambiental') || tagString.includes('chuva') || tagString.includes('polu');
+            break;
           case 'bioquimica':
-            return tagLower.includes('bio') || tagLower.includes('proteína') || tagLower.includes('lipíd');
-          default:
-            return false;
+            matchesMacro = tagString.includes('bio') || tagString.includes('proteína') || tagString.includes('lipíd');
+            break;
         }
-      });
+      }
+
+      if (!matchesMacro) return false;
+
+      // Verificar micro (se selecionado)
+      if (!selectedMicro) return true;
+
+      // Micro keywords matching
+      const microKeywords: Record<string, string[]> = {
+        'propriedades_materia': ['propriedade', 'matéria', 'estados'],
+        'atomistica': ['átomo', 'atomística', 'atômico'],
+        'tabela_periodica': ['tabela', 'periódica'],
+        'ligacoes_quimicas': ['ligação', 'ligações'],
+        'estequiometria': ['estequiometria', 'mol'],
+        'balanceamento': ['balanceamento', 'balancear'],
+        'conceitos_modernos': ['hibridização', 'orbital'],
+        'termoquimica': ['termoquímica', 'entalpia'],
+        'cinetica_quimica': ['cinética', 'velocidade'],
+        'equilibrio_quimico': ['equilíbrio', 'le chatelier'],
+        'eletroquimica': ['eletroquímica', 'pilha', 'eletrólise'],
+        'solucoes': ['solução', 'soluções', 'concentração'],
+        'propriedades_coligativas': ['coligativa', 'osmose'],
+        'radioatividade': ['radioatividade', 'meia-vida'],
+        'calculos_quimicos': ['cálculo', 'rendimento'],
+        'funcoes_organicas': ['função', 'álcool', 'aldeído'],
+        'isomeria': ['isomeria', 'isômero'],
+        'reacoes_organicas': ['reação orgânica', 'substituição'],
+        'polimeros': ['polímero', 'polimerização'],
+        'poluicao': ['poluição', 'poluente'],
+        'ciclos_biogeoquimicos': ['ciclo', 'biogeoquímico'],
+        'chuva_acida': ['chuva ácida'],
+        'efeito_estufa': ['estufa', 'aquecimento'],
+        'proteinas': ['proteína', 'aminoácido'],
+        'carboidratos': ['carboidrato', 'glicose'],
+        'lipidios': ['lipídio', 'gordura'],
+        'acidos_nucleicos': ['ácido nucleico', 'dna', 'rna'],
+        'metabolismo': ['metabolismo', 'atp'],
+      };
+
+      const keywords = microKeywords[selectedMicro] || [];
+      return keywords.some(kw => tagString.includes(kw));
     });
-  }, [baseCards, topicFilter]);
+  }, [baseCards, selectedMacro, selectedMicro]);
 
   // Se filtro reduzir a lista, garante índice válido
   useEffect(() => {
     setCurrentIndex(0);
     setIsFlipped(false);
-  }, [topicFilter, isReadyMode, isCramMode]);
+  }, [selectedMacro, selectedMicro, isReadyMode, isCramMode]);
 
   const currentCard = cards?.[currentIndex];
   const isSessionComplete = currentIndex >= (cards?.length || 0) && (cards?.length || 0) > 0;
@@ -578,45 +665,17 @@ export default function FlashcardsEmbedded({ onBack }: FlashcardsEmbeddedProps) 
           </Button>
         </div>
 
-        {/* 🎯 5 MACROS SOBERANOS — Taxonomia Questões (Constituição v10.4) */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant={topicFilter === 'all' ? 'default' : 'outline'}
-            onClick={() => setTopicFilter('all')}
-            className="text-xs"
-          >
-            Todos
-            <Badge variant="secondary" className="ml-1.5 text-[10px]">{baseCards?.length || 0}</Badge>
-          </Button>
-          {MACRO_TAXONOMY.map(macro => {
-            const count = macroStats.get(macro.value) || 0;
-            const Icon = macro.icon;
-            const isActive = topicFilter === macro.value;
-            return (
-              <Button
-                key={macro.value}
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => setTopicFilter(macro.value)}
-                className={cn(
-                  "text-xs transition-all",
-                  isActive && cn(macro.bgColor, macro.borderColor, macro.color),
-                  !isActive && "hover:bg-muted/50"
-                )}
-                disabled={count === 0}
-              >
-                <Icon className={cn("w-3.5 h-3.5 mr-1", isActive ? macro.color : "text-muted-foreground")} />
-                {macro.label}
-                {count > 0 && (
-                  <Badge variant="secondary" className="ml-1.5 text-[10px]">{count}</Badge>
-                )}
-              </Button>
-            );
-          })}
-        </div>
+        {/* 🎯 Filtro Hierárquico Macro → Micro (Taxonomia Questões) */}
+        <FlashcardsTaxonomyFilter
+          selectedMacro={selectedMacro}
+          selectedMicro={selectedMicro}
+          onMacroChange={setSelectedMacro}
+          onMicroChange={setSelectedMicro}
+          macroStats={macroStats}
+          microStats={microStats}
+          totalCards={baseCards?.length || 0}
+          className="w-full"
+        />
       </div>
 
       {/* Progress */}
