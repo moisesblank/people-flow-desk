@@ -34,13 +34,18 @@ import {
   RotateCcw, Zap, Check, X, Brain, 
   Sparkles, Plus, Target, 
   AlertTriangle, PartyPopper,
-  BookOpen, Atom, FlaskConical, Leaf, Dna, Beaker
+  BookOpen, Atom, FlaskConical, Leaf, Dna, Beaker,
+  HelpCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AnkiDashboard } from '@/components/aluno/flashcards/AnkiDashboard';
 import FlashcardRenderer from '@/components/aluno/flashcards/FlashcardRenderer';
+import { FlashcardsTutorial } from '@/components/aluno/flashcards/FlashcardsTutorial';
 
 import '@/styles/flashcards-2300.css';
+
+// 🎓 Tutorial localStorage key
+const TUTORIAL_STORAGE_KEY = 'flashcards_tutorial_completed';
 
 // 🎯 5 MACROS SOBERANOS — Taxonomia Questões (Constituição v10.4)
 const MACRO_TAXONOMY = [
@@ -75,6 +80,23 @@ export default function FlashcardsEmbedded({ onBack }: FlashcardsEmbeddedProps) 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionStats, setSessionStats] = useState({ correct: 0, incorrect: 0, xpEarned: 0 });
   const [newCard, setNewCard] = useState({ question: '', answer: '' });
+
+  // 🎓 Tutorial state - mostra na primeira visita
+  const [showTutorial, setShowTutorial] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const completed = localStorage.getItem(TUTORIAL_STORAGE_KEY);
+    return !completed;
+  });
+
+  const handleTutorialComplete = useCallback(() => {
+    localStorage.setItem(TUTORIAL_STORAGE_KEY, 'true');
+    setShowTutorial(false);
+  }, []);
+
+  const handleTutorialSkip = useCallback(() => {
+    localStorage.setItem(TUTORIAL_STORAGE_KEY, 'true');
+    setShowTutorial(false);
+  }, []);
 
   // Organização inteligente (macro/tags)
   const [topicFilter, setTopicFilter] = useState<string>('all');
@@ -482,6 +504,17 @@ export default function FlashcardsEmbedded({ onBack }: FlashcardsEmbeddedProps) 
   // ============================================
   return (
     <div className="space-y-6">
+      {/* 🎓 Tutorial de Onboarding */}
+      <AnimatePresence>
+        {showTutorial && (
+          <FlashcardsTutorial
+            onComplete={handleTutorialComplete}
+            onSkip={handleTutorialSkip}
+            className="mb-6"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -533,6 +566,15 @@ export default function FlashcardsEmbedded({ onBack }: FlashcardsEmbeddedProps) 
           )}
           <Button variant="ghost" size="icon" onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="w-5 h-5" />
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setShowTutorial(true)}
+            title="Ver tutorial"
+            className="text-muted-foreground hover:text-primary"
+          >
+            <HelpCircle className="w-5 h-5" />
           </Button>
         </div>
 
@@ -702,9 +744,9 @@ export default function FlashcardsEmbedded({ onBack }: FlashcardsEmbeddedProps) 
         </motion.p>
       )}
 
-      {/* Anki Dashboard */}
+      {/* Anki Dashboard - Aberto por padrão */}
       <div className="mt-8 anki-dashboard-container p-4 md:p-6">
-        <AnkiDashboard className="!bg-transparent !border-0" defaultExpanded={false} />
+        <AnkiDashboard className="!bg-transparent !border-0" defaultExpanded={true} />
       </div>
 
       {/* Modals */}
