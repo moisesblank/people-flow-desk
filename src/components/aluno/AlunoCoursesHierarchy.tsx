@@ -458,99 +458,131 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
 
   // Grid de Macro Cards (estilo materiais)
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
       {RESOLUCAO_MACRO_CARDS.map((card) => {
         const modules = getModulesForMacro(card.positionRange);
         const totalLessons = modules.reduce((a, m) => a + (m._count?.lessons || 0), 0);
+        
+        // Cores dinâmicas por área
+        const colorSchemes = {
+          'quimica-geral': {
+            primary: 'from-amber-600 to-orange-700',
+            glow: 'shadow-amber-500/30',
+            accent: 'text-amber-400',
+            border: 'border-amber-500/40',
+            iconBg: 'bg-gradient-to-br from-amber-500/30 to-orange-600/20',
+            statBg: 'bg-amber-950/50',
+            hoverBorder: 'group-hover:border-amber-400/60',
+          },
+          'quimica-organica': {
+            primary: 'from-violet-600 to-purple-700',
+            glow: 'shadow-purple-500/30',
+            accent: 'text-purple-400',
+            border: 'border-purple-500/40',
+            iconBg: 'bg-gradient-to-br from-purple-500/30 to-violet-600/20',
+            statBg: 'bg-purple-950/50',
+            hoverBorder: 'group-hover:border-purple-400/60',
+          },
+          'fisico-quimica': {
+            primary: 'from-cyan-600 to-blue-700',
+            glow: 'shadow-cyan-500/30',
+            accent: 'text-cyan-400',
+            border: 'border-cyan-500/40',
+            iconBg: 'bg-gradient-to-br from-cyan-500/30 to-blue-600/20',
+            statBg: 'bg-cyan-950/50',
+            hoverBorder: 'group-hover:border-cyan-400/60',
+          },
+        };
+        const colorScheme = colorSchemes[card.id as keyof typeof colorSchemes] || colorSchemes['quimica-geral'];
         
         return (
           <div
             key={card.id}
             onClick={() => setSelectedMacro(card.id)}
-            className="group relative cursor-pointer transform-gpu"
+            className={cn(
+              "group relative cursor-pointer transform-gpu",
+              "transition-transform duration-300 ease-out",
+              "hover:scale-[1.03] hover:-translate-y-1"
+            )}
           >
-            {/* Card principal */}
+            {/* Card com gradiente de fundo escuro premium */}
             <div 
               className={cn(
-                "relative overflow-hidden rounded-xl",
-                "bg-slate-900/95 backdrop-blur-sm",
-                "border border-slate-700/60",
-                "transition-all duration-200 ease-out",
-                "hover:border-slate-600 hover:-translate-y-0.5",
-                "shadow-lg hover:shadow-xl"
+                "relative overflow-hidden rounded-2xl",
+                "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950",
+                "border", colorScheme.border, colorScheme.hoverBorder,
+                "shadow-xl", colorScheme.glow,
+                "transition-all duration-300"
               )}
             >
-              {/* Barra superior com gradiente - elemento visual premium */}
-              <div 
-                className={cn(
-                  "h-1 w-full",
-                  card.id === 'quimica-geral' && "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600",
-                  card.id === 'quimica-organica' && "bg-gradient-to-r from-purple-500 via-fuchsia-500 to-purple-600",
-                  card.id === 'fisico-quimica' && "bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-600"
-                )}
-              />
-              
-              {/* Content */}
-              <div className="p-4 lg:p-5 space-y-4">
-                {/* Header: Icon + Title */}
-                <div className="flex items-center gap-3">
-                  <div 
-                    className={cn(
-                      "flex items-center justify-center w-10 h-10 lg:w-12 lg:h-12 rounded-lg",
-                      "text-2xl lg:text-3xl",
-                      card.id === 'quimica-geral' && "bg-amber-500/20",
-                      card.id === 'quimica-organica' && "bg-purple-500/20",
-                      card.id === 'fisico-quimica' && "bg-cyan-500/20"
-                    )}
-                  >
-                    {card.icon}
-                  </div>
-                  <h3 className="flex-1 text-sm lg:text-base font-semibold text-white leading-tight">
-                    {card.name}
-                  </h3>
-                </div>
+              {/* Gradiente superior - header visual */}
+              <div className={cn(
+                "h-20 w-full bg-gradient-to-br",
+                colorScheme.primary,
+                "relative overflow-hidden"
+              )}>
+                {/* Pattern overlay sutil */}
+                <div className="absolute inset-0 opacity-20" 
+                  style={{ 
+                    backgroundImage: `radial-gradient(circle at 20% 50%, rgba(255,255,255,0.15) 0%, transparent 50%),
+                                      radial-gradient(circle at 80% 50%, rgba(255,255,255,0.1) 0%, transparent 40%)` 
+                  }} 
+                />
                 
-                {/* Stats - Layout horizontal compacto */}
+                {/* Icon flutuando sobre o gradiente */}
+                <div className="absolute -bottom-5 left-5">
+                  <div className={cn(
+                    "w-14 h-14 rounded-xl flex items-center justify-center",
+                    "bg-slate-900/90 backdrop-blur-sm",
+                    "border-2", colorScheme.border,
+                    "shadow-lg",
+                    colorScheme.glow
+                  )}>
+                    <span className="text-3xl">{card.icon}</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Content area */}
+              <div className="pt-8 pb-5 px-5 space-y-4">
+                {/* Title */}
+                <h3 className="text-base lg:text-lg font-bold text-white leading-snug pr-2">
+                  {card.name}
+                </h3>
+                
+                {/* Stats row - visual premium */}
                 <div className="flex items-center gap-3">
-                  <div 
-                    className={cn(
-                      "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs",
-                      "bg-slate-800/80 border border-slate-700/50"
-                    )}
-                  >
-                    <Layers className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="font-bold text-white">{modules.length}</span>
-                    <span className="text-slate-400">módulos</span>
+                  <div className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-xl",
+                    colorScheme.statBg,
+                    "border border-slate-700/50"
+                  )}>
+                    <Layers className={cn("h-4 w-4", colorScheme.accent)} />
+                    <span className="text-base font-bold text-white">{modules.length}</span>
+                    <span className="text-xs text-slate-400 font-medium">módulos</span>
                   </div>
                   
-                  <div 
-                    className={cn(
-                      "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs",
-                      "bg-slate-800/80 border border-slate-700/50"
-                    )}
-                  >
-                    <PlayCircle className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="font-bold text-white">{totalLessons}</span>
-                    <span className="text-slate-400">aulas</span>
+                  <div className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-xl",
+                    colorScheme.statBg,
+                    "border border-slate-700/50"
+                  )}>
+                    <PlayCircle className={cn("h-4 w-4", colorScheme.accent)} />
+                    <span className="text-base font-bold text-white">{totalLessons}</span>
+                    <span className="text-xs text-slate-400 font-medium">aulas</span>
                   </div>
                 </div>
                 
-                {/* CTA Footer */}
-                <div className="flex items-center justify-between pt-3 border-t border-slate-700/40">
-                  <span className="text-xs text-slate-400">
-                    {modules.length} módulos disponíveis
-                  </span>
-                  <div 
-                    className={cn(
-                      "flex items-center gap-1 text-xs font-semibold transition-colors",
-                      card.id === 'quimica-geral' && "text-amber-400 group-hover:text-amber-300",
-                      card.id === 'quimica-organica' && "text-purple-400 group-hover:text-purple-300",
-                      card.id === 'fisico-quimica' && "text-cyan-400 group-hover:text-cyan-300"
-                    )}
-                  >
-                    Ver Módulos
-                    <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
+                {/* CTA Button style */}
+                <div className={cn(
+                  "flex items-center justify-center gap-2 py-2.5 rounded-xl",
+                  "bg-gradient-to-r", colorScheme.primary,
+                  "text-white text-sm font-semibold",
+                  "transition-all duration-200",
+                  "group-hover:shadow-lg", colorScheme.glow
+                )}>
+                  <span>Ver Módulos</span>
+                  <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </div>
@@ -566,7 +598,7 @@ ResolucaoQuestoesMacroView.displayName = 'ResolucaoQuestoesMacroView';
 // 📚 COURSE SECTION — NETFLIX PREMIUM CINEMATIC
 // Card de curso com design cinematográfico Netflix Red
 // ============================================
-function CourseSection({ 
+function CourseSection({
   course, 
   subcategoryGroups, 
   expandedModules,
