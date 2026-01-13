@@ -452,33 +452,7 @@ export function TwoFactorVerification({
               )}
             </motion.button>
 
-            {/* WhatsApp */}
-            <motion.button
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              onClick={() => selectChannelAndSend("whatsapp")}
-              disabled={isResending || !hasWhatsApp}
-              className={`w-full p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-4 group 
-                ${hasWhatsApp 
-                  ? "border-border bg-background/50 hover:border-green-500 hover:bg-green-500/5" 
-                  : "border-border/50 bg-muted/30 cursor-not-allowed opacity-50"
-                }`}
-            >
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors
-                ${hasWhatsApp ? "bg-green-500/10 group-hover:bg-green-500/20" : "bg-muted"}`}>
-                <MessageCircle className={`w-6 h-6 ${hasWhatsApp ? "text-green-500" : "text-muted-foreground"}`} />
-              </div>
-              <div className="flex-1 text-left">
-                <p className="font-semibold text-foreground">WhatsApp</p>
-                <p className="text-sm text-muted-foreground">
-                  {hasWhatsApp ? formatPhone(userPhone || "") : "Telefone não cadastrado"}
-                </p>
-              </div>
-              {hasWhatsApp && (
-                <CheckCircle className="w-5 h-5 text-muted-foreground/30 group-hover:text-green-500 transition-colors" />
-              )}
-            </motion.button>
+            {/* WhatsApp - REMOVIDO TEMPORARIAMENTE (não configurado) */}
           </div>
 
           {/* Loading */}
