@@ -329,3 +329,8 @@ verify_jwt = false
 # 🟢 Requer JWT - Apenas Admin/Owner pode reenviar
 [functions.resend-first-access-token]
 verify_jwt = true
+
+# --- Geração Inteligente de Sumário (Livros-Web) ---
+# 🟢 Requer JWT - Apenas Owner/Admin pode gerar sumários
+[functions.generate-book-toc]
+verify_jwt = true
