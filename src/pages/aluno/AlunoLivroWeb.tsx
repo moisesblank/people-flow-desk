@@ -6,7 +6,8 @@
 
 import { memo, useState, useCallback, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+// ANIMAÇÕES REMOVIDAS: motion/AnimatePresence não mais usados
+// import { motion, AnimatePresence } from 'framer-motion';
 import { WebBookLibrary, WebBookViewer } from '@/components/books';
 
 // ============================================
@@ -73,36 +74,22 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
 
   return (
     <div className="min-h-screen bg-background">
-      <AnimatePresence mode="wait">
-        {selectedBookId ? (
-          // Leitor
-          <motion.div
-            key="reader"
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.2 }}
-            className="h-screen"
-          >
-            <WebBookViewer
-              bookId={selectedBookId}
-              onClose={handleCloseReader}
-              className="h-full"
-            />
-          </motion.div>
-        ) : (
-          // Biblioteca — Agora é a ÚNICA seção
-          <motion.div
-            key="library"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-          >
-            <WebBookLibrary onBookSelect={handleBookSelect} targetBookId={targetBookId} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* SEM ANIMAÇÕES — TRANSIÇÃO DIRETA */}
+      {selectedBookId ? (
+        // Leitor
+        <div className="h-screen">
+          <WebBookViewer
+            bookId={selectedBookId}
+            onClose={handleCloseReader}
+            className="h-full"
+          />
+        </div>
+      ) : (
+        // Biblioteca — Agora é a ÚNICA seção
+        <div>
+          <WebBookLibrary onBookSelect={handleBookSelect} targetBookId={targetBookId} />
+        </div>
+      )}
     </div>
   );
 });

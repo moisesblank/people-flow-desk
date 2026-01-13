@@ -14,7 +14,8 @@ import {
   Flame, Rocket, Sparkles, ChevronRight,
   Timer, BarChart3, Shield, Hexagon, Activity, Wifi, Database, AlertCircle
 } from "lucide-react";
-import { motion } from "framer-motion";
+// ANIMAÇÕES REMOVIDAS: motion não mais usado
+// import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useOptimizedAnimation, STAGGER_DISABLED } from "@/hooks/useOptimizedAnimation";
@@ -120,26 +121,22 @@ export function BetaStudentDashboard() {
 
   return (
     <div className="min-h-screen">
-      {/* 🌌 COSMIC BACKGROUND LAYER */}
+      {/* 🌌 COSMIC BACKGROUND LAYER — ESTÁTICO (SEM ANIMAÇÕES) */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full bg-holo-cyan/5 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full bg-holo-purple/5 blur-[100px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full bg-holo-cyan/5 blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full bg-holo-purple/5 blur-[100px]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-primary/3 blur-[150px]" />
       </div>
 
       <div className="container mx-auto p-4 md:p-6 space-y-8">
         
-        {/* 📅 PLANO DE ESTUDOS ENEM 2030 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
+        {/* 📅 PLANO DE ESTUDOS ENEM 2030 — SEM ANIMAÇÃO */}
+        <div>
           <StudyPlanENEM2030 />
-        </motion.div>
+        </div>
 
-        {/* 🚀 HERO SECTION - IRON MAN HUD - FLUID RESPONSIVE */}
-        <div className="dashboard-hero-2300 p-4 sm:p-6 md:p-8 animate-optimized-fade-in">
+        {/* 🚀 HERO SECTION - IRON MAN HUD - FLUID RESPONSIVE — SEM ANIMAÇÃO */}
+        <div className="dashboard-hero-2300 p-4 sm:p-6 md:p-8">
           {/* Particles only on high-end devices */}
           {canUseDecorative && (
             <div className="particles-2300">
@@ -162,7 +159,7 @@ export function BetaStudentDashboard() {
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4 sm:mb-6">
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="relative flex-shrink-0">
-                  <Hexagon className="w-8 h-8 sm:w-10 sm:h-10 text-holo-cyan animate-pulse" style={{ animationDuration: '3s' }} />
+                  <Hexagon className="w-8 h-8 sm:w-10 sm:h-10 text-holo-cyan" />
                   <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                 </div>
                 <div>
@@ -239,14 +236,9 @@ export function BetaStudentDashboard() {
           </div>
         </div>
 
-        {/* Stats Cards - 100% DADOS REAIS - FLUID GRID */}
-        <motion.div 
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4"
-        >
-          <motion.div variants={item}>
+        {/* Stats Cards - 100% DADOS REAIS - FLUID GRID — SEM ANIMAÇÃO */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <div>
             <Card className="border-0 bg-gradient-to-br from-blue-500/20 to-cyan-500/10 hover:shadow-lg transition-all duration-300 group cursor-pointer"
               onClick={() => navigate('/alunos/videoaulas')}>
               <CardContent className="p-5">
@@ -262,9 +254,9 @@ export function BetaStudentDashboard() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
-          <motion.div variants={item}>
+          <div>
             <Card className="border-0 bg-gradient-to-br from-purple-500/20 to-pink-500/10 hover:shadow-lg transition-all duration-300 group cursor-pointer"
               onClick={() => navigate('/alunos/videoaulas')}>
               <CardContent className="p-5">
@@ -280,9 +272,9 @@ export function BetaStudentDashboard() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
-          <motion.div variants={item}>
+          <div>
             <Card className="border-0 bg-gradient-to-br from-emerald-500/20 to-green-500/10 hover:shadow-lg transition-all duration-300 group cursor-pointer"
               onClick={() => navigate('/alunos/questoes')}>
               <CardContent className="p-5">
@@ -298,9 +290,9 @@ export function BetaStudentDashboard() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
 
-          <motion.div variants={item}>
+          <div>
             <Card className="border-0 bg-gradient-to-br from-amber-500/20 to-yellow-500/10 hover:shadow-lg transition-all duration-300 group cursor-pointer"
               onClick={() => navigate('/alunos/questoes')}>
               <CardContent className="p-5">
@@ -316,25 +308,16 @@ export function BetaStudentDashboard() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
 
-        {/* RANKING INTEGRADO */}
-        <motion.div
-          id="ranking-section"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
+        {/* RANKING INTEGRADO — SEM ANIMAÇÃO */}
+        <div id="ranking-section">
           <DashboardRankingWidget />
-        </motion.div>
+        </div>
 
-        {/* AÇÕES RÁPIDAS */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
+        {/* AÇÕES RÁPIDAS — SEM ANIMAÇÃO */}
+        <div>
           <Card className="overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 via-transparent to-primary/5" />
             <CardHeader className="relative">
@@ -386,7 +369,7 @@ export function BetaStudentDashboard() {
               )}
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

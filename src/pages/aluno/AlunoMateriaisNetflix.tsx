@@ -6,7 +6,8 @@
 
 import { memo, useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet';
-import { motion } from 'framer-motion';
+// ANIMAÇÕES REMOVIDAS: motion não mais usado
+// import { motion } from 'framer-motion';
 import { MaterialBooksHub, MATERIAL_BOOKS } from '@/components/materials/MaterialBooksHub';
 import { MaterialsFilteredView } from '@/components/materials/MaterialsFilteredView';
 import { MaterialViewer } from '@/components/materials/MaterialViewer';
@@ -159,14 +160,9 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
         
         <div className="relative z-10 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
           
-          {/* 🎬 HERO HEADER — Netflix Ultra Premium 2300 */}
+          {/* 🎬 HERO HEADER — Netflix Ultra Premium 2300 — SEM ANIMAÇÃO */}
           {viewState.mode === 'hub' && (
-            <motion.div
-              initial={{ opacity: 0, y: -30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="relative"
-            >
+            <div className="relative">
               <div className={cn(
                 "relative rounded-3xl overflow-hidden",
                 "bg-gradient-to-br from-[#0a0d12] via-[#0f1419] to-[#151a22]",
@@ -179,21 +175,13 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
                 {/* Top Gradient Line */}
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
                 
-                {/* Background Orbs */}
+                {/* Background Orbs — ESTÁTICOS */}
                 {isHighEnd && (
                   <>
                     <div className="absolute -top-20 -left-20 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
                     <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-cyan-500/10 rounded-full blur-[120px]" />
                     
-                    {/* Animated Scan Line */}
-                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                      <div 
-                        className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.03] to-transparent"
-                        style={{
-                          animation: 'hero-scan 4s ease-in-out infinite'
-                        }}
-                      />
-                    </div>
+                    {/* Scan Line REMOVIDA */}
                   </>
                 )}
                 
@@ -255,7 +243,7 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
                       </div>
                     </div>
 
-                    {/* Right Side: Decorative Element */}
+                    {/* Right Side: Decorative Element — ESTÁTICO (SEM ANIMAÇÕES ORBITAIS) */}
                     {isHighEnd && (
                       <div className="hidden xl:block relative w-40 h-40">
                         {/* Outer Glow */}
@@ -266,29 +254,14 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
                           <FileText className="w-14 h-14 text-primary/40" />
                         </div>
                         
-                        {/* Orbital Rings */}
-                        <div 
-                          className="absolute inset-0 rounded-full border border-primary/20"
-                          style={{ animation: 'spin 20s linear infinite' }}
-                        />
-                        <div 
-                          className="absolute -inset-2 rounded-full border border-cyan-500/10"
-                          style={{ animation: 'spin 30s linear infinite reverse' }}
-                        />
-                        <div 
-                          className="absolute -inset-4 rounded-full border border-primary/5"
-                          style={{ animation: 'spin 40s linear infinite' }}
-                        />
+                        {/* Orbital Rings — ESTÁTICOS (SEM ANIMAÇÃO) */}
+                        <div className="absolute inset-0 rounded-full border border-primary/20" />
+                        <div className="absolute -inset-2 rounded-full border border-cyan-500/10" />
+                        <div className="absolute -inset-4 rounded-full border border-primary/5" />
                         
-                        {/* Orbiting Dots */}
-                        <div 
-                          className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-primary"
-                          style={{ animation: 'spin 20s linear infinite', transformOrigin: 'center 80px' }}
-                        />
-                        <div 
-                          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-cyan-400"
-                          style={{ animation: 'spin 30s linear infinite reverse', transformOrigin: 'center -60px' }}
-                        />
+                        {/* Orbiting Dots — ESTÁTICOS */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-primary" />
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-cyan-400" />
                       </div>
                     )}
                   </div>
@@ -300,15 +273,11 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
                 <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-cyan-500/30 rounded-bl-xl" />
                 <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-primary/40 rounded-br-xl" />
               </div>
-            </motion.div>
+            </div>
           )}
 
-          {/* 📚 CONTENT AREA */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
+          {/* 📚 CONTENT AREA — SEM ANIMAÇÃO */}
+          <div>
             {viewState.mode === 'hub' && (
               <MaterialBooksHub onSelectBook={handleSelectBook} />
             )}
@@ -325,7 +294,7 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
                 onSelectMaterial={handleSelectMaterial}
               />
             )}
-          </motion.div>
+          </div>
         </div>
       </div>
     </>

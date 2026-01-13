@@ -267,7 +267,7 @@ function HudStatOrb({
       <div className="flex items-center gap-4">
         {/* Icon container with pulse */}
         <div className="relative">
-          <div className="absolute inset-0 rounded-xl bg-current opacity-20 blur-md animate-pulse" />
+          <div className="absolute inset-0 rounded-xl bg-current opacity-20 blur-md" />
           <div className="relative p-3 rounded-xl bg-background/30 backdrop-blur-sm border border-current/30 shadow-inner">
             {icon}
           </div>
@@ -363,7 +363,7 @@ function CourseSection({
 
   return (
     <Card className={cn(
-      "group/card relative overflow-hidden transition-all duration-500 animate-fade-in",
+      "group/card relative overflow-hidden transition-all duration-500",
       "bg-gradient-to-br from-[#0a0e14] via-[#0f1419] to-[#1a0a0a]",
       "border-2 border-[#E50914]/40 hover:border-[#E50914]/70",
       "shadow-2xl shadow-[#E50914]/15 hover:shadow-[#E50914]/40",
