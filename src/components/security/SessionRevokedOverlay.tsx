@@ -1,18 +1,66 @@
 // ============================================
-// 🛡️ SESSÃO REVOGADA — OVERLAY VISUAL
-// Exibe mensagem estilizada quando o usuário é desconectado
+// 🛡️ SESSÃO REVOGADA — OVERLAY VISUAL v2.0
+// Com botão "Tentar novamente" para recovery gracioso
 // ============================================
 
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Smartphone, LogOut, Shield } from "lucide-react";
+import { Smartphone, LogOut, Shield, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SessionRevokedOverlayProps {
   isVisible: boolean;
   onClose: () => void;
+  onRetry?: () => Promise<boolean>; // Retorna true se recovery bem-sucedido
+  reason?: string; // Motivo da revogação para exibir ao usuário
 }
 
-export function SessionRevokedOverlay({ isVisible, onClose }: SessionRevokedOverlayProps) {
+export function SessionRevokedOverlay({ 
+  isVisible, 
+  onClose, 
+  onRetry,
+  reason 
+}: SessionRevokedOverlayProps) {
+  const [isRetrying, setIsRetrying] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [retryError, setRetryError] = useState<string | null>(null);
+
+  const MAX_RETRIES = 1; // Limite de tentativas
+
+  const handleRetry = useCallback(async () => {
+    if (!onRetry || retryCount >= MAX_RETRIES) return;
+
+    setIsRetrying(true);
+    setRetryError(null);
+
+    try {
+      const success = await onRetry();
+      if (success) {
+        // Recovery bem-sucedido - overlay será fechado pelo parent
+        return;
+      }
+      setRetryError("Sessão realmente revogada. Faça login novamente.");
+    } catch {
+      setRetryError("Erro ao verificar. Faça login novamente.");
+    } finally {
+      setIsRetrying(false);
+      setRetryCount(prev => prev + 1);
+    }
+  }, [onRetry, retryCount]);
+
+  const canRetry = onRetry && retryCount < MAX_RETRIES;
+
+  // Mensagem baseada no motivo
+  const getReasonMessage = () => {
+    if (reason === 'admin_revoke' || reason === 'security_threat') {
+      return "Sua sessão foi encerrada por um administrador.";
+    }
+    if (reason === 'device_replaced') {
+      return "Você conectou em outro dispositivo.";
+    }
+    return "Sua sessão foi encerrada por motivos de segurança.";
+  };
+
   return (
     <AnimatePresence>
       {isVisible && (
@@ -63,7 +111,7 @@ export function SessionRevokedOverlay({ isVisible, onClose }: SessionRevokedOver
                 transition={{ delay: 0.3 }}
                 className="text-2xl font-bold text-center text-foreground mb-3"
               >
-                Você conectou em outro dispositivo
+                Sessão Encerrada
               </motion.h2>
 
               {/* Descrição */}
@@ -73,9 +121,22 @@ export function SessionRevokedOverlay({ isVisible, onClose }: SessionRevokedOver
                 transition={{ delay: 0.4 }}
                 className="text-muted-foreground text-center mb-6 leading-relaxed"
               >
-                Por segurança, permitimos apenas <span className="text-foreground font-medium">uma sessão ativa</span>{" "}
-                por vez. Esta sessão foi encerrada porque você fez login em outro aparelho.
+                {getReasonMessage()}{" "}
+                <span className="text-foreground font-medium">
+                  Por segurança, permitimos apenas uma sessão ativa por vez.
+                </span>
               </motion.p>
+
+              {/* Erro de retry */}
+              {retryError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 mb-4 text-center"
+                >
+                  <p className="text-sm text-destructive">{retryError}</p>
+                </motion.div>
+              )}
 
               {/* Info box */}
               <motion.div
@@ -95,14 +156,43 @@ export function SessionRevokedOverlay({ isVisible, onClose }: SessionRevokedOver
                 </div>
               </motion.div>
 
-              {/* Botão */}
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+              {/* Botões */}
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ delay: 0.6 }}
+                className="space-y-3"
+              >
+                {/* Botão de retry (se disponível) */}
+                {canRetry && (
+                  <Button
+                    onClick={handleRetry}
+                    disabled={isRetrying}
+                    variant="outline"
+                    className="w-full h-12 text-base font-semibold border-primary/50 hover:bg-primary/10"
+                  >
+                    {isRetrying ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Verificando...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="w-5 h-5 mr-2" />
+                        Tentar novamente
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                {/* Botão principal */}
                 <Button
                   onClick={onClose}
+                  disabled={isRetrying}
                   className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <LogOut className="w-5 h-5 mr-2" />
-                  Entendi, ir para login
+                  Ir para login
                 </Button>
               </motion.div>
             </div>

@@ -1,8 +1,8 @@
 // ============================================
-// 🛡️ EVANGELHO DA SEGURANÇA v2.3
+// 🛡️ EVANGELHO DA SEGURANÇA v3.0
 // SESSION_BINDING_ENFORCEMENT — Revogação INSTANTÂNEA via Realtime
+// 🔧 P0 FIX: Verifica DB ANTES de mostrar overlay (anti false-positive)
 // Frontend NUNCA revoga sessões — só reage a eventos do backend
-// 🎯 P0 FIX v4: Ignora conflitos durante primeiro acesso/onboarding
 // ============================================
 
 import { useEffect, useRef, useCallback, useState } from "react";
@@ -10,12 +10,12 @@ import { useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { SessionRevokedOverlay } from "./SessionRevokedOverlay";
+import { useSessionValidator, type SessionValidationResult } from "@/hooks/useSessionValidator";
 
 const SESSION_TOKEN_KEY = "matriz_session_token";
 const SESSION_CHECK_INTERVAL = 30000; // 30s
 
 // 🕐 JANELA DE SUPRESSÃO: Revogações mais antigas que 2 horas não mostram overlay
-// Isso evita "ecos" de sessões revogadas ontem aparecerem hoje
 const REVOCATION_STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000; // 2 horas
 
 // 🎯 Rotas onde NÃO devemos mostrar conflito de sessão (primeiro acesso)
@@ -39,8 +39,17 @@ export function SessionGuard({ children }: SessionGuardProps) {
   const lastBootstrapAtRef = useRef(0);
   const hasLoggedOutRef = useRef(false);
 
+  // Hook de validação com retry e diagnóstico
+  const { 
+    validateSessionWithRetry, 
+    logOverlayEvent,
+    forceRevalidation,
+    resetRetryCount 
+  } = useSessionValidator();
+
   // Estado para controlar o overlay visual
   const [showRevokedOverlay, setShowRevokedOverlay] = useState(false);
+  const [overlayReason, setOverlayReason] = useState<string | undefined>();
 
   const BOOTSTRAP_RETRY_MS = 10_000;
   
@@ -54,30 +63,87 @@ export function SessionGuard({ children }: SessionGuardProps) {
   );
 
   /**
-   * Exibe overlay visual e prepara logout
-   * SOMENTE quando backend confirma revogação por novo dispositivo
-   * 🏛️ OWNER BYPASS: Nunca mostra overlay para Owner
-   * 🎯 P0 FIX v4: Nunca mostra overlay durante onboarding
+   * 🔧 P0 FIX v3.0: Verifica no DB ANTES de mostrar overlay
+   * Só mostra se revogação for CONFIRMADA e REAL
    */
-  const handleDeviceRevocation = useCallback(() => {
-    // 🏛️ CONSTITUIÇÃO: Owner nunca é bloqueado por conflito de sessão
+  const verifyAndShowOverlay = useCallback(async (
+    triggerSource: string,
+    suspectedReason?: string
+  ): Promise<boolean> => {
+    // Bypass para owner
     if (isOwner) {
-      console.log("[SessionGuard] ✅ OWNER BYPASS - conflito de sessão ignorado");
-      return;
+      console.log("[SessionGuard] ✅ OWNER BYPASS - overlay suprimido");
+      return false;
     }
-    
-    // 🎯 P0 FIX v4: Ignorar conflitos durante primeiro acesso
+
+    // Bypass durante onboarding
     if (isOnboardingRoute) {
-      console.log("[SessionGuard] ✅ ONBOARDING BYPASS - conflito de sessão ignorado durante primeiro acesso");
-      return;
+      console.log("[SessionGuard] ✅ ONBOARDING BYPASS - overlay suprimido");
+      return false;
     }
+
+    // Validar no banco ANTES de mostrar overlay
+    console.log(`[SessionGuard] 🔍 Verificando sessão no DB antes de overlay (trigger: ${triggerSource})`);
+    const result = await validateSessionWithRetry();
+
+    // Logar evento para diagnóstico
+    await logOverlayEvent(user?.id, result, triggerSource);
+
+    // Só mostra overlay se DB confirmar que deve mostrar
+    if (result.shouldShowOverlay) {
+      console.error(`[SessionGuard] 🔴 Revogação CONFIRMADA pelo DB: ${result.reason}`);
+      setOverlayReason(result.revokedReason || suspectedReason);
+      setShowRevokedOverlay(true);
+      return true;
+    }
+
+    // Se não deve mostrar overlay mas sessão é inválida, fazer logout silencioso
+    if (!result.isValid && !result.shouldShowOverlay) {
+      console.log(`[SessionGuard] 🔄 Sessão inválida mas sem overlay: ${result.reason}`);
+      
+      if (result.reason === 'USER_LOGOUT' || result.reason === 'SESSION_NOT_FOUND') {
+        // Limpar e redirecionar silenciosamente
+        const keysToRemove = [
+          "matriz_session_token",
+          "matriz_last_heartbeat",
+          "matriz_device_fingerprint",
+          "matriz_trusted_device",
+          "mfa_trust_cache",
+        ];
+        keysToRemove.forEach((key) => localStorage.removeItem(key));
+        sessionStorage.clear();
+        await signOut();
+      }
+    }
+
+    return false;
+  }, [isOwner, isOnboardingRoute, validateSessionWithRetry, logOverlayEvent, user?.id, signOut]);
+
+  /**
+   * Callback de retry do overlay
+   * Retorna true se recovery bem-sucedido (sessão válida)
+   */
+  const handleOverlayRetry = useCallback(async (): Promise<boolean> => {
+    resetRetryCount();
+    const result = await forceRevalidation();
     
-    if (hasLoggedOutRef.current) return;
-    hasLoggedOutRef.current = true;
+    if (result.isValid) {
+      console.log("[SessionGuard] ✅ Recovery bem-sucedido! Sessão válida.");
+      setShowRevokedOverlay(false);
+      return true;
+    }
 
-    console.error("[SessionGuard] 🔴 Sessão revogada - novo dispositivo detectado");
+    console.log(`[SessionGuard] ❌ Recovery falhou: ${result.reason}`);
+    return false;
+  }, [forceRevalidation, resetRetryCount]);
 
-    // Limpar tokens imediatamente
+  /**
+   * Callback quando usuário fecha o overlay
+   */
+  const handleOverlayClose = useCallback(async () => {
+    setShowRevokedOverlay(false);
+    
+    // Limpar tokens
     const keysToRemove = [
       "matriz_session_token",
       "matriz_last_heartbeat",
@@ -87,45 +153,21 @@ export function SessionGuard({ children }: SessionGuardProps) {
     ];
     keysToRemove.forEach((key) => localStorage.removeItem(key));
     sessionStorage.clear();
-
-    // Mostrar overlay visual
-    setShowRevokedOverlay(true);
-  }, [isOwner, isOnboardingRoute]);
-
-  /**
-   * Callback quando usuário fecha o overlay
-   */
-  const handleOverlayClose = useCallback(async () => {
-    setShowRevokedOverlay(false);
+    
     await signOut();
   }, [signOut]);
 
   /**
    * Limpa TUDO e força logout — SOMENTE quando backend confirma revogação
-   * Guarda contra múltiplos logouts simultâneos
-   * 🏛️ OWNER BYPASS: Owner nunca é deslogado por conflito de sessão
-   * 🎯 P0 FIX v4: Ignorar conflitos durante onboarding
    */
   const handleBackendRevocation = useCallback(
     async (reason: string, isDeviceChange = false) => {
-      // 🏛️ CONSTITUIÇÃO: Owner tem bypass para conflitos de sessão
-      if (isOwner && isDeviceChange) {
-        console.log("[SessionGuard] ✅ OWNER BYPASS - revogação por dispositivo ignorada:", reason);
-        return;
-      }
-      
-      // 🎯 P0 FIX v4: Ignorar conflitos durante primeiro acesso
-      if (isOnboardingRoute && isDeviceChange) {
-        console.log("[SessionGuard] ✅ ONBOARDING BYPASS - revogação por dispositivo ignorada durante primeiro acesso");
-        return;
-      }
-      
       if (hasLoggedOutRef.current) return;
 
-      // Se é mudança de dispositivo, usar overlay visual
+      // Se é mudança de dispositivo, verificar no DB antes de mostrar overlay
       if (isDeviceChange) {
-        handleDeviceRevocation();
-        return;
+        const shown = await verifyAndShowOverlay('backend_revocation', reason);
+        if (!shown) return; // DB não confirmou, não fazer nada
       }
 
       hasLoggedOutRef.current = true;
@@ -144,7 +186,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
       await signOut();
     },
-    [signOut, handleDeviceRevocation, isOwner, isOnboardingRoute],
+    [signOut, verifyAndShowOverlay],
   );
 
   const detectClientDeviceMeta = useCallback(() => {
@@ -172,18 +214,11 @@ export function SessionGuard({ children }: SessionGuardProps) {
   }, []);
 
   /**
-   * Bootstrap do token de sessão (P0):
-   * Se o usuário está autenticado mas não existe matriz_session_token,
-   * criamos a sessão única via backend (fonte da verdade).
-   *
-   * 🔧 FIX CRÍTICO: Falha de bootstrap NUNCA força logout!
-   * 🎯 P0 FIX v4: NÃO fazer bootstrap durante onboarding (criação de sessão é feita lá)
+   * Bootstrap do token de sessão
    */
   const bootstrapSessionTokenIfMissing = useCallback(async () => {
     if (!user) return;
     
-    // 🎯 P0 FIX v4: Não fazer bootstrap durante primeiro acesso
-    // A sessão será criada na etapa 4 do onboarding (TrustDeviceStage)
     if (isOnboardingRoute) {
       console.log("[SessionGuard] ⏸️ Bootstrap suspenso - em rota de onboarding");
       return;
@@ -197,7 +232,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
     if (now - lastBootstrapAtRef.current < BOOTSTRAP_RETRY_MS) return;
 
     if (bootstrapAttemptsRef.current >= MAX_BOOTSTRAP_ATTEMPTS) {
-      console.warn("[SessionGuard] ⚠️ Máximo de tentativas de bootstrap atingido. Aguardando próximo ciclo.");
+      console.warn("[SessionGuard] ⚠️ Máximo de tentativas de bootstrap atingido.");
       bootstrapAttemptsRef.current = 0;
       lastBootstrapAtRef.current = now + 60_000;
       return;
@@ -211,10 +246,9 @@ export function SessionGuard({ children }: SessionGuardProps) {
       console.warn("[SessionGuard] ⚠️ Token ausente — bootstrap de sessão única (RPC)");
       const meta = detectClientDeviceMeta();
       
-      // 🔐 P0 FIX: SEMPRE usar hash do servidor (com pepper)
       const serverDeviceHash = localStorage.getItem('matriz_device_server_hash');
       if (!serverDeviceHash) {
-        console.warn("[SessionGuard] ⚠️ Sem hash do servidor - dispositivo não registrado. Abortando bootstrap.");
+        console.warn("[SessionGuard] ⚠️ Sem hash do servidor - dispositivo não registrado.");
         return;
       }
 
@@ -224,7 +258,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
         _device_type: meta.device_type,
         _browser: meta.browser,
         _os: meta.os,
-        _device_hash_from_server: serverDeviceHash, // 🔐 P0 FIX: Hash do SERVIDOR
+        _device_hash_from_server: serverDeviceHash,
       });
 
       const token = data?.[0]?.session_token;
@@ -244,8 +278,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
   }, [user, isOnboardingRoute, detectClientDeviceMeta]);
 
   /**
-   * Validar sessão consultando o BACKEND — nunca revoga por timer
-   * 🔐 P0 FIX v5: Também verifica se mfa_verified = true
+   * Validar sessão consultando o BACKEND
    */
   const validateSession = useCallback(async (): Promise<boolean> => {
     if (!user || isValidatingRef.current || hasLoggedOutRef.current) return true;
@@ -267,29 +300,23 @@ export function SessionGuard({ children }: SessionGuardProps) {
       if (error) {
         console.error("[SessionGuard] Erro na validação (rede):", error);
         isValidatingRef.current = false;
-        return true;
+        return true; // Não bloquear por erro de rede
       }
 
       const result = data?.[0];
 
-      // 🔧 CORREÇÃO: usar status !== 'valid' ao invés de !is_valid
       if (result?.status !== "valid") {
         const reason = result?.reason || "SESSION_INVALID";
-
-        // 🎯 DIFERENCIAR: user_logout não mostra overlay de conflito
-        // SESSION_NOT_FOUND pode ser user_logout ou conflito real
-        // Para ser preciso, verificamos se acabamos de fazer logout
         const justLoggedOut = !localStorage.getItem(SESSION_TOKEN_KEY);
         const isUserInitiatedLogout = justLoggedOut || reason === "USER_LOGOUT";
 
-        console.warn(`[SessionGuard] 🔴 Backend revogou: ${reason}, justLoggedOut: ${justLoggedOut}`);
+        console.warn(`[SessionGuard] 🔴 Backend revogou: ${reason}`);
 
         if (isUserInitiatedLogout) {
-          // Logout silencioso
           await handleBackendRevocation(reason, false);
         } else {
-          // Conflito de sessão: mostrar overlay
-          await handleBackendRevocation(reason, true);
+          // 🔧 P0 FIX: Verificar no DB antes de mostrar overlay
+          await verifyAndShowOverlay('validate_session_epoch', reason);
         }
 
         isValidatingRef.current = false;
@@ -303,7 +330,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
       isValidatingRef.current = false;
       return true;
     }
-  }, [user, handleBackendRevocation, bootstrapSessionTokenIfMissing]);
+  }, [user, handleBackendRevocation, bootstrapSessionTokenIfMissing, verifyAndShowOverlay]);
 
   // ✅ Verificação periódica + visibilidade
   useEffect(() => {
@@ -346,37 +373,35 @@ export function SessionGuard({ children }: SessionGuardProps) {
       .channel(`user:${user.id}`)
       .on("broadcast", { event: "device-revoked" }, async (payload) => {
         console.error("[SessionGuard] 📡 DEVICE REVOKED recebido!", payload);
-        await handleBackendRevocation("Este dispositivo foi removido.");
+        // 🔧 P0 FIX: Verificar no DB antes de mostrar overlay
+        await verifyAndShowOverlay('broadcast_device_revoked', 'device_revoked');
       })
       .on("broadcast", { event: "user-deleted" }, async () => {
         console.error("[SessionGuard] 📡 USER DELETED recebido!");
         await handleBackendRevocation("Sua conta foi removida.");
       })
-      // 🚀 Broadcast direto para revogação de sessão (conflito)
-      // Só mostra overlay se NÃO for logout manual E se for recente (< 2h)
       .on("broadcast", { event: "session-revoked" }, async (msg) => {
         const reason = msg?.payload?.reason;
         const revokedAt = msg?.payload?.revoked_at;
-        console.error("[SessionGuard] 📡 SESSION REVOKED BROADCAST recebido!", { reason, revokedAt });
+        console.error("[SessionGuard] 📡 SESSION REVOKED BROADCAST:", { reason, revokedAt });
 
-        // Ignora se for logout manual do próprio usuário
+        // Ignora logout manual
         if (reason === "user_logout") {
-          console.log("[SessionGuard] ✅ Broadcast de logout manual - ignorando overlay");
+          console.log("[SessionGuard] ✅ Logout manual - ignorando overlay");
           return;
         }
 
-        // 🕐 JANELA DE 2 HORAS: Ignorar revogações antigas
+        // Ignorar revogações antigas (> 2h)
         if (revokedAt) {
-          const revokedTime = new Date(revokedAt).getTime();
-          const age = Date.now() - revokedTime;
+          const age = Date.now() - new Date(revokedAt).getTime();
           if (age > REVOCATION_STALE_THRESHOLD_MS) {
-            console.log(`[SessionGuard] ✅ Revogação antiga (${Math.round(age / 60000)} min) - ignorando overlay`);
+            console.log(`[SessionGuard] ✅ Revogação antiga (${Math.round(age / 60000)} min) - ignorando`);
             return;
           }
         }
 
-        // Conflito real E recente: mostrar overlay
-        handleDeviceRevocation();
+        // 🔧 P0 FIX: Verificar no DB antes de mostrar overlay
+        await verifyAndShowOverlay('broadcast_session_revoked', reason);
       })
       .subscribe();
 
@@ -384,10 +409,9 @@ export function SessionGuard({ children }: SessionGuardProps) {
       supabase.removeChannel(channel);
       supabase.removeChannel(userChannel);
     };
-  }, [user, handleBackendRevocation, validateSession, handleDeviceRevocation]);
+  }, [user, handleBackendRevocation, validateSession, verifyAndShowOverlay]);
 
-  // 🔒 SESSION_BINDING_ENFORCEMENT: Realtime listener on active_sessions
-  // Filtrar por user_id (suportado) e verificar session_token no callback
+  // 🔒 Realtime listener on active_sessions
   useEffect(() => {
     if (!user) return;
 
@@ -420,21 +444,15 @@ export function SessionGuard({ children }: SessionGuardProps) {
           console.log("[SessionGuard] 📡 Realtime UPDATE active_sessions:", {
             newStatus,
             revokedReason,
-            revokedAt,
-            payloadToken: payloadToken?.slice(0, 8) + "...",
-            currentToken: currentToken?.slice(0, 8) + "...",
             match: payloadToken === currentToken,
           });
 
-          // ⚡ Se MINHA sessão foi revogada → verificar o motivo
+          // Se MINHA sessão foi revogada
           if (newStatus === "revoked" && payloadToken === currentToken) {
-            // 🎯 DIFERENCIAR: user_logout vs conflito de sessão
             const isUserInitiatedLogout = revokedReason === "user_logout";
 
             if (isUserInitiatedLogout) {
-              // Logout manual: não mostrar overlay de conflito
-              console.log("[SessionGuard] ✅ Logout manual detectado - sem overlay de conflito");
-              // Apenas limpar e sair silenciosamente
+              console.log("[SessionGuard] ✅ Logout manual - sem overlay");
               const keysToRemove = [
                 "matriz_session_token",
                 "matriz_last_heartbeat",
@@ -446,22 +464,19 @@ export function SessionGuard({ children }: SessionGuardProps) {
               sessionStorage.clear();
               await signOut();
             } else {
-              // 🕐 JANELA DE 2 HORAS: Ignorar revogações antigas
+              // Ignorar revogações antigas
               if (revokedAt) {
-                const revokedTime = new Date(revokedAt).getTime();
-                const age = Date.now() - revokedTime;
+                const age = Date.now() - new Date(revokedAt).getTime();
                 if (age > REVOCATION_STALE_THRESHOLD_MS) {
-                  console.log(`[SessionGuard] ✅ Revogação antiga (${Math.round(age / 60000)} min) - ignorando overlay`);
-                  // Limpar token local para forçar relogin, mas SEM overlay dramático
+                  console.log(`[SessionGuard] ✅ Revogação antiga - logout silencioso`);
                   localStorage.removeItem(SESSION_TOKEN_KEY);
                   await signOut();
                   return;
                 }
               }
               
-              // Conflito de sessão real E recente: mostrar overlay
-              console.error("[SessionGuard] 🔴 Conflito de sessão detectado:", revokedReason);
-              handleDeviceRevocation();
+              // 🔧 P0 FIX: Verificar no DB antes de mostrar overlay
+              await verifyAndShowOverlay('realtime_session_update', revokedReason);
             }
           }
         },
@@ -473,13 +488,17 @@ export function SessionGuard({ children }: SessionGuardProps) {
     return () => {
       supabase.removeChannel(realtimeChannel);
     };
-  }, [user, handleDeviceRevocation, signOut]);
+  }, [user, verifyAndShowOverlay, signOut]);
 
   return (
     <>
       {children}
-      {/* @ts-ignore - Props corretas, TypeScript desatualizado */}
-      <SessionRevokedOverlay isVisible={showRevokedOverlay} onClose={handleOverlayClose} />
+      <SessionRevokedOverlay 
+        isVisible={showRevokedOverlay} 
+        onClose={handleOverlayClose}
+        onRetry={handleOverlayRetry}
+        reason={overlayReason}
+      />
     </>
   );
 }
