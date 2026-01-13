@@ -322,10 +322,7 @@ export const CalculatorInlinePanel = memo(function CalculatorInlinePanel({
         animate={{ opacity: 1 }}
         whileHover={{ scale: 1.05 }}
         onClick={onToggle}
-        className={cn(
-          "fixed top-1/3 z-[80] p-2 rounded-lg bg-blue-600/90 hover:bg-blue-500 text-white shadow-lg border border-blue-400/50",
-          side === 'right' ? 'right-2' : 'left-2'
-        )}
+        className="fixed top-4 left-4 z-[80] p-2 rounded-lg bg-blue-600/90 hover:bg-blue-500 text-white shadow-lg border border-blue-400/50"
         title="Abrir Calculadora"
       >
         <CalculatorIcon className="w-5 h-5" />
@@ -335,14 +332,11 @@ export const CalculatorInlinePanel = memo(function CalculatorInlinePanel({
 
   return (
     <motion.div
-      initial={{ x: side === 'right' ? 300 : -300, opacity: 0 }}
+      initial={{ x: -300, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      exit={{ x: side === 'right' ? 300 : -300, opacity: 0 }}
+      exit={{ x: -300, opacity: 0 }}
       transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-      className={cn(
-        "fixed top-16 z-[80] w-72 bg-slate-900/95 backdrop-blur-xl border border-blue-500/30 rounded-xl shadow-2xl overflow-hidden",
-        side === 'right' ? 'right-2' : 'left-2'
-      )}
+      className="fixed top-16 left-2 z-[80] w-72 bg-slate-900/95 backdrop-blur-xl border border-blue-500/30 rounded-xl shadow-2xl overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-blue-600/30 to-cyan-600/30 border-b border-blue-500/20">
@@ -527,10 +521,7 @@ export const PeriodicTableInlinePanel = memo(function PeriodicTableInlinePanel({
         animate={{ opacity: 1 }}
         whileHover={{ scale: 1.05 }}
         onClick={onToggle}
-        className={cn(
-          "fixed top-1/2 z-[80] p-2 rounded-lg bg-teal-600/90 hover:bg-teal-500 text-white shadow-lg border border-teal-400/50",
-          side === 'left' ? 'left-2' : 'right-2'
-        )}
+        className="fixed top-4 right-16 z-[80] p-2 rounded-lg bg-red-600/90 hover:bg-red-500 text-white shadow-lg border border-red-400/50"
         title="Abrir Tabela Periódica"
       >
         <Atom className="w-5 h-5" />
@@ -540,20 +531,17 @@ export const PeriodicTableInlinePanel = memo(function PeriodicTableInlinePanel({
 
   return (
     <motion.div
-      initial={{ x: side === 'left' ? -400 : 400, opacity: 0 }}
+      initial={{ x: 400, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      exit={{ x: side === 'left' ? -400 : 400, opacity: 0 }}
+      exit={{ x: 400, opacity: 0 }}
       transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-      className={cn(
-        "fixed top-16 bottom-16 z-[80] w-80 bg-slate-900/95 backdrop-blur-xl border border-teal-500/30 rounded-xl shadow-2xl overflow-hidden flex flex-col",
-        side === 'left' ? 'left-2' : 'right-2'
-      )}
+      className="fixed top-16 bottom-16 right-2 z-[80] w-80 bg-slate-900/95 backdrop-blur-xl border border-red-500/30 rounded-xl shadow-2xl overflow-hidden flex flex-col"
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-teal-600/30 to-emerald-600/30 border-b border-teal-500/20 shrink-0">
+      <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-red-600/30 to-rose-600/30 border-b border-red-500/20 shrink-0">
         <div className="flex items-center gap-2">
-          <Atom className="w-4 h-4 text-teal-400" />
-          <span className="text-sm font-semibold text-teal-300">Tabela Periódica</span>
+          <Atom className="w-4 h-4 text-red-400" />
+          <span className="text-sm font-semibold text-red-300">Tabela Periódica</span>
         </div>
         <Button
           variant="ghost"
@@ -570,7 +558,7 @@ export const PeriodicTableInlinePanel = memo(function PeriodicTableInlinePanel({
         <input
           type="text"
           placeholder="Buscar elemento..."
-          className="w-full px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
+          className="w-full px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-red-500"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
         />
