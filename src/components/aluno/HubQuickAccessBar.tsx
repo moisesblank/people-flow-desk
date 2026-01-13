@@ -97,57 +97,7 @@ export const HubQuickAccessBar = memo(function HubQuickAccessBar({
         />
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          LAYER 1: STARK INDUSTRIES HEADER
-      ═══════════════════════════════════════════════════════════════════ */}
-      <div className="relative z-10 text-center mb-8">
-        {/* Top tech ornament */}
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <div 
-            className="h-[2px] w-20 md:w-32 bg-gradient-to-r from-transparent via-primary/60 to-primary" 
-            style={{ boxShadow: '0 0 20px hsl(var(--primary) / 0.4)' }} 
-          />
-          
-          <div 
-            className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5"
-            style={{ boxShadow: '0 0 30px hsl(var(--primary) / 0.15), inset 0 0 20px hsl(var(--primary) / 0.05)' }}
-          >
-            <div 
-              className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" 
-              style={{ boxShadow: '0 0 10px hsl(160 100% 50%)' }} 
-            />
-            <span className="text-[10px] md:text-xs font-mono text-primary tracking-[0.3em] uppercase font-bold">
-              Sistema Neural
-            </span>
-            <div 
-              className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" 
-              style={{ boxShadow: '0 0 10px hsl(160 100% 50%)' }} 
-            />
-          </div>
-          
-          <div 
-            className="h-[2px] w-20 md:w-32 bg-gradient-to-l from-transparent via-primary/60 to-primary" 
-            style={{ boxShadow: '0 0 20px hsl(var(--primary) / 0.4)' }} 
-          />
-        </div>
-
-        {/* Main title */}
-        <h2 
-          className="text-2xl md:text-4xl font-black tracking-[0.15em] uppercase mb-2"
-          style={{
-            background: 'linear-gradient(180deg, hsl(var(--primary)) 0%, hsl(var(--holo-cyan)) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            filter: 'drop-shadow(0 0 30px hsl(var(--primary) / 0.4))'
-          }}
-        >
-          Hub Central
-        </h2>
-        
-        <p className="text-xs text-muted-foreground tracking-widest uppercase">
-          6 Módulos de Estudo Integrados
-        </p>
-      </div>
+      {/* Header removido conforme solicitação do usuário */}
 
       {/* ═══════════════════════════════════════════════════════════════════
           LAYER 2: COMMAND GRID — 6 Módulos
