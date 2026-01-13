@@ -1264,8 +1264,8 @@ export default function AlunoPlanejamento() {
                   isPending={markCompleteMutation.isPending}
                 />
 
-                {/* 🚀 HUB QUICK ACCESS BAR - Acima do Fórum */}
-                <div className="mb-6">
+                {/* 🚀 HUB QUICK ACCESS BAR - Logo abaixo do vídeo */}
+                <div className="mt-4 mb-6">
                   <HubQuickAccessBar
                     activeModal={activeModal}
                     onOpenModal={setActiveModal}

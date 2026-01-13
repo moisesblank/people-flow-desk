@@ -64,47 +64,13 @@ export const HubQuickAccessBar = memo(function HubQuickAccessBar({
   onOpenModal
 }: HubQuickAccessBarProps) {
   return (
-    <section className="relative py-8 overflow-hidden">
+    <section className="relative py-3 overflow-hidden rounded-xl border border-border/30 bg-card/50 backdrop-blur-sm">
       {/* ═══════════════════════════════════════════════════════════════════
-          LAYER 0: COSMIC VOID — Deep Space Background (como FuturisticCategoryFilter)
+          COMMAND GRID — 6 Módulos Compactos e Responsivos
       ═══════════════════════════════════════════════════════════════════ */}
-      <div className="absolute inset-0 -z-10">
-        {/* Void gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-[hsl(var(--system-cosmos-deep))] to-background" />
-        
-        {/* Nebula clouds */}
-        <div 
-          className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(ellipse 100% 60% at 20% 30%, hsl(var(--primary) / 0.12) 0%, transparent 50%),
-              radial-gradient(ellipse 80% 50% at 80% 70%, hsl(var(--holo-cyan) / 0.08) 0%, transparent 50%),
-              radial-gradient(ellipse 120% 80% at 50% 100%, hsl(var(--holo-purple) / 0.06) 0%, transparent 40%)
-            `
-          }}
-        />
-        
-        {/* Holographic grid */}
-        <div 
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: `
-              linear-gradient(90deg, hsl(var(--primary) / 0.8) 1px, transparent 1px),
-              linear-gradient(0deg, hsl(var(--primary) / 0.8) 1px, transparent 1px)
-            `,
-            backgroundSize: '60px 60px'
-          }}
-        />
-      </div>
-
-      {/* Header removido conforme solicitação do usuário */}
-
-      {/* ═══════════════════════════════════════════════════════════════════
-          LAYER 2: COMMAND GRID — 6 Módulos
-      ═══════════════════════════════════════════════════════════════════ */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4">
-        <div className="grid grid-cols-3 md:grid-cols-9 gap-3 md:gap-4">
-          {HUB_AREAS.map((area, index) => {
+      <div className="relative z-10 px-3">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          {HUB_AREAS.map((area) => {
             const Icon = area.icon;
             const isActive = activeModal === area.key;
             
@@ -113,57 +79,29 @@ export const HubQuickAccessBar = memo(function HubQuickAccessBar({
                 key={area.key}
                 onClick={() => onOpenModal(area.key)}
                 className={cn(
-                  "group relative flex flex-col items-center p-4 rounded-xl transition-all duration-300",
-                  "micro-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
-                  isActive && "scale-105"
+                  "group relative flex flex-col items-center p-2.5 rounded-lg transition-all duration-200",
+                  "hover:bg-primary/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+                  isActive && "bg-primary/15"
                 )}
-                style={{
-                  background: isActive 
-                    ? `linear-gradient(135deg, hsl(${area.hue} 80% 50% / 0.15), hsl(${area.hue} 80% 50% / 0.05))`
-                    : 'transparent'
-                }}
               >
-                {/* Glow ring on hover/active */}
+                {/* Icon container */}
                 <div 
                   className={cn(
-                    "absolute inset-0 rounded-xl transition-opacity duration-300",
-                    isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    "relative w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200",
+                    "group-hover:scale-105",
+                    isActive && "scale-105"
                   )}
                   style={{
-                    boxShadow: `inset 0 0 30px hsl(${area.hue} 80% 50% / 0.1), 0 0 40px hsl(${area.hue} 80% 50% / 0.15)`,
-                    border: `1px solid hsl(${area.hue} 80% 50% / 0.3)`
-                  }}
-                />
-                
-                {/* Icon container - Hexagonal style */}
-                <div 
-                  className={cn(
-                    "relative w-14 h-14 md:w-16 md:h-16 rounded-xl flex items-center justify-center transition-all duration-300",
-                    "group-hover:scale-110 group-hover:-translate-y-1",
-                    isActive && "scale-110 -translate-y-1"
-                  )}
-                  style={{
-                    background: `linear-gradient(135deg, hsl(${area.hue} 80% 55% / 0.25), hsl(${area.hue} 80% 45% / 0.4))`,
-                    border: `1px solid hsl(${area.hue} 80% 60% / 0.5)`,
-                    boxShadow: isActive 
-                      ? `0 0 40px hsl(${area.hue} 80% 50% / 0.4), 0 10px 40px hsl(${area.hue} 80% 50% / 0.2), inset 0 0 20px hsl(${area.hue} 80% 70% / 0.1)`
-                      : `0 4px 20px hsl(${area.hue} 80% 50% / 0.15)`
+                    background: `linear-gradient(135deg, hsl(${area.hue} 70% 50% / 0.2), hsl(${area.hue} 70% 40% / 0.3))`,
+                    border: `1px solid hsl(${area.hue} 70% 55% / 0.4)`,
+                    boxShadow: `0 2px 10px hsl(${area.hue} 70% 50% / 0.15)`
                   }}
                 >
-                  {/* Inner glow layer */}
-                  <div 
-                    className="absolute inset-1 rounded-lg opacity-40"
-                    style={{
-                      background: `radial-gradient(circle at 30% 30%, hsl(${area.hue} 80% 80% / 0.3), transparent 60%)`
-                    }}
-                  />
-                  
-                  {/* Icon */}
                   <Icon 
-                    className="relative w-6 h-6 md:w-7 md:h-7 transition-transform duration-300"
+                    className="w-5 h-5"
                     style={{ 
-                      color: `hsl(${area.hue} 80% 70%)`,
-                      filter: `drop-shadow(0 0 10px hsl(${area.hue} 80% 60% / 0.8))`
+                      color: `hsl(${area.hue} 70% 65%)`,
+                      filter: `drop-shadow(0 0 6px hsl(${area.hue} 70% 60% / 0.6))`
                     }}
                   />
                 </div>
@@ -171,12 +109,9 @@ export const HubQuickAccessBar = memo(function HubQuickAccessBar({
                 {/* Label */}
                 <span 
                   className={cn(
-                    "mt-3 text-[11px] md:text-xs font-bold tracking-wide transition-all duration-300",
+                    "mt-1.5 text-[10px] font-semibold tracking-wide transition-colors duration-200 text-center leading-tight",
                     isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
                   )}
-                  style={{
-                    textShadow: isActive ? `0 0 20px hsl(${area.hue} 80% 60% / 0.6)` : 'none'
-                  }}
                 >
                   {area.label}
                 </span>
@@ -184,41 +119,24 @@ export const HubQuickAccessBar = memo(function HubQuickAccessBar({
                 {/* Badge */}
                 {area.badge && (
                   <div 
-                    className="absolute -top-1 -right-1 px-1.5 py-0.5 rounded text-[8px] font-black text-white"
+                    className="absolute -top-0.5 -right-0.5 px-1 py-px rounded text-[7px] font-bold text-white"
                     style={{
                       background: area.badgeType === 'ai' 
-                        ? 'linear-gradient(135deg, hsl(160 80% 45%), hsl(180 80% 45%))'
+                        ? 'linear-gradient(135deg, hsl(160 70% 45%), hsl(180 70% 45%))'
                         : area.badgeType === 'xp'
-                        ? 'linear-gradient(135deg, hsl(40 90% 50%), hsl(45 90% 55%))'
-                        : 'linear-gradient(135deg, hsl(280 80% 55%), hsl(300 80% 55%))',
-                      boxShadow: area.badgeType === 'ai' 
-                        ? '0 2px 12px hsl(170 80% 50% / 0.5)'
-                        : area.badgeType === 'xp'
-                        ? '0 2px 12px hsl(45 90% 50% / 0.5)'
-                        : '0 2px 12px hsl(290 80% 55% / 0.5)'
+                        ? 'linear-gradient(135deg, hsl(40 85% 50%), hsl(45 85% 55%))'
+                        : 'linear-gradient(135deg, hsl(280 70% 55%), hsl(300 70% 55%))',
+                      boxShadow: '0 1px 6px rgba(0,0,0,0.3)'
                     }}
                   >
                     {area.badge}
                   </div>
-                )}
-                
-                {/* Active indicator */}
-                {isActive && (
-                  <div 
-                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-10 h-1 rounded-full"
-                    style={{
-                      background: `linear-gradient(90deg, transparent, hsl(${area.hue} 80% 60%), transparent)`,
-                      boxShadow: `0 0 15px hsl(${area.hue} 80% 60% / 0.8)`
-                    }}
-                  />
                 )}
               </button>
             );
           })}
         </div>
       </div>
-
-      {/* Footer removido conforme solicitação do usuário */}
     </section>
   );
 });
