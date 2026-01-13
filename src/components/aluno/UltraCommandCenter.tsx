@@ -118,7 +118,7 @@ export function UltraCommandCenter() {
         label: 'Flashcards',
         sublabel: `${flashcardsPending.count} para revisar`,
         icon: Brain,
-        route: '/alunos/flashcards',
+        route: '/alunos/materiais',
         gradient: 'from-purple-500 to-pink-500',
         badge: flashcardsPending.count,
         priority: 'high',

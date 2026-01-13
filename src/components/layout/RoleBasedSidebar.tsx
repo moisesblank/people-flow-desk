@@ -318,7 +318,8 @@ const alunoMenuGroups: MenuGroup[] = [
       { title: "Simulados ENEM", url: "/alunos/simulados", icon: Brain, area: "aluno-simulados", badge: "REAL" },
       // HIDDEN_ITEMS: Redação Química removida do menu (mantida no sistema)
       // { title: "Redação Química", url: "/alunos/redacao", icon: PenLine, area: "aluno-redacao" },
-      { title: "Flashcards", url: "/alunos/flashcards", icon: Sparkles, area: "aluno-flashcards" },
+      // HIDDEN_ITEMS: Flashcards migrado para /alunos/materiais (coleção Flash Cards)
+      // { title: "Flashcards", url: "/alunos/flashcards", icon: Sparkles, area: "aluno-flashcards" },
       { title: "Materiais", url: "/alunos/materiais", icon: FileDown, area: "aluno-materiais" },
       // HIDDEN_ITEMS: Revisão Inteligente removida do menu (mantida no sistema)
       // { title: "Revisão Inteligente", url: "/alunos/revisao", icon: Eraser, area: "aluno-revisao", badge: "IA" },

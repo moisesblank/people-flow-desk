@@ -95,7 +95,7 @@ export function StudentCommandCenter() {
         ? `${pendingFlashcardsCount} para revisar hoje` 
         : 'Revisão espaçada FSRS',
       icon: Brain,
-      route: '/alunos/flashcards',
+      route: '/alunos/materiais',
       color: 'from-purple-500 to-pink-500',
       badge: pendingFlashcardsCount && pendingFlashcardsCount > 0 ? pendingFlashcardsCount : undefined,
       priority: pendingFlashcardsCount && pendingFlashcardsCount > 0 ? 'urgent' : 'high',
