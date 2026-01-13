@@ -1199,13 +1199,24 @@ export default function Auth() {
       return;
     }
 
-    // 🛡️ NOVA ESTRATÉGIA: Turnstile NÃO é obrigatório no login normal
-    // Só é exigido em eventos de risco: signup, reset senha, muitas tentativas falhas
-    // Login padrão flui SEM bloqueio por Turnstile
+    // 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO no login para bloquear IAs/bots
+    // Após incidente MANUS - bots conseguiam entrar sem CAPTCHA visual
+    // Owner bypass mantido para não travar acesso de emergência
+    const email = (formData.email || "").trim();
+    
+    if (!isOwnerEmail(email) && (!isTurnstileVerified || !turnstileToken)) {
+      console.error("[AUTH] ERROR: Turnstile não verificado no login");
+      toast.error("Verificação de segurança necessária", {
+        description: "Complete a verificação anti-bot para fazer login.",
+      });
+      getDeviceGateActions().setLoginIntent(false);
+      return;
+    }
 
-    console.log("[AUTH] 3. Estado Turnstile (não obrigatório no login):", {
+    console.log("[AUTH] 3. Estado Turnstile (obrigatório no login):", {
       verified: isTurnstileVerified,
       hasToken: Boolean(turnstileToken),
+      isOwner: isOwnerEmail(email),
     });
 
     setIsLoading(true);
@@ -2505,8 +2516,9 @@ export default function Auth() {
                   </div>
                 )}
 
-                {/* Cloudflare Turnstile - APENAS para signup (evento de risco) */}
-                {!isLogin && (
+                {/* 🛡️ ANTI-BOT v2.0: Cloudflare Turnstile OBRIGATÓRIO para login E signup */}
+                {/* Após incidente MANUS - bots/IAs conseguiam entrar sem verificação visual */}
+                {!isOwnerEmail((formData.email || "").trim()) && (
                   <div className="py-2">
                     <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
                   </div>
