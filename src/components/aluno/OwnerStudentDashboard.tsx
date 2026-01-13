@@ -1,7 +1,7 @@
 // ============================================
-// VISÃO DIVINA DO OWNER - SANTUÁRIO BETA v9.0
+// VISÃO DIVINA DO OWNER - SANTUÁRIO BETA v10.0
 // Dashboard de Onisciência para o Arquiteto
-// Métricas, Alunos, IA e Controle Total
+// 🔒 DADOS 100% REAIS - ZERO MOCKS
 // ============================================
 
 import { useState } from "react";
@@ -10,90 +10,178 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Users, Brain, TrendingUp, Award, Clock, Target, 
   Zap, Activity, Eye, AlertTriangle, ChevronRight,
   BarChart3, Sparkles, Atom, Crown, Flame, BookOpen,
-  GraduationCap, Trophy, Star, ArrowUpRight, ArrowDownRight
+  GraduationCap, Trophy, Star, ArrowUpRight, ArrowDownRight,
+  Database
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useOptimizedAnimation, STAGGER_DISABLED } from "@/hooks/useOptimizedAnimation";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 // 🎬 OPTIMIZED: Removed stagger animations per strategy
 // Using static rendering for list items
 const container = STAGGER_DISABLED.container;
 const item = STAGGER_DISABLED.item;
 
-// Mock data - será substituído por dados reais do Supabase
-const ownerStats = {
-  totalAlunos: 847,
-  alunosAtivos: 789,
-  alunosEmRisco: 23,
-  taxaRetencao: 93.2,
-  mediaEngajamento: 78.5,
-  aulasAssistidas: 15420,
-  questoesRespondidas: 89340,
-  mediaAcertos: 72.4,
-  xpTotalDistribuido: 2450000,
-  ticketMedio: 297.00,
-  receitaMes: 42580.00,
-  churnMes: 2.1,
-};
+// ============================================
+// 🔒 HOOK DE DADOS REAIS DO OWNER
+// ============================================
+function useOwnerPlatformStats() {
+  return useQuery({
+    queryKey: ['owner-platform-stats'],
+    queryFn: async () => {
+      // Buscar contagem de alunos por status
+      const { data: alunosData, error: alunosError } = await supabase
+        .from('user_roles')
+        .select('role, user_id', { count: 'exact' })
+        .in('role', ['beta', 'aluno_gratuito', 'aluno_presencial', 'beta_expira']);
 
-const alunosDestaque = [
-  { nome: "Maria Silva", xp: 12500, nivel: 15, streak: 45, status: "🔥 On Fire" },
-  { nome: "João Santos", xp: 11200, nivel: 14, streak: 38, status: "⭐ Rising Star" },
-  { nome: "Ana Oliveira", xp: 10800, nivel: 13, streak: 32, status: "🚀 Momentum" },
-  { nome: "Pedro Costa", xp: 9500, nivel: 12, streak: 28, status: "💪 Dedicado" },
-];
+      if (alunosError) {
+        console.error('[OWNER] Erro ao buscar alunos:', alunosError);
+      }
 
-const alunosRisco = [
-  { nome: "Lucas Ferreira", diasInativo: 7, ultimoAcesso: "14/06", risco: "alto" },
-  { nome: "Julia Martins", diasInativo: 5, ultimoAcesso: "16/06", risco: "medio" },
-  { nome: "Carlos Lima", diasInativo: 4, ultimoAcesso: "17/06", risco: "medio" },
-];
+      const totalAlunos = alunosData?.length || 0;
 
-const metricsCards = [
-  { 
-    title: "Alunos Ativos", 
-    value: ownerStats.alunosAtivos, 
-    total: ownerStats.totalAlunos,
-    icon: Users, 
-    color: "from-cyan-500 to-blue-600",
-    trend: "+12%",
-    trendUp: true
-  },
-  { 
-    title: "Taxa de Retenção", 
-    value: `${ownerStats.taxaRetencao}%`, 
-    icon: Target, 
-    color: "from-green-500 to-emerald-600",
-    trend: "+2.3%",
-    trendUp: true
-  },
-  { 
-    title: "Engajamento Médio", 
-    value: `${ownerStats.mediaEngajamento}%`, 
-    icon: Activity, 
-    color: "from-purple-500 to-violet-600",
-    trend: "+5.1%",
-    trendUp: true
-  },
-  { 
-    title: "Alunos em Risco", 
-    value: ownerStats.alunosEmRisco, 
-    icon: AlertTriangle, 
-    color: "from-amber-500 to-orange-600",
-    trend: "-8%",
-    trendUp: false,
-    alert: true
-  },
-];
+      // Buscar XP total distribuído
+      const { data: gamificationData, error: gamError } = await supabase
+        .from('user_gamification')
+        .select('total_xp');
+
+      if (gamError) {
+        console.error('[OWNER] Erro ao buscar gamificação:', gamError);
+      }
+
+      const xpTotalDistribuido = gamificationData?.reduce((acc, g) => acc + (g.total_xp || 0), 0) || 0;
+
+      // Buscar aulas assistidas (lesson_progress)
+      const { count: aulasAssistidas } = await supabase
+        .from('lesson_progress')
+        .select('*', { count: 'exact', head: true })
+        .eq('completed', true);
+
+      // Buscar questões respondidas
+      const { count: questoesRespondidas } = await supabase
+        .from('question_attempts')
+        .select('*', { count: 'exact', head: true });
+
+      // Buscar acertos
+      const { count: acertos } = await supabase
+        .from('question_attempts')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_correct', true);
+
+      const mediaAcertos = questoesRespondidas && questoesRespondidas > 0 
+        ? Math.round((acertos || 0) / questoesRespondidas * 100) 
+        : 0;
+
+      // Buscar top alunos por XP
+      const { data: topAlunos } = await supabase
+        .from('user_gamification')
+        .select(`
+          user_id,
+          total_xp,
+          current_level,
+          current_streak
+        `)
+        .order('total_xp', { ascending: false })
+        .limit(5);
+
+      // Buscar nomes dos top alunos
+      const topAlunosComNomes = await Promise.all(
+        (topAlunos || []).map(async (aluno) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('nome')
+            .eq('id', aluno.user_id)
+            .maybeSingle();
+          
+          return {
+            ...aluno,
+            nome: profile?.nome || 'Aluno',
+          };
+        })
+      );
+
+      return {
+        totalAlunos,
+        xpTotalDistribuido,
+        aulasAssistidas: aulasAssistidas || 0,
+        questoesRespondidas: questoesRespondidas || 0,
+        mediaAcertos,
+        topAlunos: topAlunosComNomes,
+      };
+    },
+    staleTime: 60_000, // 1 minuto
+    refetchOnWindowFocus: false,
+  });
+}
 
 export function OwnerStudentDashboard() {
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("visao-geral");
+  
+  // 🔒 DADOS 100% REAIS
+  const { data: stats, isLoading } = useOwnerPlatformStats();
+
+  // Loading State
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-4 md:p-6 space-y-6">
+        <Skeleton className="h-48 w-full rounded-3xl" />
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <Skeleton key={i} className="h-32 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Dados reais (ou zeros se não houver)
+  const ownerStats = {
+    totalAlunos: stats?.totalAlunos || 0,
+    xpTotalDistribuido: stats?.xpTotalDistribuido || 0,
+    aulasAssistidas: stats?.aulasAssistidas || 0,
+    questoesRespondidas: stats?.questoesRespondidas || 0,
+    mediaAcertos: stats?.mediaAcertos || 0,
+  };
+
+  const topAlunos = stats?.topAlunos || [];
+
+  const metricsCards = [
+    { 
+      title: "Total de Alunos", 
+      value: ownerStats.totalAlunos, 
+      icon: Users, 
+      color: "from-cyan-500 to-blue-600",
+    },
+    { 
+      title: "XP Distribuído", 
+      value: ownerStats.xpTotalDistribuido > 1000 
+        ? `${(ownerStats.xpTotalDistribuido / 1000).toFixed(1)}K` 
+        : ownerStats.xpTotalDistribuido, 
+      icon: Zap, 
+      color: "from-amber-500 to-yellow-600",
+    },
+    { 
+      title: "Aulas Assistidas", 
+      value: ownerStats.aulasAssistidas, 
+      icon: BookOpen, 
+      color: "from-purple-500 to-violet-600",
+    },
+    { 
+      title: "Taxa de Acerto", 
+      value: `${ownerStats.mediaAcertos}%`, 
+      icon: Target, 
+      color: "from-green-500 to-emerald-600",
+    },
+  ];
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
@@ -119,12 +207,16 @@ export function OwnerStudentDashboard() {
                   <Eye className="w-3 h-3 mr-1" />
                   VISÃO DIVINA • OWNER
                 </Badge>
+                <Badge className="bg-green-500/20 text-green-300 border-0 text-xs">
+                  <Database className="w-3 h-3 mr-1" />
+                  DADOS REAIS
+                </Badge>
               </div>
               <h1 className="text-3xl md:text-4xl font-bold text-white">
                 Santuário BETA - Central de Comando
               </h1>
               <p className="text-white/80 text-lg">
-                Monitore, analise e otimize a jornada de {ownerStats.totalAlunos} alunos em tempo real
+                Monitore {ownerStats.totalAlunos} alunos em tempo real
               </p>
             </div>
 
@@ -146,7 +238,14 @@ export function OwnerStudentDashboard() {
               >
                 <div className="flex items-center justify-center gap-1">
                   <Zap className="w-6 h-6 text-yellow-400" />
-                  <span className="text-3xl font-black text-white">{(ownerStats.xpTotalDistribuido / 1000000).toFixed(1)}M</span>
+                  <span className="text-3xl font-black text-white">
+                    {ownerStats.xpTotalDistribuido > 1000000 
+                      ? `${(ownerStats.xpTotalDistribuido / 1000000).toFixed(1)}M`
+                      : ownerStats.xpTotalDistribuido > 1000
+                        ? `${(ownerStats.xpTotalDistribuido / 1000).toFixed(0)}K`
+                        : ownerStats.xpTotalDistribuido
+                    }
+                  </span>
                 </div>
                 <div className="text-xs text-white/70 font-medium">XP DISTRIBUÍDO</div>
               </motion.div>
@@ -170,17 +269,10 @@ export function OwnerStudentDashboard() {
                   <div className={`p-3 rounded-2xl bg-gradient-to-br ${metric.color} shadow-lg`}>
                     <metric.icon className="w-5 h-5 text-white" />
                   </div>
-                  <div className={`flex items-center gap-1 text-sm font-medium ${metric.trendUp ? 'text-green-500' : 'text-amber-500'}`}>
-                    {metric.trendUp ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                    {metric.trend}
-                  </div>
                 </div>
                 <div className="mt-4">
                   <p className="text-3xl font-black text-foreground">{metric.value}</p>
                   <p className="text-sm text-muted-foreground font-medium">{metric.title}</p>
-                  {metric.total && (
-                    <Progress value={(Number(String(metric.value).replace(/\D/g, '')) / metric.total) * 100} className="h-1.5 mt-2" />
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -190,7 +282,7 @@ export function OwnerStudentDashboard() {
 
       {/* Tabs de Navegação */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
-        <TabsList className="grid grid-cols-4 lg:w-fit">
+        <TabsList className="grid grid-cols-3 lg:w-fit">
           <TabsTrigger value="visao-geral" className="gap-2">
             <BarChart3 className="w-4 h-4" />
             <span className="hidden sm:inline">Visão Geral</span>
@@ -203,126 +295,88 @@ export function OwnerStudentDashboard() {
             <Brain className="w-4 h-4" />
             <span className="hidden sm:inline">IA Insights</span>
           </TabsTrigger>
-          <TabsTrigger value="financeiro" className="gap-2">
-            <TrendingUp className="w-4 h-4" />
-            <span className="hidden sm:inline">Financeiro</span>
-          </TabsTrigger>
         </TabsList>
 
         {/* Tab: Visão Geral */}
         <TabsContent value="visao-geral" className="space-y-6">
           <div className="grid lg:grid-cols-3 gap-6">
-            {/* Top Alunos */}
+            {/* Top Alunos - DADOS REAIS */}
             <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Trophy className="w-5 h-5 text-amber-500" />
-                  Top Alunos do Mês
+                  Top Alunos por XP
                 </CardTitle>
-                <CardDescription>Os discípulos mais dedicados</CardDescription>
+                <CardDescription>Os alunos mais dedicados (dados reais)</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {alunosDestaque.map((aluno, index) => (
-                  <motion.div 
-                    key={index}
-                    className="flex items-center gap-4 p-4 rounded-2xl bg-muted/50 hover:bg-muted transition-colors cursor-pointer group"
-                    whileHover={{ x: 5 }}
-                  >
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
-                      index === 0 ? 'bg-gradient-to-br from-amber-400 to-yellow-500' :
-                      index === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400' :
-                      index === 2 ? 'bg-gradient-to-br from-amber-600 to-orange-700' :
-                      'bg-gradient-to-br from-slate-500 to-slate-600'
-                    }`}>
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold">{aluno.nome}</p>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Zap className="w-3 h-3 text-yellow-500" />
-                          {aluno.xp.toLocaleString()} XP
-                        </span>
-                        <span>Nível {aluno.nivel}</span>
-                        <span className="flex items-center gap-1">
-                          <Flame className="w-3 h-3 text-orange-500" />
-                          {aluno.streak} dias
-                        </span>
+                {topAlunos.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                    <p>Nenhum aluno com XP ainda.</p>
+                    <p className="text-sm">Os alunos aparecerão aqui conforme estudarem.</p>
+                  </div>
+                ) : (
+                  topAlunos.map((aluno, index) => (
+                    <motion.div 
+                      key={aluno.user_id}
+                      className="flex items-center gap-4 p-4 rounded-2xl bg-muted/50 hover:bg-muted transition-colors cursor-pointer group"
+                      whileHover={{ x: 5 }}
+                    >
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${
+                        index === 0 ? 'bg-gradient-to-br from-amber-400 to-yellow-500' :
+                        index === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-400' :
+                        index === 2 ? 'bg-gradient-to-br from-amber-600 to-orange-700' :
+                        'bg-gradient-to-br from-slate-500 to-slate-600'
+                      }`}>
+                        {index + 1}
                       </div>
-                    </div>
-                    <Badge variant="secondary">{aluno.status}</Badge>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                  </motion.div>
-                ))}
+                      <div className="flex-1">
+                        <p className="font-semibold">{aluno.nome}</p>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Zap className="w-3 h-3 text-yellow-500" />
+                            {aluno.total_xp.toLocaleString()} XP
+                          </span>
+                          <span>Nível {aluno.current_level}</span>
+                          <span className="flex items-center gap-1">
+                            <Flame className="w-3 h-3 text-orange-500" />
+                            {aluno.current_streak} dias
+                          </span>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                    </motion.div>
+                  ))
+                )}
               </CardContent>
             </Card>
 
-            {/* Alunos em Risco */}
-            <Card className="border-amber-500/30 bg-amber-500/5">
+            {/* Métricas de Aprendizado */}
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-amber-600">
-                  <AlertTriangle className="w-5 h-5" />
-                  Alunos em Risco
+                <CardTitle className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-blue-500" />
+                  Métricas Globais
                 </CardTitle>
-                <CardDescription>Requerem atenção imediata</CardDescription>
+                <CardDescription>Performance da plataforma</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {alunosRisco.map((aluno, index) => (
-                  <motion.div 
-                    key={index}
-                    className="p-4 rounded-2xl bg-background border border-amber-500/20 space-y-2"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <p className="font-semibold">{aluno.nome}</p>
-                      <Badge variant={aluno.risco === 'alto' ? 'destructive' : 'outline'} className="text-xs">
-                        {aluno.risco === 'alto' ? '🔴 Alto' : '🟡 Médio'}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>{aluno.diasInativo} dias inativo</span>
-                      <span>Último: {aluno.ultimoAcesso}</span>
-                    </div>
-                    <Button size="sm" className="w-full mt-2" variant="outline">
-                      <Sparkles className="w-3 h-3 mr-1" />
-                      Enviar Reengajamento
-                    </Button>
-                  </motion.div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Métricas de Aprendizado */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-blue-500" />
-                Métricas de Aprendizado
-              </CardTitle>
-              <CardDescription>Performance geral da plataforma</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+              <CardContent className="space-y-4">
                 <div className="text-center p-4 rounded-2xl bg-blue-500/10">
-                  <p className="text-4xl font-black text-blue-500">{ownerStats.aulasAssistidas.toLocaleString()}</p>
+                  <p className="text-3xl font-black text-blue-500">{ownerStats.aulasAssistidas.toLocaleString()}</p>
                   <p className="text-sm text-muted-foreground">Aulas Assistidas</p>
                 </div>
                 <div className="text-center p-4 rounded-2xl bg-green-500/10">
-                  <p className="text-4xl font-black text-green-500">{ownerStats.questoesRespondidas.toLocaleString()}</p>
+                  <p className="text-3xl font-black text-green-500">{ownerStats.questoesRespondidas.toLocaleString()}</p>
                   <p className="text-sm text-muted-foreground">Questões Respondidas</p>
                 </div>
                 <div className="text-center p-4 rounded-2xl bg-purple-500/10">
-                  <p className="text-4xl font-black text-purple-500">{ownerStats.mediaAcertos}%</p>
+                  <p className="text-3xl font-black text-purple-500">{ownerStats.mediaAcertos}%</p>
                   <p className="text-sm text-muted-foreground">Média de Acertos</p>
                 </div>
-                <div className="text-center p-4 rounded-2xl bg-amber-500/10">
-                  <p className="text-4xl font-black text-amber-500">{(ownerStats.xpTotalDistribuido / 1000).toLocaleString()}K</p>
-                  <p className="text-sm text-muted-foreground">XP Total Distribuído</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Tab: Alunos */}
@@ -330,12 +384,12 @@ export function OwnerStudentDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Gestão de Alunos</CardTitle>
-              <CardDescription>Lista completa e filtros avançados em breve</CardDescription>
+              <CardDescription>Acesse a gestão completa pela área administrativa</CardDescription>
             </CardHeader>
             <CardContent className="py-12 text-center text-muted-foreground">
               <Users className="w-16 h-16 mx-auto mb-4 opacity-50" />
-              <p>Módulo de gestão de alunos será expandido nas próximas versões</p>
-              <Button className="mt-4" variant="outline" onClick={() => navigate('/alunos-gestao')}>
+              <p>Para gestão completa de alunos, acesse:</p>
+              <Button className="mt-4" variant="outline" onClick={() => navigate('/gestaofc/gestao-alunos')}>
                 Ir para Gestão de Alunos
               </Button>
             </CardContent>
@@ -363,53 +417,6 @@ export function OwnerStudentDashboard() {
               </p>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        {/* Tab: Financeiro */}
-        <TabsContent value="financeiro">
-          <div className="grid lg:grid-cols-3 gap-6">
-            <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/5">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 rounded-xl bg-green-500/20">
-                    <TrendingUp className="w-6 h-6 text-green-500" />
-                  </div>
-                  <span className="text-sm text-muted-foreground">Receita do Mês</span>
-                </div>
-                <p className="text-4xl font-black text-green-500">
-                  R$ {ownerStats.receitaMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/5">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 rounded-xl bg-blue-500/20">
-                    <Star className="w-6 h-6 text-blue-500" />
-                  </div>
-                  <span className="text-sm text-muted-foreground">Ticket Médio</span>
-                </div>
-                <p className="text-4xl font-black text-blue-500">
-                  R$ {ownerStats.ticketMedio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-amber-500/10 to-orange-500/5">
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 rounded-xl bg-amber-500/20">
-                    <AlertTriangle className="w-6 h-6 text-amber-500" />
-                  </div>
-                  <span className="text-sm text-muted-foreground">Churn Rate</span>
-                </div>
-                <p className="text-4xl font-black text-amber-500">
-                  {ownerStats.churnMes}%
-                </p>
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
       </Tabs>
     </div>
