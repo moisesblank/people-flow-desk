@@ -170,12 +170,16 @@ function AulaContent() {
               SISTEMA DE ABAS EDUCACIONAIS v9.0
               Resumo IA | Quiz | Flashcards | Transcrição
               Mapa Mental | Anotações | TRAMON
+              
+              TEMPORARIAMENTE DESATIVADO
           ======================================== */}
+          {/*
           <LessonTabs
             lessonId={lessonId || "demo-lesson"}
             lessonTitle="Introdução Inorgânica PT2-2025 - Diagramas de Fases"
             className="animate-fade-in"
           />
+          */}
         </div>
 
         {/* Sidebar - Info da Aula */}

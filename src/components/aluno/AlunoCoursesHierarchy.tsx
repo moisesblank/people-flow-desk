@@ -2292,13 +2292,14 @@ function AlunoCoursesHierarchy() {
                   />
                 </div>
 
-                {/* Lesson Tabs */}
+                {/* Lesson Tabs - TEMPORARIAMENTE DESATIVADO
                 <div className="rounded-2xl border-2 border-border/30 bg-card/50 backdrop-blur-sm overflow-hidden">
                   <LessonTabs 
                     lessonId={selectedLesson.id}
                     lessonTitle={selectedLesson.title}
                   />
                 </div>
+                */}
 
                 {/* Description */}
                 {selectedLesson.description && (

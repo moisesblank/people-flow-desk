@@ -251,11 +251,12 @@ export default function AlunoVideoaulas() {
                   />
                 </div>
 
-                {/* Lesson Tabs (Resumo, Quiz, etc) */}
+                {/* Lesson Tabs (Resumo, Quiz, etc) - TEMPORARIAMENTE DESATIVADO
                 <LessonTabs 
                   lessonId={selectedLesson.id}
                   lessonTitle={selectedLesson.title}
                 />
+                */}
 
                 {/* Descrição da aula */}
                 {selectedLesson.description && (
