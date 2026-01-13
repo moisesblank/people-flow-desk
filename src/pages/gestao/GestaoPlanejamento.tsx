@@ -2,6 +2,7 @@
 // 📋 GESTÃO DE PLANEJAMENTO SEMANAL
 // /gestaofc/planejamento
 // Gestão: CRUD de semanas, aulas, materiais
+// 🔗 v2.0 - Vinculação com Videoaulas existentes
 // ============================================
 
 import { useState, useMemo, useEffect } from "react";
@@ -40,6 +41,9 @@ import {
   Zap,
   GraduationCap,
   TrendingUp,
+  Link2,
+  Unlink,
+  ExternalLink,
 } from "lucide-react";
 
 // Components
@@ -71,6 +75,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -78,6 +84,31 @@ import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+
+// Types - Existing Lessons from lessons table
+interface ExistingLesson {
+  id: string;
+  title: string;
+  video_url: string | null;
+  panda_video_id: string | null;
+  duration_minutes: number | null;
+  module?: { id: string; title: string } | null;
+  area?: { id: string; name: string } | null;
+}
 
 // Types
 interface PlanningWeek {
@@ -563,12 +594,13 @@ function WeekFormDialog({
   );
 }
 
-// Lessons Management Dialog
+// Lessons Management Dialog with Videoaulas Linking
 function LessonsManagementDialog({
   open,
   onOpenChange,
   week,
   lessons,
+  existingLessons,
   onAddLesson,
   onDeleteLesson,
   isLoading,
@@ -577,11 +609,17 @@ function LessonsManagementDialog({
   onOpenChange: (open: boolean) => void;
   week: PlanningWeek | null;
   lessons: PlanningLesson[];
+  existingLessons: ExistingLesson[];
   onAddLesson: (data: Partial<PlanningLesson>) => void;
   onDeleteLesson: (id: string) => void;
   isLoading: boolean;
 }) {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [linkExisting, setLinkExisting] = useState(true); // Toggle: vincular existente vs criar nova
+  const [selectedLessonId, setSelectedLessonId] = useState<string>("");
+  const [lessonSearchOpen, setLessonSearchOpen] = useState(false);
+  const [lessonSearchQuery, setLessonSearchQuery] = useState("");
+  
   const [newLesson, setNewLesson] = useState({
     title: "",
     description: "",
@@ -594,16 +632,62 @@ function LessonsManagementDialog({
 
   const weekLessons = lessons.filter(l => l.week_id === week?.id).sort((a, b) => a.position - b.position);
 
+  // Group existing lessons by module for better UX
+  const groupedLessons = useMemo(() => {
+    const groups: Record<string, ExistingLesson[]> = {};
+    existingLessons.forEach(lesson => {
+      const moduleName = lesson.module?.title || "Sem Módulo";
+      if (!groups[moduleName]) groups[moduleName] = [];
+      groups[moduleName].push(lesson);
+    });
+    return groups;
+  }, [existingLessons]);
+
+  // Filtered lessons based on search
+  const filteredLessons = useMemo(() => {
+    if (!lessonSearchQuery) return existingLessons;
+    const query = lessonSearchQuery.toLowerCase();
+    return existingLessons.filter(
+      l => l.title.toLowerCase().includes(query) || 
+           l.module?.title?.toLowerCase().includes(query)
+    );
+  }, [existingLessons, lessonSearchQuery]);
+
+  const selectedExistingLesson = existingLessons.find(l => l.id === selectedLessonId);
+
+  const handleSelectExistingLesson = (lesson: ExistingLesson) => {
+    setSelectedLessonId(lesson.id);
+    setLessonSearchOpen(false);
+    
+    // Auto-fill form with selected lesson data
+    const videoUrl = lesson.video_url || 
+      (lesson.panda_video_id ? `https://player-vz-7a0cccc3-0dc.tv.pandavideo.com.br/embed/?v=${lesson.panda_video_id}` : "");
+    
+    setNewLesson({
+      ...newLesson,
+      title: lesson.title,
+      video_url: videoUrl,
+      duration_minutes: lesson.duration_minutes || 30,
+    });
+  };
+
   const handleSubmit = () => {
-    if (!newLesson.title.trim()) {
+    if (linkExisting && !selectedLessonId) {
+      toast.error("Selecione uma aula existente");
+      return;
+    }
+    if (!linkExisting && !newLesson.title.trim()) {
       toast.error("Título da aula é obrigatório");
       return;
     }
+    
     onAddLesson({
       ...newLesson,
       week_id: week!.id,
       position: weekLessons.length + 1,
     });
+    
+    // Reset form
     setNewLesson({
       title: "",
       description: "",
@@ -613,6 +697,7 @@ function LessonsManagementDialog({
       is_required: true,
       xp_reward: 10,
     });
+    setSelectedLessonId("");
     setShowAddForm(false);
   };
 
@@ -648,80 +733,256 @@ function LessonsManagementDialog({
             ) : (
               <Card className="border-primary/50">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Nova Aula</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">Nova Aula</CardTitle>
+                    
+                    {/* Toggle: Link Existing vs Create New */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <button
+                        onClick={() => {
+                          setLinkExisting(true);
+                          setSelectedLessonId("");
+                          setNewLesson({ ...newLesson, title: "", video_url: "", duration_minutes: 30 });
+                        }}
+                        className={cn(
+                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all",
+                          linkExisting 
+                            ? "bg-primary text-primary-foreground" 
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        )}
+                      >
+                        <Link2 className="h-3.5 w-3.5" />
+                        Vincular Existente
+                      </button>
+                      <button
+                        onClick={() => {
+                          setLinkExisting(false);
+                          setSelectedLessonId("");
+                        }}
+                        className={cn(
+                          "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all",
+                          !linkExisting 
+                            ? "bg-primary text-primary-foreground" 
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        )}
+                      >
+                        <Unlink className="h-3.5 w-3.5" />
+                        Criar Nova
+                      </button>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid gap-2">
-                    <Label>Título *</Label>
-                    <Input
-                      value={newLesson.title}
-                      onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })}
-                      placeholder="Ex: Aula 1 - Introdução"
-                    />
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <Label>Descrição</Label>
-                    <Textarea
-                      value={newLesson.description}
-                      onChange={(e) => setNewLesson({ ...newLesson, description: e.target.value })}
-                      placeholder="Descrição da aula..."
-                      rows={2}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label>Tipo</Label>
-                      <Select 
-                        value={newLesson.lesson_type} 
-                        onValueChange={(v) => setNewLesson({ ...newLesson, lesson_type: v as any })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="video">Videoaula</SelectItem>
-                          <SelectItem value="reading">Leitura</SelectItem>
-                          <SelectItem value="exercise">Exercício</SelectItem>
-                          <SelectItem value="quiz">Quiz</SelectItem>
-                          <SelectItem value="live">Live</SelectItem>
-                        </SelectContent>
-                      </Select>
+                  {/* Link Existing Mode */}
+                  {linkExisting && (
+                    <div className="space-y-4">
+                      <div className="grid gap-2">
+                        <Label className="flex items-center gap-2">
+                          <Video className="h-4 w-4 text-primary" />
+                          Selecionar Videoaula Existente
+                        </Label>
+                        <Popover open={lessonSearchOpen} onOpenChange={setLessonSearchOpen}>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={lessonSearchOpen}
+                              className="w-full justify-between h-auto min-h-10 py-2"
+                            >
+                              {selectedExistingLesson ? (
+                                <div className="flex items-center gap-2 text-left">
+                                  <Video className="h-4 w-4 text-primary shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium truncate">{selectedExistingLesson.title}</p>
+                                    <p className="text-xs text-muted-foreground truncate">
+                                      {selectedExistingLesson.module?.title || "Sem módulo"} 
+                                      {selectedExistingLesson.duration_minutes && ` • ${selectedExistingLesson.duration_minutes}min`}
+                                    </p>
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">Buscar videoaula...</span>
+                              )}
+                              <Search className="h-4 w-4 shrink-0 opacity-50 ml-2" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[500px] p-0" align="start">
+                            <Command>
+                              <CommandInput 
+                                placeholder="Buscar por título ou módulo..." 
+                                value={lessonSearchQuery}
+                                onValueChange={setLessonSearchQuery}
+                              />
+                              <CommandList className="max-h-[300px]">
+                                <CommandEmpty>Nenhuma videoaula encontrada</CommandEmpty>
+                                {Object.entries(groupedLessons).map(([moduleName, moduleLessons]) => {
+                                  const filtered = moduleLessons.filter(l => 
+                                    !lessonSearchQuery || 
+                                    l.title.toLowerCase().includes(lessonSearchQuery.toLowerCase())
+                                  );
+                                  if (filtered.length === 0) return null;
+                                  
+                                  return (
+                                    <CommandGroup key={moduleName} heading={moduleName}>
+                                      {filtered.map(lesson => (
+                                        <CommandItem
+                                          key={lesson.id}
+                                          value={lesson.title}
+                                          onSelect={() => handleSelectExistingLesson(lesson)}
+                                          className="flex items-center gap-3 py-3"
+                                        >
+                                          <div className={cn(
+                                            "p-1.5 rounded-md",
+                                            lesson.video_url || lesson.panda_video_id 
+                                              ? "bg-green-500/20 text-green-500" 
+                                              : "bg-yellow-500/20 text-yellow-500"
+                                          )}>
+                                            <Video className="h-3.5 w-3.5" />
+                                          </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="font-medium truncate">{lesson.title}</p>
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                              {lesson.duration_minutes && (
+                                                <span className="flex items-center gap-1">
+                                                  <Clock className="h-3 w-3" />
+                                                  {lesson.duration_minutes}min
+                                                </span>
+                                              )}
+                                              {(lesson.video_url || lesson.panda_video_id) && (
+                                                <Badge variant="outline" className="text-[10px] h-4">
+                                                  Com vídeo
+                                                </Badge>
+                                              )}
+                                            </div>
+                                          </div>
+                                          {selectedLessonId === lesson.id && (
+                                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                                          )}
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  );
+                                })}
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
+                        
+                        <p className="text-xs text-muted-foreground">
+                          {existingLessons.length} videoaulas disponíveis em /gestaofc/videoaulas
+                        </p>
+                      </div>
+                      
+                      {/* Preview of selected lesson */}
+                      {selectedExistingLesson && (
+                        <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Badge className="bg-green-500/20 text-green-500">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Aula Selecionada
+                            </Badge>
+                            <a 
+                              href={`/gestaofc/videoaulas?id=${selectedExistingLesson.id}`}
+                              target="_blank"
+                              className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                            >
+                              Ver no Gestão
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="text-muted-foreground text-xs">Título</p>
+                              <p className="font-medium">{newLesson.title}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground text-xs">Duração</p>
+                              <p className="font-medium">{newLesson.duration_minutes} minutos</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
+                  )}
 
-                    <div className="grid gap-2">
-                      <Label>Duração (min)</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        value={newLesson.duration_minutes}
-                        onChange={(e) => setNewLesson({ ...newLesson, duration_minutes: parseInt(e.target.value) || 30 })}
-                      />
-                    </div>
-                  </div>
+                  {/* Create New Mode */}
+                  {!linkExisting && (
+                    <>
+                      <div className="grid gap-2">
+                        <Label>Título *</Label>
+                        <Input
+                          value={newLesson.title}
+                          onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })}
+                          placeholder="Ex: Aula 1 - Introdução"
+                        />
+                      </div>
+                      
+                      <div className="grid gap-2">
+                        <Label>Descrição</Label>
+                        <Textarea
+                          value={newLesson.description}
+                          onChange={(e) => setNewLesson({ ...newLesson, description: e.target.value })}
+                          placeholder="Descrição da aula..."
+                          rows={2}
+                        />
+                      </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label>URL do Vídeo</Label>
-                      <Input
-                        value={newLesson.video_url}
-                        onChange={(e) => setNewLesson({ ...newLesson, video_url: e.target.value })}
-                        placeholder="https://..."
-                      />
-                    </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label>Tipo</Label>
+                          <Select 
+                            value={newLesson.lesson_type} 
+                            onValueChange={(v) => setNewLesson({ ...newLesson, lesson_type: v as any })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="video">Videoaula</SelectItem>
+                              <SelectItem value="reading">Leitura</SelectItem>
+                              <SelectItem value="exercise">Exercício</SelectItem>
+                              <SelectItem value="quiz">Quiz</SelectItem>
+                              <SelectItem value="live">Live</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-                    <div className="grid gap-2">
-                      <Label>XP Recompensa</Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        value={newLesson.xp_reward}
-                        onChange={(e) => setNewLesson({ ...newLesson, xp_reward: parseInt(e.target.value) || 10 })}
-                      />
-                    </div>
-                  </div>
+                        <div className="grid gap-2">
+                          <Label>Duração (min)</Label>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={newLesson.duration_minutes}
+                            onChange={(e) => setNewLesson({ ...newLesson, duration_minutes: parseInt(e.target.value) || 30 })}
+                          />
+                        </div>
+                      </div>
 
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                          <Label>URL do Vídeo</Label>
+                          <Input
+                            value={newLesson.video_url}
+                            onChange={(e) => setNewLesson({ ...newLesson, video_url: e.target.value })}
+                            placeholder="https://..."
+                          />
+                        </div>
+
+                        <div className="grid gap-2">
+                          <Label>XP Recompensa</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={newLesson.xp_reward}
+                            onChange={(e) => setNewLesson({ ...newLesson, xp_reward: parseInt(e.target.value) || 10 })}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Common fields */}
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={newLesson.is_required}
@@ -732,9 +993,12 @@ function LessonsManagementDialog({
 
                   <div className="flex gap-2">
                     <Button onClick={handleSubmit} disabled={isLoading}>
-                      {isLoading ? "Salvando..." : "Salvar Aula"}
+                      {isLoading ? "Salvando..." : linkExisting ? "Vincular Aula" : "Salvar Aula"}
                     </Button>
-                    <Button variant="outline" onClick={() => setShowAddForm(false)}>
+                    <Button variant="outline" onClick={() => {
+                      setShowAddForm(false);
+                      setSelectedLessonId("");
+                    }}>
                       Cancelar
                     </Button>
                   </div>
@@ -852,7 +1116,7 @@ export default function GestaoPlanejamento() {
     },
   });
 
-  // Fetch lessons
+  // Fetch planning lessons
   const { data: lessons = [] } = useQuery({
     queryKey: ["planning-lessons"],
     queryFn: async () => {
@@ -862,6 +1126,28 @@ export default function GestaoPlanejamento() {
         .order("position", { ascending: true });
       if (error) throw error;
       return data as PlanningLesson[];
+    },
+  });
+
+  // Fetch existing videoaulas from lessons table for linking
+  const { data: existingLessons = [] } = useQuery({
+    queryKey: ["existing-videoaulas-for-planning"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lessons")
+        .select(`
+          id,
+          title,
+          video_url,
+          panda_video_id,
+          duration_minutes,
+          module:modules(id, title),
+          area:areas(id, name)
+        `)
+        .eq("is_published", true)
+        .order("title", { ascending: true });
+      if (error) throw error;
+      return data as ExistingLesson[];
     },
   });
 
@@ -1165,6 +1451,7 @@ export default function GestaoPlanejamento() {
           onOpenChange={(open) => !open && setSelectedWeek(null)}
           week={selectedWeek}
           lessons={lessons}
+          existingLessons={existingLessons}
           onAddLesson={(data) => createLessonMutation.mutate(data)}
           onDeleteLesson={(id) => deleteLessonMutation.mutate(id)}
           isLoading={createLessonMutation.isPending}
