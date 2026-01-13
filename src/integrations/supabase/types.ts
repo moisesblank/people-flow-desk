@@ -585,6 +585,27 @@ export type Database = {
         }
         Relationships: []
       }
+      app_version: {
+        Row: {
+          id: string
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       areas: {
         Row: {
           color: string | null
