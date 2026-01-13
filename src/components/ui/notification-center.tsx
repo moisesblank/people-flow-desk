@@ -221,14 +221,6 @@ export const NotificationCenter = forwardRef<HTMLDivElement, NotificationCenterP
                     Marcar todas
                   </Button>
                 )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  aria-label="Configurações de notificação"
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
               </div>
             </div>
             
