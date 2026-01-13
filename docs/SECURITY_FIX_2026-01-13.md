@@ -106,6 +106,7 @@ USUÁRIO ABRE DEVTOOLS (QUALQUER MÉTODO)
 | Arquivo | Alteração |
 |---------|-----------|
 | `src/lib/security/antiDebugger.ts` | Corrigido bypass de produção |
+| `src/lib/security/nuclearShield.ts` | Corrigido bypass de produção (2ª correção) |
 | `src/hooks/useBookSecurityGuard.ts` | Polling 1s + violação real |
 | `src/hooks/useContentSecurityGuard.tsx` | Polling 1s + violação real |
 | `src/components/books/WebBookViewer.tsx` | `data-sanctum-protected` |
