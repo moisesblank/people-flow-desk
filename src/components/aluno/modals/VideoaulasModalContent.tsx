@@ -3,8 +3,7 @@
 // Biblioteca de vídeos - Acesso direto
 // ============================================
 
-import { memo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { memo, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,30 +11,40 @@ import { Video, Play, BookOpen, Film } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
+interface VideoaulasStats {
+  totalAulas: number;
+  totalModulos: number;
+}
+
 export const VideoaulasModalContent = memo(function VideoaulasModalContent() {
   const navigate = useNavigate();
+  const [stats, setStats] = useState<VideoaulasStats>({ totalAulas: 0, totalModulos: 0 });
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Buscar contagens reais
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ['videoaulas-modal-stats'],
-    queryFn: async () => {
-      const { count: totalAulas } = await supabase
-        .from('lessons')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        // Cast para evitar erro de recursão de tipos do Supabase
+        const client = supabase as any;
+        
+        const [lessonsRes, areasRes] = await Promise.all([
+          client.from('lessons').select('id', { count: 'exact', head: true }).eq('is_active', true),
+          client.from('areas').select('id', { count: 'exact', head: true }).eq('is_active', true),
+        ]);
 
-      const { count: totalModulos } = await supabase
-        .from('areas')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
+        setStats({
+          totalAulas: lessonsRes.count ?? 0,
+          totalModulos: areasRes.count ?? 0,
+        });
+      } catch (error) {
+        console.error('Erro ao buscar stats de videoaulas:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
 
-      return {
-        totalAulas: totalAulas || 0,
-        totalModulos: totalModulos || 0,
-      };
-    },
-    staleTime: 60_000,
-  });
+    fetchStats();
+  }, []);
 
   if (isLoading) {
     return <Skeleton className="h-48 w-full" />;
@@ -48,14 +57,14 @@ export const VideoaulasModalContent = memo(function VideoaulasModalContent() {
         <Card className="border-red-500/20 bg-red-500/5">
           <CardContent className="pt-4 text-center">
             <Video className="w-6 h-6 text-red-500 mx-auto mb-2" />
-            <div className="text-2xl font-bold">{stats?.totalAulas || 0}</div>
+            <div className="text-2xl font-bold">{stats.totalAulas}</div>
             <div className="text-xs text-muted-foreground">Videoaulas</div>
           </CardContent>
         </Card>
         <Card className="border-green-500/20 bg-green-500/5">
           <CardContent className="pt-4 text-center">
             <BookOpen className="w-6 h-6 text-green-500 mx-auto mb-2" />
-            <div className="text-2xl font-bold">{stats?.totalModulos || 0}</div>
+            <div className="text-2xl font-bold">{stats.totalModulos}</div>
             <div className="text-xs text-muted-foreground">Módulos</div>
           </CardContent>
         </Card>
@@ -70,7 +79,7 @@ export const VideoaulasModalContent = memo(function VideoaulasModalContent() {
             </div>
             <h3 className="text-xl font-bold mb-2">Acesse suas Videoaulas</h3>
             <p className="text-muted-foreground max-w-md mx-auto mb-6">
-              {stats?.totalAulas && stats.totalAulas > 0
+              {stats.totalAulas > 0
                 ? `Você tem acesso a ${stats.totalAulas} videoaulas.`
                 : 'Nenhuma videoaula disponível no momento.'
               }
