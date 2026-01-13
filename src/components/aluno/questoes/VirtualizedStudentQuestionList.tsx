@@ -356,6 +356,13 @@ export function VirtualizedStudentQuestionList({
     return null;
   }
 
+  // Calcular altura dinâmica baseada no número de questões
+  const dynamicHeight = Math.min(
+    questions.length * ITEM_HEIGHT + (questions.length - 1) * 16,
+    window.innerHeight * 0.7
+  );
+  const shouldUseFixedHeight = questions.length > 5;
+
   return (
     <div
       ref={containerRef}
@@ -365,9 +372,9 @@ export function VirtualizedStudentQuestionList({
         isHighEnd && "scrollbar-thin scrollbar-thumb-amber-500/20 scrollbar-track-transparent"
       )}
       style={{ 
-        height: CONTAINER_HEIGHT,
-        minHeight: '400px',
-        maxHeight: '70vh'
+        height: shouldUseFixedHeight ? CONTAINER_HEIGHT : 'auto',
+        minHeight: shouldUseFixedHeight ? '400px' : 'auto',
+        maxHeight: shouldUseFixedHeight ? '70vh' : `${dynamicHeight}px`
       }}
     >
       <div style={{ height: totalHeight, position: 'relative' }}>
