@@ -1013,7 +1013,7 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                 });
                 if (response.error) throw response.error;
                 const result = response.data;
-                toast.success(`✅ ${result.success} sumários gerados, ${result.skipped} ignorados`, { id: toastId });
+                toast.success(`✅ ${result.success_count || 0} sumários gerados, ${result.skipped || 0} ignorados`, { id: toastId });
                 loadBooks();
               } catch (err) {
                 toast.error('Erro ao gerar sumários', { id: toastId });
