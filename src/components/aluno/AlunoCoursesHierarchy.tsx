@@ -339,6 +339,214 @@ function HierarchyLegend() {
 }
 
 // ============================================
+// 🧪 RESOLUÇÃO DE QUESTÕES — MACRO GROUPING CARDS
+// Agrupa módulos por área: Química Geral, Orgânica, Físico-Química
+// APENAS para subcategoria "Resolução de Questões"
+// ============================================
+const RESOLUCAO_MACRO_CARDS = [
+  {
+    id: 'quimica-geral',
+    name: 'Resolução de questão - Química Geral',
+    icon: '⚗️',
+    gradient: 'from-amber-500/30 via-amber-600/20 to-amber-900/10',
+    borderColor: 'border-amber-500/50',
+    glowColor: 'rgba(251, 191, 36, 0.4)',
+    moduleRange: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], // Módulos 02-13
+  },
+  {
+    id: 'quimica-organica',
+    name: 'Resolução de questão - Química Orgânica',
+    icon: '🧪',
+    gradient: 'from-purple-500/30 via-purple-600/20 to-purple-900/10',
+    borderColor: 'border-purple-500/50',
+    glowColor: 'rgba(168, 85, 247, 0.4)',
+    moduleRange: [14, 15, 16, 17, 18, 19], // Módulos 14-19
+  },
+  {
+    id: 'fisico-quimica',
+    name: 'Resolução de questão - Físico-Química',
+    icon: '⚡',
+    gradient: 'from-cyan-500/30 via-cyan-600/20 to-cyan-900/10',
+    borderColor: 'border-cyan-500/50',
+    glowColor: 'rgba(34, 211, 238, 0.4)',
+    moduleRange: [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31], // Módulos 20-31
+  },
+];
+
+// Extrai número do módulo do título (ex: "Módulo 02" -> 2)
+function extractModuleNumber(title: string): number | null {
+  const match = title.match(/(?:m[óo]dulo\s*)?0*(\d+)/i);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+// ============================================
+// 🎬 RESOLUÇÃO QUESTÕES MACRO VIEW
+// Cards Netflix-style para agrupar módulos por área
+// ============================================
+const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
+  allModules,
+  expandedModules,
+  onToggleModule,
+  onPlayLesson,
+  progressMap
+}: {
+  allModules: Module[];
+  expandedModules: Set<string>;
+  onToggleModule: (id: string) => void;
+  onPlayLesson: (lesson: Lesson) => void;
+  progressMap: Map<string, ModuleProgressData>;
+}) {
+  const [selectedMacro, setSelectedMacro] = useState<string | null>(null);
+  
+  // Filtra módulos por range de número
+  const getModulesForMacro = useCallback((moduleRange: number[]) => {
+    return allModules.filter(m => {
+      const num = extractModuleNumber(m.title);
+      return num !== null && moduleRange.includes(num);
+    }).sort((a, b) => {
+      const numA = extractModuleNumber(a.title) || 0;
+      const numB = extractModuleNumber(b.title) || 0;
+      return numA - numB;
+    });
+  }, [allModules]);
+  
+  // Módulos filtrados para o macro selecionado
+  const filteredModules = useMemo(() => {
+    if (!selectedMacro) return [];
+    const card = RESOLUCAO_MACRO_CARDS.find(c => c.id === selectedMacro);
+    if (!card) return [];
+    return getModulesForMacro(card.moduleRange);
+  }, [selectedMacro, getModulesForMacro]);
+  
+  const selectedCard = RESOLUCAO_MACRO_CARDS.find(c => c.id === selectedMacro);
+
+  // Se um macro está selecionado, mostra os módulos
+  if (selectedMacro && selectedCard) {
+    const totalLessons = filteredModules.reduce((a, m) => a + (m._count?.lessons || 0), 0);
+    
+    return (
+      <div className="space-y-6">
+        {/* Back Button + Header */}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={() => setSelectedMacro(null)}
+            className="gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            Voltar
+          </Button>
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+              <span className="text-3xl">{selectedCard.icon}</span>
+              {selectedCard.name}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {filteredModules.length} módulos • {totalLessons} videoaulas
+            </p>
+          </div>
+        </div>
+        
+        {/* Módulos */}
+        <div className="space-y-2">
+          {filteredModules.map((module, idx) => (
+            <NetflixModuleSection
+              key={module.id}
+              module={module}
+              index={idx}
+              isExpanded={expandedModules.has(module.id)}
+              onToggle={() => onToggleModule(module.id)}
+              onPlayLesson={onPlayLesson}
+              progress={progressMap.get(module.id)}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Grid de Macro Cards (estilo materiais)
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {RESOLUCAO_MACRO_CARDS.map((card) => {
+        const modules = getModulesForMacro(card.moduleRange);
+        const totalLessons = modules.reduce((a, m) => a + (m._count?.lessons || 0), 0);
+        
+        return (
+          <div
+            key={card.id}
+            onClick={() => setSelectedMacro(card.id)}
+            className={cn(
+              "group relative cursor-pointer overflow-hidden rounded-2xl transition-all duration-300",
+              "bg-gradient-to-br", card.gradient,
+              "border-2", card.borderColor,
+              "hover:scale-[1.02] hover:shadow-2xl",
+              "transform-gpu"
+            )}
+            style={{
+              boxShadow: `0 10px 40px -10px ${card.glowColor}`,
+            }}
+          >
+            {/* Corner accents */}
+            <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-current/30 rounded-tl-2xl pointer-events-none" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-current/30 rounded-tr-2xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-current/30 rounded-bl-2xl pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-current/30 rounded-br-2xl pointer-events-none" />
+            
+            {/* Glow on hover */}
+            <div 
+              className="absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-500 pointer-events-none"
+              style={{ background: `radial-gradient(circle at center, ${card.glowColor}, transparent 70%)` }}
+            />
+            
+            {/* Content */}
+            <div className="relative p-6 space-y-4">
+              {/* Icon + Title */}
+              <div className="flex items-center gap-4">
+                <div className="text-4xl md:text-5xl">{card.icon}</div>
+                <div className="flex-1">
+                  <h3 className="text-lg md:text-xl font-bold text-white leading-tight">
+                    {card.name}
+                  </h3>
+                </div>
+              </div>
+              
+              {/* Stats */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/60 border border-slate-600/30">
+                  <Layers className="h-4 w-4 text-slate-300" />
+                  <span className="text-lg font-bold text-white">{modules.length}</span>
+                  <span className="text-xs text-slate-400">módulos</span>
+                </div>
+                
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/60 border border-slate-600/30">
+                  <PlayCircle className="h-4 w-4 text-slate-300" />
+                  <span className="text-lg font-bold text-white">{totalLessons}</span>
+                  <span className="text-xs text-slate-400">aulas</span>
+                </div>
+              </div>
+              
+              {/* CTA */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-600/30">
+                <span className="text-sm text-slate-300 font-medium">
+                  Módulos {card.moduleRange[0].toString().padStart(2, '0')} - {card.moduleRange[card.moduleRange.length - 1].toString().padStart(2, '0')}
+                </span>
+                <div className="flex items-center gap-2 text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
+                  Ver Módulos
+                  <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+});
+ResolucaoQuestoesMacroView.displayName = 'ResolucaoQuestoesMacroView';
+
+// ============================================
 // 📚 COURSE SECTION — NETFLIX PREMIUM CINEMATIC
 // Card de curso com design cinematográfico Netflix Red
 // ============================================
@@ -2009,68 +2217,115 @@ function AlunoCoursesHierarchy() {
         </div>
       ) : (
         <div key="filtered" className="space-y-6">
-          {/* Back Button + Header */}
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="lg"
-              onClick={handleBackToHub}
-              className="gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              Voltar
-            </Button>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-white">{viewState.selectedCardName}</h2>
-              <p className="text-sm text-muted-foreground">
-                {viewState.allowedSubcategories.length} subcategoria{viewState.allowedSubcategories.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-          </div>
+          {/* Back Button + Header - APENAS se NÃO for Resolução de Questões (o componente especial tem seu próprio header) */}
+          {viewState.selectedCardId !== 'resolucao-questoes' && (
+            <>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={handleBackToHub}
+                  className="gap-2 text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                  Voltar
+                </Button>
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-white">{viewState.selectedCardName}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {viewState.allowedSubcategories.length} subcategoria{viewState.allowedSubcategories.length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
 
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar módulo ou aula..."
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="pl-10 bg-card/50 border-border/50"
-            />
-          </div>
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar módulo ou aula..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  className="pl-10 bg-card/50 border-border/50"
+                />
+              </div>
+            </>
+          )}
 
-          {/* Content */}
-          {loadingModules ? (
-            <div className="space-y-4">
-              {[1, 2].map(i => (
-                <Card key={i} className="opacity-50">
-                  <CardHeader className="bg-muted/10">
-                    <div className="h-12 bg-muted/30 rounded-lg" />
-                  </CardHeader>
-                </Card>
-              ))}
-            </div>
-          ) : groupedData.length === 0 ? (
-            <Card className="p-12 text-center bg-card/50 backdrop-blur-xl border-border/30">
-              <GraduationCap className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-              <h3 className="text-lg font-semibold">Nenhum conteúdo encontrado</h3>
-              <p className="text-muted-foreground mt-2">
-                {busca ? 'Nenhum resultado para sua busca.' : 'As aulas aparecerão aqui quando forem publicadas.'}
-              </p>
-            </Card>
-          ) : (
+          {/* 🧪 RESOLUÇÃO DE QUESTÕES — MACRO CARDS VIEW */}
+          {viewState.selectedCardId === 'resolucao-questoes' ? (
             <div className="space-y-6">
-              {groupedData.map(({ courseId, course, subcategoryGroups }) => (
-                <CourseSection
-                  key={courseId}
-                  course={course}
-                  subcategoryGroups={subcategoryGroups}
+              {/* Header com voltar */}
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={handleBackToHub}
+                  className="gap-2 text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                  Voltar
+                </Button>
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold text-white">{viewState.selectedCardName}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Selecione uma área para ver os módulos
+                  </p>
+                </div>
+              </div>
+              
+              {/* Macro Cards */}
+              {loadingModules ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-48 rounded-2xl bg-slate-800/50 animate-pulse" />
+                  ))}
+                </div>
+              ) : (
+                <ResolucaoQuestoesMacroView
+                  allModules={groupedData.flatMap(g => g.subcategoryGroups.flatMap(s => s.modules))}
                   expandedModules={expandedModules}
                   onToggleModule={toggleModule}
                   onPlayLesson={handlePlayLesson}
+                  progressMap={new Map()}
                 />
-              ))}
+              )}
             </div>
+          ) : (
+            /* Content padrão para outros Hubs */
+            <>
+              {loadingModules ? (
+                <div className="space-y-4">
+                  {[1, 2].map(i => (
+                    <Card key={i} className="opacity-50">
+                      <CardHeader className="bg-muted/10">
+                        <div className="h-12 bg-muted/30 rounded-lg" />
+                      </CardHeader>
+                    </Card>
+                  ))}
+                </div>
+              ) : groupedData.length === 0 ? (
+                <Card className="p-12 text-center bg-card/50 backdrop-blur-xl border-border/30">
+                  <GraduationCap className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
+                  <h3 className="text-lg font-semibold">Nenhum conteúdo encontrado</h3>
+                  <p className="text-muted-foreground mt-2">
+                    {busca ? 'Nenhum resultado para sua busca.' : 'As aulas aparecerão aqui quando forem publicadas.'}
+                  </p>
+                </Card>
+              ) : (
+                <div className="space-y-6">
+                  {groupedData.map(({ courseId, course, subcategoryGroups }) => (
+                    <CourseSection
+                      key={courseId}
+                      course={course}
+                      subcategoryGroups={subcategoryGroups}
+                      expandedModules={expandedModules}
+                      onToggleModule={toggleModule}
+                      onPlayLesson={handlePlayLesson}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
