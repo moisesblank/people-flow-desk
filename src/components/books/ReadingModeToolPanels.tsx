@@ -622,41 +622,26 @@ export const PeriodicTableInlinePanel = memo(function PeriodicTableInlinePanel({
 interface ReadingModeToolPanelsProps {
   isFullscreen: boolean;
   showCalculator: boolean;
-  showPeriodicTable: boolean;
   onToggleCalculator: () => void;
-  onTogglePeriodicTable: () => void;
 }
 
 export const ReadingModeToolPanels = memo(function ReadingModeToolPanels({
   isFullscreen,
   showCalculator,
-  showPeriodicTable,
-  onToggleCalculator,
-  onTogglePeriodicTable
+  onToggleCalculator
 }: ReadingModeToolPanelsProps) {
   if (!isFullscreen) return null;
 
   return (
-    <>
-      <AnimatePresence>
-        {showCalculator && (
-          <CalculatorInlinePanel
-            isVisible={showCalculator}
-            onToggle={onToggleCalculator}
-            side="right"
-          />
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {showPeriodicTable && (
-          <PeriodicTableInlinePanel
-            isVisible={showPeriodicTable}
-            onToggle={onTogglePeriodicTable}
-            side="left"
-          />
-        )}
-      </AnimatePresence>
-    </>
+    <AnimatePresence>
+      {showCalculator && (
+        <CalculatorInlinePanel
+          isVisible={showCalculator}
+          onToggle={onToggleCalculator}
+          side="right"
+        />
+      )}
+    </AnimatePresence>
   );
 });
 

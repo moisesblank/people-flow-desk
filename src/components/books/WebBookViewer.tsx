@@ -28,8 +28,7 @@ import {
   MessageCircle,
   FileText,
   Save,
-  Calculator,
-  Atom
+  Calculator
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -42,8 +41,9 @@ import { PdfPageViewer } from './PdfPageViewer';
 import { ReadingModeToolbar, ToolMode } from './ReadingModeToolbar';
 import { useBookAnnotations } from '@/hooks/useBookAnnotations';
 // useBookPageOverlays removido - substituído por useFabricOverlays
-// CalculatorButton e PeriodicTableButton removidos - substituídos por ReadingModeToolPanels
+// CalculatorButton removido - substituído por ReadingModeToolPanels
 import { ReadingModeToolPanels } from './ReadingModeToolPanels';
+import { PeriodicTableButton } from '@/components/PeriodicTable';
 import { FabricDrawingCanvas, FabricDrawingCanvasHandle, FabricCanvasData } from './FabricDrawingCanvas';
 import { useFabricOverlays } from '@/hooks/useFabricOverlays';
 
@@ -460,9 +460,8 @@ export const WebBookViewer = memo(function WebBookViewer({
   const [isSavingHistory, setIsSavingHistory] = useState(false);
   const [imageHeight, setImageHeight] = useState<number>(0); // P0 FIX: altura real da imagem
   
-  // Estados para ferramentas (Calculadora e Tabela Periódica)
+  // Estado para Calculadora (Tabela Periódica agora usa PeriodicTableButton com Dialog próprio)
   const [showCalculator, setShowCalculator] = useState(false);
-  const [showPeriodicTable, setShowPeriodicTable] = useState(false);
   
   // Estado de ferramentas de desenho (Fabric.js)
   const [activeTool, setActiveTool] = useState<ToolMode>('pencil');
@@ -1054,30 +1053,14 @@ export const WebBookViewer = memo(function WebBookViewer({
           </button>
         )}
 
-        {/* ⚛️ TABELA PERIÓDICA - Botão no header (só em fullscreen) */}
+        {/* ⚛️ TABELA PERIÓDICA - Usando componente oficial com Dialog completo */}
         {isFullscreen && (
-          <button
-            onClick={() => setShowPeriodicTable(v => !v)}
-            className={cn(
-              "relative group transition-all duration-300 hover:scale-105 active:scale-95 ml-2",
-              showPeriodicTable && "ring-2 ring-red-500 ring-offset-2 ring-offset-black rounded-lg"
-            )}
-            title="Tabela Periódica"
-          >
-            <div 
-              className={cn(
-                "relative px-3 py-2 rounded-lg transition-all duration-300",
-                "bg-gradient-to-br from-red-900/80 to-red-800/80",
-                "border border-red-500/50 hover:border-red-400",
-                showPeriodicTable && "bg-red-600/30"
-              )}
-            >
-              <span className="flex items-center gap-2 text-red-300 text-sm font-medium">
-                <Atom className="w-4 h-4" />
-                <span className="hidden sm:inline">Tabela Periódica</span>
-              </span>
-            </div>
-          </button>
+          <div className="ml-2">
+            <PeriodicTableButton 
+              portalContainer={document.fullscreenElement as HTMLElement | undefined}
+              className="relative group transition-all duration-300 hover:scale-105 active:scale-95"
+            />
+          </div>
         )}
       </div>
 
@@ -1115,13 +1098,11 @@ export const WebBookViewer = memo(function WebBookViewer({
           </div>
         </button>
 
-        {/* 🔶 FERRAMENTAS RÁPIDAS - Calculadora e Tabela Periódica (PAINÉIS INLINE) */}
+        {/* 🔶 CALCULADORA - Painel inline */}
         <ReadingModeToolPanels 
           isFullscreen={isFullscreen}
           showCalculator={showCalculator}
-          showPeriodicTable={showPeriodicTable}
           onToggleCalculator={() => setShowCalculator(v => !v)}
-          onTogglePeriodicTable={() => setShowPeriodicTable(v => !v)}
         />
 
         {/* Página */}
