@@ -458,57 +458,65 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
 
   // Grid de Macro Cards (estilo materiais)
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
       {RESOLUCAO_MACRO_CARDS.map((card) => {
         const modules = getModulesForMacro(card.positionRange);
         const totalLessons = modules.reduce((a, m) => a + (m._count?.lessons || 0), 0);
         
-        // Cores de acento por área
         const accentColors = {
-          'quimica-geral': 'text-amber-400',
-          'quimica-organica': 'text-purple-400',
-          'fisico-quimica': 'text-cyan-400',
+          'quimica-geral': { text: 'text-amber-400', bg: 'bg-amber-500' },
+          'quimica-organica': { text: 'text-purple-400', bg: 'bg-purple-500' },
+          'fisico-quimica': { text: 'text-cyan-400', bg: 'bg-cyan-500' },
         };
-        const accentColor = accentColors[card.id as keyof typeof accentColors] || 'text-amber-400';
+        const accent = accentColors[card.id as keyof typeof accentColors] || accentColors['quimica-geral'];
         
         return (
           <div
             key={card.id}
             onClick={() => setSelectedMacro(card.id)}
             className={cn(
-              "group cursor-pointer rounded-lg overflow-hidden",
-              "bg-zinc-900/80 border border-zinc-800/60",
-              "hover:bg-zinc-800/90 hover:border-zinc-700",
-              "hover:scale-[1.02] hover:shadow-xl hover:shadow-black/40",
-              "transition-all duration-300 ease-out transform-gpu"
+              "group cursor-pointer rounded-md overflow-hidden",
+              "bg-[#181818] border border-transparent",
+              "hover:bg-[#2a2a2a] hover:border-zinc-700/50",
+              "hover:scale-105 hover:shadow-2xl hover:shadow-black/60 hover:z-10",
+              "transition-all duration-200 ease-out transform-gpu"
             )}
           >
-            <div className="p-5">
+            {/* Accent top line */}
+            <div className={cn("h-0.5 w-full", accent.bg, "opacity-80")} />
+            
+            <div className="p-4">
               {/* Header */}
-              <div className="flex items-center gap-3 mb-4">
-                <span className="text-3xl">{card.icon}</span>
-                <h3 className="text-base font-bold text-white tracking-tight">{card.name}</h3>
-              </div>
-              
-              {/* Stats */}
-              <div className="flex items-center gap-5 mb-4">
-                <div className="flex items-center gap-2">
-                  <Layers className={cn("h-4 w-4", accentColor)} />
-                  <span className="text-sm font-semibold text-white">{modules.length}</span>
-                  <span className="text-xs text-zinc-400">módulos</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <PlayCircle className={cn("h-4 w-4", accentColor)} />
-                  <span className="text-sm font-semibold text-white">{totalLessons}</span>
-                  <span className="text-xs text-zinc-400">aulas</span>
+              <div className="flex items-start gap-3 mb-3">
+                <span className="text-2xl">{card.icon}</span>
+                <div>
+                  <h3 className="text-sm font-bold text-white leading-tight">{card.name}</h3>
+                  <p className="text-[11px] text-zinc-500 mt-0.5">Resolução comentada</p>
                 </div>
               </div>
               
-              {/* CTA Netflix-style */}
-              <div className="flex items-center gap-2 text-sm font-semibold text-white/90 group-hover:text-white transition-colors">
-                <span>Ver Módulos</span>
-                <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              {/* Stats inline */}
+              <div className="flex items-center gap-4 text-xs text-zinc-400 mb-3">
+                <span className="flex items-center gap-1.5">
+                  <Layers className={cn("h-3.5 w-3.5", accent.text)} />
+                  <span className="text-white font-medium">{modules.length}</span> módulos
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <PlayCircle className={cn("h-3.5 w-3.5", accent.text)} />
+                  <span className="text-white font-medium">{totalLessons}</span> aulas
+                </span>
               </div>
+              
+              {/* CTA Netflix Play-style */}
+              <button className={cn(
+                "w-full flex items-center justify-center gap-2 py-2 rounded",
+                "bg-white text-black text-xs font-bold",
+                "opacity-0 group-hover:opacity-100",
+                "transition-opacity duration-200"
+              )}>
+                <PlayCircle className="h-4 w-4 fill-current" />
+                <span>Assistir</span>
+              </button>
             </div>
           </div>
         );
