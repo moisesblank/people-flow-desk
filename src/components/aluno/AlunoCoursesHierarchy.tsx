@@ -27,7 +27,7 @@ import { LessonTabs } from '@/components/player/LessonTabs';
 import { useModulesProgress, type ModuleProgressData } from '@/hooks/useModuleProgress';
 import { getThumbnailUrl } from '@/lib/video/thumbnails';
 import { CoursesHub, COURSE_HUB_CARDS, type CourseHubCard } from '@/components/aluno/courses/CoursesHub';
-import { AnimatePresence, motion } from 'framer-motion';
+// AnimatePresence e motion removidos para performance
 
 // ============================================
 // TIPOS
@@ -1944,92 +1944,78 @@ function AlunoCoursesHierarchy() {
       </Dialog>
 
       {/* CONDITIONAL VIEW: HUB or FILTERED */}
-      <AnimatePresence mode="wait">
-        {viewState.mode === 'hub' ? (
-          <motion.div
-            key="hub"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            <CoursesHub onSelectCard={handleSelectCard} />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="filtered"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="space-y-6"
-          >
-            {/* Back Button + Header */}
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={handleBackToHub}
-                className="gap-2 text-muted-foreground hover:text-foreground"
-              >
-                <ArrowLeft className="h-5 w-5" />
-                Voltar
-              </Button>
-              <div className="flex-1">
-                <h2 className="text-2xl font-bold text-white">{viewState.selectedCardName}</h2>
-                <p className="text-sm text-muted-foreground">
-                  {viewState.allowedSubcategories.length} subcategoria{viewState.allowedSubcategories.length !== 1 ? 's' : ''}
-                </p>
-              </div>
+      {/* CONDITIONAL VIEW: HUB or FILTERED - STATIC VERSION */}
+      {viewState.mode === 'hub' ? (
+        <div key="hub">
+          <CoursesHub onSelectCard={handleSelectCard} />
+        </div>
+      ) : (
+        <div key="filtered" className="space-y-6">
+          {/* Back Button + Header */}
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={handleBackToHub}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              Voltar
+            </Button>
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-white">{viewState.selectedCardName}</h2>
+              <p className="text-sm text-muted-foreground">
+                {viewState.allowedSubcategories.length} subcategoria{viewState.allowedSubcategories.length !== 1 ? 's' : ''}
+              </p>
             </div>
+          </div>
 
-            {/* Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar módulo ou aula..."
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                className="pl-10 bg-card/50 border-border/50"
-              />
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar módulo ou aula..."
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="pl-10 bg-card/50 border-border/50"
+            />
+          </div>
+
+          {/* Content */}
+          {loadingModules ? (
+            <div className="space-y-4">
+              {[1, 2].map(i => (
+                <Card key={i} className="opacity-50">
+                  <CardHeader className="bg-muted/10">
+                    <div className="h-12 bg-muted/30 rounded-lg" />
+                  </CardHeader>
+                </Card>
+              ))}
             </div>
-
-            {/* Content */}
-            {loadingModules ? (
-              <div className="space-y-4">
-                {[1, 2].map(i => (
-                  <Card key={i} className="animate-pulse">
-                    <CardHeader className="bg-muted/10">
-                      <div className="h-12 bg-muted/30 rounded-lg" />
-                    </CardHeader>
-                  </Card>
-                ))}
-              </div>
-            ) : groupedData.length === 0 ? (
-              <Card className="p-12 text-center bg-card/50 backdrop-blur-xl border-border/30">
-                <GraduationCap className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-                <h3 className="text-lg font-semibold">Nenhum conteúdo encontrado</h3>
-                <p className="text-muted-foreground mt-2">
-                  {busca ? 'Nenhum resultado para sua busca.' : 'As aulas aparecerão aqui quando forem publicadas.'}
-                </p>
-              </Card>
-            ) : (
-              <div className="space-y-6">
-                {groupedData.map(({ courseId, course, subcategoryGroups }) => (
-                  <CourseSection
-                    key={courseId}
-                    course={course}
-                    subcategoryGroups={subcategoryGroups}
-                    expandedModules={expandedModules}
-                    onToggleModule={toggleModule}
-                    onPlayLesson={handlePlayLesson}
-                  />
-                ))}
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          ) : groupedData.length === 0 ? (
+            <Card className="p-12 text-center bg-card/50 backdrop-blur-xl border-border/30">
+              <GraduationCap className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
+              <h3 className="text-lg font-semibold">Nenhum conteúdo encontrado</h3>
+              <p className="text-muted-foreground mt-2">
+                {busca ? 'Nenhum resultado para sua busca.' : 'As aulas aparecerão aqui quando forem publicadas.'}
+              </p>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {groupedData.map(({ courseId, course, subcategoryGroups }) => (
+                <CourseSection
+                  key={courseId}
+                  course={course}
+                  subcategoryGroups={subcategoryGroups}
+                  expandedModules={expandedModules}
+                  onToggleModule={toggleModule}
+                  onPlayLesson={handlePlayLesson}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
