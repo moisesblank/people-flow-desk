@@ -253,7 +253,7 @@ export function MFAActionModal({ isOpen, onClose, onSuccess, action, title, desc
               <p className="text-sm text-muted-foreground">Escolha como receber o código:</p>
 
               {/* Seleção de Canal */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {/* Email */}
                 <button
                   type="button"
@@ -269,23 +269,7 @@ export function MFAActionModal({ isOpen, onClose, onSuccess, action, title, desc
                   <span className="text-xs font-medium">E-mail</span>
                 </button>
 
-                {/* WhatsApp */}
-                <button
-                  type="button"
-                  onClick={() => userPhone && setChannel("whatsapp")}
-                  disabled={!userPhone}
-                  className={cn(
-                    "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all",
-                    channel === "whatsapp"
-                      ? "border-green-500 bg-green-500/10 text-green-500"
-                      : !userPhone
-                        ? "border-border opacity-50 cursor-not-allowed"
-                        : "border-border hover:border-green-500/50 hover:bg-muted/50",
-                  )}
-                >
-                  <MessageSquare className="h-5 w-5" />
-                  <span className="text-xs font-medium">WhatsApp</span>
-                </button>
+                {/* WhatsApp - REMOVIDO TEMPORARIAMENTE (não configurado) */}
 
                 {/* SMS */}
                 <button
@@ -313,20 +297,15 @@ export function MFAActionModal({ isOpen, onClose, onSuccess, action, title, desc
                     Código será enviado para: <span className="font-medium text-foreground">{user?.email}</span>
                   </p>
                 )}
-                {channel === "whatsapp" && userPhone && (
-                  <p className="text-muted-foreground">
-                    Código será enviado para: <span className="font-medium text-foreground">{userPhone}</span> via
-                    WhatsApp
-                  </p>
-                )}
+                {/* WhatsApp info - REMOVIDO TEMPORARIAMENTE */}
                 {channel === "sms" && userPhone && (
                   <p className="text-muted-foreground">
                     Código será enviado para: <span className="font-medium text-foreground">{userPhone}</span> via SMS
                   </p>
                 )}
-                {!userPhone && (channel === "sms" || channel === "whatsapp") && (
+                {!userPhone && channel === "sms" && (
                   <p className="text-yellow-500">
-                    Telefone não cadastrado. Atualize seu perfil para usar SMS/WhatsApp.
+                    Telefone não cadastrado. Atualize seu perfil para usar SMS.
                   </p>
                 )}
               </div>
