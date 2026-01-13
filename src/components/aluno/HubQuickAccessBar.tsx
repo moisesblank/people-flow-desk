@@ -28,8 +28,7 @@ import { cn } from "@/lib/utils";
 // Tipos
 export type HubAreaKey = 
   | "cronograma" 
-  | "forum" 
-  | "tutoria" 
+  | "tutoria"
   | "videoaulas" 
   | "questoes" 
   | "flashcards" 
@@ -50,7 +49,6 @@ interface HubArea {
 // Configuração das 9 áreas com HSL para tokens semânticos
 export const HUB_AREAS: HubArea[] = [
   { key: "cronograma", label: "Cronograma", icon: Calendar, hue: 210, description: "Cronograma adaptativo por IA", badge: "IA", badgeType: "ai" },
-  { key: "forum", label: "Fórum", icon: MessageSquare, hue: 280, description: "Comunidade de alunos" },
   { key: "tutoria", label: "Tutoria IA", icon: Bot, hue: 160, description: "Tutor inteligente 24h", badge: "IA", badgeType: "ai" },
   { key: "videoaulas", label: "Videoaulas", icon: Video, hue: 0, description: "Biblioteca de vídeos" },
   { key: "questoes", label: "Questões", icon: Target, hue: 40, description: "Modo Treino (0 XP)", badge: "MODO_TREINO", badgeType: "treino" },
