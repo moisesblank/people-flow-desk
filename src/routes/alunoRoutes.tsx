@@ -21,7 +21,8 @@ const AlunoQuestoes = lazy(() => import("@/pages/aluno/AlunoQuestoes"));
 const AlunoSimulados = lazy(() => import("@/pages/aluno/AlunoSimulados"));
 const AlunoRanking = lazy(() => import("@/pages/RankingPage"));
 const AlunoTabelaPeriodica = lazy(() => import("@/pages/aluno/AlunoTabelaPeriodica"));
-const TutoriaIA = lazy(() => import("@/pages/aluno/TutoriaIA"));
+// DEPRECATED: TutoriaIA movido para /alunos/forum (via AlunoForum)
+// const TutoriaIA = lazy(() => import("@/pages/aluno/TutoriaIA"));
 const AlunoPlanejamento = lazy(() => import("@/pages/aluno/AlunoPlanejamento"));
 // DEPRECATED: AlunoFlashcards migrado para /alunos/materiais (coleção Flash Cards)
 // const AlunoFlashcards = lazy(() => import("@/pages/FlashcardsPage"));
@@ -35,7 +36,8 @@ const AlunoMapasMentais = lazy(() => import("@/pages/aluno/AlunoMapasMentais"));
 const AlunoRedacao = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoRedacao })));
 const AlunoDesempenho = lazy(() => import("@/pages/aluno/AlunoDesempenho"));
 const AlunoConquistas = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoConquistas })));
-const AlunoForum = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoForum })));
+// AlunoForum agora usa TutoriaIA (migrado de /alunos/tutoria)
+const AlunoForum = lazy(() => import("@/pages/aluno/TutoriaIA"));
 const AlunoLives = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoLives })));
 const AlunoDuvidas = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoDuvidas })));
 const AlunoRevisao = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoRevisao })));
@@ -68,7 +70,8 @@ export const alunoRoutes = (
     <Route path="/alunos/desempenho" element={<ProtectedPage><AlunoDesempenho /></ProtectedPage>} />
     <Route path="/alunos/ranking" element={<ProtectedPage><AlunoRanking /></ProtectedPage>} />
     <Route path="/alunos/conquistas" element={<ProtectedPage><AlunoConquistas /></ProtectedPage>} />
-    <Route path="/alunos/tutoria" element={<ProtectedPage><TutoriaIA /></ProtectedPage>} />
+    {/* MIGRATED: /alunos/tutoria movido para /alunos/forum */}
+    <Route path="/alunos/tutoria" element={<Navigate to="/alunos/forum" replace />} />
     <Route path="/alunos/forum" element={<ProtectedPage><AlunoForum /></ProtectedPage>} />
     <Route path="/alunos/lives" element={<ProtectedPage><AlunoLives /></ProtectedPage>} />
     <Route path="/alunos/duvidas" element={<ProtectedPage><AlunoDuvidas /></ProtectedPage>} />
