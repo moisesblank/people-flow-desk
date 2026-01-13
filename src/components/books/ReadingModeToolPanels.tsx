@@ -315,19 +315,9 @@ export const CalculatorInlinePanel = memo(function CalculatorInlinePanel({
     );
   };
 
+  // Se não visível, não renderiza nada - botão está no header agora
   if (!isVisible) {
-    return (
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        whileHover={{ scale: 1.05 }}
-        onClick={onToggle}
-        className="fixed top-4 left-4 z-[80] p-2 rounded-lg bg-blue-600/90 hover:bg-blue-500 text-white shadow-lg border border-blue-400/50"
-        title="Abrir Calculadora"
-      >
-        <CalculatorIcon className="w-5 h-5" />
-      </motion.button>
-    );
+    return null;
   }
 
   return (
@@ -514,19 +504,9 @@ export const PeriodicTableInlinePanel = memo(function PeriodicTableInlinePanel({
     e.n.toString().includes(busca)
   );
 
+  // Se não visível, não renderiza nada - botão está no header agora
   if (!isVisible) {
-    return (
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        whileHover={{ scale: 1.05 }}
-        onClick={onToggle}
-        className="fixed top-4 right-16 z-[80] p-2 rounded-lg bg-red-600/90 hover:bg-red-500 text-white shadow-lg border border-red-400/50"
-        title="Abrir Tabela Periódica"
-      >
-        <Atom className="w-5 h-5" />
-      </motion.button>
-    );
+    return null;
   }
 
   return (
@@ -641,31 +621,40 @@ export const PeriodicTableInlinePanel = memo(function PeriodicTableInlinePanel({
 
 interface ReadingModeToolPanelsProps {
   isFullscreen: boolean;
+  showCalculator: boolean;
+  showPeriodicTable: boolean;
+  onToggleCalculator: () => void;
+  onTogglePeriodicTable: () => void;
 }
 
 export const ReadingModeToolPanels = memo(function ReadingModeToolPanels({
-  isFullscreen
+  isFullscreen,
+  showCalculator,
+  showPeriodicTable,
+  onToggleCalculator,
+  onTogglePeriodicTable
 }: ReadingModeToolPanelsProps) {
-  const [showCalculator, setShowCalculator] = useState(true);
-  const [showPeriodicTable, setShowPeriodicTable] = useState(true);
-
   if (!isFullscreen) return null;
 
   return (
     <>
       <AnimatePresence>
-        <CalculatorInlinePanel
-          isVisible={showCalculator}
-          onToggle={() => setShowCalculator(!showCalculator)}
-          side="right"
-        />
+        {showCalculator && (
+          <CalculatorInlinePanel
+            isVisible={showCalculator}
+            onToggle={onToggleCalculator}
+            side="right"
+          />
+        )}
       </AnimatePresence>
       <AnimatePresence>
-        <PeriodicTableInlinePanel
-          isVisible={showPeriodicTable}
-          onToggle={() => setShowPeriodicTable(!showPeriodicTable)}
-          side="left"
-        />
+        {showPeriodicTable && (
+          <PeriodicTableInlinePanel
+            isVisible={showPeriodicTable}
+            onToggle={onTogglePeriodicTable}
+            side="left"
+          />
+        )}
       </AnimatePresence>
     </>
   );

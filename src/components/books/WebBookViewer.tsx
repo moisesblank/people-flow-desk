@@ -27,7 +27,9 @@ import {
   AlertTriangle,
   MessageCircle,
   FileText,
-  Save
+  Save,
+  Calculator,
+  Atom
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -457,6 +459,10 @@ export const WebBookViewer = memo(function WebBookViewer({
   const [pdfPath, setPdfPath] = useState<string | null>(null);
   const [isSavingHistory, setIsSavingHistory] = useState(false);
   const [imageHeight, setImageHeight] = useState<number>(0); // P0 FIX: altura real da imagem
+  
+  // Estados para ferramentas (Calculadora e Tabela Periódica)
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [showPeriodicTable, setShowPeriodicTable] = useState(false);
   
   // Estado de ferramentas de desenho (Fabric.js)
   const [activeTool, setActiveTool] = useState<ToolMode>('pencil');
@@ -1021,6 +1027,58 @@ export const WebBookViewer = memo(function WebBookViewer({
             </div>
           </button>
         )}
+
+        {/* 🧮 CALCULADORA - Botão no header (só em fullscreen) */}
+        {isFullscreen && (
+          <button
+            onClick={() => setShowCalculator(v => !v)}
+            className={cn(
+              "relative group transition-all duration-300 hover:scale-105 active:scale-95 ml-2",
+              showCalculator && "ring-2 ring-blue-500 ring-offset-2 ring-offset-black rounded-lg"
+            )}
+            title="Calculadora Científica"
+          >
+            <div 
+              className={cn(
+                "relative px-3 py-2 rounded-lg transition-all duration-300",
+                "bg-gradient-to-br from-blue-900/80 to-blue-800/80",
+                "border border-blue-500/50 hover:border-blue-400",
+                showCalculator && "bg-blue-600/30"
+              )}
+            >
+              <span className="flex items-center gap-2 text-blue-300 text-sm font-medium">
+                <Calculator className="w-4 h-4" />
+                <span className="hidden sm:inline">Calculadora</span>
+              </span>
+            </div>
+          </button>
+        )}
+
+        {/* ⚛️ TABELA PERIÓDICA - Botão no header (só em fullscreen) */}
+        {isFullscreen && (
+          <button
+            onClick={() => setShowPeriodicTable(v => !v)}
+            className={cn(
+              "relative group transition-all duration-300 hover:scale-105 active:scale-95 ml-2",
+              showPeriodicTable && "ring-2 ring-red-500 ring-offset-2 ring-offset-black rounded-lg"
+            )}
+            title="Tabela Periódica"
+          >
+            <div 
+              className={cn(
+                "relative px-3 py-2 rounded-lg transition-all duration-300",
+                "bg-gradient-to-br from-red-900/80 to-red-800/80",
+                "border border-red-500/50 hover:border-red-400",
+                showPeriodicTable && "bg-red-600/30"
+              )}
+            >
+              <span className="flex items-center gap-2 text-red-300 text-sm font-medium">
+                <Atom className="w-4 h-4" />
+                <span className="hidden sm:inline">Tabela Periódica</span>
+              </span>
+            </div>
+          </button>
+        )}
       </div>
 
       <TableOfContents
@@ -1058,7 +1116,13 @@ export const WebBookViewer = memo(function WebBookViewer({
         </button>
 
         {/* 🔶 FERRAMENTAS RÁPIDAS - Calculadora e Tabela Periódica (PAINÉIS INLINE) */}
-        <ReadingModeToolPanels isFullscreen={isFullscreen} />
+        <ReadingModeToolPanels 
+          isFullscreen={isFullscreen}
+          showCalculator={showCalculator}
+          showPeriodicTable={showPeriodicTable}
+          onToggleCalculator={() => setShowCalculator(v => !v)}
+          onTogglePeriodicTable={() => setShowPeriodicTable(v => !v)}
+        />
 
         {/* Página */}
         <div 
