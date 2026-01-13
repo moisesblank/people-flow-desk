@@ -381,38 +381,44 @@ export function SimuladoReviewScreen({
             
             {/* Right: Result Stats HUD */}
             <div className="flex items-center gap-3 flex-wrap">
-              {/* Percentage orb */}
+              {/* Percentage orb - ULTRA EVIDENT */}
               <div className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-full border",
-                percentage >= 70 ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400" :
-                percentage >= 50 ? "bg-amber-500/20 border-amber-500/50 text-amber-400" :
-                "bg-red-500/20 border-red-500/50 text-red-400",
-                !isLowEnd && "shadow-lg"
+                "flex items-center gap-3 px-6 py-3 rounded-full border-2",
+                percentage >= 70 ? "bg-emerald-500/30 border-emerald-400 text-emerald-300" :
+                percentage >= 50 ? "bg-amber-500/30 border-amber-400 text-amber-300" :
+                "bg-red-500/30 border-red-400 text-red-300",
+                !isLowEnd && "shadow-[0_0_20px_rgba(168,85,247,0.4)]"
               )}>
-                <Trophy className="h-4 w-4" />
-                <span className="font-bold text-lg">{percentage}%</span>
+                <Trophy className="h-6 w-6" />
+                <span className="font-black text-2xl tracking-tight">{percentage}%</span>
               </div>
               
-              {/* Stat pills */}
+              {/* Stat pills - ULTRA EVIDENT */}
               <div className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/50 text-emerald-400",
-                !isLowEnd && "shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+                "flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-500/30 border-2 border-emerald-400 text-emerald-300",
+                !isLowEnd && "shadow-[0_0_15px_rgba(16,185,129,0.4)]"
               )}>
-                <CheckCircle2 className="h-4 w-4" />
-                <span className="font-bold">{result.correctAnswers}</span>
+                <CheckCircle2 className="h-5 w-5" />
+                <span className="font-black text-xl">{result.correctAnswers}</span>
+                <span className="text-xs font-bold opacity-80">ACERTOS</span>
               </div>
               
               <div className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/20 border border-red-500/50 text-red-400",
-                !isLowEnd && "shadow-[0_0_10px_rgba(239,68,68,0.2)]"
+                "flex items-center gap-2 px-5 py-2.5 rounded-full bg-red-500/30 border-2 border-red-400 text-red-300",
+                !isLowEnd && "shadow-[0_0_15px_rgba(239,68,68,0.4)]"
               )}>
-                <XCircle className="h-4 w-4" />
-                <span className="font-bold">{result.wrongAnswers}</span>
+                <XCircle className="h-5 w-5" />
+                <span className="font-black text-xl">{result.wrongAnswers}</span>
+                <span className="text-xs font-bold opacity-80">ERROS</span>
               </div>
               
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-500/20 border border-slate-500/50 text-slate-400">
-                <Eye className="h-4 w-4" />
-                <span className="font-bold">{result.unanswered}</span>
+              <div className={cn(
+                "flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-500/30 border-2 border-slate-400 text-slate-300",
+                !isLowEnd && "shadow-[0_0_15px_rgba(148,163,184,0.3)]"
+              )}>
+                <Eye className="h-5 w-5" />
+                <span className="font-black text-xl">{result.unanswered}</span>
+                <span className="text-xs font-bold opacity-80">PULOU</span>
               </div>
               
               {isRetake && (
