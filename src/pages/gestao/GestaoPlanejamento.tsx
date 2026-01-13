@@ -44,6 +44,7 @@ import {
   Link2,
   Unlink,
   ExternalLink,
+  Radio,
 } from "lucide-react";
 
 // Components
@@ -146,103 +147,197 @@ interface PlanningLesson {
   updated_at: string;
 }
 
-// Stats Component
-function StatsCards({ weeks, lessons }: { weeks: PlanningWeek[]; lessons: PlanningLesson[] }) {
+// ============================================
+// 🎯 5 MANAGEMENT CARDS - Year 2300 Premium
+// Sincronização em tempo real com /alunos/planejamento
+// ============================================
+function ManagementCards({ 
+  weeks, 
+  lessons,
+  onNewWeek,
+  onViewAll,
+}: { 
+  weeks: PlanningWeek[]; 
+  lessons: PlanningLesson[];
+  onNewWeek: () => void;
+  onViewAll: () => void;
+}) {
   const stats = useMemo(() => {
     const active = weeks.filter(w => w.status === "active").length;
     const draft = weeks.filter(w => w.status === "draft").length;
+    const archived = weeks.filter(w => w.status === "archived").length;
     const templates = weeks.filter(w => w.is_template).length;
     const totalLessons = lessons.length;
-    const totalHours = weeks.reduce((sum, w) => sum + (w.estimated_hours || 0), 0);
+    const linkedLessons = lessons.filter(l => l.video_url).length;
+    const totalHours = lessons.reduce((sum, l) => sum + (l.duration_minutes || 0), 0) / 60;
+    const totalXP = lessons.reduce((sum, l) => sum + (l.xp_reward || 0), 0);
     
-    return { active, draft, templates, totalLessons, totalHours, total: weeks.length };
+    return { 
+      active, 
+      draft, 
+      archived,
+      templates, 
+      totalLessons, 
+      linkedLessons,
+      totalHours: Math.round(totalHours * 10) / 10,
+      totalXP,
+      total: weeks.length,
+      syncStatus: active > 0 ? "online" : "pending"
+    };
   }, [weeks, lessons]);
 
+  const cards = [
+    {
+      id: "semanas",
+      title: "Semanas Ativas",
+      value: stats.active,
+      subtitle: `${stats.total} total • ${stats.draft} rascunhos`,
+      icon: Calendar,
+      gradient: "from-primary/20 via-primary/10 to-transparent",
+      iconBg: "bg-primary/20",
+      iconColor: "text-primary",
+      borderColor: "border-primary/30",
+      glowColor: "shadow-[0_0_30px_hsl(var(--primary)/0.2)]",
+      badge: stats.active > 0 ? "SYNC" : null,
+      badgeColor: "bg-green-500/20 text-green-500 border-green-500/30",
+      onClick: onViewAll,
+    },
+    {
+      id: "videoaulas",
+      title: "Videoaulas Vinculadas",
+      value: stats.linkedLessons,
+      subtitle: `${stats.totalLessons} aulas cadastradas`,
+      icon: Video,
+      gradient: "from-holo-cyan/20 via-holo-cyan/10 to-transparent",
+      iconBg: "bg-holo-cyan/20",
+      iconColor: "text-holo-cyan",
+      borderColor: "border-holo-cyan/30",
+      glowColor: "shadow-[0_0_30px_hsl(var(--holo-cyan)/0.2)]",
+      badge: stats.linkedLessons > 0 ? "LIVE" : null,
+      badgeColor: "bg-cyan-500/20 text-cyan-500 border-cyan-500/30",
+      progress: stats.totalLessons > 0 ? (stats.linkedLessons / stats.totalLessons) * 100 : 0,
+    },
+    {
+      id: "horas",
+      title: "Carga Horária",
+      value: `${stats.totalHours}h`,
+      subtitle: "Tempo total de conteúdo",
+      icon: Clock,
+      gradient: "from-warning/20 via-warning/10 to-transparent",
+      iconBg: "bg-warning/20",
+      iconColor: "text-warning",
+      borderColor: "border-warning/30",
+      glowColor: "shadow-[0_0_30px_hsl(var(--warning)/0.2)]",
+    },
+    {
+      id: "xp",
+      title: "XP Disponível",
+      value: stats.totalXP,
+      subtitle: "Recompensa total para alunos",
+      icon: Zap,
+      gradient: "from-holo-purple/20 via-holo-purple/10 to-transparent",
+      iconBg: "bg-holo-purple/20",
+      iconColor: "text-holo-purple",
+      borderColor: "border-holo-purple/30",
+      glowColor: "shadow-[0_0_30px_hsl(var(--holo-purple)/0.2)]",
+      badge: "XP",
+      badgeColor: "bg-purple-500/20 text-purple-500 border-purple-500/30",
+    },
+    {
+      id: "sync",
+      title: "Sincronização",
+      value: stats.syncStatus === "online" ? "Online" : "Aguardando",
+      subtitle: "Reflete em /alunos/planejamento",
+      icon: Radio,
+      gradient: stats.syncStatus === "online" 
+        ? "from-green-500/20 via-green-500/10 to-transparent"
+        : "from-muted/20 via-muted/10 to-transparent",
+      iconBg: stats.syncStatus === "online" ? "bg-green-500/20" : "bg-muted/30",
+      iconColor: stats.syncStatus === "online" ? "text-green-500" : "text-muted-foreground",
+      borderColor: stats.syncStatus === "online" ? "border-green-500/30" : "border-muted/50",
+      glowColor: stats.syncStatus === "online" 
+        ? "shadow-[0_0_30px_hsl(142_76%_36%/0.2)]" 
+        : "",
+      badge: "REALTIME",
+      badgeColor: stats.syncStatus === "online" 
+        ? "bg-green-500/20 text-green-500 border-green-500/30 animate-pulse"
+        : "bg-muted/30 text-muted-foreground border-muted/50",
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-      <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/20">
-              <Calendar className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-xs text-muted-foreground">Total Semanas</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-green-500/20">
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.active}</p>
-              <p className="text-xs text-muted-foreground">Ativas</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-yellow-500/20">
-              <AlertCircle className="h-5 w-5 text-yellow-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.draft}</p>
-              <p className="text-xs text-muted-foreground">Rascunhos</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-purple-500/20">
-              <Copy className="h-5 w-5 text-purple-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.templates}</p>
-              <p className="text-xs text-muted-foreground">Templates</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 border-cyan-500/20">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-cyan-500/20">
-              <Video className="h-5 w-5 text-cyan-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.totalLessons}</p>
-              <p className="text-xs text-muted-foreground">Total Aulas</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-orange-500/20">
-              <Clock className="h-5 w-5 text-orange-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stats.totalHours}h</p>
-              <p className="text-xs text-muted-foreground">Horas Estimadas</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {cards.map((card, index) => {
+        const Icon = card.icon;
+        return (
+          <motion.div
+            key={card.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.05 }}
+            whileHover={{ y: -4, scale: 1.02 }}
+            className="group"
+          >
+            <Card 
+              className={cn(
+                "relative overflow-hidden cursor-pointer transition-all duration-500",
+                `bg-gradient-to-br ${card.gradient}`,
+                card.borderColor,
+                card.glowColor,
+                "hover:shadow-xl"
+              )}
+              onClick={card.onClick}
+            >
+              {/* Top accent line */}
+              <div className={cn(
+                "absolute top-0 left-0 right-0 h-0.5",
+                `bg-gradient-to-r ${card.gradient.replace('to-transparent', `to-${card.iconColor.replace('text-', '')}/50`)}`
+              )} />
+              
+              {/* Badge */}
+              {card.badge && (
+                <Badge className={cn(
+                  "absolute top-3 right-3 text-[9px] px-1.5 py-0.5 font-bold",
+                  card.badgeColor
+                )}>
+                  {card.badge}
+                </Badge>
+              )}
+              
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className={cn(
+                    "p-2.5 rounded-xl transition-all duration-300",
+                    card.iconBg,
+                    "group-hover:scale-110 group-hover:shadow-lg"
+                  )}>
+                    <Icon className={cn("h-5 w-5", card.iconColor)} />
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <p className="text-2xl font-black tracking-tight">{card.value}</p>
+                    <p className="text-xs font-medium text-foreground/80 truncate">{card.title}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{card.subtitle}</p>
+                    
+                    {/* Progress bar for videoaulas */}
+                    {card.progress !== undefined && (
+                      <div className="mt-2">
+                        <Progress 
+                          value={card.progress} 
+                          className="h-1.5 bg-muted/30"
+                        />
+                        <p className="text-[9px] text-muted-foreground mt-1">
+                          {Math.round(card.progress)}% vinculadas
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        );
+      })}
     </div>
   );
 }
@@ -1335,8 +1430,16 @@ export default function GestaoPlanejamento() {
           </Button>
         </div>
 
-        {/* Stats */}
-        <StatsCards weeks={weeks} lessons={lessons} />
+        {/* 🎯 5 MANAGEMENT CARDS - Year 2300 Premium */}
+        <ManagementCards 
+          weeks={weeks} 
+          lessons={lessons}
+          onNewWeek={() => {
+            setEditingWeek(null);
+            setFormDialogOpen(true);
+          }}
+          onViewAll={() => setStatusFilter("all")}
+        />
 
         {/* Filters & Search */}
         <Card>
