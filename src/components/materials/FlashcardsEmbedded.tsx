@@ -34,13 +34,22 @@ import {
   RotateCcw, Zap, Check, X, Brain, 
   Sparkles, Plus, Target, 
   AlertTriangle, PartyPopper,
-  BookOpen
+  BookOpen, Atom, FlaskConical, Leaf, Dna, Beaker
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AnkiDashboard } from '@/components/aluno/flashcards/AnkiDashboard';
 import FlashcardRenderer from '@/components/aluno/flashcards/FlashcardRenderer';
 
 import '@/styles/flashcards-2300.css';
+
+// 🎯 5 MACROS SOBERANOS — Taxonomia Questões (Constituição v10.4)
+const MACRO_TAXONOMY = [
+  { value: 'quimica_geral', label: 'Química Geral', icon: Beaker, color: 'text-amber-500', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/30' },
+  { value: 'fisico_quimica', label: 'Físico-Química', icon: Atom, color: 'text-cyan-500', bgColor: 'bg-cyan-500/10', borderColor: 'border-cyan-500/30' },
+  { value: 'quimica_organica', label: 'Química Orgânica', icon: FlaskConical, color: 'text-purple-500', bgColor: 'bg-purple-500/10', borderColor: 'border-purple-500/30' },
+  { value: 'quimica_ambiental', label: 'Química Ambiental', icon: Leaf, color: 'text-green-500', bgColor: 'bg-green-500/10', borderColor: 'border-green-500/30' },
+  { value: 'bioquimica', label: 'Bioquímica', icon: Dna, color: 'text-pink-500', bgColor: 'bg-pink-500/10', borderColor: 'border-pink-500/30' },
+] as const;
 
 type Rating = 1 | 2 | 3 | 4;
 
@@ -107,34 +116,59 @@ export default function FlashcardsEmbedded({ onBack }: FlashcardsEmbeddedProps) 
   const baseCards = isReadyMode ? readyCards : (isCramMode ? allCards : dueCards);
   const isLoading = isReadyMode ? isLoadingReady : (isCramMode ? isLoadingAll : isLoadingDue);
 
-  const topicOptions = useMemo(() => {
-    const map = new Map<string, { value: string; label: string; count: number }>();
+  // 🎯 Organização por 5 MACROS (Taxonomia Questões - Constituição v10.4)
+  // Usa as tags dos flashcards para mapear para os macros canônicos
+  const macroStats = useMemo(() => {
     const list = baseCards || [];
+    const stats = new Map<string, number>();
 
     for (const c of list) {
       const tags = (c as any)?.tags as string[] | null | undefined;
       for (const t of tags || []) {
-        // Ex.: "QUI::Orgânica" → "Orgânica"
-        const clean = String(t).includes('::') ? String(t).split('::').slice(1).join('::').trim() : String(t).trim();
-        if (!clean) continue;
-        const key = clean;
-        const prev = map.get(key);
-        map.set(key, { value: key, label: key, count: (prev?.count || 0) + 1 });
+        const tagLower = String(t).toLowerCase();
+        // Mapear tags para macros canônicos
+        if (tagLower.includes('geral') || tagLower.includes('inorg')) {
+          stats.set('quimica_geral', (stats.get('quimica_geral') || 0) + 1);
+        } else if (tagLower.includes('orgânica') || tagLower.includes('organica')) {
+          stats.set('quimica_organica', (stats.get('quimica_organica') || 0) + 1);
+        } else if (tagLower.includes('físico') || tagLower.includes('fisico') || tagLower.includes('eletro')) {
+          stats.set('fisico_quimica', (stats.get('fisico_quimica') || 0) + 1);
+        } else if (tagLower.includes('ambiental') || tagLower.includes('chuva') || tagLower.includes('polu')) {
+          stats.set('quimica_ambiental', (stats.get('quimica_ambiental') || 0) + 1);
+        } else if (tagLower.includes('bio') || tagLower.includes('proteína') || tagLower.includes('lipíd')) {
+          stats.set('bioquimica', (stats.get('bioquimica') || 0) + 1);
+        }
       }
     }
 
-    return Array.from(map.values())
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 12); // evita UI poluída
+    return stats;
   }, [baseCards]);
 
+  // Filtrar cards por macro selecionado
   const cards = useMemo(() => {
     if (!baseCards) return baseCards;
     if (!topicFilter || topicFilter === 'all') return baseCards;
-    return baseCards.filter((c: any) => (c.tags || []).some((t: string) => {
-      const clean = String(t).includes('::') ? String(t).split('::').slice(1).join('::').trim() : String(t).trim();
-      return clean === topicFilter;
-    }));
+
+    return baseCards.filter((c: any) => {
+      const tags = (c.tags || []) as string[];
+      return tags.some((t: string) => {
+        const tagLower = String(t).toLowerCase();
+        switch (topicFilter) {
+          case 'quimica_geral':
+            return tagLower.includes('geral') || tagLower.includes('inorg');
+          case 'quimica_organica':
+            return tagLower.includes('orgânica') || tagLower.includes('organica');
+          case 'fisico_quimica':
+            return tagLower.includes('físico') || tagLower.includes('fisico') || tagLower.includes('eletro');
+          case 'quimica_ambiental':
+            return tagLower.includes('ambiental') || tagLower.includes('chuva') || tagLower.includes('polu');
+          case 'bioquimica':
+            return tagLower.includes('bio') || tagLower.includes('proteína') || tagLower.includes('lipíd');
+          default:
+            return false;
+        }
+      });
+    });
   }, [baseCards, topicFilter]);
 
   // Se filtro reduzir a lista, garante índice válido
@@ -502,31 +536,45 @@ export default function FlashcardsEmbedded({ onBack }: FlashcardsEmbeddedProps) 
           </Button>
         </div>
 
-        {/* Organização inteligente por tags (top 12) */}
-        {topicOptions.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant={topicFilter === 'all' ? 'default' : 'outline'}
-              onClick={() => setTopicFilter('all')}
-            >
-              Tudo
-            </Button>
-            {topicOptions.map(opt => (
+        {/* 🎯 5 MACROS SOBERANOS — Taxonomia Questões (Constituição v10.4) */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={topicFilter === 'all' ? 'default' : 'outline'}
+            onClick={() => setTopicFilter('all')}
+            className="text-xs"
+          >
+            Todos
+            <Badge variant="secondary" className="ml-1.5 text-[10px]">{baseCards?.length || 0}</Badge>
+          </Button>
+          {MACRO_TAXONOMY.map(macro => {
+            const count = macroStats.get(macro.value) || 0;
+            const Icon = macro.icon;
+            const isActive = topicFilter === macro.value;
+            return (
               <Button
-                key={opt.value}
+                key={macro.value}
                 type="button"
                 size="sm"
-                variant={topicFilter === opt.value ? 'default' : 'outline'}
-                onClick={() => setTopicFilter(opt.value)}
+                variant="outline"
+                onClick={() => setTopicFilter(macro.value)}
+                className={cn(
+                  "text-xs transition-all",
+                  isActive && cn(macro.bgColor, macro.borderColor, macro.color),
+                  !isActive && "hover:bg-muted/50"
+                )}
+                disabled={count === 0}
               >
-                {opt.label}
-                <span className="ml-2 text-xs text-muted-foreground">{opt.count}</span>
+                <Icon className={cn("w-3.5 h-3.5 mr-1", isActive ? macro.color : "text-muted-foreground")} />
+                {macro.label}
+                {count > 0 && (
+                  <Badge variant="secondary" className="ml-1.5 text-[10px]">{count}</Badge>
+                )}
               </Button>
-            ))}
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
 
       {/* Progress */}
