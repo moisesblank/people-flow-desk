@@ -6267,6 +6267,59 @@ export type Database = {
           },
         ]
       }
+      lesson_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_answered: boolean | null
+          is_official: boolean | null
+          is_pinned: boolean | null
+          lesson_id: string
+          parent_id: string | null
+          updated_at: string
+          user_email: string | null
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_answered?: boolean | null
+          is_official?: boolean | null
+          is_pinned?: boolean | null
+          lesson_id: string
+          parent_id?: string | null
+          updated_at?: string
+          user_email?: string | null
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_answered?: boolean | null
+          is_official?: boolean | null
+          is_pinned?: boolean | null
+          lesson_id?: string
+          parent_id?: string | null
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "lesson_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_notes: {
         Row: {
           content: string
@@ -12256,6 +12309,44 @@ export type Database = {
             columns: ["lesson_id"]
             isOneToOne: false
             referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_week_observations: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_pinned: boolean | null
+          updated_at: string
+          user_id: string
+          week_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean | null
+          updated_at?: string
+          user_id: string
+          week_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean | null
+          updated_at?: string
+          user_id?: string
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_week_observations_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "planning_weeks"
             referencedColumns: ["id"]
           },
         ]
