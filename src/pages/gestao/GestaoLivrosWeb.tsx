@@ -20,6 +20,7 @@ import {
   RefreshCw,
   CheckCircle,
   AlertCircle,
+  ListTree,
   X,
   Tag,
   CheckSquare,
@@ -1000,7 +1001,29 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
           </p>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              const toastId = toast.loading('Gerando sumários inteligentes...');
+              try {
+                const { data: session } = await supabase.auth.getSession();
+                const response = await supabase.functions.invoke('generate-book-toc', {
+                  body: { batchProcess: true, forceRegenerate: false }
+                });
+                if (response.error) throw response.error;
+                const result = response.data;
+                toast.success(`✅ ${result.success} sumários gerados, ${result.skipped} ignorados`, { id: toastId });
+                loadBooks();
+              } catch (err) {
+                toast.error('Erro ao gerar sumários', { id: toastId });
+                console.error(err);
+              }
+            }}
+          >
+            <ListTree className="w-4 h-4 mr-2" />
+            Gerar Sumários IA
+          </Button>
           <Button
             variant="outline"
             onClick={async () => {
