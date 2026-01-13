@@ -458,7 +458,7 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
 
   // Grid de Macro Cards (estilo materiais)
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
       {RESOLUCAO_MACRO_CARDS.map((card) => {
         const modules = getModulesForMacro(card.positionRange);
         const totalLessons = modules.reduce((a, m) => a + (m._count?.lessons || 0), 0);
@@ -467,64 +467,90 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
           <div
             key={card.id}
             onClick={() => setSelectedMacro(card.id)}
-            className={cn(
-              "group relative cursor-pointer overflow-hidden rounded-2xl transition-all duration-300",
-              "bg-gradient-to-br", card.gradient,
-              "border-2", card.borderColor,
-              "hover:scale-[1.02] hover:shadow-2xl",
-              "transform-gpu"
-            )}
-            style={{
-              boxShadow: `0 10px 40px -10px ${card.glowColor}`,
-            }}
+            className="group relative cursor-pointer transform-gpu"
           >
-            {/* Corner accents */}
-            <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-current/30 rounded-tl-2xl pointer-events-none" />
-            <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-current/30 rounded-tr-2xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-current/30 rounded-bl-2xl pointer-events-none" />
-            <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-current/30 rounded-br-2xl pointer-events-none" />
-            
-            {/* Glow on hover */}
+            {/* Card principal */}
             <div 
-              className="absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-500 pointer-events-none"
-              style={{ background: `radial-gradient(circle at center, ${card.glowColor}, transparent 70%)` }}
-            />
-            
-            {/* Content */}
-            <div className="relative p-6 space-y-4">
-              {/* Icon + Title */}
-              <div className="flex items-center gap-4">
-                <div className="text-4xl md:text-5xl">{card.icon}</div>
-                <div className="flex-1">
-                  <h3 className="text-lg md:text-xl font-bold text-white leading-tight">
+              className={cn(
+                "relative overflow-hidden rounded-xl",
+                "bg-slate-900/95 backdrop-blur-sm",
+                "border border-slate-700/60",
+                "transition-all duration-200 ease-out",
+                "hover:border-slate-600 hover:-translate-y-0.5",
+                "shadow-lg hover:shadow-xl"
+              )}
+            >
+              {/* Barra superior com gradiente - elemento visual premium */}
+              <div 
+                className={cn(
+                  "h-1 w-full",
+                  card.id === 'quimica-geral' && "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600",
+                  card.id === 'quimica-organica' && "bg-gradient-to-r from-purple-500 via-fuchsia-500 to-purple-600",
+                  card.id === 'fisico-quimica' && "bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-600"
+                )}
+              />
+              
+              {/* Content */}
+              <div className="p-4 lg:p-5 space-y-4">
+                {/* Header: Icon + Title */}
+                <div className="flex items-center gap-3">
+                  <div 
+                    className={cn(
+                      "flex items-center justify-center w-10 h-10 lg:w-12 lg:h-12 rounded-lg",
+                      "text-2xl lg:text-3xl",
+                      card.id === 'quimica-geral' && "bg-amber-500/20",
+                      card.id === 'quimica-organica' && "bg-purple-500/20",
+                      card.id === 'fisico-quimica' && "bg-cyan-500/20"
+                    )}
+                  >
+                    {card.icon}
+                  </div>
+                  <h3 className="flex-1 text-sm lg:text-base font-semibold text-white leading-tight">
                     {card.name}
                   </h3>
                 </div>
-              </div>
-              
-              {/* Stats */}
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/60 border border-slate-600/30">
-                  <Layers className="h-4 w-4 text-slate-300" />
-                  <span className="text-lg font-bold text-white">{modules.length}</span>
-                  <span className="text-xs text-slate-400">módulos</span>
+                
+                {/* Stats - Layout horizontal compacto */}
+                <div className="flex items-center gap-3">
+                  <div 
+                    className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs",
+                      "bg-slate-800/80 border border-slate-700/50"
+                    )}
+                  >
+                    <Layers className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="font-bold text-white">{modules.length}</span>
+                    <span className="text-slate-400">módulos</span>
+                  </div>
+                  
+                  <div 
+                    className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs",
+                      "bg-slate-800/80 border border-slate-700/50"
+                    )}
+                  >
+                    <PlayCircle className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="font-bold text-white">{totalLessons}</span>
+                    <span className="text-slate-400">aulas</span>
+                  </div>
                 </div>
                 
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/60 border border-slate-600/30">
-                  <PlayCircle className="h-4 w-4 text-slate-300" />
-                  <span className="text-lg font-bold text-white">{totalLessons}</span>
-                  <span className="text-xs text-slate-400">aulas</span>
-                </div>
-              </div>
-              
-              {/* CTA */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-600/30">
-                <span className="text-sm text-slate-300 font-medium">
-                  {modules.length} módulos
-                </span>
-                <div className="flex items-center gap-2 text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
-                  Ver Módulos
-                  <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                {/* CTA Footer */}
+                <div className="flex items-center justify-between pt-3 border-t border-slate-700/40">
+                  <span className="text-xs text-slate-400">
+                    {modules.length} módulos disponíveis
+                  </span>
+                  <div 
+                    className={cn(
+                      "flex items-center gap-1 text-xs font-semibold transition-colors",
+                      card.id === 'quimica-geral' && "text-amber-400 group-hover:text-amber-300",
+                      card.id === 'quimica-organica' && "text-purple-400 group-hover:text-purple-300",
+                      card.id === 'fisico-quimica' && "text-cyan-400 group-hover:text-cyan-300"
+                    )}
+                  >
+                    Ver Módulos
+                    <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
                 </div>
               </div>
             </div>
