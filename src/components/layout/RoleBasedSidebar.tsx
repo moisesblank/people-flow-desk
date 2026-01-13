@@ -540,10 +540,17 @@ export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>
     
     const allGroups = [...enhancedGroups, ...customGroups];
     
+    // 🏛️ CONSTITUIÇÃO v10.x: Owner em /alunos/* vê EXATAMENTE o mesmo menu que os Betas
+    // Não aplicar filtro hasAccess para Owner na área de alunos (menu idêntico aos estudantes)
+    const isOwnerInAlunosArea = isAlunosArea && user?.email?.toLowerCase() === OWNER_EMAIL;
+    
     return allGroups
-      .map((group) => ({ ...group, items: group.items.filter((item) => hasAccess(item.area)) }))
+      .map((group) => ({ 
+        ...group, 
+        items: group.items.filter((item) => isOwnerInAlunosArea ? true : hasAccess(item.area)) 
+      }))
       .filter((group) => group.items.length > 0);
-  }, [hasAccess, dynamicItems, currentMenuGroups, hasDbData, isGestaoArea]);
+  }, [hasAccess, dynamicItems, currentMenuGroups, hasDbData, isGestaoArea, isAlunosArea, user?.email]);
 
   const isActive = (path: string) => location.pathname === path;
 
