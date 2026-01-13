@@ -398,15 +398,10 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
 }) {
   const [selectedMacro, setSelectedMacro] = useState<string | null>(null);
   
-  // 🛡️ CRÍTICO: Filtra apenas módulos da subcategoria EXATA "Resolução de Questões"
-  // NÃO inclui "Revisão Cíclica" ou "Previsão Final"
-  const resolucaoOnlyModules = useMemo(() => {
-    return allModules.filter(m => m.subcategory === 'Resolução de Questões');
-  }, [allModules]);
-  
-  // Filtra módulos por range de número (somente da subcategoria correta)
+  // 🛡️ Os módulos já vêm filtrados da subcategoria "Resolução de Questões"
+  // Apenas ordenamos e agrupamos por range de número
   const getModulesForMacro = useCallback((moduleRange: number[]) => {
-    return resolucaoOnlyModules.filter(m => {
+    return allModules.filter(m => {
       const num = extractModuleNumber(m.title);
       return num !== null && moduleRange.includes(num);
     }).sort((a, b) => {
@@ -414,7 +409,7 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
       const numB = extractModuleNumber(b.title) || 0;
       return numA - numB;
     });
-  }, [resolucaoOnlyModules]);
+  }, [allModules]);
   
   // Módulos filtrados para o macro selecionado
   const filteredModules = useMemo(() => {
