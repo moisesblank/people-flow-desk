@@ -4,10 +4,11 @@
 // Interface completa + Sistema de Modais (9 áreas)
 // ============================================
 
-import { useState, useMemo, useEffect, lazy, Suspense } from "react";
+import { useState, useMemo, useEffect, lazy, Suspense, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 // framer-motion removido - Year 2300 CSS-only animations
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -537,8 +538,22 @@ function LessonsSidebar({
 }
 
 // ============================================
-// COMPONENTE: Fórum de Dúvidas
+// COMPONENTE: Fórum de Dúvidas - CONECTADO AO BANCO
 // ============================================
+interface LessonComment {
+  id: string;
+  lesson_id: string;
+  user_id: string;
+  user_name: string | null;
+  user_email: string | null;
+  content: string;
+  is_pinned: boolean;
+  is_answered: boolean;
+  is_official: boolean;
+  parent_id: string | null;
+  created_at: string;
+}
+
 function ForumSection({
   lessonId,
   userName,
@@ -546,36 +561,109 @@ function ForumSection({
   lessonId: string;
   userName: string;
 }) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [newQuestion, setNewQuestion] = useState("");
-  const [questions] = useState([
-    {
-      id: "1",
-      userName: "João Silva",
-      content: "Professor, não entendi a parte sobre distribuição eletrônica. Pode explicar novamente?",
-      createdAt: new Date(),
-      isPinned: true,
-      isAnswered: true,
-      replies: [
-        {
-          id: "r1",
-          userName: "Prof. Moisés Medeiros",
-          content: "Claro, João! A distribuição eletrônica segue a regra de Aufbau. Vou explicar...",
-          isOfficial: true,
-        },
-      ],
-    },
-    {
-      id: "2",
-      userName: "Maria Santos",
-      content: "Qual a diferença entre número atômico e número de massa?",
-      createdAt: new Date(),
-      isPinned: false,
-      isAnswered: false,
-      replies: [],
-    },
-  ]);
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState("");
 
-  const pinnedCount = questions.filter(q => q.isPinned).length;
+  // Fetch comments from database
+  const { data: comments = [], isLoading } = useQuery({
+    queryKey: ["lesson-comments", lessonId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lesson_comments")
+        .select("*")
+        .eq("lesson_id", lessonId)
+        .order("is_pinned", { ascending: false })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as LessonComment[];
+    },
+    enabled: !!lessonId,
+  });
+
+  // Realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel(`lesson-comments-${lessonId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "lesson_comments", filter: `lesson_id=eq.${lessonId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ["lesson-comments", lessonId] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [lessonId, queryClient]);
+
+  // Add question mutation
+  const addQuestionMutation = useMutation({
+    mutationFn: async (content: string) => {
+      if (!user?.id) throw new Error("Not authenticated");
+      const { error } = await supabase.from("lesson_comments").insert({
+        lesson_id: lessonId,
+        user_id: user.id,
+        user_name: userName,
+        user_email: user.email,
+        content,
+        parent_id: null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setNewQuestion("");
+      queryClient.invalidateQueries({ queryKey: ["lesson-comments", lessonId] });
+      toast.success("Dúvida enviada com sucesso!");
+    },
+    onError: () => {
+      toast.error("Erro ao enviar dúvida");
+    },
+  });
+
+  // Add reply mutation
+  const addReplyMutation = useMutation({
+    mutationFn: async ({ parentId, content }: { parentId: string; content: string }) => {
+      if (!user?.id) throw new Error("Not authenticated");
+      const { error } = await supabase.from("lesson_comments").insert({
+        lesson_id: lessonId,
+        user_id: user.id,
+        user_name: userName,
+        user_email: user.email,
+        content,
+        parent_id: parentId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setReplyTo(null);
+      setReplyContent("");
+      queryClient.invalidateQueries({ queryKey: ["lesson-comments", lessonId] });
+      toast.success("Resposta enviada!");
+    },
+    onError: () => {
+      toast.error("Erro ao enviar resposta");
+    },
+  });
+
+  // Separate questions (no parent) and replies
+  const questions = comments.filter(c => !c.parent_id);
+  const replies = comments.filter(c => c.parent_id);
+  const getReplies = (parentId: string) => replies.filter(r => r.parent_id === parentId);
+
+  const pinnedCount = questions.filter(q => q.is_pinned).length;
+
+  const handleSubmitQuestion = () => {
+    if (newQuestion.trim()) {
+      addQuestionMutation.mutate(newQuestion.trim());
+    }
+  };
+
+  const handleSubmitReply = (parentId: string) => {
+    if (replyContent.trim()) {
+      addReplyMutation.mutate({ parentId, content: replyContent.trim() });
+    }
+  };
 
   return (
     <div className="relative rounded-2xl overflow-hidden">
@@ -596,10 +684,12 @@ function ForumSection({
                 <Clock className="h-3 w-3 text-primary" />
                 Respostas em até 24h
               </span>
-              <Badge className="bg-gradient-to-r from-success/20 to-success/10 text-success border-success/30 shadow-[0_0_10px_hsl(var(--success)/0.2)]">
-                <Pin className="h-3 w-3 mr-1" />
-                {pinnedCount} fixada
-              </Badge>
+              {pinnedCount > 0 && (
+                <Badge className="bg-gradient-to-r from-success/20 to-success/10 text-success border-success/30 shadow-[0_0_10px_hsl(var(--success)/0.2)]">
+                  <Pin className="h-3 w-3 mr-1" />
+                  {pinnedCount} fixada{pinnedCount > 1 ? 's' : ''}
+                </Badge>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -623,79 +713,127 @@ function ForumSection({
           </div>
           <div className="flex justify-end">
             <Button 
-              disabled={!newQuestion.trim()} 
+              disabled={!newQuestion.trim() || addQuestionMutation.isPending} 
+              onClick={handleSubmitQuestion}
               className="gap-2 bg-gradient-to-r from-primary to-holo-purple hover:from-primary/90 hover:to-holo-purple/90 shadow-[0_0_25px_hsl(var(--primary)/0.4)] border-0"
             >
               <Send className="h-4 w-4" />
-              Enviar Dúvida
+              {addQuestionMutation.isPending ? "Enviando..." : "Enviar Dúvida"}
             </Button>
           </div>
 
           <Separator className="bg-gradient-to-r from-transparent via-border to-transparent" />
 
           {/* Lista de dúvidas */}
-          <div className="space-y-4">
-            {questions.map((question) => (
-              <div key={question.id} className="p-4 rounded-xl bg-gradient-to-r from-muted/40 to-transparent border border-border/40 space-y-3">
-                <div className="flex items-start gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-muted">{question.userName.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="font-medium">{question.userName}</span>
-                      {question.isPinned && (
-                        <Badge className="bg-success/20 text-success text-xs border-success/30">
-                          <Pin className="h-3 w-3 mr-1" />
-                          Fixada
-                        </Badge>
-                      )}
-                      {question.isAnswered && (
-                        <Badge className="bg-info/20 text-info text-xs border-info/30">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Respondido
-                        </Badge>
-                      )}
-                      <span className="text-xs text-muted-foreground">
-                        {format(question.createdAt, "dd/MM/yyyy")}
-                      </span>
-                    </div>
-                    <p className="text-sm">{question.content}</p>
-                    <button className="text-xs text-primary mt-2 flex items-center gap-1 hover:underline">
-                      ← Responder
-                    </button>
-                  </div>
-                </div>
-
-                {/* Respostas */}
-                {question.replies.map((reply) => (
-                  <div key={reply.id} className="ml-12 pl-4 border-l-2 border-primary/30">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+            </div>
+          ) : questions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-30" />
+              <p>Nenhuma dúvida ainda. Seja o primeiro a perguntar!</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {questions.map((question) => {
+                const questionReplies = getReplies(question.id);
+                return (
+                  <div key={question.id} className="p-4 rounded-xl bg-gradient-to-r from-muted/40 to-transparent border border-border/40 space-y-3">
                     <div className="flex items-start gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">P</AvatarFallback>
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-muted">{question.user_name?.charAt(0) || "U"}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-sm">{reply.userName}</span>
-                          {reply.isOfficial && (
-                            <>
-                              <Badge variant="outline" className="text-primary border-primary/30 text-xs">
-                                Professor
-                              </Badge>
-                              <Badge className="bg-success/20 text-success text-xs border-success/30">
-                                Resposta Oficial
-                              </Badge>
-                            </>
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="font-medium">{question.user_name || "Aluno"}</span>
+                          {question.is_pinned && (
+                            <Badge className="bg-success/20 text-success text-xs border-success/30">
+                              <Pin className="h-3 w-3 mr-1" />
+                              Fixada
+                            </Badge>
                           )}
+                          {question.is_answered && (
+                            <Badge className="bg-info/20 text-info text-xs border-info/30">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Respondido
+                            </Badge>
+                          )}
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(question.created_at), "dd/MM/yyyy HH:mm")}
+                          </span>
                         </div>
-                        <p className="text-sm text-muted-foreground">{reply.content}</p>
+                        <p className="text-sm">{question.content}</p>
+                        <button 
+                          onClick={() => setReplyTo(replyTo === question.id ? null : question.id)}
+                          className="text-xs text-primary mt-2 flex items-center gap-1 hover:underline"
+                        >
+                          ← Responder
+                        </button>
                       </div>
                     </div>
+
+                    {/* Input de resposta */}
+                    {replyTo === question.id && (
+                      <div className="ml-12 pl-4 border-l-2 border-primary/30 space-y-2">
+                        <Textarea
+                          value={replyContent}
+                          onChange={(e) => setReplyContent(e.target.value)}
+                          placeholder="Escreva sua resposta..."
+                          rows={2}
+                          className="resize-none bg-background/50 text-sm"
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <Button variant="ghost" size="sm" onClick={() => setReplyTo(null)}>
+                            Cancelar
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            disabled={!replyContent.trim() || addReplyMutation.isPending}
+                            onClick={() => handleSubmitReply(question.id)}
+                          >
+                            {addReplyMutation.isPending ? "Enviando..." : "Enviar"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Respostas */}
+                    {questionReplies.map((reply) => (
+                      <div key={reply.id} className="ml-12 pl-4 border-l-2 border-primary/30">
+                        <div className="flex items-start gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className={reply.is_official ? "bg-primary text-primary-foreground text-xs" : "bg-muted text-xs"}>
+                              {reply.user_name?.charAt(0) || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-sm">{reply.user_name || "Aluno"}</span>
+                              {reply.is_official && (
+                                <>
+                                  <Badge variant="outline" className="text-primary border-primary/30 text-xs">
+                                    Professor
+                                  </Badge>
+                                  <Badge className="bg-success/20 text-success text-xs border-success/30">
+                                    Resposta Oficial
+                                  </Badge>
+                                </>
+                              )}
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(reply.created_at), "dd/MM/yyyy HH:mm")}
+                              </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{reply.content}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
@@ -1032,6 +1170,10 @@ export default function AlunoPlanejamento() {
   
   // 🚀 HUB MODAL STATE
   const [activeModal, setActiveModal] = useState<HubAreaKey | null>(null);
+  
+  // 📝 OBSERVAÇÕES MODAL STATE
+  const [observationsModalOpen, setObservationsModalOpen] = useState(false);
+  const [observationContent, setObservationContent] = useState("");
   const activeModalArea = activeModal ? HUB_AREAS.find(a => a.key === activeModal) : null;
   
   // Modal content renderer
@@ -1122,6 +1264,60 @@ export default function AlunoPlanejamento() {
       return data as LessonProgress[];
     },
     enabled: !!user?.id,
+  });
+
+  // 📝 Fetch observations for selected week
+  const { data: weekObservation } = useQuery({
+    queryKey: ["week-observation", user?.id, selectedWeek?.id],
+    queryFn: async () => {
+      if (!user?.id || !selectedWeek?.id) return null;
+      const { data, error } = await supabase
+        .from("student_week_observations")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("week_id", selectedWeek.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id && !!selectedWeek?.id,
+  });
+
+  // Update observationContent when weekObservation changes
+  useEffect(() => {
+    if (weekObservation?.content) {
+      setObservationContent(weekObservation.content);
+    } else {
+      setObservationContent("");
+    }
+  }, [weekObservation]);
+
+  // 📝 Save observation mutation
+  const saveObservationMutation = useMutation({
+    mutationFn: async (content: string) => {
+      if (!user?.id || !selectedWeek?.id) throw new Error("Missing data");
+      
+      const { error } = await supabase
+        .from("student_week_observations")
+        .upsert({
+          user_id: user.id,
+          week_id: selectedWeek.id,
+          content,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id,week_id'
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["week-observation"] });
+      toast.success("Observações salvas!");
+      setObservationsModalOpen(false);
+    },
+    onError: () => {
+      toast.error("Erro ao salvar observações");
+    },
   });
 
   // Realtime subscriptions
@@ -1377,9 +1573,22 @@ export default function AlunoPlanejamento() {
               )}
 
               {/* Minhas Observações */}
-              <Button variant="outline" size="sm" className="gap-2 bg-muted/30 border-border/50 hover:bg-muted/50 hover:border-primary/30 transition-all duration-200">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setObservationsModalOpen(true)}
+                className={cn(
+                  "gap-2 transition-all duration-200",
+                  weekObservation?.content 
+                    ? "bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 border-emerald-500/40 text-emerald-400 hover:border-emerald-500/60"
+                    : "bg-muted/30 border-border/50 hover:bg-muted/50 hover:border-primary/30"
+                )}
+              >
                 <Pencil className="h-4 w-4" />
                 Minhas Observações
+                {weekObservation?.content && (
+                  <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                )}
               </Button>
             </div>
           </div>
@@ -1453,6 +1662,64 @@ export default function AlunoPlanejamento() {
         </div>
       </div>
     </div>
+
+      {/* 📝 MODAL: Minhas Observações */}
+      <Dialog open={observationsModalOpen} onOpenChange={setObservationsModalOpen}>
+        <DialogContent className="sm:max-w-[600px] bg-card border-border/50">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-holo-purple/10 border border-primary/30">
+                <Pencil className="h-5 w-5 text-primary" />
+              </div>
+              Minhas Observações
+            </DialogTitle>
+            <DialogDescription>
+              {selectedWeek 
+                ? `Anotações pessoais para Semana ${selectedWeek.week_number} - ${selectedWeek.title}`
+                : "Selecione uma semana para fazer anotações"}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <Textarea
+              value={observationContent}
+              onChange={(e) => setObservationContent(e.target.value)}
+              placeholder="Escreva suas observações, lembretes, dicas pessoais sobre esta semana de estudos..."
+              rows={8}
+              className="resize-none bg-background/50 border-border/50 focus:border-primary/50 transition-colors"
+            />
+            <p className="text-xs text-muted-foreground">
+              Suas observações ficam salvas automaticamente e só você pode vê-las.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="ghost" 
+              onClick={() => setObservationsModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => saveObservationMutation.mutate(observationContent)}
+              disabled={saveObservationMutation.isPending}
+              className="gap-2 bg-gradient-to-r from-primary to-holo-purple hover:from-primary/90 hover:to-holo-purple/90"
+            >
+              {saveObservationMutation.isPending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                  Salvando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Salvar Observações
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
