@@ -4,7 +4,7 @@
 // Integrado à coleção "Flash Cards"
 // ============================================
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { AnkiDashboard } from '@/components/aluno/flashcards/AnkiDashboard';
-import { processFlashcardText } from '@/components/aluno/flashcards/FlashcardRenderer';
+import FlashcardRenderer from '@/components/aluno/flashcards/FlashcardRenderer';
 
 import '@/styles/flashcards-2300.css';
 
@@ -66,6 +66,9 @@ export default function FlashcardsEmbedded({ onBack }: FlashcardsEmbeddedProps) 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [sessionStats, setSessionStats] = useState({ correct: 0, incorrect: 0, xpEarned: 0 });
   const [newCard, setNewCard] = useState({ question: '', answer: '' });
+
+  // Organização inteligente (macro/tags)
+  const [topicFilter, setTopicFilter] = useState<string>('all');
 
   const { data: dueCards, isLoading: isLoadingDue, refetch: refetchDue } = useDueFlashcards();
   const { data: allCards, isLoading: isLoadingAll, refetch: refetchAll } = useAllFlashcards();
@@ -101,8 +104,45 @@ export default function FlashcardsEmbedded({ onBack }: FlashcardsEmbeddedProps) 
     };
   }, [user?.id, queryClient]);
 
-  const cards = isReadyMode ? readyCards : (isCramMode ? allCards : dueCards);
+  const baseCards = isReadyMode ? readyCards : (isCramMode ? allCards : dueCards);
   const isLoading = isReadyMode ? isLoadingReady : (isCramMode ? isLoadingAll : isLoadingDue);
+
+  const topicOptions = useMemo(() => {
+    const map = new Map<string, { value: string; label: string; count: number }>();
+    const list = baseCards || [];
+
+    for (const c of list) {
+      const tags = (c as any)?.tags as string[] | null | undefined;
+      for (const t of tags || []) {
+        // Ex.: "QUI::Orgânica" → "Orgânica"
+        const clean = String(t).includes('::') ? String(t).split('::').slice(1).join('::').trim() : String(t).trim();
+        if (!clean) continue;
+        const key = clean;
+        const prev = map.get(key);
+        map.set(key, { value: key, label: key, count: (prev?.count || 0) + 1 });
+      }
+    }
+
+    return Array.from(map.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12); // evita UI poluída
+  }, [baseCards]);
+
+  const cards = useMemo(() => {
+    if (!baseCards) return baseCards;
+    if (!topicFilter || topicFilter === 'all') return baseCards;
+    return baseCards.filter((c: any) => (c.tags || []).some((t: string) => {
+      const clean = String(t).includes('::') ? String(t).split('::').slice(1).join('::').trim() : String(t).trim();
+      return clean === topicFilter;
+    }));
+  }, [baseCards, topicFilter]);
+
+  // Se filtro reduzir a lista, garante índice válido
+  useEffect(() => {
+    setCurrentIndex(0);
+    setIsFlipped(false);
+  }, [topicFilter, isReadyMode, isCramMode]);
+
   const currentCard = cards?.[currentIndex];
   const isSessionComplete = currentIndex >= (cards?.length || 0) && (cards?.length || 0) > 0;
 
@@ -461,6 +501,32 @@ export default function FlashcardsEmbedded({ onBack }: FlashcardsEmbeddedProps) 
             <Plus className="w-5 h-5" />
           </Button>
         </div>
+
+        {/* Organização inteligente por tags (top 12) */}
+        {topicOptions.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={topicFilter === 'all' ? 'default' : 'outline'}
+              onClick={() => setTopicFilter('all')}
+            >
+              Tudo
+            </Button>
+            {topicOptions.map(opt => (
+              <Button
+                key={opt.value}
+                type="button"
+                size="sm"
+                variant={topicFilter === opt.value ? 'default' : 'outline'}
+                onClick={() => setTopicFilter(opt.value)}
+              >
+                {opt.label}
+                <span className="ml-2 text-xs text-muted-foreground">{opt.count}</span>
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Progress */}
@@ -522,9 +588,9 @@ export default function FlashcardsEmbedded({ onBack }: FlashcardsEmbeddedProps) 
             
             <Brain className="w-14 h-14 text-primary/20 mb-4" />
             <p className="text-xs text-muted-foreground uppercase tracking-widest mb-3">Pergunta</p>
-            <p className="text-xl md:text-2xl font-medium text-center leading-relaxed whitespace-pre-line max-w-lg">
-              {processFlashcardText(currentCard?.question, false)}
-            </p>
+            <div className="text-base md:text-lg font-medium text-center leading-relaxed max-w-lg mx-auto">
+              <FlashcardRenderer content={currentCard?.question} showClozeAnswer={false} />
+            </div>
             <p className="text-sm text-muted-foreground mt-8 animate-pulse flex items-center gap-2">
               <span className="inline-block w-1.5 h-1.5 bg-primary rounded-full animate-ping" />
               Clique para revelar
@@ -541,9 +607,9 @@ export default function FlashcardsEmbedded({ onBack }: FlashcardsEmbeddedProps) 
           >
             <Sparkles className="w-14 h-14 text-primary/30 mb-4" />
             <p className="text-xs text-primary/70 uppercase tracking-widest mb-3">Resposta</p>
-            <p className="text-xl md:text-2xl font-medium text-center leading-relaxed whitespace-pre-line max-w-lg">
-              {processFlashcardText(currentCard?.answer, true)}
-            </p>
+            <div className="text-base md:text-lg font-medium text-center leading-relaxed max-w-lg mx-auto">
+              <FlashcardRenderer content={currentCard?.answer} showClozeAnswer={true} />
+            </div>
           </div>
         </motion.div>
       </div>
