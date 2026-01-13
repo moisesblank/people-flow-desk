@@ -7,7 +7,7 @@
 // - Image Occlusion (BASE + MASK)
 // ============================================
 
-import { memo, useMemo, useState, useEffect } from 'react';
+import { memo, useMemo, useState, useEffect, Fragment } from 'react';
 import { cn } from '@/lib/utils';
 import { useStorageRouter } from '@/hooks/useStorageRouter';
 
