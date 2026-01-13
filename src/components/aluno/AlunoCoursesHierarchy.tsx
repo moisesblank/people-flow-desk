@@ -765,9 +765,24 @@ function SubcategorySection({
   const moduleIds = useMemo(() => modules.map(m => m.id), [modules]);
   const { progressMap } = useModulesProgress(isOpen ? moduleIds : []);
 
+  // 🎯 AUTO-EXPAND: Quando subcategoria ABRE → expande PRIMEIRO MÓDULO automaticamente
+  // Aulas SÓ aparecem após clique manual no módulo (comportamento imutável)
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+    
+    // Se está ABRINDO a subcategoria e tem módulos, expande o PRIMEIRO
+    if (open && modules.length > 0) {
+      const firstModuleId = modules[0].id;
+      // Só expande se ainda não estiver expandido
+      if (!expandedModules.has(firstModuleId)) {
+        onToggleModule(firstModuleId);
+      }
+    }
+  }, [modules, expandedModules, onToggleModule]);
+
   return (
     <div className="space-y-3">
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Collapsible open={isOpen} onOpenChange={handleOpenChange}>
         <CollapsibleTrigger asChild>
           {/* 🎬 NETFLIX PREMIUM SUBCATEGORY BUTTON — Gradient Design */}
           <button
