@@ -19,16 +19,13 @@ import { HubQuickAccessBar, HubModal, HUB_AREAS, type HubAreaKey } from "@/compo
 // Seletor de Cronogramas
 import { CronogramaSelector, type CronogramaType } from "@/components/aluno/CronogramaSelector";
 
-// Lazy load modal contents (9 módulos)
+// Lazy load modal contents
 const CronogramaModalContent = lazy(() => import("@/components/aluno/modals/CronogramaModalContent"));
-// ForumModalContent removido - consolidado em /comunidade
 const TutoriaModalContent = lazy(() => import("@/components/aluno/modals/TutoriaModalContent"));
-const VideoaulasModalContent = lazy(() => import("@/components/aluno/modals/VideoaulasModalContent"));
 const QuestoesModalContent = lazy(() => import("@/components/aluno/modals/QuestoesModalContent"));
-const FlashcardsModalContent = lazy(() => import("@/components/aluno/modals/FlashcardsModalContent"));
 const SimuladosModalContent = lazy(() => import("@/components/aluno/modals/SimuladosModalContent"));
-const MapasMentaisModalContent = lazy(() => import("@/components/aluno/modals/MapasMentaisModalContent"));
 const LivrosWebModalContent = lazy(() => import("@/components/aluno/modals/LivrosWebModalContent"));
+// Removidos: VideoaulasModalContent, FlashcardsModalContent, MapasMentaisModalContent (consolidados)
 
 // Icons
 import {
@@ -910,16 +907,14 @@ export default function AlunoPlanejamento() {
         return <Suspense fallback={<ModalLoader />}><CronogramaModalContent /></Suspense>;
       case "tutoria":
         return <Suspense fallback={<ModalLoader />}><TutoriaModalContent /></Suspense>;
-      case "videoaulas":
-        return <Suspense fallback={<ModalLoader />}><VideoaulasModalContent /></Suspense>;
       case "questoes":
         return <Suspense fallback={<ModalLoader />}><QuestoesModalContent /></Suspense>;
-      case "flashcards":
-        return <Suspense fallback={<ModalLoader />}><FlashcardsModalContent /></Suspense>;
       case "simulados":
         return <Suspense fallback={<ModalLoader />}><SimuladosModalContent /></Suspense>;
-      case "mapas-mentais":
-        return <Suspense fallback={<ModalLoader />}><MapasMentaisModalContent /></Suspense>;
+      case "materiais":
+        // Redireciona para /alunos/materiais
+        window.location.href = '/alunos/materiais';
+        return null;
       case "livros-web":
         return <Suspense fallback={<ModalLoader />}><LivrosWebModalContent /></Suspense>;
       default:
