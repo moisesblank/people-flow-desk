@@ -458,133 +458,49 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
 
   // Grid de Macro Cards (estilo materiais)
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {RESOLUCAO_MACRO_CARDS.map((card) => {
         const modules = getModulesForMacro(card.positionRange);
         const totalLessons = modules.reduce((a, m) => a + (m._count?.lessons || 0), 0);
         
-        // Cores dinâmicas por área
-        const colorSchemes = {
-          'quimica-geral': {
-            primary: 'from-amber-600 to-orange-700',
-            glow: 'shadow-amber-500/30',
-            accent: 'text-amber-400',
-            border: 'border-amber-500/40',
-            iconBg: 'bg-gradient-to-br from-amber-500/30 to-orange-600/20',
-            statBg: 'bg-amber-950/50',
-            hoverBorder: 'group-hover:border-amber-400/60',
-          },
-          'quimica-organica': {
-            primary: 'from-violet-600 to-purple-700',
-            glow: 'shadow-purple-500/30',
-            accent: 'text-purple-400',
-            border: 'border-purple-500/40',
-            iconBg: 'bg-gradient-to-br from-purple-500/30 to-violet-600/20',
-            statBg: 'bg-purple-950/50',
-            hoverBorder: 'group-hover:border-purple-400/60',
-          },
-          'fisico-quimica': {
-            primary: 'from-cyan-600 to-blue-700',
-            glow: 'shadow-cyan-500/30',
-            accent: 'text-cyan-400',
-            border: 'border-cyan-500/40',
-            iconBg: 'bg-gradient-to-br from-cyan-500/30 to-blue-600/20',
-            statBg: 'bg-cyan-950/50',
-            hoverBorder: 'group-hover:border-cyan-400/60',
-          },
+        // Cores de acento por área
+        const accentColors = {
+          'quimica-geral': 'text-amber-500',
+          'quimica-organica': 'text-purple-500',
+          'fisico-quimica': 'text-cyan-500',
         };
-        const colorScheme = colorSchemes[card.id as keyof typeof colorSchemes] || colorSchemes['quimica-geral'];
+        const accentColor = accentColors[card.id as keyof typeof accentColors] || 'text-amber-500';
         
         return (
           <div
             key={card.id}
             onClick={() => setSelectedMacro(card.id)}
-            className={cn(
-              "group relative cursor-pointer transform-gpu",
-              "transition-transform duration-300 ease-out",
-              "hover:scale-[1.03] hover:-translate-y-1"
-            )}
+            className="group cursor-pointer bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors"
           >
-            {/* Card com gradiente de fundo escuro premium */}
-            <div 
-              className={cn(
-                "relative overflow-hidden rounded-2xl",
-                "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950",
-                "border", colorScheme.border, colorScheme.hoverBorder,
-                "shadow-xl", colorScheme.glow,
-                "transition-all duration-300"
-              )}
-            >
-              {/* Gradiente superior - header visual */}
-              <div className={cn(
-                "h-20 w-full bg-gradient-to-br",
-                colorScheme.primary,
-                "relative overflow-hidden"
-              )}>
-                {/* Pattern overlay sutil */}
-                <div className="absolute inset-0 opacity-20" 
-                  style={{ 
-                    backgroundImage: `radial-gradient(circle at 20% 50%, rgba(255,255,255,0.15) 0%, transparent 50%),
-                                      radial-gradient(circle at 80% 50%, rgba(255,255,255,0.1) 0%, transparent 40%)` 
-                  }} 
-                />
-                
-                {/* Icon flutuando sobre o gradiente */}
-                <div className="absolute -bottom-5 left-5">
-                  <div className={cn(
-                    "w-14 h-14 rounded-xl flex items-center justify-center",
-                    "bg-slate-900/90 backdrop-blur-sm",
-                    "border-2", colorScheme.border,
-                    "shadow-lg",
-                    colorScheme.glow
-                  )}>
-                    <span className="text-3xl">{card.icon}</span>
-                  </div>
-                </div>
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-2xl">{card.icon}</span>
+              <h3 className="text-sm font-semibold text-foreground">{card.name}</h3>
+            </div>
+            
+            {/* Stats */}
+            <div className="flex items-center gap-4 mb-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Layers className={cn("h-3.5 w-3.5", accentColor)} />
+                <span className="font-medium text-foreground">{modules.length}</span>
+                <span>módulos</span>
               </div>
-              
-              {/* Content area */}
-              <div className="pt-8 pb-5 px-5 space-y-4">
-                {/* Title */}
-                <h3 className="text-base lg:text-lg font-bold text-white leading-snug pr-2">
-                  {card.name}
-                </h3>
-                
-                {/* Stats row - visual premium */}
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-xl",
-                    colorScheme.statBg,
-                    "border border-slate-700/50"
-                  )}>
-                    <Layers className={cn("h-4 w-4", colorScheme.accent)} />
-                    <span className="text-base font-bold text-white">{modules.length}</span>
-                    <span className="text-xs text-slate-400 font-medium">módulos</span>
-                  </div>
-                  
-                  <div className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-xl",
-                    colorScheme.statBg,
-                    "border border-slate-700/50"
-                  )}>
-                    <PlayCircle className={cn("h-4 w-4", colorScheme.accent)} />
-                    <span className="text-base font-bold text-white">{totalLessons}</span>
-                    <span className="text-xs text-slate-400 font-medium">aulas</span>
-                  </div>
-                </div>
-                
-                {/* CTA Button style */}
-                <div className={cn(
-                  "flex items-center justify-center gap-2 py-2.5 rounded-xl",
-                  "bg-gradient-to-r", colorScheme.primary,
-                  "text-white text-sm font-semibold",
-                  "transition-all duration-200",
-                  "group-hover:shadow-lg", colorScheme.glow
-                )}>
-                  <span>Ver Módulos</span>
-                  <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </div>
+              <div className="flex items-center gap-1.5">
+                <PlayCircle className={cn("h-3.5 w-3.5", accentColor)} />
+                <span className="font-medium text-foreground">{totalLessons}</span>
+                <span>aulas</span>
               </div>
+            </div>
+            
+            {/* CTA */}
+            <div className="flex items-center gap-1.5 text-xs font-medium text-primary group-hover:gap-2 transition-all">
+              <span>Ver Módulos</span>
+              <ChevronRight className="h-3.5 w-3.5" />
             </div>
           </div>
         );
