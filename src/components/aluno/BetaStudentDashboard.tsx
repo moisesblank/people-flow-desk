@@ -64,8 +64,8 @@ export function BetaStudentDashboard() {
   // Estado de carregamento - FLUID RESPONSIVE
   if (isLoading) {
     return (
-      <div className="min-h-screen">
-        <div className="container mx-auto p-4 md:p-6 space-y-6 sm:space-y-8">
+      <div className="min-h-screen w-full overflow-x-hidden">
+        <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 space-y-6 sm:space-y-8">
           {/* Loading Hero */}
           <div className="dashboard-hero-2300 p-4 sm:p-6 md:p-8">
             <div className="space-y-4">
@@ -79,7 +79,7 @@ export function BetaStudentDashboard() {
             </div>
           </div>
           {/* Loading Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 auto-rows-fr">
             {[1, 2, 3, 4].map(i => (
               <Skeleton key={i} className="h-24 sm:h-32 rounded-2xl" />
             ))}
@@ -120,15 +120,15 @@ export function BetaStudentDashboard() {
   const xpProgresso = xpProximoNivel > 0 ? (stats.xpTotal / xpProximoNivel) * 100 : 0;
 
   return (
-    <div className="min-h-screen">
-      {/* 🌌 COSMIC BACKGROUND LAYER — ESTÁTICO (SEM ANIMAÇÕES) */}
+    <div className="min-h-screen w-full overflow-x-hidden">
+      {/* 🌌 COSMIC BACKGROUND LAYER — FLUID RESPONSIVE */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full bg-holo-cyan/5 blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full bg-holo-purple/5 blur-[100px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-primary/3 blur-[150px]" />
+        <div className="absolute top-0 left-[10%] sm:left-1/4 w-[50vw] sm:w-[40vw] max-w-[600px] aspect-square rounded-full bg-holo-cyan/5 blur-[80px] sm:blur-[120px]" />
+        <div className="absolute bottom-0 right-[10%] sm:right-1/4 w-[45vw] sm:w-[35vw] max-w-[500px] aspect-square rounded-full bg-holo-purple/5 blur-[60px] sm:blur-[100px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70vw] sm:w-[60vw] max-w-[800px] aspect-[2/1] rounded-full bg-primary/3 blur-[100px] sm:blur-[150px]" />
       </div>
 
-      <div className="container mx-auto p-4 md:p-6 space-y-8">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 space-y-6 sm:space-y-8">
         
         {/* 📅 PLANO DE ESTUDOS ENEM 2030 — SEM ANIMAÇÃO */}
         <div>
@@ -237,7 +237,7 @@ export function BetaStudentDashboard() {
         </div>
 
         {/* Stats Cards - 100% DADOS REAIS - FLUID GRID — SEM ANIMAÇÃO */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 auto-rows-fr">
           <div>
             <Card className="border-0 bg-gradient-to-br from-blue-500/20 to-cyan-500/10 hover:shadow-lg transition-all duration-300 group cursor-pointer"
               onClick={() => navigate('/alunos/videoaulas')}>
@@ -330,7 +330,7 @@ export function BetaStudentDashboard() {
               <CardDescription>Sua evolução está em suas mãos</CardDescription>
             </CardHeader>
             <CardContent className="relative">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 py-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4 py-4">
                 <Button 
                   size="lg" 
                   className="gap-2 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 w-full"
