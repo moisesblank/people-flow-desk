@@ -1234,7 +1234,10 @@ const NetflixEpisodeCard = memo(function NetflixEpisodeCard({
           </div>
           
           {/* Watch Button - Netflix RED Always */}
-          <button className="w-full py-2.5 rounded-lg font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 bg-gradient-to-r from-[#E50914] to-[#FF4444] text-white border-0 shadow-lg shadow-[#E50914]/40 hover:from-[#FF4444] hover:to-[#E50914] hover:shadow-[#E50914]/60 transition-all duration-300">
+          <button
+            type="button"
+            className="w-full py-2.5 rounded-lg font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 bg-gradient-to-r from-[#E50914] to-[#FF4444] text-white border-0 shadow-lg shadow-[#E50914]/40 hover:from-[#FF4444] hover:to-[#E50914] hover:shadow-[#E50914]/60 transition-all duration-300"
+          >
             <Play className="h-4 w-4" fill="currentColor" />
             Assistir Agora
           </button>
@@ -1888,17 +1891,29 @@ function AlunoCoursesHierarchy() {
   };
 
   const getVideoType = (lesson: Lesson): "youtube" | "panda" => {
-    if (lesson.video_provider === 'panda') return "panda";
-    if (lesson.video_provider === 'youtube') return "youtube";
-
-    // ✅ FIX: provider pode estar implícito em video_url (Panda embed) mesmo sem panda_video_id
-    const detected = detectVideoProviderFromUrl(lesson.video_url);
-    if (detected === 'panda') return "panda";
-
-    if (lesson.panda_video_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lesson.panda_video_id)) {
-      return "panda";
+    // ✅ Guard de integridade: se video_provider está marcado como 'panda' mas não há panda_video_id,
+    // e o video_url aponta para YouTube, devemos tratar como YouTube (evita player Panda receber URL errada).
+    if (lesson.video_provider === 'panda') {
+      if (!lesson.panda_video_id) {
+        const detectedExplicit = detectVideoProviderFromUrl(lesson.video_url);
+        if (detectedExplicit === 'youtube') return 'youtube';
+      }
+      return 'panda';
     }
-    return "youtube";
+
+    if (lesson.video_provider === 'youtube') return 'youtube';
+
+    // provider pode estar implícito em video_url
+    const detected = detectVideoProviderFromUrl(lesson.video_url);
+    if (detected === 'panda') return 'panda';
+
+    if (
+      lesson.panda_video_id &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lesson.panda_video_id)
+    ) {
+      return 'panda';
+    }
+    return 'youtube';
   };
 
   const getVideoId = (lesson: Lesson): string => {
@@ -1908,15 +1923,16 @@ function AlunoCoursesHierarchy() {
       const fromId = lesson.panda_video_id || "";
       if (fromId) return fromId;
 
-      // ✅ FIX: Panda pode estar salvo apenas em video_url (UUID ou URL embed completa)
+      // Panda pode estar salvo apenas em video_url (UUID ou URL embed completa)
       const raw = (lesson.video_url || '').trim();
       if (!raw) return "";
 
-      if (looksLikeUrl(raw)) return raw;
+      // Se vier URL, normaliza para extrair o v=... (id do Panda) quando aplicável.
+      if (looksLikeUrl(raw)) return normalizePandaVideoId(raw);
       return normalizePandaVideoId(raw);
     }
 
-    // ✅ FIX: YouTube pode estar salvo como video_url (URL completa) sem youtube_video_id
+    // YouTube pode estar salvo como video_url (URL completa) sem youtube_video_id
     const fromId = lesson.youtube_video_id || "";
     if (fromId) return fromId;
 
