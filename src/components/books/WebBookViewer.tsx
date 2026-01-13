@@ -539,36 +539,91 @@ export const WebBookViewer = memo(function WebBookViewer({
     ? pdfRenderer.totalPages 
     : totalPages;
 
-  // Fullscreen
+  // Fullscreen - COM FALLBACK PARA MOBILE (iOS Safari não suporta requestFullscreen)
   const toggleFullscreen = useCallback(async () => {
     if (!containerRef.current) return;
 
-    if (!document.fullscreenElement) {
-      await containerRef.current.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      await document.exitFullscreen();
+    // Detectar se fullscreen API está disponível
+    const canUseNativeFullscreen = !!(
+      document.fullscreenEnabled ||
+      (document as any).webkitFullscreenEnabled ||
+      (document as any).mozFullScreenEnabled ||
+      (document as any).msFullscreenEnabled
+    );
+
+    // Se já está em modo fullscreen (nativo ou simulado)
+    if (isFullscreen) {
+      // Tentar sair do fullscreen nativo primeiro
+      if (document.fullscreenElement) {
+        await document.exitFullscreen().catch(() => {});
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      }
       setIsFullscreen(false);
+      return;
     }
-  }, []);
+
+    // ENTRAR em fullscreen
+    if (canUseNativeFullscreen) {
+      try {
+        // Tentar API padrão
+        if (containerRef.current.requestFullscreen) {
+          await containerRef.current.requestFullscreen();
+        } else if ((containerRef.current as any).webkitRequestFullscreen) {
+          (containerRef.current as any).webkitRequestFullscreen();
+        } else if ((containerRef.current as any).mozRequestFullScreen) {
+          (containerRef.current as any).mozRequestFullScreen();
+        } else if ((containerRef.current as any).msRequestFullscreen) {
+          (containerRef.current as any).msRequestFullscreen();
+        }
+        setIsFullscreen(true);
+      } catch (error) {
+        // Fallback para CSS se a API falhar (comum em iOS)
+        console.log('[WebBookViewer] Fullscreen API falhou, usando fallback CSS');
+        setIsFullscreen(true);
+      }
+    } else {
+      // 📱 MOBILE FALLBACK: Usar CSS para simular fullscreen
+      console.log('[WebBookViewer] Mobile: usando fallback CSS para fullscreen');
+      setIsFullscreen(true);
+    }
+  }, [isFullscreen]);
 
   // Sincronizar estado com mudanças de fullscreen (ESC, clique fora, etc)
   useEffect(() => {
     const handleFullscreenChange = () => {
-      const nowFullscreen = !!document.fullscreenElement;
+      const nowFullscreen = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
 
-      // Se SAIU do fullscreen
-      if (isFullscreen && !nowFullscreen) {
-        console.log('[WebBookViewer] Saindo do Modo Leitura - desativando ferramentas');
-        setActiveTool('pencil');
-        // Fabric.js cuida automaticamente da limpeza quando o canvas é desmontado
+      // Se SAIU do fullscreen NATIVO, sincronizar estado
+      // Mas NÃO resetar se estamos em modo CSS fallback
+      if (!nowFullscreen && document.fullscreenElement === null) {
+        // Verificar se ainda estamos em modo CSS (isFullscreen true mas sem elemento nativo)
+        // Neste caso, manter o estado - o usuário precisa clicar no botão para sair
+        if (isFullscreen && !document.fullscreenElement) {
+          // Só desativar se realmente saiu via ESC ou botão nativo
+          console.log('[WebBookViewer] Detectado saída do fullscreen nativo');
+          setActiveTool('pencil');
+          setIsFullscreen(false);
+        }
       }
-
-      setIsFullscreen(nowFullscreen);
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
   }, [isFullscreen]);
 
   // Função para salvar histórico de anotações + overlays Fabric.js + SAIR DO FULLSCREEN
@@ -760,7 +815,8 @@ export const WebBookViewer = memo(function WebBookViewer({
       data-sanctum-protected="true"
       className={cn(
         "relative flex flex-col h-full min-h-[600px] bg-background sanctum-protected-surface",
-        isFullscreen && "fixed inset-0 z-50",
+        // 📱 MOBILE FULLSCREEN: Funciona tanto com API nativa quanto fallback CSS
+        isFullscreen && "fixed inset-0 z-50 bg-black overflow-auto",
         className
       )}
       style={{
@@ -769,6 +825,17 @@ export const WebBookViewer = memo(function WebBookViewer({
         userSelect: 'none',
         WebkitTouchCallout: 'none',
         MozUserSelect: 'none',
+        // 📱 MOBILE: Garantir que ocupe 100% da viewport
+        ...(isFullscreen && {
+          width: '100vw',
+          height: '100vh',
+          maxWidth: '100vw',
+          maxHeight: '100vh',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+        }),
       }}
     >
       {/* ═══════════════════════════════════════════════════════════ */}
@@ -885,8 +952,8 @@ export const WebBookViewer = memo(function WebBookViewer({
         </div>
       </header>
 
-      {/* 🔶 MODO LEITURA + SALVAR HISTÓRICO - Botões Chamativos DESIGNER 2300 */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3">
+      {/* 🔶 MODO LEITURA + SALVAR HISTÓRICO - Botões Chamativos DESIGNER 2300 - 📱 RESPONSIVO */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 sm:gap-3 px-2">
         <button
           onClick={toggleFullscreen}
           className="relative group transition-all duration-300 hover:scale-105 active:scale-95"
@@ -902,10 +969,10 @@ export const WebBookViewer = memo(function WebBookViewer({
             )}
           />
           
-          {/* Container principal */}
+          {/* Container principal - 📱 RESPONSIVO */}
           <div 
             className={cn(
-              "relative px-6 py-2.5 rounded-lg transition-all duration-300",
+              "relative px-3 py-2 sm:px-6 sm:py-2.5 rounded-lg transition-all duration-300",
               "bg-gradient-to-br from-black via-gray-900 to-black",
               "border-2",
               isFullscreen 
@@ -924,10 +991,10 @@ export const WebBookViewer = memo(function WebBookViewer({
             {/* Brilho superior */}
             <div className="absolute top-0 left-2 right-2 h-px bg-gradient-to-r from-transparent via-red-400/60 to-transparent" />
             
-            {/* Texto com glow */}
+            {/* Texto com glow - 📱 RESPONSIVO */}
             <span 
               className={cn(
-                "relative z-10 text-sm font-bold tracking-widest uppercase flex items-center gap-2",
+                "relative z-10 text-xs sm:text-sm font-bold tracking-wider sm:tracking-widest uppercase flex items-center gap-1 sm:gap-2",
                 isFullscreen 
                   ? "text-red-400" 
                   : "text-red-500 group-hover:text-red-400"
@@ -941,10 +1008,14 @@ export const WebBookViewer = memo(function WebBookViewer({
               {isFullscreen ? (
                 <>
                   <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  MODO LEITURA ATIVADO
+                  <span className="hidden sm:inline">MODO LEITURA ATIVADO</span>
+                  <span className="sm:hidden">LEITURA</span>
                 </>
               ) : (
-                <>Clique aqui para ativar o modo leitura</>
+                <>
+                  <span className="hidden sm:inline">Clique aqui para ativar o modo leitura</span>
+                  <span className="sm:hidden">Modo Leitura</span>
+                </>
               )}
             </span>
             
@@ -962,7 +1033,7 @@ export const WebBookViewer = memo(function WebBookViewer({
           <button
             onClick={handleSaveHistory}
             disabled={isSavingHistory}
-            className="relative group transition-all duration-300 hover:scale-105 active:scale-95 ml-3"
+            className="relative group transition-all duration-300 hover:scale-105 active:scale-95 ml-1 sm:ml-3"
             title="Salvar suas anotações e marcações"
           >
             {/* Glow externo pulsante - verde */}
@@ -975,10 +1046,10 @@ export const WebBookViewer = memo(function WebBookViewer({
               )}
             />
             
-            {/* Container principal */}
+            {/* Container principal - 📱 RESPONSIVO */}
             <div 
               className={cn(
-                "relative px-5 py-2.5 rounded-lg transition-all duration-300",
+                "relative px-3 py-2 sm:px-5 sm:py-2.5 rounded-lg transition-all duration-300",
                 "bg-gradient-to-br from-black via-gray-900 to-black",
                 "border-2",
                 isSavingHistory 
@@ -997,10 +1068,10 @@ export const WebBookViewer = memo(function WebBookViewer({
               {/* Brilho superior */}
               <div className="absolute top-0 left-2 right-2 h-px bg-gradient-to-r from-transparent via-green-400/60 to-transparent" />
               
-              {/* Texto com glow */}
+              {/* Texto com glow - 📱 RESPONSIVO */}
               <span 
                 className={cn(
-                  "relative z-10 text-sm font-bold tracking-widest uppercase flex items-center gap-2",
+                  "relative z-10 text-xs sm:text-sm font-bold tracking-wider sm:tracking-widest uppercase flex items-center gap-1 sm:gap-2",
                   isSavingHistory 
                     ? "text-green-400" 
                     : "text-green-500 group-hover:text-green-400"
@@ -1014,12 +1085,14 @@ export const WebBookViewer = memo(function WebBookViewer({
                 {isSavingHistory ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    SALVANDO...
+                    <span className="hidden sm:inline">SALVANDO...</span>
+                    <span className="sm:hidden">...</span>
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    Clique para salvar e sair do modo leitura.
+                    <span className="hidden sm:inline">Clique para salvar e sair</span>
+                    <span className="sm:hidden">Salvar</span>
                   </>
                 )}
               </span>
