@@ -6,7 +6,7 @@
 // ============================================
 
 import React, { memo, useState, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// REMOVIDO: framer-motion por performance
 import { useWebBookLibrary, WebBookListItem } from '@/hooks/useWebBook';
 import { DateLock } from '@/components/ui/chronolock';
 import { 
@@ -15,7 +15,6 @@ import {
   Play,
   Clock,
   Library,
-  Flame,
   BookMarked,
   Eye,
   FileText,
@@ -670,48 +669,39 @@ const BookSection = memo(function BookSection({
       </div>
 
       {/* 📚 BOOK CARDS — Visíveis apenas quando seção aberta */}
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div 
-            key="book-cards"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
-            className="space-y-4 pl-2 pb-3 overflow-hidden"
-          >
-            {books.map((book, idx) => {
-              const isPrevisaoFinal = book.category === 'previsao_final';
-              const bookCard = (
-                <BookCard
+      {isOpen && (
+        <div className="space-y-4 pl-2 pb-3 overflow-hidden animate-fade-in">
+          {books.map((book, idx) => {
+            const isPrevisaoFinal = book.category === 'previsao_final';
+            const bookCard = (
+              <BookCard
+                key={book.id}
+                book={book}
+                index={idx}
+                coverUrl={book.coverUrl || BOOK_COVERS_BY_CATEGORY[book.category || ''] || BOOK_COVERS_BY_INDEX[idx] || '/placeholder.svg'}
+                onSelect={() => onBookSelect(book.id)}
+                isHighEnd={isHighEnd}
+              />
+            );
+            
+            // 🔒 CHRONOLOCK: Previsão Final bloqueado até 28/09
+            if (isPrevisaoFinal) {
+              return (
+                <DateLock 
                   key={book.id}
-                  book={book}
-                  index={idx}
-                  coverUrl={book.coverUrl || BOOK_COVERS_BY_CATEGORY[book.category || ''] || BOOK_COVERS_BY_INDEX[idx] || '/placeholder.svg'}
-                  onSelect={() => onBookSelect(book.id)}
-                  isHighEnd={isHighEnd}
-                />
+                  releaseDate="28/09"
+                  variant="danger"
+                  subtitle="Este material será liberado em breve"
+                >
+                  {bookCard}
+                </DateLock>
               );
-              
-              // 🔒 CHRONOLOCK: Previsão Final bloqueado até 28/09
-              if (isPrevisaoFinal) {
-                return (
-                  <DateLock 
-                    key={book.id}
-                    releaseDate="28/09"
-                    variant="danger"
-                    subtitle="Este material será liberado em breve"
-                  >
-                    {bookCard}
-                  </DateLock>
-                );
-              }
-              
-              return bookCard;
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
+            }
+            
+            return bookCard;
+          })}
+        </div>
+      )}
     </div>
   );
 });
@@ -1046,31 +1036,6 @@ const WebBookLibrary = memo(function WebBookLibrary({
                   <span className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold">Total</span>
                 </div>
                 
-                {/* LENDO */}
-                <div className="relative group flex flex-col items-center gap-2">
-                  {isHighEnd && <div className="absolute inset-0 bg-amber-500/30 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />}
-                  <div className="relative px-5 py-4 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-yellow-500 shadow-lg shadow-amber-500/40 border border-amber-500/60 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                    <div className="relative flex items-center gap-2">
-                      <Flame className="w-5 h-5 text-white/90" />
-                      <span className="text-2xl md:text-3xl font-black text-white">{stats.reading}</span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold">Lendo</span>
-                </div>
-                
-                {/* DOMINADOS */}
-                <div className="relative group flex flex-col items-center gap-2">
-                  {isHighEnd && <div className="absolute inset-0 bg-emerald-500/30 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />}
-                  <div className="relative px-5 py-4 rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 shadow-lg shadow-emerald-500/40 border border-emerald-500/60 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                    <div className="relative flex items-center gap-2">
-                      <Crown className="w-5 h-5 text-white/90" />
-                      <span className="text-2xl md:text-3xl font-black text-white">{stats.completed}</span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground/60 uppercase tracking-widest font-bold">Dominados</span>
-                </div>
               </div>
             </div>
           </div>
