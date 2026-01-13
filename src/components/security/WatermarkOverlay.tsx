@@ -35,20 +35,20 @@ export const WatermarkOverlay = memo(function WatermarkOverlay({
     return () => clearInterval(id);
   }, []);
 
-  // 🎭 Ciclo de aparição/desaparição (60% visível / 40% invisível)
+  // 🎭 Ciclo de aparição/desaparição (40% visível / 60% invisível) — PROPORÇÃO INVERTIDA PERMANENTE
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     
     const scheduleNext = () => {
       if (isVisible) {
-        // ✅ Visível por 9-21 segundos (~60% do ciclo)
-        const visibleTime = randomTime(9, 21) * 1000;
+        // ✅ Visível por 6-14 segundos (~40% do ciclo)
+        const visibleTime = randomTime(6, 14) * 1000;
         timeoutId = setTimeout(() => {
           setIsVisible(false);
         }, visibleTime);
       } else {
-        // ⬛ Invisível por 6-14 segundos (~40% do ciclo)
-        const hiddenTime = randomTime(6, 14) * 1000;
+        // ⬛ Invisível por 9-21 segundos (~60% do ciclo)
+        const hiddenTime = randomTime(9, 21) * 1000;
         timeoutId = setTimeout(() => {
           setIsVisible(true);
         }, hiddenTime);
