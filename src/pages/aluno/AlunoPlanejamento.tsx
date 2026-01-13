@@ -703,7 +703,236 @@ function ForumSection({
 }
 
 // ============================================
-// COMPONENTE: Cronograma Inteligente
+// COMPONENTE: Hub Unificado de Estudo
+// Combina Quick Access + Cronograma Inteligente
+// ============================================
+function UnifiedStudyHub({
+  activeModal,
+  onOpenModal,
+  lessons,
+  lessonProgress,
+}: {
+  activeModal: HubAreaKey | null;
+  onOpenModal: (key: HubAreaKey | null) => void;
+  lessons: PlanningLesson[];
+  lessonProgress: Record<string, LessonProgress>;
+}) {
+  const completedCount = lessons.filter((l) => lessonProgress[l.id]?.is_completed).length;
+  const totalActivities = lessons.length || 4;
+  const progressPercent = totalActivities > 0 ? Math.round((completedCount / totalActivities) * 100) : 0;
+
+  // Mock data para atividades do cronograma
+  const activities = [
+    { code: "QG - D1", category: "QUÍMICA GERAL", categoryColor: "bg-amber-500", progress: 0 },
+    { code: "FQ - D2", category: "FÍSICO-QUÍMICA", categoryColor: "bg-cyan-500", progress: 50 },
+    { code: "QO - D3", category: "ORGÂNICA", categoryColor: "bg-purple-500", progress: 100 },
+    { code: "QA - D4", category: "AMBIENTAL", categoryColor: "bg-green-500", progress: 25 },
+  ];
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden group mt-4 mb-6">
+      {/* Animated gradient border */}
+      <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-r from-primary via-holo-purple to-holo-cyan opacity-60 blur-sm group-hover:opacity-80 transition-opacity duration-500" />
+      <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary/70 via-holo-purple/50 to-holo-cyan/60" />
+      
+      <Card className="relative border-0 overflow-hidden bg-gradient-to-b from-card via-card/98 to-card/95">
+        {/* Top scanline effect */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-holo-purple to-holo-cyan" />
+        <div className="absolute top-1 left-0 right-0 h-12 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none" />
+        
+        <CardHeader className="pb-3 bg-gradient-to-r from-primary/10 via-holo-purple/5 to-transparent relative">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-holo-purple/10 border border-primary/30 shadow-[0_0_20px_hsl(var(--primary)/0.3)]">
+                <Target className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <div className="flex items-center gap-3">
+                  <CardTitle className="text-xl font-bold">Central de Estudos</CardTitle>
+                  <Badge className="bg-gradient-to-r from-primary/20 to-holo-purple/20 text-primary border-primary/30 shadow-[0_0_10px_hsl(var(--primary)/0.2)]">
+                    <Sparkles className="h-3 w-3 mr-1 animate-pulse" />
+                    IA
+                  </Badge>
+                </div>
+                <CardDescription className="mt-1">
+                  {completedCount} de {activities.length} atividades concluídas
+                </CardDescription>
+              </div>
+            </div>
+            
+            <div className="text-right bg-gradient-to-br from-primary/15 to-holo-purple/10 p-3 rounded-xl border border-primary/30 shadow-[0_0_20px_hsl(var(--primary)/0.15)]">
+              <div className="text-2xl font-black bg-gradient-to-r from-primary to-holo-purple bg-clip-text text-transparent">{progressPercent}%</div>
+              <div className="w-20 h-2 bg-muted/50 rounded-full overflow-hidden mt-1 ring-1 ring-white/10">
+                <div 
+                  className="h-full bg-gradient-to-r from-primary via-holo-purple to-holo-cyan rounded-full transition-all duration-500 shadow-[0_0_15px_hsl(var(--primary)/0.5)]"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <span className="text-[10px] text-muted-foreground mt-1 block">progresso</span>
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="pt-2 space-y-4">
+          {/* QUICK ACCESS GRID - 6 Keys */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+            {HUB_AREAS.map((area) => {
+              const Icon = area.icon;
+              const isActive = activeModal === area.key;
+              return (
+                <button
+                  key={area.key}
+                  onClick={() => onOpenModal(isActive ? null : area.key)}
+                  className={cn(
+                    "relative flex flex-col items-center justify-center gap-1.5 p-3 rounded-xl transition-all duration-300 border group/btn",
+                    isActive
+                      ? "bg-gradient-to-br from-primary/20 to-holo-purple/10 border-primary/50 shadow-[0_0_20px_hsl(var(--primary)/0.3)]"
+                      : "bg-gradient-to-br from-muted/30 to-muted/10 border-border/50 hover:border-primary/40 hover:bg-muted/50"
+                  )}
+                >
+                  <div className={cn(
+                    "p-2 rounded-lg transition-all duration-300",
+                    isActive 
+                      ? "bg-primary/20 text-primary shadow-[0_0_15px_hsl(var(--primary)/0.4)]" 
+                      : "bg-muted/50 text-muted-foreground group-hover/btn:text-primary group-hover/btn:bg-primary/10"
+                  )}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <span className={cn(
+                    "text-[10px] font-semibold text-center leading-tight",
+                    isActive ? "text-primary" : "text-muted-foreground group-hover/btn:text-foreground"
+                  )}>
+                    {area.label}
+                  </span>
+                  {area.badge && (
+                    <Badge 
+                      variant="outline" 
+                      className={cn(
+                        "text-[8px] px-1 py-0 h-3.5 absolute -top-1 -right-1",
+                        area.badgeType === "ai" && "bg-gradient-to-r from-holo-purple/20 to-holo-cyan/20 text-holo-purple border-holo-purple/40",
+                        area.badgeType === "xp" && "bg-gradient-to-r from-warning/20 to-orange-500/20 text-warning border-warning/40",
+                        area.badgeType === "treino" && "bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-500 border-cyan-500/40"
+                      )}
+                    >
+                      {area.badge}
+                    </Badge>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <Separator className="bg-gradient-to-r from-transparent via-border to-transparent" />
+
+          {/* CRONOGRAMA TABLE - Compact */}
+          <div className="space-y-2">
+            {/* Table Header */}
+            <div className="grid grid-cols-10 gap-1 text-[10px] font-semibold text-muted-foreground pb-2 border-b border-border/30 uppercase tracking-wider">
+              <span>Atividade</span>
+              <span>Categoria</span>
+              <span className="text-center">%</span>
+              <span className="text-center">Resumos</span>
+              <span className="text-center">Flashcards</span>
+              <span className="text-center">Simulado</span>
+              <span className="text-center">Questões</span>
+              <span className="text-center">Link</span>
+              <span className="text-center">Mapa</span>
+              <span className="text-center">✓</span>
+            </div>
+
+            {/* Table Rows - Compact */}
+            {activities.map((activity, index) => {
+              const isCompleted = activity.progress === 100;
+              return (
+                <div 
+                  key={index} 
+                  className={cn(
+                    "grid grid-cols-10 gap-1 items-center text-xs py-2 px-2 rounded-lg transition-all duration-300",
+                    isCompleted 
+                      ? "bg-gradient-to-r from-success/15 to-transparent border border-success/30" 
+                      : "hover:bg-muted/30 border border-transparent hover:border-border/30"
+                  )}
+                >
+                  {/* Atividade */}
+                  <div className="flex items-center gap-1.5">
+                    <Video className="h-3 w-3 text-muted-foreground" />
+                    <span className="font-semibold text-[10px]">{activity.code}</span>
+                  </div>
+
+                  {/* Categoria */}
+                  <Badge className={`text-[8px] py-0 h-4 justify-center ${activity.categoryColor} text-white border-0`}>
+                    {activity.category.split(' ')[0]}
+                  </Badge>
+
+                  {/* Progress */}
+                  <div className="flex items-center justify-center gap-1">
+                    <div className={cn(
+                      "w-8 h-1.5 rounded-full overflow-hidden",
+                      activity.progress === 100 ? "bg-success/30" : "bg-muted/50"
+                    )}>
+                      <div 
+                        className={cn(
+                          "h-full rounded-full",
+                          activity.progress === 100 ? "bg-success" : "bg-primary"
+                        )}
+                        style={{ width: `${activity.progress}%` }}
+                      />
+                    </div>
+                    <span className="text-[9px] w-6">{activity.progress}%</span>
+                  </div>
+
+                  {/* Icons - Compact */}
+                  <div className="flex justify-center">
+                    <BookOpen className="h-3 w-3 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                  </div>
+                  <div className="flex justify-center">
+                    <BrainCircuit className="h-3 w-3 text-muted-foreground hover:text-holo-purple cursor-pointer transition-colors" />
+                  </div>
+                  <div className="flex justify-center">
+                    <FileText className="h-3 w-3 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                  </div>
+                  <div className="flex justify-center">
+                    <HelpCircle className="h-3 w-3 text-muted-foreground hover:text-warning cursor-pointer transition-colors" />
+                  </div>
+                  <div className="flex justify-center">
+                    <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-holo-cyan cursor-pointer transition-colors" />
+                  </div>
+                  <div className="flex justify-center">
+                    <BrainCircuit className="h-3 w-3 text-muted-foreground hover:text-holo-pink cursor-pointer transition-colors" />
+                  </div>
+
+                  {/* Checkbox */}
+                  <div className="flex justify-center">
+                    {isCompleted ? (
+                      <CheckCircle2 className="h-4 w-4 text-success" />
+                    ) : (
+                      <div className="w-4 h-4 rounded border-2 border-muted-foreground/30 hover:border-primary cursor-pointer" />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* TRAMON Button - Compact */}
+          <div className="flex justify-center pt-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="gap-2 bg-gradient-to-r from-holo-pink/10 to-holo-purple/10 border-holo-pink/50 hover:border-holo-pink/80 shadow-[0_0_20px_hsl(var(--holo-pink)/0.2)] px-4"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-holo-pink" />
+              <span className="font-bold text-sm bg-gradient-to-r from-holo-pink to-holo-purple bg-clip-text text-transparent">TRAMON v8</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ============================================
+// COMPONENTE: Cronograma Inteligente (Legacy - Manter para compatibilidade)
 // ============================================
 function SmartSchedule({
   lessons,
@@ -1282,22 +1511,19 @@ export default function AlunoPlanejamento() {
                   isPending={markCompleteMutation.isPending}
                 />
 
-                {/* 🚀 HUB QUICK ACCESS BAR - Logo abaixo do vídeo */}
-                <div className="mt-4 mb-6">
-                  <HubQuickAccessBar
-                    activeModal={activeModal}
-                    onOpenModal={setActiveModal}
-                  />
-                </div>
+                {/* 🚀 HUB UNIFICADO: Quick Access + Cronograma Inteligente */}
+                <UnifiedStudyHub
+                  activeModal={activeModal}
+                  onOpenModal={setActiveModal}
+                  lessons={lessons}
+                  lessonProgress={lessonProgress}
+                />
 
                 {/* Forum */}
                 <ForumSection
                   lessonId={selectedLesson.id}
                   userName={user?.user_metadata?.full_name || user?.email || "Aluno"}
                 />
-
-                {/* Smart Schedule */}
-                <SmartSchedule lessons={lessons} lessonProgress={lessonProgress} />
               </>
             ) : (
               <Card className="py-12">
