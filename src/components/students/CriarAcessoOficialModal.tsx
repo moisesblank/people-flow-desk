@@ -1069,7 +1069,7 @@ export function CriarAcessoOficialModal({
                     <FormControl>
                       <Input 
                         {...field} 
-                        type="password"
+                        type="text"
                         placeholder="Deixe vazio para enviar email de definição"
                         className="border-muted-foreground/30"
                         disabled={isSubmitting}

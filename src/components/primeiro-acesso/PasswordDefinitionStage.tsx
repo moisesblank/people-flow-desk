@@ -39,8 +39,8 @@ export function PasswordDefinitionStage({
 }: PasswordDefinitionStageProps) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(true); // Visível por padrão
+  const [showConfirmPassword, setShowConfirmPassword] = useState(true); // Visível por padrão
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Validação de senha forte (8+ chars, todos os critérios)
