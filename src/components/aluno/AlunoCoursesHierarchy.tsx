@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { Chronolock } from '@/components/ui/chronolock';
+import { Chronolock, DateLock } from '@/components/ui/chronolock';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog';
 import { OmegaFortressPlayer } from '@/components/video/OmegaFortressPlayer';
 import { LessonTabs } from '@/components/player/LessonTabs';
@@ -775,6 +775,16 @@ function SubcategorySection({
                 onPlayLesson={onPlayLesson}
                 progressMap={progressMap}
               />
+            ) : subcategory === 'Resolução de Questões - Previsão Final' ? (
+              <DateLock releaseDate="31/08">
+                <NetflixCarouselRow
+                  modules={modules}
+                  expandedModules={expandedModules}
+                  onToggleModule={onToggleModule}
+                  onPlayLesson={onPlayLesson}
+                  progressMap={progressMap}
+                />
+              </DateLock>
             ) : (
               <NetflixCarouselRow
                 modules={modules}
