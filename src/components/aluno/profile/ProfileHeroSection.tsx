@@ -3,7 +3,7 @@
 // Componente focado para o Hero Banner
 // ============================================
 
-import { memo, useRef, useCallback } from 'react';
+import { memo, useRef, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -15,6 +15,7 @@ import {
   User, Calendar, Trophy, Flame, Clock, Camera, Loader2, Star 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AvatarCropModal } from './AvatarCropModal';
 
 interface ProfileHeroProps {
   profile: {
@@ -56,8 +57,13 @@ export const ProfileHeroSection = memo(function ProfileHeroSection({
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { shouldAnimate, motionProps, isLowEnd } = useConstitutionPerformance();
+  
+  // Estado para o editor de imagem
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string | null>(null);
 
-  const handleAvatarUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Quando seleciona arquivo, abre o editor ao invés de fazer upload direto
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !profile.id) return;
 
@@ -67,16 +73,31 @@ export const ProfileHeroSection = memo(function ProfileHeroSection({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Arquivo muito grande', { description: 'O tamanho máximo é 5MB.' });
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Arquivo muito grande', { description: 'O tamanho máximo é 10MB.' });
       return;
     }
 
+    // Criar URL para preview e abrir modal de edição
+    const imageUrl = URL.createObjectURL(file);
+    setSelectedImageSrc(imageUrl);
+    setShowCropModal(true);
+    
+    // Limpar input para permitir selecionar o mesmo arquivo novamente
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, [profile.id]);
+
+  // Upload da imagem cortada
+  const handleCropComplete = useCallback(async (croppedBlob: Blob) => {
+    if (!profile.id) return;
+
+    setShowCropModal(false);
     onAvatarUploadStart();
 
     try {
-      const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
-      const fileName = `${profile.id}/avatar-${Date.now()}.${ext}`;
+      const fileName = `${profile.id}/avatar-${Date.now()}.jpg`;
+      const file = new File([croppedBlob], 'avatar.jpg', { type: 'image/jpeg' });
+      
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { upsert: true });
@@ -95,15 +116,27 @@ export const ProfileHeroSection = memo(function ProfileHeroSection({
       if (updateError) throw updateError;
 
       queryClient.invalidateQueries({ queryKey: ['user-profile-stats'] });
-      toast.success('Foto atualizada!');
+      toast.success('Foto atualizada com sucesso!');
     } catch (error: any) {
       console.error('[ProfileHero] Erro no upload:', error);
       toast.error('Erro ao enviar foto', { description: error.message });
     } finally {
       onAvatarUploadEnd();
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      // Limpar URL da imagem
+      if (selectedImageSrc) {
+        URL.revokeObjectURL(selectedImageSrc);
+        setSelectedImageSrc(null);
+      }
     }
-  }, [profile.id, queryClient, onAvatarUploadStart, onAvatarUploadEnd]);
+  }, [profile.id, queryClient, onAvatarUploadStart, onAvatarUploadEnd, selectedImageSrc]);
+
+  const handleCloseModal = useCallback(() => {
+    setShowCropModal(false);
+    if (selectedImageSrc) {
+      URL.revokeObjectURL(selectedImageSrc);
+      setSelectedImageSrc(null);
+    }
+  }, [selectedImageSrc]);
 
   const memberSince = new Date(profile.created_at).toLocaleDateString('pt-BR', {
     year: 'numeric',
@@ -129,10 +162,20 @@ export const ProfileHeroSection = memo(function ProfileHeroSection({
               ref={fileInputRef}
               type="file"
               accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
-              onChange={handleAvatarUpload}
+              onChange={handleFileSelect}
               className="hidden"
               aria-label="Upload de foto de perfil"
             />
+            
+            {/* Modal de Edição de Imagem */}
+            {selectedImageSrc && (
+              <AvatarCropModal
+                isOpen={showCropModal}
+                onClose={handleCloseModal}
+                imageSrc={selectedImageSrc}
+                onCropComplete={handleCropComplete}
+              />
+            )}
 
             <div
               className={cn(
