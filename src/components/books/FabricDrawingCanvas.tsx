@@ -91,6 +91,8 @@ export const FabricDrawingCanvas = memo(forwardRef<FabricDrawingCanvasHandle, Fa
         backgroundColor: 'transparent',
         isDrawingMode: false,
         selection: false,
+        // 📱 MOBILE: Habilitar suporte a touch events
+        allowTouchScrolling: false, // Desabilitar scroll para permitir desenho
       });
 
       // Configurar brush padrão

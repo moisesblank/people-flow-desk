@@ -340,15 +340,15 @@ export const ReadingModeToolbar = memo(function ReadingModeToolbar({
           </button>
         )}
 
-        {/* Painel Expandido */}
+        {/* Painel Expandido - 📱 RESPONSIVO: 100% em mobile, 360px em desktop */}
         <AnimatePresence>
           {isExpanded && (
             <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 360, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
+              initial={{ x: '100%', opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="fixed right-0 top-0 bottom-0 bg-black/95 backdrop-blur-xl border-l-2 border-amber-600/40 flex flex-col overflow-hidden"
+              className="fixed right-0 top-0 bottom-0 w-full sm:w-[360px] bg-black/95 backdrop-blur-xl border-l-2 border-amber-600/40 flex flex-col overflow-hidden z-[60]"
             >
               {/* Header */}
               <div className="flex items-center justify-between p-3 border-b border-amber-600/20 bg-gradient-to-r from-amber-900/20 to-transparent">
