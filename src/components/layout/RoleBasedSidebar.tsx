@@ -356,8 +356,8 @@ const alunoMenuGroups: MenuGroup[] = [
     image: alunosCentralImg,
     color: "from-rose-500/80 via-pink-600/80",
     items: [
-      { title: "Tutoria ao Vivo", url: "/alunos/tutoria", icon: UserCheck, area: "aluno-tutoria", badge: "LIVE" },
-      { title: "Fórum de Dúvidas", url: "/alunos/forum", icon: MessageCircle, area: "aluno-forum" },
+      // MIGRATED: Tutoria ao Vivo removida do menu (conteúdo movido para /alunos/forum)
+      { title: "Fórum & Tutoria IA", url: "/alunos/forum", icon: MessageCircle, area: "aluno-forum", badge: "IA" },
       // Lives Exclusivas movida para topo isolado (grupo aluno-lives-destaque)
       // HIDDEN_ITEMS: Tire suas Dúvidas removida do menu (mantida no sistema)
       // { title: "Tire suas Dúvidas", url: "/alunos/duvidas", icon: HelpCircle, area: "aluno-duvidas" },
