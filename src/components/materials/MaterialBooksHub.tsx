@@ -152,8 +152,8 @@ const MATERIAL_BOOKS: MaterialBook[] = [
     ]
   },
   {
-    id: 'flush-card',
-    name: 'Flush Card',
+    id: 'flash-cards',
+    name: 'Flash Cards',
     description: 'Cards de revisão rápida para memorização eficiente',
     icon: <Zap className="w-7 h-7" />,
     accentColor: 'text-violet-400',
@@ -164,7 +164,7 @@ const MATERIAL_BOOKS: MaterialBook[] = [
     borderColor: 'border-violet-500/30',
     badge: 'REVISÃO',
     filters: [
-      { value: 'flush_card', label: 'Flush Card' },
+      { value: 'flash_cards', label: 'Flash Cards' },
     ]
   }
 ];

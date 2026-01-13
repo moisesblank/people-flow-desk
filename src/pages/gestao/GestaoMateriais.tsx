@@ -250,13 +250,13 @@ const HUB_CARDS: HubCard[] = [
     ],
   },
   {
-    id: 'flush-card',
-    name: 'Flush Card',
+    id: 'flash-cards',
+    name: 'Flash Cards',
     icon: '⚡',
     description: 'Cards de revisão rápida',
     color: 'violet',
     filters: [
-      { value: 'flush_card', label: 'Flush Card' },
+      { value: 'flash_cards', label: 'Flash Cards' },
     ],
   },
 ];
