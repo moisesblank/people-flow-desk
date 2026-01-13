@@ -859,11 +859,15 @@ const LazyVideoRow = memo(function LazyVideoRow({
     return () => observer.disconnect();
   }, []);
 
+  // ══════════════════════════════════════════════════════════════
+  // 🏛️ LEI SUPREMA: LAYOUT VERTICAL OBRIGATÓRIO EM TODOS OS DISPOSITIVOS
+  // Aulas SEMPRE em grid vertical (scroll-y), NUNCA horizontal (scroll-x)
+  // ══════════════════════════════════════════════════════════════
   return (
-    <div ref={rowRef} className="relative min-h-[280px]">
+    <div ref={rowRef} className="relative">
       {/* Row Label (if multiple rows) */}
       {totalRows > 1 && (
-        <div className="flex items-center gap-2 px-6 mb-3">
+        <div className="flex items-center gap-2 px-4 sm:px-6 mb-3">
           <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
             Série {rowNumber}
           </span>
@@ -874,44 +878,37 @@ const LazyVideoRow = memo(function LazyVideoRow({
         </div>
       )}
       
-      {/* Only render cards when visible */}
+      {/* Only render cards when visible — VERTICAL GRID (NEVER horizontal scroll) */}
       {isVisible ? (
-        <div className="relative group/row">
-          {/* Gradient Edges (visual only — never allowed to hide content) */}
-          <div className="absolute left-0 top-0 bottom-0 w-10 sm:w-12 bg-gradient-to-r from-[#0a0e14] to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-10 sm:w-12 bg-gradient-to-l from-[#0a0e14] to-transparent z-10 pointer-events-none" />
-
-          {/* Scrollable Container (owns horizontal scroll + guarantees end-safe-area) */}
-          <div
+        <div className="px-4 sm:px-6">
+          {/* 
+            GRID VERTICAL RESPONSIVO — LEI IMUTÁVEL
+            Mobile: 1 coluna | SM: 2 colunas | MD: 3 colunas | LG: 4 colunas | XL+: 5 colunas
+            Scroll vertical habilitado, horizontal PROIBIDO
+          */}
+          <div 
             ref={scrollRef}
-            className="flex gap-4 pl-6 pr-2 overflow-x-auto overflow-y-visible pb-4 scrollbar-none [&::-webkit-scrollbar]:hidden scroll-smooth"
-            style={{
-              scrollbarWidth: 'none',
-              paddingRight: 'max(2.5rem, env(safe-area-inset-right))',
-              paddingLeft: 'max(1.5rem, env(safe-area-inset-left))',
-              scrollPaddingRight: 'max(2.5rem, env(safe-area-inset-right))',
-              scrollPaddingLeft: 'max(1.5rem, env(safe-area-inset-left))',
-            }}
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pb-4"
           >
             {rowLessons.map((lesson, idx) => (
               <NetflixEpisodeCard
                 key={lesson.id}
                 lesson={lesson}
-                index={rowIndex * 8 + idx}
+                index={rowIndex * 7 + idx}
                 onPlay={() => onPlayLesson(lesson)}
                 isLowEnd={isLowEnd}
               />
             ))}
-            <div aria-hidden className="w-12 sm:w-16 flex-shrink-0" />
           </div>
         </div>
       ) : (
-        /* Skeleton placeholder while loading */
-        <div className="flex gap-4 pl-6 pr-2 overflow-hidden">
-          {Array.from({ length: Math.min(6, rowLessons.length) }, (_, i) => (
-            <div key={i} className="flex-shrink-0 w-[180px] sm:w-[200px] md:w-[220px] lg:w-[240px] rounded-xl bg-slate-800/50 animate-pulse aspect-[3/4]" />
-          ))}
-          <div aria-hidden className="w-12 sm:w-16 flex-shrink-0" />
+        /* Skeleton placeholder while loading — VERTICAL GRID */
+        <div className="px-4 sm:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {Array.from({ length: Math.min(6, rowLessons.length) }, (_, i) => (
+              <div key={i} className="rounded-xl bg-slate-800/50 animate-pulse aspect-[3/4]" />
+            ))}
+          </div>
         </div>
       )}
     </div>
