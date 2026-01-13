@@ -198,7 +198,7 @@ export function StudyPlanENEM2030({ className }: StudyPlanENEM2030Props) {
                 const nextTask = tasks.find(t => !t.completed);
                 if (nextTask?.type === 'video') navigate('/alunos/videoaulas');
                 else if (nextTask?.type === 'exercise') navigate('/alunos/questoes');
-                else if (nextTask?.type === 'flashcard') navigate('/alunos/flashcards');
+                else if (nextTask?.type === 'flashcard') navigate('/alunos/materiais');
                 else navigate('/alunos/materiais');
               }}
             >

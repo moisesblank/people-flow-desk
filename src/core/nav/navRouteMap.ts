@@ -483,7 +483,8 @@ export const NAV_ITEMS_ALUNOS: NavItem[] = [
   { id: "alunos-mapas-mentais", title: "Mapas Mentais", path: "/alunos/mapas-mentais", icon: "Brain", roles: ALUNO_ROLES, group: "alunos-estudo", order: 4 },
   { id: "alunos-questoes", title: "Questões", path: "/alunos/questoes", icon: "HelpCircle", roles: ALUNO_ROLES, group: "alunos-estudo", order: 5 },
   { id: "alunos-simulados", title: "Simulados", path: "/alunos/simulados", icon: "ClipboardList", roles: ALUNO_ROLES, group: "alunos-estudo", order: 6 },
-  { id: "alunos-flashcards", title: "Flashcards", path: "/alunos/flashcards", icon: "Layers", roles: ALUNO_ROLES, group: "alunos-estudo", order: 7 },
+  // DEPRECATED: Flashcards migrado para /alunos/materiais (coleção Flash Cards)
+  // { id: "alunos-flashcards", title: "Flashcards", path: "/alunos/flashcards", icon: "Layers", roles: ALUNO_ROLES, group: "alunos-estudo", order: 7 },
   
   // Ferramentas
   { id: "alunos-tutoria", title: "Tutoria IA", path: "/alunos/tutoria", icon: "Bot", roles: ALUNO_ROLES, group: "alunos-ferramentas", order: 1 },
@@ -853,7 +854,7 @@ export const NAV_STATUS: Record<NavItemKey, NavItemStatus> = {
   "alunos-laboratorio": "active",
   "alunos-calculadora": "active",
   "alunos-tabela-periodica": "active",
-  "alunos-flashcards": "active",
+  "alunos-flashcards": "disabled", // DEPRECATED: migrado para /alunos/materiais
   "alunos-metas": "active",
   "alunos-agenda": "active",
   "alunos-certificados": "active",

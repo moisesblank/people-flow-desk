@@ -99,7 +99,8 @@ export const ROUTES = {
   ALUNOS_LABORATORIO: "/alunos/laboratorio",
   ALUNOS_CALCULADORA: "/alunos/calculadora",
   ALUNOS_TABELA_PERIODICA: "/alunos/tabela-periodica",
-  ALUNOS_FLASHCARDS: "/alunos/flashcards",
+  // DEPRECATED: Flashcards migrado para /alunos/materiais
+  ALUNOS_FLASHCARDS: "/alunos/materiais",
   ALUNOS_METAS: "/alunos/metas",
   ALUNOS_AGENDA: "/alunos/agenda",
   ALUNOS_CERTIFICADOS: "/alunos/certificados",
@@ -298,7 +299,8 @@ export const STUDENT_ROUTES: RouteDefinition[] = [
   { path: "/alunos/laboratorio", domain: "aluno", title: "Laboratório Virtual", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno"] },
   { path: "/alunos/calculadora", domain: "aluno", title: "Calculadora", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno"] },
   { path: "/alunos/tabela-periodica", domain: "aluno", title: "Tabela Periódica", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno"] },
-  { path: "/alunos/flashcards", domain: "aluno", title: "Flashcards", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno"] },
+  // DEPRECATED: Flashcards migrado para /alunos/materiais (redirect ativo)
+  { path: "/alunos/flashcards", domain: "aluno", title: "Flashcards", authRequired: true, status: "disabled", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno"] },
   { path: "/alunos/metas", domain: "aluno", title: "Metas", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno"] },
   { path: "/alunos/agenda", domain: "aluno", title: "Agenda", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno"] },
   { path: "/alunos/certificados", domain: "aluno", title: "Certificados", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno"] },
@@ -513,7 +515,8 @@ export const ROUTE_DEFINITIONS: Record<string, RouteDefinition> = {
   ALUNOS_LABORATORIO: { path: "/alunos/laboratorio", title: "Laboratório Virtual", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
   ALUNOS_CALCULADORA: { path: "/alunos/calculadora", title: "Calculadora", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
   ALUNOS_TABELA_PERIODICA: { path: "/alunos/tabela-periodica", title: "Tabela Periódica", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
-  ALUNOS_FLASHCARDS: { path: "/alunos/flashcards", title: "Flashcards", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  // DEPRECATED: Flashcards migrado para /alunos/materiais (mantido para redirect)
+  ALUNOS_FLASHCARDS: { path: "/alunos/materiais", title: "Flashcards", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "disabled", domain: "aluno" },
   ALUNOS_METAS: { path: "/alunos/metas", title: "Metas", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
   ALUNOS_AGENDA: { path: "/alunos/agenda", title: "Agenda", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
   ALUNOS_CERTIFICADOS: { path: "/alunos/certificados", title: "Certificados", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },

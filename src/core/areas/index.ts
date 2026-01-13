@@ -307,7 +307,8 @@ export const URL_TO_AREA: Record<string, SystemArea> = {
   "/alunos/laboratorio": "aluno-laboratorio",
   "/alunos/calculadora": "aluno-calculadora",
   "/alunos/tabela-periodica": "aluno-tabela-periodica",
-  "/alunos/flashcards": "aluno-flashcards",
+  // DEPRECATED: "/alunos/flashcards" migrado para /alunos/materiais (mantido para redirect)
+  "/alunos/flashcards": "aluno-materiais",
   "/alunos/metas": "aluno-metas",
   "/alunos/agenda": "aluno-agenda",
   "/alunos/certificados": "aluno-certificados",
