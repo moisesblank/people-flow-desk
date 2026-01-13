@@ -38,35 +38,35 @@ type CategoryConfig = {
 const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
   quimica_geral: {
     icon: Atom,
-    gradient: 'from-amber-600 via-amber-500 to-orange-500',
+    gradient: 'from-amber-500 via-orange-500 to-amber-600',
     accentColor: '#F59E0B',
     label: 'Química Geral',
     description: 'Fundamentos e conceitos essenciais'
   },
   quimica_organica: {
     icon: Beaker,
-    gradient: 'from-purple-600 via-purple-500 to-violet-500',
+    gradient: 'from-purple-500 via-violet-500 to-purple-600',
     accentColor: '#A855F7',
     label: 'Química Orgânica',
     description: 'Compostos e reações orgânicas'
   },
   fisico_quimica: {
     icon: FlaskConical,
-    gradient: 'from-cyan-600 via-cyan-500 to-blue-500',
+    gradient: 'from-cyan-500 via-blue-500 to-cyan-600',
     accentColor: '#06B6D4',
     label: 'Físico-Química',
     description: 'Termodinâmica e cinética'
   },
   quimica_ambiental: {
     icon: Leaf,
-    gradient: 'from-emerald-600 via-emerald-500 to-green-500',
+    gradient: 'from-emerald-500 via-green-500 to-emerald-600',
     accentColor: '#10B981',
     label: 'Química Ambiental',
     description: 'Meio ambiente e sustentabilidade'
   },
   bioquimica: {
     icon: Dna,
-    gradient: 'from-pink-600 via-pink-500 to-rose-500',
+    gradient: 'from-pink-500 via-rose-500 to-pink-600',
     accentColor: '#EC4899',
     label: 'Bioquímica',
     description: 'Processos biológicos moleculares'
@@ -123,15 +123,15 @@ export const MaterialBookSection = memo(forwardRef<HTMLDivElement, MaterialBookS
             config.gradient,
             "flex items-center justify-between"
           )}>
-            {/* Background effects */}
+            {/* Background effects — MAIS EVIDENTES */}
             {isHighEnd && (
               <>
-                <div className="absolute inset-0 opacity-20" 
+                <div className="absolute inset-0 opacity-40" 
                   style={{ 
-                    backgroundImage: `repeating-linear-gradient(90deg, transparent 0px, transparent 4px, rgba(255,255,255,0.1) 4px, rgba(255,255,255,0.1) 5px)` 
+                    backgroundImage: `repeating-linear-gradient(90deg, transparent 0px, transparent 4px, rgba(255,255,255,0.15) 4px, rgba(255,255,255,0.15) 5px)` 
                   }} 
                 />
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/25 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
               </>
             )}
 
