@@ -283,6 +283,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (newSession?.user) {
         // Role + heartbeat são iniciados em um useEffect baseado em user/session.
 
+        // 🔥 P0 FIX v4: TOKEN_REFRESHED → Sincronizar sessão customizada
+        // Quando Supabase renova o JWT automaticamente, atualizar last_activity_at
+        // para evitar "sessão fantasma" que causa overlay falso
+        if (event === "TOKEN_REFRESHED") {
+          const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
+          if (sessionToken) {
+            // Atualizar last_activity_at de forma assíncrona (não bloqueia callback)
+            setTimeout(async () => {
+              try {
+                await supabase
+                  .from('active_sessions')
+                  .update({ last_activity_at: new Date().toISOString() })
+                  .eq('session_token', sessionToken);
+                console.log("[AUTH] ✅ TOKEN_REFRESHED → active_sessions.last_activity_at sincronizado");
+              } catch (err) {
+                console.warn("[AUTH] ⚠️ Falha ao sincronizar sessão no TOKEN_REFRESHED:", err);
+              }
+            }, 0);
+          }
+          return;
+        }
+
         // Pós-login/restauração: garantir sessão única + token de segurança
         // - SIGNED_IN: login explícito
         // - INITIAL_SESSION: sessão restaurada (ex: segundo device abrindo com cookie)
@@ -512,10 +534,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // (Evita logout ~5-6s pelo SessionGuard em rotas não-/auth)
     const existingToken = typeof window !== "undefined" ? localStorage.getItem(SESSION_TOKEN_KEY) : null;
 
+    // 🔥 P0 FIX v4: Se token existe, verificar se sessão no banco ainda é válida
+    // Evita "sessão fantasma" onde token local aponta para sessão inválida/expirada
     if (existingToken) {
-      console.log("[AUTH][SESSAO] Token já existe - pulando criação de sessão única");
-      setSecuritySessionReady(true);
-      startHeartbeatRef.current();
+      console.log("[AUTH][SESSAO] Token existe - verificando validade no banco...");
+      
+      const validateAndProceed = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('active_sessions')
+            .select('status, last_activity_at, expires_at')
+            .eq('session_token', existingToken)
+            .maybeSingle();
+          
+          if (error || !data) {
+            // Token local não tem sessão correspondente - criar nova
+            console.warn("[AUTH][SESSAO] ⚠️ Sessão não encontrada no banco - recriando...");
+            localStorage.removeItem(SESSION_TOKEN_KEY);
+            // Dispara novo tick para criar sessão
+            setPostSignInTick((t) => t + 1);
+            return;
+          }
+          
+          // Verificar se sessão está ativa e não expirou
+          const isExpired = new Date(data.expires_at) < new Date();
+          const isRevoked = data.status !== 'active';
+          
+          if (isExpired || isRevoked) {
+            console.warn("[AUTH][SESSAO] ⚠️ Sessão expirada/revogada - recriando...");
+            localStorage.removeItem(SESSION_TOKEN_KEY);
+            setPostSignInTick((t) => t + 1);
+            return;
+          }
+          
+          // ✅ Sessão válida - atualizar last_activity_at e continuar
+          await supabase
+            .from('active_sessions')
+            .update({ last_activity_at: new Date().toISOString() })
+            .eq('session_token', existingToken);
+          
+          console.log("[AUTH][SESSAO] ✅ Sessão existente válida - last_activity_at atualizado");
+          setSecuritySessionReady(true);
+          startHeartbeatRef.current();
+        } catch (err) {
+          console.error("[AUTH][SESSAO] Erro ao validar sessão existente:", err);
+          // Em caso de erro, manter token e continuar
+          setSecuritySessionReady(true);
+          startHeartbeatRef.current();
+        }
+      };
+      
+      validateAndProceed();
       postSignInPayloadRef.current = null;
       return;
     }
