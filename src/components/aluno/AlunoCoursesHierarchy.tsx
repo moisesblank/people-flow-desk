@@ -26,6 +26,7 @@ import { OmegaFortressPlayer } from '@/components/video/OmegaFortressPlayer';
 import { LessonTabs } from '@/components/player/LessonTabs';
 import { useModulesProgress, type ModuleProgressData } from '@/hooks/useModuleProgress';
 import { getThumbnailUrl } from '@/lib/video/thumbnails';
+import { detectVideoProviderFromUrl, looksLikeUrl, normalizePandaVideoId } from '@/lib/video/detectVideoProvider';
 import { CoursesHub, COURSE_HUB_CARDS, type CourseHubCard } from '@/components/aluno/courses/CoursesHub';
 // AnimatePresence e motion removidos para performance
 
@@ -1889,6 +1890,11 @@ function AlunoCoursesHierarchy() {
   const getVideoType = (lesson: Lesson): "youtube" | "panda" => {
     if (lesson.video_provider === 'panda') return "panda";
     if (lesson.video_provider === 'youtube') return "youtube";
+
+    // ✅ FIX: provider pode estar implícito em video_url (Panda embed) mesmo sem panda_video_id
+    const detected = detectVideoProviderFromUrl(lesson.video_url);
+    if (detected === 'panda') return "panda";
+
     if (lesson.panda_video_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lesson.panda_video_id)) {
       return "panda";
     }
@@ -1897,7 +1903,18 @@ function AlunoCoursesHierarchy() {
 
   const getVideoId = (lesson: Lesson): string => {
     const type = getVideoType(lesson);
-    if (type === "panda") return lesson.panda_video_id || "";
+
+    if (type === "panda") {
+      const fromId = lesson.panda_video_id || "";
+      if (fromId) return fromId;
+
+      // ✅ FIX: Panda pode estar salvo apenas em video_url (UUID ou URL embed completa)
+      const raw = (lesson.video_url || '').trim();
+      if (!raw) return "";
+
+      if (looksLikeUrl(raw)) return raw;
+      return normalizePandaVideoId(raw);
+    }
 
     // ✅ FIX: YouTube pode estar salvo como video_url (URL completa) sem youtube_video_id
     const fromId = lesson.youtube_video_id || "";
