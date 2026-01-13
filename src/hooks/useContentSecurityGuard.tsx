@@ -438,6 +438,47 @@ export function useContentSecurityGuard({
   }, [enabled, logViolation]);
 
   // ═══════════════════════════════════════════════════════════
+  // 🚨 DETECÇÃO DE DEVTOOLS VIA MENU CHROME (polling agressivo)
+  // Detecta DevTools aberto via menu 3 pontinhos (não dispara keydown)
+  // ═══════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (!enabled) return;
+    if (isOwnerRef.current) return;
+
+    let lastDevToolsDetection = 0;
+    let consecutiveDetections = 0;
+
+    const checkDevToolsDimensions = () => {
+      if (isOwnerRef.current) return;
+
+      const widthThreshold = 160;
+      const heightThreshold = 160;
+      
+      const widthDiff = window.outerWidth - window.innerWidth;
+      const heightDiff = window.outerHeight - window.innerHeight;
+      
+      if (widthDiff > widthThreshold || heightDiff > heightThreshold) {
+        consecutiveDetections++;
+        
+        if (consecutiveDetections >= 2) {
+          const now = Date.now();
+          if (now - lastDevToolsDetection > 10000) {
+            lastDevToolsDetection = now;
+            console.error('[ContentSecurityGuard] 🚨 DevTools detectado via MENU CHROME!');
+            handleEscalatedResponse('devtools');
+          }
+        }
+      } else {
+        consecutiveDetections = 0;
+      }
+    };
+
+    const interval = setInterval(checkDevToolsDimensions, 1000);
+
+    return () => clearInterval(interval);
+  }, [enabled, handleEscalatedResponse]);
+
+  // ═══════════════════════════════════════════════════════════
   // BLOQUEIO DE CONTEXT MENU
   // ═══════════════════════════════════════════════════════════
   useEffect(() => {
