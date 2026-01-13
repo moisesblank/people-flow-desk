@@ -66,6 +66,7 @@ export const ROUTE_CONTRACTS: Record<string, { role: string; area: string }> = {
   '/alunos/questoes': { role: 'beta', area: 'alunos' },
   '/alunos/simulados': { role: 'beta', area: 'alunos' },
   '/alunos/ranking': { role: 'beta', area: 'alunos' },
+  // DEPRECATED: '/alunos/flashcards' migrado para /alunos/materiais (mantido para redirect)
   '/alunos/flashcards': { role: 'beta', area: 'alunos' },
   '/alunos/tabela-periodica': { role: 'beta', area: 'alunos' },
   '/alunos/cronograma': { role: 'beta', area: 'alunos' },

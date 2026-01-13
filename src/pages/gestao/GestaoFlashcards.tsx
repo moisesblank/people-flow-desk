@@ -1,6 +1,7 @@
 // ============================================
 // 🧠 GESTÃO DE FLASHCARDS
-// CRUD + Importação Inteligente + Sync com /alunos/flashcards
+// CRUD + Importação Inteligente
+// Portal Aluno: /alunos/materiais (coleção Flash Cards)
 // Estrutura: src/types/flashcards.ts (FONTE DA VERDADE)
 // ============================================
 
@@ -1425,7 +1426,7 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
               Gestão de Flashcards
             </h1>
             <p className="text-muted-foreground mt-1">
-              CRUD + Importação → Sincronizado com /alunos/flashcards
+              CRUD + Importação → Portal Aluno: /alunos/materiais (Flash Cards)
             </p>
           </div>
 
@@ -1687,7 +1688,7 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
         {/* Rodapé com contagem */}
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>Exibindo {filteredCards.length} de {flashcards?.length || 0} flashcards</span>
-          <span>Sincronizado com /alunos/flashcards</span>
+          <span>Portal Aluno: /alunos/materiais → Flash Cards</span>
         </div>
       </div>
 

@@ -215,7 +215,7 @@ export function StudyPlanENEM2030() {
         completed: false,
         xp: flashcards.count * 5,
         isReal: true,
-        actionPath: '/alunos/flashcards'
+        actionPath: '/alunos/materiais'
       });
       timeSlot += 0.5;
     }

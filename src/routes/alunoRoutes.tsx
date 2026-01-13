@@ -23,7 +23,8 @@ const AlunoRanking = lazy(() => import("@/pages/RankingPage"));
 const AlunoTabelaPeriodica = lazy(() => import("@/pages/aluno/AlunoTabelaPeriodica"));
 const TutoriaIA = lazy(() => import("@/pages/aluno/TutoriaIA"));
 const AlunoPlanejamento = lazy(() => import("@/pages/aluno/AlunoPlanejamento"));
-const AlunoFlashcards = lazy(() => import("@/pages/FlashcardsPage"));
+// DEPRECATED: AlunoFlashcards migrado para /alunos/materiais (coleção Flash Cards)
+// const AlunoFlashcards = lazy(() => import("@/pages/FlashcardsPage"));
 const AlunoPerfil = lazy(() => import("@/pages/ProfilePage"));
 
 // Placeholders - Named exports
@@ -75,7 +76,8 @@ export const alunoRoutes = (
     <Route path="/alunos/laboratorio" element={<ProtectedPage><AlunoLaboratorio /></ProtectedPage>} />
     <Route path="/alunos/calculadora" element={<ProtectedPage><AlunoCalculadora /></ProtectedPage>} />
     <Route path="/alunos/tabela-periodica" element={<ProtectedPage><AlunoTabelaPeriodica /></ProtectedPage>} />
-    <Route path="/alunos/flashcards" element={<ProtectedPage><AlunoFlashcards /></ProtectedPage>} />
+    {/* DEPRECATED: Flashcards migrado para /alunos/materiais - rota mantida para redirect */}
+    <Route path="/alunos/flashcards" element={<Navigate to="/alunos/materiais" replace />} />
     <Route path="/alunos/metas" element={<ProtectedPage><AlunoMetas /></ProtectedPage>} />
     <Route path="/alunos/agenda" element={<ProtectedPage><AlunoAgenda /></ProtectedPage>} />
     <Route path="/alunos/certificados" element={<ProtectedPage><AlunoCertificados /></ProtectedPage>} />
