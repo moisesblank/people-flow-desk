@@ -162,12 +162,8 @@ export const Chronolock = memo(function Chronolock({
             )}
           </div>
           
-          {/* Mensagem principal */}
-          <h3 className={cn(
-            "text-lg md:text-xl font-bold text-center",
-            "tracking-wider",
-            styles.text
-          )}>
+          {/* Mensagem principal - SEMPRE BRANCO */}
+          <h3 className="text-lg md:text-xl font-bold text-center tracking-wider text-white">
             {displayMessage}
           </h3>
           
