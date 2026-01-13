@@ -21,7 +21,7 @@ import { CronogramaSelector, type CronogramaType } from "@/components/aluno/Cron
 
 // Lazy load modal contents (9 módulos)
 const CronogramaModalContent = lazy(() => import("@/components/aluno/modals/CronogramaModalContent"));
-const ForumModalContent = lazy(() => import("@/components/aluno/modals/ForumModalContent"));
+// ForumModalContent removido - consolidado em /comunidade
 const TutoriaModalContent = lazy(() => import("@/components/aluno/modals/TutoriaModalContent"));
 const VideoaulasModalContent = lazy(() => import("@/components/aluno/modals/VideoaulasModalContent"));
 const QuestoesModalContent = lazy(() => import("@/components/aluno/modals/QuestoesModalContent"));
@@ -908,8 +908,6 @@ export default function AlunoPlanejamento() {
     switch (activeModal) {
       case "cronograma":
         return <Suspense fallback={<ModalLoader />}><CronogramaModalContent /></Suspense>;
-      case "forum":
-        return <Suspense fallback={<ModalLoader />}><ForumModalContent /></Suspense>;
       case "tutoria":
         return <Suspense fallback={<ModalLoader />}><TutoriaModalContent /></Suspense>;
       case "videoaulas":
