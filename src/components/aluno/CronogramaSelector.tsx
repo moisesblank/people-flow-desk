@@ -1,9 +1,9 @@
 // ============================================
 // 📅 CRONOGRAMA SELECTOR - Seleção de Cronogramas
 // Layout estilo módulos com 5 cards
+// CSS-only animations (Year 2300 standard)
 // ============================================
 
-import { motion } from "framer-motion";
 import { Calendar, Sparkles, ChevronRight } from "lucide-react";
 
 // Imagens dos cronogramas
@@ -73,13 +73,11 @@ export function CronogramaSelector({ onSelect }: CronogramaSelectorProps) {
       {/* Cards Grid - 5 cards responsivos, estilo módulos */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 max-w-7xl mx-auto">
         {cronogramas.map((cronograma, index) => (
-          <motion.button
+          <button
             key={cronograma.id}
             onClick={() => onSelect(cronograma.id)}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="group relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50"
+            style={{ animationDelay: `${index * 100}ms` }}
+            className="group relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 animate-fade-in transform-gpu transition-transform duration-300 hover:scale-[1.02]"
           >
             {/* Background Image */}
             <img
@@ -121,7 +119,7 @@ export function CronogramaSelector({ onSelect }: CronogramaSelectorProps) {
             <div className="absolute top-2 right-2 w-4 h-4 border-r-2 border-t-2 border-white/30 rounded-tr-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="absolute bottom-2 left-2 w-4 h-4 border-l-2 border-b-2 border-white/30 rounded-bl-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="absolute bottom-2 right-2 w-4 h-4 border-r-2 border-b-2 border-white/30 rounded-br-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </motion.button>
+          </button>
         ))}
       </div>
     </div>
