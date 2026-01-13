@@ -62,7 +62,7 @@ export const CalculatorButton = forwardRef<HTMLButtonElement, CalculatorButtonPr
           </Button>
         </DialogTrigger>
 
-        <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden bg-gradient-to-b from-background to-background/95 border-primary/20">
+        <DialogContent className="sm:max-w-[480px] max-h-[90vh] p-0 gap-0 overflow-y-auto bg-gradient-to-b from-background to-background/95 border-primary/20">
           <DialogHeader className="px-4 py-3 border-b border-border/50 bg-gradient-to-r from-primary/10 via-transparent to-accent/10">
             <DialogTitle className="flex items-center gap-2 text-lg">
               <div className="p-1.5 rounded-lg bg-primary/20">
