@@ -805,11 +805,17 @@ export const MaterialBooksHub = memo(function MaterialBooksHub({
   const [selectedBook, setSelectedBook] = useState<MaterialBook | null>(null);
 
   const handleSelectBook = useCallback((bookId: string) => {
+    // Flash Cards: Navega diretamente (sem BookDetailView)
+    if (bookId === 'flash-cards') {
+      onSelectBook(bookId);
+      return;
+    }
+    
     const book = MATERIAL_BOOKS.find(b => b.id === bookId);
     if (book) {
       setSelectedBook(book);
     }
-  }, []);
+  }, [onSelectBook]);
 
   const handleSelectFilter = useCallback((
     bookId: string,
