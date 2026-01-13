@@ -16,6 +16,9 @@ import { toast } from "sonner";
 // Hub Quick Access System
 import { HubQuickAccessBar, HubModal, HUB_AREAS, type HubAreaKey } from "@/components/aluno/HubQuickAccessBar";
 
+// Seletor de Cronogramas
+import { CronogramaSelector, type CronogramaType } from "@/components/aluno/CronogramaSelector";
+
 // Lazy load modal contents (9 módulos)
 const CronogramaModalContent = lazy(() => import("@/components/aluno/modals/CronogramaModalContent"));
 const ForumModalContent = lazy(() => import("@/components/aluno/modals/ForumModalContent"));
@@ -884,6 +887,9 @@ export default function AlunoPlanejamento() {
   const [selectedWeek, setSelectedWeek] = useState<PlanningWeek | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<PlanningLesson | null>(null);
   
+  // 📅 CRONOGRAMA SELECTOR STATE
+  const [selectedCronograma, setSelectedCronograma] = useState<CronogramaType>(null);
+  
   // 🚀 HUB MODAL STATE
   const [activeModal, setActiveModal] = useState<HubAreaKey | null>(null);
   const activeModalArea = activeModal ? HUB_AREAS.find(a => a.key === activeModal) : null;
@@ -1087,6 +1093,43 @@ export default function AlunoPlanejamento() {
     );
   }
 
+  // 📅 SE NENHUM CRONOGRAMA SELECIONADO, MOSTRAR SELECTOR
+  if (!selectedCronograma) {
+    return (
+      <div className="min-h-screen bg-background">
+        <CronogramaSelector onSelect={setSelectedCronograma} />
+      </div>
+    );
+  }
+
+  // 📅 SE CRONOGRAMA DIFERENTE DE 'FEVEREIRO', MOSTRAR PLACEHOLDER
+  if (selectedCronograma !== 'fevereiro') {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-6 max-w-md px-4">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/20 to-holo-purple/10 border border-primary/30 inline-block">
+            <Calendar className="h-12 w-12 text-primary" />
+          </div>
+          <h2 className="text-2xl font-bold">
+            {selectedCronograma === 'inteligente' 
+              ? 'Cronograma Inteligente'
+              : `Cronograma ${selectedCronograma.charAt(0).toUpperCase() + selectedCronograma.slice(1)}`}
+          </h2>
+          <p className="text-muted-foreground">
+            Este cronograma estará disponível em breve. Por enquanto, experimente o Cronograma Extensivo Fevereiro.
+          </p>
+          <Button
+            onClick={() => setSelectedCronograma(null)}
+            className="bg-gradient-to-r from-primary to-holo-purple text-white"
+          >
+            Voltar para Seleção
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // 📅 CRONOGRAMA FEVEREIRO - CONTEÚDO ATUAL
   return (
     <>
       {/* 🚀 HUB MODAL SYSTEM */}
@@ -1135,6 +1178,16 @@ export default function AlunoPlanejamento() {
         <div className="absolute inset-0 bg-[linear-gradient(0deg,transparent_49%,hsl(var(--primary)/0.03)_50%,transparent_51%)] bg-[length:100%_4px] pointer-events-none" />
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
+            {/* Botão Voltar para Seleção */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedCronograma(null)}
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <ChevronDown className="h-4 w-4 rotate-90" />
+              Voltar
+            </Button>
             {/* Week Selector - Futuristic */}
             <Select
               value={selectedWeek?.id || ""}
