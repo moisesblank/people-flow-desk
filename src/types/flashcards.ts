@@ -41,6 +41,13 @@ export interface Flashcard {
   question: string;
   answer: string;
   
+  // Imagens (v1.0 - Suporte a mídia)
+  question_image_url?: string | null;
+  answer_image_url?: string | null;
+  // JSONB do Supabase retorna como unknown, não string[]
+  question_image_urls?: unknown;
+  answer_image_urls?: unknown;
+  
   // FSRS v5 - Algoritmo de repetição espaçada
   due_date: string;
   stability: number;
@@ -80,6 +87,9 @@ export interface CreateFlashcardInput {
   lessonId?: string;
   source?: string;
   tags?: string[];
+  // Imagens (v1.0)
+  question_image_url?: string;
+  answer_image_url?: string;
 }
 
 /**
