@@ -10,6 +10,23 @@ let antiDebugActive = false;
 let infiniteLoopActive = false;
 
 // ============================================
+// VERIFICAÇÃO DE AMBIENTE PREVIEW (LOVABLE)
+// ============================================
+function isPreviewEnvironment(): boolean {
+  const hostname = window.location.hostname.toLowerCase();
+  const origin = window.location.origin.toLowerCase();
+  
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.includes('lovableproject.com') ||
+    hostname.includes('lovable.app') ||
+    origin.includes('lovableproject.com') ||
+    origin.includes('lovable.app')
+  );
+}
+
+// ============================================
 // CONFIGURAR OWNER MODE
 // ============================================
 export function setOwnerMode(email: string | null | undefined): void {
@@ -20,7 +37,7 @@ export function setOwnerMode(email: string | null | undefined): void {
 // 1. CONSOLE FLOODING - Inunda o console com lixo
 // ============================================
 function floodConsole(): void {
-  if (isOwnerMode) return;
+  if (isOwnerMode || isPreviewEnvironment()) return;
   
   const junkMessages = [
     '🛡️ Conteúdo protegido por Lei de Direitos Autorais',
@@ -44,11 +61,11 @@ function floodConsole(): void {
 // 2. INFINITE DEBUGGER LOOP - Pausa execução infinitamente
 // ============================================
 function startInfiniteDebugger(): void {
-  if (isOwnerMode || infiniteLoopActive) return;
+  if (isOwnerMode || isPreviewEnvironment() || infiniteLoopActive) return;
   infiniteLoopActive = true;
   
   const loop = (): void => {
-    if (isOwnerMode) {
+    if (isOwnerMode || isPreviewEnvironment()) {
       infiniteLoopActive = false;
       return;
     }
@@ -67,7 +84,7 @@ function startInfiniteDebugger(): void {
 // 3. PROTOTYPE POLLUTION DETECTION
 // ============================================
 function protectPrototypes(): void {
-  if (isOwnerMode) return;
+  if (isOwnerMode || isPreviewEnvironment()) return;
   
   try {
     // Detectar se alguém está inspecionando objetos
@@ -89,7 +106,7 @@ function protectPrototypes(): void {
 // 4. DISABLE CONSOLE METHODS
 // ============================================
 function disableConsoleMethods(): void {
-  if (isOwnerMode) return;
+  if (isOwnerMode || isPreviewEnvironment()) return;
   
   const noop = (): void => {};
   const methods: (keyof Console)[] = ['log', 'debug', 'info', 'warn', 'error', 'table', 'dir', 'dirxml', 'trace'];
@@ -108,7 +125,7 @@ function disableConsoleMethods(): void {
 // 5. DETECT DEVTOOLS VIA ELEMENT INSPECTION
 // ============================================
 function detectDevToolsViaElement(): boolean {
-  if (isOwnerMode) return false;
+  if (isOwnerMode || isPreviewEnvironment()) return false;
   
   let devtoolsOpen = false;
   
@@ -129,7 +146,7 @@ function detectDevToolsViaElement(): boolean {
 // 6. TIMING ATTACK DETECTION
 // ============================================
 function detectViaTimingAttack(): boolean {
-  if (isOwnerMode) return false;
+  if (isOwnerMode || isPreviewEnvironment()) return false;
   
   const start = performance.now();
   // eslint-disable-next-line no-debugger
@@ -144,7 +161,7 @@ function detectViaTimingAttack(): boolean {
 // 7. DIMENSION CHECK (mais confiável)
 // ============================================
 function detectViaDimensions(): boolean {
-  if (isOwnerMode) return false;
+  if (isOwnerMode || isPreviewEnvironment()) return false;
   
   const widthThreshold = window.outerWidth - window.innerWidth > 160;
   const heightThreshold = window.outerHeight - window.innerHeight > 160;
@@ -156,7 +173,7 @@ function detectViaDimensions(): boolean {
 // 8. OVERRIDE toString PARA ESCONDER CÓDIGO (REFORÇADO 2026-01-12)
 // ============================================
 function hideSourceCode(): void {
-  if (isOwnerMode) return;
+  if (isOwnerMode || isPreviewEnvironment()) return;
   
   // Override Function.prototype.toString para esconder implementação
   const originalFunctionToString = Function.prototype.toString;
@@ -190,7 +207,7 @@ function hideSourceCode(): void {
 // 9. BLOQUEAR DEBUGGER STATEMENT (NOVO 2026-01-12)
 // ============================================
 function blockDebuggerStatement(): void {
-  if (isOwnerMode) return;
+  if (isOwnerMode || isPreviewEnvironment()) return;
   
   // Injetar CSS que oculta conteúdo quando DevTools está aberto
   const style = document.createElement('style');
@@ -229,7 +246,7 @@ function blockDebuggerStatement(): void {
 // 10. DETECTAR E RESPONDER A DEVTOOLS (REFORÇADO)
 // ============================================
 function aggressiveDevToolsResponse(): void {
-  if (isOwnerMode) return;
+  if (isOwnerMode || isPreviewEnvironment()) return;
   
   // Marcar body como detectado
   document.body.classList.add('devtools-detected');
@@ -251,7 +268,7 @@ function aggressiveDevToolsResponse(): void {
 // HANDLER DE DETECÇÃO
 // ============================================
 function handleDevToolsDetected(): void {
-  if (isOwnerMode) return;
+  if (isOwnerMode || isPreviewEnvironment()) return;
   
   // 1. Limpar e inundar console
   console.clear();
@@ -272,8 +289,9 @@ export function initAntiDebugger(userEmail?: string | null): () => void {
   
   setOwnerMode(userEmail);
   
-  if (isOwnerMode) {
-    console.log('[AntiDebugger] Owner mode - bypassed');
+  // ⚡ BYPASS TOTAL: Owner OU ambiente de preview Lovable
+  if (isOwnerMode || isPreviewEnvironment()) {
+    console.log('[AntiDebugger] ⚡ Bypass ativo (Owner ou Preview) - proteções desativadas');
     return () => {};
   }
   
@@ -313,7 +331,7 @@ export function initAntiDebugger(userEmail?: string | null): () => void {
 // ATIVAR MODO AGRESSIVO (para páginas de conteúdo) - REFORÇADO 2026-01-12
 // ============================================
 export function enableAggressiveMode(): void {
-  if (isOwnerMode) return;
+  if (isOwnerMode || isPreviewEnvironment()) return;
   
   // Injetar CSS de bloqueio
   blockDebuggerStatement();
@@ -334,7 +352,7 @@ export function enableAggressiveMode(): void {
   
   // Verificação via timing a cada 3s (mais agressivo)
   setInterval(() => {
-    if (!isOwnerMode) {
+    if (!isOwnerMode && !isPreviewEnvironment()) {
       const detected = detectViaTimingAttack() || detectViaDimensions();
       if (detected) {
         handleDevToolsDetected();
@@ -345,7 +363,7 @@ export function enableAggressiveMode(): void {
   
   // Listener para keyboard shortcuts de DevTools
   window.addEventListener('keydown', (e) => {
-    if (isOwnerMode) return;
+    if (isOwnerMode || isPreviewEnvironment()) return;
     
     const key = e.key?.toLowerCase();
     const ctrl = e.ctrlKey || e.metaKey;

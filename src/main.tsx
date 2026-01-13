@@ -69,8 +69,17 @@ import { initGlobalErrorCapture } from "@/hooks/useSystemLogs";
 // ============================================
 // ☢️ LAYER 2: DEVTOOLS DETECTION & BLOCKING
 // Detecta abertura do DevTools e bloqueia a página
+// BYPASS: Ambiente Lovable Preview
 // ============================================
-if (typeof window !== 'undefined' && import.meta.env.PROD) {
+const isLovablePreview = () => {
+  const hostname = window.location.hostname.toLowerCase();
+  return hostname.includes('lovableproject.com') || 
+         hostname.includes('lovable.app') || 
+         hostname === 'localhost' ||
+         hostname === '127.0.0.1';
+};
+
+if (typeof window !== 'undefined' && import.meta.env.PROD && !isLovablePreview()) {
   // Método 1: Timing attack (detecta breakpoints/debugger)
   const detectDevToolsByTiming = () => {
     const start = performance.now();
