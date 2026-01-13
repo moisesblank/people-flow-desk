@@ -970,12 +970,18 @@ const NetflixModuleSection = memo(function NetflixModuleSection({
               {isExpanded ? 'Ocultar' : 'Ver Videoaulas'}
             </Button>
             
-            {/* Watch Now - Netflix RED Cinematic */}
+            {/* Watch Now - Netflix RED Cinematic - FUNCIONA COMO "VER VIDEOAULAS" */}
             {lessonCount > 0 && (
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Play first lesson logic
+                  // Se já expandido e temos aulas, toca a primeira
+                  if (isExpanded && lessons && lessons.length > 0) {
+                    onPlayLesson(lessons[0]);
+                  } else {
+                    // Se não está expandido, expande primeiro (mesma ação que "Ver Videoaulas")
+                    onToggle();
+                  }
                 }}
                 className={cn(
                   "relative h-12 md:h-14 px-7 md:px-10 text-base md:text-lg font-black uppercase tracking-widest rounded-xl",
