@@ -14,6 +14,7 @@ import {
   Terminal
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { ForceRefreshButton } from "@/components/admin/ForceRefreshButton";
 
 interface SystemMetric {
   name: string;
@@ -90,14 +91,23 @@ export function CommandCenter() {
           </div>
         </div>
         
-        <motion.div
-          className="flex items-center gap-2"
-          animate={{ opacity: [0.5, 1, 0.5] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-        >
-          <Activity className="h-4 w-4 text-[hsl(var(--stats-green))]" />
-          <span className="text-xs text-[hsl(var(--stats-green))]">ONLINE</span>
-        </motion.div>
+        <div className="flex items-center gap-3">
+          <motion.div
+            className="flex items-center gap-2"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={{ repeat: Infinity, duration: 1.5 }}
+          >
+            <Activity className="h-4 w-4 text-[hsl(var(--stats-green))]" />
+            <span className="text-xs text-[hsl(var(--stats-green))]">ONLINE</span>
+          </motion.div>
+          
+          {/* 🔄 FORCE REFRESH: Atualizar todos os alunos */}
+          <ForceRefreshButton 
+            variant="ghost" 
+            size="sm" 
+            showLabel={false}
+          />
+        </div>
       </div>
 
       {/* System Metrics Grid */}

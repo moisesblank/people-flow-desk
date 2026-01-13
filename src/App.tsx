@@ -24,6 +24,8 @@ import { P0AliveBeacon } from "@/components/debug/P0AliveBeacon";
 // LegacyDomainBlocker REMOVIDO - domínio gestao.* descontinuado
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
+// 🔄 FORCE REFRESH AUTOMÁTICO - Quando admin publica, alunos recebem refresh
+import { useAppVersionCheck } from "@/hooks/useAppVersionCheck";
 // 🚨 BLACKOUT ANTI-PIRATARIA v1.1 - PROTEÇÃO GLOBAL
 import { SecurityBlackoutOverlay } from "@/components/security/SecurityBlackoutOverlay";
 
@@ -117,6 +119,9 @@ function useGlobalShortcutsOverlay() {
 const AppContent = memo(() => {
   const { isOpen, setIsOpen } = useGlobalShortcutsOverlay();
   useGlobalDevToolsBlock();
+  
+  // 🔄 FORCE REFRESH: Escuta mudanças de versão e faz refresh automático para alunos
+  useAppVersionCheck();
 
   const handleClose = useCallback(() => setIsOpen(false), [setIsOpen]);
 
