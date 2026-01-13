@@ -60,6 +60,7 @@ import {
 } from "lucide-react";
 
 // Components
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -165,9 +166,11 @@ function getVideoId(url: string): string {
 function VideoPlayer({
   lesson,
   onComplete,
+  isCompleted,
 }: {
   lesson: PlanningLesson;
   onComplete: () => void;
+  isCompleted: boolean;
 }) {
   if (!lesson.video_url) {
     return (
@@ -203,10 +206,24 @@ function VideoPlayer({
           <p className="text-sm font-bold text-white mt-0.5 drop-shadow-lg">{lesson.description || "Conceitos"}</p>
         </div>
 
-        {/* XP Badge */}
-        <div className="absolute top-4 right-4 z-30 flex items-center gap-2 bg-gradient-to-r from-warning/20 to-warning/10 backdrop-blur-xl px-3 py-1.5 rounded-full border border-warning/30 shadow-[0_0_15px_hsl(var(--warning)/0.3)] pointer-events-none">
-          <Star className="h-3.5 w-3.5 text-warning fill-warning" />
-          <span className="text-xs font-bold text-warning">+{lesson.xp_reward || 50} XP</span>
+        {/* PROGRESSO Badge - Vídeo aulas NÃO dão XP para ranking (Constituição SYNAPSE) */}
+        <div className={cn(
+          "absolute top-4 right-4 z-30 flex items-center gap-2 backdrop-blur-xl px-3 py-1.5 rounded-full border shadow-lg pointer-events-none",
+          isCompleted 
+            ? "bg-gradient-to-r from-green-500/20 to-emerald-500/10 border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+            : "bg-gradient-to-r from-primary/20 to-cyan-500/10 border-primary/30 shadow-[0_0_15px_hsl(var(--primary)/0.3)]"
+        )}>
+          {isCompleted ? (
+            <>
+              <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+              <span className="text-xs font-bold text-green-500">Concluída</span>
+            </>
+          ) : (
+            <>
+              <Clock className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-bold text-primary">{lesson.estimated_time_minutes || 45} min</span>
+            </>
+          )}
         </div>
 
         {/* 🔒 OMEGA FORTRESS PLAYER com Overlay */}
@@ -1254,6 +1271,7 @@ export default function AlunoPlanejamento() {
                 <VideoPlayer
                   lesson={selectedLesson}
                   onComplete={() => markCompleteMutation.mutate()}
+                  isCompleted={!!lessonProgress[selectedLesson.id]?.is_completed}
                 />
 
                 {/* Lesson Info */}
