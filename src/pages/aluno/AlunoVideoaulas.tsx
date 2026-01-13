@@ -129,20 +129,28 @@ export default function AlunoVideoaulas() {
   // Determinar tipo de player
   // PATCH: detectar Panda também via video_url (embed vindo do Excel/legado)
   const getVideoType = (lesson: Lesson): "youtube" | "panda" => {
-    // 1) Fonte da verdade: campo explícito
-    if (lesson.video_provider === 'panda') return "panda";
-    if (lesson.video_provider === 'youtube') return "youtube";
+    // ✅ Guard de integridade: se video_provider está marcado como 'panda' mas não há panda_video_id,
+    // e o video_url aponta para YouTube, devemos tratar como YouTube (evita player Panda receber URL errada).
+    if (lesson.video_provider === 'panda') {
+      if (!lesson.panda_video_id) {
+        const detectedExplicit = detectVideoProviderFromUrl(lesson.video_url);
+        if (detectedExplicit === 'youtube') return 'youtube';
+      }
+      return 'panda';
+    }
 
-    // 2) Fallback: tentar identificar por URL (legado)
+    if (lesson.video_provider === 'youtube') return 'youtube';
+
+    // Fallback: tentar identificar por URL (legado)
     const providerFromUrl = detectVideoProviderFromUrl(lesson.video_url || null);
     if (providerFromUrl === 'panda') return 'panda';
 
-    // 3) Fallback: UUID em panda_video_id (padrão atual)
+    // Fallback: UUID em panda_video_id (padrão atual)
     if (lesson.panda_video_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lesson.panda_video_id)) {
-      return "panda";
+      return 'panda';
     }
 
-    return "youtube";
+    return 'youtube';
   };
 
   // Obter ID/URL do vídeo
