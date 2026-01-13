@@ -198,9 +198,12 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        success: true,
         message: `Processamento concluído: ${results.success} sucesso, ${results.failed} falhas, ${results.skipped} ignorados`,
-        ...results,
+        processed: results.processed,
+        success_count: results.success,
+        failed_count: results.failed,
+        skipped: results.skipped,
+        details: results.details,
         duration_ms: duration
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
