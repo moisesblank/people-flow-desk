@@ -1980,7 +1980,7 @@ function AlunoCoursesHierarchy() {
                     lessonId={selectedLesson.id}
                     showSecurityBadge
                     showWatermark
-                    autoplay
+                    autoplay={false}
                   />
                 </div>
 
