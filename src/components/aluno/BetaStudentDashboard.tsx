@@ -60,27 +60,27 @@ export function BetaStudentDashboard() {
 
   const firstName = user?.user_metadata?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Estudante';
 
-  // Estado de carregamento
+  // Estado de carregamento - FLUID RESPONSIVE
   if (isLoading) {
     return (
       <div className="min-h-screen">
-        <div className="container mx-auto p-4 md:p-6 space-y-8">
+        <div className="container mx-auto p-4 md:p-6 space-y-6 sm:space-y-8">
           {/* Loading Hero */}
-          <div className="dashboard-hero-2300 p-6 md:p-8">
+          <div className="dashboard-hero-2300 p-4 sm:p-6 md:p-8">
             <div className="space-y-4">
-              <Skeleton className="h-12 w-2/3 bg-white/10" />
-              <Skeleton className="h-6 w-1/2 bg-white/10" />
-              <div className="flex gap-4 mt-8">
-                <Skeleton className="h-24 w-32 rounded-2xl bg-white/10" />
-                <Skeleton className="h-24 w-32 rounded-2xl bg-white/10" />
-                <Skeleton className="h-24 w-32 rounded-2xl bg-white/10" />
+              <Skeleton className="h-8 sm:h-12 w-2/3 bg-white/10" />
+              <Skeleton className="h-5 sm:h-6 w-1/2 bg-white/10" />
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-6 sm:mt-8">
+                <Skeleton className="h-16 sm:h-24 rounded-2xl bg-white/10" />
+                <Skeleton className="h-16 sm:h-24 rounded-2xl bg-white/10" />
+                <Skeleton className="h-16 sm:h-24 rounded-2xl bg-white/10" />
               </div>
             </div>
           </div>
           {/* Loading Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             {[1, 2, 3, 4].map(i => (
-              <Skeleton key={i} className="h-32 rounded-2xl" />
+              <Skeleton key={i} className="h-24 sm:h-32 rounded-2xl" />
             ))}
           </div>
         </div>
@@ -138,8 +138,8 @@ export function BetaStudentDashboard() {
           <StudyPlanENEM2030 />
         </motion.div>
 
-        {/* 🚀 HERO SECTION - IRON MAN HUD */}
-        <div className="dashboard-hero-2300 p-6 md:p-8 animate-optimized-fade-in">
+        {/* 🚀 HERO SECTION - IRON MAN HUD - FLUID RESPONSIVE */}
+        <div className="dashboard-hero-2300 p-4 sm:p-6 md:p-8 animate-optimized-fade-in">
           {/* Particles only on high-end devices */}
           {canUseDecorative && (
             <div className="particles-2300">
@@ -158,61 +158,61 @@ export function BetaStudentDashboard() {
           )}
 
           <div className="relative z-10">
-            {/* Top Status Bar */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Hexagon className="w-10 h-10 text-holo-cyan animate-pulse" style={{ animationDuration: '3s' }} />
-                  <Activity className="w-5 h-5 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            {/* Top Status Bar - FLUID RESPONSIVE */}
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4 sm:mb-6">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="relative flex-shrink-0">
+                  <Hexagon className="w-8 h-8 sm:w-10 sm:h-10 text-holo-cyan animate-pulse" style={{ animationDuration: '3s' }} />
+                  <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                 </div>
                 <div>
-                  <Badge className="bg-holo-cyan/20 text-holo-cyan border border-holo-cyan/30 backdrop-blur-sm">
-                    <Database className="w-3 h-3 mr-1" />
+                  <Badge className="bg-holo-cyan/20 text-holo-cyan border border-holo-cyan/30 backdrop-blur-sm text-[10px] sm:text-xs">
+                    <Database className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
                     DADOS REAIS
                   </Badge>
                 </div>
               </div>
-              <Badge className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-400 border border-amber-500/30">
-                <Shield className="w-3 h-3 mr-1" />
-                NÍVEL {stats.nivel} • {getTituloNivel(stats.nivel).toUpperCase()}
+              <Badge className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-400 border border-amber-500/30 text-[10px] sm:text-xs">
+                <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1" />
+                <span className="truncate max-w-[120px] sm:max-w-none">NÍVEL {stats.nivel} • {getTituloNivel(stats.nivel).toUpperCase()}</span>
               </Badge>
             </div>
 
-            {/* Main Hero Content */}
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-              <div className="space-y-3">
-                <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
+            {/* Main Hero Content - FLUID LAYOUT */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 sm:gap-6 lg:gap-8">
+              <div className="space-y-2 sm:space-y-3 min-w-0 flex-1">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white tracking-tight break-words">
                   {getGreeting()}, <span className="bg-gradient-to-r from-holo-cyan via-holo-purple to-holo-pink bg-clip-text text-transparent">{firstName}</span>! 🧪
                 </h1>
-                <p className="text-white/70 text-lg max-w-xl">
+                <p className="text-white/70 text-base sm:text-lg max-w-xl">
                   A Química é a ciência das transformações. E você está se transformando em um <span className="text-holo-cyan font-semibold">mestre</span>!
                 </p>
               </div>
 
-              {/* Stat Orbs - 100% DADOS REAIS */}
-              <div className="flex items-center gap-4 md:gap-5">
-                <div className="stat-orb-2300 text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <Flame className="w-6 h-6 text-orange-400" />
-                    <span className="text-3xl md:text-4xl font-black text-white">{stats.diasConsecutivos}</span>
+              {/* Stat Orbs - 100% DADOS REAIS - FLUID RESPONSIVE */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:flex lg:items-center lg:gap-5 w-full lg:w-auto">
+                <div className="stat-orb-2300 text-center min-w-0">
+                  <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1">
+                    <Flame className="w-5 h-5 sm:w-6 sm:h-6 text-orange-400 flex-shrink-0" />
+                    <span className="text-2xl sm:text-3xl md:text-4xl font-black text-white truncate">{stats.diasConsecutivos}</span>
                   </div>
-                  <div className="text-[10px] uppercase tracking-widest text-white/50 font-medium">Dias Seguidos</div>
+                  <div className="text-[8px] sm:text-[10px] uppercase tracking-widest text-white/50 font-medium truncate">Dias Seguidos</div>
                 </div>
 
-                <div className="stat-orb-2300 text-center">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <Zap className="w-6 h-6 text-yellow-400" />
-                    <span className="text-3xl md:text-4xl font-black text-white">{stats.xpTotal.toLocaleString()}</span>
+                <div className="stat-orb-2300 text-center min-w-0">
+                  <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1">
+                    <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400 flex-shrink-0" />
+                    <span className="text-2xl sm:text-3xl md:text-4xl font-black text-white truncate">{stats.xpTotal.toLocaleString()}</span>
                   </div>
-                  <div className="text-[10px] uppercase tracking-widest text-white/50 font-medium">XP Total</div>
+                  <div className="text-[8px] sm:text-[10px] uppercase tracking-widest text-white/50 font-medium truncate">XP Total</div>
                 </div>
 
-                <div className="stat-orb-2300 text-center hidden md:block">
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <Timer className="w-6 h-6 text-holo-cyan" />
-                    <span className="text-3xl md:text-4xl font-black text-white">{diasParaENEM}</span>
+                <div className="stat-orb-2300 text-center min-w-0">
+                  <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1">
+                    <Timer className="w-5 h-5 sm:w-6 sm:h-6 text-holo-cyan flex-shrink-0" />
+                    <span className="text-2xl sm:text-3xl md:text-4xl font-black text-white truncate">{diasParaENEM}</span>
                   </div>
-                  <div className="text-[10px] uppercase tracking-widest text-white/50 font-medium">Dias p/ ENEM</div>
+                  <div className="text-[8px] sm:text-[10px] uppercase tracking-widest text-white/50 font-medium truncate">Dias p/ ENEM</div>
                 </div>
               </div>
             </div>
@@ -239,12 +239,12 @@ export function BetaStudentDashboard() {
           </div>
         </div>
 
-        {/* Stats Cards - 100% DADOS REAIS */}
+        {/* Stats Cards - 100% DADOS REAIS - FLUID GRID */}
         <motion.div 
           variants={container}
           initial="hidden"
           animate="show"
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
+          className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4"
         >
           <motion.div variants={item}>
             <Card className="border-0 bg-gradient-to-br from-blue-500/20 to-cyan-500/10 hover:shadow-lg transition-all duration-300 group cursor-pointer"
@@ -347,31 +347,31 @@ export function BetaStudentDashboard() {
               <CardDescription>Sua evolução está em suas mãos</CardDescription>
             </CardHeader>
             <CardContent className="relative">
-              <div className="flex flex-wrap items-center justify-center gap-4 py-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 py-4">
                 <Button 
                   size="lg" 
-                  className="gap-2 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700"
+                  className="gap-2 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 w-full"
                   onClick={() => navigate('/alunos/videoaulas')}
                 >
-                  <PlayCircle className="w-4 h-4" />
-                  Assistir Aulas
+                  <PlayCircle className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">Assistir Aulas</span>
                 </Button>
                 <Button 
                   size="lg" 
-                  className="gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                  className="gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 w-full"
                   onClick={() => navigate('/alunos/simulados')}
                 >
-                  <BarChart3 className="w-4 h-4" />
-                  Fazer Simulado
+                  <BarChart3 className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">Fazer Simulado</span>
                 </Button>
                 <Button 
                   size="lg" 
                   variant="outline"
-                  className="gap-2"
+                  className="gap-2 w-full"
                   onClick={() => navigate('/alunos/questoes')}
                 >
-                  <TrendingUp className="w-4 h-4" />
-                  Ver Evolução
+                  <TrendingUp className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">Ver Evolução</span>
                 </Button>
               </div>
               
