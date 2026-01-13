@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { 
   Layers, Search, ChevronRight, PlayCircle,
   FolderOpen, BookOpen, Eye, Video, Clock, Sparkles, GraduationCap,
-  ChevronUp, ChevronDown, Play, ChevronLeft, Info, ArrowLeft
+  ChevronUp, ChevronDown, Play, ChevronLeft, Info, ArrowLeft, ArrowRight
 } from 'lucide-react';
 import { useConstitutionPerformance } from '@/hooks/useConstitutionPerformance';
 import { Button } from '@/components/ui/button';
@@ -456,68 +456,151 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
     );
   }
 
-  // Grid de Macro Cards (estilo materiais)
+  // ══════════════════════════════════════════════════════════════
+  // 🏛️ MACRO CARDS — YEAR 2300 CINEMATIC PREMIUM
+  // Estética futurista cinematográfica de alto impacto
+  // ══════════════════════════════════════════════════════════════
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-2">
       {RESOLUCAO_MACRO_CARDS.map((card) => {
         const modules = getModulesForMacro(card.positionRange);
         const totalLessons = modules.reduce((a, m) => a + (m._count?.lessons || 0), 0);
         
-        const accentColors = {
-          'quimica-geral': { text: 'text-amber-400', bg: 'bg-amber-500' },
-          'quimica-organica': { text: 'text-purple-400', bg: 'bg-purple-500' },
-          'fisico-quimica': { text: 'text-cyan-400', bg: 'bg-cyan-500' },
+        const cardStyles = {
+          'quimica-geral': { 
+            accent: 'amber',
+            iconBg: 'from-amber-500 to-orange-600',
+            border: 'hover:border-amber-500/60',
+            glow: 'hover:shadow-amber-500/30',
+            ring: 'group-hover:ring-amber-500/40',
+            badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+            bar: 'bg-gradient-to-r from-amber-500 to-orange-500',
+          },
+          'quimica-organica': { 
+            accent: 'purple',
+            iconBg: 'from-purple-500 to-fuchsia-600',
+            border: 'hover:border-purple-500/60',
+            glow: 'hover:shadow-purple-500/30',
+            ring: 'group-hover:ring-purple-500/40',
+            badge: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+            bar: 'bg-gradient-to-r from-purple-500 to-fuchsia-500',
+          },
+          'fisico-quimica': { 
+            accent: 'cyan',
+            iconBg: 'from-cyan-500 to-blue-600',
+            border: 'hover:border-cyan-500/60',
+            glow: 'hover:shadow-cyan-500/30',
+            ring: 'group-hover:ring-cyan-500/40',
+            badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+            bar: 'bg-gradient-to-r from-cyan-500 to-blue-500',
+          },
         };
-        const accent = accentColors[card.id as keyof typeof accentColors] || accentColors['quimica-geral'];
+        const style = cardStyles[card.id as keyof typeof cardStyles] || cardStyles['quimica-geral'];
         
         return (
           <div
             key={card.id}
             onClick={() => setSelectedMacro(card.id)}
             className={cn(
-              "group cursor-pointer rounded-md overflow-hidden",
-              "bg-[#181818] border border-transparent",
-              "hover:bg-[#2a2a2a] hover:border-zinc-700/50",
-              "hover:scale-105 hover:shadow-2xl hover:shadow-black/60 hover:z-10",
-              "transition-all duration-200 ease-out transform-gpu"
+              "group relative cursor-pointer rounded-2xl overflow-hidden",
+              "bg-gradient-to-br from-slate-900/95 via-slate-800/90 to-slate-900/95",
+              "border border-slate-700/50",
+              style.border,
+              "shadow-xl shadow-black/40",
+              style.glow,
+              "hover:shadow-2xl",
+              "ring-1 ring-transparent",
+              style.ring,
+              "transition-all duration-300 ease-out transform-gpu",
+              "hover:scale-[1.03] hover:-translate-y-1"
             )}
           >
-            {/* Accent top line */}
-            <div className={cn("h-0.5 w-full", accent.bg, "opacity-80")} />
+            {/* ═══ HOLOGRAPHIC TOP BAR ═══ */}
+            <div className={cn("h-1.5 w-full", style.bar)} />
             
-            <div className="p-4">
-              {/* Header */}
-              <div className="flex items-start gap-3 mb-3">
-                <span className="text-2xl">{card.icon}</span>
-                <div>
-                  <h3 className="text-sm font-bold text-white leading-tight">{card.name}</h3>
-                  <p className="text-[11px] text-zinc-500 mt-0.5">Resolução comentada</p>
+            {/* ═══ AMBIENT GLOW EFFECT ═══ */}
+            <div className={cn(
+              "absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32",
+              "bg-gradient-to-b opacity-0 group-hover:opacity-30",
+              style.iconBg.replace('from-', 'from-').replace('to-', 'to-'),
+              "blur-3xl transition-opacity duration-500 pointer-events-none"
+            )} />
+            
+            {/* ═══ CARD CONTENT ═══ */}
+            <div className="relative p-6">
+              {/* Icon + Title Section */}
+              <div className="flex items-start gap-4 mb-5">
+                {/* Premium Icon Badge */}
+                <div className={cn(
+                  "flex-shrink-0 w-14 h-14 rounded-xl",
+                  "bg-gradient-to-br", style.iconBg,
+                  "flex items-center justify-center",
+                  "shadow-lg shadow-black/30",
+                  "ring-2 ring-white/10",
+                  "group-hover:scale-110 transition-transform duration-300"
+                )}>
+                  <span className="text-3xl filter drop-shadow-lg">{card.icon}</span>
+                </div>
+                
+                {/* Title & Subtitle */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-black text-white leading-tight mb-1 tracking-tight">
+                    {card.name.replace('Resolução de questão - ', '')}
+                  </h3>
+                  <p className="text-xs text-slate-400 font-medium tracking-wide uppercase">
+                    Resoluções Comentadas
+                  </p>
                 </div>
               </div>
               
-              {/* Stats inline */}
-              <div className="flex items-center gap-4 text-xs text-zinc-400 mb-3">
-                <span className="flex items-center gap-1.5">
-                  <Layers className={cn("h-3.5 w-3.5", accent.text)} />
-                  <span className="text-white font-medium">{modules.length}</span> módulos
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <PlayCircle className={cn("h-3.5 w-3.5", accent.text)} />
-                  <span className="text-white font-medium">{totalLessons}</span> aulas
-                </span>
+              {/* ═══ STATS SECTION ═══ */}
+              <div className="flex items-center gap-3 mb-5">
+                {/* Módulos Badge */}
+                <div className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-lg",
+                  "border backdrop-blur-sm",
+                  style.badge
+                )}>
+                  <Layers className="h-4 w-4" />
+                  <span className="text-sm font-bold">{modules.length}</span>
+                  <span className="text-xs opacity-80">módulos</span>
+                </div>
+                
+                {/* Aulas Badge */}
+                <div className={cn(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-lg",
+                  "border backdrop-blur-sm",
+                  style.badge
+                )}>
+                  <Video className="h-4 w-4" />
+                  <span className="text-sm font-bold">{totalLessons}</span>
+                  <span className="text-xs opacity-80">aulas</span>
+                </div>
               </div>
               
-              {/* CTA Netflix Play-style */}
+              {/* ═══ CTA BUTTON ═══ */}
               <button className={cn(
-                "w-full flex items-center justify-center gap-2 py-2 rounded",
-                "bg-white text-black text-xs font-bold",
-                "opacity-0 group-hover:opacity-100",
-                "transition-opacity duration-200"
+                "w-full flex items-center justify-center gap-3 py-3.5 rounded-xl",
+                "bg-white text-black font-bold text-sm uppercase tracking-wider",
+                "shadow-lg shadow-black/20",
+                "group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-100",
+                "transform transition-all duration-300",
+                "opacity-90 group-hover:opacity-100",
+                "group-hover:shadow-xl"
               )}>
-                <PlayCircle className="h-4 w-4 fill-current" />
-                <span>Assistir</span>
+                <PlayCircle className="h-5 w-5 fill-current" />
+                <span>ASSISTIR AGORA</span>
+                <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
               </button>
             </div>
+            
+            {/* ═══ CORNER ACCENT ═══ */}
+            <div className={cn(
+              "absolute bottom-0 right-0 w-24 h-24",
+              "bg-gradient-to-tl opacity-5",
+              style.iconBg.replace('from-', 'from-').replace('to-', 'to-'),
+              "pointer-events-none"
+            )} />
           </div>
         );
       })}
