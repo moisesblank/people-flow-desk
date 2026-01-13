@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogPortal,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -276,9 +277,17 @@ const cationsVariaveis = [
 ];
 
 // ForwardRef wrapper para compatibilidade com TooltipTrigger/Radix
-export const PeriodicTableButton = forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  (props, ref) => {
+export interface PeriodicTableButtonProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Container para renderizar o portal (usa document.fullscreenElement se em fullscreen) */
+  portalContainer?: HTMLElement | null;
+}
+
+export const PeriodicTableButton = forwardRef<HTMLDivElement, PeriodicTableButtonProps>(
+  ({ portalContainer, ...props }, ref) => {
     const [isOpen, setIsOpen] = useState(false);
+
+    // Determina o container: prop > fullscreenElement > undefined (body)
+    const resolvedContainer = portalContainer ?? document.fullscreenElement ?? undefined;
 
     return (
       <div ref={ref} {...props}>
@@ -293,20 +302,22 @@ export const PeriodicTableButton = forwardRef<HTMLDivElement, React.HTMLAttribut
               <Atom className="h-5 w-5 text-red-600 group-hover:text-red-500 group-hover:scale-110 group-hover:rotate-180 transition-all duration-500" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="dark w-[98vw] max-w-[98vw] md:max-w-[95vw] lg:max-w-[1500px] h-[95vh] max-h-[95vh] p-0 gap-0 overflow-hidden bg-slate-900 text-slate-50 border-primary/30">
-            <DialogHeader className="px-2 sm:px-4 py-2 sm:py-3 border-b border-border/50 bg-gradient-to-r from-teal-600 via-sky-600 to-violet-600">
-              <DialogTitle className="flex items-center gap-2 sm:gap-3 text-sm sm:text-lg text-white">
-                <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur shrink-0">
-                  <Atom className="h-4 w-4 sm:h-6 sm:w-6" />
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="font-bold text-sm sm:text-xl truncate">CLASSIFICAÇÃO PERIÓDICA DOS ELEMENTOS</span>
-                  <span className="text-[10px] sm:text-xs text-white/80 font-normal truncate">Moisés Medeiros • Curso de Química • IUPAC 2024</span>
-                </div>
-              </DialogTitle>
-            </DialogHeader>
-            <PeriodicTableContent />
-          </DialogContent>
+          <DialogPortal container={resolvedContainer as HTMLElement | undefined}>
+            <DialogContent className="dark w-[98vw] max-w-[98vw] md:max-w-[95vw] lg:max-w-[1500px] h-[95vh] max-h-[95vh] p-0 gap-0 overflow-hidden bg-slate-900 text-slate-50 border-primary/30">
+              <DialogHeader className="px-2 sm:px-4 py-2 sm:py-3 border-b border-border/50 bg-gradient-to-r from-teal-600 via-sky-600 to-violet-600">
+                <DialogTitle className="flex items-center gap-2 sm:gap-3 text-sm sm:text-lg text-white">
+                  <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur shrink-0">
+                    <Atom className="h-4 w-4 sm:h-6 sm:w-6" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-bold text-sm sm:text-xl truncate">CLASSIFICAÇÃO PERIÓDICA DOS ELEMENTOS</span>
+                    <span className="text-[10px] sm:text-xs text-white/80 font-normal truncate">Moisés Medeiros • Curso de Química • IUPAC 2024</span>
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+              <PeriodicTableContent />
+            </DialogContent>
+          </DialogPortal>
         </Dialog>
       </div>
     );

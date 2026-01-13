@@ -1090,22 +1090,22 @@ export const WebBookViewer = memo(function WebBookViewer({
                   QUÍMICA
                 </span>
                 
-                {/* Calculadora - Usando diretamente o componente */}
+                {/* Calculadora - Usando diretamente o componente com portal container */}
                 <div className="relative">
                   <div className="absolute -inset-0.5 rounded-lg opacity-0 hover:opacity-60 blur-sm bg-blue-500 transition-all duration-300 pointer-events-none" />
                   <div className="relative rounded-lg bg-blue-600/20 border border-blue-500/40 hover:bg-blue-600/40 hover:border-blue-400 transition-all">
-                    <CalculatorButton />
+                    <CalculatorButton portalContainer={containerRef.current} />
                   </div>
                 </div>
                 
                 {/* Separador */}
                 <div className="w-full h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
                 
-                {/* Tabela Periódica - Usando diretamente o componente */}
+                {/* Tabela Periódica - Usando diretamente o componente com portal container */}
                 <div className="relative">
                   <div className="absolute -inset-0.5 rounded-lg opacity-0 hover:opacity-60 blur-sm bg-teal-500 transition-all duration-300 pointer-events-none" />
                   <div className="relative rounded-lg bg-teal-600/20 border border-teal-500/40 hover:bg-teal-600/40 hover:border-teal-400 transition-all">
-                    <PeriodicTableButton />
+                    <PeriodicTableButton portalContainer={containerRef.current} />
                   </div>
                 </div>
               </div>
