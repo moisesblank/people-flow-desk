@@ -19,6 +19,7 @@ interface ShortcutConfig {
 
 export const KEYBOARD_SHORTCUTS = [
   // Sistema
+  { key: "F11", description: "Alternar Tela Cheia", category: "system" as const },
   { key: "E", ctrl: true, shift: true, description: "Ativar/Desativar Modo Master", category: "system" as const },
   { key: "K", ctrl: true, description: "Abrir busca global", category: "system" as const },
   { key: "K", ctrl: true, shift: true, description: "Abrir Command Center", category: "system" as const },
@@ -46,10 +47,21 @@ export function useKeyboardShortcuts(
 ) {
   const navigate = useNavigate();
 
-  const handleKeyDown = useCallback(
+    const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
       const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+
+      // F11 - Toggle Fullscreen (prevent browser default, use custom)
+      if (event.key === "F11") {
+        event.preventDefault();
+        if (document.fullscreenElement) {
+          document.exitFullscreen?.();
+        } else {
+          document.documentElement.requestFullscreen?.();
+        }
+        return;
+      }
 
       // Ctrl + K - Global search (works even in inputs)
       if (event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === "k") {
