@@ -27,16 +27,35 @@ export function setOwnerMode(email: string | null | undefined): void {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 1. VERIFICAÇÃO DE DOMÍNIO AUTORIZADO
+// 1. VERIFICAÇÃO DE DOMÍNIO AUTORIZADO + PREVIEW BYPASS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function isDomainAuthorized(): boolean {
+function isPreviewEnvironment(): boolean {
   const hostname = window.location.hostname.toLowerCase();
+  const origin = window.location.origin.toLowerCase();
   
-  // Permitir localhost/preview em desenvolvimento
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return true; // Permitir desenvolvimento local
+  // Lovable preview/development environments - SEMPRE bypass
+  if (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.includes('lovableproject.com') ||
+    hostname.includes('lovable.app') ||
+    origin.includes('lovableproject.com') ||
+    origin.includes('lovable.app')
+  ) {
+    return true;
   }
+  
+  return false;
+}
+
+function isDomainAuthorized(): boolean {
+  // Preview environments sempre autorizados
+  if (isPreviewEnvironment()) {
+    return true;
+  }
+  
+  const hostname = window.location.hostname.toLowerCase();
   
   return AUTHORIZED_DOMAINS.some(domain => 
     hostname === domain || hostname.endsWith('.' + domain)
@@ -83,7 +102,7 @@ function enforceAuthorizedDomain(): void {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function detectDevToolsViaPerformance(): boolean {
-  if (isOwnerMode) return false;
+  if (isOwnerMode || isPreviewEnvironment()) return false;
   
   const threshold = 100; // ms
   const t1 = performance.now();
@@ -99,7 +118,7 @@ function detectDevToolsViaPerformance(): boolean {
 }
 
 function detectDevToolsViaDimensions(): boolean {
-  if (isOwnerMode) return false;
+  if (isOwnerMode || isPreviewEnvironment()) return false;
   
   const widthDiff = window.outerWidth - window.innerWidth;
   const heightDiff = window.outerHeight - window.innerHeight;
@@ -109,7 +128,7 @@ function detectDevToolsViaDimensions(): boolean {
 }
 
 function detectDevToolsViaDebugger(): boolean {
-  if (isOwnerMode) return false;
+  if (isOwnerMode || isPreviewEnvironment()) return false;
   
   const start = performance.now();
   // eslint-disable-next-line no-debugger
@@ -122,7 +141,7 @@ function detectDevToolsViaDebugger(): boolean {
 
 // Detecção via Console getter trap
 function detectDevToolsViaConsoleTrap(): boolean {
-  if (isOwnerMode) return false;
+  if (isOwnerMode || isPreviewEnvironment()) return false;
   
   let detected = false;
   const element = new Image();
@@ -145,7 +164,7 @@ function detectDevToolsViaConsoleTrap(): boolean {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function executeNuclearResponse(): void {
-  if (isOwnerMode) return;
+  if (isOwnerMode || isPreviewEnvironment()) return;
   
   // Previne chamadas múltiplas em sequência
   const now = Date.now();
@@ -509,8 +528,9 @@ export function initNuclearShield(userEmail?: string | null): () => void {
   
   setOwnerMode(userEmail);
   
-  if (isOwnerMode) {
-    console.log('[NUCLEAR SHIELD] ⚡ Owner mode - all protections bypassed');
+  // ⚡ BYPASS TOTAL: Owner OU ambiente de preview Lovable
+  if (isOwnerMode || isPreviewEnvironment()) {
+    console.log('[NUCLEAR SHIELD] ⚡ Bypass ativo (Owner ou Preview) - proteções desativadas');
     return () => {};
   }
   
