@@ -94,6 +94,33 @@ export const LazyVideoPlayer = memo(function LazyVideoPlayer({
     }
   }, [videoId, type]);
   
+  // 🔥 AUTO-FULLSCREEN v17.0: Ativar fullscreen ao iniciar vídeo
+  const requestAutoFullscreen = useCallback(() => {
+    if (!containerRef.current) return;
+    
+    // Detectar iOS/Safari que não suporta requestFullscreen em elementos
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    
+    if (isIOS || (isSafari && !document.fullscreenEnabled)) {
+      console.log('[LazyVideoPlayer] ⚠️ iOS/Safari detectado - fullscreen nativo não suportado');
+      return;
+    }
+    
+    try {
+      const container = containerRef.current;
+      if (container.requestFullscreen) {
+        container.requestFullscreen().catch(() => {
+          console.log('[LazyVideoPlayer] ⚠️ Fullscreen recusado pelo navegador');
+        });
+      } else if ((container as any).webkitRequestFullscreen) {
+        (container as any).webkitRequestFullscreen();
+      }
+    } catch (e) {
+      console.log('[LazyVideoPlayer] ⚠️ Erro ao solicitar fullscreen:', e);
+    }
+  }, []);
+
   // Handle play button click - COM DISCLAIMER OBRIGATÓRIO
   const handlePlay = useCallback(() => {
     // 🔒 DISCLAIMER: Exibir aviso legal por 3 segundos antes de iniciar
@@ -104,7 +131,10 @@ export const LazyVideoPlayer = memo(function LazyVideoPlayer({
     setIsLoading(true);
     setIsActivated(true);
     onPlay?.();
-  }, [onPlay, startDisclaimer]);
+    
+    // 🔥 AUTO-FULLSCREEN: Ativar após iniciar vídeo
+    requestAutoFullscreen();
+  }, [onPlay, startDisclaimer, requestAutoFullscreen]);
   
   // Callback quando disclaimer completar
   const onDisclaimerComplete = useCallback(() => {
@@ -112,7 +142,10 @@ export const LazyVideoPlayer = memo(function LazyVideoPlayer({
     setIsLoading(true);
     setIsActivated(true);
     onPlay?.();
-  }, [handleDisclaimerComplete, onPlay]);
+    
+    // 🔥 AUTO-FULLSCREEN: Ativar após disclaimer completar
+    requestAutoFullscreen();
+  }, [handleDisclaimerComplete, onPlay, requestAutoFullscreen]);
   
   // Handle iframe load
   const handleIframeLoad = useCallback(() => {

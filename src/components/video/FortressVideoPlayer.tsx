@@ -268,6 +268,33 @@ export const FortressVideoPlayer = memo(({
   // ============================================
   // CONTROLES
   // ============================================
+  // 🔥 AUTO-FULLSCREEN v17.0: Ativar fullscreen ao iniciar vídeo
+  const requestAutoFullscreen = useCallback(() => {
+    if (!containerRef.current) return;
+    
+    // Detectar iOS/Safari que não suporta requestFullscreen em elementos
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    
+    if (isIOS || (isSafari && !document.fullscreenEnabled)) {
+      console.log('[FortressVideoPlayer] ⚠️ iOS/Safari detectado - fullscreen nativo não suportado');
+      return;
+    }
+    
+    try {
+      const container = containerRef.current;
+      if (container.requestFullscreen) {
+        container.requestFullscreen().catch(() => {
+          console.log('[FortressVideoPlayer] ⚠️ Fullscreen recusado pelo navegador');
+        });
+      } else if ((container as any).webkitRequestFullscreen) {
+        (container as any).webkitRequestFullscreen();
+      }
+    } catch (e) {
+      console.log('[FortressVideoPlayer] ⚠️ Erro ao solicitar fullscreen:', e);
+    }
+  }, []);
+
   const handlePlayPause = useCallback(() => {
     if (showThumbnail) {
       // 🔒 DISCLAIMER: Exibir aviso legal por 3 segundos antes de iniciar
@@ -276,6 +303,9 @@ export const FortressVideoPlayer = memo(({
       }
       setShowThumbnail(false);
       setIsLoading(true);
+      
+      // 🔥 AUTO-FULLSCREEN: Ativar após iniciar vídeo
+      requestAutoFullscreen();
       return;
     }
 
@@ -295,14 +325,17 @@ export const FortressVideoPlayer = memo(({
       );
       setIsPlaying(!isPlaying);
     }
-  }, [showThumbnail, isPlaying, startDisclaimer]);
+  }, [showThumbnail, isPlaying, startDisclaimer, requestAutoFullscreen]);
 
   // Callback quando disclaimer completar
   const onDisclaimerComplete = useCallback(() => {
     handleDisclaimerComplete();
     setShowThumbnail(false);
     setIsLoading(true);
-  }, [handleDisclaimerComplete]);
+    
+    // 🔥 AUTO-FULLSCREEN: Ativar após disclaimer completar
+    requestAutoFullscreen();
+  }, [handleDisclaimerComplete, requestAutoFullscreen]);
 
   const handleSpeedChange = useCallback((speed: number) => {
     setCurrentSpeed(speed);
