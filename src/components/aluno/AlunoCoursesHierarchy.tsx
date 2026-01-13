@@ -754,7 +754,7 @@ function SubcategorySection({
                 onPlayLesson={onPlayLesson}
                 progressMap={progressMap}
               />
-            ) : subcategory === 'Resolução de Questões - Previsão Final' ? (
+            ) : subcategory?.toLowerCase().includes('previsão final') ? (
               <DateLock releaseDate="31/08">
                 <NetflixCarouselRow
                   modules={modules}
