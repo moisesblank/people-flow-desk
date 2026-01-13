@@ -706,9 +706,25 @@ export function useWebBookLibrary() {
     }
   }, [user?.id]);
 
-  // 🔄 REALTIME SYNC: Atualiza imediatamente quando gestão modifica
+  // 🔄 REALTIME SYNC: DESATIVADO INICIALMENTE para performance
+  // ⚡ OTIMIZAÇÃO #4: Realtime só ativa após primeira interação ou visibilidade
+  const [realtimeEnabled, setRealtimeEnabled] = useState(false);
+  
+  // Ativar realtime quando página voltar a ficar visível (após 3s)
   useEffect(() => {
-    if (!user?.id) return;
+    const enableRealtimeAfterDelay = () => {
+      const timer = setTimeout(() => setRealtimeEnabled(true), 3000);
+      return () => clearTimeout(timer);
+    };
+    
+    // Ativar após 3 segundos de página carregada
+    const cleanup = enableRealtimeAfterDelay();
+    return cleanup;
+  }, []);
+  
+  useEffect(() => {
+    // ⚡ Skip realtime se ainda não habilitado
+    if (!user?.id || !realtimeEnabled) return;
 
     const channel = supabase
       .channel('web-books-realtime-sync')
@@ -727,14 +743,14 @@ export function useWebBookLibrary() {
       )
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
-          console.log('[WebBookLibrary] ✅ Realtime sync ativo');
+          console.log('[WebBookLibrary] ✅ Realtime sync ativo (deferred)');
         }
       });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, loadBooks]);
+  }, [user?.id, loadBooks, realtimeEnabled]);
 
   // Carrega ao montar
   useEffect(() => {

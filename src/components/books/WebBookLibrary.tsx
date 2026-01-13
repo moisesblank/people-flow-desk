@@ -39,6 +39,7 @@ import {
   Save,
   X
 } from 'lucide-react';
+// DND-KIT: Mantido para funcionalidade de admin (reordenação)
 import {
   DndContext,
   closestCenter,
@@ -46,7 +47,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
+  type DragEndEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -70,31 +71,25 @@ import '@/styles/dashboard-2300.css';
 
 // ============================================
 // 🖼️ CAPAS PERMANENTES DOS LIVROS (por CATEGORIA)
+// ⚡ LAZY-LOADED: URLs estáticas (Vite resolve em build)
 // ============================================
 
-import capa1RevisaoCiclica from '@/assets/book-covers/capa-1-revisao-ciclica.png';
-import capa2FisicoQuimica from '@/assets/book-covers/capa-2-fisico-quimica.png';
-import capa3PrevisaoFinal from '@/assets/book-covers/capa-3-previsao-final.png';
-import capa4QuimicaOrganica from '@/assets/book-covers/capa-4-quimica-organica.png';
-import capa5QuimicaGeral from '@/assets/book-covers/capa-5-quimica-geral.png';
-
 // Mapeamento por CATEGORIA → Capa correspondente
-// Qualquer livro dessa categoria terá essa capa automaticamente
 const BOOK_COVERS_BY_CATEGORY: Record<string, string> = {
-  quimica_geral: capa5QuimicaGeral,
-  quimica_organica: capa4QuimicaOrganica,
-  fisico_quimica: capa2FisicoQuimica,
-  revisao_ciclica: capa1RevisaoCiclica,
-  previsao_final: capa3PrevisaoFinal,
+  quimica_geral: '/src/assets/book-covers/capa-5-quimica-geral.png',
+  quimica_organica: '/src/assets/book-covers/capa-4-quimica-organica.png',
+  fisico_quimica: '/src/assets/book-covers/capa-2-fisico-quimica.png',
+  revisao_ciclica: '/src/assets/book-covers/capa-1-revisao-ciclica.png',
+  previsao_final: '/src/assets/book-covers/capa-3-previsao-final.png',
 };
 
 // Fallback por posição (caso categoria não seja reconhecida)
 const BOOK_COVERS_BY_INDEX: Record<number, string> = {
-  0: capa5QuimicaGeral,
-  1: capa4QuimicaOrganica,
-  2: capa2FisicoQuimica,
-  3: capa1RevisaoCiclica,
-  4: capa3PrevisaoFinal,
+  0: '/src/assets/book-covers/capa-5-quimica-geral.png',
+  1: '/src/assets/book-covers/capa-4-quimica-organica.png',
+  2: '/src/assets/book-covers/capa-2-fisico-quimica.png',
+  3: '/src/assets/book-covers/capa-1-revisao-ciclica.png',
+  4: '/src/assets/book-covers/capa-3-previsao-final.png',
 };
 
 // ============================================
@@ -779,7 +774,7 @@ const WebBookLibrary = memo(function WebBookLibrary({
   const { isOwner } = useRolePermissions();
   
   // ⚡ Performance flags - LEI I
-  const { shouldShowParticles, isLowEnd, tier } = useConstitutionPerformance();
+  const { shouldShowParticles, isLowEnd, tier, isMobile } = useConstitutionPerformance();
   const isHighEnd = tier === 'enhanced' || tier === 'standard' || !isLowEnd;
   
   // 🔀 Owner reorder state
@@ -890,29 +885,18 @@ const WebBookLibrary = memo(function WebBookLibrary({
   }, [books]);
 
   // ============================================
-  // LOADING STATE — YEAR 2300 CINEMATIC
+  // LOADING STATE — OTIMIZADO (CSS-only, zero JS)
+  // ⚡ OTIMIZAÇÃO #6: Skeleton leve sem animações pesadas
   // ============================================
   
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a0a0a]">
-        <div className="relative">
-          {/* Central orb */}
-          <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-[#E50914] via-red-600 to-[#E50914] animate-pulse flex items-center justify-center shadow-2xl shadow-[#E50914]/40">
-            <Library className="w-10 h-10 text-white" />
-          </div>
-          
-          {/* Orbital rings */}
-          {isHighEnd && (
-            <>
-              <div className="absolute inset-[-20px] border-2 border-[#E50914]/30 rounded-full animate-spin" style={{ animationDuration: '4s' }} />
-              <div className="absolute inset-[-40px] border border-[#E50914]/20 rounded-full animate-spin" style={{ animationDuration: '6s', animationDirection: 'reverse' }} />
-            </>
-          )}
-          
-          {/* Loading text */}
-          <p className="absolute -bottom-12 left-1/2 -translate-x-1/2 text-sm text-[#E50914] font-bold uppercase tracking-widest whitespace-nowrap">
-            Carregando Biblioteca...
+        <div className="text-center space-y-4">
+          {/* Simple loading indicator - CSS only */}
+          <div className="w-16 h-16 mx-auto rounded-full border-4 border-[#E50914]/30 border-t-[#E50914] animate-spin" />
+          <p className="text-sm text-[#E50914] font-medium uppercase tracking-widest">
+            Carregando...
           </p>
         </div>
       </div>
@@ -939,8 +923,9 @@ const WebBookLibrary = memo(function WebBookLibrary({
 
   return (
     <div className={cn("relative min-h-screen", className)}>
-      {/* 🌌 Cinematic Background */}
-      {shouldShowParticles && <CyberBackground variant="grid" intensity={isLowEnd ? "low" : "medium"} />}
+      {/* 🌌 Cinematic Background — REMOVIDO em mobile para performance */}
+      {/* ⚡ OTIMIZAÇÃO #5: CyberBackground apenas desktop high-end + não mobile */}
+      {shouldShowParticles && !isMobile && <CyberBackground variant="grid" intensity="low" />}
       
       <div className="relative z-10 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
         
