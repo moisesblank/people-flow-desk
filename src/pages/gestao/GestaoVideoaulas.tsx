@@ -16,6 +16,7 @@ import {
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X
 } from "lucide-react";
 import { OmegaFortressPlayer } from "@/components/video/OmegaFortressPlayer";
+import { getVideoTypeWithIntegrityGuard } from "@/lib/video/detectVideoProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -474,10 +475,9 @@ export default function GestaoVideoaulas() {
     return '';
   }, []);
 
+  // ✅ PADRÃO SOBERANO v2400 — Usa função centralizada com guard de integridade
   const getVideoType = useCallback((lesson: Lesson): 'youtube' | 'panda' | 'vimeo' => {
-    if (lesson.video_provider === 'panda') return 'panda';
-    if (lesson.video_provider === 'vimeo') return 'vimeo';
-    return 'youtube';
+    return getVideoTypeWithIntegrityGuard(lesson);
   }, []);
 
   const hasVideo = useCallback((lesson: Lesson): boolean => {

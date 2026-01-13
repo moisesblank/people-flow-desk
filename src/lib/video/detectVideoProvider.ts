@@ -29,6 +29,55 @@ export function detectVideoProviderFromUrl(url?: string | null): VideoProvider {
   return 'unknown';
 }
 
+/**
+ * ============================================
+ * 🛡️ PADRÃO SOBERANO v2400 — DETECÇÃO DE VÍDEO COM GUARD DE INTEGRIDADE
+ * ============================================
+ * Esta função é o PADRÃO ÚNICO para detecção de tipo de vídeo em todo o sistema.
+ * 
+ * REGRA DE OURO:
+ * Se video_provider = 'panda' MAS panda_video_id está vazio E video_url aponta para YouTube,
+ * então tratamos como YOUTUBE (evita player Panda receber URL errada).
+ * 
+ * DEVE SER USADO EM TODO LUGAR que determina qual player renderizar.
+ * ============================================
+ */
+export interface VideoLessonInput {
+  video_provider?: string | null;
+  panda_video_id?: string | null;
+  youtube_video_id?: string | null;
+  video_url?: string | null;
+}
+
+export function getVideoTypeWithIntegrityGuard(lesson: VideoLessonInput): 'youtube' | 'panda' | 'vimeo' {
+  // ✅ Guard de integridade: se video_provider está marcado como 'panda' mas não há panda_video_id,
+  // e o video_url aponta para YouTube, devemos tratar como YouTube.
+  if (lesson.video_provider === 'panda') {
+    if (!lesson.panda_video_id) {
+      const detectedFromUrl = detectVideoProviderFromUrl(lesson.video_url);
+      if (detectedFromUrl === 'youtube') return 'youtube';
+      if (detectedFromUrl === 'vimeo') return 'vimeo';
+    }
+    return 'panda';
+  }
+
+  if (lesson.video_provider === 'youtube') return 'youtube';
+  if (lesson.video_provider === 'vimeo') return 'vimeo';
+
+  // Fallback: tentar identificar por URL (dados legados)
+  const providerFromUrl = detectVideoProviderFromUrl(lesson.video_url);
+  if (providerFromUrl === 'panda') return 'panda';
+  if (providerFromUrl === 'vimeo') return 'vimeo';
+
+  // Fallback: UUID válido em panda_video_id indica Panda
+  if (lesson.panda_video_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lesson.panda_video_id)) {
+    return 'panda';
+  }
+
+  // Default: YouTube
+  return 'youtube';
+}
+
 export function looksLikeUrl(value?: string | null): boolean {
   return !!value && /^https?:\/\//i.test(value);
 }

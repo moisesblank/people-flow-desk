@@ -4,6 +4,9 @@
 // Padrão Netflix: CDN + Lazy Loading + Fallback
 // ============================================
 
+// ✅ PADRÃO SOBERANO v2400 — Importar função centralizada
+import { getVideoTypeWithIntegrityGuard } from './detectVideoProvider';
+
 /**
  * PANDA VIDEO THUMBNAIL
  * CDN CORRETO: https://b-vz-{library_id}.tv.pandavideo.com.br/{video_id}/thumbnail.jpg
@@ -29,6 +32,7 @@ export interface VideoThumbnailResult {
 
 /**
  * Detecta o provider do vídeo baseado nos campos disponíveis
+ * Usa a função centralizada com guard de integridade
  */
 export function detectVideoProvider(lesson: {
   panda_video_id?: string | null;
@@ -36,37 +40,41 @@ export function detectVideoProvider(lesson: {
   video_url?: string | null;
   video_provider?: string | null;
 }): { provider: VideoProvider; videoId: string | null } {
-  // 1. Panda Video ID (prioridade máxima)
-  if (lesson.panda_video_id) {
-    return { provider: 'panda', videoId: lesson.panda_video_id };
-  }
-
-  // 2. YouTube Video ID direto
-  if (lesson.youtube_video_id) {
-    return { provider: 'youtube', videoId: lesson.youtube_video_id };
-  }
-
-  // 3. Extrair de video_url
-  if (lesson.video_url) {
-    const url = lesson.video_url;
-
-    // YouTube patterns
-    const ytMatch = url.match(
-      /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-    );
-    if (ytMatch) {
-      return { provider: 'youtube', videoId: ytMatch[1] };
+  // Usar guard de integridade centralizado
+  const detectedType = getVideoTypeWithIntegrityGuard(lesson);
+  
+  // Mapear para o formato esperado com videoId
+  if (detectedType === 'panda') {
+    // Priorizar panda_video_id, senão extrair de video_url
+    if (lesson.panda_video_id) {
+      return { provider: 'panda', videoId: lesson.panda_video_id };
     }
-
-    // Panda patterns (embed URL)
-    const pandaMatch = url.match(
-      /pandavideo\.com\.br\/embed\/\?v=([a-f0-9-]{36})/i
-    );
-    if (pandaMatch) {
-      return { provider: 'panda', videoId: pandaMatch[1] };
+    if (lesson.video_url) {
+      const pandaMatch = lesson.video_url.match(/[?&]v=([a-f0-9-]{36})/i) 
+        || lesson.video_url.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
+      if (pandaMatch) {
+        return { provider: 'panda', videoId: pandaMatch[1] };
+      }
     }
+    return { provider: 'panda', videoId: null };
   }
-
+  
+  if (detectedType === 'youtube') {
+    // Priorizar youtube_video_id, senão extrair de video_url
+    if (lesson.youtube_video_id) {
+      return { provider: 'youtube', videoId: lesson.youtube_video_id };
+    }
+    if (lesson.video_url) {
+      const ytMatch = lesson.video_url.match(
+        /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+      );
+      if (ytMatch) {
+        return { provider: 'youtube', videoId: ytMatch[1] };
+      }
+    }
+    return { provider: 'youtube', videoId: null };
+  }
+  
   return { provider: 'unknown', videoId: null };
 }
 

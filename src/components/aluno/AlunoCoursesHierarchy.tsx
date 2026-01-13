@@ -26,7 +26,7 @@ import { OmegaFortressPlayer } from '@/components/video/OmegaFortressPlayer';
 import { LessonTabs } from '@/components/player/LessonTabs';
 import { useModulesProgress, type ModuleProgressData } from '@/hooks/useModuleProgress';
 import { getThumbnailUrl } from '@/lib/video/thumbnails';
-import { detectVideoProviderFromUrl, looksLikeUrl, normalizePandaVideoId } from '@/lib/video/detectVideoProvider';
+import { detectVideoProviderFromUrl, looksLikeUrl, normalizePandaVideoId, getVideoTypeWithIntegrityGuard } from '@/lib/video/detectVideoProvider';
 import { CoursesHub, COURSE_HUB_CARDS, type CourseHubCard } from '@/components/aluno/courses/CoursesHub';
 // AnimatePresence e motion removidos para performance
 
@@ -1890,30 +1890,11 @@ function AlunoCoursesHierarchy() {
     return '';
   };
 
+  // ✅ PADRÃO SOBERANO v2400 — Usa função centralizada com guard de integridade
   const getVideoType = (lesson: Lesson): "youtube" | "panda" => {
-    // ✅ Guard de integridade: se video_provider está marcado como 'panda' mas não há panda_video_id,
-    // e o video_url aponta para YouTube, devemos tratar como YouTube (evita player Panda receber URL errada).
-    if (lesson.video_provider === 'panda') {
-      if (!lesson.panda_video_id) {
-        const detectedExplicit = detectVideoProviderFromUrl(lesson.video_url);
-        if (detectedExplicit === 'youtube') return 'youtube';
-      }
-      return 'panda';
-    }
-
-    if (lesson.video_provider === 'youtube') return 'youtube';
-
-    // provider pode estar implícito em video_url
-    const detected = detectVideoProviderFromUrl(lesson.video_url);
-    if (detected === 'panda') return 'panda';
-
-    if (
-      lesson.panda_video_id &&
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lesson.panda_video_id)
-    ) {
-      return 'panda';
-    }
-    return 'youtube';
+    const result = getVideoTypeWithIntegrityGuard(lesson);
+    // Normalizar para o tipo esperado (sem vimeo aqui)
+    return result === 'vimeo' ? 'youtube' : result;
   };
 
   const getVideoId = (lesson: Lesson): string => {
