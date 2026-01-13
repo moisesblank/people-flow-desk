@@ -902,24 +902,23 @@ export default function AlunoPlanejamento() {
   const renderModalContent = () => {
     if (!activeModal) return null;
     
-    switch (activeModal) {
-      case "cronograma":
-        return <Suspense fallback={<ModalLoader />}><CronogramaModalContent /></Suspense>;
-      case "tutoria":
-        return <Suspense fallback={<ModalLoader />}><TutoriaModalContent /></Suspense>;
-      case "questoes":
-        return <Suspense fallback={<ModalLoader />}><QuestoesModalContent /></Suspense>;
-      case "simulados":
-        return <Suspense fallback={<ModalLoader />}><SimuladosModalContent /></Suspense>;
-      case "materiais":
-        // Redireciona para /alunos/materiais
-        window.location.href = '/alunos/materiais';
-        return null;
-      case "livros-web":
-        return <Suspense fallback={<ModalLoader />}><LivrosWebModalContent /></Suspense>;
-      default:
-        return null;
+    // Todas as 6 keys redirecionam diretamente para suas URLs
+    const keyToUrl: Record<string, string> = {
+      "cronograma": "/alunos/cronograma",
+      "tutoria": "/alunos/forum",
+      "materiais": "/alunos/materiais",
+      "simulados": "/alunos/simulados",
+      "livros-web": "/alunos/livros",
+      "questoes": "/alunos/questoes",
+    };
+    
+    const url = keyToUrl[activeModal];
+    if (url) {
+      window.location.href = url;
+      return null;
     }
+    
+    return null;
   };
 
   // Fetch active weeks
