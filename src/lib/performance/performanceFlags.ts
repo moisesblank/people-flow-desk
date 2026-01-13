@@ -1,8 +1,40 @@
 // ============================================
-// 🏛️ CONSTITUIÇÃO SYNAPSE - PERFORMANCE FLAGS v3
+// 🏛️ CONSTITUIÇÃO SYNAPSE - PERFORMANCE FLAGS v3.1
 // Controle centralizado de performance + detecção de dispositivo
 // Integrado com LEI I (Performance) e LEI II (Dispositivos)
 // ============================================
+//
+// ══════════════════════════════════════════════════════════════
+// 🏛️ LEI SUPREMA DE COMPONENTES — IMUTÁVEL PARA AGORA E SEMPRE
+// ══════════════════════════════════════════════════════════════
+//
+// COMPONENTES IMUTÁVEIS (NUNCA afetados por Performance Tiering):
+// ┌─────────────────────────────────────────────────────────────┐
+// │ ✓ Menu/Sidebar         - Disposição, layout, cores, itens  │
+// │ ✓ Headers de página    - Identidade visual + navegação     │
+// │ ✓ Botões de ação       - Login, salvar, confirmar          │
+// │ ✓ Formulários          - Inputs, campos, validações        │
+// │ ✓ Modais de segurança  - 2FA, confirmações, alertas        │
+// │ ✓ Estrutura de cards   - Organização, grid, espaçamento    │
+// │ ✓ Textos/Conteúdo      - Sempre legível, mesma tipografia  │
+// │ ✓ Navegação/Rotas      - Estrutura de links, breadcrumbs   │
+// └─────────────────────────────────────────────────────────────┘
+//
+// COMPONENTES VARIÁVEIS (PODEM ser afetados por Performance):
+// ┌─────────────────────────────────────────────────────────────┐
+// │ ~ Animações decorativas - fade, glow, pulse, slide         │
+// │ ~ Blur/efeitos visuais  - backdrop-blur, glass morphism    │
+// │ ~ Partículas/orbs       - ambient effects, sparkles        │
+// │ ~ Qualidade de imagens  - 50-90% baseado no tier           │
+// │ ~ Autoplay de vídeos    - click-to-play em tiers baixos    │
+// │ ~ Transições suaves     - duration 0-300ms baseado tier    │
+// │ ~ Sombras decorativas   - box-shadow complexas             │
+// │ ~ Gradientes animados   - animate-gradient, holo-shift     │
+// └─────────────────────────────────────────────────────────────┘
+//
+// DOGMA: Todos os alunos veem a MESMA estrutura funcional.
+//        Apenas efeitos DECORATIVOS variam por performance.
+// ══════════════════════════════════════════════════════════════
 
 // ============================================
 // TIPOS AUXILIARES PARA APIs DO NAVEGADOR
