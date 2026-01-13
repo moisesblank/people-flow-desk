@@ -207,117 +207,163 @@ export default function AlunoSimulados() {
       
       <div className="relative z-10 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
         
-        {/* 🎬 UNIFIED NETFLIX HEADER - Arena + XP + Tabs em um só */}
-        <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-[#0d0d1a] via-[#1a0a2e] to-[#0d0d1a]">
-          {/* Background Effects */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(168,85,247,0.15),transparent_50%)]" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(6,182,212,0.1),transparent_50%)]" />
+        {/* 🎬 CINEMATIC MARVEL HEADER 2300 - Impacto Máximo */}
+        <div className="relative overflow-hidden rounded-3xl border-2 border-purple-500/50 shadow-[0_0_60px_rgba(168,85,247,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]">
+          {/* Mega Background Layers */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0a0014] via-[#1a0a2e] to-[#0d0520]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_-20%,rgba(168,85,247,0.4),transparent_60%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_80%_100%,rgba(6,182,212,0.25),transparent_50%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_20%_100%,rgba(236,72,153,0.2),transparent_50%)]" />
+          
+          {/* Holographic Grid */}
           <div 
-            className="absolute inset-0 opacity-[0.03]"
+            className="absolute inset-0 opacity-[0.08]"
             style={{
-              backgroundImage: 'linear-gradient(rgba(168,85,247,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(168,85,247,0.5) 1px, transparent 1px)',
-              backgroundSize: '40px 40px',
+              backgroundImage: `
+                linear-gradient(rgba(168,85,247,0.8) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(168,85,247,0.8) 1px, transparent 1px)
+              `,
+              backgroundSize: '60px 60px',
             }}
           />
           
-          {/* Glowing Accent Line */}
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
+          {/* Animated Scan Line */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div 
+              className="absolute w-full h-[2px] bg-gradient-to-r from-transparent via-purple-400/60 to-transparent"
+              style={{ animation: 'simulado-scan 4s linear infinite' }}
+            />
+          </div>
           
-          <div className="relative z-10 p-4 md:p-6">
-            {/* ROW 1: Title + Stats */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
-              {/* Left: Icon + Title */}
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-600/30 to-cyan-600/20 border border-purple-500/40 backdrop-blur-sm shadow-[0_0_20px_rgba(168,85,247,0.2)]">
-                  <Brain className="h-6 w-6 text-purple-400" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="text-xl md:text-2xl font-bold text-white">Arena de Simulados</h1>
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-md border border-purple-500/40 text-purple-400 bg-purple-500/10 uppercase tracking-wider">
-                      Competitivo
-                    </span>
-                    <Zap className="h-4 w-4 text-amber-400" />
+          {/* Top Mega Glow Line */}
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 shadow-[0_0_30px_rgba(168,85,247,0.8)]" />
+          
+          {/* Bottom Accent */}
+          <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent" />
+          
+          <div className="relative z-10 p-5 md:p-8">
+            {/* ROW 1: MEGA Title + XP HERO */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-6">
+              {/* Left: MEGA Title Block */}
+              <div className="flex items-center gap-4">
+                {/* Holographic Icon Container */}
+                <div className="relative group">
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500 to-cyan-500 blur-xl opacity-50 group-hover:opacity-80 transition-opacity" />
+                  <div className="relative p-4 rounded-2xl bg-gradient-to-br from-purple-600/40 to-cyan-600/30 border-2 border-purple-400/50 backdrop-blur-sm shadow-[0_0_40px_rgba(168,85,247,0.4),inset_0_1px_0_rgba(255,255,255,0.2)]">
+                    <Brain className="h-10 w-10 text-white drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]" />
                   </div>
-                  <p className="text-sm text-purple-200/50 hidden sm:block">
+                </div>
+                
+                <div>
+                  <div className="flex items-center gap-3 flex-wrap mb-1">
+                    <h1 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-cyan-200 tracking-tight drop-shadow-[0_0_30px_rgba(168,85,247,0.5)]">
+                      ARENA DE SIMULADOS
+                    </h1>
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 text-xs font-black rounded-lg border-2 border-purple-400/60 text-purple-300 bg-purple-500/20 uppercase tracking-widest shadow-[0_0_20px_rgba(168,85,247,0.3)]">
+                        COMPETITIVO
+                      </span>
+                      <Zap className="h-6 w-6 text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.8)]" />
+                    </div>
+                  </div>
+                  <p className="text-base text-purple-200/70 font-medium hidden sm:block">
                     Domine suas provas com prática intensa e ranking competitivo
                   </p>
                 </div>
               </div>
 
-              {/* Right: Stats Mini */}
-              <div className="flex items-center gap-1">
-                {/* Stats compactados */}
-                <div className="flex items-center gap-4 px-4 py-2 rounded-xl bg-black/30 border border-white/5">
-                  <div className="flex items-center gap-1.5">
-                    <Play className="h-3.5 w-3.5 text-emerald-400" />
-                    <span className="text-lg font-bold text-white font-mono">{stats.disponíveis}</span>
-                    <span className="text-[10px] text-muted-foreground uppercase hidden md:inline">Disponíveis</span>
+              {/* Right: XP MEGA HERO BADGE + Stats */}
+              <div className="flex items-center gap-4 flex-wrap">
+                {/* Stats Cards - Ultra Visual */}
+                <div className="flex items-center gap-3">
+                  {/* Disponíveis */}
+                  <div className="relative group">
+                    <div className="absolute inset-0 rounded-xl bg-emerald-500/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative flex flex-col items-center px-4 py-3 rounded-xl bg-black/50 border border-emerald-500/40 backdrop-blur-sm">
+                      <Play className="h-5 w-5 text-emerald-400 mb-1" />
+                      <span className="text-2xl font-black text-white font-mono leading-none">{stats.disponíveis}</span>
+                      <span className="text-[9px] text-emerald-300/80 uppercase font-bold tracking-wider">Prontos</span>
+                    </div>
                   </div>
-                  <div className="w-px h-6 bg-white/10" />
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-purple-400" />
-                    <span className="text-lg font-bold text-white font-mono">{stats.realizados}</span>
-                    <span className="text-[10px] text-muted-foreground uppercase hidden md:inline">Realizados</span>
+                  
+                  {/* Realizados */}
+                  <div className="relative group">
+                    <div className="absolute inset-0 rounded-xl bg-purple-500/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative flex flex-col items-center px-4 py-3 rounded-xl bg-black/50 border border-purple-500/40 backdrop-blur-sm">
+                      <CheckCircle2 className="h-5 w-5 text-purple-400 mb-1" />
+                      <span className="text-2xl font-black text-white font-mono leading-none">{stats.realizados}</span>
+                      <span className="text-[9px] text-purple-300/80 uppercase font-bold tracking-wider">Feitos</span>
+                    </div>
                   </div>
-                  <div className="w-px h-6 bg-white/10" />
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-amber-400" />
-                    <span className="text-lg font-bold text-white font-mono">{stats.emBreve}</span>
-                    <span className="text-[10px] text-muted-foreground uppercase hidden md:inline">Em Breve</span>
+                  
+                  {/* Em Breve */}
+                  <div className="relative group">
+                    <div className="absolute inset-0 rounded-xl bg-amber-500/30 blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="relative flex flex-col items-center px-4 py-3 rounded-xl bg-black/50 border border-amber-500/40 backdrop-blur-sm">
+                      <Calendar className="h-5 w-5 text-amber-400 mb-1" />
+                      <span className="text-2xl font-black text-white font-mono leading-none">{stats.emBreve}</span>
+                      <span className="text-[9px] text-amber-300/80 uppercase font-bold tracking-wider">Breve</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* XP Badge destacado */}
-                <div className="ml-2 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/30">
-                  <div className="flex items-center gap-1.5">
-                    <Star className="w-4 h-4 text-white" />
-                    <span className="text-lg font-bold text-white">+10 XP</span>
+                {/* XP MEGA BADGE - Hero Element */}
+                <div className="relative group">
+                  <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-emerald-500 blur-xl opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-400 opacity-80" />
+                  <div className="relative px-6 py-4 rounded-2xl bg-gradient-to-br from-emerald-600 via-cyan-600 to-emerald-700 shadow-[0_0_50px_rgba(16,185,129,0.5),inset_0_1px_0_rgba(255,255,255,0.3)]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Star className="w-7 h-7 text-yellow-300 drop-shadow-[0_0_15px_rgba(253,224,71,0.8)]" />
+                      <span className="text-3xl font-black text-white tracking-tight">+10 XP</span>
+                    </div>
+                    <span className="text-xs text-emerald-100 uppercase tracking-widest font-bold block text-center">POR ACERTO</span>
                   </div>
-                  <span className="text-[8px] text-emerald-100/70 uppercase tracking-wider block text-center">por questão</span>
                 </div>
               </div>
             </div>
 
-            {/* ROW 2: Tab Navigation integrada */}
+            {/* ROW 2: MEGA Tab Navigation */}
             <Tabs value={tab} onValueChange={setTab} className="space-y-0">
-              <TabsList className="w-full p-0.5 border border-white/10 rounded-xl grid grid-cols-3 h-auto bg-black/40 backdrop-blur-sm">
+              <TabsList className="w-full p-1.5 border-2 border-white/10 rounded-2xl grid grid-cols-3 h-auto bg-black/60 backdrop-blur-md shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
                 <TabsTrigger 
                   value="disponiveis" 
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600/30 data-[state=active]:to-cyan-600/20 data-[state=active]:border-emerald-500/50 data-[state=active]:text-emerald-300 data-[state=active]:shadow-[0_0_15px_rgba(16,185,129,0.2)] rounded-lg py-2.5 px-3 border border-transparent transition-all duration-200"
+                  className="relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600/50 data-[state=active]:to-cyan-600/30 data-[state=active]:border-2 data-[state=active]:border-emerald-400/70 data-[state=active]:text-emerald-200 data-[state=active]:shadow-[0_0_30px_rgba(16,185,129,0.4),inset_0_1px_0_rgba(255,255,255,0.1)] rounded-xl py-4 px-4 border-2 border-transparent transition-all duration-300"
                 >
-                  <div className="flex items-center justify-center gap-1.5">
-                    <Rocket className="h-4 w-4" />
-                    <span className="text-sm font-medium">Disponíveis</span>
-                    <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">{stats.disponíveis}</span>
+                  <div className="flex items-center justify-center gap-2">
+                    <Rocket className="h-5 w-5" />
+                    <span className="text-base font-bold">Disponíveis</span>
+                    <span className="ml-1 px-2.5 py-1 text-xs font-black rounded-lg bg-emerald-500/30 text-emerald-200 border border-emerald-400/50 shadow-[0_0_10px_rgba(16,185,129,0.3)]">{stats.disponíveis}</span>
                   </div>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="realizados"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/30 data-[state=active]:to-pink-600/20 data-[state=active]:border-purple-500/50 data-[state=active]:text-purple-300 data-[state=active]:shadow-[0_0_15px_rgba(168,85,247,0.2)] rounded-lg py-2.5 px-3 border border-transparent transition-all duration-200"
+                  className="relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/50 data-[state=active]:to-pink-600/30 data-[state=active]:border-2 data-[state=active]:border-purple-400/70 data-[state=active]:text-purple-200 data-[state=active]:shadow-[0_0_30px_rgba(168,85,247,0.4),inset_0_1px_0_rgba(255,255,255,0.1)] rounded-xl py-4 px-4 border-2 border-transparent transition-all duration-300"
                 >
-                  <div className="flex items-center justify-center gap-1.5">
-                    <Trophy className="h-4 w-4" />
-                    <span className="text-sm font-medium">Realizados</span>
-                    <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">{stats.realizados}</span>
+                  <div className="flex items-center justify-center gap-2">
+                    <Trophy className="h-5 w-5" />
+                    <span className="text-base font-bold">Realizados</span>
+                    <span className="ml-1 px-2.5 py-1 text-xs font-black rounded-lg bg-purple-500/30 text-purple-200 border border-purple-400/50 shadow-[0_0_10px_rgba(168,85,247,0.3)]">{stats.realizados}</span>
                   </div>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="embreve"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600/30 data-[state=active]:to-orange-600/20 data-[state=active]:border-amber-500/50 data-[state=active]:text-amber-300 data-[state=active]:shadow-[0_0_15px_rgba(245,158,11,0.2)] rounded-lg py-2.5 px-3 border border-transparent transition-all duration-200"
+                  className="relative data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600/50 data-[state=active]:to-orange-600/30 data-[state=active]:border-2 data-[state=active]:border-amber-400/70 data-[state=active]:text-amber-200 data-[state=active]:shadow-[0_0_30px_rgba(245,158,11,0.4),inset_0_1px_0_rgba(255,255,255,0.1)] rounded-xl py-4 px-4 border-2 border-transparent transition-all duration-300"
                 >
-                  <div className="flex items-center justify-center gap-1.5">
-                    <Clock className="h-4 w-4" />
-                    <span className="text-sm font-medium">Em Breve</span>
-                    <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">{stats.emBreve}</span>
+                  <div className="flex items-center justify-center gap-2">
+                    <Clock className="h-5 w-5" />
+                    <span className="text-base font-bold">Em Breve</span>
+                    <span className="ml-1 px-2.5 py-1 text-xs font-black rounded-lg bg-amber-500/30 text-amber-200 border border-amber-400/50 shadow-[0_0_10px_rgba(245,158,11,0.3)]">{stats.emBreve}</span>
                   </div>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
           
-          {/* Corner Accents */}
-          <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 rounded-tl-lg border-purple-500/30" />
+          {/* Corner Tech Accents - Larger */}
+          <div className="absolute top-3 left-3 w-8 h-8 border-t-2 border-l-2 rounded-tl-xl border-purple-400/60" />
+          <div className="absolute top-3 right-3 w-8 h-8 border-t-2 border-r-2 rounded-tr-xl border-cyan-400/60" />
+          <div className="absolute bottom-3 left-3 w-8 h-8 border-b-2 border-l-2 rounded-bl-xl border-pink-400/40" />
+          <div className="absolute bottom-3 right-3 w-8 h-8 border-b-2 border-r-2 rounded-br-xl border-emerald-400/40" />
           <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 rounded-tr-lg border-purple-500/30" />
           <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 rounded-bl-lg border-purple-500/30" />
           <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 rounded-br-lg border-purple-500/30" />
