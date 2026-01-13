@@ -11,7 +11,6 @@ import {
   Check, 
   CheckCheck, 
   X, 
-  Settings,
   AlertCircle,
   Info,
   CheckCircle2,
