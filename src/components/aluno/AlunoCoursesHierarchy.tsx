@@ -772,13 +772,23 @@ function SubcategorySection({
         <CollapsibleContent>
           {/* 🎬 NETFLIX MODULES LIST — Refined container */}
           <div className="mt-3 ml-3 pl-4 border-l-2 border-gradient-to-b border-[#E50914]/20 space-y-2">
-            <NetflixCarouselRow
-              modules={modules}
-              expandedModules={expandedModules}
-              onToggleModule={onToggleModule}
-              onPlayLesson={onPlayLesson}
-              progressMap={progressMap}
-            />
+            {subcategory === 'Resolução de Questões' ? (
+              <ResolucaoQuestoesMacroView
+                allModules={modules}
+                expandedModules={expandedModules}
+                onToggleModule={onToggleModule}
+                onPlayLesson={onPlayLesson}
+                progressMap={progressMap}
+              />
+            ) : (
+              <NetflixCarouselRow
+                modules={modules}
+                expandedModules={expandedModules}
+                onToggleModule={onToggleModule}
+                onPlayLesson={onPlayLesson}
+                progressMap={progressMap}
+              />
+            )}
           </div>
         </CollapsibleContent>
       </Collapsible>
@@ -2223,139 +2233,70 @@ function AlunoCoursesHierarchy() {
         </div>
       ) : (
         <div key="filtered" className="space-y-6">
-          {/* Back Button + Header - APENAS se NÃO for Resolução de Questões (o componente especial tem seu próprio header) */}
-          {viewState.selectedCardId !== 'resolucao-questoes' && (
-            <>
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  onClick={handleBackToHub}
-                  className="gap-2 text-muted-foreground hover:text-foreground"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                  Voltar
-                </Button>
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-white">{viewState.selectedCardName}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {viewState.allowedSubcategories.length} subcategoria{viewState.allowedSubcategories.length !== 1 ? 's' : ''}
-                  </p>
-                </div>
+          {/* Back Button + Header */}
+          <>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={handleBackToHub}
+                className="gap-2 text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="h-5 w-5" />
+                Voltar
+              </Button>
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-white">{viewState.selectedCardName}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {viewState.allowedSubcategories.length} subcategoria{viewState.allowedSubcategories.length !== 1 ? 's' : ''}
+                </p>
               </div>
+            </div>
 
-              {/* Search */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar módulo ou aula..."
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                  className="pl-10 bg-card/50 border-border/50"
-                />
-              </div>
-            </>
-          )}
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar módulo ou aula..."
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="pl-10 bg-card/50 border-border/50"
+              />
+            </div>
+          </>
 
-          {/* 🧪 RESOLUÇÃO DE QUESTÕES — MACRO CARDS VIEW + outras subcategorias */}
-          {viewState.selectedCardId === 'resolucao-questoes' ? (
+          {/* Content padrão para todos os Hubs */}
+          {loadingModules ? (
+            <div className="space-y-4">
+              {[1, 2].map(i => (
+                <Card key={i} className="opacity-50">
+                  <CardHeader className="bg-muted/10">
+                    <div className="h-12 bg-muted/30 rounded-lg" />
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          ) : groupedData.length === 0 ? (
+            <Card className="p-12 text-center bg-card/50 backdrop-blur-xl border-border/30">
+              <GraduationCap className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
+              <h3 className="text-lg font-semibold">Nenhum conteúdo encontrado</h3>
+              <p className="text-muted-foreground mt-2">
+                {busca ? 'Nenhum resultado para sua busca.' : 'As aulas aparecerão aqui quando forem publicadas.'}
+              </p>
+            </Card>
+          ) : (
             <div className="space-y-6">
-              {/* Header com voltar */}
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="ghost"
-                  size="lg"
-                  onClick={handleBackToHub}
-                  className="gap-2 text-muted-foreground hover:text-foreground"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                  Voltar
-                </Button>
-                <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-white">{viewState.selectedCardName}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Selecione uma área para ver os módulos
-                  </p>
-                </div>
-              </div>
-              
-              {/* Macro Cards — APENAS para subcategoria exata "Resolução de Questões" */}
-              {loadingModules ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="h-48 rounded-2xl bg-slate-800/50 animate-pulse" />
-                  ))}
-                </div>
-              ) : (
-                <ResolucaoQuestoesMacroView
-                  allModules={groupedData.flatMap(g => g.subcategoryGroups.flatMap(s => s.modules))}
+              {groupedData.map(({ courseId, course, subcategoryGroups }) => (
+                <CourseSection
+                  key={courseId}
+                  course={course}
+                  subcategoryGroups={subcategoryGroups}
                   expandedModules={expandedModules}
                   onToggleModule={toggleModule}
                   onPlayLesson={handlePlayLesson}
-                  progressMap={new Map()}
                 />
-              )}
-              
-              {/* 🎯 Outras subcategorias do Hub (Revisão Cíclica, Previsão Final) — VIEW NORMAL */}
-              {!loadingModules && groupedData.length > 0 && (
-                <div className="space-y-6 pt-4 border-t border-slate-700/50">
-                  {groupedData.map(({ courseId, course, subcategoryGroups }) => {
-                    // Filtra APENAS subcategorias que NÃO são "Resolução de Questões"
-                    const otherSubcats = subcategoryGroups.filter(
-                      sg => sg.subcategory !== 'Resolução de Questões'
-                    );
-                    if (otherSubcats.length === 0) return null;
-                    
-                    return (
-                      <CourseSection
-                        key={courseId}
-                        course={course}
-                        subcategoryGroups={otherSubcats}
-                        expandedModules={expandedModules}
-                        onToggleModule={toggleModule}
-                        onPlayLesson={handlePlayLesson}
-                      />
-                    );
-                  })}
-                </div>
-              )}
+              ))}
             </div>
-          ) : (
-            /* Content padrão para outros Hubs */
-            <>
-              {loadingModules ? (
-                <div className="space-y-4">
-                  {[1, 2].map(i => (
-                    <Card key={i} className="opacity-50">
-                      <CardHeader className="bg-muted/10">
-                        <div className="h-12 bg-muted/30 rounded-lg" />
-                      </CardHeader>
-                    </Card>
-                  ))}
-                </div>
-              ) : groupedData.length === 0 ? (
-                <Card className="p-12 text-center bg-card/50 backdrop-blur-xl border-border/30">
-                  <GraduationCap className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-                  <h3 className="text-lg font-semibold">Nenhum conteúdo encontrado</h3>
-                  <p className="text-muted-foreground mt-2">
-                    {busca ? 'Nenhum resultado para sua busca.' : 'As aulas aparecerão aqui quando forem publicadas.'}
-                  </p>
-                </Card>
-              ) : (
-                <div className="space-y-6">
-                  {groupedData.map(({ courseId, course, subcategoryGroups }) => (
-                    <CourseSection
-                      key={courseId}
-                      course={course}
-                      subcategoryGroups={subcategoryGroups}
-                      expandedModules={expandedModules}
-                      onToggleModule={toggleModule}
-                      onPlayLesson={handlePlayLesson}
-                    />
-                  ))}
-                </div>
-              )}
-            </>
           )}
         </div>
       )}
