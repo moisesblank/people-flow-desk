@@ -247,9 +247,9 @@ export function useCreateFlashcard() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  return useOptimisticMutation<Flashcard[], { question: string; answer: string; areaId?: string }, Flashcard>({
+  return useOptimisticMutation<Flashcard[], { question: string; answer: string; areaId?: string; question_image_url?: string; answer_image_url?: string }, Flashcard>({
     queryKey: ['flashcards-all', user?.id || 'anon'],
-    mutationFn: async ({ question, answer, areaId }) => {
+    mutationFn: async ({ question, answer, areaId, question_image_url, answer_image_url }) => {
       const { data, error } = await supabase
         .from('study_flashcards')
         .insert({
@@ -265,6 +265,8 @@ export function useCreateFlashcard() {
           reps: 0,
           lapses: 0,
           state: 'new',
+          question_image_url: question_image_url || null,
+          answer_image_url: answer_image_url || null,
         })
         .select()
         .single();

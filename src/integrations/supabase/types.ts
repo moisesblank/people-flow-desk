@@ -12433,6 +12433,8 @@ export type Database = {
       study_flashcards: {
         Row: {
           answer: string
+          answer_image_url: string | null
+          answer_image_urls: Json | null
           area_id: string | null
           created_at: string
           difficulty: number | null
@@ -12444,6 +12446,8 @@ export type Database = {
           last_review: string | null
           lesson_id: string | null
           question: string
+          question_image_url: string | null
+          question_image_urls: Json | null
           reps: number | null
           scheduled_days: number | null
           source: string | null
@@ -12454,6 +12458,8 @@ export type Database = {
         }
         Insert: {
           answer: string
+          answer_image_url?: string | null
+          answer_image_urls?: Json | null
           area_id?: string | null
           created_at?: string
           difficulty?: number | null
@@ -12465,6 +12471,8 @@ export type Database = {
           last_review?: string | null
           lesson_id?: string | null
           question: string
+          question_image_url?: string | null
+          question_image_urls?: Json | null
           reps?: number | null
           scheduled_days?: number | null
           source?: string | null
@@ -12475,6 +12483,8 @@ export type Database = {
         }
         Update: {
           answer?: string
+          answer_image_url?: string | null
+          answer_image_urls?: Json | null
           area_id?: string | null
           created_at?: string
           difficulty?: number | null
@@ -12486,6 +12496,8 @@ export type Database = {
           last_review?: string | null
           lesson_id?: string | null
           question?: string
+          question_image_url?: string | null
+          question_image_urls?: Json | null
           reps?: number | null
           scheduled_days?: number | null
           source?: string | null

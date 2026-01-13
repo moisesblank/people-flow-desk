@@ -25,6 +25,9 @@ interface FlashcardData {
   verso: string;
   dica?: string;
   dificuldade: "facil" | "medio" | "dificil";
+  // Suporte a imagens (v1.0)
+  frente_image_url?: string | null;
+  verso_image_url?: string | null;
 }
 
 interface FlashcardProps {
@@ -181,7 +184,7 @@ export function Flashcard({ cards, onComplete }: FlashcardProps) {
         >
           {/* Front */}
           <div
-            className={`absolute inset-0 glass-card rounded-2xl p-6 flex flex-col items-center justify-center backface-hidden ${
+            className={`absolute inset-0 glass-card rounded-2xl p-6 flex flex-col items-center justify-center backface-hidden overflow-hidden ${
               isFlipped ? "invisible" : ""
             }`}
           >
@@ -191,6 +194,15 @@ export function Flashcard({ cards, onComplete }: FlashcardProps) {
             >
               {difficultyLabels[currentCard.dificuldade]}
             </Badge>
+            
+            {/* Imagem da Frente (v1.0) */}
+            {currentCard.frente_image_url && (
+              <img 
+                src={currentCard.frente_image_url} 
+                alt="Imagem da pergunta" 
+                className="max-h-28 w-auto rounded-lg mb-3 object-contain"
+              />
+            )}
             
             <p className="text-xl font-medium text-center text-foreground">
               {currentCard.frente}
@@ -203,11 +215,20 @@ export function Flashcard({ cards, onComplete }: FlashcardProps) {
 
           {/* Back */}
           <div
-            className={`absolute inset-0 glass-card rounded-2xl p-6 flex flex-col items-center justify-center backface-hidden bg-primary/5 ${
+            className={`absolute inset-0 glass-card rounded-2xl p-6 flex flex-col items-center justify-center backface-hidden bg-primary/5 overflow-hidden ${
               !isFlipped ? "invisible" : ""
             }`}
             style={{ transform: "rotateY(180deg)" }}
           >
+            {/* Imagem do Verso (v1.0) */}
+            {currentCard.verso_image_url && (
+              <img 
+                src={currentCard.verso_image_url} 
+                alt="Imagem da resposta" 
+                className="max-h-28 w-auto rounded-lg mb-3 object-contain"
+              />
+            )}
+            
             <p className="text-xl font-medium text-center text-foreground">
               {currentCard.verso}
             </p>

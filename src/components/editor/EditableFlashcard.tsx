@@ -26,6 +26,9 @@ export interface FlashcardData {
   back: string;
   category?: string;
   difficulty?: "easy" | "medium" | "hard";
+  // Suporte a imagens (v1.0)
+  front_image_url?: string | null;
+  back_image_url?: string | null;
 }
 
 interface EditableFlashcardProps {
@@ -82,6 +85,18 @@ export function EditableFlashcard({
               rows={3}
             />
           </div>
+          {/* Imagem da Frente (v1.0) */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Imagem da Frente (URL)</label>
+            <Input
+              value={editedCard.front_image_url || ""}
+              onChange={(e) => setEditedCard({ ...editedCard, front_image_url: e.target.value || null })}
+              placeholder="https://exemplo.com/imagem.png"
+            />
+            {editedCard.front_image_url && (
+              <img src={editedCard.front_image_url} alt="Preview" className="h-16 w-auto rounded-md object-contain" />
+            )}
+          </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Verso do Card</label>
             <Textarea
@@ -90,6 +105,18 @@ export function EditableFlashcard({
               placeholder="Resposta ou explicação..."
               rows={3}
             />
+          </div>
+          {/* Imagem do Verso (v1.0) */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Imagem do Verso (URL)</label>
+            <Input
+              value={editedCard.back_image_url || ""}
+              onChange={(e) => setEditedCard({ ...editedCard, back_image_url: e.target.value || null })}
+              placeholder="https://exemplo.com/imagem.png"
+            />
+            {editedCard.back_image_url && (
+              <img src={editedCard.back_image_url} alt="Preview" className="h-16 w-auto rounded-md object-contain" />
+            )}
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Categoria</label>
@@ -184,6 +211,10 @@ export function EditableFlashcard({
                   {card.category}
                 </span>
               )}
+              {/* Imagem da Frente (v1.0) */}
+              {card.front_image_url && (
+                <img src={card.front_image_url} alt="Imagem da pergunta" className="max-h-20 w-auto rounded-md mb-2 object-contain" />
+              )}
               <p className="text-lg font-medium text-center">{card.front}</p>
               <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
                 <RotateCcw className="h-3 w-3" />
@@ -204,6 +235,10 @@ export function EditableFlashcard({
             }}
           >
             <CardContent className="p-6 flex flex-col items-center justify-center h-full min-h-[200px]">
+              {/* Imagem do Verso (v1.0) */}
+              {card.back_image_url && (
+                <img src={card.back_image_url} alt="Imagem da resposta" className="max-h-20 w-auto rounded-md mb-2 object-contain" />
+              )}
               <p className="text-lg text-center">{card.back}</p>
               <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
                 <RotateCcw className="h-3 w-3" />
