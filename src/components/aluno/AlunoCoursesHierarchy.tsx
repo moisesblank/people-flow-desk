@@ -578,19 +578,30 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
                 </div>
               </div>
               
-              {/* ═══ CTA BUTTON ═══ */}
+              {/* ═══ NETFLIX PREMIUM CTA BUTTON ═══ */}
               <button className={cn(
-                "w-full flex items-center justify-center gap-3 py-3.5 rounded-xl",
-                "bg-white text-black font-bold text-sm uppercase tracking-wider",
-                "shadow-lg shadow-black/20",
-                "group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-100",
-                "transform transition-all duration-300",
-                "opacity-90 group-hover:opacity-100",
-                "group-hover:shadow-xl"
+                "relative w-full flex items-center justify-center gap-3 py-4 rounded-lg overflow-hidden",
+                // Netflix Red Background
+                "bg-[#E50914]",
+                // Text styling
+                "text-white font-black text-sm uppercase tracking-widest",
+                // Shadows - Netflix glow
+                "shadow-[0_4px_20px_rgba(229,9,20,0.5)]",
+                "group-hover:shadow-[0_8px_35px_rgba(229,9,20,0.7)]",
+                // Hover state
+                "group-hover:bg-[#F40612]",
+                // Scale on hover
+                "group-hover:scale-[1.03]",
+                // Transition
+                "transform-gpu transition-all duration-300 ease-out"
               )}>
-                <PlayCircle className="h-5 w-5 fill-current" />
-                <span>ASSISTIR AGORA</span>
-                <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                {/* Shimmer effect overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+                
+                {/* Button content */}
+                <PlayCircle className="relative h-5 w-5 fill-white drop-shadow-lg" />
+                <span className="relative drop-shadow-lg">ASSISTIR AGORA</span>
+                <ArrowRight className="relative h-5 w-5 drop-shadow-lg opacity-0 -translate-x-3 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
               </button>
             </div>
             
