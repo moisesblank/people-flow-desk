@@ -144,6 +144,30 @@
     /* Holographic gradients */
     --gradient-holo: linear-gradient(135deg, hsl(185 100% 50% / 0.1), hsl(280 100% 60% / 0.1), hsl(320 100% 60% / 0.1));
     --gradient-holo-intense: linear-gradient(135deg, hsl(185 100% 50% / 0.3), hsl(280 100% 60% / 0.3));
+    
+    /* ============================================
+       🎨 SURFACE TOKENS - Substituem cores hardcoded
+       Use estes ao invés de bg-zinc-*, bg-slate-*, bg-gray-*
+       ============================================ */
+    --surface-inset: 0 0% 5%;          /* Mais escuro que card */
+    --surface-raised: 0 0% 12%;        /* Mais claro que card */
+    --surface-overlay: 0 0% 8%;        /* Para modals/overlays */
+    --surface-subtle: 0 0% 14%;        /* Hover states */
+    
+    /* ============================================
+       📝 TEXT TOKENS - Substituem text-zinc-*, text-gray-*
+       ============================================ */
+    --text-primary: 0 0% 95%;          /* Texto principal */
+    --text-secondary: 0 0% 70%;        /* Texto secundário */
+    --text-tertiary: 0 0% 50%;         /* Texto terciário/desabilitado */
+    --text-inverse: 0 0% 10%;          /* Texto sobre fundos claros */
+    
+    /* ============================================
+       🔲 BORDER TOKENS - Substituem border-zinc-*, border-gray-*
+       ============================================ */
+    --border-subtle: 0 0% 15%;         /* Bordas sutis */
+    --border-strong: 0 0% 25%;         /* Bordas fortes */
+    --border-focus: 0 84% 50%;         /* Borda de foco */
   }
 
   /* ============================================
@@ -347,6 +371,23 @@
     --system-cosmos-mid: 225 50% 6%;
     --system-accent-wine: 355 75% 42%;
     --system-accent-sapphire: 210 90% 55%;
+    
+    /* Surface tokens para tema System */
+    --surface-inset: 225 50% 3%;
+    --surface-raised: 225 45% 12%;
+    --surface-overlay: 225 50% 6%;
+    --surface-subtle: 225 45% 14%;
+    
+    /* Text tokens */
+    --text-primary: 210 40% 96%;
+    --text-secondary: 210 25% 65%;
+    --text-tertiary: 210 20% 45%;
+    --text-inverse: 225 50% 10%;
+    
+    /* Border tokens */
+    --border-subtle: 225 40% 14%;
+    --border-strong: 225 40% 24%;
+    --border-focus: 355 85% 48%;
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -602,6 +643,23 @@
     /* God Mode */
     --god-mode-purple: 280 80% 60%;
     --god-mode-pink: 328 100% 60%;
+    
+    /* Surface tokens para tema Dark */
+    --surface-inset: 0 0% 3%;
+    --surface-raised: 0 0% 10%;
+    --surface-overlay: 0 0% 5%;
+    --surface-subtle: 0 0% 12%;
+    
+    /* Text tokens */
+    --text-primary: 0 0% 98%;
+    --text-secondary: 0 0% 70%;
+    --text-tertiary: 0 0% 50%;
+    --text-inverse: 0 0% 10%;
+    
+    /* Border tokens */
+    --border-subtle: 0 0% 12%;
+    --border-strong: 0 0% 22%;
+    --border-focus: 0 84% 55%;
   }
 
   /* ============================================
@@ -741,6 +799,25 @@
     --rarity-rare: 210 80% 50%;
     --rarity-epic: 280 70% 55%;
     --rarity-legendary: 43 90% 45%;
+    
+    /* ============================================
+       🎨 SURFACE TOKENS - Tema Claro
+       ============================================ */
+    --surface-inset: 220 10% 80%;      /* Mais escuro que card */
+    --surface-raised: 220 10% 96%;     /* Mais claro que card */
+    --surface-overlay: 220 10% 98%;    /* Para modals/overlays */
+    --surface-subtle: 220 10% 88%;     /* Hover states */
+    
+    /* Text tokens */
+    --text-primary: 220 25% 15%;
+    --text-secondary: 220 15% 40%;
+    --text-tertiary: 220 10% 55%;
+    --text-inverse: 0 0% 98%;
+    
+    /* Border tokens */
+    --border-subtle: 220 10% 78%;
+    --border-strong: 220 10% 65%;
+    --border-focus: 0 75% 45%;
   }
 }
 
@@ -791,6 +868,33 @@
 }
 
 @layer utilities {
+  /* ============================================
+     🔄 ADAPTIVE UTILITIES - Auto-adaptam ao tema
+     Use estas classes ao invés de text-white, bg-zinc-*, etc.
+     ============================================ */
+  
+  /* Backgrounds adaptativos */
+  .bg-adaptive { background-color: hsl(var(--background)); }
+  .bg-adaptive-card { background-color: hsl(var(--card)); }
+  .bg-adaptive-inset { background-color: hsl(var(--surface-inset)); }
+  .bg-adaptive-raised { background-color: hsl(var(--surface-raised)); }
+  .bg-adaptive-overlay { background-color: hsl(var(--surface-overlay)); }
+  .bg-adaptive-subtle { background-color: hsl(var(--surface-subtle)); }
+  .bg-adaptive-muted { background-color: hsl(var(--muted)); }
+  
+  /* Textos adaptativos */
+  .text-adaptive { color: hsl(var(--foreground)); }
+  .text-adaptive-primary { color: hsl(var(--text-primary)); }
+  .text-adaptive-secondary { color: hsl(var(--text-secondary)); }
+  .text-adaptive-tertiary { color: hsl(var(--text-tertiary)); }
+  .text-adaptive-muted { color: hsl(var(--muted-foreground)); }
+  .text-adaptive-inverse { color: hsl(var(--text-inverse)); }
+  
+  /* Bordas adaptativas */
+  .border-adaptive { border-color: hsl(var(--border)); }
+  .border-adaptive-subtle { border-color: hsl(var(--border-subtle)); }
+  .border-adaptive-strong { border-color: hsl(var(--border-strong)); }
+  
   /* ============================================
      GLASS MORPHISM
      ============================================ */

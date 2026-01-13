@@ -142,6 +142,33 @@ export default {
           epic: "hsl(var(--rarity-epic))",
           legendary: "hsl(var(--rarity-legendary))",
         },
+        // ============================================
+        // SURFACE TOKENS - Substituem cores hardcoded
+        // Use bg-surface-* ao invés de bg-zinc-*, bg-slate-*
+        // ============================================
+        surface: {
+          inset: "hsl(var(--surface-inset))",
+          raised: "hsl(var(--surface-raised))",
+          overlay: "hsl(var(--surface-overlay))",
+          subtle: "hsl(var(--surface-subtle))",
+        },
+        // ============================================
+        // TEXT SEMANTIC TOKENS
+        // ============================================
+        text: {
+          primary: "hsl(var(--text-primary))",
+          secondary: "hsl(var(--text-secondary))",
+          tertiary: "hsl(var(--text-tertiary))",
+          inverse: "hsl(var(--text-inverse))",
+        },
+        // ============================================
+        // BORDER SEMANTIC TOKENS
+        // ============================================
+        "border-semantic": {
+          subtle: "hsl(var(--border-subtle))",
+          strong: "hsl(var(--border-strong))",
+          focus: "hsl(var(--border-focus))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
