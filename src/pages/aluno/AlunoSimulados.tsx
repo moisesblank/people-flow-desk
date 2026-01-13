@@ -12,7 +12,7 @@ import { useState, useCallback, memo, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Brain, Clock, Target, Trophy, Play, 
   Calendar, CheckCircle2, Lock, FileText, Zap,
@@ -29,7 +29,7 @@ import { SimuladoModeSelector } from "@/components/simulados/screens";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { calculatePercentage } from "@/components/simulados/types";
 import { CyberBackground } from "@/components/ui/cyber-background";
-import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
+
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 import { 
   classifySimuladosByGroup, 
@@ -207,90 +207,125 @@ export default function AlunoSimulados() {
       
       <div className="relative z-10 container mx-auto p-4 md:p-6 lg:p-8 space-y-8">
         
-        {/* 🎬 Hero Header */}
-        <FuturisticPageHeader
-          title="Arena de Simulados"
-          subtitle="Domine suas provas com prática intensa e ranking competitivo"
-          icon={Brain}
-          badge="COMPETITIVO"
-          accentColor="purple"
-          stats={[
-            { label: "Disponíveis", value: stats.disponíveis, icon: Play },
-            { label: "Realizados", value: stats.realizados, icon: CheckCircle2 },
-            { label: "Em Breve", value: stats.emBreve, icon: Calendar },
-          ]}
-        />
-
-        {/* ⚡ XP Banner - Performance-Optimized (CSS-only) */}
-        <div className="relative overflow-hidden rounded-xl">
-          <div className="dashboard-hero-2300 p-5 md:p-6">
-            <div className="relative z-10 flex flex-col md:flex-row items-center gap-4 md:gap-6">
-              {/* Icon Container */}
-              <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 flex items-center justify-center shadow-lg">
-                <Zap className="w-8 h-8 md:w-10 md:h-10 text-white" />
+        {/* 🎬 UNIFIED NETFLIX HEADER - Arena + XP + Tabs em um só */}
+        <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-[#0d0d1a] via-[#1a0a2e] to-[#0d0d1a]">
+          {/* Background Effects */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(168,85,247,0.15),transparent_50%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(6,182,212,0.1),transparent_50%)]" />
+          <div 
+            className="absolute inset-0 opacity-[0.03]"
+            style={{
+              backgroundImage: 'linear-gradient(rgba(168,85,247,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(168,85,247,0.5) 1px, transparent 1px)',
+              backgroundSize: '40px 40px',
+            }}
+          />
+          
+          {/* Glowing Accent Line */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
+          
+          <div className="relative z-10 p-4 md:p-6">
+            {/* ROW 1: Title + Stats */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
+              {/* Left: Icon + Title */}
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-600/30 to-cyan-600/20 border border-purple-500/40 backdrop-blur-sm shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+                  <Brain className="h-6 w-6 text-purple-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-xl md:text-2xl font-bold text-white">Arena de Simulados</h1>
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded-md border border-purple-500/40 text-purple-400 bg-purple-500/10 uppercase tracking-wider">
+                      Competitivo
+                    </span>
+                    <Zap className="h-4 w-4 text-amber-400" />
+                  </div>
+                  <p className="text-sm text-purple-200/50 hidden sm:block">
+                    Domine suas provas com prática intensa e ranking competitivo
+                  </p>
+                </div>
               </div>
 
-              {/* Text Content */}
-              <div className="flex-1 text-center md:text-left">
-                <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-1">
-                  Ganhe XP e Domine o Ranking!
-                </h3>
-                <p className="text-cyan-100/70 text-sm md:text-base max-w-xl">
-                  Cada questão correta vale pontos de experiência. Suba de nível e conquiste o topo!
-                </p>
-              </div>
-
-              {/* XP Badge */}
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 shadow-lg">
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                    <span className="text-xl md:text-2xl font-bold text-white">+10 XP</span>
+              {/* Right: Stats Mini */}
+              <div className="flex items-center gap-1">
+                {/* Stats compactados */}
+                <div className="flex items-center gap-4 px-4 py-2 rounded-xl bg-black/30 border border-white/5">
+                  <div className="flex items-center gap-1.5">
+                    <Play className="h-3.5 w-3.5 text-emerald-400" />
+                    <span className="text-lg font-bold text-white font-mono">{stats.disponíveis}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase hidden md:inline">Disponíveis</span>
+                  </div>
+                  <div className="w-px h-6 bg-white/10" />
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-purple-400" />
+                    <span className="text-lg font-bold text-white font-mono">{stats.realizados}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase hidden md:inline">Realizados</span>
+                  </div>
+                  <div className="w-px h-6 bg-white/10" />
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-amber-400" />
+                    <span className="text-lg font-bold text-white font-mono">{stats.emBreve}</span>
+                    <span className="text-[10px] text-muted-foreground uppercase hidden md:inline">Em Breve</span>
                   </div>
                 </div>
-                <span className="text-[10px] text-cyan-200/50 uppercase tracking-wider">por questão</span>
+
+                {/* XP Badge destacado */}
+                <div className="ml-2 px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-cyan-600 shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/30">
+                  <div className="flex items-center gap-1.5">
+                    <Star className="w-4 h-4 text-white" />
+                    <span className="text-lg font-bold text-white">+10 XP</span>
+                  </div>
+                  <span className="text-[8px] text-emerald-100/70 uppercase tracking-wider block text-center">por questão</span>
+                </div>
               </div>
             </div>
+
+            {/* ROW 2: Tab Navigation integrada */}
+            <Tabs value={tab} onValueChange={setTab} className="space-y-0">
+              <TabsList className="w-full p-0.5 border border-white/10 rounded-xl grid grid-cols-3 h-auto bg-black/40 backdrop-blur-sm">
+                <TabsTrigger 
+                  value="disponiveis" 
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-600/30 data-[state=active]:to-cyan-600/20 data-[state=active]:border-emerald-500/50 data-[state=active]:text-emerald-300 data-[state=active]:shadow-[0_0_15px_rgba(16,185,129,0.2)] rounded-lg py-2.5 px-3 border border-transparent transition-all duration-200"
+                >
+                  <div className="flex items-center justify-center gap-1.5">
+                    <Rocket className="h-4 w-4" />
+                    <span className="text-sm font-medium">Disponíveis</span>
+                    <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">{stats.disponíveis}</span>
+                  </div>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="realizados"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600/30 data-[state=active]:to-pink-600/20 data-[state=active]:border-purple-500/50 data-[state=active]:text-purple-300 data-[state=active]:shadow-[0_0_15px_rgba(168,85,247,0.2)] rounded-lg py-2.5 px-3 border border-transparent transition-all duration-200"
+                >
+                  <div className="flex items-center justify-center gap-1.5">
+                    <Trophy className="h-4 w-4" />
+                    <span className="text-sm font-medium">Realizados</span>
+                    <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-purple-500/20 text-purple-300 border border-purple-500/30">{stats.realizados}</span>
+                  </div>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="embreve"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-600/30 data-[state=active]:to-orange-600/20 data-[state=active]:border-amber-500/50 data-[state=active]:text-amber-300 data-[state=active]:shadow-[0_0_15px_rgba(245,158,11,0.2)] rounded-lg py-2.5 px-3 border border-transparent transition-all duration-200"
+                >
+                  <div className="flex items-center justify-center gap-1.5">
+                    <Clock className="h-4 w-4" />
+                    <span className="text-sm font-medium">Em Breve</span>
+                    <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">{stats.emBreve}</span>
+                  </div>
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
+          
+          {/* Corner Accents */}
+          <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 rounded-tl-lg border-purple-500/30" />
+          <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 rounded-tr-lg border-purple-500/30" />
+          <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 rounded-bl-lg border-purple-500/30" />
+          <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 rounded-br-lg border-purple-500/30" />
         </div>
 
-        {/* 🗂️ Tabs Navigation - CSS-only */}
-        <Tabs value={tab} onValueChange={setTab} className="space-y-6">
-          <TabsList className="w-full p-1 border border-border/50 rounded-xl grid grid-cols-3 h-auto bg-card/80">
-            <TabsTrigger 
-              value="disponiveis" 
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/20 data-[state=active]:to-cyan-500/20 data-[state=active]:border-emerald-500/50 data-[state=active]:text-emerald-400 rounded-lg py-3 px-4 border border-transparent transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Rocket className="h-4 w-4" />
-                <span className="hidden sm:inline">Disponíveis</span>
-                <Badge variant="secondary" className="ml-1 text-xs">{stats.disponíveis}</Badge>
-              </div>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="realizados"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500/20 data-[state=active]:to-pink-500/20 data-[state=active]:border-purple-500/50 data-[state=active]:text-purple-400 rounded-lg py-3 px-4 border border-transparent transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Trophy className="h-4 w-4" />
-                <span className="hidden sm:inline">Realizados</span>
-                <Badge variant="secondary" className="ml-1 text-xs">{stats.realizados}</Badge>
-              </div>
-            </TabsTrigger>
-            <TabsTrigger 
-              value="embreve"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500/20 data-[state=active]:to-orange-500/20 data-[state=active]:border-amber-500/50 data-[state=active]:text-amber-400 rounded-lg py-3 px-4 border border-transparent transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <span className="hidden sm:inline">Em Breve</span>
-                <Badge variant="secondary" className="ml-1 text-xs">{stats.emBreve}</Badge>
-              </div>
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Content Areas */}
-          <TabsContent value="disponiveis" className="mt-0">
+        {/* 📦 Content Areas - Separadas do header unificado */}
+        {tab === "disponiveis" && (
+          <div className="mt-6">
             {simuladosData?.available.length === 0 ? (
               <EmptyState 
                 icon={Rocket}
@@ -304,9 +339,11 @@ export default function AlunoSimulados() {
                 onSelectSimulado={handleSelectSimulado}
               />
             )}
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="realizados" className="mt-0">
+        {tab === "realizados" && (
+          <div className="mt-6">
             {simuladosData?.completed.length === 0 ? (
               <EmptyState 
                 icon={Trophy}
@@ -327,9 +364,11 @@ export default function AlunoSimulados() {
                 ))}
               </div>
             )}
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="embreve" className="mt-0">
+        {tab === "embreve" && (
+          <div className="mt-6">
             {simuladosData?.upcoming.length === 0 ? (
               <EmptyState 
                 icon={Calendar}
@@ -348,8 +387,8 @@ export default function AlunoSimulados() {
                 ))}
               </div>
             )}
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </div>
     </div>
   );
