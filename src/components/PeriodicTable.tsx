@@ -293,15 +293,15 @@ export const PeriodicTableButton = forwardRef<HTMLDivElement, React.HTMLAttribut
               <Atom className="h-5 w-5 text-red-600 group-hover:text-red-500 group-hover:scale-110 group-hover:rotate-180 transition-all duration-500" />
             </Button>
           </DialogTrigger>
-          <DialogContent className="dark max-w-[98vw] w-[1500px] max-h-[95vh] p-0 gap-0 overflow-hidden bg-slate-900 text-slate-50 border-primary/30">
-            <DialogHeader className="px-4 py-3 border-b border-border/50 bg-gradient-to-r from-teal-600 via-sky-600 to-violet-600">
-              <DialogTitle className="flex items-center gap-3 text-lg text-white">
-                <div className="p-2 rounded-xl bg-white/20 backdrop-blur">
-                  <Atom className="h-6 w-6" />
+          <DialogContent className="dark w-[98vw] max-w-[98vw] md:max-w-[95vw] lg:max-w-[1500px] h-[95vh] max-h-[95vh] p-0 gap-0 overflow-hidden bg-slate-900 text-slate-50 border-primary/30">
+            <DialogHeader className="px-2 sm:px-4 py-2 sm:py-3 border-b border-border/50 bg-gradient-to-r from-teal-600 via-sky-600 to-violet-600">
+              <DialogTitle className="flex items-center gap-2 sm:gap-3 text-sm sm:text-lg text-white">
+                <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-white/20 backdrop-blur shrink-0">
+                  <Atom className="h-4 w-4 sm:h-6 sm:w-6" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="font-bold text-xl">CLASSIFICAÇÃO PERIÓDICA DOS ELEMENTOS</span>
-                  <span className="text-xs text-white/80 font-normal">Moisés Medeiros • Curso de Química • IUPAC 2024</span>
+                <div className="flex flex-col min-w-0">
+                  <span className="font-bold text-sm sm:text-xl truncate">CLASSIFICAÇÃO PERIÓDICA DOS ELEMENTOS</span>
+                  <span className="text-[10px] sm:text-xs text-white/80 font-normal truncate">Moisés Medeiros • Curso de Química • IUPAC 2024</span>
                 </div>
               </DialogTitle>
             </DialogHeader>
@@ -539,19 +539,19 @@ function PeriodicTableContent() {
         whileTap={{ scale: 0.95 }}
         onClick={() => setSelectedElement(element)}
         className={cn(
-          "relative w-[54px] h-[54px] rounded border-2 transition-all duration-150 flex flex-col items-center justify-center cursor-pointer shadow-sm hover:shadow-lg",
+          "relative w-[28px] h-[28px] sm:w-[54px] sm:h-[54px] rounded border sm:border-2 transition-all duration-150 flex flex-col items-center justify-center cursor-pointer shadow-sm hover:shadow-lg",
           colors.bg,
           colors.border,
           isSelected && "ring-2 ring-offset-2 ring-primary shadow-xl scale-105"
         )}
         title={`${element.namePt} (${element.name})`}
       >
-        <span className="text-[9px] font-semibold absolute top-0.5 left-1 opacity-80">{element.number}</span>
-        <span className={cn("text-xl font-black leading-none", colors.text)}>{element.symbol}</span>
-        <span className={cn("text-[8px] font-medium truncate w-full text-center leading-tight capitalize", colors.text === "text-white" ? "text-white/90" : "text-slate-700")}>
+        <span className="text-[5px] sm:text-[9px] font-semibold absolute top-0 left-0.5 sm:top-0.5 sm:left-1 opacity-80">{element.number}</span>
+        <span className={cn("text-[10px] sm:text-xl font-black leading-none", colors.text)}>{element.symbol}</span>
+        <span className={cn("text-[4px] sm:text-[8px] font-medium truncate w-full text-center leading-tight capitalize hidden sm:block", colors.text === "text-white" ? "text-white/90" : "text-slate-700")}>
           {element.namePt}
         </span>
-        <span className={cn("text-[7px] opacity-70", colors.text === "text-white" ? "text-white/80" : "text-slate-600")}>
+        <span className={cn("text-[4px] sm:text-[7px] opacity-70 hidden sm:block", colors.text === "text-white" ? "text-white/80" : "text-slate-600")}>
           {typeof element.mass === 'number' ? element.mass : element.mass}
         </span>
       </motion.button>
@@ -559,39 +559,46 @@ function PeriodicTableContent() {
   };
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-      <TabsList className="w-full justify-start rounded-none border-b bg-background px-4 py-0 h-12">
-        <TabsTrigger value="tabela" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-2">
-          <Atom className="h-4 w-4" />
-          Tabela Periódica
-        </TabsTrigger>
-        <TabsTrigger value="anions" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-2">
-          <FlaskConical className="h-4 w-4" />
-          Tabela de Ânions
-        </TabsTrigger>
-        <TabsTrigger value="propriedades" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-2">
-          <Zap className="h-4 w-4" />
-          Propriedades Periódicas
-        </TabsTrigger>
-        <TabsTrigger value="diagrama" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-2">
-          <ArrowRight className="h-4 w-4" />
-          Diagrama de Linus Pauling
-        </TabsTrigger>
-        <TabsTrigger value="interativa" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-2">
-          <MousePointer className="h-4 w-4" />
-          Tabela Interativa
-        </TabsTrigger>
-      </TabsList>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full overflow-hidden">
+      <ScrollArea className="w-full shrink-0">
+        <TabsList className="w-max min-w-full justify-start rounded-none border-b bg-background px-2 sm:px-4 py-0 h-10 sm:h-12">
+          <TabsTrigger value="tabela" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+            <Atom className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Tabela Periódica</span>
+            <span className="sm:hidden">Tabela</span>
+          </TabsTrigger>
+          <TabsTrigger value="anions" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+            <FlaskConical className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Tabela de Ânions</span>
+            <span className="sm:hidden">Ânions</span>
+          </TabsTrigger>
+          <TabsTrigger value="propriedades" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+            <Zap className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Propriedades Periódicas</span>
+            <span className="sm:hidden">Props.</span>
+          </TabsTrigger>
+          <TabsTrigger value="diagrama" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+            <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Diagrama de Linus Pauling</span>
+            <span className="sm:hidden">Diagrama</span>
+          </TabsTrigger>
+          <TabsTrigger value="interativa" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+            <MousePointer className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">Tabela Interativa</span>
+            <span className="sm:hidden">Interativa</span>
+          </TabsTrigger>
+        </TabsList>
+      </ScrollArea>
 
-      <TabsContent value="tabela" className="flex-1 m-0">
-        <ScrollArea className="h-[calc(95vh-120px)]">
-          <div className="p-4 flex gap-4">
+      <TabsContent value="tabela" className="flex-1 m-0 overflow-hidden">
+        <ScrollArea className="h-full w-full">
+          <div className="p-2 sm:p-4 flex gap-2 sm:gap-4 min-w-max">
             {/* Main Periodic Table */}
             <div className="flex-1">
               {/* Group numbers */}
-              <div className="flex gap-0.5 mb-1 ml-[55px]">
+              <div className="flex gap-0.5 mb-1 ml-[30px] sm:ml-[55px]">
                 {Array.from({ length: 18 }, (_, i) => (
-                  <div key={i} className="w-[54px] text-center text-xs font-bold text-muted-foreground">
+                  <div key={i} className="w-[28px] sm:w-[54px] text-center text-[8px] sm:text-xs font-bold text-muted-foreground">
                     {i + 1}
                   </div>
                 ))}
@@ -599,9 +606,9 @@ function PeriodicTableContent() {
 
               {/* Main Table with Period numbers */}
               <div className="flex">
-                <div className="flex flex-col gap-0.5 mr-1">
+                <div className="flex flex-col gap-0.5 mr-0.5 sm:mr-1">
                   {Array.from({ length: 7 }, (_, i) => (
-                    <div key={i} className="h-[54px] w-[50px] flex items-center justify-center text-xs font-bold text-muted-foreground">
+                    <div key={i} className="h-[28px] sm:h-[54px] w-[28px] sm:w-[50px] flex items-center justify-center text-[8px] sm:text-xs font-bold text-muted-foreground">
                       {i + 1}
                     </div>
                   ))}
@@ -610,8 +617,8 @@ function PeriodicTableContent() {
                 <div 
                   className="grid gap-0.5"
                   style={{ 
-                    gridTemplateColumns: "repeat(18, 54px)",
-                    gridTemplateRows: "repeat(7, 54px)"
+                    gridTemplateColumns: "repeat(18, minmax(28px, 54px))",
+                    gridTemplateRows: "repeat(7, minmax(28px, 54px))"
                   }}
                 >
                   {elements.filter(e => e.category !== "lanthanide" && e.category !== "actinide").map(element => (
@@ -622,32 +629,32 @@ function PeriodicTableContent() {
                   
                   {/* Lanthanide/Actinide references */}
                   <div 
-                    className="w-[54px] h-[54px] flex items-center justify-center text-xs font-bold bg-pink-900/50 rounded border-2 border-pink-400"
+                    className="w-[28px] h-[28px] sm:w-[54px] sm:h-[54px] flex items-center justify-center text-[6px] sm:text-xs font-bold bg-pink-900/50 rounded border sm:border-2 border-pink-400"
                     style={{ gridColumn: 3, gridRow: 6 }}
                   >
-                    <span className="text-pink-300">57 a 71</span>
+                    <span className="text-pink-300">57-71</span>
                   </div>
                   <div 
-                    className="w-[54px] h-[54px] flex items-center justify-center text-xs font-bold bg-rose-900/50 rounded border-2 border-rose-400"
+                    className="w-[28px] h-[28px] sm:w-[54px] sm:h-[54px] flex items-center justify-center text-[6px] sm:text-xs font-bold bg-rose-900/50 rounded border sm:border-2 border-rose-400"
                     style={{ gridColumn: 3, gridRow: 7 }}
                   >
-                    <span className="text-rose-300">89 a 103</span>
+                    <span className="text-rose-300">89-103</span>
                   </div>
                 </div>
               </div>
 
               {/* Transition elements label */}
-              <div className="flex items-center justify-center mt-4 mb-2">
-                <div className="flex items-center gap-2 px-4 py-1 bg-sky-900/30 rounded-full border border-sky-300">
-                  <div className="h-px w-8 bg-sky-400" />
-                  <span className="text-sm font-bold text-sky-300">ELEMENTOS DE TRANSIÇÃO</span>
-                  <div className="h-px w-8 bg-sky-400" />
+              <div className="flex items-center justify-center mt-2 sm:mt-4 mb-1 sm:mb-2">
+                <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-0.5 sm:py-1 bg-sky-900/30 rounded-full border border-sky-300">
+                  <div className="h-px w-4 sm:w-8 bg-sky-400" />
+                  <span className="text-[8px] sm:text-sm font-bold text-sky-300">ELEMENTOS DE TRANSIÇÃO</span>
+                  <div className="h-px w-4 sm:w-8 bg-sky-400" />
                 </div>
               </div>
 
               {/* Lanthanides */}
-              <div className="mt-4 ml-[55px]">
-                <div className="text-xs font-bold text-pink-400 mb-1">Lantanídeos (57-71)</div>
+              <div className="mt-2 sm:mt-4 ml-[30px] sm:ml-[55px]">
+                <div className="text-[8px] sm:text-xs font-bold text-pink-400 mb-0.5 sm:mb-1">Lantanídeos (57-71)</div>
                 <div className="flex gap-0.5">
                   {elements.filter(e => e.category === "lanthanide").map(element => (
                     <ElementCell key={element.number} element={element} />
@@ -656,8 +663,8 @@ function PeriodicTableContent() {
               </div>
 
               {/* Actinides */}
-              <div className="mt-2 ml-[55px]">
-                <div className="text-xs font-bold text-rose-400 mb-1">Actinídeos (89-103)</div>
+              <div className="mt-1 sm:mt-2 ml-[30px] sm:ml-[55px]">
+                <div className="text-[8px] sm:text-xs font-bold text-rose-400 mb-0.5 sm:mb-1">Actinídeos (89-103)</div>
                 <div className="flex gap-0.5">
                   {elements.filter(e => e.category === "actinide").map(element => (
                     <ElementCell key={element.number} element={element} />
@@ -666,26 +673,26 @@ function PeriodicTableContent() {
               </div>
 
               {/* Legend */}
-              <div className="mt-6 p-4 bg-slate-800 rounded-lg border shadow-sm">
-                <div className="flex flex-wrap gap-3 justify-center">
+              <div className="mt-3 sm:mt-6 p-2 sm:p-4 bg-slate-800 rounded-lg border shadow-sm">
+                <div className="flex flex-wrap gap-1.5 sm:gap-3 justify-center">
                   {Object.entries(categoryColors).map(([category, colors]) => (
                     <div
                       key={category}
                       className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-all",
+                        "flex items-center gap-1 sm:gap-2 px-1.5 sm:px-3 py-0.5 sm:py-1.5 rounded-full border sm:border-2 transition-all",
                         colors.bg,
                         colors.border
                       )}
                     >
-                      <span className={cn("text-xs font-semibold", colors.text)}>
+                      <span className={cn("text-[7px] sm:text-xs font-semibold", colors.text)}>
                         {categoryNamesPt[category]}
                       </span>
                     </div>
                   ))}
                 </div>
 
-                {/* Element key */}
-                <div className="mt-4 flex items-center justify-center gap-8">
+                {/* Element key - hidden on mobile */}
+                <div className="hidden sm:flex mt-4 items-center justify-center gap-8">
                   <div className="flex items-center gap-4 p-3 bg-slate-700 rounded-lg">
                     <div className="w-16 h-16 bg-teal-500 rounded border-2 border-teal-600 flex flex-col items-center justify-center text-white relative">
                       <span className="text-[8px] font-bold absolute top-0.5 left-1">3</span>
