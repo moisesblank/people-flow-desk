@@ -154,10 +154,11 @@ export const FabricDrawingCanvas = memo(forwardRef<FabricDrawingCanvasHandle, Fa
 
       // Borracha NÃO é modo de desenho - é modo de clique para deletar objetos
       const isDrawingTool = activeTool === 'pencil' || activeTool === 'highlight';
-      const isEraserMode = activeTool === 'eraser';
+      const isTextMode = activeTool === 'text';
       
       canvas.isDrawingMode = isActive && isDrawingTool;
-      canvas.selection = false; // Sem modo seleção - todas as ferramentas são de desenho/edição
+      // Texto precisa de selection para editar IText objects
+      canvas.selection = isActive && isTextMode;
 
       if (canvas.isDrawingMode) {
         // Configurar brush baseado na ferramenta
