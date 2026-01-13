@@ -1134,13 +1134,6 @@ export default function AlunoPlanejamento() {
       </HubModal>
       
       <div className="min-h-screen bg-background relative overflow-hidden">
-        {/* 🚀 HUB QUICK ACCESS BAR */}
-        <div className="container mx-auto px-4 pt-4 relative z-10">
-          <HubQuickAccessBar
-            activeModal={activeModal}
-            onOpenModal={setActiveModal}
-          />
-        </div>
         
         {/* 🌌 COSMIC BACKGROUND - GPU-only animations */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -1270,6 +1263,14 @@ export default function AlunoPlanejamento() {
                   isCompleted={!!lessonProgress[selectedLesson.id]?.is_completed}
                   isPending={markCompleteMutation.isPending}
                 />
+
+                {/* 🚀 HUB QUICK ACCESS BAR - Acima do Fórum */}
+                <div className="mb-6">
+                  <HubQuickAccessBar
+                    activeModal={activeModal}
+                    onOpenModal={setActiveModal}
+                  />
+                </div>
 
                 {/* Forum */}
                 <ForumSection
