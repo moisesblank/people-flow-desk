@@ -465,42 +465,50 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
         
         // Cores de acento por área
         const accentColors = {
-          'quimica-geral': 'text-amber-500',
-          'quimica-organica': 'text-purple-500',
-          'fisico-quimica': 'text-cyan-500',
+          'quimica-geral': 'text-amber-400',
+          'quimica-organica': 'text-purple-400',
+          'fisico-quimica': 'text-cyan-400',
         };
-        const accentColor = accentColors[card.id as keyof typeof accentColors] || 'text-amber-500';
+        const accentColor = accentColors[card.id as keyof typeof accentColors] || 'text-amber-400';
         
         return (
           <div
             key={card.id}
             onClick={() => setSelectedMacro(card.id)}
-            className="group cursor-pointer bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors"
+            className={cn(
+              "group cursor-pointer rounded-lg overflow-hidden",
+              "bg-zinc-900/80 border border-zinc-800/60",
+              "hover:bg-zinc-800/90 hover:border-zinc-700",
+              "hover:scale-[1.02] hover:shadow-xl hover:shadow-black/40",
+              "transition-all duration-300 ease-out transform-gpu"
+            )}
           >
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-2xl">{card.icon}</span>
-              <h3 className="text-sm font-semibold text-foreground">{card.name}</h3>
-            </div>
-            
-            {/* Stats */}
-            <div className="flex items-center gap-4 mb-3 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <Layers className={cn("h-3.5 w-3.5", accentColor)} />
-                <span className="font-medium text-foreground">{modules.length}</span>
-                <span>módulos</span>
+            <div className="p-5">
+              {/* Header */}
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-3xl">{card.icon}</span>
+                <h3 className="text-base font-bold text-white tracking-tight">{card.name}</h3>
               </div>
-              <div className="flex items-center gap-1.5">
-                <PlayCircle className={cn("h-3.5 w-3.5", accentColor)} />
-                <span className="font-medium text-foreground">{totalLessons}</span>
-                <span>aulas</span>
+              
+              {/* Stats */}
+              <div className="flex items-center gap-5 mb-4">
+                <div className="flex items-center gap-2">
+                  <Layers className={cn("h-4 w-4", accentColor)} />
+                  <span className="text-sm font-semibold text-white">{modules.length}</span>
+                  <span className="text-xs text-zinc-400">módulos</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <PlayCircle className={cn("h-4 w-4", accentColor)} />
+                  <span className="text-sm font-semibold text-white">{totalLessons}</span>
+                  <span className="text-xs text-zinc-400">aulas</span>
+                </div>
               </div>
-            </div>
-            
-            {/* CTA */}
-            <div className="flex items-center gap-1.5 text-xs font-medium text-primary group-hover:gap-2 transition-all">
-              <span>Ver Módulos</span>
-              <ChevronRight className="h-3.5 w-3.5" />
+              
+              {/* CTA Netflix-style */}
+              <div className="flex items-center gap-2 text-sm font-semibold text-white/90 group-hover:text-white transition-colors">
+                <span>Ver Módulos</span>
+                <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </div>
             </div>
           </div>
         );
