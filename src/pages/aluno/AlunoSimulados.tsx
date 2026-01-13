@@ -17,7 +17,7 @@ import {
   Brain, Clock, Target, Trophy, Play, 
   Calendar, CheckCircle2, Lock, FileText, Zap,
   Shield, Camera, Timer, Rocket,
-  Flame, TrendingUp, Star, BookOpen, RotateCcw
+  Flame, TrendingUp, Star, BookOpen, RotateCcw, XCircle
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -663,11 +663,26 @@ const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, on
             
             <h3 className="text-lg font-bold text-foreground mb-2 truncate">{simulado.title}</h3>
             
-            <div className="flex items-center gap-4 text-sm">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <Target className="w-4 h-4 text-purple-400" />
-                {attempt?.correct_answers}/{simulado.total_questions} acertos
-              </span>
+            {/* MÉTRICAS ULTRA EVIDENTES */}
+            <div className="flex flex-wrap items-center gap-3 mt-3">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/20 border-2 border-emerald-400">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <span className="text-emerald-300 font-black text-lg">{attempt?.correct_answers}</span>
+                <span className="text-emerald-400/80 text-xs font-bold">ACERTOS</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/20 border-2 border-red-400">
+                <XCircle className="w-5 h-5 text-red-400" />
+                <span className="text-red-300 font-black text-lg">{simulado.total_questions - (attempt?.correct_answers || 0)}</span>
+                <span className="text-red-400/80 text-xs font-bold">ERROS</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-500/20 border-2 border-slate-400">
+                <Target className="w-5 h-5 text-slate-400" />
+                <span className="text-slate-300 font-black text-lg">{simulado.total_questions}</span>
+                <span className="text-slate-400/80 text-xs font-bold">TOTAL</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 mt-2">
               <span className="flex items-center gap-1.5">
                 <Zap className="w-4 h-4 text-amber-400" />
                 <span className="text-amber-400 font-semibold">{attempt?.score || 0} XP</span>
@@ -683,26 +698,27 @@ const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, on
             )}
           </div>
           
-          {/* Score Circle */}
+          {/* Score Circle - ULTRA EVIDENT */}
           <div className="flex items-center gap-6">
             <div className="relative">
-              <svg className="w-20 h-20 -rotate-90" viewBox="0 0 100 100">
+              <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
                 {/* Background circle */}
                 <circle
                   cx="50" cy="50" r="40"
                   fill="none"
                   stroke="hsl(var(--border))"
-                  strokeWidth="8"
+                  strokeWidth="10"
                 />
                 {/* Progress circle */}
                 <circle
                   cx="50" cy="50" r="40"
                   fill="none"
                   stroke={passed ? "url(#successGradient)" : "url(#warningGradient)"}
-                  strokeWidth="8"
+                  strokeWidth="10"
                   strokeLinecap="round"
                   strokeDasharray={`${percentage * 2.51} 251`}
                   className="transition-all duration-500"
+                  style={{ filter: passed ? 'drop-shadow(0 0 8px rgb(16, 185, 129))' : 'drop-shadow(0 0 8px rgb(245, 158, 11))' }}
                 />
                 <defs>
                   <linearGradient id="successGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -717,9 +733,11 @@ const SimuladoCompletedCard = memo(function SimuladoCompletedCard({ simulado, on
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <span className={cn(
-                  "text-xl font-bold",
-                  passed ? "text-emerald-400" : "text-amber-400"
-                )}>
+                  "text-2xl font-black tracking-tight",
+                  passed ? "text-emerald-300" : "text-amber-300"
+                )}
+                style={{ textShadow: passed ? '0 0 10px rgb(16, 185, 129)' : '0 0 10px rgb(245, 158, 11)' }}
+                >
                   {percentage}%
                 </span>
               </div>

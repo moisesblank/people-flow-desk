@@ -314,34 +314,34 @@ export function SimuladoFinishedScreen({
           shouldAnimate && "animate-fade-in"
         )}>
           <StatCardHUD
-            icon={<CheckCircle2 className="h-6 w-6" />}
+            icon={<CheckCircle2 className="h-8 w-8" />}
             value={result.correctAnswers}
-            label="Corretas"
+            label="ACERTOS"
             color="emerald"
             isLowEnd={isLowEnd}
             shouldBlur={shouldBlur}
             shouldShowShadows={shouldShowShadows}
           />
           <StatCardHUD
-            icon={<XCircle className="h-6 w-6" />}
+            icon={<XCircle className="h-8 w-8" />}
             value={result.wrongAnswers}
-            label="Erradas"
+            label="ERROS"
             color="red"
             isLowEnd={isLowEnd}
             shouldBlur={shouldBlur}
             shouldShowShadows={shouldShowShadows}
           />
           <StatCardHUD
-            icon={<Minus className="h-6 w-6" />}
+            icon={<Minus className="h-8 w-8" />}
             value={result.unanswered}
-            label="Em Branco"
+            label="PULOU"
             color="muted"
             isLowEnd={isLowEnd}
             shouldBlur={shouldBlur}
             shouldShowShadows={shouldShowShadows}
           />
           <StatCardHUD
-            icon={<Clock className="h-6 w-6" />}
+            icon={<Clock className="h-8 w-8" />}
             value={formatTime(result.timeSpentSeconds)}
             label="Tempo"
             color="blue"
@@ -619,29 +619,29 @@ function StatCardHUD({
 
   return (
     <div className={cn(
-      "relative flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all duration-200",
+      "relative flex flex-col items-center gap-3 p-5 rounded-2xl border-2 transition-all duration-200",
       config.border,
       shouldBlur ? "bg-card/60 backdrop-blur-sm" : "bg-card/90",
       shouldShowShadows && !isLowEnd && `shadow-lg ${config.glow}`
     )}>
       {/* Icon container */}
       <div className={cn(
-        "w-10 h-10 rounded-xl flex items-center justify-center",
+        "w-14 h-14 rounded-xl flex items-center justify-center",
         config.bg
       )}>
         <div className={config.icon}>{icon}</div>
       </div>
       
-      {/* Value */}
+      {/* Value - ULTRA EVIDENT */}
       <span className={cn(
-        "font-bold",
-        isText ? "text-xl" : "text-3xl"
+        "font-black tracking-tight",
+        isText ? "text-2xl" : "text-4xl"
       )}>
         {value}
       </span>
       
-      {/* Label */}
-      <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
+      {/* Label - ULTRA EVIDENT */}
+      <span className="text-xs text-muted-foreground uppercase tracking-widest font-bold">
         {label}
       </span>
     </div>
