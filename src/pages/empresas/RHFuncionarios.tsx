@@ -1525,7 +1525,7 @@ export default function RHFuncionarios() {
                     </Label>
                     <Input
                       id="senha"
-                      type="password"
+                      type="text"
                       value={formData.senha}
                       onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
                       placeholder="Mínimo 6 caracteres (ou deixe em branco)"

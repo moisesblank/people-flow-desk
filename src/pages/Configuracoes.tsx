@@ -547,16 +547,16 @@ export default function Configuracoes() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Senha Atual</Label>
-                    <Input type="password" placeholder="••••••••" className="bg-card/50" />
+                    <Input type="text" placeholder="Digite sua senha atual" className="bg-card/50" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Nova Senha</Label>
-                      <Input type="password" placeholder="••••••••" className="bg-card/50" />
+                      <Input type="text" placeholder="Digite a nova senha" className="bg-card/50" />
                     </div>
                     <div className="space-y-2">
                       <Label>Confirmar Nova Senha</Label>
-                      <Input type="password" placeholder="••••••••" className="bg-card/50" />
+                      <Input type="text" placeholder="Confirme a nova senha" className="bg-card/50" />
                     </div>
                   </div>
                   <Button className="cyber-button">

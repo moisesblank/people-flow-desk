@@ -655,8 +655,8 @@ export default function Auth() {
   const [isUpdatePassword, setIsUpdatePassword] = useState(false); // 🎯 P0 FIX: Estado para definir nova senha
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // 🎯 P0 FIX
+  const [showPassword, setShowPassword] = useState(true); // 🎯 Visível por padrão
+  const [showConfirmPassword, setShowConfirmPassword] = useState(true); // 🎯 Visível por padrão
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);

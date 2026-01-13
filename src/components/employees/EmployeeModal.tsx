@@ -71,7 +71,7 @@ export function EmployeeModal({
 }: EmployeeModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isSendingInvite, setIsSendingInvite] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(true); // Visível por padrão
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
