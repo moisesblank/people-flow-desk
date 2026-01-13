@@ -29,11 +29,9 @@ import { cn } from "@/lib/utils";
 export type HubAreaKey = 
   | "cronograma" 
   | "tutoria"
-  | "videoaulas" 
   | "questoes" 
-  | "flashcards" 
   | "simulados" 
-  | "mapas-mentais" 
+  | "materiais"
   | "livros-web";
 
 interface HubArea {
@@ -46,15 +44,13 @@ interface HubArea {
   badgeType?: "ai" | "xp" | "treino";
 }
 
-// Configuração das 9 áreas com HSL para tokens semânticos
+// Configuração das áreas com HSL para tokens semânticos
 export const HUB_AREAS: HubArea[] = [
   { key: "cronograma", label: "Cronograma", icon: Calendar, hue: 210, description: "Cronograma adaptativo por IA", badge: "IA", badgeType: "ai" },
   { key: "tutoria", label: "Tutoria IA", icon: Bot, hue: 160, description: "Tutor inteligente 24h", badge: "IA", badgeType: "ai" },
-  { key: "videoaulas", label: "Videoaulas", icon: Video, hue: 0, description: "Biblioteca de vídeos" },
   { key: "questoes", label: "Questões", icon: Target, hue: 40, description: "Modo Treino (0 XP)", badge: "MODO_TREINO", badgeType: "treino" },
-  { key: "flashcards", label: "Flashcards", icon: Brain, hue: 330, description: "Revisão espaçada" },
   { key: "simulados", label: "Simulados", icon: FileText, hue: 250, description: "Provas oficiais (+10 XP)", badge: "+10 XP", badgeType: "xp" },
-  { key: "mapas-mentais", label: "Mapas", icon: Network, hue: 190, description: "Mapas mentais visuais" },
+  { key: "materiais", label: "Materiais", icon: Brain, hue: 330, description: "Flashcards & Mapas Mentais" },
   { key: "livros-web", label: "Livros", icon: BookOpen, hue: 25, description: "Biblioteca digital" }
 ];
 
