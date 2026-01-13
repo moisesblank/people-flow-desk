@@ -118,7 +118,7 @@ serve(async (req) => {
 
     const results = {
       processed: 0,
-      success: 0,
+      successCount: 0,
       failed: 0,
       skipped: 0,
       details: [] as { bookId: string; title: string; status: string; chapters: number; error?: string }[]
@@ -170,7 +170,7 @@ serve(async (req) => {
 
         console.log(`[generate-book-toc] ✅ Sumário gerado para ${book.title}: ${toc.length} capítulos`);
         
-        results.success++;
+        results.successCount++;
         results.details.push({
           bookId: book.id,
           title: book.title,
@@ -194,13 +194,13 @@ serve(async (req) => {
     }
 
     const duration = Date.now() - startTime;
-    console.log(`[generate-book-toc] Concluído em ${duration}ms - ${results.success}/${results.processed} sucesso`);
+    console.log(`[generate-book-toc] Concluído em ${duration}ms - ${results.successCount}/${results.processed} sucesso`);
 
     return new Response(
       JSON.stringify({
-        message: `Processamento concluído: ${results.success} sucesso, ${results.failed} falhas, ${results.skipped} ignorados`,
+        message: `Processamento concluído: ${results.successCount} sucesso, ${results.failed} falhas, ${results.skipped} ignorados`,
         processed: results.processed,
-        success_count: results.success,
+        success_count: results.successCount,
         failed_count: results.failed,
         skipped: results.skipped,
         details: results.details,
