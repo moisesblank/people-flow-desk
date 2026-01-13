@@ -117,7 +117,7 @@ export function FlashcardsDiarios({ className }: FlashcardsDiariosProps) {
                 {flashcards.length} cards para revisar
               </CardDescription>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/alunos/flashcards')}>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/alunos/materiais')}>
               Ver todos <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>
@@ -244,7 +244,7 @@ export function FlashcardsDiarios({ className }: FlashcardsDiariosProps) {
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Revisar novamente
                 </Button>
-                <Button onClick={() => navigate('/alunos/flashcards')} className="flex-1">
+                <Button onClick={() => navigate('/alunos/materiais')} className="flex-1">
                   Ver mais cards
                 </Button>
               </div>

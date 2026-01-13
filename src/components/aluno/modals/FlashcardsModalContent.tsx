@@ -49,7 +49,7 @@ export const FlashcardsModalContent = memo(function FlashcardsModalContent() {
             </p>
             <Button 
               className="w-full h-12 text-lg font-bold bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600"
-              onClick={() => navigate('/alunos/flashcards')}
+              onClick={() => navigate('/alunos/materiais')}
             >
               <Play className="w-5 h-5 mr-2" />
               Acessar Flashcards
