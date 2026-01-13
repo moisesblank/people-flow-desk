@@ -581,27 +581,27 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
               {/* ═══ NETFLIX PREMIUM CTA BUTTON ═══ */}
               <button className={cn(
                 "relative w-full flex items-center justify-center gap-3 py-4 rounded-lg overflow-hidden",
-                // Netflix Red Background
-                "bg-[#E50914]",
+                // Subtle dark red background
+                "bg-[#8B1A1A]",
                 // Text styling
-                "text-white font-black text-sm uppercase tracking-widest",
-                // Shadows - Netflix glow
-                "shadow-[0_4px_20px_rgba(229,9,20,0.5)]",
-                "group-hover:shadow-[0_8px_35px_rgba(229,9,20,0.7)]",
-                // Hover state
-                "group-hover:bg-[#F40612]",
+                "text-white font-bold text-sm uppercase tracking-wider",
+                // Subtle shadow
+                "shadow-lg shadow-black/30",
+                "group-hover:shadow-xl group-hover:shadow-red-900/40",
+                // Hover - slightly brighter
+                "group-hover:bg-[#A02020]",
                 // Scale on hover
-                "group-hover:scale-[1.03]",
+                "group-hover:scale-[1.02]",
                 // Transition
                 "transform-gpu transition-all duration-300 ease-out"
               )}>
                 {/* Shimmer effect overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
                 
                 {/* Button content */}
-                <PlayCircle className="relative h-5 w-5 fill-white drop-shadow-lg" />
-                <span className="relative drop-shadow-lg">ASSISTIR AGORA</span>
-                <ArrowRight className="relative h-5 w-5 drop-shadow-lg opacity-0 -translate-x-3 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
+                <PlayCircle className="relative h-5 w-5 fill-white" />
+                <span className="relative">ASSISTIR AGORA</span>
+                <ArrowRight className="relative h-5 w-5 opacity-0 -translate-x-3 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
               </button>
             </div>
             
