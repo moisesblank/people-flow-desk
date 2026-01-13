@@ -399,37 +399,22 @@ export const CoursesHub = memo(function CoursesHub({ onSelectCard }: CoursesHubP
   };
 
   return (
-    <div className="relative py-6">
-      {/* === CINEMATIC HEADER === */}
-      <div className="text-center mb-12 md:mb-16">
-        {/* Pre-header badge */}
-        <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-rose-500/10 via-violet-500/10 to-cyan-500/10 border border-white/10 backdrop-blur-md mb-6">
-          <Play className="w-5 h-5 text-rose-400" />
-          <span className="text-sm font-bold text-white/80 tracking-[0.2em] uppercase">Video Aulas Premium</span>
-          <div className="w-2 h-2 rounded-full bg-emerald-400" />
-        </div>
-        
-        {/* Main title */}
-        <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 tracking-tight">
+    <div className="relative py-4">
+      {/* === SECTION HEADER — Escolha uma categoria === */}
+      <div className="text-center mb-8 md:mb-10">
+        <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-2 tracking-tight">
           Escolha uma{' '}
-          <span 
-            className="bg-gradient-to-r from-rose-400 via-pink-400 to-violet-400 bg-clip-text text-transparent"
-          >
+          <span className="bg-gradient-to-r from-rose-400 via-red-400 to-rose-500 bg-clip-text text-transparent">
             categoria
           </span>
         </h2>
-        
-        {/* Subtitle */}
-        <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto">
-          Navegue pelas videoaulas organizadas por tema e conquiste sua aprovação
+        <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto">
+          Navegue pelas videoaulas organizadas por tema
         </p>
-
-        {/* Decorative line */}
-        <div className="mt-8 mx-auto w-48 h-[2px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
       </div>
 
       {/* === CARDS GRID === */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8 md:gap-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
         {COURSE_HUB_CARDS.map((card, index) => (
           <NetflixCourseCard
             key={card.id}
