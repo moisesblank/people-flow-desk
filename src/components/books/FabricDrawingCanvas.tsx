@@ -246,45 +246,64 @@ export const FabricDrawingCanvas = memo(forwardRef<FabricDrawingCanvasHandle, Fa
     }, [isActive, activeTool, size, isReady]);
 
     // ============================================
-    // HANDLERS DE TEXTO
+    // HANDLERS DE TEXTO - P0 FIX: Usar eventos nativos do Fabric
     // ============================================
-    const handleCanvasClick = useCallback((e: React.MouseEvent) => {
+    useEffect(() => {
       const canvas = fabricRef.current;
-      if (!canvas || !isActive || activeTool !== 'text') return;
+      if (!canvas || !isReady) return;
+      
+      const isTextMode = isActive && activeTool === 'text';
+      if (!isTextMode) return;
 
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return;
+      console.log('[FabricCanvas] Text mode ACTIVATED');
 
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const handleMouseDown = (opt: any) => {
+        if (!isActive || activeTool !== 'text') return;
+        
+        const target = opt.target;
+        const pointer = canvas.getPointer(opt.e);
+        
+        // Se clicou em um IText existente, entrar em modo de edição
+        if (target && target instanceof IText) {
+          console.log('[FabricCanvas] Text: editing existing text');
+          target.enterEditing();
+          target.selectAll();
+          canvas.setActiveObject(target);
+          canvas.renderAll();
+          return;
+        }
 
-      // Verificar se clicou em um objeto existente
-      const target = canvas.findTarget(e.nativeEvent as any);
-      if (target instanceof IText) {
-        // Editar texto existente
-        target.enterEditing();
-        target.selectAll();
-        canvas.setActiveObject(target);
-        canvas.renderAll();
-        return;
-      }
+        // Criar novo texto no ponto clicado
+        console.log('[FabricCanvas] Text: creating new text at', pointer.x, pointer.y);
+        const text = new IText('Digite aqui...', {
+          left: pointer.x,
+          top: pointer.y,
+          fontFamily: 'Inter, Segoe UI, sans-serif',
+          fontSize: Math.max(18, size * 5),
+          fill: color,
+          fontWeight: 'bold',
+          editable: true,
+          padding: 5,
+          backgroundColor: 'rgba(0,0,0,0.1)',
+        });
 
-      // Criar novo texto
-      const text = new IText('', {
-        left: x,
-        top: y,
-        fontFamily: 'Inter, Segoe UI, sans-serif',
-        fontSize: Math.max(16, size * 5),
-        fill: color,
-        fontWeight: 'bold',
-        editable: true,
-      });
+        canvas.add(text);
+        canvas.setActiveObject(text);
+        
+        // Pequeno delay para garantir que o objeto foi adicionado
+        setTimeout(() => {
+          text.enterEditing();
+          text.selectAll();
+          canvas.renderAll();
+        }, 50);
+      };
 
-      canvas.add(text);
-      canvas.setActiveObject(text);
-      text.enterEditing();
-      canvas.renderAll();
-    }, [isActive, activeTool, color, size]);
+      canvas.on('mouse:down', handleMouseDown);
+
+      return () => {
+        canvas.off('mouse:down', handleMouseDown);
+      };
+    }, [isActive, activeTool, color, size, isReady]);
 
     // ============================================
     // HISTÓRICO (UNDO)
@@ -456,7 +475,7 @@ export const FabricDrawingCanvas = memo(forwardRef<FabricDrawingCanvasHandle, Fa
           cursor: getCursor(),
           touchAction: isActive ? 'none' : 'auto'
         }}
-        onClick={activeTool === 'text' ? handleCanvasClick : undefined}
+        // Texto agora é tratado via canvas.on('mouse:down') nativo do Fabric
       >
         <canvas ref={canvasRef} />
         
