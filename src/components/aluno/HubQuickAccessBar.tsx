@@ -218,19 +218,7 @@ export const HubQuickAccessBar = memo(function HubQuickAccessBar({
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════
-          LAYER 3: STATUS BAR — Bottom Indicators
-      ═══════════════════════════════════════════════════════════════════ */}
-      <div className="relative z-10 mt-8 flex items-center justify-center">
-        <div 
-          className="flex items-center gap-6 px-6 py-2 rounded-full border border-border/30 bg-card/30 backdrop-blur-sm"
-          style={{ boxShadow: '0 0 30px hsl(var(--primary) / 0.05)' }}
-        >
-          <StatusIndicator color="160" label="IA Online" />
-          <StatusIndicator color="210" label="Sincronizado" />
-          <StatusIndicator color="280" label="Progresso Salvo" />
-        </div>
-      </div>
+      {/* Footer removido conforme solicitação do usuário */}
     </section>
   );
 });
