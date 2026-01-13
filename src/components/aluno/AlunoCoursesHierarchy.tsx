@@ -351,7 +351,7 @@ const RESOLUCAO_MACRO_CARDS = [
     gradient: 'from-amber-500/30 via-amber-600/20 to-amber-900/10',
     borderColor: 'border-amber-500/50',
     glowColor: 'rgba(251, 191, 36, 0.4)',
-    moduleRange: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], // Módulos 02-13
+    positionRange: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], // Positions 1-12 (Introdução à Gases)
   },
   {
     id: 'quimica-organica',
@@ -360,7 +360,7 @@ const RESOLUCAO_MACRO_CARDS = [
     gradient: 'from-purple-500/30 via-purple-600/20 to-purple-900/10',
     borderColor: 'border-purple-500/50',
     glowColor: 'rgba(168, 85, 247, 0.4)',
-    moduleRange: [14, 15, 16, 17, 18, 19], // Módulos 14-19
+    positionRange: [13, 14, 15, 16, 17, 18], // Positions 13-18 (Intro Orgânica à Polímeros)
   },
   {
     id: 'fisico-quimica',
@@ -369,15 +369,9 @@ const RESOLUCAO_MACRO_CARDS = [
     gradient: 'from-cyan-500/30 via-cyan-600/20 to-cyan-900/10',
     borderColor: 'border-cyan-500/50',
     glowColor: 'rgba(34, 211, 238, 0.4)',
-    moduleRange: [20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31], // Módulos 20-31
+    positionRange: [19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31], // Positions 19-31 (Soluções em diante)
   },
 ];
-
-// Extrai número do módulo do título (ex: "Módulo 02" -> 2)
-function extractModuleNumber(title: string): number | null {
-  const match = title.match(/(?:m[óo]dulo\s*)?0*(\d+)/i);
-  return match ? parseInt(match[1], 10) : null;
-}
 
 // ============================================
 // 🎬 RESOLUÇÃO QUESTÕES MACRO VIEW
@@ -399,16 +393,11 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
   const [selectedMacro, setSelectedMacro] = useState<string | null>(null);
   
   // 🛡️ Os módulos já vêm filtrados da subcategoria "Resolução de Questões"
-  // Apenas ordenamos e agrupamos por range de número
-  const getModulesForMacro = useCallback((moduleRange: number[]) => {
+  // Agrupamos por POSITION (campo do banco de dados)
+  const getModulesForMacro = useCallback((positionRange: number[]) => {
     return allModules.filter(m => {
-      const num = extractModuleNumber(m.title);
-      return num !== null && moduleRange.includes(num);
-    }).sort((a, b) => {
-      const numA = extractModuleNumber(a.title) || 0;
-      const numB = extractModuleNumber(b.title) || 0;
-      return numA - numB;
-    });
+      return positionRange.includes(m.position);
+    }).sort((a, b) => a.position - b.position);
   }, [allModules]);
   
   // Módulos filtrados para o macro selecionado
@@ -416,7 +405,7 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
     if (!selectedMacro) return [];
     const card = RESOLUCAO_MACRO_CARDS.find(c => c.id === selectedMacro);
     if (!card) return [];
-    return getModulesForMacro(card.moduleRange);
+    return getModulesForMacro(card.positionRange);
   }, [selectedMacro, getModulesForMacro]);
   
   const selectedCard = RESOLUCAO_MACRO_CARDS.find(c => c.id === selectedMacro);
@@ -471,7 +460,7 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {RESOLUCAO_MACRO_CARDS.map((card) => {
-        const modules = getModulesForMacro(card.moduleRange);
+        const modules = getModulesForMacro(card.positionRange);
         const totalLessons = modules.reduce((a, m) => a + (m._count?.lessons || 0), 0);
         
         return (
@@ -531,7 +520,7 @@ const ResolucaoQuestoesMacroView = memo(function ResolucaoQuestoesMacroView({
               {/* CTA */}
               <div className="flex items-center justify-between pt-2 border-t border-slate-600/30">
                 <span className="text-sm text-slate-300 font-medium">
-                  Módulos {card.moduleRange[0].toString().padStart(2, '0')} - {card.moduleRange[card.moduleRange.length - 1].toString().padStart(2, '0')}
+                  {modules.length} módulos
                 </span>
                 <div className="flex items-center gap-2 text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
                   Ver Módulos
