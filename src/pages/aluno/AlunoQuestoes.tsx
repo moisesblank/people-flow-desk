@@ -801,60 +801,68 @@ function RapidoTreinoModal({ open, onClose, questions, onComplete }: RapidoTrein
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
           )}
           
-          {!showResult ? (
+        {/* NAVEGAÇÃO LIVRE: Permite transitar entre questões a qualquer momento */}
+          <div className="flex gap-3">
+            {/* Botão Anterior - sempre visível */}
             <Button 
-              onClick={handleSubmitAnswer}
-              disabled={!selectedOption || isSubmitting}
+              onClick={handlePrevious}
+              disabled={currentIndex === 0}
               size="lg"
+              variant="outline"
               className={cn(
-                "w-full h-12 text-base font-bold bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black disabled:opacity-50",
-                isHighEnd ? "shadow-lg shadow-amber-500/20 transition-all duration-200" : "transition-colors duration-100"
+                "h-12 px-4 text-base font-bold border-amber-500/30 text-amber-400 hover:bg-amber-500/10 hover:border-amber-500/50 disabled:opacity-40",
+                isHighEnd ? "transition-all duration-200" : "transition-colors duration-100"
               )}
             >
-              {isSubmitting ? (
-                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-              ) : (
-                <CheckCircle2 className="h-5 w-5 mr-2" />
-              )}
-              CONFIRMAR
+              <ArrowLeft className="h-5 w-5 mr-1" />
+              <span className="hidden sm:inline">ANTERIOR</span>
             </Button>
-          ) : (
-            <div className="flex gap-3">
+            
+            {/* Botão Confirmar - só aparece se não respondeu ainda */}
+            {!showResult && (
               <Button 
-                onClick={handlePrevious}
-                disabled={currentIndex === 0}
-                size="lg"
-                variant="outline"
-                className={cn(
-                  "flex-1 h-12 text-base font-bold border-amber-500/30 text-amber-400 hover:bg-amber-500/10 hover:border-amber-500/50 disabled:opacity-40",
-                  isHighEnd ? "transition-all duration-200" : "transition-colors duration-100"
-                )}
-              >
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                ANTERIOR
-              </Button>
-              <Button 
-                onClick={handleNext} 
+                onClick={handleSubmitAnswer}
+                disabled={!selectedOption || isSubmitting}
                 size="lg"
                 className={cn(
-                  "flex-1 h-12 text-base font-bold bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black",
+                  "flex-1 h-12 text-base font-bold bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black disabled:opacity-50",
                   isHighEnd ? "shadow-lg shadow-amber-500/20 transition-all duration-200" : "transition-colors duration-100"
                 )}
               >
-                {currentIndex + 1 >= questions.length ? (
-                  <>
-                    <Trophy className="h-5 w-5 mr-2" />
-                    FINALIZAR
-                  </>
+                {isSubmitting ? (
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                 ) : (
-                  <>
-                    PRÓXIMA
-                    <ArrowRight className="h-5 w-5 ml-2" />
-                  </>
+                  <CheckCircle2 className="h-5 w-5 mr-2" />
                 )}
+                CONFIRMAR
               </Button>
-            </div>
-          )}
+            )}
+            
+            {/* Espaçador quando já confirmou */}
+            {showResult && <div className="flex-1" />}
+            
+            {/* Botão Próxima/Finalizar - sempre visível */}
+            <Button 
+              onClick={handleNext} 
+              size="lg"
+              className={cn(
+                "h-12 px-4 text-base font-bold bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black",
+                isHighEnd ? "shadow-lg shadow-amber-500/20 transition-all duration-200" : "transition-colors duration-100"
+              )}
+            >
+              {currentIndex + 1 >= questions.length ? (
+                <>
+                  <Trophy className="h-5 w-5 mr-1" />
+                  <span className="hidden sm:inline">FINALIZAR</span>
+                </>
+              ) : (
+                <>
+                  <span className="hidden sm:inline">PRÓXIMA</span>
+                  <ArrowRight className="h-5 w-5 ml-1" />
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
