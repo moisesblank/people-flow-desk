@@ -8,7 +8,7 @@ import { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { motion, AnimatePresence } from "framer-motion";
+// framer-motion removido - Year 2300 CSS-only animations
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
