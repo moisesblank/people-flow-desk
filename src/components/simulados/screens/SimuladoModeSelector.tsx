@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { 
   Flame, Shield, Clock, Camera, Eye, 
   Trophy, Zap, BookOpen, Target, X,
-  AlertTriangle, CheckCircle2, Sparkles
+  AlertTriangle, CheckCircle2, Sparkles, 
+  History, Ban
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
@@ -59,23 +60,26 @@ const ModeCard = memo(function ModeCard({
   
   const features = useMemo(() => {
     if (isHard) {
+      // Modo Hard: mantém base + adiciona webcam e bloqueio de aba
       return [
         { icon: Zap, text: "+10 XP por acerto", highlight: true },
         { icon: Trophy, text: "Conta no ranking", highlight: true },
         { icon: Clock, text: "Tempo cronometrado", highlight: false },
         { icon: Eye, text: "Anti-cheat ativo", highlight: false },
-        ...(requiresCamera ? [{ icon: Camera, text: "Câmera obrigatória", highlight: false }] : []),
+        { icon: Camera, text: "Webcam ligada", highlight: false },
+        { icon: Ban, text: "Não pode mudar de aba", highlight: false },
         { icon: AlertTriangle, text: "Sem pausas permitidas", highlight: false },
       ];
     }
+    // Modo Treino: nova versão organizada
     return [
-      { icon: BookOpen, text: "Foco no aprendizado", highlight: true },
-      { icon: Shield, text: "Sem pressão", highlight: true },
-      { icon: Clock, text: "Tempo flexível", highlight: false },
-      { icon: Target, text: "Pratique à vontade", highlight: false },
-      { icon: CheckCircle2, text: "XP: 0 (treino)", highlight: false },
+      { icon: Zap, text: "Cada questão vale 10 XP (ranking)", highlight: true },
+      { icon: Clock, text: "Tempo cronometrado, sem pressão", highlight: false },
+      { icon: Target, text: "Pratique quantas vezes quiser", highlight: false },
+      { icon: CheckCircle2, text: "Só a 1ª tentativa gera XP", highlight: false },
+      { icon: History, text: "Novas tentativas vão pro Histórico", highlight: false },
     ];
-  }, [isHard, requiresCamera]);
+  }, [isHard]);
 
   return (
     <div
