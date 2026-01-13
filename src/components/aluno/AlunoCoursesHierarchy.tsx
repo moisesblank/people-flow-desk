@@ -1857,6 +1857,35 @@ function AlunoCoursesHierarchy() {
   };
 
   // Video player helpers
+  const extractYouTubeVideoId = (raw: string): string => {
+    const s = (raw || '').trim();
+    if (!s) return '';
+
+    // Se já parece um ID do YouTube (11 chars), retorna direto
+    if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
+
+    // Tentar extrair de URL
+    try {
+      const u = new URL(s);
+      const v = u.searchParams.get('v');
+      if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
+
+      // youtu.be/<id>
+      if (u.hostname.includes('youtu.be')) {
+        const id = u.pathname.replace('/', '');
+        if (/^[a-zA-Z0-9_-]{11}$/.test(id)) return id;
+      }
+
+      // youtube.com/embed/<id>
+      const embedMatch = u.pathname.match(/\/embed\/([a-zA-Z0-9_-]{11})/);
+      if (embedMatch?.[1]) return embedMatch[1];
+    } catch {
+      // ignore
+    }
+
+    return '';
+  };
+
   const getVideoType = (lesson: Lesson): "youtube" | "panda" => {
     if (lesson.video_provider === 'panda') return "panda";
     if (lesson.video_provider === 'youtube') return "youtube";
@@ -1869,7 +1898,16 @@ function AlunoCoursesHierarchy() {
   const getVideoId = (lesson: Lesson): string => {
     const type = getVideoType(lesson);
     if (type === "panda") return lesson.panda_video_id || "";
-    return lesson.youtube_video_id || lesson.panda_video_id || "";
+
+    // ✅ FIX: YouTube pode estar salvo como video_url (URL completa) sem youtube_video_id
+    const fromId = lesson.youtube_video_id || "";
+    if (fromId) return fromId;
+
+    const fromUrl = lesson.video_url ? extractYouTubeVideoId(lesson.video_url) : "";
+    if (fromUrl) return fromUrl;
+
+    // Fallback legado: alguns registros antigos podem ter panda_video_id preenchido
+    return lesson.panda_video_id || "";
   };
 
   const handlePlayLesson = (lesson: Lesson) => {
