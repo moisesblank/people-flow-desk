@@ -145,12 +145,12 @@ export const HubQuickAccessBar = memo(function HubQuickAccessBar({
         </h2>
         
         <p className="text-xs text-muted-foreground tracking-widest uppercase">
-          9 Módulos de Estudo Integrados
+          6 Módulos de Estudo Integrados
         </p>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════════════
-          LAYER 2: COMMAND GRID — 9 Módulos
+          LAYER 2: COMMAND GRID — 6 Módulos
       ═══════════════════════════════════════════════════════════════════ */}
       <div className="relative z-10 max-w-5xl mx-auto px-4">
         <div className="grid grid-cols-3 md:grid-cols-9 gap-3 md:gap-4">
