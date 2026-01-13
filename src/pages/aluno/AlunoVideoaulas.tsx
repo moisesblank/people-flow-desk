@@ -24,7 +24,7 @@ import { AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { OmegaFortressPlayer } from "@/components/video/OmegaFortressPlayer";
 import { LessonTabs } from "@/components/player/LessonTabs";
-import { detectVideoProviderFromUrl, isPandaUrl } from "@/lib/video/detectVideoProvider";
+import { detectVideoProviderFromUrl, isPandaUrl, getVideoTypeWithIntegrityGuard } from "@/lib/video/detectVideoProvider";
 import { VirtualizedAlunoVideoaulaList } from "@/components/aluno/videoaulas/VirtualizedAlunoVideoaulaList";
 // SecurityBlackoutOverlay REMOVIDO - Agora integrado globalmente no App.tsx (v1.1)
 
@@ -126,31 +126,11 @@ export default function AlunoVideoaulas() {
     setSearchParams({});
   };
 
-  // Determinar tipo de player
-  // PATCH: detectar Panda também via video_url (embed vindo do Excel/legado)
+  // ✅ PADRÃO SOBERANO v2400 — Usa função centralizada com guard de integridade
   const getVideoType = (lesson: Lesson): "youtube" | "panda" => {
-    // ✅ Guard de integridade: se video_provider está marcado como 'panda' mas não há panda_video_id,
-    // e o video_url aponta para YouTube, devemos tratar como YouTube (evita player Panda receber URL errada).
-    if (lesson.video_provider === 'panda') {
-      if (!lesson.panda_video_id) {
-        const detectedExplicit = detectVideoProviderFromUrl(lesson.video_url);
-        if (detectedExplicit === 'youtube') return 'youtube';
-      }
-      return 'panda';
-    }
-
-    if (lesson.video_provider === 'youtube') return 'youtube';
-
-    // Fallback: tentar identificar por URL (legado)
-    const providerFromUrl = detectVideoProviderFromUrl(lesson.video_url || null);
-    if (providerFromUrl === 'panda') return 'panda';
-
-    // Fallback: UUID em panda_video_id (padrão atual)
-    if (lesson.panda_video_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lesson.panda_video_id)) {
-      return 'panda';
-    }
-
-    return 'youtube';
+    const result = getVideoTypeWithIntegrityGuard(lesson);
+    // Normalizar para o tipo esperado (sem vimeo aqui)
+    return result === 'vimeo' ? 'youtube' : result;
   };
 
   // Obter ID/URL do vídeo

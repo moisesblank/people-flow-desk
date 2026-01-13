@@ -83,14 +83,14 @@ const DIFFICULTY_LABELS: Record<string, string> = {
 
 import { OmegaFortressPlayer } from "@/components/video/OmegaFortressPlayer";
 
+// ✅ PADRÃO SOBERANO v2400 — Importar função centralizada
+import { detectVideoProviderFromUrl } from "@/lib/video/detectVideoProvider";
+
 /**
- * Detecta o tipo de vídeo pela URL
+ * Detecta o tipo de vídeo pela URL (usa função centralizada)
  */
 function getVideoType(url: string): 'panda' | 'youtube' | 'vimeo' | 'unknown' {
-  if (url.includes('pandavideo') || url.includes('player-vz')) return 'panda';
-  if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
-  if (url.includes('vimeo.com')) return 'vimeo';
-  return 'unknown';
+  return detectVideoProviderFromUrl(url);
 }
 
 /**

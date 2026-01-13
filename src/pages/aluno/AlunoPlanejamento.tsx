@@ -138,13 +138,14 @@ interface WeekProgress {
 // ============================================
 import { OmegaFortressPlayer } from "@/components/video/OmegaFortressPlayer";
 
+// ✅ PADRÃO SOBERANO v2400 — Importar função centralizada
+import { getVideoTypeWithIntegrityGuard, detectVideoProviderFromUrl } from "@/lib/video/detectVideoProvider";
+
 /**
- * Detecta o tipo de vídeo pela URL
+ * Detecta o tipo de vídeo pela URL (wrapper para compatibilidade)
  */
 function getVideoType(url: string): 'panda' | 'youtube' | 'vimeo' {
-  if (url.includes('pandavideo') || url.includes('player-vz')) return 'panda';
-  if (url.includes('vimeo')) return 'vimeo';
-  return 'youtube';
+  return detectVideoProviderFromUrl(url) as 'panda' | 'youtube' | 'vimeo';
 }
 
 /**
