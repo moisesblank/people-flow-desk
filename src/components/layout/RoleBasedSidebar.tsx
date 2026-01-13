@@ -607,6 +607,10 @@ export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>
             <StorageAndBackupWidget collapsed={collapsed} />
           ) : null}
 
+          {/* 
+           * 🚫 REMOVIDO (não excluído): Botão de perfil/usuário no rodapé do sidebar
+           * Mantido aqui para referência futura caso seja necessário restaurar
+           * 
           <div className={`flex items-center gap-3 p-2 ${collapsed ? "justify-center" : ""}`}>
             <Avatar className="h-10 w-10 border-2 border-primary/30">
               {userAvatar ? <AvatarImage src={userAvatar} alt={userName || "User"} /> : null}
@@ -636,6 +640,7 @@ export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>
               <TooltipContent>Sair</TooltipContent>
             </Tooltip>
           </div>
+          */}
         </SidebarFooter>
       </Sidebar>
     </aside>
