@@ -32,21 +32,23 @@ export function setOwnerMode(email: string | null | undefined): void {
 
 function isPreviewEnvironment(): boolean {
   const hostname = window.location.hostname.toLowerCase();
-  const origin = window.location.origin.toLowerCase();
   
-  // Lovable preview/development environments - SEMPRE bypass
+  // 🛡️ PRODUÇÃO: NUNCA bypass em domínios de produção (2026-01-13 FIX)
   if (
-    hostname === 'localhost' ||
-    hostname === '127.0.0.1' ||
-    hostname.includes('lovableproject.com') ||
-    hostname.includes('lovable.app') ||
-    origin.includes('lovableproject.com') ||
-    origin.includes('lovable.app')
+    hostname === 'pro.moisesmedeiros.com.br' ||
+    hostname === 'moisesmedeiros.com.br' ||
+    hostname === 'gestao.moisesmedeiros.com.br' ||
+    hostname.includes('.lovable.app') // Domínios custom publicados = PRODUÇÃO
   ) {
-    return true;
+    return false; // PROTEÇÃO ATIVA
   }
   
-  return false;
+  // Preview/desenvolvimento: bypass apenas para testes
+  return (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.includes('lovableproject.com') // Preview do Lovable apenas
+  );
 }
 
 function isDomainAuthorized(): boolean {
