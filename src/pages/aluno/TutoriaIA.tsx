@@ -142,17 +142,7 @@ const TutoriaIA = memo(function TutoriaIA() {
           </div>
         </motion.div>
         
-        {/* Mode Selector */}
-        <motion.div
-          initial={ui.shouldAnimate ? { opacity: 0, y: 10 } : undefined}
-          animate={ui.shouldAnimate ? { opacity: 1, y: 0 } : undefined}
-          transition={{ delay: 0.1 }}
-        >
-          <h2 className="text-lg font-semibold text-foreground mb-3">
-            Escolha o modo
-          </h2>
-          <TutoriaModeSelector selectedMode={mode} onModeChange={setMode} />
-        </motion.div>
+        {/* Mode Selector removido - apenas modo tutor ativo */}
         
         {/* Chat Section */}
         <motion.div
