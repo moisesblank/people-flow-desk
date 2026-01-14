@@ -21,15 +21,22 @@ export function useTimelinePerformance(userId: string | undefined) {
       if (!userId) return [];
 
       // 🚀 PATCH 5K: Query única com JOIN - elimina N+1 (2 queries → 1)
+      // 🔒 FILTROS DE INTEGRIDADE PERMANENTES: Apenas questões válidas nas estatísticas
       const { data: attempts, error } = await supabase
         .from('question_attempts')
         .select(`
           question_id,
           created_at,
           is_correct,
-          quiz_questions!inner(macro, micro)
+          quiz_questions!inner(macro, micro, question_text, explanation, question_type)
         `)
         .eq('user_id', userId)
+        .not('quiz_questions.question_text', 'is', null)
+        .neq('quiz_questions.question_text', '')
+        .not('quiz_questions.explanation', 'is', null)
+        .neq('quiz_questions.explanation', '')
+        .not('quiz_questions.question_type', 'is', null)
+        .neq('quiz_questions.question_type', '')
         .order('created_at', { ascending: true });
 
       if (error) throw error;

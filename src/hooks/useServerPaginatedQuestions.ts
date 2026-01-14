@@ -76,6 +76,18 @@ export function useServerPaginatedQuestions<T = any>(
         .from('quiz_questions')
         .select('*', { count: 'exact' });
 
+      // 🔒 FILTROS DE INTEGRIDADE PERMANENTES: Excluir questões com erros de sistema
+      // (Aplicado APENAS quando chamado de rotas /alunos via queryKeyPrefix)
+      if (queryKeyPrefix.includes('aluno') || queryKeyPrefix.includes('treino') || queryKeyPrefix.includes('practice')) {
+        query = query
+          .not('question_text', 'is', null)
+          .neq('question_text', '')
+          .not('explanation', 'is', null)
+          .neq('explanation', '')
+          .not('question_type', 'is', null)
+          .neq('question_type', '');
+      }
+
       // Aplicar filtros
       if (filters.isActive !== undefined) {
         query = query.eq('is_active', filters.isActive);

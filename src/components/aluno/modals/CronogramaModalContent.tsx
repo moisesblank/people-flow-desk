@@ -98,11 +98,18 @@ export const CronogramaModalContent = memo(function CronogramaModalContent() {
       }
 
       // Buscar as questões para pegar os macros
+      // 🔒 FILTROS DE INTEGRIDADE PERMANENTES: Excluir questões com erros
       const questionIds = [...new Set(attempts.map(a => a.question_id))];
       const { data: questions } = await supabase
         .from('quiz_questions')
         .select('id, macro')
-        .in('id', questionIds);
+        .in('id', questionIds)
+        .not('question_text', 'is', null)
+        .neq('question_text', '')
+        .not('explanation', 'is', null)
+        .neq('explanation', '')
+        .not('question_type', 'is', null)
+        .neq('question_type', '');
 
       if (!questions) return [];
 
