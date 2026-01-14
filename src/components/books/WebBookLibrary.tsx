@@ -24,6 +24,9 @@ import {
   Sparkles,
   Zap,
   Target,
+  Lightbulb,
+  MousePointer,
+  Pencil,
   Crown,
   Star,
   TrendingUp,
@@ -1030,6 +1033,85 @@ const WebBookLibrary = memo(function WebBookLibrary({
           <div className="absolute top-0 right-0 w-20 h-20 border-r-2 border-t-2 border-[#E50914]/40 rounded-tr-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-20 h-20 border-l-2 border-b-2 border-[#E50914]/40 rounded-bl-3xl pointer-events-none" />
           <div className="absolute bottom-0 right-0 w-20 h-20 border-r-2 border-b-2 border-cyan-500/40 rounded-br-3xl pointer-events-none" />
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════════
+            📖 GUIDANCE SECTION — ORIENTAÇÕES PARA LEIGOS (YEAR 2300)
+        ══════════════════════════════════════════════════════════════ */}
+        <div className="relative overflow-hidden rounded-2xl border border-holo-cyan/30 bg-gradient-to-br from-holo-cyan/5 via-background to-holo-purple/5 p-5 shadow-xl shadow-holo-cyan/5">
+          {/* Efeitos holográficos */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-holo-cyan/50 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-holo-purple/30 to-transparent" />
+          <div className="absolute top-0 left-0 w-6 h-6 border-l-2 border-t-2 border-holo-cyan/40 rounded-tl-xl" />
+          <div className="absolute top-0 right-0 w-6 h-6 border-r-2 border-t-2 border-holo-cyan/40 rounded-tr-xl" />
+          
+          <div className="relative">
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1.5 h-1.5 rounded-full bg-holo-cyan animate-pulse" />
+              <span className="text-xs font-bold uppercase tracking-widest text-holo-cyan/80">Como Usar a Biblioteca</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-holo-cyan/30 to-transparent" />
+            </div>
+            
+            {/* 3 Steps */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Step 1 */}
+              <div className="group flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-holo-cyan/10 to-cyan-600/5 border border-holo-cyan/20 hover:border-holo-cyan/40 transition-all">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-holo-cyan to-cyan-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-holo-cyan/30">
+                  1
+                </div>
+                <div>
+                  <h3 className="font-bold text-holo-cyan flex items-center gap-2">
+                    <MousePointer className="w-4 h-4" />
+                    Escolha um Livro
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Clique em uma das <span className="text-cyan-300">coleções abaixo</span> para expandir e depois selecione o <span className="text-cyan-300">livro desejado</span>.
+                  </p>
+                </div>
+              </div>
+              
+              {/* Step 2 */}
+              <div className="group flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-green-500/10 to-emerald-600/5 border border-green-500/20 hover:border-green-400/40 transition-all">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-green-500/30">
+                  2
+                </div>
+                <div>
+                  <h3 className="font-bold text-green-400 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Leia e Estude
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Use o <span className="text-green-300">leitor premium</span> com modo tela cheia, zoom e navegação fácil entre páginas.
+                  </p>
+                </div>
+              </div>
+              
+              {/* Step 3 */}
+              <div className="group flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-violet-600/5 border border-purple-500/20 hover:border-purple-400/40 transition-all">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-purple-500/30">
+                  3
+                </div>
+                <div>
+                  <h3 className="font-bold text-purple-400 flex items-center gap-2">
+                    <Pencil className="w-4 h-4" />
+                    Anote e Marque
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Ative o <span className="text-purple-300">Modo Leitura</span> para fazer anotações com lápis, marca-texto e texto diretamente no livro!
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Dica extra */}
+            <div className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-holo-cyan/10 border border-holo-cyan/20">
+              <Lightbulb className="w-4 h-4 text-holo-cyan flex-shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                <span className="font-bold text-holo-cyan">Dica:</span> Suas anotações são salvas automaticamente e você pode acessá-las a qualquer momento. Use as ferramentas <span className="text-cyan-300">Calculadora</span> e <span className="text-cyan-300">Tabela Periódica</span> no modo tela cheia! 🚀
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* 📢 AVISO — VERSÃO 2026 — NETFLIX ULTRA PREMIUM 2300 */}
