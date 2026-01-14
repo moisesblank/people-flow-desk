@@ -26,7 +26,7 @@ const TutoriaModalContent = lazy(() => import("@/components/aluno/modals/Tutoria
 const QuestoesModalContent = lazy(() => import("@/components/aluno/modals/QuestoesModalContent"));
 const SimuladosModalContent = lazy(() => import("@/components/aluno/modals/SimuladosModalContent"));
 const LivrosWebModalContent = lazy(() => import("@/components/aluno/modals/LivrosWebModalContent"));
-// Removidos: VideoaulasModalContent, FlashcardsModalContent, MapasMentaisModalContent (consolidados)
+const MateriaisModalContent = lazy(() => import("@/components/aluno/modals/MateriaisModalContent"));
 
 // Icons
 import {
@@ -1206,23 +1206,47 @@ export default function AlunoPlanejamento() {
   const renderModalContent = () => {
     if (!activeModal) return null;
     
-    // Todas as 6 keys redirecionam diretamente para suas URLs
-    const keyToUrl: Record<string, string> = {
-      "cronograma": "/alunos/cronograma",
-      "tutoria": "/alunos/forum",
-      "materiais": "/alunos/materiais",
-      "simulados": "/alunos/simulados",
-      "livros-web": "/alunos/livros",
-      "questoes": "/alunos/questoes",
-    };
-    
-    const url = keyToUrl[activeModal];
-    if (url) {
-      window.location.href = url;
-      return null;
+    // Renderizar modais com conteúdo em vez de redirecionar
+    switch (activeModal) {
+      case "cronograma":
+        return (
+          <Suspense fallback={<ModalLoader />}>
+            <CronogramaModalContent />
+          </Suspense>
+        );
+      case "tutoria":
+        return (
+          <Suspense fallback={<ModalLoader />}>
+            <TutoriaModalContent />
+          </Suspense>
+        );
+      case "questoes":
+        return (
+          <Suspense fallback={<ModalLoader />}>
+            <QuestoesModalContent />
+          </Suspense>
+        );
+      case "simulados":
+        return (
+          <Suspense fallback={<ModalLoader />}>
+            <SimuladosModalContent />
+          </Suspense>
+        );
+      case "materiais":
+        return (
+          <Suspense fallback={<ModalLoader />}>
+            <MateriaisModalContent />
+          </Suspense>
+        );
+      case "livros-web":
+        return (
+          <Suspense fallback={<ModalLoader />}>
+            <LivrosWebModalContent />
+          </Suspense>
+        );
+      default:
+        return null;
     }
-    
-    return null;
   };
 
   // Fetch active weeks
