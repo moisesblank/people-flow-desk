@@ -1461,6 +1461,87 @@ export default function AlunoQuestoes() {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════
+          BLOCK_04B: INITIAL GUIDANCE - Orientações para Leigos (Year 2300)
+      ══════════════════════════════════════════════════════════════ */}
+      {isZeroState && (
+        <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-purple-950/20 p-5 shadow-xl shadow-primary/5">
+          {/* Efeitos holográficos */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+          <div className="absolute top-0 left-0 w-6 h-6 border-l-2 border-t-2 border-primary/40 rounded-tl-xl" />
+          <div className="absolute top-0 right-0 w-6 h-6 border-r-2 border-t-2 border-primary/40 rounded-tr-xl" />
+          
+          <div className="relative">
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <span className="text-xs font-bold uppercase tracking-widest text-primary/80">Como Usar o Banco de Questões</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-primary/30 to-transparent" />
+            </div>
+            
+            {/* 3 Steps */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Step 1 */}
+              <div className="group flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-600/5 border border-amber-500/20 hover:border-amber-400/40 transition-all">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-yellow-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-amber-500/30">
+                  1
+                </div>
+                <div>
+                  <h3 className="font-bold text-amber-400 flex items-center gap-2">
+                    <Filter className="w-4 h-4" />
+                    Filtre suas Questões
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Use os filtros de <span className="text-amber-300">Macro</span>, <span className="text-amber-300">Micro</span>, <span className="text-amber-300">Dificuldade</span> e <span className="text-amber-300">Banca</span> para encontrar exatamente o que precisa estudar.
+                  </p>
+                </div>
+              </div>
+              
+              {/* Step 2 */}
+              <div className="group flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-green-500/10 to-emerald-600/5 border border-green-500/20 hover:border-green-400/40 transition-all">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-green-500/30">
+                  2
+                </div>
+                <div>
+                  <h3 className="font-bold text-green-400 flex items-center gap-2">
+                    <Play className="w-4 h-4" />
+                    Crie um Treino Rápido
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Clique em <span className="text-green-300">"Criar Questões"</span> para montar um treino com até 20 questões filtradas e resolva de forma dinâmica.
+                  </p>
+                </div>
+              </div>
+              
+              {/* Step 3 */}
+              <div className="group flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-violet-600/5 border border-purple-500/20 hover:border-purple-400/40 transition-all">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-purple-500/30">
+                  3
+                </div>
+                <div>
+                  <h3 className="font-bold text-purple-400 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Estude a Resolução
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Após responder, veja a <span className="text-purple-300">explicação detalhada</span> de cada questão para aprender com seus erros e acertos.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Dica extra */}
+            <div className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 border border-primary/20">
+              <Lightbulb className="w-4 h-4 text-primary flex-shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                <span className="font-bold text-primary">Dica:</span> No modo Treino, você pode resolver as mesmas questões quantas vezes quiser para fixar o conteúdo! 💪
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════
           BLOCK_05: PROGRESS_STATUS - Estados de progresso (Year 2300 Enhanced)
       ══════════════════════════════════════════════════════════════ */}
       <div className={cn(
