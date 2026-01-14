@@ -531,8 +531,9 @@ function CronogramasGestaoCards({
 }
 
 // ============================================
-// 🎬 CRONOGRAMA VIDEOAULAS MODAL
+// 🎬 CRONOGRAMA VIDEOAULAS MODAL v2.0
 // Modal para vincular videoaulas ao cronograma selecionado
+// COM SELEÇÃO DE SEMANA ESPECÍFICA (1-40+)
 // ============================================
 interface CronogramaVideoaulasModalProps {
   open: boolean;
@@ -541,7 +542,10 @@ interface CronogramaVideoaulasModalProps {
   existingLessons: ExistingLesson[];
   weeks: PlanningWeek[];
   planningLessons: PlanningLesson[];
+  onCreateWeeksIfNeeded: (cronogramaId: string, minWeeks: number) => Promise<PlanningWeek[]>;
 }
+
+const MIN_WEEKS_PER_CRONOGRAMA = 40;
 
 function CronogramaVideoaulasModal({
   open,
@@ -550,14 +554,50 @@ function CronogramaVideoaulasModal({
   existingLessons,
   weeks,
   planningLessons,
+  onCreateWeeksIfNeeded,
 }: CronogramaVideoaulasModalProps) {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLessons, setSelectedLessons] = useState<Set<string>>(new Set());
+  const [selectedWeekId, setSelectedWeekId] = useState<string | null>(null);
   const [isLinking, setIsLinking] = useState(false);
+  const [isCreatingWeeks, setIsCreatingWeeks] = useState(false);
   
   // Find cronograma config
   const cronogramaConfig = CRONOGRAMAS_CONFIG.find(c => c.id === cronogramaId);
+  
+  // Get weeks for this specific cronograma
+  const cronogramaWeeks = useMemo(() => {
+    if (!cronogramaId) return [];
+    return weeks.filter(w => {
+      // Match by cronograma ID in title or use active status for fevereiro
+      const titleLower = w.title.toLowerCase();
+      if (cronogramaId === 'fevereiro') {
+        return titleLower.includes('fevereiro') || 
+               titleLower.includes('extensivo fev') ||
+               (w.status === 'active' && !titleLower.includes('março') && !titleLower.includes('abril') && !titleLower.includes('maio'));
+      }
+      return titleLower.includes(cronogramaId);
+    }).sort((a, b) => a.week_number - b.week_number);
+  }, [weeks, cronogramaId]);
+  
+  // Auto-create weeks if needed when modal opens
+  useEffect(() => {
+    if (open && cronogramaId && cronogramaWeeks.length < MIN_WEEKS_PER_CRONOGRAMA) {
+      setIsCreatingWeeks(true);
+      onCreateWeeksIfNeeded(cronogramaId, MIN_WEEKS_PER_CRONOGRAMA)
+        .finally(() => setIsCreatingWeeks(false));
+    }
+  }, [open, cronogramaId, cronogramaWeeks.length, onCreateWeeksIfNeeded]);
+  
+  // Reset selection when modal opens/closes
+  useEffect(() => {
+    if (!open) {
+      setSelectedLessons(new Set());
+      setSelectedWeekId(null);
+      setSearchQuery("");
+    }
+  }, [open]);
   
   // Filter existing lessons by search
   const filteredLessons = useMemo(() => {
@@ -578,22 +618,27 @@ function CronogramaVideoaulasModal({
       if (!groups[moduleName]) groups[moduleName] = [];
       groups[moduleName].push(lesson);
     });
-    return groups;
+    return Object.entries(groups).sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
   }, [filteredLessons]);
   
-  // Get already linked lesson IDs for this cronograma
+  // Get already linked lesson IDs for selected week
   const linkedLessonIds = useMemo(() => {
-    const cronogramaWeeks = weeks.filter(w => {
-      if (cronogramaId === 'fevereiro') return w.status === 'active';
-      return w.title.toLowerCase().includes(cronogramaId || '');
-    });
-    const weekIds = new Set(cronogramaWeeks.map(w => w.id));
+    if (!selectedWeekId) return new Set<string>();
     return new Set(
       planningLessons
-        .filter(l => weekIds.has(l.week_id))
+        .filter(l => l.week_id === selectedWeekId)
         .map(l => l.video_url || l.title)
     );
-  }, [weeks, planningLessons, cronogramaId]);
+  }, [planningLessons, selectedWeekId]);
+  
+  // Get lessons count per week
+  const lessonsPerWeek = useMemo(() => {
+    const counts: Record<string, number> = {};
+    planningLessons.forEach(l => {
+      counts[l.week_id] = (counts[l.week_id] || 0) + 1;
+    });
+    return counts;
+  }, [planningLessons]);
   
   const toggleLesson = (lessonId: string) => {
     setSelectedLessons(prev => {
@@ -607,40 +652,56 @@ function CronogramaVideoaulasModal({
     });
   };
   
+  const selectAllVisible = () => {
+    const allVisibleIds = filteredLessons
+      .filter(l => !linkedLessonIds.has(l.video_url || l.title))
+      .map(l => l.id);
+    setSelectedLessons(new Set(allVisibleIds));
+  };
+  
+  const clearSelection = () => {
+    setSelectedLessons(new Set());
+  };
+  
   const handleLinkLessons = async () => {
     if (selectedLessons.size === 0) {
       toast.error("Selecione pelo menos uma videoaula");
       return;
     }
     
-    // Find the first active week for this cronograma
-    const targetWeek = weeks.find(w => {
-      if (cronogramaId === 'fevereiro') return w.status === 'active';
-      return w.title.toLowerCase().includes(cronogramaId || '');
-    });
+    if (!selectedWeekId) {
+      toast.error("Selecione uma semana para vincular as videoaulas");
+      return;
+    }
     
+    const targetWeek = cronogramaWeeks.find(w => w.id === selectedWeekId);
     if (!targetWeek) {
-      toast.error("Nenhuma semana encontrada para este cronograma. Crie uma semana primeiro.");
+      toast.error("Semana não encontrada");
       return;
     }
     
     setIsLinking(true);
     
     try {
+      // Get current max position for this week
+      const currentMaxPosition = planningLessons
+        .filter(l => l.week_id === selectedWeekId)
+        .reduce((max, l) => Math.max(max, l.position || 0), 0);
+      
       const lessonsToInsert = Array.from(selectedLessons).map((lessonId, index) => {
         const lesson = existingLessons.find(l => l.id === lessonId);
         if (!lesson) return null;
         
         const videoUrl = lesson.video_url || 
-          (lesson.panda_video_id ? `https://player-vz-7a0cccc3-0dc.tv.pandavideo.com.br/embed/?v=${lesson.panda_video_id}` : "");
+          (lesson.panda_video_id ? `https://player-vz-c3e3c21e-7ce.tv.pandavideo.com.br/embed/?v=${lesson.panda_video_id}` : "");
         
         return {
-          week_id: targetWeek.id,
+          week_id: selectedWeekId,
           title: lesson.title,
           video_url: videoUrl,
           video_provider: lesson.panda_video_id ? 'panda' : 'youtube',
           duration_minutes: lesson.duration_minutes || 30,
-          position: planningLessons.filter(l => l.week_id === targetWeek.id).length + index + 1,
+          position: currentMaxPosition + index + 1,
           lesson_type: 'video' as const,
           is_required: true,
           xp_reward: 10,
@@ -658,10 +719,9 @@ function CronogramaVideoaulasModal({
       
       if (error) throw error;
       
-      toast.success(`${lessonsToInsert.length} videoaula(s) vinculada(s) com sucesso!`);
+      toast.success(`${lessonsToInsert.length} videoaula(s) vinculada(s) à Semana ${targetWeek.week_number}!`);
       queryClient.invalidateQueries({ queryKey: ["planning-lessons"] });
       setSelectedLessons(new Set());
-      onOpenChange(false);
     } catch (error: any) {
       toast.error("Erro ao vincular: " + error.message);
     } finally {
@@ -673,7 +733,7 @@ function CronogramaVideoaulasModal({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-5xl max-h-[95vh] flex flex-col">
         <DialogHeader>
           <div className="flex items-center gap-4">
             <div className="w-16 h-20 rounded-lg overflow-hidden shrink-0">
@@ -683,135 +743,263 @@ function CronogramaVideoaulasModal({
                 className="w-full h-full object-cover"
               />
             </div>
-            <div>
+            <div className="flex-1">
               <DialogTitle className="flex items-center gap-2">
                 <Video className="h-5 w-5 text-primary" />
-                Vincular Videoaulas
+                Vincular Videoaulas às Semanas
               </DialogTitle>
               <DialogDescription className="mt-1">
-                {cronogramaConfig.title} • {cronogramaConfig.highlight}
+                {cronogramaConfig.title} • {cronogramaConfig.highlight} • {cronogramaWeeks.length} semanas disponíveis
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
         
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar videoaulas..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        
-        {/* Selection Summary */}
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
-            {filteredLessons.length} videoaulas disponíveis
-          </span>
-          <Badge variant={selectedLessons.size > 0 ? "default" : "secondary"}>
-            {selectedLessons.size} selecionada(s)
-          </Badge>
-        </div>
-        
-        {/* Lessons List */}
-        <ScrollArea className="flex-1 min-h-[300px] max-h-[400px] border rounded-lg">
-          <div className="p-4 space-y-4">
-            {Object.entries(groupedLessons).map(([moduleName, moduleLessons]) => (
-              <div key={moduleName} className="space-y-2">
-                <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                  <BookOpen className="h-3.5 w-3.5" />
-                  {moduleName}
-                </h4>
-                <div className="space-y-1 pl-5">
-                  {moduleLessons.map(lesson => {
-                    const isLinked = linkedLessonIds.has(lesson.video_url || lesson.title);
-                    const isSelected = selectedLessons.has(lesson.id);
-                    
-                    return (
-                      <div
-                        key={lesson.id}
-                        onClick={() => !isLinked && toggleLesson(lesson.id)}
-                        className={cn(
-                          "flex items-center gap-3 p-2 rounded-lg transition-all cursor-pointer",
-                          isLinked 
-                            ? "bg-green-500/10 border border-green-500/30 cursor-not-allowed opacity-60"
-                            : isSelected
-                              ? "bg-primary/10 border border-primary/30"
-                              : "hover:bg-muted border border-transparent"
-                        )}
-                      >
-                        <div className={cn(
-                          "w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0",
-                          isLinked 
-                            ? "bg-green-500 border-green-500"
-                            : isSelected 
-                              ? "bg-primary border-primary" 
-                              : "border-muted-foreground/30"
-                        )}>
-                          {(isLinked || isSelected) && (
-                            <CheckCircle2 className="h-3 w-3 text-white" />
-                          )}
-                        </div>
-                        
-                        <Video className={cn(
-                          "h-4 w-4 shrink-0",
-                          isLinked ? "text-green-500" : "text-primary"
-                        )} />
-                        
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{lesson.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {lesson.duration_minutes || 0} min
-                            {lesson.panda_video_id && " • Panda Video"}
-                          </p>
-                        </div>
-                        
-                        {isLinked && (
-                          <Badge variant="outline" className="text-green-500 border-green-500/30 text-[10px]">
-                            JÁ VINCULADA
-                          </Badge>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-            
-            {Object.keys(groupedLessons).length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>Nenhuma videoaula encontrada</p>
-              </div>
-            )}
+        {isCreatingWeeks ? (
+          <div className="flex-1 flex items-center justify-center py-12">
+            <div className="text-center space-y-4">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+              <p className="text-muted-foreground">Criando semanas automaticamente...</p>
+            </div>
           </div>
-        </ScrollArea>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleLinkLessons} 
-            disabled={selectedLessons.size === 0 || isLinking}
-            className="gap-2"
-          >
-            {isLinking ? (
-              <>
-                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                Vinculando...
-              </>
-            ) : (
-              <>
-                <Link2 className="h-4 w-4" />
-                Vincular {selectedLessons.size > 0 && `(${selectedLessons.size})`}
-              </>
-            )}
-          </Button>
-        </DialogFooter>
+        ) : (
+          <>
+            {/* Two Column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4 flex-1 min-h-0">
+              
+              {/* Left Column: Week Selector */}
+              <div className="flex flex-col space-y-2">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-primary" />
+                  Selecione a Semana
+                </Label>
+                <ScrollArea className="flex-1 border rounded-lg p-2 min-h-[200px] max-h-[400px]">
+                  <div className="space-y-1">
+                    {cronogramaWeeks.map((week) => {
+                      const lessonCount = lessonsPerWeek[week.id] || 0;
+                      const isSelected = selectedWeekId === week.id;
+                      
+                      return (
+                        <div
+                          key={week.id}
+                          onClick={() => setSelectedWeekId(week.id)}
+                          className={cn(
+                            "flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-all",
+                            isSelected 
+                              ? "bg-primary text-primary-foreground shadow-lg"
+                              : "hover:bg-muted border border-transparent hover:border-primary/30"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
+                              isSelected ? "bg-primary-foreground/20" : "bg-primary/10 text-primary"
+                            )}>
+                              {week.week_number}
+                            </div>
+                            <div className="min-w-0">
+                              <p className={cn(
+                                "text-sm font-medium truncate",
+                                isSelected ? "text-primary-foreground" : ""
+                              )}>
+                                Semana {week.week_number}
+                              </p>
+                              {week.title && !week.title.includes(`Semana ${week.week_number}`) && (
+                                <p className={cn(
+                                  "text-xs truncate",
+                                  isSelected ? "text-primary-foreground/70" : "text-muted-foreground"
+                                )}>
+                                  {week.title}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <Badge 
+                            variant={isSelected ? "secondary" : "outline"}
+                            className={cn(
+                              "text-[10px] shrink-0",
+                              isSelected ? "" : lessonCount > 0 ? "text-green-600 border-green-500/30" : ""
+                            )}
+                          >
+                            {lessonCount} aulas
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                    
+                    {cronogramaWeeks.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Calendar className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Nenhuma semana criada</p>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+              
+              {/* Right Column: Video Selector */}
+              <div className="flex flex-col space-y-2 min-h-0">
+                {/* Search */}
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar videoaulas..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="icon" onClick={selectAllVisible}>
+                        <CheckCircle2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Selecionar todos visíveis</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="icon" onClick={clearSelection}>
+                        <Unlink className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Limpar seleção</TooltipContent>
+                  </Tooltip>
+                </div>
+                
+                {/* Selection Summary */}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {filteredLessons.length} de {existingLessons.length} videoaulas
+                  </span>
+                  <Badge variant={selectedLessons.size > 0 ? "default" : "secondary"}>
+                    {selectedLessons.size} selecionada(s)
+                  </Badge>
+                </div>
+                
+                {/* Lessons List */}
+                <ScrollArea className="flex-1 border rounded-lg min-h-[200px]">
+                  <div className="p-3 space-y-3">
+                    {groupedLessons.map(([moduleName, moduleLessons]) => (
+                      <div key={moduleName} className="space-y-1.5">
+                        <h4 className="text-xs font-medium text-muted-foreground flex items-center gap-2 sticky top-0 bg-background py-1">
+                          <BookOpen className="h-3 w-3" />
+                          {moduleName} ({moduleLessons.length})
+                        </h4>
+                        <div className="space-y-1 pl-4">
+                          {moduleLessons.map(lesson => {
+                            const isLinked = selectedWeekId ? linkedLessonIds.has(lesson.video_url || lesson.title) : false;
+                            const isSelected = selectedLessons.has(lesson.id);
+                            
+                            return (
+                              <div
+                                key={lesson.id}
+                                onClick={() => !isLinked && selectedWeekId && toggleLesson(lesson.id)}
+                                className={cn(
+                                  "flex items-center gap-2 p-2 rounded-lg transition-all",
+                                  !selectedWeekId 
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : isLinked 
+                                      ? "bg-green-500/10 border border-green-500/30 cursor-not-allowed opacity-60"
+                                      : isSelected
+                                        ? "bg-primary/10 border border-primary/30 cursor-pointer"
+                                        : "hover:bg-muted border border-transparent cursor-pointer"
+                                )}
+                              >
+                                <div className={cn(
+                                  "w-4 h-4 rounded border-2 flex items-center justify-center transition-all shrink-0",
+                                  isLinked 
+                                    ? "bg-green-500 border-green-500"
+                                    : isSelected 
+                                      ? "bg-primary border-primary" 
+                                      : "border-muted-foreground/30"
+                                )}>
+                                  {(isLinked || isSelected) && (
+                                    <CheckCircle2 className="h-2.5 w-2.5 text-white" />
+                                  )}
+                                </div>
+                                
+                                <Video className={cn(
+                                  "h-3.5 w-3.5 shrink-0",
+                                  isLinked ? "text-green-500" : "text-primary"
+                                )} />
+                                
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium truncate">{lesson.title}</p>
+                                </div>
+                                
+                                <span className="text-[10px] text-muted-foreground shrink-0">
+                                  {lesson.duration_minutes || 0}min
+                                </span>
+                                
+                                {isLinked && (
+                                  <Badge variant="outline" className="text-green-500 border-green-500/30 text-[9px] px-1.5">
+                                    VINCULADA
+                                  </Badge>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {groupedLessons.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Video className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">Nenhuma videoaula encontrada</p>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
+            
+            {/* Footer with Week Summary */}
+            <div className="border-t pt-4 mt-2">
+              {selectedWeekId && (
+                <div className="flex items-center gap-3 mb-3 p-2 bg-muted/50 rounded-lg">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">
+                      Destino: Semana {cronogramaWeeks.find(w => w.id === selectedWeekId)?.week_number}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {lessonsPerWeek[selectedWeekId] || 0} aulas já vinculadas
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="text-primary">
+                    + {selectedLessons.size} nova(s)
+                  </Badge>
+                </div>
+              )}
+              
+              <DialogFooter>
+                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                  Fechar
+                </Button>
+                <Button 
+                  onClick={handleLinkLessons} 
+                  disabled={selectedLessons.size === 0 || isLinking || !selectedWeekId}
+                  className="gap-2"
+                >
+                  {isLinking ? (
+                    <>
+                      <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      Vinculando...
+                    </>
+                  ) : (
+                    <>
+                      <Link2 className="h-4 w-4" />
+                      Vincular {selectedLessons.size > 0 && `(${selectedLessons.size})`}
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -1855,6 +2043,63 @@ export default function GestaoPlanejamento() {
     },
   });
 
+  // Function to auto-create weeks if needed for a cronograma
+  const handleCreateWeeksIfNeeded = async (cronogramaId: string, minWeeks: number): Promise<PlanningWeek[]> => {
+    // Get existing weeks for this cronograma
+    const cronogramaTitle = CRONOGRAMAS_CONFIG.find(c => c.id === cronogramaId)?.title || cronogramaId.toUpperCase();
+    
+    const existingCronogramaWeeks = weeks.filter(w => {
+      const titleLower = w.title.toLowerCase();
+      if (cronogramaId === 'fevereiro') {
+        return titleLower.includes('fevereiro') || 
+               titleLower.includes('extensivo fev') ||
+               (w.status === 'active' && !titleLower.includes('março') && !titleLower.includes('abril') && !titleLower.includes('maio'));
+      }
+      return titleLower.includes(cronogramaId);
+    });
+    
+    const existingCount = existingCronogramaWeeks.length;
+    
+    if (existingCount >= minWeeks) {
+      return existingCronogramaWeeks;
+    }
+    
+    // Find max week number for this cronograma
+    const maxWeekNumber = existingCronogramaWeeks.reduce((max, w) => Math.max(max, w.week_number), 0);
+    
+    // Create missing weeks
+    const weeksToCreate = [];
+    for (let i = existingCount + 1; i <= minWeeks; i++) {
+      weeksToCreate.push({
+        title: `${cronogramaTitle} - Semana ${i}`,
+        description: `Semana ${i} do cronograma ${cronogramaTitle}`,
+        week_number: maxWeekNumber + (i - existingCount),
+        status: 'draft' as const,
+        difficulty: 'medium' as const,
+        is_template: false,
+        estimated_hours: 10,
+      });
+    }
+    
+    if (weeksToCreate.length > 0) {
+      const { data, error } = await supabase
+        .from("planning_weeks")
+        .insert(weeksToCreate)
+        .select();
+      
+      if (error) {
+        toast.error("Erro ao criar semanas: " + error.message);
+        return existingCronogramaWeeks;
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["planning-weeks"] });
+      toast.success(`${weeksToCreate.length} semanas criadas automaticamente!`);
+      return [...existingCronogramaWeeks, ...(data as PlanningWeek[] || [])];
+    }
+    
+    return existingCronogramaWeeks;
+  };
+
   // Filter weeks
   const filteredWeeks = useMemo(() => {
     return weeks.filter((week) => {
@@ -2052,6 +2297,7 @@ export default function GestaoPlanejamento() {
           existingLessons={existingLessons}
           weeks={weeks}
           planningLessons={lessons}
+          onCreateWeeksIfNeeded={handleCreateWeeksIfNeeded}
         />
       </div>
     </div>
