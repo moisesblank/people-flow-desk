@@ -17,21 +17,24 @@ let infiniteLoopActive = false;
 function isPreviewEnvironment(): boolean {
   const hostname = window.location.hostname.toLowerCase();
   
-  // 🛡️ PRODUÇÃO: NUNCA bypass em domínios de produção
-  if (
+  // 🛡️ PRODUÇÃO: NUNCA bypass em domínios de produção PUBLICADOS
+  const isProductionDomain = 
     hostname === 'pro.moisesmedeiros.com.br' ||
     hostname === 'moisesmedeiros.com.br' ||
     hostname === 'gestao.moisesmedeiros.com.br' ||
-    hostname.includes('.lovable.app') // Domínios custom publicados
-  ) {
+    hostname === 'people-flow-desk.lovable.app'; // Domínio publicado oficial
+  
+  if (isProductionDomain) {
     return false; // PROTEÇÃO ATIVA
   }
   
-  // Preview/desenvolvimento: bypass apenas para testes
+  // Preview/desenvolvimento: bypass para testes
+  // Inclui id-preview--.lovable.app (preview do Lovable)
   return (
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
-    hostname.includes('lovableproject.com') // Preview do Lovable apenas
+    hostname.includes('lovableproject.com') ||
+    hostname.includes('id-preview--') // Preview do Lovable (id-preview--xxx.lovable.app)
   );
 }
 
