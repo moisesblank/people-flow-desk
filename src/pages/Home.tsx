@@ -138,19 +138,23 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
+      {/* ✝️ VERSÍCULO FIXO — TOPO ABSOLUTO */}
+      <div className="fixed top-0 left-0 right-0 z-[100] bg-black/80 backdrop-blur-sm border-b border-white/5">
+        <div className="w-full max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-end gap-2 text-white/50 select-none">
+          <span className="text-xs opacity-70">✝</span>
+          <span className="text-[10px] sm:text-xs italic">
+            Josué 1:9 — Não temas... o Senhor teu Deus é contigo.
+          </span>
+        </div>
+      </div>
+      
+      {/* Spacer para o versículo fixo */}
+      <div className="h-8" />
+      
       {disableAnimations ? (
         <div className="will-change-auto">
           <UltraBackground />
           <Navbar />
-          
-          {/* ✝️ VERSÍCULO DISCRETO — CANTO SUPERIOR */}
-          <div className="w-full max-w-7xl mx-auto px-4 pt-4 flex items-center justify-end gap-2 text-white/40 select-none">
-            <span className="text-xs opacity-70">✝</span>
-            <span className="text-[10px] sm:text-xs italic">
-              Josué 1:9 — Não temas... o Senhor teu Deus é contigo.
-            </span>
-          </div>
-          
           <HeroSection />
           
           <Suspense fallback={<SectionLoader />}>
@@ -182,15 +186,6 @@ const Home = () => {
         >
           <UltraBackground />
           <Navbar />
-          
-          {/* ✝️ VERSÍCULO DISCRETO — CANTO SUPERIOR */}
-          <div className="w-full max-w-7xl mx-auto px-4 pt-4 flex items-center justify-end gap-2 text-white/40 select-none">
-            <span className="text-xs opacity-70">✝</span>
-            <span className="text-[10px] sm:text-xs italic">
-              Josué 1:9 — Não temas... o Senhor teu Deus é contigo.
-            </span>
-          </div>
-          
           <HeroSection />
           
           <LazySection><RealtimeStats variant="section" /></LazySection>
