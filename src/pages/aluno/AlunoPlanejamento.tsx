@@ -279,8 +279,8 @@ function LessonInfo({
       <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary/50 via-holo-cyan/30 to-holo-purple/50 opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
       
       <div className="relative bg-gradient-to-br from-card via-card/95 to-card/90 rounded-2xl p-6 space-y-4">
-        {/* Header - Título + Botão */}
-        <div className="flex items-center justify-between gap-4">
+        {/* Header - Título + Botões */}
+        <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-holo-pink/10 border border-primary/30 shadow-[0_0_15px_hsl(var(--primary)/0.2)]">
               <BookOpen className="h-5 w-5 text-primary" />
@@ -288,39 +288,42 @@ function LessonInfo({
             <h2 className="text-lg font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text line-clamp-2">{lesson.title}</h2>
           </div>
           
-          {/* Complete button */}
-          <Button
-            onClick={onComplete}
-            disabled={isCompleted || isPending}
-            size="sm"
-            className={`gap-2 shrink-0 shadow-lg transition-all duration-300 ${
-              isCompleted 
-                ? 'bg-gradient-to-r from-success/80 to-success/60 text-white border-0 shadow-[0_0_20px_hsl(var(--success)/0.3)]'
-                : 'bg-gradient-to-r from-primary to-holo-pink text-white border-0 shadow-[0_0_25px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_35px_hsl(var(--primary)/0.5)]'
-            }`}
-          >
-            {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            {isCompleted ? 'Concluída' : 'Marcar Concluída'}
-          </Button>
-          
-          {/* Minhas Observações - movido para cá */}
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={onOpenObservations}
-            className={cn(
-              "gap-2 transition-all duration-200",
-              hasObservations 
-                ? "bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 border-emerald-500/40 text-emerald-400 hover:border-emerald-500/60"
-                : "bg-muted/30 border-border/50 hover:bg-muted/50 hover:border-primary/30"
-            )}
-          >
-            <Pencil className="h-4 w-4" />
-            Minhas Observações
-            {hasObservations && (
-              <div className="w-2 h-2 rounded-full bg-emerald-400" />
-            )}
-          </Button>
+          {/* Botões alinhados verticalmente */}
+          <div className="flex flex-col gap-2 shrink-0">
+            {/* Complete button */}
+            <Button
+              onClick={onComplete}
+              disabled={isCompleted || isPending}
+              size="sm"
+              className={`gap-2 shadow-lg transition-all duration-300 ${
+                isCompleted 
+                  ? 'bg-gradient-to-r from-success/80 to-success/60 text-white border-0 shadow-[0_0_20px_hsl(var(--success)/0.3)]'
+                  : 'bg-gradient-to-r from-primary to-holo-pink text-white border-0 shadow-[0_0_25px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_35px_hsl(var(--primary)/0.5)]'
+              }`}
+            >
+              {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              {isCompleted ? 'Concluída' : 'Marcar Concluída'}
+            </Button>
+            
+            {/* Minhas Observações - abaixo de Marcar Concluída */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onOpenObservations}
+              className={cn(
+                "gap-2 transition-all duration-200",
+                hasObservations 
+                  ? "bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 border-emerald-500/40 text-emerald-400 hover:border-emerald-500/60"
+                  : "bg-muted/30 border-border/50 hover:bg-muted/50 hover:border-primary/30"
+              )}
+            >
+              <Pencil className="h-4 w-4" />
+              Minhas Observações
+              {hasObservations && (
+                <div className="w-2 h-2 rounded-full bg-emerald-400" />
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* INFERIOR: Badges de tempo, conceitos e obrigatória - SEM FUNDO */}
