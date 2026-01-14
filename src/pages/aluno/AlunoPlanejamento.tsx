@@ -290,17 +290,17 @@ function LessonInfo({
           </Button>
         </div>
 
-        {/* INFERIOR: Badges de tempo, conceitos e obrigatória */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge className="bg-gradient-to-r from-primary/20 to-holo-pink/10 text-primary border-primary/30 shadow-[0_0_10px_hsl(var(--primary)/0.15)]">
+        {/* INFERIOR: Badges de tempo, conceitos e obrigatória - COM FUNDO SÓLIDO PARA LEGIBILIDADE */}
+        <div className="flex items-center gap-2 flex-wrap p-3 rounded-xl bg-surface-inset/80 backdrop-blur-sm border border-border/50">
+          <Badge className="bg-primary/30 text-primary-foreground border-primary/50 shadow-md">
             <Clock className="h-3.5 w-3.5 mr-1.5" />
             {lesson.duration_minutes || 0} min
           </Badge>
-          <Badge className="bg-gradient-to-r from-holo-cyan/20 to-holo-cyan/10 text-holo-cyan border-holo-cyan/30">
+          <Badge className="bg-holo-cyan/30 text-white border-holo-cyan/50 shadow-md">
             {lesson.description || "Conceitos"}
           </Badge>
           {lesson.is_required && (
-            <Badge className="bg-gradient-to-r from-warning/20 to-warning/10 text-warning border-warning/30">
+            <Badge className="bg-warning/30 text-white border-warning/50 shadow-md">
               <AlertCircle className="h-3 w-3 mr-1" />
               Obrigatória
             </Badge>
