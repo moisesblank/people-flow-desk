@@ -2143,7 +2143,7 @@ export default function AlunoQuestoes() {
                 )}
               >
                 {isLoadingModoProva ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-                📄 Modo Prova
+                📄 Modo Prova ({isAnyFilterActive ? totalCount : 0})
               </Button>
             </div>
           </div>
