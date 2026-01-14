@@ -179,8 +179,14 @@ async function detectSpoofOrClone(
   origin: string | null
 ): Promise<{ isSpoof: boolean; reason?: string }> {
   
-  // 🔐 P0 FIX: BYPASS para OWNER - pode usar qualquer dispositivo para testes
-  const isOwner = userEmail.toLowerCase() === 'moisesblank@gmail.com';
+  // 🔐 P0 FIX: BYPASS para OWNER via role (não email)
+  const { data: roleData } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .single();
+  
+  const isOwner = roleData?.role === 'owner';
   if (isOwner) {
     console.log(`[register-device-server] 👑 OWNER bypass: verificação de spoof ignorada`);
     return { isSpoof: false };
@@ -337,8 +343,14 @@ Deno.serve(async (req) => {
       );
     }
 
-    // 🔐 VERIFICAR SE É OWNER (bypass de limite)
-    const isOwner = userEmail.toLowerCase() === 'moisesblank@gmail.com';
+    // 🔐 VERIFICAR SE É OWNER via role (bypass de limite)
+    // Re-usar a verificação feita em detectSpoofOrClone
+    const { data: ownerRoleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
+    const isOwner = ownerRoleData?.role === 'owner';
 
     // Verificar se dispositivo já existe para este usuário
     const { data: existingDevice } = await supabase

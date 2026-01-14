@@ -65,9 +65,8 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
     
-    const isOwnerOrAdmin = user.email === 'moisesblank@gmail.com' || 
-                           roleData?.role === 'owner' || 
-                           roleData?.role === 'admin';
+    // 🛡️ SECURITY: Verificar role via banco (não por email)
+    const isOwnerOrAdmin = roleData?.role === 'owner' || roleData?.role === 'admin';
     
     if (!isOwnerOrAdmin) {
       return new Response(

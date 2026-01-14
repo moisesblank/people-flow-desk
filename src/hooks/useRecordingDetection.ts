@@ -37,7 +37,8 @@ const KNOWN_RECORDER_EXTENSIONS = [
   "__sharex__",
 ];
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// 🛡️ DEPRECATED: OWNER_EMAIL removido - usar role='owner' do useAuth
+// const OWNER_EMAIL = "moisesblank@gmail.com";
 
 interface RecordingDetectionResult {
   isRecordingDetected: boolean;
@@ -53,13 +54,13 @@ export function useRecordingDetection(isVideoPlaying: boolean = false): Recordin
   const originalMediaRecorder = useRef<typeof MediaRecorder | null>(null);
 
   // ═══════════════════════════════════════════════════════════
-  // VERIFICAR SE É OWNER
+  // VERIFICAR SE É OWNER via RPC (role='owner')
   // ═══════════════════════════════════════════════════════════
   useEffect(() => {
     const checkOwner = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        isOwnerRef.current = (user?.email || "").toLowerCase() === OWNER_EMAIL;
+        const { data, error } = await supabase.rpc('check_is_owner');
+        isOwnerRef.current = data === true && !error;
       } catch {
         isOwnerRef.current = false;
       }
