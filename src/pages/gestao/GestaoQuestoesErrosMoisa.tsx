@@ -1,7 +1,9 @@
 // ============================================
 // 🚨 QUESTÕES COM ERROS DO MOISA
 // Página para corrigir questões problemáticas
-// Critério: sem enunciado OU qualquer alternativa (A-E) vazia
+// Critério: sem enunciado, alternativas insuficientes (0-2), 
+//           qualquer alternativa (A-E) vazia, OU sem explicação
+// CONSTITUIÇÃO v10.4 - REGRA PERMANENTE
 // ============================================
 
 import { useState, useCallback, useEffect } from 'react';
@@ -43,6 +45,7 @@ interface QuestionWithErrors {
   question_text: string | null;
   options: OptionsType | null;
   correct_answer: string | null;
+  explanation: string | null;
   macro: string | null;
   micro: string | null;
   difficulty: string | null;
@@ -68,11 +71,32 @@ function detectErrors(question: any): string[] {
   const options = question.options || {};
   const alternatives = ['A', 'B', 'C', 'D', 'E'];
   
+  // Conta alternativas válidas e detecta vazias
+  let validAlternatives = 0;
+  const emptyAlternatives: string[] = [];
+  
   for (const alt of alternatives) {
     const value = options[alt];
     if (!value || (typeof value === 'string' && value.trim() === '')) {
-      errors.push(`SEM_ALTERNATIVA_${alt}`);
+      emptyAlternatives.push(alt);
+    } else {
+      validAlternatives++;
     }
+  }
+  
+  // ERRO CRÍTICO: 0-2 alternativas = questão inválida
+  if (validAlternatives <= 2) {
+    errors.push(`POUCAS_ALTERNATIVAS_${validAlternatives}`);
+  }
+  
+  // Adiciona erros de alternativas vazias individuais
+  for (const alt of emptyAlternatives) {
+    errors.push(`SEM_ALTERNATIVA_${alt}`);
+  }
+  
+  // Verifica explicação
+  if (!question.explanation || question.explanation.trim() === '') {
+    errors.push('SEM_EXPLICACAO');
   }
   
   return errors;
@@ -80,16 +104,23 @@ function detectErrors(question: any): string[] {
 
 function getErrorBadgeColor(error: string): string {
   if (error === 'SEM_ENUNCIADO') return 'bg-red-500/20 text-red-400 border-red-500/30';
+  if (error.startsWith('POUCAS_ALTERNATIVAS')) return 'bg-red-600/20 text-red-300 border-red-600/30';
   if (error.startsWith('SEM_ALTERNATIVA')) return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
+  if (error === 'SEM_EXPLICACAO') return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
   return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
 }
 
 function getErrorLabel(error: string): string {
   if (error === 'SEM_ENUNCIADO') return '❌ Sem Enunciado';
+  if (error.startsWith('POUCAS_ALTERNATIVAS_')) {
+    const count = error.replace('POUCAS_ALTERNATIVAS_', '');
+    return `🚨 Só ${count} alternativa${count === '1' ? '' : 's'}`;
+  }
   if (error.startsWith('SEM_ALTERNATIVA_')) {
     const letter = error.replace('SEM_ALTERNATIVA_', '');
     return `⚠️ Alt. ${letter} vazia`;
   }
+  if (error === 'SEM_EXPLICACAO') return '📝 Sem Explicação';
   return error;
 }
 
@@ -237,10 +268,11 @@ export default function GestaoQuestoesErrosMoisa() {
     queryKey: ['questoes-erros-moisa', page],
     queryFn: async () => {
       // Buscar questões que atendem aos critérios de erro
+      // Expande query para incluir: sem enunciado, sem alternativas, sem explicação
       const { data: questions, error, count } = await supabase
         .from('quiz_questions')
-        .select('id, question_text, options, correct_answer, macro, micro, difficulty, banca, ano, created_at', { count: 'exact' })
-        .or(`question_text.is.null,question_text.eq.,options.is.null,options->A.is.null,options->B.is.null,options->C.is.null,options->D.is.null,options->E.is.null`)
+        .select('id, question_text, options, correct_answer, explanation, macro, micro, difficulty, banca, ano, created_at', { count: 'exact' })
+        .or(`question_text.is.null,question_text.eq.,options.is.null,options->A.is.null,options->B.is.null,options->C.is.null,options->D.is.null,options->E.is.null,explanation.is.null,explanation.eq.`)
         .order('created_at', { ascending: false })
         .range((page - 1) * pageSize, page * pageSize - 1);
 
@@ -258,6 +290,7 @@ export default function GestaoQuestoesErrosMoisa() {
             question_text: q.question_text,
             options: optionsObj,
             correct_answer: q.correct_answer,
+            explanation: q.explanation,
             macro: q.macro,
             micro: q.micro,
             difficulty: q.difficulty,
@@ -367,7 +400,7 @@ export default function GestaoQuestoesErrosMoisa() {
         <CardContent className="py-3">
           <div className="flex items-center gap-2 text-sm text-yellow-400">
             <AlertTriangle className="w-4 h-4" />
-            <span><strong>Critérios de erro:</strong> Sem enunciado OU qualquer alternativa (A, B, C, D ou E) vazia</span>
+            <span><strong>Critérios de erro:</strong> Sem enunciado • Poucas alternativas (0-2) • Alternativa vazia • Sem explicação</span>
           </div>
         </CardContent>
       </Card>
@@ -452,6 +485,19 @@ export default function GestaoQuestoesErrosMoisa() {
                       );
                     })}
                   </div>
+
+                  {/* Explicação */}
+                  {question.error_types.includes('SEM_EXPLICACAO') && (
+                    <div>
+                      <label className="text-xs font-medium text-purple-400 mb-1 block">EXPLICAÇÃO</label>
+                      <InlineEditCell
+                        value={question.explanation || ''}
+                        onSave={(value) => handleSave(question.id, 'explanation', value)}
+                        placeholder="📝 Explicação vazia - clique para adicionar"
+                        multiline
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))
