@@ -52,29 +52,11 @@ const DIFFICULTY_CONFIG = {
   dificil: { label: 'Difícil', class: 'bg-red-500 text-white border-0' },
 } as const;
 
-// MACRO_CONFIG — ZERO EMOJIS (Constituição v10.4)
-const MACRO_CONFIG: Record<string, { label: string; badge: string }> = {
-  'Química Geral': {
-    label: 'Química Geral',
-    badge: 'bg-amber-500/90 text-white',
-  },
-  'Química Orgânica': {
-    label: 'Química Orgânica',
-    badge: 'bg-purple-600/90 text-white',
-  },
-  'Físico-Química': {
-    label: 'Físico-Química',
-    badge: 'bg-cyan-500/90 text-white',
-  },
-  'Química Ambiental': {
-    label: 'Química Ambiental',
-    badge: 'bg-emerald-500/90 text-white',
-  },
-  'Bioquímica': {
-    label: 'Bioquímica',
-    badge: 'bg-pink-500/90 text-white',
-  },
-};
+// ============================================
+// 🏛️ MACRO CONFIG — FONTE ÚNICA DE VERDADE
+// Constituição SYNAPSE Ω v10.4 — NOMES DO BANCO, VISUAIS CENTRALIZADOS
+// ============================================
+import { getMacroVisual, getMacroBadgeClass } from '@/lib/taxonomy/macroVisualConfig';
 
 const getQuestionTypeLabel = (type?: string) => {
   switch (type) {
@@ -98,10 +80,8 @@ export function QuestionMetadataBadges({
   formatBancaHeader,
 }: QuestionMetadataBadgesProps) {
   const diffConfig = DIFFICULTY_CONFIG[question.difficulty as keyof typeof DIFFICULTY_CONFIG] || DIFFICULTY_CONFIG.medio;
-  const macroConfig = MACRO_CONFIG[question.macro || ''] || {
-    label: question.macro || 'Química Geral',
-    badge: 'bg-amber-500/90 text-white',
-  };
+  const macroLabel = question.macro || 'Química Geral';
+  const macroBadgeClass = getMacroBadgeClass(macroLabel);
   
   // Formatar banca + ano
   const bancaAnoLabel = formatBancaHeader
@@ -237,10 +217,8 @@ export function QuestionModeBadge({ tags }: { tags?: string[] | null }) {
  */
 export function QuestionBadgesCompact({ question, className }: { question: QuestionMetadata; className?: string }) {
   const diffConfig = DIFFICULTY_CONFIG[question.difficulty as keyof typeof DIFFICULTY_CONFIG] || DIFFICULTY_CONFIG.medio;
-  const macroConfig = MACRO_CONFIG[question.macro || ''] || {
-    label: question.macro || 'Química Geral',
-    badge: 'bg-amber-500/90 text-white',
-  };
+  const macroLabel = question.macro || 'Química Geral';
+  const macroBadgeClass = getMacroBadgeClass(macroLabel);
   
   const bancaAno = question.banca && question.ano
     ? `${question.banca} (${question.ano})`

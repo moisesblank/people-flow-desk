@@ -35,13 +35,27 @@ const LazyCharts = lazy(() => import('./StudentPerformanceCharts'));
 // =====================================================
 const MAX_ITEMS_PER_CATEGORY = 20;
 
-const MACRO_CONFIG: Record<string, { icon: typeof FlaskConical; color: string; gradient: string }> = {
-  "Química Geral": { icon: Atom, color: "text-amber-400", gradient: "from-amber-500/20 to-amber-600/5" },
-  "Físico-Química": { icon: Zap, color: "text-cyan-400", gradient: "from-cyan-500/20 to-cyan-600/5" },
-  "Química Orgânica": { icon: Beaker, color: "text-purple-400", gradient: "from-purple-500/20 to-purple-600/5" },
-  "Química Ambiental": { icon: Leaf, color: "text-emerald-400", gradient: "from-emerald-500/20 to-emerald-600/5" },
-  "Bioquímica": { icon: Dna, color: "text-pink-400", gradient: "from-pink-500/20 to-pink-600/5" },
-};
+// ============================================
+// 🏛️ MACRO CONFIG — FONTE ÚNICA DE VERDADE
+// Constituição SYNAPSE Ω v10.4 — NOMES DO BANCO, VISUAIS CENTRALIZADOS
+// ============================================
+import { getMacroVisual, type MacroVisualConfig } from '@/lib/taxonomy/macroVisualConfig';
+
+/**
+ * Adapta MacroVisualConfig para formato esperado pelo componente
+ * Mantém gradientes específicos para analytics (bg com transparência)
+ */
+function getMacroAnalyticsConfig(macroLabel: string) {
+  const visual = getMacroVisual(macroLabel);
+  // Converte gradient 'from-X to-Y' para 'from-X/20 to-Y/5' (analytics style)
+  const baseGradient = visual.gradient.replace(/from-(\w+)-(\d+)/g, 'from-$1-$2/20')
+                                       .replace(/to-(\w+)-(\d+)/g, 'to-$1-$2/5');
+  return {
+    icon: visual.icon,
+    color: visual.color,
+    gradient: baseGradient,
+  };
+}
 
 // =====================================================
 // TIPOS
@@ -187,7 +201,7 @@ interface MacroCardProps {
 
 const MacroCard = memo(function MacroCard({ macro, micros, temas, isExpanded, onToggle }: MacroCardProps) {
   const [expandedMicro, setExpandedMicro] = useState<string | null>(null);
-  const config = MACRO_CONFIG[macro.name] || { icon: FlaskConical, color: "text-primary", gradient: "from-primary/20 to-primary/5" };
+  const config = getMacroAnalyticsConfig(macro.name);
   const Icon = config.icon;
 
   const displayMicros = micros.slice(0, MAX_ITEMS_PER_CATEGORY);
