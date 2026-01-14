@@ -142,6 +142,15 @@ const Home = () => {
         <div className="will-change-auto">
           <UltraBackground />
           <Navbar />
+          
+          {/* ✝️ VERSÍCULO DISCRETO — CANTO SUPERIOR */}
+          <div className="w-full max-w-7xl mx-auto px-4 pt-4 flex items-center justify-end gap-2 text-white/40 select-none">
+            <span className="text-xs opacity-70">✝</span>
+            <span className="text-[10px] sm:text-xs italic">
+              Josué 1:9 — Não temas... o Senhor teu Deus é contigo.
+            </span>
+          </div>
+          
           <HeroSection />
           
           <Suspense fallback={<SectionLoader />}>
@@ -173,6 +182,15 @@ const Home = () => {
         >
           <UltraBackground />
           <Navbar />
+          
+          {/* ✝️ VERSÍCULO DISCRETO — CANTO SUPERIOR */}
+          <div className="w-full max-w-7xl mx-auto px-4 pt-4 flex items-center justify-end gap-2 text-white/40 select-none">
+            <span className="text-xs opacity-70">✝</span>
+            <span className="text-[10px] sm:text-xs italic">
+              Josué 1:9 — Não temas... o Senhor teu Deus é contigo.
+            </span>
+          </div>
+          
           <HeroSection />
           
           <LazySection><RealtimeStats variant="section" /></LazySection>
