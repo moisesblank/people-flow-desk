@@ -101,6 +101,42 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
   const percentage = questions.length > 0 ? Math.round((correctCount / questions.length) * 100) : 0;
 
   // ============================================
+  // CABEÇALHO PADRÃO DO PDF (Leve, Cinza/Preto)
+  // ============================================
+  const addPdfHeader = useCallback((pdf: jsPDF, pageNum: number, totalPages: number) => {
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const margin = 15;
+    
+    // Barra de cabeçalho cinza claro
+    pdf.setFillColor(245, 245, 245);
+    pdf.rect(0, 0, pageWidth, 18, 'F');
+    
+    // Borda inferior do cabeçalho
+    pdf.setDrawColor(180, 180, 180);
+    pdf.line(0, 18, pageWidth, 18);
+    
+    // Logo placeholder (texto estilizado para manter leve)
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(128, 0, 32); // Bordô/Marrom da logo
+    pdf.text('MOISÉS MEDEIROS', margin, 11);
+    
+    // Slogan
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(100, 100, 100);
+    pdf.text('Muito além da sala de aula!', pageWidth / 2, 11, { align: 'center' });
+    
+    // Data e paginação
+    pdf.setFontSize(7);
+    pdf.setTextColor(120, 120, 120);
+    pdf.text(`${new Date().toLocaleDateString('pt-BR')} • Pág ${pageNum}/${totalPages}`, pageWidth - margin, 11, { align: 'right' });
+    
+    // Reset cor do texto
+    pdf.setTextColor(0, 0, 0);
+  }, []);
+
+  // ============================================
   // GERAR PDF PARA IMPRESSÃO
   // ============================================
   const generateAndPrintPDF = useCallback(async () => {
@@ -118,24 +154,41 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const margin = 15;
+      const headerHeight = 22;
       const contentWidth = pageWidth - (margin * 2);
-      let yPos = margin;
       
-      // Header
-      pdf.setFontSize(16);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('MODO PROVA - PRO MOISÉS MEDEIROS', pageWidth / 2, yPos, { align: 'center' });
-      yPos += 8;
+      // === PRIMEIRA PASSAGEM: Contar páginas ===
+      let tempYPos = headerHeight + 5;
+      let estimatedPages = 1;
       
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`${questions.length} questões • ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, yPos, { align: 'center' });
-      yPos += 10;
+      for (let i = 0; i < questions.length; i++) {
+        const q = questions[i];
+        const cleanText = q.question_text
+          .replace(/<[^>]*>/g, '')
+          .replace(/&nbsp;/g, ' ')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .trim();
+        
+        pdf.setFontSize(10);
+        const lines = pdf.splitTextToSize(cleanText, contentWidth);
+        const questionHeight = 6 + (lines.length * 5) + 3 + (q.options.length * 10) + 8;
+        
+        if (tempYPos + questionHeight > pageHeight - 20) {
+          estimatedPages++;
+          tempYPos = headerHeight + 5;
+        }
+        tempYPos += questionHeight;
+      }
+      estimatedPages++; // +1 para o cartão de respostas
       
-      // Linha separadora
-      pdf.setDrawColor(100);
-      pdf.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 8;
+      // === SEGUNDA PASSAGEM: Gerar PDF com cabeçalhos ===
+      let currentPage = 1;
+      let yPos = headerHeight + 5;
+      
+      // Cabeçalho da primeira página
+      addPdfHeader(pdf, currentPage, estimatedPages);
       
       // Questões
       for (let i = 0; i < questions.length; i++) {
@@ -144,7 +197,9 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
         // Check page break
         if (yPos > pageHeight - 60) {
           pdf.addPage();
-          yPos = margin;
+          currentPage++;
+          addPdfHeader(pdf, currentPage, estimatedPages);
+          yPos = headerHeight + 5;
         }
         
         // Número da questão
@@ -174,7 +229,9 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
         for (const line of lines) {
           if (yPos > pageHeight - 30) {
             pdf.addPage();
-            yPos = margin;
+            currentPage++;
+            addPdfHeader(pdf, currentPage, estimatedPages);
+            yPos = headerHeight + 5;
           }
           pdf.text(line, margin, yPos);
           yPos += 5;
@@ -186,7 +243,9 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
         for (let j = 0; j < q.options.length && j < 5; j++) {
           if (yPos > pageHeight - 20) {
             pdf.addPage();
-            yPos = margin;
+            currentPage++;
+            addPdfHeader(pdf, currentPage, estimatedPages);
+            yPos = headerHeight + 5;
           }
           
           const optText = q.options[j].text
@@ -206,47 +265,68 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
       
       // Página do Cartão de Respostas
       pdf.addPage();
-      yPos = margin;
+      currentPage++;
+      addPdfHeader(pdf, currentPage, estimatedPages);
+      yPos = headerHeight + 8;
       
-      pdf.setFontSize(16);
+      pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(60, 60, 60);
       pdf.text('CARTÃO DE RESPOSTAS', pageWidth / 2, yPos, { align: 'center' });
-      yPos += 10;
+      yPos += 8;
       
-      pdf.setFontSize(10);
+      pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Marque suas respostas abaixo:', margin, yPos);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`${questions.length} questões • Marque suas respostas abaixo`, pageWidth / 2, yPos, { align: 'center' });
+      pdf.setTextColor(0, 0, 0);
       yPos += 10;
       
-      // Grid de respostas
-      const cellWidth = 30;
+      // Grid de respostas - Design limpo
+      const cellWidth = 32;
       const cellHeight = 12;
       const cols = 5;
+      let baseY = yPos;
+      
+      pdf.setDrawColor(200, 200, 200);
       
       for (let i = 0; i < questions.length; i++) {
         const col = i % cols;
         const row = Math.floor(i / cols);
-        const x = margin + (col * (cellWidth + 5));
-        const y = yPos + (row * (cellHeight + 8));
+        const x = margin + (col * (cellWidth + 3));
+        const y = baseY + (row * (cellHeight + 4));
         
-        if (y > pageHeight - 30) {
+        // Verificar se precisa de nova página
+        if (y > pageHeight - 25) {
           pdf.addPage();
-          yPos = margin;
+          currentPage++;
+          addPdfHeader(pdf, currentPage, estimatedPages);
+          baseY = headerHeight + 8;
+          // Recalcular posição
+          const newRow = Math.floor(i / cols);
+          continue;
         }
         
-        // Número
+        // Número da questão
+        pdf.setFontSize(9);
         pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(80, 80, 80);
         pdf.text(`${i + 1}.`, x, y);
         
-        // Opções A-E
+        // Caixas de opções A-E (estilo clean)
         pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(0, 0, 0);
         const opts = ['A', 'B', 'C', 'D', 'E'];
         for (let j = 0; j < opts.length; j++) {
-          pdf.rect(x + 8 + (j * 8), y - 4, 6, 6);
-          pdf.setFontSize(7);
-          pdf.text(opts[j], x + 9.5 + (j * 8), y);
+          const boxX = x + 8 + (j * 7);
+          pdf.setDrawColor(180, 180, 180);
+          pdf.rect(boxX, y - 4, 5, 5);
+          pdf.setFontSize(6);
+          pdf.setTextColor(100, 100, 100);
+          pdf.text(opts[j], boxX + 1.2, y - 0.3);
         }
         pdf.setFontSize(10);
+        pdf.setTextColor(0, 0, 0);
       }
       
       // Abrir para impressão
