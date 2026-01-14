@@ -444,25 +444,25 @@ function LessonsSidebar({
                       onClick={() => onSelectLesson(lesson)}
                       className={`w-full p-4 rounded-xl text-left transition-all duration-300 relative overflow-hidden group/lesson ${
                         isActive
-                          ? "bg-gradient-to-r from-primary/20 via-holo-pink/15 to-transparent border-l-4 border-primary shadow-[inset_0_0_30px_hsl(var(--primary)/0.15)]"
+                          ? "bg-gradient-to-r from-success/20 via-emerald-500/15 to-transparent border-l-4 border-success shadow-[inset_0_0_30px_hsl(var(--success)/0.15)]"
                           : isCompleted
                           ? "bg-gradient-to-r from-success/15 to-transparent hover:from-success/20 border-l-4 border-success shadow-[inset_0_0_20px_hsl(var(--success)/0.1)]"
                           : "bg-gradient-to-r from-primary/5 via-holo-pink/5 to-transparent hover:from-primary/15 hover:via-holo-pink/10 border-l-4 border-primary/30 hover:border-primary/60"
                       }`}
                     >
-                      {/* Active indicator glow */}
+                      {/* Active indicator glow - GREEN for selected */}
                       {isActive && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent animate-pulse" style={{ animationDuration: '2s' }} />
+                        <div className="absolute inset-0 bg-gradient-to-r from-success/5 to-transparent animate-pulse" style={{ animationDuration: '2s' }} />
                       )}
                       
                       <div className="flex items-start gap-4 relative z-10">
-                        {/* Number/Check - Verde e Rosa SOBERANO */}
+                        {/* Number/Check - VERDE para selecionado, Rosa para demais */}
                         <div
                           className={`flex items-center justify-center w-10 h-10 rounded-xl text-sm font-black shrink-0 transition-all duration-300 ${
                             isCompleted
                               ? "bg-gradient-to-br from-success to-success/80 text-white shadow-[0_0_20px_hsl(var(--success)/0.5)]"
                               : isActive
-                              ? "bg-gradient-to-br from-primary via-holo-pink to-primary text-white shadow-[0_0_25px_hsl(var(--primary)/0.5)]"
+                              ? "bg-gradient-to-br from-success via-emerald-500 to-success text-white shadow-[0_0_25px_hsl(var(--success)/0.5)]"
                               : "bg-gradient-to-br from-primary/20 to-holo-pink/20 text-primary group-hover/lesson:from-primary/40 group-hover/lesson:to-holo-pink/40"
                           }`}
                         >
@@ -472,11 +472,11 @@ function LessonsSidebar({
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1.5">
-                            <h4 className={`font-semibold text-sm line-clamp-1 transition-colors ${isActive ? "text-primary" : ""}`}>
+                            <h4 className={`font-semibold text-sm line-clamp-1 transition-colors ${isActive ? "text-success" : ""}`}>
                               {lesson.title}
                             </h4>
                             {isActive && (
-                              <Badge className="bg-gradient-to-r from-primary to-holo-purple text-white text-[10px] px-2 py-0 border-0 shadow-lg animate-pulse">
+                              <Badge className="bg-gradient-to-r from-success to-emerald-500 text-white text-[10px] px-2 py-0 border-0 shadow-lg animate-pulse">
                                 ATUAL
                               </Badge>
                             )}
@@ -486,10 +486,7 @@ function LessonsSidebar({
                               <Clock className="h-3 w-3" />
                               {lesson.duration_minutes || 0} min
                             </span>
-                            <span className="flex items-center gap-1">
-                              <Star className="h-3 w-3 text-warning" />
-                              +{lesson.xp_reward || 0} XP
-                            </span>
+                            {/* XP REMOVIDO - Vídeo-aulas NÃO dão XP (Constituição SYNAPSE) */}
                             {isCompleted && (
                               <span className="text-success flex items-center gap-1 font-semibold">
                                 <CheckCircle2 className="h-3 w-3" />
@@ -499,14 +496,14 @@ function LessonsSidebar({
                           </div>
                         </div>
 
-                        {/* Play Button - Verde/Rosa SOBERANO */}
+                        {/* Play Button - VERDE para selecionado, Rosa para demais */}
                         <div className="shrink-0">
                           <div
                             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
                               isCompleted
                                 ? "bg-gradient-to-br from-success to-success/80 text-white shadow-[0_0_15px_hsl(var(--success)/0.4)]"
                                 : isActive 
-                                ? "bg-gradient-to-br from-primary via-holo-pink to-primary text-white shadow-[0_0_20px_hsl(var(--primary)/0.5)]" 
+                                ? "bg-gradient-to-br from-success via-emerald-500 to-success text-white shadow-[0_0_20px_hsl(var(--success)/0.5)]" 
                                 : "bg-gradient-to-br from-primary/20 to-holo-pink/20 text-primary group-hover/lesson:from-primary/40 group-hover/lesson:to-holo-pink/40 group-hover/lesson:shadow-[0_0_15px_hsl(var(--primary)/0.3)]"
                             }`}
                           >
