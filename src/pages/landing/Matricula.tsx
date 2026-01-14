@@ -23,7 +23,7 @@ const Matricula = () => {
     <>
       <Helmet>
         <title>Matricule-se Agora | Prof. Moisés Medeiros - Sua vaga está esperando</title>
-        <meta name="description" content="Matricule-se agora no curso do Prof. Moisés Medeiros. Oferta por tempo limitado com até 50% de desconto. Garantia de 30 dias." />
+        <meta name="description" content="Matricule-se agora no curso do Prof. Moisés Medeiros. Oferta por tempo limitado com até 50% de desconto. Garantia de 7 dias." />
       </Helmet>
       
       <div className="min-h-screen bg-black text-white overflow-x-hidden">

@@ -143,7 +143,7 @@ export const HeroSection = memo(() => {
   ];
 
   const trustItems = [
-    { icon: Shield, label: "Garantia 30 dias", color: "text-green-400" },
+    { icon: Shield, label: "Garantia 7 dias", color: "text-green-400" },
     { icon: Zap, label: "Acesso imediato", color: "text-amber-400" },
     { icon: Star, label: "4.9/5 avaliações", color: "text-purple-400" },
   ];
