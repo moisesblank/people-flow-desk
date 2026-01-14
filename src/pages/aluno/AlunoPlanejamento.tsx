@@ -278,24 +278,40 @@ function LessonInfo({
       {/* Holographic border */}
       <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary/50 via-holo-cyan/30 to-holo-purple/50 opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
       
-      <div className="relative bg-gradient-to-br from-card via-card/95 to-card/90 rounded-2xl p-6 space-y-4">
-        {/* Header - Título + Botões */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-holo-pink/10 border border-primary/30 shadow-[0_0_15px_hsl(var(--primary)/0.2)]">
-              <BookOpen className="h-5 w-5 text-primary" />
-            </div>
-            <h2 className="text-lg font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text line-clamp-2">{lesson.title}</h2>
+      <div className="relative bg-gradient-to-br from-card via-card/95 to-card/90 rounded-2xl p-5 space-y-3">
+        {/* Header - Título + Ícone */}
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-holo-pink/10 border border-primary/30 shadow-[0_0_15px_hsl(var(--primary)/0.2)]">
+            <BookOpen className="h-5 w-5 text-primary" />
           </div>
-          
-          {/* Botões alinhados verticalmente */}
-          <div className="flex flex-col gap-2 shrink-0">
-            {/* Complete button */}
+          <h2 className="text-lg font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text line-clamp-2 flex-1">{lesson.title}</h2>
+        </div>
+
+        {/* Badges de tempo, conceitos e obrigatória */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge className="bg-primary/30 text-primary-foreground border-primary/50 shadow-md px-3 py-1">
+            <Clock className="h-3.5 w-3.5 mr-1.5" />
+            {lesson.duration_minutes || 0} min
+          </Badge>
+          <Badge className="bg-holo-cyan/30 text-white border-holo-cyan/50 shadow-md px-3 py-1">
+            {lesson.description || "Conceitos"}
+          </Badge>
+          {lesson.is_required && (
+            <Badge className="bg-warning/30 text-white border-warning/50 shadow-md px-3 py-1">
+              <AlertCircle className="h-3 w-3 mr-1" />
+              Obrigatória
+            </Badge>
+          )}
+        </div>
+
+        {/* Ações + Rating - Layout compacto em linha */}
+        <div className="flex items-center justify-between gap-4 pt-2 border-t border-border/30">
+          {/* Botões de ação - Tamanho maior */}
+          <div className="flex items-center gap-3">
             <Button
               onClick={onComplete}
               disabled={isCompleted || isPending}
-              size="sm"
-              className={`gap-2 shadow-lg transition-all duration-300 ${
+              className={`gap-2 px-5 py-2.5 h-auto text-sm font-medium shadow-lg transition-all duration-300 ${
                 isCompleted 
                   ? 'bg-gradient-to-r from-success/80 to-success/60 text-white border-0 shadow-[0_0_20px_hsl(var(--success)/0.3)]'
                   : 'bg-gradient-to-r from-primary to-holo-pink text-white border-0 shadow-[0_0_25px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_35px_hsl(var(--primary)/0.5)]'
@@ -305,56 +321,35 @@ function LessonInfo({
               {isCompleted ? 'Concluída' : 'Marcar Concluída'}
             </Button>
             
-            {/* Minhas Observações - abaixo de Marcar Concluída */}
             <Button 
               variant="outline" 
-              size="sm" 
               onClick={onOpenObservations}
               className={cn(
-                "gap-2 transition-all duration-200",
+                "gap-2 px-5 py-2.5 h-auto text-sm font-medium transition-all duration-200",
                 hasObservations 
                   ? "bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 border-emerald-500/40 text-emerald-400 hover:border-emerald-500/60"
                   : "bg-muted/30 border-border/50 hover:bg-muted/50 hover:border-primary/30"
               )}
             >
               <Pencil className="h-4 w-4" />
-              Minhas Observações
+              Observações
               {hasObservations && (
                 <div className="w-2 h-2 rounded-full bg-emerald-400" />
               )}
             </Button>
           </div>
-        </div>
 
-        {/* INFERIOR: Badges de tempo, conceitos e obrigatória - SEM FUNDO */}
-        <div className="flex items-center gap-2 flex-wrap p-3">
-          <Badge className="bg-primary/30 text-primary-foreground border-primary/50 shadow-md">
-            <Clock className="h-3.5 w-3.5 mr-1.5" />
-            {lesson.duration_minutes || 0} min
-          </Badge>
-          <Badge className="bg-holo-cyan/30 text-white border-holo-cyan/50 shadow-md">
-            {lesson.description || "Conceitos"}
-          </Badge>
-          {lesson.is_required && (
-            <Badge className="bg-warning/30 text-white border-warning/50 shadow-md">
-              <AlertCircle className="h-3 w-3 mr-1" />
-              Obrigatória
-            </Badge>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          {/* Rating Stars - Enhanced */}
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground font-medium">Avalie:</span>
-            <div className="flex gap-1.5 p-2 rounded-xl bg-muted/30 border border-border/50">
+          {/* Rating Stars - Compacto */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground font-medium hidden sm:block">Avalie:</span>
+            <div className="flex gap-1 p-1.5 rounded-lg bg-muted/30 border border-border/50">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
                   onClick={() => setRating(star)}
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
-                  className="p-1 transition-all duration-300 hover:scale-125 active:scale-95"
+                  className="p-0.5 transition-all duration-300 hover:scale-125 active:scale-95"
                 >
                   <Star
                     className={`h-5 w-5 transition-all duration-300 ${
@@ -368,8 +363,6 @@ function LessonInfo({
             </div>
             {rating > 0 && <span className="text-xs text-warning font-medium">{rating}/5</span>}
           </div>
-
-          {/* TRAMON removido conforme solicitação do Owner */}
         </div>
       </div>
     </div>
