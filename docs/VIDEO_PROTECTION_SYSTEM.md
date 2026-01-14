@@ -1,132 +1,95 @@
-# 🔥 SISTEMA DE PROTEÇÃO DE VÍDEOS - FORTALEZA DIGITAL
+# 🔥 SISTEMA DE PROTEÇÃO DE VÍDEOS - OMEGA FORTRESS v2400
 
-## 📌 REGRA OBRIGATÓRIA PARA TODOS OS VÍDEOS
+## 📌 REGRA SOBERANA ABSOLUTA (LEI IMUTÁVEL)
 
-**TODOS os vídeos do sistema DEVEM usar o `FortressPlayerWrapper`** (ou `ProtectedVideoWrapper` para casos simples):
+**TODOS os vídeos do sistema DEVEM usar EXCLUSIVAMENTE o `OmegaFortressPlayer`:**
 
-1. Bloquear botões de "Assistir no YouTube"
-2. Bloquear botões de "Compartilhar"
-3. Forçar qualidade 1080p automaticamente
-4. Bloquear clique direito e atalhos de teclado
-5. Detectar tentativas de inspeção (DevTools)
+```tsx
+import { OmegaFortressPlayer } from "@/components/video";
+
+<OmegaFortressPlayer
+  videoId={videoId}
+  type="youtube" // ou "panda" ou "vimeo"
+  title="Título do Vídeo"
+  showSecurityBadge
+  showWatermark
+  autoplay={false}
+/>
+```
 
 ---
 
-## 🔥 FORTALEZA DIGITAL (5 CAMADAS)
-
-### Arquivo: `src/components/video/FortressPlayerWrapper.tsx`
-
-### As 5 Camadas de Proteção:
+## 🛡️ 7 CAMADAS DE PROTEÇÃO (OMEGA)
 
 | Camada | Nome | Proteção |
 |--------|------|----------|
-| 1 | Escudo CSS | Máscaras invisíveis que bloqueiam cliques em áreas sensíveis |
-| 2 | Escudo JS (Cliques) | Bloqueio de contextmenu, drag, select, copy |
-| 3 | Escudo JS (Teclado) | Bloqueio de Ctrl+S, F12, Ctrl+U, Ctrl+Shift+I/J/C |
-| 4 | Anti-Inspeção | Detecção de DevTools e limpeza de console |
-| 5 | CSS Específico | Oculta botões de download/share do Panda/YouTube |
+| 1 | **Disclaimer Legal** | Aviso obrigatório 3s antes da reprodução |
+| 2 | **Escudo CSS** | Máscaras invisíveis que bloqueiam cliques em áreas sensíveis |
+| 3 | **Escudo JS (Cliques)** | Bloqueio de contextmenu, drag, select, copy |
+| 4 | **Escudo JS (Teclado)** | Bloqueio de F12, Ctrl+Shift+I/J/C, PrintScreen |
+| 5 | **Anti-DevTools** | Detecção de DevTools via timing attacks |
+| 6 | **Watermark Forense** | Nome + CPF + Email do usuário (dinâmica) |
+| 7 | **SANCTUM 2.0** | Sessão única, heartbeat 30s, threat score |
 
-### Como Usar (Modo Fortaleza):
+---
+
+## ⚠️ COMPONENTES LEGADOS (PROIBIDOS)
+
+Os seguintes componentes são **LEGADOS** e **NÃO DEVEM SER USADOS**:
 
 ```tsx
-import { FortressPlayerWrapper, getFortressYouTubeUrl } from "@/components/video/FortressPlayerWrapper";
+// ❌ PROIBIDO - Use OmegaFortressPlayer
+import { FortressVideoPlayer } from "@/components/video";
+import { FortressPlayerWrapper } from "@/components/video";
+import { ProtectedVideoWrapper } from "@/components/video";
+import { VideoPlayer2300 } from "@/components/ui/video-player-2300";
+import { YouTubePlayer } from "@/components/lms/YouTubePlayer";
+import { LazyVideoPlayer } from "@/components/video";
 
-// Em qualquer componente com vídeo:
-<FortressPlayerWrapper className="aspect-video" showSecurityBadge>
-  <iframe
-    src={getFortressYouTubeUrl(videoId, true)}
-    className="w-full h-full"
-    allowFullScreen
-  />
-</FortressPlayerWrapper>
+// ✅ CORRETO - ÚNICO PERMITIDO
+import { OmegaFortressPlayer } from "@/components/video";
 ```
 
 ---
 
-## 🛡️ COMPONENTE BÁSICO (ProtectedVideoWrapper)
+## ✅ ARQUIVOS COM OMEGA FORTRESS
 
-### Arquivo: `src/components/video/ProtectedVideoWrapper.tsx`
-
-Para casos onde proteção mais leve é suficiente:
-
-```tsx
-import { ProtectedVideoWrapper, getProtectedYouTubeUrl } from "@/components/video/ProtectedVideoWrapper";
-
-<ProtectedVideoWrapper className="aspect-video">
-  <iframe
-    src={getProtectedYouTubeUrl(videoId, true)}
-    className="w-full h-full"
-    allowFullScreen
-  />
-</ProtectedVideoWrapper>
-```
-
----
-
-## 🎯 MÁSCARAS DE PROTEÇÃO (Fortaleza)
-
-O FortressPlayerWrapper adiciona escudos em todas as bordas:
-
-| Área | Dimensão | O que bloqueia |
-|------|----------|----------------|
-| Superior | 100% x 60px | Info do vídeo, título, share |
-| Inferior | 100% x 70px | Controles, timeline, logo |
-| Esquerda | 80px x 100% | Logo, branding |
-| Direita | 80px x 100% | Config, share, mais |
-| Centro | 30% x 40% | **PERMITIDO** (Play/Pause) |
-
----
-
-## 📺 PARÂMETROS DE QUALIDADE
-
-Usar `getFortressYouTubeUrl()` ou `FORTRESS_PLAYER_VARS`:
-
-```js
-{
-  vq: "hd1080",        // Força 1080p
-  rel: "0",            // Sem vídeos relacionados
-  modestbranding: "1", // Minimiza branding
-  showinfo: "0",       // Oculta info do canal
-  iv_load_policy: "3", // Oculta anotações
-  enablejsapi: "0",    // Desabilita API JS (anti-manipulação)
-}
-```
-
----
-
-## ✅ ARQUIVOS JÁ PROTEGIDOS
-
+- [x] `src/pages/aluno/AlunoPlanejamento.tsx`
+- [x] `src/pages/aluno/AlunoVideoaulas.tsx`
+- [x] `src/pages/gestao/GestaoVideoaulas.tsx`
 - [x] `src/components/landing/FuturisticVideoPlayer.tsx`
 - [x] `src/components/landing/VideoFeedbackCarousel.tsx`
-- [x] `src/components/lms/YouTubePlayer.tsx`
-- [x] `src/components/youtube/YouTubeLivePlayer.tsx`
+- [x] `src/components/aluno/AlunoCoursesHierarchy.tsx`
+- [x] `src/components/aluno/questoes/TreinoReviewModal.tsx`
+- [x] `src/components/simulados/screens/SimuladoReviewScreen.tsx`
+- [x] `src/pages/Aula.tsx`
+- [x] `src/pages/empresas/ArquivosEmpresariais.tsx`
 
 ---
 
-## ⚠️ PARA NOVOS COMPONENTES
+## 🔒 BYPASS DO OWNER
 
-**OBRIGATÓRIO**: Qualquer novo componente de vídeo DEVE:
+O Owner (moisesblank@gmail.com) possui bypass automático:
+- Watermark não exibida
+- Sem bloqueio de DevTools
+- Sem restrições de captura
 
-1. Importar `FortressPlayerWrapper` (recomendado) ou `ProtectedVideoWrapper`
-2. Envolver o iframe com o wrapper
-3. Usar `getFortressYouTubeUrl()` ou `getFortressPandaUrl()` para URLs
-4. Para YouTube IFrame API, usar `FORTRESS_PLAYER_VARS`
-
----
-
-## 🔒 PROTEÇÕES ATIVAS
-
-- ✅ Clique direito bloqueado
-- ✅ Arrastar bloqueado
-- ✅ Selecionar texto bloqueado
-- ✅ Copiar bloqueado
-- ✅ Atalhos de DevTools bloqueados (F12, Ctrl+Shift+I, etc.)
-- ✅ Detecção de DevTools aberto
-- ✅ Máscaras invisíveis em todas as bordas
-- ✅ CSS para ocultar botões de share/download
-- ✅ Qualidade 1080p forçada
+Verificado via `useRolePermissions().isOwner`
 
 ---
 
-**Atualizado em:** 2024-12-21
-**Versão:** 2.0 - FORTALEZA DIGITAL
+## 📺 PARÂMETROS OBRIGATÓRIOS
+
+| Parâmetro | Obrigatório | Descrição |
+|-----------|-------------|-----------|
+| `videoId` | ✅ | ID do vídeo (YouTube, Panda ou Vimeo) |
+| `type` | ✅ | `"youtube"` \| `"panda"` \| `"vimeo"` |
+| `title` | ⚠️ | Título para acessibilidade |
+| `showWatermark` | ⚠️ | Habilitar watermark forense |
+| `autoplay` | ❌ | Default: false (Disclaimer obrigatório) |
+
+---
+
+**Atualizado em:** 2026-01-14
+**Versão:** 3.0 - OMEGA FORTRESS SOVEREIGN
+**Autoridade:** CONSTITUIÇÃO SYNAPSE Ω v10.4
