@@ -1,11 +1,13 @@
 // =====================================================
 // useStudentTaxonomyPerformance - Hook de Performance por Taxonomia
-// Busca dados agregados do backend e monta árvore hierárquica
+// LEI SUPREMA: Usa question_taxonomy como FONTE ÚNICA DE VERDADE
+// Constituição SYNAPSE Ω v10.4
 // =====================================================
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { useQuestionTaxonomy } from "@/hooks/useQuestionTaxonomy";
 
 export interface TaxonomyNode {
   name: string;
@@ -37,151 +39,80 @@ export interface TaxonomyPerformanceData {
   };
 }
 
-// ============================================
-// LEI SUPREMA: MAPEADOR VALUE → LABEL
-// Garante que NUNCA expomos MICRO_VALUE na UI
-// ============================================
-const MICRO_VALUE_TO_LABEL: Record<string, string> = {
-  // QUÍMICA GERAL
-  introducao_quimica_inorganica: "Introdução à Química Inorgânica",
-  atomistica: "Atomística",
-  tabela_periodica: "Tabela Periódica",
-  numero_oxidacao_nox: "Número de Oxidação (NOX)",
-  ligacoes_quimicas: "Ligações Químicas",
-  funcoes_inorganicas: "Funções Inorgânicas",
-  teorias_acido_base: "Teorias Ácido-Base",
-  reacoes_inorganicas: "Reações Inorgânicas",
-  calculos_quimicos: "Cálculos Químicos",
-  estequiometria: "Estequiometria",
-  gases: "Gases",
-  balanceamento: "Balanceamento",
-  conceitos_modernos: "Conceitos Modernos",
-  // QUÍMICA ORGÂNICA
-  introducao_organica: "Introdução à orgânica",
-  nomenclatura_organica: "Nomenclatura Orgânica",
-  funcoes_organicas: "Funções Orgânicas",
-  propriedades_organicas: "Propriedades Orgânicas",
-  isomeria: "Isomeria",
-  reacoes_organicas: "Reações Orgânicas",
-  polimeros: "Polímeros",
-  // FÍSICO-QUÍMICA
-  solucoes: "Soluções",
-  propriedades_coligativas: "Propriedades Coligativas",
-  termoquimica: "Termoquímica",
-  cinetica_quimica: "Cinética Química",
-  equilibrio_quimico: "Equilíbrio Químico",
-  equilibrio_ionico: "Equilíbrio Iônico",
-  produto_solubilidade_kps: "Produto de Solubilidade (Kps)",
-  solucoes_tampao: "Soluções Tampão",
-  eletroquimica: "Eletroquímica",
-  radioatividade: "Radioatividade",
-  // QUÍMICA AMBIENTAL
-  agua_e_seu_ciclo: "Água e Seu Ciclo",
-  agua_e_seu_tratamento: "Água e Seu Tratamento",
-  atmosfera_ambiental: "Atmosfera",
-  camada_de_ozonio: "Camada de Ozônio",
-  ciclos_biogeoquimicos: "Ciclos Biogeoquímicos",
-  chuva_acida: "Chuva Ácida",
-  contaminacao_cidades: "Contaminação Cidades",
-  contaminacao_solo: "Contaminação Solo",
-  efeito_estufa: "Efeito Estufa",
-  eutrofizacao: "Eutrofização",
-  fontes_renovaveis: "Fontes Renováveis",
-  metais_pesados: "Metais Pesados",
-  poluicao_atmosferica: "Poluição Atmosférica",
-  poluicao_hidrica: "Poluição Hídrica",
-  qualidade_da_agua: "Qualidade da Água",
-  quimica_verde: "Química Verde",
-  tratamento_de_efluentes: "Tratamento de Efluentes",
-  residuos_solidos: "Resíduos Sólidos",
-  quimica_dos_agrotoxicos: "Química dos Agrotóxicos",
-  sustentabilidade: "Sustentabilidade",
-  mudancas_climaticas: "Mudanças Climáticas",
-  radioatividade_ambiental: "Radioatividade Ambiental",
-  // BIOQUÍMICA
-  proteinas: "Proteínas",
-  carboidratos: "Carboidratos",
-  enzimas: "Enzimas",
-  lipidios: "Lipídios",
-  acidos_nucleicos: "Ácidos Nucleicos",
-  vitaminas: "Vitaminas",
-  sais_minerais: "Sais Minerais",
-  metabolismo_bio: "Metabolismo",
-  respiracao_celular: "Respiração Celular",
-  fotossintese: "Fotossíntese",
-  hormonios: "Hormônios",
-  bioquimica_membranas: "Bioquímica das Membranas",
-  bioenergetica: "Bioenergética",
-  aminoacidos: "Aminoácidos",
-};
-
-const TEMA_VALUE_TO_LABEL: Record<string, string> = {
-  modelos_atomicos: "Modelos Atômicos",
-  distribuicao_eletronica: "Distribuição Eletrônica",
-  propriedades_magneticas: "Propriedades Magnéticas",
-  numeros_quanticos: "Números Quânticos",
-  origem_quimica_organica: "Origem da Química Orgânica",
-  caracteristicas_gerais_ligacoes: "Características Gerais das Ligações",
-  caracteristicas_gases: "Características dos Gases",
-  caracteristicas_origem_tabela: "Características e Origem da Tabela Periódica",
-  funcoes_oxigenadas: "Funções Oxigenadas",
-  acidos: "Ácidos",
-};
-
-// Micros legados que devem ser normalizados
-const LEGACY_MICRO_NORMALIZATION: Record<string, string> = {
-  "Química Orgânica Geral": "Funções Orgânicas",
-  "quimica_organica_geral": "Funções Orgânicas",
-};
-
 /**
- * Converte VALUE para LABEL se necessário
- * LEI SUPREMA: NUNCA expor MICRO_VALUE
+ * ============================================
+ * LEI SUPREMA: Normalizador VALUE → LABEL usando BANCO
+ * NUNCA expor MICRO_VALUE (slug) na UI
+ * ============================================
  */
-function normalizeToLabel(value: string | null | undefined, type: 'micro' | 'tema' | 'subtema'): string {
-  if (!value) return '';
+function createNormalizer(taxonomyItems: Array<{ value: string; label: string; level: string }>) {
+  // Criar mapa value → label do banco
+  const valueToLabel = new Map<string, string>();
   
-  // Verificar se é um legado que precisa normalização
-  if (LEGACY_MICRO_NORMALIZATION[value]) {
-    return LEGACY_MICRO_NORMALIZATION[value];
+  for (const item of taxonomyItems) {
+    // Mapear pelo value técnico
+    valueToLabel.set(item.value, item.label);
+    // Também mapear pelo value em lowercase para tolerância
+    valueToLabel.set(item.value.toLowerCase(), item.label);
+    // E pelo label normalizado (sem acentos, lowercase)
+    const normalizedValue = item.label
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    valueToLabel.set(normalizedValue, item.label);
   }
-  
-  // Verificar mapeamento de micro
-  if (type === 'micro' && MICRO_VALUE_TO_LABEL[value]) {
-    return MICRO_VALUE_TO_LABEL[value];
-  }
-  
-  // Verificar mapeamento de tema
-  if (type === 'tema' && TEMA_VALUE_TO_LABEL[value]) {
-    return TEMA_VALUE_TO_LABEL[value];
-  }
-  
-  // Se parece com um slug (snake_case), retornar vazio para não expor
-  if (/^[a-z0-9_]+$/.test(value) && value.includes('_')) {
-    console.warn(`[TAXONOMY] Possível VALUE exposto: ${value}`);
-    // Tentar converter snake_case para Title Case como fallback
-    return value
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  }
-  
-  // Já é um label legível
-  return value;
+
+  return function normalizeToLabel(value: string | null | undefined): string {
+    if (!value) return '';
+    
+    // Tentar lookup direto
+    const directMatch = valueToLabel.get(value);
+    if (directMatch) return directMatch;
+    
+    // Tentar lowercase
+    const lowerMatch = valueToLabel.get(value.toLowerCase());
+    if (lowerMatch) return lowerMatch;
+    
+    // Tentar normalizado
+    const normalized = value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    const normalizedMatch = valueToLabel.get(normalized);
+    if (normalizedMatch) return normalizedMatch;
+    
+    // Se parece com um slug (snake_case), tentar converter para Title Case
+    if (/^[a-z0-9_]+$/.test(value) && value.includes('_')) {
+      console.warn(`[TAXONOMY] Possível VALUE exposto sem mapeamento: ${value}`);
+      return value
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+    
+    // Já é um label legível
+    return value;
+  };
 }
 
 // Função para construir árvore a partir dos dados flat
-// LEI SUPREMA: Normaliza VALUE → LABEL antes de exibir
-function buildTaxonomyTree(data: TaxonomyPerformanceData[]): Map<string, TaxonomyNode> {
+function buildTaxonomyTree(
+  data: TaxonomyPerformanceData[],
+  normalizeToLabel: (value: string | null | undefined) => string
+): Map<string, TaxonomyNode> {
   const tree = new Map<string, TaxonomyNode>();
 
   for (const row of data) {
     // ============================================
     // LEI SUPREMA: Normalizar VALUE → LABEL
     // ============================================
-    const normalizedMicro = normalizeToLabel(row.micro, 'micro');
-    const normalizedTema = normalizeToLabel(row.tema, 'tema');
-    const normalizedSubtema = normalizeToLabel(row.subtema, 'subtema');
+    const normalizedMicro = normalizeToLabel(row.micro);
+    const normalizedTema = normalizeToLabel(row.tema);
+    const normalizedSubtema = normalizeToLabel(row.subtema);
     
     // Nível 1: Macro (já vem como label do banco)
     if (!tree.has(row.macro)) {
@@ -198,7 +129,7 @@ function buildTaxonomyTree(data: TaxonomyPerformanceData[]): Map<string, Taxonom
     const macroNode = tree.get(row.macro)!;
 
     // Nível 2: Micro (NORMALIZADO)
-    if (!macroNode.children.has(normalizedMicro)) {
+    if (normalizedMicro && !macroNode.children.has(normalizedMicro)) {
       macroNode.children.set(normalizedMicro, {
         name: normalizedMicro,
         totalAttempts: 0,
@@ -209,10 +140,10 @@ function buildTaxonomyTree(data: TaxonomyPerformanceData[]): Map<string, Taxonom
         children: new Map(),
       });
     }
-    const microNode = macroNode.children.get(normalizedMicro)!;
+    const microNode = normalizedMicro ? macroNode.children.get(normalizedMicro)! : null;
 
     // Nível 3: Tema (NORMALIZADO)
-    if (!microNode.children.has(normalizedTema)) {
+    if (microNode && normalizedTema && !microNode.children.has(normalizedTema)) {
       microNode.children.set(normalizedTema, {
         name: normalizedTema,
         totalAttempts: 0,
@@ -223,31 +154,37 @@ function buildTaxonomyTree(data: TaxonomyPerformanceData[]): Map<string, Taxonom
         children: new Map(),
       });
     }
-    const temaNode = microNode.children.get(normalizedTema)!;
+    const temaNode = microNode && normalizedTema ? microNode.children.get(normalizedTema)! : null;
 
     // Nível 4: Subtema (folha, NORMALIZADO)
-    temaNode.children.set(normalizedSubtema, {
-      name: normalizedSubtema,
-      totalAttempts: row.total_attempts,
-      correctAttempts: row.correct_attempts,
-      accuracyPercent: row.accuracy_percent,
-      avgTimeSeconds: row.avg_time_seconds ?? 0,
-      difficultyDistribution: row.difficulty_distribution ?? { facil: 0, medio: 0, dificil: 0 },
-      children: new Map(),
-    });
+    if (temaNode && normalizedSubtema) {
+      temaNode.children.set(normalizedSubtema, {
+        name: normalizedSubtema,
+        totalAttempts: row.total_attempts,
+        correctAttempts: row.correct_attempts,
+        accuracyPercent: row.accuracy_percent,
+        avgTimeSeconds: row.avg_time_seconds ?? 0,
+        difficultyDistribution: row.difficulty_distribution ?? { facil: 0, medio: 0, dificil: 0 },
+        children: new Map(),
+      });
+    }
 
     // Agregar para cima
-    temaNode.totalAttempts += row.total_attempts;
-    temaNode.correctAttempts += row.correct_attempts;
-    temaNode.difficultyDistribution.facil += row.difficulty_distribution?.facil ?? 0;
-    temaNode.difficultyDistribution.medio += row.difficulty_distribution?.medio ?? 0;
-    temaNode.difficultyDistribution.dificil += row.difficulty_distribution?.dificil ?? 0;
+    if (temaNode) {
+      temaNode.totalAttempts += row.total_attempts;
+      temaNode.correctAttempts += row.correct_attempts;
+      temaNode.difficultyDistribution.facil += row.difficulty_distribution?.facil ?? 0;
+      temaNode.difficultyDistribution.medio += row.difficulty_distribution?.medio ?? 0;
+      temaNode.difficultyDistribution.dificil += row.difficulty_distribution?.dificil ?? 0;
+    }
 
-    microNode.totalAttempts += row.total_attempts;
-    microNode.correctAttempts += row.correct_attempts;
-    microNode.difficultyDistribution.facil += row.difficulty_distribution?.facil ?? 0;
-    microNode.difficultyDistribution.medio += row.difficulty_distribution?.medio ?? 0;
-    microNode.difficultyDistribution.dificil += row.difficulty_distribution?.dificil ?? 0;
+    if (microNode) {
+      microNode.totalAttempts += row.total_attempts;
+      microNode.correctAttempts += row.correct_attempts;
+      microNode.difficultyDistribution.facil += row.difficulty_distribution?.facil ?? 0;
+      microNode.difficultyDistribution.medio += row.difficulty_distribution?.medio ?? 0;
+      microNode.difficultyDistribution.dificil += row.difficulty_distribution?.dificil ?? 0;
+    }
 
     macroNode.totalAttempts += row.total_attempts;
     macroNode.correctAttempts += row.correct_attempts;
@@ -276,6 +213,20 @@ export function treeToArray(tree: Map<string, TaxonomyNode>): TaxonomyNode[] {
 
 export function useStudentTaxonomyPerformance(userId: string | undefined, daysBack: number = 360) {
   const queryClient = useQueryClient();
+  
+  // ============================================
+  // 🗄️ FONTE ÚNICA DE VERDADE: BANCO DE DADOS
+  // ============================================
+  const { data: taxonomyData } = useQuestionTaxonomy();
+
+  // Criar normalizador a partir dos dados do banco
+  const normalizeToLabel = useMemo(() => {
+    if (!taxonomyData?.items) {
+      // Fallback: retorna o valor original
+      return (value: string | null | undefined) => value || '';
+    }
+    return createNormalizer(taxonomyData.items);
+  }, [taxonomyData?.items]);
 
   const query = useQuery({
     queryKey: ['student-taxonomy-performance', userId, daysBack],
@@ -290,7 +241,7 @@ export function useStudentTaxonomyPerformance(userId: string | undefined, daysBa
       if (error) throw error;
       
       const typedData = (data as TaxonomyPerformanceData[]) ?? [];
-      const tree = buildTaxonomyTree(typedData);
+      const tree = buildTaxonomyTree(typedData, normalizeToLabel);
       
       return {
         raw: typedData,
@@ -298,8 +249,8 @@ export function useStudentTaxonomyPerformance(userId: string | undefined, daysBa
         array: treeToArray(tree),
       };
     },
-    enabled: !!userId,
-    staleTime: 60_000, // PATCH 5K: 60s cache para performance de usuário
+    enabled: !!userId && !!taxonomyData, // Aguardar taxonomia carregar
+    staleTime: 60_000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
@@ -320,7 +271,6 @@ export function useStudentTaxonomyPerformance(userId: string | undefined, daysBa
           filter: `user_id=eq.${userId}`,
         },
         () => {
-          // Invalidar queries relacionadas
           queryClient.invalidateQueries({ queryKey: ['student-taxonomy-performance', userId] });
           queryClient.invalidateQueries({ queryKey: ['student-performance-stats', userId] });
           queryClient.invalidateQueries({ queryKey: ['student-trends', userId] });
