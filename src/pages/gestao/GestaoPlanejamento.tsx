@@ -45,6 +45,7 @@ import {
   Unlink,
   ExternalLink,
   Radio,
+  Save,
 } from "lucide-react";
 
 // Components
@@ -1010,10 +1011,27 @@ function CronogramaVideoaulasModal({
                 </div>
               )}
               
-              <DialogFooter>
-                <Button variant="outline" onClick={() => onOpenChange(false)}>
-                  Fechar
-                </Button>
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                  Alterações salvas automaticamente
+                </p>
+                <div className="flex gap-2 ml-auto">
+                  <Button variant="outline" onClick={() => onOpenChange(false)}>
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={() => {
+                      toast.success("Vinculações salvas com sucesso! Refletindo no Portal do Aluno.");
+                      queryClient.invalidateQueries({ queryKey: ["planning-lessons"] });
+                      onOpenChange(false);
+                    }}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Salvar e Fechar
+                  </Button>
+                </div>
               </DialogFooter>
             </div>
           </>
