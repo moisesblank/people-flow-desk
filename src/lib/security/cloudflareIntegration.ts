@@ -20,7 +20,7 @@
 //
 // ============================================
 
-import { generateCorrelationId, writeAuditLog, isOwnerEmail, OWNER_EMAIL } from "./sanctumGate";
+import { generateCorrelationId, writeAuditLog, isOwnerEmail } from "./sanctumGate";
 
 // ============================================
 // TIPOS CLOUDFLARE

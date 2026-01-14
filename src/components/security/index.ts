@@ -256,7 +256,7 @@ export {
   useSanctumGuard,
   
   // Constantes e tipos
-  OWNER_EMAIL as SANCTUM_OWNER_EMAIL,
+  // OWNER_EMAIL removido - usar RPC check_is_owner()
   ROLES,
   ROLE_HIERARCHY,
   LOCKDOWN_FLAGS,
