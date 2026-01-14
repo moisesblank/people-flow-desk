@@ -189,5 +189,6 @@ export const OWNER_EMAIL = 'moisesblank@gmail.com'; // Legacy: apenas audit
 export const IMMUNE_ROLES = ['owner'] as const;
 // 🎯 CONSTITUIÇÃO ROLES v1.0.0 - "employee" é CATEGORIA, não role
 export const GESTAO_ROLES = ['owner', 'admin', 'coordenacao', 'contabilidade', 'suporte', 'monitoria', 'marketing', 'afiliado'] as const;
-export const BETA_ROLES = ['owner', 'admin', 'beta', 'aluno_presencial', 'beta_expira'] as const;
+// 🛡️ CONSTITUIÇÃO v10.4.2: admin REMOVIDO de BETA_ROLES - funcionários são GESTAO, não ALUNO
+export const BETA_ROLES = ['owner', 'beta', 'aluno_presencial', 'beta_expira'] as const;
 export const ALUNO_ROLES = ['beta', 'aluno_gratuito', 'aluno_presencial', 'beta_expira'] as const;
