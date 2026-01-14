@@ -134,7 +134,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOptimisticMutation } from "@/hooks/useSubspaceCommunication";
 import { buscarArquivos, deleteFile, toggleIaLer, processarArquivoComIA, formatFileSize, getFileCategory, uploadFile } from "@/lib/fileUpload";
 import { MinimizableSection, useMinimizable } from "@/components/ui/minimizable-section";
-import { FortressPlayerWrapper } from "@/components/video/FortressPlayerWrapper";
+import { OmegaFortressPlayer } from "@/components/video";
 
 // ═══════════════════════════════════════════════════════════════
 // TIPOS E INTERFACES
@@ -1389,9 +1389,16 @@ export default function ArquivosEmpresariais() {
                     {selectedFile.tipo.startsWith('image/') ? (
                       <img src={selectedFile.url} className="max-w-full max-h-[50vh] object-contain" />
                     ) : selectedFile.tipo.startsWith('video/') ? (
-                      <FortressPlayerWrapper className="max-w-full rounded-lg overflow-hidden" showSecurityBadge>
-                        <video src={selectedFile.url} controls className="max-w-full" />
-                      </FortressPlayerWrapper>
+                      <div className="w-full aspect-video rounded-lg overflow-hidden">
+                        <OmegaFortressPlayer
+                          videoId={selectedFile.url}
+                          type="youtube"
+                          title={selectedFile.nome}
+                          showSecurityBadge
+                          showWatermark
+                          autoplay={false}
+                        />
+                      </div>
                     ) : selectedFile.tipo.startsWith('audio/') ? (
                       <audio src={selectedFile.url} controls />
                     ) : selectedFile.tipo === 'application/pdf' ? (

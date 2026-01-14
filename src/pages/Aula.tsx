@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { YouTubePlayer, VideoChapter } from '@/components/lms/YouTubePlayer';
+import { VideoChapter } from '@/components/lms/YouTubePlayer';
+import { OmegaFortressPlayer } from '@/components/video';
 import { LessonComments } from '@/components/forum/LessonComments';
 import { BetaLessonGuard } from '@/components/lms/BetaLessonGuard';
 import { usePublishEvent } from '@/hooks/usePublishEvent';
@@ -106,11 +107,14 @@ function AulaContent() {
             </TabsList>
 
             <TabsContent value="video" className="mt-4">
-              <YouTubePlayer
+              {/* 🛡️ OmegaFortressPlayer - 7 Camadas de Proteção */}
+              <OmegaFortressPlayer
                 videoId={youtubeVideoId}
+                type="youtube"
                 title="Aula 2: Introdução Inorgânica PT2-2025"
-                chapters={sampleChapters}
-                showChaptersBelow={true}
+                showSecurityBadge={false}
+                showWatermark
+                autoplay={false}
                 onProgress={handleProgress}
                 onComplete={handleComplete}
               />
