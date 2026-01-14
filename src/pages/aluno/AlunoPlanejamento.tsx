@@ -1599,7 +1599,7 @@ export default function AlunoPlanejamento() {
                       <Video className="h-4 w-4" />
                     </div>
                     <span className="font-bold tracking-wide text-base drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
-                      {selectedWeek ? `Semana ${selectedWeek.week_number} - ${selectedWeek.title}` : "Selecione uma semana"}
+                      {selectedWeek ? selectedWeek.title : "Selecione uma semana"}
                     </span>
                   </div>
                 </SelectTrigger>
@@ -1616,7 +1616,7 @@ export default function AlunoPlanejamento() {
                       >
                         <div className="flex items-center gap-2">
                           {isCompleted && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
-                          <span className={isSelected ? 'font-semibold text-white' : ''}>Semana {week.week_number} - {week.title}</span>
+                          <span className={isSelected ? 'font-semibold text-white' : ''}>{week.title}</span>
                           {wp && <Badge className="ml-2 text-xs bg-destructive/20 text-destructive-foreground border-destructive/40">{wp.progress_percent}%</Badge>}
                         </div>
                       </SelectItem>
