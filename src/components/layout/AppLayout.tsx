@@ -6,6 +6,7 @@ import { OwnerAIModelsPanel } from "@/components/ai/OwnerAIModelsPanel";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { RoleBasedSidebar } from "./RoleBasedSidebar";
 import { ThemeToggle } from "./ThemeToggle";
+import { WhatsAppSupportButton } from "./WhatsAppSupportButton";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { CalculatorButton } from "@/components/Calculator";
 import { PeriodicTableButton } from "@/components/PeriodicTable";
@@ -174,6 +175,7 @@ const AppHeader = memo(
 
           <div className="flex-1" />
 
+          <WhatsAppSupportButton />
           <ThemeToggle />
 
           <div data-notification-center>
