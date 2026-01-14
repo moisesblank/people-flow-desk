@@ -155,7 +155,15 @@ export const HeroSection = memo(() => {
         <HeroBackground />
         
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto text-center">
+            {/* ✝️ VERSÍCULO CENTRALIZADO */}
+            <div className="flex items-center justify-center gap-2 text-white/50 select-none mb-4">
+              <span className="text-sm opacity-70">✝</span>
+              <span className="text-xs sm:text-sm italic">
+                Josué 1:9 — Não temas... o Senhor teu Deus é contigo.
+              </span>
+            </div>
+            
             <HeroBadge animate={false} />
             
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-black leading-tight mt-6 mb-6">
@@ -218,6 +226,14 @@ export const HeroSection = memo(() => {
             {...gpuAnimationProps.fadeUp}
             className="text-center lg:text-left"
           >
+            {/* ✝️ VERSÍCULO CENTRALIZADO */}
+            <div className="flex items-center justify-center lg:justify-start gap-2 text-white/50 select-none mb-4">
+              <span className="text-sm opacity-70">✝</span>
+              <span className="text-xs sm:text-sm italic">
+                Josué 1:9 — Não temas... o Senhor teu Deus é contigo.
+              </span>
+            </div>
+            
             <HeroBadge animate={true} />
             
             {/* Headline */}
