@@ -2106,11 +2106,14 @@ export default function GestaoPlanejamento() {
     // Create missing weeks
     const weeksToCreate = [];
     for (let i = existingCount + 1; i <= minWeeks; i++) {
+      const isFevereiro = cronogramaId === 'fevereiro';
       weeksToCreate.push({
         title: `${cronogramaTitle} - Semana ${i}`,
         description: `Semana ${i} do cronograma ${cronogramaTitle}`,
         week_number: maxWeekNumber + (i - existingCount),
-        status: 'draft' as const,
+        // IMPORTANT: /alunos/planejamento only loads weeks where status='active'
+        // So for Cronograma Fevereiro, auto-created weeks must be active.
+        status: isFevereiro ? 'active' : 'draft',
         difficulty: 'medium' as const,
         is_template: false,
         estimated_hours: 10,
