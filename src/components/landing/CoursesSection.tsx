@@ -18,40 +18,25 @@ import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 
 const courses = [
   {
-    id: 'enem',
-    title: 'ENEM Completo',
-    subtitle: 'Química do Zero ao 1000',
-    description: 'Domine toda a química do ENEM com aulas completas, exercícios resolvidos e simulados exclusivos.',
+    id: 'extensivo-fisico',
+    title: 'Plano Extensivo',
+    subtitle: '+ Todo o material físico do curso impresso',
+    description: 'Acesso completo ao curso online + apostilas e materiais físicos impressos entregues na sua casa.',
     hours: '200+',
     students: '5.847',
     rating: 4.9,
-    price: 'R$ 497',
-    originalPrice: 'R$ 997',
-    discount: '50% OFF',
-    features: ['Aulas em 4K', 'Material em PDF', 'Simulados ilimitados', 'Suporte 24/7 com IA', 'Acesso vitalício'],
+    price: 'R$ 1.187,00',
+    originalPrice: 'R$ 1.569,00',
+    discount: '-24,37% OFF',
+    discountValue: '-R$ 382,00',
+    installments: 'até 6x sem juros',
+    features: ['Aulas em 4K', 'Material Físico Impresso', 'Apostilas Exclusivas', 'Suporte 24/7 com IA', 'Acesso vitalício'],
     gradient: 'from-red-600 via-red-500 to-orange-500',
     glow: 'rgba(220, 38, 38, 0.4)',
     badge: 'Mais Popular',
     badgeGradient: 'from-amber-500 to-orange-500',
     icon: Target,
-  },
-  {
-    id: 'medicina',
-    title: 'Medicina',
-    subtitle: 'Foco Total em Aprovação',
-    description: 'Preparação intensiva para vestibulares de medicina com conteúdo aprofundado e estratégias específicas.',
-    hours: '300+',
-    students: '3.421',
-    rating: 4.9,
-    price: 'R$ 697',
-    originalPrice: 'R$ 1.297',
-    discount: '46% OFF',
-    features: ['Aulas avançadas', 'Questões de vestibular', 'Mentoria individual', 'Grupo VIP exclusivo', 'Simulados semanais'],
-    gradient: 'from-purple-600 via-purple-500 to-pink-500',
-    glow: 'rgba(147, 51, 234, 0.4)',
-    badge: 'Premium',
-    badgeGradient: 'from-purple-500 to-pink-500',
-    icon: Crown,
+    externalLink: 'https://app.moisesmedeiros.com.br/cadastro-produto-fisico/',
   },
 ];
 
@@ -171,17 +156,24 @@ const CourseCard = ({ course, index }: { course: typeof courses[0]; index: numbe
 
             {/* Preço */}
             <div className="mb-6">
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Preço Oficial</p>
+              <p className="text-sm text-gray-400 mb-2">
+                DE <span className="line-through">{course.originalPrice}</span> POR:
+              </p>
               <div className="flex items-baseline gap-3">
                 <span className="text-4xl font-black text-white">{course.price}</span>
-                <span className="text-lg text-gray-500 line-through">{course.originalPrice}</span>
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-green-400 font-semibold text-sm">{course.discountValue}</span>
+                <span className="text-green-400 font-semibold text-sm">{course.discount}</span>
               </div>
               <p className="text-sm text-gray-400 mt-1">
-                ou 12x de <span className="text-white font-semibold">R$ {(parseInt(course.price.replace(/\D/g, '')) / 12).toFixed(0)}</span>
+                <span className="text-white font-semibold">({course.installments})</span>
               </p>
             </div>
 
             {/* CTA */}
-            <Link to="/auth" className="block">
+            <a href={course.externalLink} target="_blank" rel="noopener noreferrer" className="block">
               <motion.div 
                 whileHover={{ scale: 1.02 }} 
                 whileTap={{ scale: 0.98 }}
@@ -191,7 +183,7 @@ const CourseCard = ({ course, index }: { course: typeof courses[0]; index: numbe
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </motion.div>
-            </Link>
+            </a>
 
             {/* Garantia */}
             <div className="flex items-center justify-center gap-2 mt-4 text-xs text-gray-500">
