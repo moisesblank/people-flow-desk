@@ -194,13 +194,16 @@ export const ProfessorSection = () => {
             whileInView={{ opacity: 1, x: 0 }}
             className="space-y-5"
           >
+            <p className="text-gray-300 text-base leading-relaxed font-semibold">
+              PROFESSOR DE QUÍMICA E MÉDICO
+            </p>
+            
             <p className="text-gray-300 text-base leading-relaxed">
-              Químico formado pela UFRN, professor há mais de 15 anos, especialista em preparação para ENEM e vestibulares de medicina. Criador da metodologia que mais aprova alunos em universidades federais do Brasil.
+              Moisés Medeiros é proprietário do maior curso de Química da Paraíba e, por muitos alunos, o melhor do BRASIL. Coleciona inúmeras aprovações COMPROVADAS, dentre elas vários primeiros lugares em federais para medicina.
             </p>
 
             <p className="text-gray-400 text-sm leading-relaxed">
-              Com uma abordagem didática única e uso de tecnologia de ponta, incluindo IA personalizada, 
-              o Prof. Moisés já transformou a vida de milhares de estudantes.
+              Ele é especialista no Enem e vestibulares tradicionais de todo o Brasil. Atualmente seu curso conta com milhares de alunos, compondo a maior comunidade de Química ativa do Brasil. Em 2024 realizou o SESSÃO ENEM o maior aulão de Química do BRASIL.
             </p>
 
             {/* Stats compactos */}
