@@ -558,9 +558,7 @@ function CronogramaVideoaulasModal({
 }: CronogramaVideoaulasModalProps) {
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedLessons, setSelectedLessons] = useState<Set<string>>(new Set());
   const [selectedWeekId, setSelectedWeekId] = useState<string | null>(null);
-  const [isLinking, setIsLinking] = useState(false);
   const [isCreatingWeeks, setIsCreatingWeeks] = useState(false);
   
   // Find cronograma config
@@ -593,7 +591,6 @@ function CronogramaVideoaulasModal({
   // Reset selection when modal opens/closes
   useEffect(() => {
     if (!open) {
-      setSelectedLessons(new Set());
       setSelectedWeekId(null);
       setSearchQuery("");
     }
@@ -640,58 +637,82 @@ function CronogramaVideoaulasModal({
     return counts;
   }, [planningLessons]);
   
-  const toggleLesson = (lessonId: string) => {
-    setSelectedLessons(prev => {
-      const next = new Set(prev);
-      if (next.has(lessonId)) {
-        next.delete(lessonId);
-      } else {
-        next.add(lessonId);
+  // Toggle lesson - agora com suporte a vincular/desvincular em tempo real
+  const toggleLesson = async (lessonId: string, isCurrentlyLinked: boolean) => {
+    if (!selectedWeekId) return;
+    
+    const lesson = existingLessons.find(l => l.id === lessonId);
+    if (!lesson) return;
+    
+    const videoUrl = lesson.video_url || 
+      (lesson.panda_video_id ? `https://player-vz-c3e3c21e-7ce.tv.pandavideo.com.br/embed/?v=${lesson.panda_video_id}` : "");
+    
+    if (isCurrentlyLinked) {
+      // DESVINCULAR em tempo real
+      try {
+        const { error } = await supabase
+          .from("planning_lessons")
+          .delete()
+          .eq("week_id", selectedWeekId)
+          .or(`video_url.eq.${videoUrl},title.eq.${lesson.title}`);
+        
+        if (error) throw error;
+        
+        toast.success(`"${lesson.title}" desvinculada!`);
+        queryClient.invalidateQueries({ queryKey: ["planning-lessons"] });
+      } catch (error: any) {
+        toast.error("Erro ao desvincular: " + error.message);
       }
-      return next;
-    });
-  };
-  
-  const selectAllVisible = () => {
-    const allVisibleIds = filteredLessons
-      .filter(l => !linkedLessonIds.has(l.video_url || l.title))
-      .map(l => l.id);
-    setSelectedLessons(new Set(allVisibleIds));
-  };
-  
-  const clearSelection = () => {
-    setSelectedLessons(new Set());
-  };
-  
-  const handleLinkLessons = async () => {
-    if (selectedLessons.size === 0) {
-      toast.error("Selecione pelo menos uma videoaula");
-      return;
+    } else {
+      // VINCULAR em tempo real
+      try {
+        const currentMaxPosition = planningLessons
+          .filter(l => l.week_id === selectedWeekId)
+          .reduce((max, l) => Math.max(max, l.position || 0), 0);
+        
+        const { error } = await supabase
+          .from("planning_lessons")
+          .insert({
+            week_id: selectedWeekId,
+            title: lesson.title,
+            video_url: videoUrl,
+            video_provider: lesson.panda_video_id ? 'panda' : 'youtube',
+            duration_minutes: lesson.duration_minutes || 30,
+            position: currentMaxPosition + 1,
+            lesson_type: 'video' as const,
+            is_required: true,
+            xp_reward: 10,
+          });
+        
+        if (error) throw error;
+        
+        toast.success(`"${lesson.title}" vinculada!`);
+        queryClient.invalidateQueries({ queryKey: ["planning-lessons"] });
+      } catch (error: any) {
+        toast.error("Erro ao vincular: " + error.message);
+      }
     }
-    
+  };
+  
+  // Vincular TODAS as aulas visíveis de uma vez
+  const selectAllVisible = async () => {
     if (!selectedWeekId) {
-      toast.error("Selecione uma semana para vincular as videoaulas");
+      toast.error("Selecione uma semana primeiro");
       return;
     }
     
-    const targetWeek = cronogramaWeeks.find(w => w.id === selectedWeekId);
-    if (!targetWeek) {
-      toast.error("Semana não encontrada");
+    const unlinkedLessons = filteredLessons.filter(l => !linkedLessonIds.has(l.video_url || l.title));
+    if (unlinkedLessons.length === 0) {
+      toast.info("Todas as aulas visíveis já estão vinculadas");
       return;
     }
-    
-    setIsLinking(true);
     
     try {
-      // Get current max position for this week
       const currentMaxPosition = planningLessons
         .filter(l => l.week_id === selectedWeekId)
         .reduce((max, l) => Math.max(max, l.position || 0), 0);
       
-      const lessonsToInsert = Array.from(selectedLessons).map((lessonId, index) => {
-        const lesson = existingLessons.find(l => l.id === lessonId);
-        if (!lesson) return null;
-        
+      const lessonsToInsert = unlinkedLessons.map((lesson, index) => {
         const videoUrl = lesson.video_url || 
           (lesson.panda_video_id ? `https://player-vz-c3e3c21e-7ce.tv.pandavideo.com.br/embed/?v=${lesson.panda_video_id}` : "");
         
@@ -706,12 +727,7 @@ function CronogramaVideoaulasModal({
           is_required: true,
           xp_reward: 10,
         };
-      }).filter(Boolean);
-      
-      if (lessonsToInsert.length === 0) {
-        toast.error("Nenhuma videoaula válida para vincular");
-        return;
-      }
+      });
       
       const { error } = await supabase
         .from("planning_lessons")
@@ -719,15 +735,42 @@ function CronogramaVideoaulasModal({
       
       if (error) throw error;
       
-      toast.success(`${lessonsToInsert.length} videoaula(s) vinculada(s) à Semana ${targetWeek.week_number}!`);
+      toast.success(`${lessonsToInsert.length} videoaulas vinculadas!`);
       queryClient.invalidateQueries({ queryKey: ["planning-lessons"] });
-      setSelectedLessons(new Set());
     } catch (error: any) {
-      toast.error("Erro ao vincular: " + error.message);
-    } finally {
-      setIsLinking(false);
+      toast.error("Erro ao vincular em lote: " + error.message);
     }
   };
+  
+  // Desvincular TODAS as aulas da semana selecionada
+  const clearSelection = async () => {
+    if (!selectedWeekId) {
+      toast.error("Selecione uma semana primeiro");
+      return;
+    }
+    
+    const linkedCount = planningLessons.filter(l => l.week_id === selectedWeekId).length;
+    if (linkedCount === 0) {
+      toast.info("Nenhuma aula vinculada a esta semana");
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from("planning_lessons")
+        .delete()
+        .eq("week_id", selectedWeekId);
+      
+      if (error) throw error;
+      
+      toast.success(`${linkedCount} videoaulas desvinculadas!`);
+      queryClient.invalidateQueries({ queryKey: ["planning-lessons"] });
+    } catch (error: any) {
+      toast.error("Erro ao desvincular: " + error.message);
+    }
+  };
+  
+  // handleLinkLessons removido - agora vinculação é instantânea via toggleLesson
   
   if (!cronogramaConfig) return null;
   
@@ -873,8 +916,8 @@ function CronogramaVideoaulasModal({
                   <span className="text-muted-foreground">
                     {filteredLessons.length} de {existingLessons.length} videoaulas
                   </span>
-                  <Badge variant={selectedLessons.size > 0 ? "default" : "secondary"}>
-                    {selectedLessons.size} selecionada(s)
+                  <Badge variant={linkedLessonIds.size > 0 ? "default" : "secondary"}>
+                    {linkedLessonIds.size} vinculada(s)
                   </Badge>
                 </div>
                 
@@ -890,32 +933,27 @@ function CronogramaVideoaulasModal({
                         <div className="space-y-1 pl-4">
                           {moduleLessons.map(lesson => {
                             const isLinked = selectedWeekId ? linkedLessonIds.has(lesson.video_url || lesson.title) : false;
-                            const isSelected = selectedLessons.has(lesson.id);
                             
                             return (
                               <div
                                 key={lesson.id}
-                                onClick={() => !isLinked && selectedWeekId && toggleLesson(lesson.id)}
+                                onClick={() => selectedWeekId && toggleLesson(lesson.id, isLinked)}
                                 className={cn(
-                                  "flex items-center gap-2 p-2 rounded-lg transition-all",
+                                  "flex items-center gap-2 p-2 rounded-lg transition-all cursor-pointer",
                                   !selectedWeekId 
                                     ? "opacity-50 cursor-not-allowed"
                                     : isLinked 
-                                      ? "bg-green-500/10 border border-green-500/30 cursor-not-allowed opacity-60"
-                                      : isSelected
-                                        ? "bg-primary/10 border border-primary/30 cursor-pointer"
-                                        : "hover:bg-muted border border-transparent cursor-pointer"
+                                      ? "bg-green-500/10 border border-green-500/30 hover:bg-red-500/10 hover:border-red-500/30"
+                                      : "hover:bg-primary/10 border border-transparent hover:border-primary/30"
                                 )}
                               >
                                 <div className={cn(
                                   "w-4 h-4 rounded border-2 flex items-center justify-center transition-all shrink-0",
                                   isLinked 
                                     ? "bg-green-500 border-green-500"
-                                    : isSelected 
-                                      ? "bg-primary border-primary" 
-                                      : "border-muted-foreground/30"
+                                    : "border-muted-foreground/30 group-hover:border-primary/50"
                                 )}>
-                                  {(isLinked || isSelected) && (
+                                  {isLinked && (
                                     <CheckCircle2 className="h-2.5 w-2.5 text-white" />
                                   )}
                                 </div>
@@ -966,35 +1004,15 @@ function CronogramaVideoaulasModal({
                       Destino: Semana {cronogramaWeeks.find(w => w.id === selectedWeekId)?.week_number}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {lessonsPerWeek[selectedWeekId] || 0} aulas já vinculadas
+                      {lessonsPerWeek[selectedWeekId] || 0} aulas vinculadas
                     </p>
                   </div>
-                  <Badge variant="outline" className="text-primary">
-                    + {selectedLessons.size} nova(s)
-                  </Badge>
                 </div>
               )}
               
               <DialogFooter>
                 <Button variant="outline" onClick={() => onOpenChange(false)}>
                   Fechar
-                </Button>
-                <Button 
-                  onClick={handleLinkLessons} 
-                  disabled={selectedLessons.size === 0 || isLinking || !selectedWeekId}
-                  className="gap-2"
-                >
-                  {isLinking ? (
-                    <>
-                      <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      Vinculando...
-                    </>
-                  ) : (
-                    <>
-                      <Link2 className="h-4 w-4" />
-                      Vincular {selectedLessons.size > 0 && `(${selectedLessons.size})`}
-                    </>
-                  )}
                 </Button>
               </DialogFooter>
             </div>
