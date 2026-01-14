@@ -16,7 +16,11 @@ import {
   Shield,
   Zap,
   FileText,
-  ArrowLeft
+  ArrowLeft,
+  Lightbulb,
+  MousePointer,
+  Eye,
+  Download
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useConstitutionPerformance } from '@/hooks/useConstitutionPerformance';
@@ -281,6 +285,87 @@ const AlunoMateriaisNetflix = memo(function AlunoMateriaisNetflix() {
                 <div className="absolute top-4 right-4 w-8 h-8 border-r-2 border-t-2 border-cyan-500/30 rounded-tr-xl" />
                 <div className="absolute bottom-4 left-4 w-8 h-8 border-l-2 border-b-2 border-cyan-500/30 rounded-bl-xl" />
                 <div className="absolute bottom-4 right-4 w-8 h-8 border-r-2 border-b-2 border-primary/40 rounded-br-xl" />
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════
+              INITIAL GUIDANCE - Orientações para Leigos (Year 2300)
+          ══════════════════════════════════════════════════════════════ */}
+          {viewState.mode === 'hub' && (
+            <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 via-background to-cyan-950/10 p-5 shadow-xl shadow-primary/5">
+              {/* Efeitos holográficos */}
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
+              <div className="absolute top-0 left-0 w-6 h-6 border-l-2 border-t-2 border-primary/40 rounded-tl-xl" />
+              <div className="absolute top-0 right-0 w-6 h-6 border-r-2 border-t-2 border-cyan-400/40 rounded-tr-xl" />
+              
+              <div className="relative">
+                {/* Header */}
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                  <span className="text-xs font-bold uppercase tracking-widest text-primary/80">Como Usar a Biblioteca de Materiais</span>
+                  <div className="flex-1 h-px bg-gradient-to-r from-primary/30 to-transparent" />
+                </div>
+                
+                {/* 3 Steps */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Step 1 */}
+                  <div className="group flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-primary/10 to-rose-600/5 border border-primary/20 hover:border-primary/40 transition-all">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary to-rose-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-primary/30">
+                      1
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-primary flex items-center gap-2">
+                        <MousePointer className="w-4 h-4" />
+                        Escolha uma Coleção
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                        Clique em <span className="text-primary">"Explorar"</span> no card da coleção desejada e selecione a <span className="text-primary">categoria específica</span> do conteúdo.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Step 2 */}
+                  <div className="group flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-cyan-500/10 to-blue-600/5 border border-cyan-500/20 hover:border-cyan-400/40 transition-all">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-cyan-500/30">
+                      2
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-cyan-400 flex items-center gap-2">
+                        <Eye className="w-4 h-4" />
+                        Visualize o Material
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                        Abra PDFs, imagens ou apostilas direto no <span className="text-cyan-300">leitor integrado</span> com proteção contra pirataria e <span className="text-cyan-300">watermark forense</span>.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Step 3 */}
+                  <div className="group flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-violet-500/10 to-purple-600/5 border border-violet-500/20 hover:border-violet-400/40 transition-all">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-violet-500/30">
+                      3
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-violet-400 flex items-center gap-2">
+                        <Zap className="w-4 h-4" />
+                        Use os Flash Cards
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                        Acesse os <span className="text-violet-300">Flash Cards</span> para memorização com <span className="text-violet-300">repetição espaçada</span> — ideal para fixar fórmulas e conceitos!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Dica extra */}
+                <div className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <Lightbulb className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-bold text-amber-400">Dica:</span> Os materiais são protegidos com seu nome embutido. Compartilhamento é rastreável e pode resultar em banimento! 🔒
+                  </p>
+                </div>
               </div>
             </div>
           )}
