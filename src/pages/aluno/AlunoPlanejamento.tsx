@@ -337,16 +337,7 @@ function LessonInfo({
             {rating > 0 && <span className="text-xs text-warning font-medium">{rating}/5</span>}
           </div>
 
-          {/* TRAMON Button - HOLOGRAPHIC */}
-          <Button 
-            variant="outline" 
-            className="relative gap-2 bg-gradient-to-r from-holo-pink/10 via-holo-purple/10 to-holo-pink/10 border-holo-pink/50 hover:border-holo-pink/80 shadow-[0_0_30px_hsl(var(--holo-pink)/0.2)] hover:shadow-[0_0_50px_hsl(var(--holo-pink)/0.3)] transition-all duration-500 overflow-hidden group/tramon"
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-holo-pink/0 via-holo-pink/20 to-holo-pink/0 translate-x-[-100%] group-hover/tramon:translate-x-[100%] transition-transform duration-700" />
-            <Bot className="h-5 w-5 text-holo-pink animate-pulse relative z-10" />
-            <span className="font-black text-holo-pink relative z-10">TRAMON</span>
-            <Badge className="bg-holo-purple/20 text-holo-purple border-holo-purple/30 text-[10px] relative z-10">IA</Badge>
-          </Button>
+          {/* TRAMON removido conforme solicitação do Owner */}
         </div>
       </div>
     </div>
