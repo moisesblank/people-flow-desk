@@ -38,6 +38,9 @@ import { DashboardRankingWidget } from "./DashboardRankingWidget";
 // 📅 Plano de Estudos ENEM 2030 (Dados Reais + IA)
 import { StudyPlanENEM2030 } from "./StudyPlanENEM2030";
 
+// 🎬 Video Player Netflix-style para Dashboard
+import { FortressVideoPlayer } from "@/components/video";
+
 export function BetaStudentDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -130,6 +133,36 @@ export function BetaStudentDashboard() {
 
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 space-y-6 sm:space-y-8">
         
+        {/* 🎬 VÍDEO BOAS-VINDAS NETFLIX-STYLE — CANTO SUPERIOR */}
+        <div className="flex justify-end">
+          <div className="w-full sm:w-80 md:w-96">
+            <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-primary/20">
+              {/* Glow effect */}
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500/30 via-purple-500/30 to-blue-500/30 blur-sm rounded-xl opacity-60" />
+              
+              <div className="relative bg-black/80 backdrop-blur-sm rounded-xl overflow-hidden">
+                <FortressVideoPlayer
+                  videoId="Md3pbv34TtY"
+                  type="youtube"
+                  title="Bem vindos 2025"
+                  thumbnail="https://img.youtube.com/vi/Md3pbv34TtY/maxresdefault.jpg"
+                  showSecurityBadge={false}
+                  showCustomControls
+                  className="aspect-video"
+                />
+                
+                {/* Bottom gradient with title */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3 pointer-events-none">
+                  <div className="flex items-center gap-2">
+                    <PlayCircle className="w-4 h-4 text-pink-400 flex-shrink-0" />
+                    <span className="text-xs font-medium text-white truncate">Bem vindos 2025</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* 📅 PLANO DE ESTUDOS ENEM 2030 — SEM ANIMAÇÃO */}
         <div>
           <StudyPlanENEM2030 />
