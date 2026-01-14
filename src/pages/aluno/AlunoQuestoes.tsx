@@ -308,6 +308,12 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                     );
                   })}
                 </RadioGroup>
+                
+                {/* Reportar Erro */}
+                <ReportQuestionError 
+                  questionId={question.id}
+                  sourcePage="questoes"
+                />
               </div>
             )}
 
