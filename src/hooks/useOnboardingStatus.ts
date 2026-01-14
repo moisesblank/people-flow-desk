@@ -9,7 +9,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { isGestaoRole } from "@/core/urlAccessControl";
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
+/**
+ * @deprecated P1-2 FIX: Usar role='owner' para verificações.
+ */
+// const OWNER_EMAIL = "moisesblank@gmail.com"; // REMOVIDO - Usar role='owner'
 
 interface OnboardingStatus {
   isLoading: boolean;
@@ -36,9 +39,10 @@ export function useOnboardingStatus(): OnboardingStatus {
   });
 
   // Owner bypass - NUNCA bloqueia owner no onboarding
+  // P1-2 FIX: Role como fonte da verdade
   const isOwner = useMemo(() => {
-    return user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
-  }, [user?.email]);
+    return role === 'owner';
+  }, [role]);
 
   // 🛡️ v10.4.2: Determinar path de onboarding baseado no role
   const onboardingRedirectPath = useMemo(() => {

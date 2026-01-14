@@ -110,7 +110,7 @@ const URL_CACHE_TTL = 3500000; // ~58 minutos (antes do TTL de 1h expirar)
 const PREFETCH_AHEAD = 1; // ✅ OTIMIZADO: 1 página à frente
 const PREFETCH_BEHIND = 1; // ✅ OTIMIZADO: 1 página atrás
 const MAX_CACHED_URLS = 5; // ✅ OTIMIZADO: Cache mínimo
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// P1-2 FIX: OWNER_EMAIL removido - usar role='owner'
 
 // Polyfill para requestIdleCallback
 const requestIdleCallbackPolyfill = (
@@ -156,10 +156,11 @@ export function useWebBook(bookId?: string) {
   const lastSaveRef = useRef<number>(Date.now());
   const prefetchingRef = useRef<Set<number>>(new Set());
 
-  // Verificar se é owner
+  // Verificar se é owner - P1-2 FIX: Role como fonte da verdade
+  const { role } = useAuth();
   const isOwner = useMemo(() => {
-    return user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
-  }, [user?.email]);
+    return role === 'owner';
+  }, [role]);
 
   // Carregar livro
   const loadBook = useCallback(async () => {

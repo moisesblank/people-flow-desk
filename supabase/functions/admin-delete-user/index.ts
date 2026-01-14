@@ -12,7 +12,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// P1-2 FIX: OWNER_EMAIL removido - usar role='owner' do banco
 
 serve(async (req) => {
   // Handle CORS preflight
@@ -47,27 +47,24 @@ serve(async (req) => {
       );
     }
 
-    // Verificar se é Admin ou Owner
-    const callerEmail = (caller.email || "").toLowerCase();
-    const isOwner = callerEmail === OWNER_EMAIL;
+    // P1-2 FIX: Verificar role no banco (fonte da verdade)
+    const { data: roleData } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", caller.id)
+      .maybeSingle();
 
-    if (!isOwner) {
-      // Verificar role no banco
-      const { data: roleData } = await supabaseAdmin
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", caller.id)
-        .maybeSingle();
-
-      const callerRole = roleData?.role;
-      if (callerRole !== "owner" && callerRole !== "admin") {
-        console.error("[admin-delete-user] ❌ Permissão negada. Role:", callerRole);
-        return new Response(
-          JSON.stringify({ error: "Apenas Admin ou Owner podem excluir usuários" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+    const callerRole = roleData?.role;
+    if (callerRole !== "owner" && callerRole !== "admin") {
+      console.error("[admin-delete-user] ❌ Permissão negada. Role:", callerRole);
+      return new Response(
+        JSON.stringify({ error: "Apenas Admin ou Owner podem excluir usuários" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+    
+    const isOwner = callerRole === "owner";
+    const callerEmail = caller.email || "unknown";
 
     // Parsear body
     const body = await req.json();
@@ -116,8 +113,14 @@ serve(async (req) => {
       resolvedEmail = profileData?.email?.toLowerCase();
     }
 
-    // 🛡️ PROTEÇÃO: Não permitir excluir o Owner
-    if (resolvedEmail === OWNER_EMAIL) {
+    // P1-2 FIX: Proteção - verificar se target é owner via role no banco
+    const { data: targetRole } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", resolvedUserId)
+      .maybeSingle();
+
+    if (targetRole?.role === "owner") {
       console.error("[admin-delete-user] ❌ Tentativa de excluir Owner BLOQUEADA");
       return new Response(
         JSON.stringify({ error: "Não é possível excluir o Owner do sistema" }),
