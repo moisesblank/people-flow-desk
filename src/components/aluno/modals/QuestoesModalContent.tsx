@@ -114,9 +114,16 @@ export const QuestoesModalContent = memo(function QuestoesModalContent() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('quiz_questions')
-        .select('id, question_text, options, correct_answer, difficulty, macro, micro, points, tags')
+        .select('id, question_text, question_type, options, correct_answer, difficulty, macro, micro, points, tags')
         .contains('tags', ['MODO_TREINO'])
         .eq('is_active', true)
+        // FILTROS DE INTEGRIDADE: Excluir questões com erros de sistema
+        .not('question_text', 'is', null)
+        .neq('question_text', '')
+        .not('explanation', 'is', null)
+        .neq('explanation', '')
+        .not('question_type', 'is', null)
+        .neq('question_type', '')
         .order('created_at', { ascending: false })
         .limit(1000);
 
