@@ -1614,12 +1614,6 @@ export default function AlunoPlanejamento() {
                 <span className="text-sm font-medium">LIVE:18:30 05/02</span>
               </a>
 
-              {/* Revisão */}
-              {selectedWeek && (
-                <Badge className="bg-gradient-to-r from-destructive to-pink-600 text-white border-0 py-2 px-5 shadow-[0_0_20px_rgba(220,38,38,0.3)] text-sm font-semibold">
-                  Revisão: {selectedWeek.title.split("-")[1]?.trim() || "Geral"}
-                </Badge>
-              )}
 
             </div>
           </div>
