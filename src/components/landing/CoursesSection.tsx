@@ -38,6 +38,27 @@ const courses = [
     icon: Target,
     externalLink: 'https://app.moisesmedeiros.com.br/cadastro-produto-fisico/',
   },
+  {
+    id: 'extensivo-digital',
+    title: 'Plano Extensivo',
+    subtitle: '+ Livros Digitais (NÃO PDF)',
+    description: 'Acesso completo ao curso online + livros digitais interativos com experiência de leitura premium.',
+    hours: '200+',
+    students: '5.847',
+    rating: 4.9,
+    price: 'R$ 784,50',
+    originalPrice: 'R$ 1.569,00',
+    discount: '-50% OFF',
+    discountValue: '-R$ 784,50',
+    installments: 'até 6x sem juros',
+    features: ['Aulas em 4K', 'Livros Digitais Interativos', 'Leitura Premium', 'Suporte 24/7 com IA', 'Acesso vitalício'],
+    gradient: 'from-purple-600 via-purple-500 to-pink-500',
+    glow: 'rgba(147, 51, 234, 0.4)',
+    badge: 'Melhor Custo-Benefício',
+    badgeGradient: 'from-purple-500 to-pink-500',
+    icon: BookOpen,
+    externalLink: 'https://app.moisesmedeiros.com.br/cadastro-produto-digital/',
+  },
 ];
 
 const CourseCard = ({ course, index }: { course: typeof courses[0]; index: number }) => {
