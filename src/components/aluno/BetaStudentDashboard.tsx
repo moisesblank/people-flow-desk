@@ -133,6 +133,14 @@ export function BetaStudentDashboard() {
 
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6 space-y-6 sm:space-y-8">
         
+        {/* ✝️ VERSÍCULO DISCRETO — CANTO SUPERIOR */}
+        <div className="flex items-center justify-end gap-2 text-muted-foreground/60 select-none">
+          <span className="text-xs opacity-70">✝</span>
+          <span className="text-[10px] sm:text-xs italic">
+            Josué 1:9 — Não temas... o Senhor teu Deus é contigo.
+          </span>
+        </div>
+
         {/* 🎬 VÍDEO BOAS-VINDAS NETFLIX-STYLE — CANTO SUPERIOR */}
         <div className="flex justify-end">
           <div className="w-full sm:w-80 md:w-96">
