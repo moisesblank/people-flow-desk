@@ -24,8 +24,10 @@ import { useConstitutionPerformance } from '@/hooks/useConstitutionPerformance';
 import { MaterialBookCard, MaterialBookItem } from './MaterialBookCard';
 
 // ============================================
-// CONFIGURAÇÃO DAS 5 CATEGORIAS
+// 🏛️ CONFIGURAÇÃO DAS 5 CATEGORIAS — FONTE ÚNICA DE VERDADE
+// Constituição SYNAPSE Ω v10.4 — NOMES DO BANCO, VISUAIS CENTRALIZADOS
 // ============================================
+import { getMacroVisual, type MacroVisualConfig } from '@/lib/taxonomy/macroVisualConfig';
 
 type CategoryConfig = {
   icon: React.ElementType;
@@ -35,43 +37,53 @@ type CategoryConfig = {
   description: string;
 };
 
-const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
-  quimica_geral: {
-    icon: Atom,
-    gradient: 'from-amber-500 via-orange-500 to-amber-600',
-    accentColor: '#F59E0B',
-    label: 'Química Geral',
-    description: 'Fundamentos e conceitos essenciais'
-  },
-  quimica_organica: {
-    icon: Beaker,
-    gradient: 'from-purple-500 via-violet-500 to-purple-600',
-    accentColor: '#A855F7',
-    label: 'Química Orgânica',
-    description: 'Compostos e reações orgânicas'
-  },
-  fisico_quimica: {
-    icon: FlaskConical,
-    gradient: 'from-cyan-500 via-blue-500 to-cyan-600',
-    accentColor: '#06B6D4',
-    label: 'Físico-Química',
-    description: 'Termodinâmica e cinética'
-  },
-  quimica_ambiental: {
-    icon: Leaf,
-    gradient: 'from-emerald-500 via-green-500 to-emerald-600',
-    accentColor: '#10B981',
-    label: 'Química Ambiental',
-    description: 'Meio ambiente e sustentabilidade'
-  },
-  bioquimica: {
-    icon: Dna,
-    gradient: 'from-pink-500 via-rose-500 to-pink-600',
-    accentColor: '#EC4899',
-    label: 'Bioquímica',
-    description: 'Processos biológicos moleculares'
-  },
+// Mapeamento VALUE → LABEL para lookup
+const MACRO_VALUE_TO_LABEL: Record<string, string> = {
+  'quimica_geral': 'Química Geral',
+  'fisico_quimica': 'Físico-Química',
+  'quimica_organica': 'Química Orgânica',
+  'quimica_ambiental': 'Química Ambiental',
+  'bioquimica': 'Bioquímica',
 };
+
+// Descrições fixas por categoria (não são taxonomia, são UI)
+const CATEGORY_DESCRIPTIONS: Record<string, string> = {
+  'Química Geral': 'Fundamentos e conceitos essenciais',
+  'Química Orgânica': 'Compostos e reações orgânicas',
+  'Físico-Química': 'Termodinâmica e cinética',
+  'Química Ambiental': 'Meio ambiente e sustentabilidade',
+  'Bioquímica': 'Processos biológicos moleculares',
+};
+
+// Cores hex para accentColor (usado em efeitos visuais)
+const MACRO_HEX_COLORS: Record<string, string> = {
+  'Química Geral': '#F59E0B',
+  'Físico-Química': '#06B6D4',
+  'Química Orgânica': '#A855F7',
+  'Química Ambiental': '#10B981',
+  'Bioquímica': '#EC4899',
+};
+
+/**
+ * Obtém configuração completa de uma categoria
+ */
+function getCategoryConfig(categoryKey: string): CategoryConfig {
+  const label = MACRO_VALUE_TO_LABEL[categoryKey] || categoryKey;
+  const visual = getMacroVisual(label);
+  // Expande gradient para 3-stop (Netflix style)
+  const baseGradient = visual.gradient;
+  const expandedGradient = baseGradient.includes('via-') 
+    ? baseGradient 
+    : baseGradient.replace(' to-', ' via-').replace(/to-(\w+)-(\d+)$/, 'via-$1-$2 to-$1-600');
+  
+  return {
+    icon: visual.icon,
+    gradient: expandedGradient,
+    accentColor: MACRO_HEX_COLORS[label] || '#888888',
+    label,
+    description: CATEGORY_DESCRIPTIONS[label] || 'Conteúdo de química',
+  };
+}
 
 // ============================================
 // TIPOS
@@ -98,14 +110,7 @@ export const MaterialBookSection = memo(forwardRef<HTMLDivElement, MaterialBookS
   const isHighEnd = tier === 'quantum' || tier === 'neural';
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
-  const config = CATEGORY_CONFIG[categoryKey] || {
-    icon: Atom,
-    gradient: 'from-gray-600 to-slate-500',
-    accentColor: '#6B7280',
-    label: 'Materiais',
-    description: 'Conteúdos diversos'
-  };
-
+  const config = getCategoryConfig(categoryKey);
   const Icon = config.icon;
 
   if (items.length === 0) return null;

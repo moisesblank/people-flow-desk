@@ -48,15 +48,35 @@ export interface AreaRecommendation {
   action: string;
 }
 
-// Áreas de Química — ZERO EMOJIS (Constituição v10.4)
-const CHEMISTRY_AREAS = {
-  // 5 MACROS CANÔNICOS
-  'quimica-geral': { name: 'Química Geral', color: '#F59E0B' },
-  'quimica-organica': { name: 'Química Orgânica', color: '#8B5CF6' },
-  'fisico-quimica': { name: 'Físico-Química', color: '#06B6D4' },
-  'quimica-ambiental': { name: 'Química Ambiental', color: '#10B981' },
-  'bioquimica': { name: 'Bioquímica', color: '#EC4899' },
-  // Subáreas para análises detalhadas
+// ============================================
+// 🏛️ ÁREAS DE QUÍMICA — FALLBACK VISUAL APENAS
+// Constituição SYNAPSE Ω v10.4
+// 
+// NOTA: Este mapeamento é usado APENAS como fallback visual
+// quando os dados do banco (study_areas) não existem.
+// Os NOMES canônicos vêm do banco question_taxonomy.
+// As CORES são derivadas de macroVisualConfig.ts
+// ============================================
+import { getMacroVisual } from '@/lib/taxonomy/macroVisualConfig';
+
+// Cores hex extraídas do macroVisualConfig para uso em gráficos
+const MACRO_HEX_COLORS: Record<string, string> = {
+  'Química Geral': '#F59E0B',
+  'Físico-Química': '#06B6D4',
+  'Química Orgânica': '#8B5CF6',
+  'Química Ambiental': '#10B981',
+  'Bioquímica': '#EC4899',
+};
+
+// Fallback para slugs de study_areas (legado)
+const CHEMISTRY_AREAS: Record<string, { name: string; color: string }> = {
+  // 5 MACROS CANÔNICOS (mapeados para labels)
+  'quimica-geral': { name: 'Química Geral', color: MACRO_HEX_COLORS['Química Geral'] },
+  'quimica-organica': { name: 'Química Orgânica', color: MACRO_HEX_COLORS['Química Orgânica'] },
+  'fisico-quimica': { name: 'Físico-Química', color: MACRO_HEX_COLORS['Físico-Química'] },
+  'quimica-ambiental': { name: 'Química Ambiental', color: MACRO_HEX_COLORS['Química Ambiental'] },
+  'bioquimica': { name: 'Bioquímica', color: MACRO_HEX_COLORS['Bioquímica'] },
+  // Subáreas (MICROs) — cores derivadas dos MACROs pai
   'estequiometria': { name: 'Estequiometria', color: '#EF4444' },
   'eletroquimica': { name: 'Eletroquímica', color: '#3B82F6' },
   'termoquimica': { name: 'Termoquímica', color: '#F97316' },

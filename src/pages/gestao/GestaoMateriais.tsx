@@ -144,14 +144,29 @@ const CONTENT_TYPES = [
   { value: 'outros', label: '📁 Outros', icon: FolderOpen },
 ];
 
-// 5 MACROS CANÔNICOS
-const MACRO_CONFIG: Record<string, { icon: React.ElementType; color: string; gradient: string }> = {
-  'quimica_geral': { icon: Atom, color: 'text-amber-500', gradient: 'from-amber-500 to-orange-500' },
-  'fisico_quimica': { icon: FlaskConical, color: 'text-cyan-500', gradient: 'from-cyan-500 to-blue-500' },
-  'quimica_organica': { icon: Beaker, color: 'text-purple-500', gradient: 'from-purple-500 to-violet-500' },
-  'quimica_ambiental': { icon: Leaf, color: 'text-green-500', gradient: 'from-green-500 to-emerald-500' },
-  'bioquimica': { icon: Dna, color: 'text-pink-500', gradient: 'from-pink-500 to-rose-500' },
+// ============================================
+// 🏛️ MACRO CONFIG — FONTE ÚNICA DE VERDADE
+// Constituição SYNAPSE Ω v10.4 — NOMES DO BANCO, VISUAIS CENTRALIZADOS
+// ============================================
+import { getMacroVisual } from '@/lib/taxonomy/macroVisualConfig';
+
+// Mapeamento VALUE → LABEL para lookup (materiais armazenam value como slug)
+const MACRO_VALUE_TO_LABEL: Record<string, string> = {
+  'quimica_geral': 'Química Geral',
+  'fisico_quimica': 'Físico-Química',
+  'quimica_organica': 'Química Orgânica',
+  'quimica_ambiental': 'Química Ambiental',
+  'bioquimica': 'Bioquímica',
 };
+
+/**
+ * Obtém configuração visual de um macro (por value/slug ou label)
+ */
+function getMacroConfig(macroKey: string | undefined) {
+  if (!macroKey) return { visual: getMacroVisual(null), label: 'Química' };
+  const label = MACRO_VALUE_TO_LABEL[macroKey] || macroKey;
+  return { visual: getMacroVisual(label), label };
+}
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   draft: { label: 'Rascunho', color: 'bg-muted', icon: Edit },

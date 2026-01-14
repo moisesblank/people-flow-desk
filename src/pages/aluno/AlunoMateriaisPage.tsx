@@ -85,13 +85,29 @@ const CONTENT_TYPES = [
   { value: 'outros', label: '📁 Outros', icon: FolderOpen, color: 'from-gray-500 to-slate-500' },
 ];
 
-const MACRO_CONFIG: Record<string, { icon: React.ElementType; color: string; gradient: string; label: string }> = {
-  'quimica_geral': { icon: Atom, color: 'text-amber-500', gradient: 'from-amber-500 to-orange-500', label: 'Química Geral' },
-  'fisico_quimica': { icon: FlaskConical, color: 'text-cyan-500', gradient: 'from-cyan-500 to-blue-500', label: 'Físico-Química' },
-  'quimica_organica': { icon: Beaker, color: 'text-purple-500', gradient: 'from-purple-500 to-violet-500', label: 'Química Orgânica' },
-  'quimica_ambiental': { icon: Leaf, color: 'text-green-500', gradient: 'from-green-500 to-emerald-500', label: 'Química Ambiental' },
-  'bioquimica': { icon: Dna, color: 'text-pink-500', gradient: 'from-pink-500 to-rose-500', label: 'Bioquímica' },
+// ============================================
+// 🏛️ MACRO CONFIG — IMPORTADO DA FONTE ÚNICA DE VERDADE
+// Constituição SYNAPSE Ω v10.4 — NOMES VÊM DO BANCO, VISUAIS VÊM DAQUI
+// ============================================
+import { getMacroVisual, MACRO_VISUAL_CONFIG } from '@/lib/taxonomy/macroVisualConfig';
+
+// Mapeamento VALUE → LABEL para lookup (materiais armazenam value como slug)
+const MACRO_VALUE_TO_LABEL: Record<string, string> = {
+  'quimica_geral': 'Química Geral',
+  'fisico_quimica': 'Físico-Química',
+  'quimica_organica': 'Química Orgânica',
+  'quimica_ambiental': 'Química Ambiental',
+  'bioquimica': 'Bioquímica',
 };
+
+/**
+ * Obtém configuração visual de um macro (por value/slug ou label)
+ */
+function getMacroConfig(macroKey: string | undefined) {
+  if (!macroKey) return { visual: getMacroVisual(null), label: 'Química' };
+  const label = MACRO_VALUE_TO_LABEL[macroKey] || macroKey;
+  return { visual: getMacroVisual(label), label };
+}
 
 // ============================================
 // MATERIAL CARD (Netflix Style)
@@ -103,8 +119,8 @@ interface MaterialCardProps {
 }
 
 const MaterialCard = memo(function MaterialCard({ material, onView }: MaterialCardProps) {
-  const macroConfig = MACRO_CONFIG[material.macro || ''];
-  const MacroIcon = macroConfig?.icon || Atom;
+  const { visual, label } = getMacroConfig(material.macro);
+  const MacroIcon = visual.icon;
   
   return (
     <motion.div
@@ -194,12 +210,8 @@ const MacroSection = memo(function MacroSection({
   defaultOpen = false 
 }: MacroSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const config = MACRO_CONFIG[macroValue] || { 
-    icon: Atom, 
-    gradient: 'from-gray-500 to-slate-500', 
-    label: 'Outros' 
-  };
-  const Icon = config.icon;
+  const { visual, label } = getMacroConfig(macroValue);
+  const Icon = visual.icon;
 
   if (materials.length === 0) return null;
 
@@ -330,7 +342,7 @@ const AlunoMateriaisPage = memo(function AlunoMateriaisPage() {
   // Agrupar por MACRO
   const materialsByMacro = useMemo(() => {
     const grouped: Record<string, Material[]> = {};
-    Object.keys(MACRO_CONFIG).forEach(macroKey => {
+    Object.keys(MACRO_VALUE_TO_LABEL).forEach(macroKey => {
       grouped[macroKey] = filteredMaterials.filter(m => m.macro === macroKey);
     });
     return grouped;
@@ -497,7 +509,7 @@ const AlunoMateriaisPage = memo(function AlunoMateriaisPage() {
             </p>
           </Card>
         ) : (
-          Object.entries(MACRO_CONFIG).map(([macroKey, config], index) => (
+          Object.keys(MACRO_VALUE_TO_LABEL).map((macroKey, index) => (
             <MacroSection
               key={macroKey}
               macroValue={macroKey}
