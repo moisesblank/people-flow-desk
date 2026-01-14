@@ -9657,6 +9657,7 @@ export type Database = {
           autor_id: string | null
           banca: string | null
           campos_inferidos: string[] | null
+          common_error: string | null
           contexto_tematico: string | null
           correct_answer: string | null
           created_at: string | null
@@ -9677,6 +9678,7 @@ export type Database = {
           is_estilo_enem: boolean | null
           lesson_id: string | null
           macro: string
+          main_formula: string | null
           micro: string | null
           nivel_cognitivo: string | null
           objeto_conhecimento: string | null
@@ -9697,6 +9699,7 @@ export type Database = {
           subtema: string | null
           tags: string[] | null
           taxa_acerto_media: number | null
+          teacher_tip: string | null
           tem_situacao_problema: boolean | null
           tem_texto_base: boolean | null
           tema: string | null
@@ -9716,6 +9719,7 @@ export type Database = {
           autor_id?: string | null
           banca?: string | null
           campos_inferidos?: string[] | null
+          common_error?: string | null
           contexto_tematico?: string | null
           correct_answer?: string | null
           created_at?: string | null
@@ -9736,6 +9740,7 @@ export type Database = {
           is_estilo_enem?: boolean | null
           lesson_id?: string | null
           macro: string
+          main_formula?: string | null
           micro?: string | null
           nivel_cognitivo?: string | null
           objeto_conhecimento?: string | null
@@ -9756,6 +9761,7 @@ export type Database = {
           subtema?: string | null
           tags?: string[] | null
           taxa_acerto_media?: number | null
+          teacher_tip?: string | null
           tem_situacao_problema?: boolean | null
           tem_texto_base?: boolean | null
           tema?: string | null
@@ -9775,6 +9781,7 @@ export type Database = {
           autor_id?: string | null
           banca?: string | null
           campos_inferidos?: string[] | null
+          common_error?: string | null
           contexto_tematico?: string | null
           correct_answer?: string | null
           created_at?: string | null
@@ -9795,6 +9802,7 @@ export type Database = {
           is_estilo_enem?: boolean | null
           lesson_id?: string | null
           macro?: string
+          main_formula?: string | null
           micro?: string | null
           nivel_cognitivo?: string | null
           objeto_conhecimento?: string | null
@@ -9815,6 +9823,7 @@ export type Database = {
           subtema?: string | null
           tags?: string[] | null
           taxa_acerto_media?: number | null
+          teacher_tip?: string | null
           tem_situacao_problema?: boolean | null
           tem_texto_base?: boolean | null
           tema?: string | null
