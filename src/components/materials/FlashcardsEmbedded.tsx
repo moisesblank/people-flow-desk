@@ -41,7 +41,7 @@ import { toast } from 'sonner';
 import { AnkiDashboard } from '@/components/aluno/flashcards/AnkiDashboard';
 import FlashcardRenderer from '@/components/aluno/flashcards/FlashcardRenderer';
 import { FlashcardsTutorial } from '@/components/aluno/flashcards/FlashcardsTutorial';
-import { FlashcardsTaxonomyFilter, MACRO_CONFIG, type MacroValue, type MicroValue } from '@/components/aluno/flashcards/FlashcardsTaxonomyFilter';
+import { FlashcardsTaxonomyFilter, MACRO_VISUAL_CONFIG, type MacroValue, type MicroValue } from '@/components/aluno/flashcards/FlashcardsTaxonomyFilter';
 
 import '@/styles/flashcards-2300.css';
 
