@@ -53,24 +53,6 @@ const courses = [
     badgeGradient: 'from-purple-500 to-pink-500',
     icon: Crown,
   },
-  {
-    id: 'intensivo',
-    title: 'Intensivão',
-    subtitle: 'Revisão Final ENEM',
-    description: 'Revisão completa de toda a química nos últimos meses antes do ENEM com foco em alta performance.',
-    hours: '80+',
-    students: '2.134',
-    rating: 4.8,
-    price: 'R$ 297',
-    originalPrice: 'R$ 497',
-    discount: '40% OFF',
-    features: ['Foco em TRI', 'Resolução ao vivo', 'Resumos visuais', 'Mapas mentais', 'Dicas estratégicas'],
-    gradient: 'from-blue-600 via-blue-500 to-cyan-500',
-    glow: 'rgba(37, 99, 235, 0.4)',
-    badge: 'Rápido',
-    badgeGradient: 'from-blue-500 to-cyan-500',
-    icon: Zap,
-  },
 ];
 
 const CourseCard = ({ course, index }: { course: typeof courses[0]; index: number }) => {
