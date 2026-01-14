@@ -48,21 +48,21 @@ export interface AreaRecommendation {
   action: string;
 }
 
-// Áreas de Química específicas (mapeamento de referência)
+// Áreas de Química — ZERO EMOJIS (Constituição v10.4)
 const CHEMISTRY_AREAS = {
   // 5 MACROS CANÔNICOS
-  'quimica-geral': { name: 'Química Geral', icon: '⚗️', color: '#F59E0B' },
-  'quimica-organica': { name: 'Química Orgânica', icon: '🧪', color: '#8B5CF6' },
-  'fisico-quimica': { name: 'Físico-Química', icon: '⚡', color: '#06B6D4' },
-  'quimica-ambiental': { name: 'Química Ambiental', icon: '🌍', color: '#10B981' },
-  'bioquimica': { name: 'Bioquímica', icon: '🧬', color: '#EC4899' },
+  'quimica-geral': { name: 'Química Geral', color: '#F59E0B' },
+  'quimica-organica': { name: 'Química Orgânica', color: '#8B5CF6' },
+  'fisico-quimica': { name: 'Físico-Química', color: '#06B6D4' },
+  'quimica-ambiental': { name: 'Química Ambiental', color: '#10B981' },
+  'bioquimica': { name: 'Bioquímica', color: '#EC4899' },
   // Subáreas para análises detalhadas
-  'estequiometria': { name: 'Estequiometria', icon: '📊', color: '#EF4444' },
-  'eletroquimica': { name: 'Eletroquímica', icon: '🔋', color: '#3B82F6' },
-  'termoquimica': { name: 'Termoquímica', icon: '🔥', color: '#F97316' },
-  'cinetica': { name: 'Cinética Química', icon: '⏱️', color: '#84CC16' },
-  'equilibrio': { name: 'Equilíbrio Químico', icon: '⚖️', color: '#A855F7' },
-  'solucoes': { name: 'Soluções', icon: '🧪', color: '#14B8A6' },
+  'estequiometria': { name: 'Estequiometria', color: '#EF4444' },
+  'eletroquimica': { name: 'Eletroquímica', color: '#3B82F6' },
+  'termoquimica': { name: 'Termoquímica', color: '#F97316' },
+  'cinetica': { name: 'Cinética Química', color: '#84CC16' },
+  'equilibrio': { name: 'Equilíbrio Químico', color: '#A855F7' },
+  'solucoes': { name: 'Soluções', color: '#14B8A6' },
 };
 
 export interface UseAreasAnalysisOptions {

@@ -98,12 +98,13 @@ const MATERIAL_BOOKS: MaterialBook[] = [
     gradientTo: 'to-rose-900/5',
     borderColor: 'border-rose-500/30',
     badge: 'ESSENCIAL',
+    // ZERO EMOJIS (Constituição v10.4)
     filters: [
-      { value: 'quimica_geral', label: '⚗️ Química Geral' },
-      { value: 'fisico_quimica', label: '⚡ Físico-Química' },
-      { value: 'quimica_organica', label: '🧪 Química Orgânica' },
-      { value: 'quimica_ambiental', label: '🌿 Química Ambiental' },
-      { value: 'bioquimica', label: '🧬 Bioquímica' },
+      { value: 'quimica_geral', label: 'Química Geral' },
+      { value: 'fisico_quimica', label: 'Físico-Química' },
+      { value: 'quimica_organica', label: 'Química Orgânica' },
+      { value: 'quimica_ambiental', label: 'Química Ambiental' },
+      { value: 'bioquimica', label: 'Bioquímica' },
     ]
   },
   {

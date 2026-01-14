@@ -52,30 +52,26 @@ const DIFFICULTY_CONFIG = {
   dificil: { label: 'Difícil', class: 'bg-red-500 text-white border-0' },
 } as const;
 
-const MACRO_CONFIG: Record<string, { label: string; icon: string; badge: string }> = {
+// MACRO_CONFIG — ZERO EMOJIS (Constituição v10.4)
+const MACRO_CONFIG: Record<string, { label: string; badge: string }> = {
   'Química Geral': {
     label: 'Química Geral',
-    icon: '⚗️',
     badge: 'bg-amber-500/90 text-white',
   },
   'Química Orgânica': {
     label: 'Química Orgânica',
-    icon: '🧪',
     badge: 'bg-purple-600/90 text-white',
   },
   'Físico-Química': {
     label: 'Físico-Química',
-    icon: '📊',
     badge: 'bg-cyan-500/90 text-white',
   },
   'Química Ambiental': {
     label: 'Química Ambiental',
-    icon: '🌍',
     badge: 'bg-emerald-500/90 text-white',
   },
   'Bioquímica': {
     label: 'Bioquímica',
-    icon: '🧬',
     badge: 'bg-pink-500/90 text-white',
   },
 };
@@ -104,7 +100,6 @@ export function QuestionMetadataBadges({
   const diffConfig = DIFFICULTY_CONFIG[question.difficulty as keyof typeof DIFFICULTY_CONFIG] || DIFFICULTY_CONFIG.medio;
   const macroConfig = MACRO_CONFIG[question.macro || ''] || {
     label: question.macro || 'Química Geral',
-    icon: '⚗️',
     badge: 'bg-amber-500/90 text-white',
   };
   
@@ -148,7 +143,7 @@ export function QuestionMetadataBadges({
         
         {/* MACRO (Identidade Principal) */}
         <Badge className={cn("text-sm px-4 py-1.5 border-0 font-bold", macroConfig.badge)}>
-          {macroConfig.icon} {macroConfig.label}
+          {macroConfig.label}
         </Badge>
       </div>
 
@@ -244,7 +239,6 @@ export function QuestionBadgesCompact({ question, className }: { question: Quest
   const diffConfig = DIFFICULTY_CONFIG[question.difficulty as keyof typeof DIFFICULTY_CONFIG] || DIFFICULTY_CONFIG.medio;
   const macroConfig = MACRO_CONFIG[question.macro || ''] || {
     label: question.macro || 'Química Geral',
-    icon: '⚗️',
     badge: 'bg-amber-500/90 text-white',
   };
   
@@ -263,7 +257,7 @@ export function QuestionBadgesCompact({ question, className }: { question: Quest
         </Badge>
       )}
       <Badge className={cn("text-xs px-2 py-0.5", macroConfig.badge)}>
-        {macroConfig.icon} {macroConfig.label}
+        {macroConfig.label}
       </Badge>
       {question.micro && (
         <Badge className="text-xs px-2 py-0.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
