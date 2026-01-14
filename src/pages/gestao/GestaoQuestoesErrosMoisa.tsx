@@ -140,48 +140,47 @@ export default function GestaoQuestoesErrosMoisa() {
   const { data: systemData, isLoading: isLoadingSystem, refetch: refetchSystem } = useQuery({
     queryKey: ['system-question-errors', systemPage, systemFilter],
     queryFn: async () => {
-      // Buscar questões com problemas
-      let query = supabase
+      // ============================================
+      // 🔒 VARREDURA COMPLETA DE ERROS DE SISTEMA
+      // Critérios: sem enunciado, poucas alternativas, sem explicação, sem tipo
+      // ============================================
+      
+      // ESTRATÉGIA: Buscar TODAS as questões e filtrar no cliente
+      // Motivo: Supabase não suporta jsonb_array_length em filtros de query
+      const { data: allQuestions, error } = await supabase
         .from('quiz_questions')
-        .select('id, question_text, options, correct_answer, explanation, macro, micro, difficulty, banca, ano, question_type', { count: 'exact' });
-
-      // Aplicar filtros de erro
-      if (systemFilter === 'no_text') {
-        query = query.or('question_text.is.null,question_text.eq.');
-      } else if (systemFilter === 'few_options') {
-        // Filtrar no cliente pois é JSONB
-      } else if (systemFilter === 'no_explanation') {
-        query = query.or('explanation.is.null,explanation.eq.');
-      } else if (systemFilter === 'no_type') {
-        query = query.or('question_type.is.null,question_type.eq.');
-      } else {
-        // Todos: sem enunciado OU sem explicação OU sem tipo
-        query = query.or('question_text.is.null,question_text.eq.,explanation.is.null,explanation.eq.,question_type.is.null,question_type.eq.');
-      }
-
-      const { data: questions, error, count } = await query
-        .order('id', { ascending: true })
-        .range((systemPage - 1) * ITEMS_PER_PAGE, systemPage * ITEMS_PER_PAGE - 1);
+        .select('id, question_text, options, correct_answer, explanation, macro, micro, difficulty, banca, ano, question_type')
+        .order('id', { ascending: true });
 
       if (error) throw error;
 
-      // Processar e classificar erros
-      const processedQuestions: SystemErrorQuestion[] = (questions || []).map(q => {
-        let error_type: SystemErrorQuestion['error_type'] = 'no_text';
-        let error_label = '';
-
+      // Processar e classificar TODOS os erros
+      const allErrorQuestions: SystemErrorQuestion[] = [];
+      
+      for (const q of allQuestions || []) {
         const hasNoText = !q.question_text || q.question_text.trim() === '';
         const hasNoExplanation = !q.explanation || q.explanation.trim() === '';
-        const optionsCount = q.options ? Object.keys(q.options).length : 0;
+        // FIX CRÍTICO: options é um ARRAY, não objeto
+        const optionsArray = Array.isArray(q.options) ? q.options : [];
+        const optionsCount = optionsArray.length;
         const hasFewOptions = optionsCount < 4;
         const hasNoType = !q.question_type || q.question_type.trim() === '';
+        
+        // Pular se não tem nenhum erro
+        if (!hasNoText && !hasFewOptions && !hasNoExplanation && !hasNoType) {
+          continue;
+        }
+        
+        // Determinar tipo de erro principal (prioridade)
+        let error_type: SystemErrorQuestion['error_type'] = 'no_text';
+        let error_label = '';
 
         if (hasNoText) {
           error_type = 'no_text';
           error_label = 'Sem Enunciado';
         } else if (hasFewOptions) {
           error_type = 'few_options';
-          error_label = `Apenas ${optionsCount} alternativas`;
+          error_label = optionsCount === 0 ? 'Sem Alternativas' : `Apenas ${optionsCount} alternativa${optionsCount > 1 ? 's' : ''}`;
         } else if (hasNoExplanation) {
           error_type = 'no_explanation';
           error_label = 'Sem Explicação';
@@ -190,29 +189,39 @@ export default function GestaoQuestoesErrosMoisa() {
           error_label = 'Sem Tipo/Estilo';
         }
 
-        return {
+        allErrorQuestions.push({
           ...q,
           error_type,
           error_label,
           question_type: q.question_type
-        } as SystemErrorQuestion;
-      });
-
-      // Filtrar few_options ou no_type no cliente se necessário
-      let filteredQuestions = processedQuestions;
-      if (systemFilter === 'few_options') {
-        filteredQuestions = processedQuestions.filter(q => {
-          const optionsCount = q.options ? Object.keys(q.options).length : 0;
-          return optionsCount < 4;
-        });
-      } else if (systemFilter === 'no_type') {
-        filteredQuestions = processedQuestions.filter(q => !q.question_type || q.question_type.trim() === '');
+        } as SystemErrorQuestion);
       }
 
+      // Aplicar filtro selecionado
+      let filteredQuestions = allErrorQuestions;
+      if (systemFilter === 'no_text') {
+        filteredQuestions = allErrorQuestions.filter(q => !q.question_text || q.question_text.trim() === '');
+      } else if (systemFilter === 'few_options') {
+        filteredQuestions = allErrorQuestions.filter(q => {
+          const optionsArray = Array.isArray(q.options) ? q.options : [];
+          return optionsArray.length < 4;
+        });
+      } else if (systemFilter === 'no_explanation') {
+        filteredQuestions = allErrorQuestions.filter(q => !q.explanation || q.explanation.trim() === '');
+      } else if (systemFilter === 'no_type') {
+        filteredQuestions = allErrorQuestions.filter(q => !q.question_type || q.question_type.trim() === '');
+      }
+      // else: 'all' - mantém todos os erros
+
+      // Paginação no cliente
+      const totalCount = filteredQuestions.length;
+      const startIndex = (systemPage - 1) * ITEMS_PER_PAGE;
+      const paginatedQuestions = filteredQuestions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
       return {
-        questions: filteredQuestions,
-        totalCount: count || 0,
-        totalPages: Math.ceil((count || 0) / ITEMS_PER_PAGE)
+        questions: paginatedQuestions,
+        totalCount,
+        totalPages: Math.ceil(totalCount / ITEMS_PER_PAGE)
       };
     },
     staleTime: 30000,
