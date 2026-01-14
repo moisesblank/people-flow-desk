@@ -170,7 +170,7 @@ export default function GestaoQuestoesErrosMoisa() {
         const hasNoText = !q.question_text || q.question_text.trim() === '';
         const hasNoExplanation = !q.explanation || q.explanation.trim() === '';
         const optionsCount = q.options ? Object.keys(q.options).length : 0;
-        const hasFewOptions = optionsCount < 3;
+        const hasFewOptions = optionsCount < 4;
 
         if (hasNoText) {
           error_type = 'no_text';
@@ -195,7 +195,7 @@ export default function GestaoQuestoesErrosMoisa() {
       if (systemFilter === 'few_options') {
         filteredQuestions = processedQuestions.filter(q => {
           const optionsCount = q.options ? Object.keys(q.options).length : 0;
-          return optionsCount < 3;
+          return optionsCount < 4;
         });
       }
 
@@ -405,7 +405,7 @@ export default function GestaoQuestoesErrosMoisa() {
                   <Badge variant="outline" className="border-orange-500/50 text-orange-400 shrink-0">2</Badge>
                   <div>
                     <p className="font-medium text-foreground">Poucas Alternativas</p>
-                    <p className="text-muted-foreground text-xs">Menos de 3 alternativas em `options`</p>
+                    <p className="text-muted-foreground text-xs">Menos de 4 alternativas em `options`</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
@@ -435,7 +435,7 @@ export default function GestaoQuestoesErrosMoisa() {
                 <SelectContent>
                   <SelectItem value="all">Todos os Erros</SelectItem>
                   <SelectItem value="no_text">Sem Enunciado</SelectItem>
-                  <SelectItem value="few_options">Poucas Alternativas (&lt;3)</SelectItem>
+                  <SelectItem value="few_options">Poucas Alternativas (&lt;4)</SelectItem>
                   <SelectItem value="no_explanation">Sem Explicação</SelectItem>
                 </SelectContent>
               </Select>
