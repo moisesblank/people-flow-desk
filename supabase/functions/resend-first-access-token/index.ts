@@ -213,7 +213,10 @@ serve(async (req) => {
     }
 
     // Enviar e-mail
-    const accessUrl = `https://pro.moisesmedeiros.com.br/auth?first_access_token=${newToken}`;
+    // 🎯 P0 FIX: URL dinâmica via env (fallback para produção)
+    const siteUrl = Deno.env.get('SITE_URL') || 'https://pro.moisesmedeiros.com.br';
+    const accessUrl = `${siteUrl}/auth?first_access_token=${newToken}`;
+    console.log('[resend-first-access-token] 📍 Using SITE_URL:', siteUrl);
     const htmlContent = getEmailTemplate(profile.nome || 'Aluno', roleLabel, accessUrl);
 
     const { error: emailError } = await resend.emails.send({

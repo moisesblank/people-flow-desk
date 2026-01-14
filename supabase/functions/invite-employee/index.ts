@@ -304,7 +304,9 @@ const handler = async (req: Request): Promise<Response> => {
     // NÃO enviar senha em texto - funcionário define no onboarding
     if (newUser.user) {
       try {
-        const siteUrl = 'https://pro.moisesmedeiros.com.br';
+        // 🎯 P0 FIX v3: URL dinâmica via env (fallback para produção)
+        const siteUrl = Deno.env.get('SITE_URL') || 'https://pro.moisesmedeiros.com.br';
+        console.log('[invite-employee] 📍 Using SITE_URL:', siteUrl);
         
         // Gerar magic link para primeiro acesso
         const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({

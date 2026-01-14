@@ -876,7 +876,9 @@ serve(async (req) => {
     // ============================================
     console.log('[c-create-official-access] 📧 Generating persistent first-access token...');
     
-    const siteUrl = 'https://pro.moisesmedeiros.com.br';
+    // 🎯 P0 FIX: URL dinâmica via env (fallback para produção)
+    const siteUrl = Deno.env.get('SITE_URL') || 'https://pro.moisesmedeiros.com.br';
+    console.log('[c-create-official-access] 📍 Using SITE_URL:', siteUrl);
     
     // Gerar token único e seguro (32 bytes = 64 hex chars)
     const tokenBytes = new Uint8Array(32);
