@@ -50,6 +50,13 @@ export default function Simulados() {
         .select('id, question_text, difficulty, banca, ano, macro, micro, points, tags, is_active', { count: 'exact' })
         .contains('tags', ['SIMULADOS'])
         .eq('is_active', true)
+        // 🔒 FILTROS DE INTEGRIDADE PERMANENTES: Excluir questões com erros de sistema
+        .not('question_text', 'is', null)
+        .neq('question_text', '')
+        .not('explanation', 'is', null)
+        .neq('explanation', '')
+        .not('question_type', 'is', null)
+        .neq('question_type', '')
         .order('created_at', { ascending: false })
         .limit(500); // Limite para estatísticas - não precisa de todas
 

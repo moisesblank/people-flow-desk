@@ -95,6 +95,13 @@ export function useQuiz(quizId: string | undefined) {
           .from('quiz_questions')
           .select('*')
           .eq('quiz_id', quizId)
+          // 🔒 FILTROS DE INTEGRIDADE PERMANENTES: Excluir questões com erros de sistema
+          .not('question_text', 'is', null)
+          .neq('question_text', '')
+          .not('explanation', 'is', null)
+          .neq('explanation', '')
+          .not('question_type', 'is', null)
+          .neq('question_type', '')
           .order('position', { ascending: true }),
       ]);
 

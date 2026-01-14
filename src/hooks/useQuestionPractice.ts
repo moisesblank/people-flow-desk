@@ -69,6 +69,13 @@ export function usePracticeQuestions(options?: {
           .from("quiz_questions")
           .select("*")
           .eq("is_active", true)
+          // 🔒 FILTROS DE INTEGRIDADE PERMANENTES: Excluir questões com erros de sistema
+          .not('question_text', 'is', null)
+          .neq('question_text', '')
+          .not('explanation', 'is', null)
+          .neq('explanation', '')
+          .not('question_type', 'is', null)
+          .neq('question_type', '')
           .order("position", { ascending: true })
           .range(from, to);
 

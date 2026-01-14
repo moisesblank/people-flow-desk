@@ -53,10 +53,17 @@ export const MateriaisModalContent = memo(function MateriaisModalContent() {
     queryKey: ['hub-flashcards-count'],
     queryFn: async () => {
       // Usando quiz_questions como proxy
+      // 🔒 FILTROS DE INTEGRIDADE PERMANENTES: Contar apenas questões válidas
       const { count, error } = await supabase
         .from('quiz_questions')
         .select('*', { count: 'exact', head: true })
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .not('question_text', 'is', null)
+        .neq('question_text', '')
+        .not('explanation', 'is', null)
+        .neq('explanation', '')
+        .not('question_type', 'is', null)
+        .neq('question_type', '');
       if (error) throw error;
       return count || 0;
     },
