@@ -9,6 +9,10 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode,
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+/**
+ * @deprecated P1-2: OWNER_EMAIL usado apenas como fallback.
+ * Verificação primária agora é via role === 'owner' no banco.
+ */
 const OWNER_EMAIL = 'moisesblank@gmail.com';
 
 /**
@@ -110,7 +114,7 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
   const clickHandlerRef = useRef<((e: MouseEvent) => void) | null>(null);
   const hoverStylesRef = useRef<Map<HTMLElement, string>>(new Map());
 
-  // Verificar usuário e status de owner - SIMPLIFICADO E DIRETO
+  // P1-2: Verificar usuário e status de owner via ROLE (não email)
   useEffect(() => {
     const checkOwner = async () => {
       setIsLoading(true);
@@ -124,19 +128,29 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        // VERIFICAÇÃO DIRETA POR EMAIL - SEM DEPENDÊNCIA DE RPC
-        const isEmailOwner = (currentUser.email || '').toLowerCase() === OWNER_EMAIL;
-        setIsOwner(isEmailOwner);
+        // P1-2: VERIFICAÇÃO VIA ROLE NO BANCO - não por email
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', currentUser.id)
+          .maybeSingle();
+        
+        const isRoleOwner = roleData?.role === 'owner';
+        // Fallback por email apenas se role não encontrado (compatibilidade)
+        const isEmailOwner = !roleData && (currentUser.email || '').toLowerCase() === OWNER_EMAIL;
+        const finalIsOwner = isRoleOwner || isEmailOwner;
+        
+        setIsOwner(finalIsOwner);
         
         // Se é owner, ativar automaticamente o modo master na primeira vez
-        if (isEmailOwner) {
+        if (finalIsOwner) {
           const savedActive = localStorage.getItem('mm_godmode_active');
           if (savedActive === 'true') {
             setIsActive(true);
           }
         }
         
-        console.log('[GodMode] Owner check:', { email: currentUser.email, isOwner: isEmailOwner });
+        console.log('[GodMode] Owner check:', { email: currentUser.email, role: roleData?.role, isOwner: finalIsOwner });
       } catch (err) {
         console.error('[GodMode] Error checking owner:', err);
         setIsOwner(false);
@@ -147,16 +161,26 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
 
     checkOwner();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user || null);
       if (!session?.user) {
         setIsOwner(false);
         setIsActive(false);
       } else {
-        // VERIFICAÇÃO IMEDIATA POR EMAIL
-        const isEmailOwner = (session.user.email || '').toLowerCase() === OWNER_EMAIL;
-        setIsOwner(isEmailOwner);
-        console.log('[GodMode] Auth change - Owner:', isEmailOwner);
+        // P1-2: Verificar via role no banco (async)
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        const isRoleOwner = roleData?.role === 'owner';
+        // Fallback por email apenas se role não encontrado
+        const isEmailOwner = !roleData && (session.user.email || '').toLowerCase() === OWNER_EMAIL;
+        const finalIsOwner = isRoleOwner || isEmailOwner;
+        
+        setIsOwner(finalIsOwner);
+        console.log('[GodMode] Auth change - Owner:', finalIsOwner, 'role:', roleData?.role);
       }
     });
 

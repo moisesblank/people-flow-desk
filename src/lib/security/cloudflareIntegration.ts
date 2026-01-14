@@ -513,10 +513,10 @@ export function useCloudflareContext(): CloudflareContext | null {
 // VERIFICAR SE USUÁRIO É OWNER (BYPASS TOTAL)
 // @deprecated P1-2: Use role-based check
 // ============================================
-export function isCloudflareBypass(email?: string): boolean {
-  if (!email) return false;
+export function isCloudflareBypass(_email?: string): boolean {
+  // P1-2: Retorna sempre false - verificar via role no backend
   console.warn('[SECURITY] isCloudflareBypass(email) é deprecated - usar role check');
-  return isOwnerEmail(email);
+  return false;
 }
 
 // ============================================

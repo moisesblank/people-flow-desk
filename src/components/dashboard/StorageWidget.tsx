@@ -13,7 +13,10 @@ import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
-// 🏛️ CONSTITUIÇÃO: OWNER EMAIL (IMUTÁVEL)
+/**
+ * @deprecated P1-2: OWNER_EMAIL mantido apenas como fallback.
+ * Verificação primária é via role === 'owner'.
+ */
 const OWNER_EMAIL = "moisesblank@gmail.com";
 
 interface StorageStats {
@@ -33,8 +36,9 @@ export function StorageWidget() {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  // 🏛️ CONSTITUIÇÃO: VERIFICAÇÃO OWNER ABSOLUTA
-  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL;
+  // P1-2: VERIFICAÇÃO OWNER VIA ROLE (não email)
+  const { role } = useAuth();
+  const isOwner = role === 'owner' || user?.email?.toLowerCase() === OWNER_EMAIL;
 
   // Fetch storage stats
   const fetchStorageStats = async () => {

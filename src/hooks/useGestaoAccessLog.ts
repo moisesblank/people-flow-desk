@@ -16,7 +16,11 @@ interface GestaoAccessLogOptions {
   logActions?: boolean;
 }
 
-const OWNER_EMAIL = 'moisesblank@gmail.com';
+/**
+ * @deprecated P1-2: OWNER_EMAIL não é mais usado.
+ * Verificação primária é via role === 'owner'.
+ */
+// const OWNER_EMAIL = 'moisesblank@gmail.com';
 
 // PATCH-CUSTO: Debounce para evitar múltiplos logs em navegação rápida
 const LOG_DEBOUNCE_MS = 2000; // 2 segundos entre logs

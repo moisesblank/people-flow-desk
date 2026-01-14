@@ -7,7 +7,10 @@
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
-// 🎯 CONSTANTE ÚNICA - Owner Email
+/**
+ * @deprecated P1-2: OWNER_EMAIL mantido apenas como fallback UX.
+ * Verificação primária é via role === 'owner'.
+ */
 const OWNER_EMAIL = 'moisesblank@gmail.com';
 
 // Roles que podem CRIAR simulados
@@ -72,10 +75,10 @@ export function useSimuladoPermissions(): SimuladoPermissions {
   
   const userEmail = user?.email || null;
   
-  // Owner por email (prioridade máxima)
-  const isOwnerByEmail = (userEmail || '').toLowerCase() === OWNER_EMAIL.toLowerCase();
+  // P1-2: Role-first, email como fallback UX
   const isOwnerByRole = role === 'owner';
-  const isOwner = isOwnerByEmail || isOwnerByRole;
+  const isOwnerByEmail = (userEmail || '').toLowerCase() === OWNER_EMAIL.toLowerCase();
+  const isOwner = isOwnerByRole || isOwnerByEmail;
   
   const isAdmin = role === 'admin';
   

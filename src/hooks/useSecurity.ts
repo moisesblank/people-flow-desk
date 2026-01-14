@@ -16,7 +16,6 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import {
   sanctumGuard,
-  isOwnerEmail,
   hasRoleAccess,
   ROLES,
   LOCKDOWN_FLAGS,
@@ -165,11 +164,12 @@ export function useSecurity(options: UseSecurityOptions = {}) {
 
   /**
    * @deprecated P1-2: Preferir verificação por role (state.isOwner)
-   * Esta função existe apenas para compatibilidade
+   * Esta função existe apenas para compatibilidade - SEMPRE retorna false agora
    */
-  const checkIsOwner = useCallback((email: string): boolean => {
+  const checkIsOwner = useCallback((_email: string): boolean => {
     console.warn('[SECURITY] checkIsOwner(email) é deprecated - usar state.isOwner (role-based)');
-    return isOwnerEmail(email);
+    // P1-2: Verificação por email desabilitada
+    return false;
   }, []);
 
   /**
@@ -271,14 +271,15 @@ export function useSecurity(options: UseSecurityOptions = {}) {
 /**
  * @deprecated P1-2: Preferir useRole() e verificar role === 'owner'
  * Hook mantido para compatibilidade com código existente
+ * SEMPRE retorna false agora - usar role-based
  */
 export function useIsOwner(): boolean {
-  const { user } = useAuth();
-  console.warn('[SECURITY] useIsOwner() é deprecated - usar useRole() e verificar role');
+  const { role } = useAuth();
+  console.warn('[SECURITY] useIsOwner() é deprecated - usar role === "owner"');
   return useMemo(() => {
-    if (!user?.email) return false;
-    return isOwnerEmail(user.email);
-  }, [user?.email]);
+    // P1-2: Retorna true apenas se role === 'owner'
+    return role === 'owner';
+  }, [role]);
 }
 
 // ============================================

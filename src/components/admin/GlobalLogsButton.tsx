@@ -14,6 +14,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
+/**
+ * @deprecated P1-2: OWNER_EMAIL mantido apenas como fallback.
+ * Verificação primária é via role === 'owner'.
+ */
 const OWNER_EMAIL = 'moisesblank@gmail.com';
 
 // Interface para os logs do sistema

@@ -11,6 +11,10 @@ import { supabase } from "@/integrations/supabase/client";
 // ============================================
 // CONSTANTES
 // ============================================
+/**
+ * @deprecated P1-2: OWNER_EMAIL exportado apenas para compatibilidade.
+ * Usar role === 'owner' no banco de dados (user_roles).
+ */
 export const OWNER_EMAIL = "moisesblank@gmail.com";
 
 // Tipos de roles do sistema
@@ -148,9 +152,10 @@ export function validateDomainAccessForLogin(
     areaAtual = "alunos";
   }
 
-  // Owner tem BYPASS SUPREMO em qualquer área
-  if (userEmail?.toLowerCase() === OWNER_EMAIL) {
-    console.log("[AREA-ACCESS] Owner detectado - bypass supremo ativado");
+  // P1-2: Owner bypass agora é via role === 'owner', não por email
+  // Mantendo compatibilidade: email OU role podem indicar owner
+  if (role === "owner" || userEmail?.toLowerCase() === OWNER_EMAIL) {
+    console.log("[AREA-ACCESS] Owner detectado (role ou email) - bypass supremo ativado");
     return { permitido: true, dominioAtual, areaAtual };
   }
 

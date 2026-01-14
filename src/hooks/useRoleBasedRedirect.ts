@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { OWNER_EMAIL } from "@/hooks/useRolePermissions";
+// @deprecated P1-2: OWNER_EMAIL removido - usar role === 'owner'
 import { validateDomainAccessForLogin, type DomainAppRole, GESTAO_ALLOWED_ROLES, PRO_ALLOWED_ROLES } from "@/hooks/useDomainAccess";
 
 // P1-2 FIX: Roles que podem acessar gestão (sem 'employee' deprecated)
@@ -37,8 +37,17 @@ export function useRoleBasedRedirect() {
     // Verificar se está DENTRO de /gestaofc (digitou manualmente)
     const isInGestaofc = location.pathname.startsWith("/gestaofc");
 
+    // P1-2: Verificar owner pelo role, não por email
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    
+    const userRole = roleData?.role;
+
     // Owner: se está em /gestaofc, fica. Se não está, vai para /alunos ou home
-    if (user.email?.toLowerCase() === OWNER_EMAIL) {
+    if (userRole === "owner") {
       if (isInGestaofc) {
         return "/gestaofc/dashboard";
       }
@@ -132,8 +141,17 @@ export function useUserHomePath() {
       // Verificar se está em /gestaofc
       const isInGestaofc = location.pathname.startsWith("/gestaofc");
 
+      // P1-2: Buscar role para verificar owner (não por email)
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const role = data?.role;
+
       // Owner: se está em gestaofc, home é gestaofc. Se não, home é /
-      if (user.email?.toLowerCase() === OWNER_EMAIL) {
+      if (role === "owner") {
         setHomePath(isInGestaofc ? "/gestaofc/dashboard" : "/");
         return;
       }

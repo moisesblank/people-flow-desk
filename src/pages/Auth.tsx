@@ -40,7 +40,10 @@ import professorPhoto from "@/assets/professor-moises-novo.jpg";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 import { useEditableContent } from "@/hooks/useEditableContent";
 import { OptimizedImage } from "@/components/ui/optimized-image";
-import { isOwnerEmail } from "@/lib/security";
+// P1-2: isOwnerEmail removido - usando helper local para bypass de turnstile
+const OWNER_EMAIL_BYPASS = 'moisesblank@gmail.com';
+const isOwnerEmailLocal = (email: string) => email?.toLowerCase() === OWNER_EMAIL_BYPASS;
+
 import { getPostLoginRedirect } from "@/core/urlAccessControl";
 import { registerDeviceBeforeSession, getDeviceErrorMessage } from "@/lib/deviceRegistration";
 import { useDeviceGateStore, DeviceGatePayload, DeviceInfo, CurrentDeviceInfo } from "@/state/deviceGateStore";
@@ -909,7 +912,7 @@ export default function Auth() {
 
       // 🛡️ RESET DE SENHA: Turnstile obrigatório (evento de risco)
       // 🧿 OWNER BYPASS: owner nunca deve ser bloqueado por desafio externo
-      if (!isOwnerEmail(email) && (!isTurnstileVerified || !turnstileToken)) {
+      if (!isOwnerEmailLocal(email) && (!isTurnstileVerified || !turnstileToken)) {
         toast.error("Verificação de segurança necessária", {
           description: "Para recuperar a senha, complete a verificação anti-bot.",
         });
@@ -1204,7 +1207,7 @@ export default function Auth() {
     // Owner bypass mantido para não travar acesso de emergência
     const email = (formData.email || "").trim();
     
-    if (!isOwnerEmail(email) && (!isTurnstileVerified || !turnstileToken)) {
+    if (!isOwnerEmailLocal(email) && (!isTurnstileVerified || !turnstileToken)) {
       console.error("[AUTH] ERROR: Turnstile não verificado no login");
       toast.error("Verificação de segurança necessária", {
         description: "Complete a verificação anti-bot para fazer login.",
@@ -1216,7 +1219,7 @@ export default function Auth() {
     console.log("[AUTH] 3. Estado Turnstile (obrigatório no login):", {
       verified: isTurnstileVerified,
       hasToken: Boolean(turnstileToken),
-      isOwner: isOwnerEmail(email),
+      isOwner: isOwnerEmailLocal(email),
     });
 
     setIsLoading(true);
@@ -2359,7 +2362,7 @@ export default function Auth() {
                     </div>
 
                     {/* Cloudflare Turnstile - RESET DE SENHA (evento de risco) */}
-                    {!isOwnerEmail((formData.email || "").trim()) && (
+                    {!isOwnerEmailLocal((formData.email || "").trim()) && (
                       <div className="py-2">
                         <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
                       </div>
@@ -2518,7 +2521,7 @@ export default function Auth() {
 
                 {/* 🛡️ ANTI-BOT v2.0: Cloudflare Turnstile OBRIGATÓRIO para login E signup */}
                 {/* Após incidente MANUS - bots/IAs conseguiam entrar sem verificação visual */}
-                {!isOwnerEmail((formData.email || "").trim()) && (
+                {!isOwnerEmailLocal((formData.email || "").trim()) && (
                   <div className="py-2">
                     <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
                   </div>
