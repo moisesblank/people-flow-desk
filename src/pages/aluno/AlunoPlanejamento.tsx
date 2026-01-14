@@ -334,8 +334,8 @@ function LessonInfo({
           </Button>
         </div>
 
-        {/* INFERIOR: Badges de tempo, conceitos e obrigatória - COM FUNDO SÓLIDO PARA LEGIBILIDADE */}
-        <div className="flex items-center gap-2 flex-wrap p-3 rounded-xl bg-surface-inset/80 backdrop-blur-sm border border-border/50">
+        {/* INFERIOR: Badges de tempo, conceitos e obrigatória - SEM FUNDO */}
+        <div className="flex items-center gap-2 flex-wrap p-3">
           <Badge className="bg-primary/30 text-primary-foreground border-primary/50 shadow-md">
             <Clock className="h-3.5 w-3.5 mr-1.5" />
             {lesson.duration_minutes || 0} min
