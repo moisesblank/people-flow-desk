@@ -14,6 +14,7 @@ import { useRolePermissions, OWNER_EMAIL } from "@/hooks/useRolePermissions";
 import { type SystemArea, URL_TO_AREA } from "@/core/areas";
 import { validateDomainAccessForLogin, type DomainAppRole } from "@/hooks/useDomainAccess";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
+import { isGestaoRole } from "@/core/urlAccessControl";
 import { Button } from "@/components/ui/button";
 
 interface RoleProtectedRouteProps {
@@ -43,7 +44,7 @@ function NotFoundPage() {
 export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRouteProps) {
   const { user, isLoading: authLoading } = useAuth();
   const { hasAccess, hasAccessToUrl, isLoading: roleLoading, roleLabel, role, isOwner } = useRolePermissions();
-  const { isLoading: onboardingLoading, needsOnboarding } = useOnboardingStatus();
+  const { isLoading: onboardingLoading, needsOnboarding, onboardingRedirectPath } = useOnboardingStatus();
   const location = useLocation();
 
   // ============================================
@@ -123,7 +124,7 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // 🛡️ LÓGICA DE ACESSO (APÓS TODOS OS HOOKS)
   // ============================================
   const isGestaoPath = location.pathname.startsWith("/gestaofc");
-  const isOnPrimeiroAcesso = location.pathname === "/primeiro-acesso";
+  const isOnPrimeiroAcesso = location.pathname === "/primeiro-acesso" || location.pathname === "/primeiro-acesso-funcionario";
   // P1-2 FIX: Sem 'funcionario' e 'employee' deprecated
   const isStaffRole = [
     "owner",
@@ -186,11 +187,11 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // ============================================
   // 🔐 ONBOARDING OBRIGATÓRIO
   // Se onboarding incompleto, redirecionar
-  // (Exceto owner e se já estamos na página)
+  // v10.4.2: Redireciona funcionários para /primeiro-acesso-funcionario
   // ============================================
   if (needsOnboarding && !isOnPrimeiroAcesso && !shouldBypassForOwner) {
-    console.log("[RoleProtectedRoute] Onboarding incompleto, redirecionando para /primeiro-acesso");
-    return <Navigate to="/primeiro-acesso" replace />;
+    console.log(`[RoleProtectedRoute] Onboarding incompleto, redirecionando para ${onboardingRedirectPath}`);
+    return <Navigate to={onboardingRedirectPath} replace />;
   }
 
   // ============================================

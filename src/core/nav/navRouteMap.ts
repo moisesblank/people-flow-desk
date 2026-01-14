@@ -437,9 +437,10 @@ const GESTAO_ROLES: AppRole[] = [
   "monitoria", "marketing", "afiliado"
 ];
 
-const ALUNO_ROLES: AppRole[] = ["owner", "admin", "beta", "aluno_gratuito"];
+// 🛡️ CONSTITUIÇÃO v10.4.2: admin REMOVIDO - funcionários NÃO acessam /alunos
+const ALUNO_ROLES: AppRole[] = ["owner", "beta", "aluno_gratuito", "aluno_presencial", "beta_expira"];
 
-const COMUNIDADE_ROLES: AppRole[] = ["owner", "admin", "beta", "aluno_gratuito"];
+const COMUNIDADE_ROLES: AppRole[] = ["owner", "beta", "aluno_gratuito", "aluno_presencial", "beta_expira"];
 
 const OWNER_ONLY: AppRole[] = ["owner"];
 
