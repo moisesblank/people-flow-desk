@@ -93,8 +93,10 @@ export function CronogramaSelector({ onSelect }: CronogramaSelectorProps) {
                 className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
 
-              {/* Overlay Gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-60 transition-opacity duration-300" />
+              {/* Overlay Gradient - Apenas se NÃO estiver bloqueado (DateLock já tem overlay) */}
+              {!isLocked && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-60 transition-opacity duration-300" />
+              )}
 
               {/* Holographic Border on Hover */}
               <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-primary/60 transition-all duration-300 group-hover:shadow-[0_0_30px_hsl(var(--primary)/0.3)]" />
