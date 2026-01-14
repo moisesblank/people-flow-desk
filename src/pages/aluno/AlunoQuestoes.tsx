@@ -2064,38 +2064,41 @@ export default function AlunoQuestoes() {
         </Card>
       ) : (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
               Mostrando <strong>{filteredQuestions.length}</strong> de <strong>{totalCount.toLocaleString('pt-BR')}</strong> questões
             </p>
             
-            {/* Botão Criar Questões - Só habilita com filtro selecionado */}
-            <Button 
-              onClick={handleStartRapidoTreino}
-              disabled={isLoadingTreino || !isAnyFilterActive || totalCount === 0}
-              variant="2300"
-              className={cn(
-                "gap-2 px-6 py-2.5 h-auto bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:via-yellow-300 hover:to-amber-400 text-black font-semibold tracking-wide",
-                isHighEnd ? "shadow-lg shadow-amber-500/25" : "",
-                !isAnyFilterActive && "opacity-50 cursor-not-allowed"
-              )}
-            >
-              {isLoadingTreino ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5 fill-current" />}
-              Criar Questões ({isAnyFilterActive ? Math.min(totalCount, RAPIDO_TREINO_LIMIT) : 0})
-            </Button>
-            
-            {/* Botão Modo Prova */}
-            <Button 
-              onClick={handleStartModoProva}
-              disabled={isLoadingModoProva || !isAnyFilterActive || totalCount === 0}
-              className={cn(
-                "gap-2 px-6 py-2.5 h-auto bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 hover:from-cyan-400 hover:via-blue-400 hover:to-cyan-400 text-white font-semibold tracking-wide shadow-lg shadow-cyan-500/25",
-                !isAnyFilterActive && "opacity-50 cursor-not-allowed"
-              )}
-            >
-              {isLoadingModoProva ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
-              📄 Modo Prova
-            </Button>
+            {/* Botões de Ação */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Botão Criar Questões - Só habilita com filtro selecionado */}
+              <Button 
+                onClick={handleStartRapidoTreino}
+                disabled={isLoadingTreino || !isAnyFilterActive || totalCount === 0}
+                variant="2300"
+                className={cn(
+                  "gap-2 px-4 py-2 h-auto bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 hover:from-amber-400 hover:via-yellow-300 hover:to-amber-400 text-black font-semibold tracking-wide",
+                  isHighEnd ? "shadow-lg shadow-amber-500/25" : "",
+                  !isAnyFilterActive && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {isLoadingTreino ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4 fill-current" />}
+                Criar Questões ({isAnyFilterActive ? Math.min(totalCount, RAPIDO_TREINO_LIMIT) : 0})
+              </Button>
+              
+              {/* Botão Modo Prova */}
+              <Button 
+                onClick={handleStartModoProva}
+                disabled={isLoadingModoProva || !isAnyFilterActive || totalCount === 0}
+                className={cn(
+                  "gap-2 px-4 py-2 h-auto bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 hover:from-cyan-400 hover:via-blue-400 hover:to-cyan-400 text-white font-semibold tracking-wide shadow-lg shadow-cyan-500/25",
+                  !isAnyFilterActive && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {isLoadingModoProva ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                📄 Modo Prova
+              </Button>
+            </div>
           </div>
 
           {/* Lista de Questões */}
@@ -2166,6 +2169,14 @@ export default function AlunoQuestoes() {
         questions={treinoReviewQuestions}
         answers={treinoReviewAnswers}
         results={treinoReviewResults}
+      />
+
+      {/* BLOCK_14: Modal MODO PROVA (PDF Style) */}
+      <ModoProvaModal
+        open={modoProvaOpen}
+        onClose={() => setModoProvaOpen(false)}
+        questions={modoProvaQuestions}
+        title={`Prova: ${modoProvaQuestions.length} questões`}
       />
 
       {/* BLOCK_13: SEÇÃO DE MÉTRICAS E ANÁLISE POR ÁREAS */}
