@@ -15,9 +15,9 @@
 import { supabase } from "@/integrations/supabase/client";
 
 // ============================================
-// CONSTANTES CRÍTICAS
+// 🛡️ P0 SECURITY FIX: Email removido do bundle
+// Owner verificado via RPC check_is_owner()
 // ============================================
-export const OWNER_EMAIL = "moisesblank@gmail.com";
 
 // 🎯 CONSTITUIÇÃO ROLES v1.0.0 - Nomenclatura Definitiva
 // "employee" e "funcionario" são CATEGORIAS, não roles individuais
@@ -126,7 +126,8 @@ export function generateCorrelationId(): string {
 
 export async function hashValue(value: string): Promise<string> {
   const encoder = new TextEncoder();
-  const data = encoder.encode(value + OWNER_EMAIL);
+  // 🛡️ P0 FIX: Salt genérico (não expõe email)
+  const data = encoder.encode(value + "sanctum-salt-v2");
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("").substring(0, 16);
@@ -138,13 +139,12 @@ export function hasRoleAccess(userRole: AppRole, requiredRole: AppRole): boolean
 }
 
 /**
- * @deprecated P1-2 FIX: Use isOwnerByRole() para verificação segura
- * Esta função existe apenas para bypass de UX (spinners/loading)
- * A autorização REAL vem do banco via user_roles.role='owner'
+ * @deprecated P0 SECURITY FIX: Esta função foi removida
+ * Use isOwnerByRole(role) ou check_is_owner RPC
  */
-export function isOwnerEmail(email: string): boolean {
-  console.warn('[SECURITY] isOwnerEmail() é deprecated - usar verificação por role');
-  return email.toLowerCase() === OWNER_EMAIL.toLowerCase();
+export function isOwnerEmail(_email: string): boolean {
+  // 🛡️ P0 FIX: Retorna false - usar verificação por role
+  return false;
 }
 
 /**

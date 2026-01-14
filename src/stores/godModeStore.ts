@@ -1,14 +1,13 @@
 // ============================================
 // 👑 GOD MODE STORE — ZUSTAND (substitui GodModeContext)
 // Estado global sem Provider = zero re-renders extras
+// 🛡️ P0 SECURITY FIX: Owner via RPC server-side
 // ============================================
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-const OWNER_EMAIL = 'moisesblank@gmail.com';
 
 /**
  * 🔧 CORREÇÃO P0: Aplicar conteúdo salvo de volta ao DOM
@@ -156,8 +155,9 @@ export const useGodModeStore = create<GodModeStore>()(
       checkOwner: async () => {
         set({ isLoading: true });
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          const isOwner = (user?.email || '').toLowerCase() === OWNER_EMAIL;
+          // 🛡️ P0 FIX: Verificar owner via RPC server-side
+          const { data, error } = await supabase.rpc('check_is_owner');
+          const isOwner = error ? false : data === true;
           set({ isOwner, isLoading: false });
         } catch {
           set({ isOwner: false, isLoading: false });

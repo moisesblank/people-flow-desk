@@ -1,14 +1,10 @@
 // ============================================
-// MOISÉS MEDEIROS v10.0 - ADMIN CHECK HOOK
-// Verificação de Permissões Owner/Admin
-// 🎯 UNIFICADO: Owner por EMAIL (igual godModeStore)
-// MODO MASTER: Exclusivo para moisesblank@gmail.com
+// MOISÉS MEDEIROS v11.0 - ADMIN CHECK HOOK
+// 🛡️ P0 SECURITY FIX: Owner verificado via ROLE do banco
+// REMOVIDO: Email hardcoded do bundle
 // ============================================
 
 import { useAuth } from "@/hooks/useAuth";
-
-// 🎯 CONSTANTE ÚNICA - Igual ao godModeStore
-const OWNER_EMAIL = 'moisesblank@gmail.com';
 
 // P1-2 FIX: Sem 'employee' deprecated
 export type AppRole = "owner" | "admin" | "coordenacao" | "suporte" | "monitoria" | "afiliado" | "marketing" | "contabilidade";
@@ -28,8 +24,8 @@ interface AdminCheckResult {
 }
 
 // ============================================
-// 🎯 UNIFICADO: Owner determinado por EMAIL (igual godModeStore)
-// Isso garante que godModeStore e useAdminCheck usem a MESMA lógica
+// 🛡️ P0 SECURITY FIX: Owner determinado APENAS por role do banco
+// Email removido do bundle para segurança
 // ============================================
 
 export function useAdminCheck(): AdminCheckResult {
@@ -38,13 +34,9 @@ export function useAdminCheck(): AdminCheckResult {
 
   const userEmail = user?.email || null;
   
-  // 🎯 CRÍTICO: Owner verificado por EMAIL (igual godModeStore)
-  // Isso unifica a lógica com o store Zustand
-  const isOwnerByEmail = (userEmail || '').toLowerCase() === OWNER_EMAIL.toLowerCase();
-  const isOwnerByRole = role === "owner";
-  
-  // Owner = email OU role (email tem prioridade imediata)
-  const isOwner = isOwnerByEmail || isOwnerByRole;
+  // 🛡️ P0 FIX: Owner verificado APENAS via role do banco
+  // Não há mais email hardcoded no frontend
+  const isOwner = role === "owner";
   
   const isAdmin = role === "admin";
   const isCoordinator = role === "coordenacao";
@@ -52,7 +44,7 @@ export function useAdminCheck(): AdminCheckResult {
   // P1-2: 'employee' deprecated - verificar roles específicas
   const isEmployee = false; // deprecated
 
-  // MODO DEUS: exclusivo do Owner
+  // MODO DEUS: exclusivo do Owner (via role)
   const isGodMode = isOwner;
 
   // Apenas owner pode editar campos críticos

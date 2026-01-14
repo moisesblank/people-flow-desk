@@ -18296,6 +18296,8 @@ export type Database = {
         Args: { _device_hash: string; _user_id: string }
         Returns: boolean
       }
+      check_is_owner: { Args: never; Returns: boolean }
+      check_is_owner_by_id: { Args: { p_user_id: string }; Returns: boolean }
       check_is_owner_email: { Args: { p_user_id: string }; Returns: boolean }
       check_mfa_valid: {
         Args: { _action: string; _user_id: string }
