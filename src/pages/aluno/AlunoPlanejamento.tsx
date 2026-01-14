@@ -448,10 +448,10 @@ function LessonsSidebar({
                       onClick={() => onSelectLesson(lesson)}
                       className={`w-full p-4 rounded-xl text-left transition-all duration-300 relative overflow-hidden group/lesson ${
                         isActive
-                          ? "bg-gradient-to-r from-primary/20 via-holo-purple/10 to-transparent border-l-4 border-primary shadow-[inset_0_0_30px_hsl(var(--primary)/0.1)]"
+                          ? "bg-gradient-to-r from-primary/20 via-holo-pink/15 to-transparent border-l-4 border-primary shadow-[inset_0_0_30px_hsl(var(--primary)/0.15)]"
                           : isCompleted
-                          ? "bg-gradient-to-r from-success/10 to-transparent hover:from-success/15 border border-success/30"
-                          : "hover:bg-gradient-to-r hover:from-muted/50 hover:to-transparent border border-transparent hover:border-border/50"
+                          ? "bg-gradient-to-r from-success/15 to-transparent hover:from-success/20 border-l-4 border-success shadow-[inset_0_0_20px_hsl(var(--success)/0.1)]"
+                          : "bg-gradient-to-r from-primary/5 via-holo-pink/5 to-transparent hover:from-primary/15 hover:via-holo-pink/10 border-l-4 border-primary/30 hover:border-primary/60"
                       }`}
                     >
                       {/* Active indicator glow */}
@@ -460,14 +460,14 @@ function LessonsSidebar({
                       )}
                       
                       <div className="flex items-start gap-4 relative z-10">
-                        {/* Number/Check - HOLOGRAPHIC */}
+                        {/* Number/Check - Verde e Rosa SOBERANO */}
                         <div
                           className={`flex items-center justify-center w-10 h-10 rounded-xl text-sm font-black shrink-0 transition-all duration-300 ${
                             isCompleted
                               ? "bg-gradient-to-br from-success to-success/80 text-white shadow-[0_0_20px_hsl(var(--success)/0.5)]"
                               : isActive
-                              ? "bg-gradient-to-br from-primary via-primary to-holo-purple text-white shadow-[0_0_25px_hsl(var(--primary)/0.5)]"
-                              : "bg-muted/80 text-muted-foreground group-hover/lesson:bg-primary/20 group-hover/lesson:text-primary"
+                              ? "bg-gradient-to-br from-primary via-holo-pink to-primary text-white shadow-[0_0_25px_hsl(var(--primary)/0.5)]"
+                              : "bg-gradient-to-br from-primary/20 to-holo-pink/20 text-primary group-hover/lesson:from-primary/40 group-hover/lesson:to-holo-pink/40"
                           }`}
                         >
                           {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : index + 1}
@@ -503,13 +503,15 @@ function LessonsSidebar({
                           </div>
                         </div>
 
-                        {/* Play Button */}
+                        {/* Play Button - Verde/Rosa SOBERANO */}
                         <div className="shrink-0">
                           <div
                             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                              isActive 
-                                ? "bg-gradient-to-br from-primary to-holo-purple text-white shadow-[0_0_20px_hsl(var(--primary)/0.5)]" 
-                                : "bg-muted/60 hover:bg-primary/20 hover:text-primary group-hover/lesson:shadow-[0_0_15px_hsl(var(--primary)/0.2)]"
+                              isCompleted
+                                ? "bg-gradient-to-br from-success to-success/80 text-white shadow-[0_0_15px_hsl(var(--success)/0.4)]"
+                                : isActive 
+                                ? "bg-gradient-to-br from-primary via-holo-pink to-primary text-white shadow-[0_0_20px_hsl(var(--primary)/0.5)]" 
+                                : "bg-gradient-to-br from-primary/20 to-holo-pink/20 text-primary group-hover/lesson:from-primary/40 group-hover/lesson:to-holo-pink/40 group-hover/lesson:shadow-[0_0_15px_hsl(var(--primary)/0.3)]"
                             }`}
                           >
                             <Play className="h-5 w-5 ml-0.5" />
