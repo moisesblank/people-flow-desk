@@ -51,7 +51,8 @@ import {
 // ============================================
 // CONSTANTES GLOBAIS - ARQUITETURA MONO-DOMÍNIO
 // ============================================
-export const OWNER_EMAIL = "moisesblank@gmail.com";
+/** @deprecated P1-2 FIX: Usar role='owner' para verificações. Email apenas para audit log. */
+export const OWNER_EMAIL = "moisesblank@gmail.com"; // Legacy: apenas audit/log
 
 // Re-exportar constantes da matriz para uso externo
 export { MATRIZ_URLS, MATRIZ_PATHS };

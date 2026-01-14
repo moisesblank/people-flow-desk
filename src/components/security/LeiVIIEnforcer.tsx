@@ -10,7 +10,7 @@ import { memo, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { executeLeiVII, updateLeiVIIUser } from "@/lib/constitution/executeLeiVII";
 import {
-  OWNER_EMAIL,
+  // OWNER_EMAIL removido - P1-2 FIX
   isOwnerBypass,
   logSecurityEvent,
   detectSuspiciousActivity,
@@ -28,12 +28,12 @@ interface LeiVIIEnforcerProps {
  * Deve envolver toda a aplicação para garantir proteção global
  */
 export const LeiVIIEnforcer = memo(({ children }: LeiVIIEnforcerProps) => {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
 
-  // Verificar se é owner (MASTER - bypass total)
+  // P1-2 FIX: Verificar owner via role (não email)
   const isOwner = useCallback(() => {
-    return isOwnerBypass(user?.email, null);
-  }, [user?.email]);
+    return role === 'owner' || isOwnerBypass(null, role);
+  }, [role]);
 
   // Verificação de saúde do sistema
   useEffect(() => {
@@ -67,7 +67,7 @@ export const LeiVIIEnforcer = memo(({ children }: LeiVIIEnforcerProps) => {
       console.log(`[LEI VII] ✅ Proteções ativas: ${report.protectionsActive}`);
 
       if (report.handlers.includes("owner_bypass")) {
-        console.log(`[LEI VII] 👑 OWNER Mode - ${OWNER_EMAIL} - Bypass Total Ativo`);
+        console.log(`[LEI VII] 👑 OWNER Mode - role='owner' - Bypass Total Ativo`);
       }
     }
 

@@ -34,10 +34,11 @@ export const LEI_III_ACTIVE = true;
 
 /**
  * Art. 1° - OWNER SUPREMO
- * Email com IMUNIDADE TOTAL. NUNCA bloquear, NUNCA restringir.
- * Bypass automático de TODAS as verificações de segurança.
+ * @deprecated P1-2 FIX: Usar role='owner' ou RPC check_is_owner() para verificações.
+ * Email mantido APENAS para audit logs e fallback de UX.
+ * Bypass automático de TODAS as verificações via ROLE, não email.
  */
-export const OWNER_EMAIL = 'moisesblank@gmail.com';
+export const OWNER_EMAIL = 'moisesblank@gmail.com'; // Legacy: apenas audit/log - NÃO USAR PARA AUTH
 
 /**
  * Art. 2° - ROLES IMUNES

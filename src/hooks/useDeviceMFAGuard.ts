@@ -25,7 +25,7 @@ export interface DeviceMFAGuardResult extends DeviceMFAGuardState {
   resetState: () => void;
 }
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// P1-2 FIX: OWNER_EMAIL removido - usar role='owner' via useAuth()
 // 🧪 BYPASS BETA TEST - usuário de teste não precisa verificar MFA repetidamente
 const BETA_TEST_EMAIL = "moisescursoquimica@gmail.com";
 
@@ -42,7 +42,7 @@ const getCacheKey = (userId: string, deviceHash: string) => `${userId}:${deviceH
  * Cache de 24 horas por dispositivo
  */
 export function useDeviceMFAGuard(): DeviceMFAGuardResult {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const hasChecked = useRef(false);
 
   const [state, setState] = useState<DeviceMFAGuardState>({
@@ -54,8 +54,8 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
     expiresAt: null,
   });
 
-  // Owner tem bypass total
-  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+  // P1-2 FIX: Owner bypass via role (não email)
+  const isOwner = role === 'owner';
 
   // 🧪 Beta test bypass
   const isBetaTest = user?.email?.toLowerCase() === BETA_TEST_EMAIL.toLowerCase();

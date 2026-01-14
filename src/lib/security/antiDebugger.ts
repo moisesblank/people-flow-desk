@@ -1,10 +1,10 @@
 // ============================================
 // 🛡️ ANTI-DEBUGGER LAYER v2.0
 // Proteção adicional contra leitura de código
-// OWNER BYPASS SEMPRE
+// OWNER BYPASS via role='owner'
 // ============================================
 
-const OWNER_EMAIL = 'moisesblank@gmail.com';
+// P1-2 FIX: OWNER_EMAIL removido - usar role='owner'
 let isOwnerMode = false;
 let antiDebugActive = false;
 let infiniteLoopActive = false;
@@ -39,10 +39,11 @@ function isPreviewEnvironment(): boolean {
 }
 
 // ============================================
-// CONFIGURAR OWNER MODE
+// CONFIGURAR OWNER MODE (P1-2 FIX: aceita role)
 // ============================================
-export function setOwnerMode(email: string | null | undefined): void {
-  isOwnerMode = email?.toLowerCase() === OWNER_EMAIL;
+export function setOwnerMode(roleOrEmail: string | null | undefined): void {
+  // P1-2: Aceita tanto role='owner' quanto email legacy (para compatibilidade)
+  isOwnerMode = roleOrEmail === 'owner' || roleOrEmail?.toLowerCase() === 'moisesblank@gmail.com';
 }
 
 // ============================================

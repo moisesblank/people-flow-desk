@@ -27,10 +27,10 @@
 /**
  * 👑 OWNER_EMAIL - APENAS PARA AUDITORIA/LOGS
  * ⚠️ NUNCA usar para controle de acesso!
- * Fonte da verdade: user_roles.role = 'owner'
- * @deprecated Use role='owner' para verificar permissões
+ * Fonte da verdade: user_roles.role = 'owner' ou RPC check_is_owner()
+ * @deprecated P1-2 FIX: Use role='owner' para verificar permissões
  */
-export const OWNER_EMAIL = "moisesblank@gmail.com"; // Legacy: apenas audit
+export const OWNER_EMAIL = "moisesblank@gmail.com"; // Legacy: apenas audit/log - NÃO USAR PARA AUTH
 
 /**
  * Versão do sistema de controle de acesso

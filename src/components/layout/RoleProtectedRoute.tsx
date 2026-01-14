@@ -9,7 +9,8 @@ import { ReactNode, useEffect, useState, useMemo } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useRolePermissions, OWNER_EMAIL } from "@/hooks/useRolePermissions";
+import { useRolePermissions } from "@/hooks/useRolePermissions";
+// P1-2 FIX: OWNER_EMAIL não mais usado - verificação via role='owner'
 // 🎯 FONTE ÚNICA DE VERDADE - ÁREAS
 import { type SystemArea, URL_TO_AREA } from "@/core/areas";
 import { validateDomainAccessForLogin, type DomainAppRole } from "@/hooks/useDomainAccess";
@@ -71,38 +72,24 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   }, [authLoading, roleLoading]);
 
   // ============================================
-  // 🔥 OWNER BYPASS DE FRICÇÃO (NÃO SEGURANÇA)
-  // Email hardcoded é usado APENAS para:
-  // - Não ficar preso em loading/spinner
-  // - Não depender de guards externos
-  // A autorização real (role) vem do banco e será verificada
-  // @deprecated P1-2: Preferir role check primeiro
+  // 🔥 OWNER BYPASS VIA ROLE (P1-2 FIX)
+  // Autorização real vem do banco via role='owner'
+  // Email NÃO é mais usado para controle de acesso
   // ============================================
-  const isOwnerEmailMatch = useMemo(() => {
-    return user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
-  }, [user?.email]);
 
-  // ✅ P1-2 FIX: Preferir verificação por role
+  // ✅ P1-2 FIX: Verificação APENAS por role
   const isOwnerByRole = useMemo(() => {
     return role === "owner";
   }, [role]);
 
-  // ✅ BYPASS calculado como VALOR, não como return condicional
+  // ✅ BYPASS calculado via role, não email
   const shouldBypassForOwner = useMemo(() => {
-    // 1. Primeiro: verificar role (fonte da verdade)
+    // 1. Verificar role (fonte da verdade)
     if (isOwnerByRole && user) return true;
-    // 1b. Verificar isOwner do hook (pode estar disponível antes de role)
+    // 2. Verificar isOwner do hook (pode estar disponível antes de role)
     if (isOwner && user) return true;
-    // 2. Fallback: email (apenas UX bypass enquanto role carrega)
-    // CRÍTICO: Permite owner abrir novas abas sem redirect para login
-    if (isOwnerEmailMatch && user) return true;
-    // 3. Se role já carregou e não é owner, não dar bypass
-    if (!roleLoading && !isOwnerByRole && isOwnerEmailMatch) {
-      console.warn(`[RoleProtectedRoute] Email owner mas role=${role} - verificar banco`);
-      return false;
-    }
     return false;
-  }, [isOwnerByRole, isOwnerEmailMatch, user, role, roleLoading, isOwner]);
+  }, [isOwnerByRole, user, isOwner]);
 
   // ============================================
   // 🛡️ DOMAIN GUARD - LOG ONLY (sem redirect)

@@ -15,8 +15,8 @@ import { toast } from "sonner";
 export const SANCTUM_OMEGA_CONFIG = {
   version: "3.0-OMEGA-ULTRA",
   
-  // Owner email - IMUNIDADE TOTAL
-  ownerEmail: "moisesblank@gmail.com",
+  // P1-2 FIX: Owner verificado via role='owner', não email
+  // ownerEmail removido - usar isOwnerByRole()
   
   // P1-2 FIX: Roles imunes (sem 'funcionario' e 'employee' deprecated)
   immuneRoles: ["owner", "admin", "coordenacao", "suporte", "monitoria", "contabilidade", "marketing", "afiliado"] as const,
@@ -129,10 +129,11 @@ export interface UseSanctumOmegaReturn extends SanctumState {
 // FUNÇÕES UTILITÁRIAS
 // ============================================
 /**
- * @deprecated P1-2: Use role-based check first
+ * @deprecated P1-2: Use isOwnerByRole() instead
+ * Retorna SEMPRE FALSE por segurança
  */
-function isOwnerEmail(email?: string | null): boolean {
-  return email?.toLowerCase() === SANCTUM_OMEGA_CONFIG.ownerEmail;
+function isOwnerEmail(_email?: string | null): boolean {
+  return false; // P1-2 SECURITY: Nunca usar email para verificar owner
 }
 
 /**
