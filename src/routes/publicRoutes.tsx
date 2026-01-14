@@ -16,6 +16,7 @@ const AreaGratuita = lazy(() => import("@/pages/AreaGratuita"));
 const PerfilIncompleto = lazy(() => import("@/pages/PerfilIncompleto"));
 const GuiaDaPlataforma = lazy(() => import("@/pages/GuiaDaPlataforma"));
 const PrimeiroAcesso = lazy(() => import("@/pages/PrimeiroAcesso"));
+const PrimeiroAcessoFuncionario = lazy(() => import("@/pages/PrimeiroAcessoFuncionario"));
 
 // 🛡️ Security Pages
 const DeviceLimitGate = lazy(() => import("@/pages/security/DeviceLimitGate"));
@@ -52,8 +53,11 @@ export const publicRoutes = (
     {/* 📚 Guia Educacional da Plataforma */}
     <Route path="/guia-plataforma" element={<GuiaDaPlataforma />} />
     
-    {/* 🔐 ONBOARDING OBRIGATÓRIO - Primeiro Acesso */}
+    {/* 🔐 ONBOARDING OBRIGATÓRIO - Primeiro Acesso (Alunos) */}
     <Route path="/primeiro-acesso" element={<PrimeiroAcesso />} />
+    
+    {/* 🔐 ONBOARDING FUNCIONÁRIOS - Acesso Separado (v10.4.2) */}
+    <Route path="/primeiro-acesso-funcionario" element={<PrimeiroAcessoFuncionario />} />
     
     {/* 🛡️ SECURITY GATES */}
     <Route path="/security/device-limit" element={<DeviceLimitGate />} />

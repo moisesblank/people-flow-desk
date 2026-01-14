@@ -1,5 +1,6 @@
 // ============================================
 // PROTECTED ROUTE - Com verificação de Onboarding
+// v10.4.2: Redireciona funcionários para /primeiro-acesso-funcionario
 // Bloqueia acesso se onboarding não completo
 // ============================================
 
@@ -17,7 +18,11 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, isLoading: authLoading } = useAuth();
-  const { isLoading: onboardingLoading, needsOnboarding } = useOnboardingStatus();
+  const { 
+    isLoading: onboardingLoading, 
+    needsOnboarding, 
+    onboardingRedirectPath  // v10.4.2: Path correto por role
+  } = useOnboardingStatus();
   const location = useLocation();
 
   // P0 anti-tela-preta: se auth/onboarding travarem por rede/RLS, não congelar UI.
@@ -44,8 +49,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const is2FAPendingRaw = typeof window !== "undefined" && sessionStorage.getItem("matriz_2fa_pending") === "1";
   const is2FAPending = is2FAPendingRaw && !isOwner && !isBetaTestBypass;
 
-  // Não redirecionar se já estamos na página de primeiro acesso
-  const isOnPrimeiroAcesso = location.pathname === "/primeiro-acesso";
+  // Não redirecionar se já estamos na página de primeiro acesso (qualquer uma)
+  const isOnPrimeiroAcesso = location.pathname === "/primeiro-acesso" || 
+                              location.pathname === "/primeiro-acesso-funcionario";
 
   // Loading: com fail-safe por timeout
   if (authLoading || onboardingLoading) {
@@ -54,8 +60,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       if (user) {
         // Owner não pode ficar preso em loader por falha de leitura de onboarding.
         if (isOwner) return <>{children}</>;
-        // Para alunos/roles comuns, onboarding é obrigatório: seguir para /primeiro-acesso.
-        if (!isOnPrimeiroAcesso) return <Navigate to="/primeiro-acesso" replace />;
+        // Para alunos/roles comuns, onboarding é obrigatório: seguir para path correto.
+        if (!isOnPrimeiroAcesso) return <Navigate to={onboardingRedirectPath} replace />;
         // Se já está no onboarding, renderiza (evita loop).
         return <>{children}</>;
       }
@@ -76,12 +82,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/auth" replace />;
   }
 
-  // 🔐 ONBOARDING OBRIGATÓRIO: Redirecionar para primeiro acesso
+  // 🔐 ONBOARDING OBRIGATÓRIO: Redirecionar para primeiro acesso correto
+  // v10.4.2: Funcionários → /primeiro-acesso-funcionario, Alunos → /primeiro-acesso
   // Exceto se já estamos na página ou é owner
-  // P0 FIX: Agora o default isComplete=false garante redirecionamento seguro
   if (needsOnboarding && !isOnPrimeiroAcesso && !isOwner) {
-    console.log("[ProtectedRoute] Onboarding incompleto, redirecionando para /primeiro-acesso");
-    return <Navigate to="/primeiro-acesso" replace />;
+    console.log(`[ProtectedRoute] Onboarding incompleto, redirecionando para ${onboardingRedirectPath}`);
+    return <Navigate to={onboardingRedirectPath} replace />;
   }
 
   return <>{children}</>;

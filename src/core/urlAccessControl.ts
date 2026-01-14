@@ -118,24 +118,29 @@ export const GESTAO_ROLES: AppRole[] = [
 
 /**
  * Roles que podem acessar a área de alunos (/alunos)
- * CONSTITUIÇÃO v10.0 — Bloco ALUNOS
+ * CONSTITUIÇÃO v10.4.2 — Bloco ALUNOS
+ * 🛡️ CRÍTICO: admin REMOVIDO - funcionários NÃO acessam /alunos
+ * Admin agora é estritamente GESTAO_ROLES
  */
 export const ALUNO_ROLES: AppRole[] = [
-  "owner",
-  "admin",
-  "beta",
-  "aluno_gratuito",
+  "owner",           // Owner tem acesso TOTAL (bypass universal)
+  "beta",            // Aluno pagante
+  "aluno_gratuito",  // Aluno gratuito (acesso limitado)
+  "aluno_presencial",// Aluno presencial (v10.x)
+  "beta_expira",     // Beta com expiração (v10.x)
 ];
 
 /**
  * Roles que podem acessar a comunidade (/comunidade)
- * Todos os alunos (beta, gratuito) + gestão
+ * Todos os alunos (beta, gratuito) + owner
+ * 🛡️ CRÍTICO: admin REMOVIDO - funcionários usam /gestaofc
  */
 export const COMUNIDADE_ROLES: AppRole[] = [
   "owner",
-  "admin",
   "beta",
   "aluno_gratuito",
+  "aluno_presencial",
+  "beta_expira",
 ];
 
 // ============================================
@@ -364,6 +369,11 @@ export const PUBLIC_PATHS: string[] = [
   "/termos",
   "/privacidade",
   "/area-gratuita",
+  "/primeiro-acesso",           // Onboarding alunos
+  "/primeiro-acesso-funcionario", // Onboarding funcionários (v10.4.2)
+  "/perfil-incompleto",
+  "/security/device-limit",
+  "/security/same-type-replacement",
 ];
 
 // ============================================

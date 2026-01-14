@@ -1,11 +1,13 @@
 // ============================================
 // HOOK: VERIFICAÇÃO DE ONBOARDING
 // Verifica se usuário completou primeiro acesso
+// v10.4.2: Agora retorna redirectPath separado para funcionários
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { isGestaoRole } from "@/core/urlAccessControl";
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
 
@@ -18,11 +20,13 @@ interface OnboardingStatus {
   uiThemeSelected: boolean;
   passwordDefined: boolean;
   trustedDeviceRegistered: boolean;
+  // v10.4.2: Path correto para onboarding baseado no role
+  onboardingRedirectPath: string;
 }
 
 export function useOnboardingStatus(): OnboardingStatus {
-  const { user } = useAuth();
-  const [status, setStatus] = useState<Omit<OnboardingStatus, 'needsOnboarding'>>({
+  const { user, role } = useAuth();
+  const [status, setStatus] = useState<Omit<OnboardingStatus, 'needsOnboarding' | 'onboardingRedirectPath'>>({
     isLoading: true,
     isComplete: false, // 🔒 P0 FIX: Default FALSE para garantir redirecionamento seguro
     platformStepsCompleted: false,
@@ -35,6 +39,16 @@ export function useOnboardingStatus(): OnboardingStatus {
   const isOwner = useMemo(() => {
     return user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
   }, [user?.email]);
+
+  // 🛡️ v10.4.2: Determinar path de onboarding baseado no role
+  const onboardingRedirectPath = useMemo(() => {
+    // Funcionários (gestão roles) → onboarding separado
+    if (role && isGestaoRole(role)) {
+      return "/primeiro-acesso-funcionario";
+    }
+    // Alunos e demais → onboarding normal
+    return "/primeiro-acesso";
+  }, [role]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -110,5 +124,6 @@ export function useOnboardingStatus(): OnboardingStatus {
   return {
     ...status,
     needsOnboarding: !status.isLoading && !status.isComplete,
+    onboardingRedirectPath,
   };
 }
