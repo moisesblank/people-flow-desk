@@ -237,40 +237,6 @@ function VideoPlayer({
           )}
         </div>
 
-        {/* 🎯 BARRA FLUTUANTE DE KEYS — Responsiva dentro do player */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-2xl">
-          <div className="bg-black/80 backdrop-blur-xl rounded-xl border border-white/20 shadow-[0_0_30px_rgba(0,0,0,0.8)] p-2">
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-              {Object.entries(hubKeyUrls).map(([key, { label, url, color }]) => (
-                <a
-                  key={key}
-                  href={url}
-                  className={cn(
-                    "flex flex-col items-center justify-center gap-1 p-2 rounded-lg transition-all duration-200",
-                    "bg-white/5 hover:bg-white/15 border border-white/10 hover:border-white/30",
-                    "hover:scale-105 transform-gpu"
-                  )}
-                >
-                  <div className={cn(
-                    "w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center bg-gradient-to-br shadow-lg",
-                    color
-                  )}>
-                    {key === 'cronograma' && <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />}
-                    {key === 'tutoria' && <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />}
-                    {key === 'questoes' && <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />}
-                    {key === 'simulados' && <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />}
-                    {key === 'materiais' && <BrainCircuit className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />}
-                    {key === 'livros' && <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />}
-                  </div>
-                  <span className="text-[9px] sm:text-[10px] text-white/80 font-medium truncate max-w-full">
-                    {label}
-                  </span>
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* 🔒 OMEGA FORTRESS PLAYER com Overlay */}
         <OmegaFortressPlayer
           videoId={videoId}
