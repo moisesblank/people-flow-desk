@@ -387,6 +387,9 @@ export default function GestaoQuestoesErrosMoisa() {
               <CardTitle className="text-sm font-medium text-blue-400 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4" />
                 Critérios de Detecção Automática
+                <Badge variant="outline" className="ml-2 text-xs border-blue-400/50 text-blue-300">
+                  Basta 1 para aparecer
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
