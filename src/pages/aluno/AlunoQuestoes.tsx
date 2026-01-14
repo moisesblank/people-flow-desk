@@ -27,7 +27,8 @@ import {
   Clock, Trophy, BookOpen, Loader2,
   ArrowLeft, ArrowRight, RotateCcw,
   Lightbulb, AlertCircle, Star, Play,
-  TrendingUp, BarChart3, Filter, Sparkles
+  TrendingUp, BarChart3, Filter, Sparkles,
+  FileText
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -43,6 +44,7 @@ import { useTaxonomyForSelects } from "@/hooks/useQuestionTaxonomy";
 import { QuestionBadgesCompact } from "@/components/shared/QuestionMetadataBadges";
 import { TreinoReviewModal } from "@/components/aluno/questoes/TreinoReviewModal";
 import { StudentPerformanceAnalytics } from "@/components/aluno/questoes/StudentPerformanceAnalytics";
+import { ModoProvaModal } from "@/components/aluno/questoes/ModoProvaModal";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 import { ReportQuestionError } from "@/components/shared/ReportQuestionError";
 
@@ -992,6 +994,11 @@ export default function AlunoQuestoes() {
   const [treinoReviewAnswers, setTreinoReviewAnswers] = useState<Record<string, { answer: string; isCorrect: boolean }>>({});
   const [treinoReviewResults, setTreinoReviewResults] = useState({ correct: 0, total: 0 });
   
+  // BLOCK_MODO_PROVA: Modo Prova state
+  const [modoProvaOpen, setModoProvaOpen] = useState(false);
+  const [modoProvaQuestions, setModoProvaQuestions] = useState<Question[]>([]);
+  const [isLoadingModoProva, setIsLoadingModoProva] = useState(false);
+  
   // BLOCK_PAGINATION: Paginação server-side (ESCALA 5000+)
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 3;
@@ -1349,6 +1356,57 @@ export default function AlunoQuestoes() {
     
     const percentage = Math.round((results.correct / results.total) * 100);
     toast.success(`Treino concluído! ${results.correct}/${results.total} (${percentage}%) — Veja as resoluções abaixo.`);
+  }, [rapidoTreinoQuestions, queryClient]);
+
+  // BLOCK_MODO_PROVA: Handler para iniciar Modo Prova
+  const handleStartModoProva = useCallback(async () => {
+    setIsLoadingModoProva(true);
+    
+    try {
+      let query = supabase
+        .from('quiz_questions')
+        .select('*')
+        .contains('tags', ['MODO_TREINO'])
+        .eq('is_active', true)
+        .not('question_text', 'is', null)
+        .neq('question_text', '')
+        .not('explanation', 'is', null)
+        .neq('explanation', '')
+        .not('question_type', 'is', null)
+        .neq('question_type', '');
+
+      if (filterMacro !== 'todas') query = query.eq('macro', getMacroLabelForDb(filterMacro));
+      if (filterMicro !== 'todas') query = query.eq('micro', getMicroLabelForDb(filterMacro, filterMicro));
+      if (filterTema !== 'todas') query = query.eq('tema', getTemaLabelForDb(filterMicro, filterTema));
+      if (filterSubtema !== 'todas') query = query.eq('subtema', getSubtemaLabelForDb(filterTema, filterSubtema));
+      if (dificuldade !== 'todas') query = query.eq('difficulty', dificuldade);
+      if (banca !== 'todas') query = query.eq('banca', banca);
+      if (anoFilter !== 'todas') query = query.eq('ano', parseInt(anoFilter));
+
+      const { data, error } = await query.order('created_at', { ascending: false }).limit(RAPIDO_TREINO_LIMIT);
+
+      if (error) throw error;
+
+      const mapped = (data || []).map(q => ({
+        ...q,
+        options: Array.isArray(q.options) ? (q.options as unknown as QuestionOption[]) : [],
+        difficulty: (q.difficulty || 'medio') as "facil" | "medio" | "dificil",
+      })) as Question[];
+
+      if (mapped.length === 0) {
+        toast.error('Nenhuma questão disponível com esses filtros');
+        return;
+      }
+
+      setModoProvaQuestions(mapped);
+      setModoProvaOpen(true);
+    } catch (err) {
+      console.error('Erro ao carregar Modo Prova:', err);
+      toast.error('Erro ao carregar questões');
+    } finally {
+      setIsLoadingModoProva(false);
+    }
+  }, [filterMacro, filterMicro, filterTema, filterSubtema, dificuldade, banca, anoFilter, getMacroLabelForDb, getMicroLabelForDb, getTemaLabelForDb, getSubtemaLabelForDb]);
   }, [rapidoTreinoQuestions, queryClient]);
 
   // Handler: Reset de tentativa (Tentar Novamente do Zero)
@@ -2026,11 +2084,19 @@ export default function AlunoQuestoes() {
               {isLoadingTreino ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5 fill-current" />}
               Criar Questões ({isAnyFilterActive ? Math.min(totalCount, RAPIDO_TREINO_LIMIT) : 0})
             </Button>
-          </div>
-
-          {/* VIRTUALIZAÇÃO PERMANENTE - Renderiza apenas itens visíveis */}
-          <VirtualizedStudentQuestionList
-            questions={filteredQuestions}
+            
+            {/* Botão Modo Prova */}
+            <Button 
+              onClick={handleStartModoProva}
+              disabled={isLoadingModoProva || !isAnyFilterActive || totalCount === 0}
+              className={cn(
+                "gap-2 px-6 py-2.5 h-auto bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 hover:from-cyan-400 hover:via-blue-400 hover:to-cyan-400 text-white font-semibold tracking-wide shadow-lg shadow-cyan-500/25",
+                !isAnyFilterActive && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              {isLoadingModoProva ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
+              📄 Modo Prova
+            </Button>
             attemptsByQuestion={attemptsByQuestion}
             onOpenQuestion={handleOpenQuestion}
             onResetAttempt={handleResetAttempt}
