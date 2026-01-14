@@ -530,6 +530,293 @@ function CronogramasGestaoCards({
   );
 }
 
+// ============================================
+// 🎬 CRONOGRAMA VIDEOAULAS MODAL
+// Modal para vincular videoaulas ao cronograma selecionado
+// ============================================
+interface CronogramaVideoaulasModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  cronogramaId: string | null;
+  existingLessons: ExistingLesson[];
+  weeks: PlanningWeek[];
+  planningLessons: PlanningLesson[];
+}
+
+function CronogramaVideoaulasModal({
+  open,
+  onOpenChange,
+  cronogramaId,
+  existingLessons,
+  weeks,
+  planningLessons,
+}: CronogramaVideoaulasModalProps) {
+  const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedLessons, setSelectedLessons] = useState<Set<string>>(new Set());
+  const [isLinking, setIsLinking] = useState(false);
+  
+  // Find cronograma config
+  const cronogramaConfig = CRONOGRAMAS_CONFIG.find(c => c.id === cronogramaId);
+  
+  // Filter existing lessons by search
+  const filteredLessons = useMemo(() => {
+    if (!searchQuery) return existingLessons;
+    const query = searchQuery.toLowerCase();
+    return existingLessons.filter(
+      l => l.title.toLowerCase().includes(query) ||
+           l.module?.title?.toLowerCase().includes(query) ||
+           l.area?.name?.toLowerCase().includes(query)
+    );
+  }, [existingLessons, searchQuery]);
+  
+  // Group lessons by module
+  const groupedLessons = useMemo(() => {
+    const groups: Record<string, ExistingLesson[]> = {};
+    filteredLessons.forEach(lesson => {
+      const moduleName = lesson.module?.title || lesson.area?.name || "Sem Categoria";
+      if (!groups[moduleName]) groups[moduleName] = [];
+      groups[moduleName].push(lesson);
+    });
+    return groups;
+  }, [filteredLessons]);
+  
+  // Get already linked lesson IDs for this cronograma
+  const linkedLessonIds = useMemo(() => {
+    const cronogramaWeeks = weeks.filter(w => {
+      if (cronogramaId === 'fevereiro') return w.status === 'active';
+      return w.title.toLowerCase().includes(cronogramaId || '');
+    });
+    const weekIds = new Set(cronogramaWeeks.map(w => w.id));
+    return new Set(
+      planningLessons
+        .filter(l => weekIds.has(l.week_id))
+        .map(l => l.video_url || l.title)
+    );
+  }, [weeks, planningLessons, cronogramaId]);
+  
+  const toggleLesson = (lessonId: string) => {
+    setSelectedLessons(prev => {
+      const next = new Set(prev);
+      if (next.has(lessonId)) {
+        next.delete(lessonId);
+      } else {
+        next.add(lessonId);
+      }
+      return next;
+    });
+  };
+  
+  const handleLinkLessons = async () => {
+    if (selectedLessons.size === 0) {
+      toast.error("Selecione pelo menos uma videoaula");
+      return;
+    }
+    
+    // Find the first active week for this cronograma
+    const targetWeek = weeks.find(w => {
+      if (cronogramaId === 'fevereiro') return w.status === 'active';
+      return w.title.toLowerCase().includes(cronogramaId || '');
+    });
+    
+    if (!targetWeek) {
+      toast.error("Nenhuma semana encontrada para este cronograma. Crie uma semana primeiro.");
+      return;
+    }
+    
+    setIsLinking(true);
+    
+    try {
+      const lessonsToInsert = Array.from(selectedLessons).map((lessonId, index) => {
+        const lesson = existingLessons.find(l => l.id === lessonId);
+        if (!lesson) return null;
+        
+        const videoUrl = lesson.video_url || 
+          (lesson.panda_video_id ? `https://player-vz-7a0cccc3-0dc.tv.pandavideo.com.br/embed/?v=${lesson.panda_video_id}` : "");
+        
+        return {
+          week_id: targetWeek.id,
+          title: lesson.title,
+          video_url: videoUrl,
+          video_provider: lesson.panda_video_id ? 'panda' : 'youtube',
+          duration_minutes: lesson.duration_minutes || 30,
+          position: planningLessons.filter(l => l.week_id === targetWeek.id).length + index + 1,
+          lesson_type: 'video' as const,
+          is_required: true,
+          xp_reward: 10,
+        };
+      }).filter(Boolean);
+      
+      if (lessonsToInsert.length === 0) {
+        toast.error("Nenhuma videoaula válida para vincular");
+        return;
+      }
+      
+      const { error } = await supabase
+        .from("planning_lessons")
+        .insert(lessonsToInsert);
+      
+      if (error) throw error;
+      
+      toast.success(`${lessonsToInsert.length} videoaula(s) vinculada(s) com sucesso!`);
+      queryClient.invalidateQueries({ queryKey: ["planning-lessons"] });
+      setSelectedLessons(new Set());
+      onOpenChange(false);
+    } catch (error: any) {
+      toast.error("Erro ao vincular: " + error.message);
+    } finally {
+      setIsLinking(false);
+    }
+  };
+  
+  if (!cronogramaConfig) return null;
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-20 rounded-lg overflow-hidden shrink-0">
+              <img 
+                src={cronogramaConfig.image} 
+                alt={cronogramaConfig.title}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div>
+              <DialogTitle className="flex items-center gap-2">
+                <Video className="h-5 w-5 text-primary" />
+                Vincular Videoaulas
+              </DialogTitle>
+              <DialogDescription className="mt-1">
+                {cronogramaConfig.title} • {cronogramaConfig.highlight}
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+        
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar videoaulas..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
+        {/* Selection Summary */}
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">
+            {filteredLessons.length} videoaulas disponíveis
+          </span>
+          <Badge variant={selectedLessons.size > 0 ? "default" : "secondary"}>
+            {selectedLessons.size} selecionada(s)
+          </Badge>
+        </div>
+        
+        {/* Lessons List */}
+        <ScrollArea className="flex-1 min-h-[300px] max-h-[400px] border rounded-lg">
+          <div className="p-4 space-y-4">
+            {Object.entries(groupedLessons).map(([moduleName, moduleLessons]) => (
+              <div key={moduleName} className="space-y-2">
+                <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                  <BookOpen className="h-3.5 w-3.5" />
+                  {moduleName}
+                </h4>
+                <div className="space-y-1 pl-5">
+                  {moduleLessons.map(lesson => {
+                    const isLinked = linkedLessonIds.has(lesson.video_url || lesson.title);
+                    const isSelected = selectedLessons.has(lesson.id);
+                    
+                    return (
+                      <div
+                        key={lesson.id}
+                        onClick={() => !isLinked && toggleLesson(lesson.id)}
+                        className={cn(
+                          "flex items-center gap-3 p-2 rounded-lg transition-all cursor-pointer",
+                          isLinked 
+                            ? "bg-green-500/10 border border-green-500/30 cursor-not-allowed opacity-60"
+                            : isSelected
+                              ? "bg-primary/10 border border-primary/30"
+                              : "hover:bg-muted border border-transparent"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-5 h-5 rounded border-2 flex items-center justify-center transition-all shrink-0",
+                          isLinked 
+                            ? "bg-green-500 border-green-500"
+                            : isSelected 
+                              ? "bg-primary border-primary" 
+                              : "border-muted-foreground/30"
+                        )}>
+                          {(isLinked || isSelected) && (
+                            <CheckCircle2 className="h-3 w-3 text-white" />
+                          )}
+                        </div>
+                        
+                        <Video className={cn(
+                          "h-4 w-4 shrink-0",
+                          isLinked ? "text-green-500" : "text-primary"
+                        )} />
+                        
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{lesson.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {lesson.duration_minutes || 0} min
+                            {lesson.panda_video_id && " • Panda Video"}
+                          </p>
+                        </div>
+                        
+                        {isLinked && (
+                          <Badge variant="outline" className="text-green-500 border-green-500/30 text-[10px]">
+                            JÁ VINCULADA
+                          </Badge>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            
+            {Object.keys(groupedLessons).length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>Nenhuma videoaula encontrada</p>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+        
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleLinkLessons} 
+            disabled={selectedLessons.size === 0 || isLinking}
+            className="gap-2"
+          >
+            {isLinking ? (
+              <>
+                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                Vinculando...
+              </>
+            ) : (
+              <>
+                <Link2 className="h-4 w-4" />
+                Vincular {selectedLessons.size > 0 && `(${selectedLessons.size})`}
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // Week Card Component
 function WeekCard({ 
   week, 
@@ -1385,6 +1672,7 @@ export default function GestaoPlanejamento() {
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingWeek, setEditingWeek] = useState<PlanningWeek | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<PlanningWeek | null>(null);
+  const [selectedCronograma, setSelectedCronograma] = useState<string | null>(null);
 
   // Fetch weeks
   const { data: weeks = [], isLoading: weeksLoading } = useQuery({
@@ -1633,11 +1921,7 @@ export default function GestaoPlanejamento() {
         <CronogramasGestaoCards 
           weeks={weeks}
           onSelectCronograma={(id) => {
-            toast.info(`Gerenciando cronograma: ${id.toUpperCase()}`);
-            // Filtrar semanas por cronograma selecionado
-            if (id === 'fevereiro') {
-              setStatusFilter("active");
-            }
+            setSelectedCronograma(id);
           }}
         />
 
@@ -1758,6 +2042,16 @@ export default function GestaoPlanejamento() {
           onAddLesson={(data) => createLessonMutation.mutate(data)}
           onDeleteLesson={(id) => deleteLessonMutation.mutate(id)}
           isLoading={createLessonMutation.isPending}
+        />
+
+        {/* Cronograma Videoaulas Modal */}
+        <CronogramaVideoaulasModal
+          open={selectedCronograma !== null}
+          onOpenChange={(open) => !open && setSelectedCronograma(null)}
+          cronogramaId={selectedCronograma}
+          existingLessons={existingLessons}
+          weeks={weeks}
+          planningLessons={lessons}
         />
       </div>
     </div>
