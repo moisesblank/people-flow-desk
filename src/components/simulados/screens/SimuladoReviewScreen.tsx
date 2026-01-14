@@ -126,16 +126,17 @@ function QuestionMetadata({ question, isLowEnd }: { question: SimuladoQuestion; 
     dificil: { label: 'Difícil', class: 'border-red-500/50 text-red-400 bg-red-500/10', glow: 'shadow-[0_0_10px_rgba(239,68,68,0.3)]' },
   };
 
-  const macroConfig: Record<string, { icon: string; class: string }> = {
-    'Química Geral': { icon: '⚗️', class: 'bg-amber-500/20 text-amber-400 border-amber-500/40' },
-    'Química Orgânica': { icon: '🧪', class: 'bg-purple-500/20 text-purple-400 border-purple-500/40' },
-    'Físico-Química': { icon: '📊', class: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40' },
-    'Química Ambiental': { icon: '🌍', class: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' },
-    'Bioquímica': { icon: '🧬', class: 'bg-pink-500/20 text-pink-400 border-pink-500/40' },
+  // Configurações visuais para macros (ZERO EMOJIS - Constituição v10.4)
+  const macroConfig: Record<string, { class: string }> = {
+    'Química Geral': { class: 'bg-amber-500/20 text-amber-400 border-amber-500/40' },
+    'Química Orgânica': { class: 'bg-purple-500/20 text-purple-400 border-purple-500/40' },
+    'Físico-Química': { class: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40' },
+    'Química Ambiental': { class: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' },
+    'Bioquímica': { class: 'bg-pink-500/20 text-pink-400 border-pink-500/40' },
   };
 
   const diff = question.difficulty ? difficultyConfig[question.difficulty] : null;
-  const macro = question.macro ? macroConfig[question.macro] || { icon: '⚗️', class: 'bg-amber-500/20 text-amber-400 border-amber-500/40' } : null;
+  const macro = question.macro ? macroConfig[question.macro] || { class: 'bg-amber-500/20 text-amber-400 border-amber-500/40' } : null;
   
   return (
     <div className="space-y-3 mb-6">
@@ -162,7 +163,7 @@ function QuestionMetadata({ question, isLowEnd }: { question: SimuladoQuestion; 
         )}
         {question.macro && macro && (
           <Badge variant="outline" className={cn("text-xs font-medium px-3 py-1", macro.class)}>
-            {macro.icon} {question.macro}
+            {question.macro}
           </Badge>
         )}
       </div>

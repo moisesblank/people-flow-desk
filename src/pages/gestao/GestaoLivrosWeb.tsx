@@ -124,17 +124,18 @@ interface WebBookAdmin {
 // CATEGORIAS
 // ============================================
 
+// CATEGORIES — ZERO EMOJIS (Constituição v10.4)
 const CATEGORIES = [
-  { value: 'quimica_geral', label: '⚗️ Química Geral' },
-  { value: 'quimica_organica', label: '🧪 Química Orgânica' },
-  { value: 'fisico_quimica', label: '📊 Físico-Química' },
-  { value: 'revisao_ciclica', label: '🔄 Revisão Cíclica' },
-  { value: 'previsao_final', label: '🎯 Previsão Final' },
-  { value: 'exercicios', label: '✏️ Exercícios' },
-  { value: 'simulados', label: '📝 Simulados' },
-  { value: 'resumos', label: '📋 Resumos' },
-  { value: 'mapas_mentais', label: '🧠 Mapas Mentais' },
-  { value: 'outros', label: '📚 Outros' },
+  { value: 'quimica_geral', label: 'Química Geral' },
+  { value: 'quimica_organica', label: 'Química Orgânica' },
+  { value: 'fisico_quimica', label: 'Físico-Química' },
+  { value: 'revisao_ciclica', label: 'Revisão Cíclica' },
+  { value: 'previsao_final', label: 'Previsão Final' },
+  { value: 'exercicios', label: 'Exercícios' },
+  { value: 'simulados', label: 'Simulados' },
+  { value: 'resumos', label: 'Resumos' },
+  { value: 'mapas_mentais', label: 'Mapas Mentais' },
+  { value: 'outros', label: 'Outros' },
 ];
 
 const STATUS_MAP: Record<string, { label: string; color: string; icon: React.ElementType }> = {

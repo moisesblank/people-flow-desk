@@ -204,12 +204,13 @@ const BANCAS_FILTERS: CardFilter[] = [
 
 // 5 MACROS Químicos — valores CANÔNICOS (slug) para espelhar /alunos/materiais
 // (o label exibido segue humano; o value precisa bater com MaterialsFilteredView.eq('macro', filterValue))
+// ZERO EMOJIS (Constituição v10.4)
 const MACRO_FILTERS: CardFilter[] = [
-  { value: 'quimica_geral', label: '⚗️ Química Geral' },
-  { value: 'fisico_quimica', label: '⚡ Físico-Química' },
-  { value: 'quimica_organica', label: '🧪 Química Orgânica' },
-  { value: 'quimica_ambiental', label: '🌿 Química Ambiental' },
-  { value: 'bioquimica', label: '🧬 Bioquímica' },
+  { value: 'quimica_geral', label: 'Química Geral' },
+  { value: 'fisico_quimica', label: 'Físico-Química' },
+  { value: 'quimica_organica', label: 'Química Orgânica' },
+  { value: 'quimica_ambiental', label: 'Química Ambiental' },
+  { value: 'bioquimica', label: 'Bioquímica' },
 ];
 // 5 HUB CARDS — Exatamente igual a /alunos/materiais
 const HUB_CARDS: HubCard[] = [
