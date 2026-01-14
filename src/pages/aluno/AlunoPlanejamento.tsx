@@ -394,8 +394,6 @@ function LessonsSidebar({
   lessonProgress: Record<string, LessonProgress>;
   weekProgress: WeekProgress | undefined;
 }) {
-  const [isOpen, setIsOpen] = useState(true);
-  
   const completedCount = lessons.filter(l => lessonProgress[l.id]?.is_completed).length;
   const progressPercent = lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
   const remainingMinutes = lessons
@@ -404,70 +402,80 @@ function LessonsSidebar({
 
   return (
     <div className="relative rounded-2xl overflow-hidden group/sidebar">
-      {/* Holographic outer glow */}
-      <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-primary/60 via-holo-purple/40 to-holo-cyan/50 opacity-50 group-hover/sidebar:opacity-70 transition-opacity duration-500" />
+      {/* 🎬 NETFLIX PREMIUM OUTER GLOW - Cinematographic */}
+      <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-b from-destructive/80 via-primary/50 to-holo-cyan/60 opacity-60 group-hover/sidebar:opacity-90 transition-opacity duration-500 blur-[1px]" />
       
-      <Card className="relative border-0 overflow-hidden bg-gradient-to-b from-card via-card/98 to-card/95">
-        {/* Top accent line */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-holo-purple to-holo-cyan" />
+      <Card className="relative border-0 overflow-hidden bg-gradient-to-b from-[#0a0a0f] via-card to-card/95">
+        {/* 🔴 Netflix Red Accent Line */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-destructive via-primary to-destructive" />
         
-        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gradient-to-r hover:from-primary/10 hover:via-holo-purple/5 hover:to-transparent transition-all duration-500 pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="p-3 rounded-xl bg-gradient-to-br from-primary/30 via-primary/20 to-holo-purple/10 border border-primary/40 shadow-[0_0_25px_hsl(var(--primary)/0.3)]">
-                      <Video className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-br from-success to-success/80 border-2 border-card flex items-center justify-center shadow-[0_0_10px_hsl(var(--success)/0.5)]">
-                      <span className="text-[8px] text-white font-bold">{completedCount}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg font-black bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text">
-                      Semana {week.week_number}
-                    </CardTitle>
-                    <CardDescription className="text-sm font-medium text-primary/80">
-                      {week.title}
-                    </CardDescription>
-                  </div>
-                </div>
-                <div className={`p-2 rounded-xl transition-all duration-300 ${isOpen ? 'bg-primary/20 rotate-180' : 'bg-muted/50'}`}>
-                  <ChevronDown className={`h-5 w-5 ${isOpen ? 'text-primary' : 'text-muted-foreground'}`} />
-                </div>
+        {/* Scanline effect */}
+        <div className="absolute inset-0 bg-[linear-gradient(0deg,transparent_49%,hsl(var(--primary)/0.02)_50%,transparent_51%)] bg-[length:100%_4px] pointer-events-none" />
+        
+        {/* 🎬 WEEK HEADER - Premium Netflix Style */}
+        <div className="relative p-5 border-b border-primary/20">
+          {/* Background glow */}
+          <div className="absolute inset-0 bg-gradient-to-br from-destructive/10 via-transparent to-primary/5" />
+          
+          <div className="relative flex items-center gap-4">
+            {/* Icon Container - Netflix Red */}
+            <div className="relative">
+              <div className="p-3.5 rounded-xl bg-gradient-to-br from-destructive/30 via-destructive/20 to-primary/10 border border-destructive/50 shadow-[0_0_30px_hsl(var(--destructive)/0.4)]">
+                <Video className="h-7 w-7 text-destructive" />
               </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-
-          {/* Progress Bar - HOLOGRAPHIC */}
-          <div className="px-5 pb-5">
-            <div className="p-4 rounded-xl bg-gradient-to-r from-muted/40 via-muted/20 to-transparent border border-border/30">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Progresso</span>
-                <span className="text-lg font-black bg-gradient-to-r from-primary to-holo-purple bg-clip-text text-transparent">{progressPercent}%</span>
-              </div>
-              <div className="h-3 bg-muted/50 rounded-full overflow-hidden ring-1 ring-white/10">
-                <div 
-                  className="h-full bg-gradient-to-r from-primary via-holo-purple to-holo-cyan rounded-full transition-all duration-700 shadow-[0_0_20px_hsl(var(--primary)/0.5)]"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-              <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                  {completedCount}/{lessons.length} aulas
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-primary" />
-                  {remainingMinutes} min restantes
-                </span>
+              {/* Episode count badge */}
+              <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-gradient-to-br from-success to-emerald-600 border-2 border-card flex items-center justify-center shadow-[0_0_15px_hsl(var(--success)/0.6)]">
+                <span className="text-[10px] text-white font-black">{completedCount}/{lessons.length}</span>
               </div>
             </div>
+            
+            {/* Week Title - Cinematic */}
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-destructive/80">SEMANA</span>
+                <span className="text-xl font-black text-foreground">{week.week_number}</span>
+              </div>
+              <h3 className="text-sm font-semibold text-foreground/80 line-clamp-1">
+                {week.title}
+              </h3>
+            </div>
           </div>
+          
+          {/* 📊 PROGRESS BAR - Inline Premium */}
+          <div className="mt-4 p-3 rounded-xl bg-gradient-to-r from-black/40 via-black/20 to-transparent border border-white/5">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Progresso</span>
+              <span className="text-base font-black bg-gradient-to-r from-destructive to-primary bg-clip-text text-transparent">{progressPercent}%</span>
+            </div>
+            <div className="h-2 bg-black/50 rounded-full overflow-hidden ring-1 ring-white/5">
+              <div 
+                className="h-full bg-gradient-to-r from-destructive via-primary to-holo-cyan rounded-full transition-all duration-700 shadow-[0_0_15px_hsl(var(--destructive)/0.5)]"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3 text-success" />
+                {completedCount} concluídas
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3 text-primary" />
+                {remainingMinutes}min restantes
+              </span>
+            </div>
+          </div>
+        </div>
 
-          <CollapsibleContent>
-            <ScrollArea className="h-[420px]">
+        {/* 📺 EPISODES LABEL - Netflix Style */}
+        <div className="px-5 pt-4 pb-2">
+          <div className="flex items-center gap-2">
+            <Play className="h-4 w-4 text-destructive" />
+            <span className="text-xs font-bold uppercase tracking-[0.15em] text-foreground/70">Episódios da Semana</span>
+          </div>
+        </div>
+
+        {/* 📺 LESSONS LIST */}
+        <ScrollArea className="h-[380px]">
               <div className="px-4 pb-4 space-y-2">
                 {lessons.map((lesson, index) => {
                   const progress = lessonProgress[lesson.id];
@@ -552,8 +560,6 @@ function LessonsSidebar({
                 })}
               </div>
             </ScrollArea>
-          </CollapsibleContent>
-        </Collapsible>
       </Card>
     </div>
   );
