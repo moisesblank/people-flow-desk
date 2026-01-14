@@ -9174,6 +9174,57 @@ export type Database = {
           },
         ]
       }
+      question_error_reports: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          error_message: string
+          id: string
+          question_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          simulado_id: string | null
+          source_page: string | null
+          status: string
+          updated_at: string
+          user_email: string | null
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          error_message: string
+          id?: string
+          question_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          simulado_id?: string | null
+          source_page?: string | null
+          status?: string
+          updated_at?: string
+          user_email?: string | null
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          error_message?: string
+          id?: string
+          question_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          simulado_id?: string | null
+          source_page?: string | null
+          status?: string
+          updated_at?: string
+          user_email?: string | null
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       question_import_history: {
         Row: {
           campos_inferidos: string[] | null
