@@ -1407,7 +1407,6 @@ export default function AlunoQuestoes() {
       setIsLoadingModoProva(false);
     }
   }, [filterMacro, filterMicro, filterTema, filterSubtema, dificuldade, banca, anoFilter, getMacroLabelForDb, getMicroLabelForDb, getTemaLabelForDb, getSubtemaLabelForDb]);
-  }, [rapidoTreinoQuestions, queryClient]);
 
   // Handler: Reset de tentativa (Tentar Novamente do Zero)
   const [resettingQuestionId, setResettingQuestionId] = useState<string | null>(null);
@@ -2097,6 +2096,11 @@ export default function AlunoQuestoes() {
               {isLoadingModoProva ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileText className="w-5 h-5" />}
               📄 Modo Prova
             </Button>
+          </div>
+
+          {/* Lista de Questões */}
+          <VirtualizedStudentQuestionList
+            questions={filteredQuestions}
             attemptsByQuestion={attemptsByQuestion}
             onOpenQuestion={handleOpenQuestion}
             onResetAttempt={handleResetAttempt}
