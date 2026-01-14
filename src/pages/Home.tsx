@@ -23,7 +23,7 @@ const AppExclusivoSection = lazy(() => import("@/components/landing/AppExclusivo
 const FirstPlaceShowcase = lazy(() => import("@/components/landing/FirstPlaceShowcase").then(m => ({ default: m.FirstPlaceShowcase })));
 const ApprovedCarousel = lazy(() => import("@/components/landing/ApprovedCarousel").then(m => ({ default: m.ApprovedCarousel })));
 const VideoFeedbackCarousel = lazy(() => import("@/components/landing/VideoFeedbackCarousel").then(m => ({ default: m.VideoFeedbackCarousel })));
-const TestimonialsSection = lazy(() => import("@/components/landing/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
+
 const FeaturesSection = lazy(() => import("@/components/landing/FeaturesSection").then(m => ({ default: m.FeaturesSection })));
 const MaterialSection = lazy(() => import("@/components/landing/MaterialSection").then(m => ({ default: m.MaterialSection })));
 
@@ -156,7 +156,6 @@ const Home = () => {
           <LazySection><FirstPlaceShowcase /></LazySection>
           <LazySection><ApprovedCarousel /></LazySection>
           <LazySection><VideoFeedbackCarousel /></LazySection>
-          <LazySection><TestimonialsSection /></LazySection>
           <LazySection><FeaturesSection /></LazySection>
           <LazySection><MaterialSection /></LazySection>
           <LazySection><CoursesSection /></LazySection>
@@ -183,7 +182,7 @@ const Home = () => {
           <LazySection><FirstPlaceShowcase /></LazySection>
           <LazySection><ApprovedCarousel /></LazySection>
           <LazySection><VideoFeedbackCarousel /></LazySection>
-          <LazySection><TestimonialsSection /></LazySection>
+          
           <LazySection><FeaturesSection /></LazySection>
           <LazySection><MaterialSection /></LazySection>
           
