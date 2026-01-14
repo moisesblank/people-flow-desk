@@ -13,7 +13,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// P1-2 FIX: OWNER_EMAIL removido - usar role='owner' do banco
 
 serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
@@ -55,16 +55,15 @@ serve(async (req) => {
       });
     }
 
-    // Verificar se é o OWNER
+    // P1-2 FIX: Verificar role no banco (fonte da verdade)
     const { data: ownerRole } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .eq('role', 'owner')
       .maybeSingle();
 
-    if (!ownerRole && user.email?.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
-      console.log(`[FIX-BETA] ❌ Acesso negado para: ${user.email}`);
+    if (ownerRole?.role !== 'owner') {
+      console.log(`[FIX-BETA] ❌ Acesso negado para: ${user.email} (role: ${ownerRole?.role})`);
       return new Response(JSON.stringify({ 
         error: "Apenas o OWNER pode executar esta função" 
       }), {

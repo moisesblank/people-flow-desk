@@ -132,7 +132,7 @@ interface WebBookReaderProps {
 // ============================================
 // CONSTANTES
 // ============================================
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// P1-2 FIX: OWNER_EMAIL removido - usar role='owner'
 const PAGE_REFRESH_INTERVAL_MS = 45000;
 const AUTO_SAVE_INTERVAL_MS = 30000;
 const EDGE_CLICK_WIDTH = 80;
@@ -195,11 +195,12 @@ export const WebBookReader = memo(({
   const readingStartRef = useRef<number>(Date.now());
   const pageRefreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const { session: authSession } = useAuth();
+  const { session: authSession, role } = useAuth();
   
+  // P1-2 FIX: Role como fonte da verdade
   const isOwner = useMemo(() => {
-    return authSession?.user?.email?.toLowerCase() === OWNER_EMAIL;
-  }, [authSession]);
+    return role === 'owner';
+  }, [role]);
 
   // ============================================
   // BUSCAR DADOS DO LIVRO

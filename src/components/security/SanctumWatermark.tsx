@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 // ============================================
 // CONSTANTES
 // ============================================
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// P1-2 FIX: OWNER_EMAIL removido - usar role='owner'
 const UPDATE_INTERVAL_MS = 15000; // 15 segundos
 
 // Detectar dispositivo
@@ -135,9 +135,11 @@ export const SanctumWatermark = memo(({
   );
 
   // Verificar se é owner (MASTER) - não exibir watermark
+  // P1-2 FIX: Role como fonte da verdade
+  const { role } = useAuth();
   const isOwner = useMemo(() => {
-    return user?.email?.toLowerCase() === OWNER_EMAIL;
-  }, [user]);
+    return role === 'owner';
+  }, [role]);
 
   // Session ID (externo ou gerado)
   const sessionId = useMemo(() => {
