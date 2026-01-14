@@ -9110,6 +9110,7 @@ export type Database = {
           is_correct: boolean
           question_id: string
           selected_answer: string
+          source: string | null
           time_spent_seconds: number | null
           user_id: string
           xp_earned: number | null
@@ -9121,6 +9122,7 @@ export type Database = {
           is_correct: boolean
           question_id: string
           selected_answer: string
+          source?: string | null
           time_spent_seconds?: number | null
           user_id: string
           xp_earned?: number | null
@@ -9132,6 +9134,7 @@ export type Database = {
           is_correct?: boolean
           question_id?: string
           selected_answer?: string
+          source?: string | null
           time_spent_seconds?: number | null
           user_id?: string
           xp_earned?: number | null
