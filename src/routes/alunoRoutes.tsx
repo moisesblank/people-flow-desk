@@ -30,7 +30,7 @@ const AlunoPerfil = lazy(() => import("@/pages/ProfilePage"));
 
 // Placeholders - Named exports
 // UPGRADED: Cronograma Pessoal do Aluno (antes placeholder)
-const AlunoCronograma = lazy(() => import("@/pages/aluno/AlunoCronogramaPersonal"));
+const AlunoPlaner = lazy(() => import("@/pages/aluno/AlunoPlaner"));
 const AlunoMateriais = lazy(() => import("@/pages/aluno/AlunoMateriaisNetflix"));
 const AlunoResumos = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoResumos })));
 const AlunoMapasMentais = lazy(() => import("@/pages/aluno/AlunoMapasMentais"));
@@ -60,7 +60,9 @@ export const alunoRoutes = (
     <Route path="/alunos/livro-web" element={<ProtectedPage><AlunoLivroWeb /></ProtectedPage>} />
     {/* Canonical - Cursos (Mirror Read-Only) */}
     <Route path="/alunos/cursos" element={<ProtectedPage><AlunoCursos /></ProtectedPage>} />
-    <Route path="/alunos/cronograma" element={<ProtectedPage><AlunoCronograma /></ProtectedPage>} />
+    <Route path="/alunos/planer" element={<ProtectedPage><AlunoPlaner /></ProtectedPage>} />
+    {/* Redirect antigo cronograma para planer */}
+    <Route path="/alunos/cronograma" element={<Navigate to="/alunos/planer" replace />} />
     <Route path="/alunos/videoaulas" element={<ProtectedPage><AlunoVideoaulas /></ProtectedPage>} />
     <Route path="/alunos/materiais" element={<ProtectedPage><AlunoMateriais /></ProtectedPage>} />
     <Route path="/alunos/resumos" element={<ProtectedPage><AlunoResumos /></ProtectedPage>} />

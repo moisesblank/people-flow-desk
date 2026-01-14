@@ -474,7 +474,7 @@ export const NAV_ITEMS_COMUNIDADE: NavItem[] = [
 export const NAV_ITEMS_ALUNOS: NavItem[] = [
   // Principal
   { id: "alunos-dashboard", title: "Dashboard", path: "/alunos/dashboard", icon: "LayoutDashboard", roles: ALUNO_ROLES, group: "alunos-principal", order: 1 },
-  { id: "alunos-cronograma", title: "Cronograma", path: "/alunos/cronograma", icon: "Calendar", roles: ALUNO_ROLES, group: "alunos-principal", order: 2 },
+  { id: "alunos-planer", title: "Meu Planer", path: "/alunos/planer", icon: "CalendarCheck", roles: ALUNO_ROLES, group: "alunos-principal", order: 2 },
   { id: "alunos-perfil", title: "Meu Perfil", path: "/alunos/perfil", icon: "User", roles: ALUNO_ROLES, group: "alunos-principal", order: 3 },
   
   // Estudos

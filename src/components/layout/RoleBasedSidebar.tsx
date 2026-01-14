@@ -315,7 +315,7 @@ const alunoMenuGroups: MenuGroup[] = [
       { title: "Livro Web", url: "/alunos/livro-web", icon: BookOpen, area: "aluno-livro-web", badge: "NOVO" },
       { title: "Cursos", url: "/alunos/cursos", icon: GraduationCap, area: "aluno-cursos", badge: "NOVO" },
       { title: "Meu Planejamento", url: "/alunos/planejamento", icon: Target, area: "aluno-planejamento", badge: "NOVO" },
-      { title: "Meu Cronograma", url: "/alunos/cronograma", icon: CalendarDays, area: "aluno-cronograma" },
+      { title: "Meu Planer", url: "/alunos/planer", icon: CalendarDays, area: "aluno-cronograma", badge: "NOVO" },
       // HIDDEN_ITEMS: Videoaulas removida do menu (mantida no sistema)
       // { title: "Videoaulas", url: "/alunos/videoaulas", icon: Video, area: "aluno-videoaulas", badge: "HD" },
       // HIDDEN_ITEMS: Resumos e Mapas Mentais removidos do menu (mantidos no sistema)
