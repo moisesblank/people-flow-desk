@@ -40,6 +40,7 @@ import { SimuladoQuestionNavGrid } from "@/components/simulados/widgets/Simulado
 import { cn } from "@/lib/utils";
 import QuestionTextField from "@/components/shared/QuestionTextField";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
+import { ReportQuestionError } from "@/components/shared/ReportQuestionError";
 
 interface SimuladoRunningScreenProps {
   simulado: Simulado;
@@ -540,7 +541,8 @@ export function SimuladoRunningScreen({
 
                 {/* Alternativas Premium ULTRA */}
                 <div className="space-y-4">
-                  {sortedOptions.map(([key, optionValue], idx) => {
+                  {sortedOptions.map(([key, optionValue], idx, arr) => {
+                    const isLastOption = idx === arr.length - 1;
                     const isSelected = currentAnswer?.selectedOption === key;
                     const isSelecting = selectingOption === key;
                     const isEliminated = currentEliminated.has(key);
@@ -664,6 +666,13 @@ export function SimuladoRunningScreen({
                       </div>
                     );
                   })}
+                  
+                  {/* Reportar Erro - após última alternativa */}
+                  <ReportQuestionError 
+                    questionId={currentQuestion.id}
+                    sourcePage="simulados"
+                    simuladoId={simulado.id}
+                  />
                 </div>
               </div>
 
