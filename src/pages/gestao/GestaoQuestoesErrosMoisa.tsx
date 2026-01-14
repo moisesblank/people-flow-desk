@@ -97,8 +97,9 @@ interface Question {
 }
 
 interface SystemErrorQuestion extends Question {
-  error_type: 'no_text' | 'few_options' | 'no_explanation';
+  error_type: 'no_text' | 'few_options' | 'no_explanation' | 'no_type';
   error_label: string;
+  question_type?: string | null;
 }
 
 const STATUS_CONFIG = {
@@ -142,7 +143,7 @@ export default function GestaoQuestoesErrosMoisa() {
       // Buscar questões com problemas
       let query = supabase
         .from('quiz_questions')
-        .select('id, question_text, options, correct_answer, explanation, macro, micro, difficulty, banca, ano', { count: 'exact' });
+        .select('id, question_text, options, correct_answer, explanation, macro, micro, difficulty, banca, ano, question_type', { count: 'exact' });
 
       // Aplicar filtros de erro
       if (systemFilter === 'no_text') {
@@ -151,9 +152,11 @@ export default function GestaoQuestoesErrosMoisa() {
         // Filtrar no cliente pois é JSONB
       } else if (systemFilter === 'no_explanation') {
         query = query.or('explanation.is.null,explanation.eq.');
+      } else if (systemFilter === 'no_type') {
+        query = query.or('question_type.is.null,question_type.eq.');
       } else {
-        // Todos: sem enunciado OU sem explicação
-        query = query.or('question_text.is.null,question_text.eq.,explanation.is.null,explanation.eq.');
+        // Todos: sem enunciado OU sem explicação OU sem tipo
+        query = query.or('question_text.is.null,question_text.eq.,explanation.is.null,explanation.eq.,question_type.is.null,question_type.eq.');
       }
 
       const { data: questions, error, count } = await query
@@ -171,6 +174,7 @@ export default function GestaoQuestoesErrosMoisa() {
         const hasNoExplanation = !q.explanation || q.explanation.trim() === '';
         const optionsCount = q.options ? Object.keys(q.options).length : 0;
         const hasFewOptions = optionsCount < 4;
+        const hasNoType = !q.question_type || q.question_type.trim() === '';
 
         if (hasNoText) {
           error_type = 'no_text';
@@ -181,22 +185,28 @@ export default function GestaoQuestoesErrosMoisa() {
         } else if (hasNoExplanation) {
           error_type = 'no_explanation';
           error_label = 'Sem Explicação';
+        } else if (hasNoType) {
+          error_type = 'no_type';
+          error_label = 'Sem Tipo/Estilo';
         }
 
         return {
           ...q,
           error_type,
-          error_label
+          error_label,
+          question_type: q.question_type
         } as SystemErrorQuestion;
       });
 
-      // Filtrar few_options no cliente se necessário
+      // Filtrar few_options ou no_type no cliente se necessário
       let filteredQuestions = processedQuestions;
       if (systemFilter === 'few_options') {
         filteredQuestions = processedQuestions.filter(q => {
           const optionsCount = q.options ? Object.keys(q.options).length : 0;
           return optionsCount < 4;
         });
+      } else if (systemFilter === 'no_type') {
+        filteredQuestions = processedQuestions.filter(q => !q.question_type || q.question_type.trim() === '');
       }
 
       return {
@@ -393,7 +403,7 @@ export default function GestaoQuestoesErrosMoisa() {
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                 <div className="flex items-start gap-2">
                   <Badge variant="outline" className="border-red-500/50 text-red-400 shrink-0">1</Badge>
                   <div>
@@ -415,6 +425,13 @@ export default function GestaoQuestoesErrosMoisa() {
                     <p className="text-muted-foreground text-xs">Campo `explanation` vazio ou nulo</p>
                   </div>
                 </div>
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="border-purple-500/50 text-purple-400 shrink-0">4</Badge>
+                  <div>
+                    <p className="font-medium text-foreground">Sem Tipo/Estilo</p>
+                    <p className="text-muted-foreground text-xs">Campo `question_type` vazio ou nulo</p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -429,7 +446,7 @@ export default function GestaoQuestoesErrosMoisa() {
                   setSystemPage(1);
                 }}
               >
-                <SelectTrigger className="w-full md:w-[250px]">
+                <SelectTrigger className="w-full md:w-[280px]">
                   <SelectValue placeholder="Filtrar por tipo de erro" />
                 </SelectTrigger>
                 <SelectContent>
@@ -437,6 +454,7 @@ export default function GestaoQuestoesErrosMoisa() {
                   <SelectItem value="no_text">Sem Enunciado</SelectItem>
                   <SelectItem value="few_options">Poucas Alternativas (&lt;4)</SelectItem>
                   <SelectItem value="no_explanation">Sem Explicação</SelectItem>
+                  <SelectItem value="no_type">Sem Tipo/Estilo</SelectItem>
                 </SelectContent>
               </Select>
             </CardContent>
@@ -493,7 +511,8 @@ export default function GestaoQuestoesErrosMoisa() {
                                   "text-xs",
                                   question.error_type === 'no_text' && "border-red-500/50 text-red-400",
                                   question.error_type === 'few_options' && "border-orange-500/50 text-orange-400",
-                                  question.error_type === 'no_explanation' && "border-yellow-500/50 text-yellow-400"
+                                  question.error_type === 'no_explanation' && "border-yellow-500/50 text-yellow-400",
+                                  question.error_type === 'no_type' && "border-purple-500/50 text-purple-400"
                                 )}
                               >
                                 {question.error_label}

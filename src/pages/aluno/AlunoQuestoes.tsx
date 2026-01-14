@@ -1012,7 +1012,14 @@ export default function AlunoQuestoes() {
         .from('quiz_questions')
         .select('*', { count: 'exact' })
         .contains('tags', ['MODO_TREINO'])
-        .eq('is_active', true);
+        .eq('is_active', true)
+        // FILTROS DE INTEGRIDADE: Excluir questões com erros de sistema
+        .not('question_text', 'is', null)
+        .neq('question_text', '')
+        .not('explanation', 'is', null)
+        .neq('explanation', '')
+        .not('question_type', 'is', null)
+        .neq('question_type', '');
 
       // Aplicar filtros server-side (ACADEMIC_FILTERS)
       if (filterMacro !== 'todas') {
@@ -1268,7 +1275,14 @@ export default function AlunoQuestoes() {
         .from('quiz_questions')
         .select('*')
         .contains('tags', ['MODO_TREINO'])
-        .eq('is_active', true);
+        .eq('is_active', true)
+        // FILTROS DE INTEGRIDADE: Excluir questões com erros de sistema
+        .not('question_text', 'is', null)
+        .neq('question_text', '')
+        .not('explanation', 'is', null)
+        .neq('explanation', '')
+        .not('question_type', 'is', null)
+        .neq('question_type', '');
 
       // Aplicar filtros server-side (ACADEMIC_FILTERS)
       if (filterMacro !== 'todas') {

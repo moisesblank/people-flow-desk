@@ -103,7 +103,14 @@ export function useSimuladoState(options: UseSimuladoStateOptions) {
         const { data: questionsData, error: questionsError } = await supabase
           .from("quiz_questions")
           .select("id, question_text, question_type, options, image_url, image_urls, difficulty, banca, ano, correct_answer, explanation, video_url, video_provider, has_video_resolution, macro, micro, tema, subtema, tags, points")
-          .in("id", simData.question_ids);
+          .in("id", simData.question_ids)
+          // FILTROS DE INTEGRIDADE: Excluir questões com erros de sistema
+          .not('question_text', 'is', null)
+          .neq('question_text', '')
+          .not('explanation', 'is', null)
+          .neq('explanation', '')
+          .not('question_type', 'is', null)
+          .neq('question_type', '');
         
         if (questionsError) {
           console.error("[useSimuladoState] Error loading questions:", questionsError);
