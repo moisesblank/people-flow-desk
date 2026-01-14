@@ -19,7 +19,7 @@ export {
   recordFailedAttempt,
   clearLockout,
   writeAuditLog,
-  OWNER_EMAIL,
+  // OWNER_EMAIL removido - verificar via RPC check_is_owner()
   ROLES,
   ROLE_HIERARCHY,
   LOCKDOWN_FLAGS,
