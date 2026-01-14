@@ -369,6 +369,85 @@ export default function AlunoSimulados() {
           <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 rounded-br-lg border-purple-500/30" />
         </div>
 
+        {/* ══════════════════════════════════════════════════════════════
+            INITIAL GUIDANCE - Orientações para Leigos (Year 2300)
+        ══════════════════════════════════════════════════════════════ */}
+        <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-950/40 via-background to-cyan-950/20 p-5 shadow-xl shadow-purple-500/10">
+          {/* Efeitos holográficos */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
+          <div className="absolute top-0 left-0 w-6 h-6 border-l-2 border-t-2 border-purple-400/40 rounded-tl-xl" />
+          <div className="absolute top-0 right-0 w-6 h-6 border-r-2 border-t-2 border-cyan-400/40 rounded-tr-xl" />
+          
+          <div className="relative">
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-pulse" />
+              <span className="text-xs font-bold uppercase tracking-widest text-purple-400/80">Como Usar a Arena de Simulados</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-purple-500/30 to-transparent" />
+            </div>
+            
+            {/* 3 Steps */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Step 1 */}
+              <div className="group flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-emerald-500/10 to-cyan-600/5 border border-emerald-500/20 hover:border-emerald-400/40 transition-all">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-emerald-500/30">
+                  1
+                </div>
+                <div>
+                  <h3 className="font-bold text-emerald-400 flex items-center gap-2">
+                    <Target className="w-4 h-4" />
+                    Escolha seu Simulado
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Selecione um <span className="text-emerald-300">simulado disponível</span> na aba "Disponíveis" e escolha entre <span className="text-emerald-300">Modo Treino</span> (sem XP) ou <span className="text-emerald-300">Modo Hard</span> (vale XP!).
+                  </p>
+                </div>
+              </div>
+              
+              {/* Step 2 */}
+              <div className="group flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-amber-500/10 to-orange-600/5 border border-amber-500/20 hover:border-amber-400/40 transition-all">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-amber-500/30">
+                  2
+                </div>
+                <div>
+                  <h3 className="font-bold text-amber-400 flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    Resolva no Tempo
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    O <span className="text-amber-300">cronômetro roda</span> enquanto você responde. Navegue entre as questões e marque suas respostas antes do tempo acabar!
+                  </p>
+                </div>
+              </div>
+              
+              {/* Step 3 */}
+              <div className="group flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-600/5 border border-purple-500/20 hover:border-purple-400/40 transition-all">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-purple-500/30">
+                  3
+                </div>
+                <div>
+                  <h3 className="font-bold text-purple-400 flex items-center gap-2">
+                    <Trophy className="w-4 h-4" />
+                    Ganhe XP e Suba no Ranking
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                    Cada <span className="text-purple-300">acerto vale +10 XP</span> no Modo Hard! Compete com outros alunos e veja sua posição no <span className="text-purple-300">ranking global</span>.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Dica extra */}
+            <div className="mt-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+              <Zap className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                <span className="font-bold text-cyan-400">Dica:</span> Você pode refazer qualquer simulado quantas vezes quiser no Modo Treino para estudar, mas só o primeiro acerto no Modo Hard conta para o ranking! 🏆
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* 📦 Content Areas - Separadas do header unificado */}
         {tab === "disponiveis" && (
           <div className="mt-6">
