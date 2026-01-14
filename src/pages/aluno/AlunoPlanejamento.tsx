@@ -260,11 +260,15 @@ function LessonInfo({
   onComplete,
   isCompleted,
   isPending,
+  onOpenObservations,
+  hasObservations,
 }: {
   lesson: PlanningLesson;
   onComplete: () => void;
   isCompleted: boolean;
   isPending: boolean;
+  onOpenObservations: () => void;
+  hasObservations: boolean;
 }) {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -297,6 +301,25 @@ function LessonInfo({
           >
             {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : <Play className="h-4 w-4" />}
             {isCompleted ? 'Concluída' : 'Marcar Concluída'}
+          </Button>
+          
+          {/* Minhas Observações - movido para cá */}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onOpenObservations}
+            className={cn(
+              "gap-2 transition-all duration-200",
+              hasObservations 
+                ? "bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 border-emerald-500/40 text-emerald-400 hover:border-emerald-500/60"
+                : "bg-muted/30 border-border/50 hover:bg-muted/50 hover:border-primary/30"
+            )}
+          >
+            <Pencil className="h-4 w-4" />
+            Minhas Observações
+            {hasObservations && (
+              <div className="w-2 h-2 rounded-full bg-emerald-400" />
+            )}
           </Button>
         </div>
 
@@ -1571,24 +1594,6 @@ export default function AlunoPlanejamento() {
                 </Badge>
               )}
 
-              {/* Minhas Observações */}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setObservationsModalOpen(true)}
-                className={cn(
-                  "gap-2 transition-all duration-200",
-                  weekObservation?.content 
-                    ? "bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 border-emerald-500/40 text-emerald-400 hover:border-emerald-500/60"
-                    : "bg-muted/30 border-border/50 hover:bg-muted/50 hover:border-primary/30"
-                )}
-              >
-                <Pencil className="h-4 w-4" />
-                Minhas Observações
-                {weekObservation?.content && (
-                  <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                )}
-              </Button>
             </div>
           </div>
         </div>
@@ -1614,6 +1619,8 @@ export default function AlunoPlanejamento() {
                   onComplete={() => markCompleteMutation.mutate()}
                   isCompleted={!!lessonProgress[selectedLesson.id]?.is_completed}
                   isPending={markCompleteMutation.isPending}
+                  onOpenObservations={() => setObservationsModalOpen(true)}
+                  hasObservations={!!weekObservation?.content}
                 />
 
                 {/* 🚀 HUB UNIFICADO: Quick Access + Cronograma Inteligente */}
