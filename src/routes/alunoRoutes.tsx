@@ -14,6 +14,7 @@ import AlunosRouteSwitcher from "@/pages/AlunosRouteSwitcher";
 
 // Lazy imports - Central do Aluno (subrotas)
 const AlunoUniversalDashboard = lazy(() => import("@/pages/aluno/AlunoUniversalDashboard"));
+const AlunoDashboardOwner = lazy(() => import("@/pages/aluno/AlunoDashboardOwner"));
 const AlunoLivroWeb = lazy(() => import("@/pages/aluno/AlunoLivroWeb"));
 const AlunoCursos = lazy(() => import("@/pages/aluno/AlunoCursos"));
 const AlunoVideoaulas = lazy(() => import("@/pages/aluno/AlunoVideoaulas"));
@@ -56,6 +57,7 @@ export const alunoRoutes = (
     <Route path="/ALUNOS/*" element={<CaseInsensitiveAlunosRedirect />} />
     <Route path="/alunos" element={<ProtectedPage><AlunosRouteSwitcher /></ProtectedPage>} />
     <Route path="/alunos/dashboard" element={<ProtectedPage><AlunoUniversalDashboard /></ProtectedPage>} />
+    <Route path="/alunos/dashboardowner" element={<ProtectedPage><AlunoDashboardOwner /></ProtectedPage>} />
     {/* Canonical - Livros Web */}
     <Route path="/alunos/livro-web" element={<ProtectedPage><AlunoLivroWeb /></ProtectedPage>} />
     {/* Canonical - Cursos (Mirror Read-Only) */}
