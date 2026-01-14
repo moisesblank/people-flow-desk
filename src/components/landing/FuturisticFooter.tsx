@@ -44,7 +44,7 @@ const socialLinks = [
 
 const trustBadges = [
   { icon: Shield, label: 'Site 100% Seguro', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20' },
-  { icon: Award, label: 'Garantia de 30 dias', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
+  { icon: Award, label: 'Garantia de 7 dias', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
   { icon: Zap, label: 'Acesso Imediato', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
   { icon: Star, label: '4.9/5 Avaliações', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
 ];
@@ -313,19 +313,9 @@ export const FuturisticFooter = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-10 border-t border-white/10">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-6 pt-10 border-t border-white/10">
           <p className="text-sm text-gray-500">
             © {new Date().getFullYear()} Moisés Medeiros. Todos os direitos reservados.
-          </p>
-          <p className="text-sm text-gray-500 flex items-center gap-2">
-            Feito com 
-            <motion.span
-              animate={{ scale: [1, 1.3, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-            >
-              <Heart className="w-4 h-4 text-red-500" fill="currentColor" />
-            </motion.span>
-            por Professor Moisés Medeiros
           </p>
         </div>
 

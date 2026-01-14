@@ -214,7 +214,7 @@ const CourseCard = ({ course, index }: { course: typeof courses[0]; index: numbe
             {/* Garantia */}
             <div className="flex items-center justify-center gap-2 mt-4 text-xs text-gray-500">
               <Shield className="w-4 h-4 text-green-400" />
-              <span>Garantia de 30 dias ou seu dinheiro de volta</span>
+              <span>Garantia de 7 dias ou seu dinheiro de volta</span>
             </div>
           </div>
 
@@ -307,7 +307,7 @@ export const CoursesSection = () => {
             viewport={{ once: true }}
             className="text-lg text-gray-400 max-w-2xl mx-auto"
           >
-            Escolha o curso ideal para o seu objetivo. Todos com garantia de 30 dias e acesso vitalício.
+            Escolha o curso ideal para o seu objetivo. Todos com garantia de 7 dias e acesso vitalício.
           </motion.p>
         </div>
 

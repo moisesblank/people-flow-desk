@@ -17,7 +17,7 @@ const benefits = [
   "Acesso vitalício a todo conteúdo",
   "Atualizações gratuitas para sempre",
   "Suporte 24/7 via WhatsApp + IA",
-  "Garantia de 30 dias",
+  "Garantia de 7 dias",
   "Comunidade VIP exclusiva",
   "Certificado de conclusão",
 ];
@@ -176,7 +176,7 @@ export const EpicCTASection = () => {
           <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-gray-500">
             <div className="flex items-center gap-2"><Shield className="w-5 h-5 text-green-400" /><span>Compra 100% Segura</span></div>
             <div className="flex items-center gap-2"><Clock className="w-5 h-5 text-blue-400" /><span>Acesso Imediato</span></div>
-            <div className="flex items-center gap-2"><Award className="w-5 h-5 text-amber-400" /><span>Garantia de 30 Dias</span></div>
+            <div className="flex items-center gap-2"><Award className="w-5 h-5 text-amber-400" /><span>Garantia de 7 Dias</span></div>
           </div>
         </motion.div>
       </div>
