@@ -71,8 +71,8 @@ const variantStyles = {
   },
 };
 
-// 🎨 VISUAL INTENSITY: Ultra-light lock visibility
-// Reduced defaults: blurIntensity=3, overlayOpacity=0.35
+// 🎨 VISUAL INTENSITY: Balanced lock visibility (not too faded)
+// Adjusted: blurIntensity=2, overlayOpacity=0.55 for visible cards with clear lock state
 
 export const Chronolock = memo(function Chronolock({
   children,
@@ -81,8 +81,8 @@ export const Chronolock = memo(function Chronolock({
   isLocked = true,
   releaseDate,
   className,
-  blurIntensity = 3,
-  overlayOpacity = 0.35,
+  blurIntensity = 2,
+  overlayOpacity = 0.55,
   variant = 'default',
   icon,
 }: ChronolockProps) {

@@ -4,7 +4,7 @@
 // CSS-only animations (Year 2300 standard)
 // ============================================
 
-import { Calendar, Sparkles, ChevronRight } from "lucide-react";
+import { Calendar, Sparkles, ChevronRight, Lightbulb, CheckCircle2, ArrowDown } from "lucide-react";
 import { DateLock } from "@/components/ui/chronolock";
 
 // Imagens dos cronogramas
@@ -57,7 +57,7 @@ export function CronogramaSelector({ onSelect }: CronogramaSelectorProps) {
   return (
     <div className="min-h-screen p-4 md:p-6 lg:p-8">
       {/* Header */}
-      <div className="mb-8 text-center">
+      <div className="mb-6 text-center">
         <div className="inline-flex items-center gap-3 mb-4">
           <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-holo-purple/10 border border-primary/30">
             <Calendar className="h-6 w-6 text-primary" />
@@ -69,6 +69,86 @@ export function CronogramaSelector({ onSelect }: CronogramaSelectorProps) {
         <p className="text-muted-foreground max-w-xl mx-auto">
           Selecione o cronograma ideal para você com base na sua data de início
         </p>
+      </div>
+
+      {/* 🎯 ORIENTAÇÕES INICIAIS — Passos Leigos */}
+      <div className="max-w-4xl mx-auto mb-8">
+        <div className="relative rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 via-background to-holo-cyan/5 p-5 md:p-6 overflow-hidden">
+          {/* Decorative corner accents */}
+          <div className="absolute top-0 left-0 w-12 h-12 border-l-2 border-t-2 border-primary/40 rounded-tl-2xl" />
+          <div className="absolute top-0 right-0 w-12 h-12 border-r-2 border-t-2 border-holo-cyan/40 rounded-tr-2xl" />
+          <div className="absolute bottom-0 left-0 w-12 h-12 border-l-2 border-b-2 border-holo-purple/40 rounded-bl-2xl" />
+          <div className="absolute bottom-0 right-0 w-12 h-12 border-r-2 border-b-2 border-primary/40 rounded-br-2xl" />
+          
+          {/* Header da seção de orientações */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/30">
+              <Lightbulb className="h-5 w-5 text-amber-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">Como funciona?</h2>
+              <p className="text-xs text-muted-foreground">Passos simples para começar</p>
+            </div>
+          </div>
+          
+          {/* Grid de passos */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Passo 1 */}
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-emerald-500/30">
+                1
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white mb-1">Escolha seu Card</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Clique no cronograma de acordo com sua data de início dos estudos
+                </p>
+              </div>
+            </div>
+            
+            {/* Passo 2 */}
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-500/30">
+                2
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white mb-1">Assista as Aulas</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Siga o plano semanal com vídeo-aulas e materiais organizados
+                </p>
+              </div>
+            </div>
+            
+            {/* Passo 3 */}
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-purple-500/30">
+                3
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white mb-1">Pratique</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Faça simulados e questões para fixar o conteúdo
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Dica extra */}
+          <div className="mt-4 flex items-center gap-2 text-xs text-primary/80">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            <span className="text-muted-foreground">
+              <strong className="text-emerald-400">Dica:</strong> O cronograma de <strong className="text-primary">Fevereiro</strong> já está liberado e pronto para você começar!
+            </span>
+          </div>
+        </div>
+        
+        {/* Seta indicando os cards */}
+        <div className="flex justify-center mt-4">
+          <div className="flex flex-col items-center gap-1 text-muted-foreground">
+            <span className="text-xs uppercase tracking-wider">Selecione abaixo</span>
+            <ArrowDown className="h-4 w-4 text-primary" />
+          </div>
+        </div>
       </div>
 
       {/* Cards Grid - 5 cards responsivos, estilo módulos */}
