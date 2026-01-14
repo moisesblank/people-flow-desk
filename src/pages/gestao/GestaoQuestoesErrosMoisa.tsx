@@ -381,6 +381,41 @@ export default function GestaoQuestoesErrosMoisa() {
         {/* TAB: ERROS DE SISTEMA */}
         {/* ============================================ */}
         <TabsContent value="sistema" className="space-y-4">
+          {/* Critérios de Detecção Automática */}
+          <Card className="border-blue-500/30 bg-blue-500/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium text-blue-400 flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" />
+                Critérios de Detecção Automática
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="border-red-500/50 text-red-400 shrink-0">1</Badge>
+                  <div>
+                    <p className="font-medium text-foreground">Sem Enunciado</p>
+                    <p className="text-muted-foreground text-xs">Campo `question_text` vazio ou nulo</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="border-orange-500/50 text-orange-400 shrink-0">2</Badge>
+                  <div>
+                    <p className="font-medium text-foreground">Poucas Alternativas</p>
+                    <p className="text-muted-foreground text-xs">Menos de 3 alternativas em `options`</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Badge variant="outline" className="border-yellow-500/50 text-yellow-400 shrink-0">3</Badge>
+                  <div>
+                    <p className="font-medium text-foreground">Sem Explicação</p>
+                    <p className="text-muted-foreground text-xs">Campo `explanation` vazio ou nulo</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Filtros Sistema */}
           <Card>
             <CardContent className="py-4">
