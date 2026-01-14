@@ -23,8 +23,8 @@ let lastDetectionTime = 0;
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function setOwnerMode(roleOrEmail: string | null | undefined): void {
-  // P1-2: Aceita tanto role='owner' quanto email legacy (para compatibilidade)
-  isOwnerMode = roleOrEmail === 'owner' || roleOrEmail?.toLowerCase() === 'moisesblank@gmail.com';
+  // P1-2 SECURITY FIX: Aceita APENAS role='owner' (email removido do bundle)
+  isOwnerMode = roleOrEmail === 'owner';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

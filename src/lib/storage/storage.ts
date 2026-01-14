@@ -1535,8 +1535,8 @@ export function canAccessBucketByKey(
 ): boolean {
   const def = BUCKET_DEFINITIONS[bucketKey];
 
-  // Owner MASTER pode tudo
-  if (userRole === "owner" || userEmail?.toLowerCase() === OWNER_EMAIL) {
+  // P1-2 SECURITY FIX: Owner MASTER via role apenas (email removido)
+  if (userRole === "owner") {
     return true;
   }
 
