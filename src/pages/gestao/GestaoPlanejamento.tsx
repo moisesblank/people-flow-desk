@@ -406,9 +406,13 @@ const CRONOGRAMAS_CONFIG = [
 function CronogramasGestaoCards({ 
   weeks, 
   onSelectCronograma,
+  selectedCronogramaFilter,
+  onClearFilter,
 }: { 
   weeks: PlanningWeek[];
   onSelectCronograma: (id: string) => void;
+  selectedCronogramaFilter: string | null;
+  onClearFilter: () => void;
 }) {
   // Calcular stats por cronograma (baseado em templates ou semanas ativas)
   const stats = useMemo(() => {
@@ -453,7 +457,12 @@ function CronogramasGestaoCards({
             key={crono.id}
             onClick={() => onSelectCronograma(crono.id)}
             style={{ animationDelay: `${index * 80}ms` }}
-            className="group relative aspect-[3/4] rounded-xl overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 animate-fade-in transform-gpu transition-all duration-300 hover:scale-[1.02] border-2 border-transparent hover:border-primary/40"
+            className={cn(
+              "group relative aspect-[3/4] rounded-xl overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 animate-fade-in transform-gpu transition-all duration-300 hover:scale-[1.02]",
+              selectedCronogramaFilter === crono.id 
+                ? "border-4 border-primary shadow-[0_0_30px_hsl(var(--primary)/0.5)] ring-4 ring-primary/30" 
+                : "border-2 border-transparent hover:border-primary/40"
+            )}
           >
             {/* Background Image */}
             <img
@@ -467,7 +476,12 @@ function CronogramasGestaoCards({
 
             {/* Status Indicator */}
             <div className="absolute top-2 right-2">
-              {crono.status === 'active' ? (
+            {selectedCronogramaFilter === crono.id ? (
+                <Badge className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 animate-pulse">
+                  <Filter className="h-3 w-3 mr-1" />
+                  FILTRO ATIVO
+                </Badge>
+              ) : crono.status === 'active' ? (
                 <Badge className="bg-green-500/90 text-white text-[10px] px-2 py-0.5">
                   <CheckCircle2 className="h-3 w-3 mr-1" />
                   ATIVO
@@ -1892,6 +1906,7 @@ export default function GestaoPlanejamento() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [cronogramaFilter, setCronogramaFilter] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [editingWeek, setEditingWeek] = useState<PlanningWeek | null>(null);
@@ -2139,15 +2154,40 @@ export default function GestaoPlanejamento() {
     return existingCronogramaWeeks;
   };
 
-  // Filter weeks
+  // Filter weeks - now includes cronogramaFilter
   const filteredWeeks = useMemo(() => {
     return weeks.filter((week) => {
       const matchesSearch = week.title.toLowerCase().includes(search.toLowerCase()) ||
         week.description?.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === "all" || week.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      
+      // NEW: Filter by cronograma when a card is selected
+      let matchesCronograma = true;
+      if (cronogramaFilter) {
+        const titleLower = week.title.toLowerCase();
+        if (cronogramaFilter === 'fevereiro') {
+          matchesCronograma = titleLower.includes('fevereiro') || 
+                             titleLower.includes('extensivo fev');
+        } else if (cronogramaFilter === 'marco') {
+          matchesCronograma = titleLower.includes('março') || 
+                             titleLower.includes('marco') ||
+                             titleLower.includes('extensivo mar');
+        } else if (cronogramaFilter === 'abril') {
+          matchesCronograma = titleLower.includes('abril') ||
+                             titleLower.includes('extensivo abr');
+        } else if (cronogramaFilter === 'maio') {
+          matchesCronograma = titleLower.includes('maio') ||
+                             titleLower.includes('extensivo mai');
+        } else if (cronogramaFilter === 'inteligente') {
+          matchesCronograma = titleLower.includes('inteligente') ||
+                             titleLower.includes('personalizado') ||
+                             titleLower.includes('monte');
+        }
+      }
+      
+      return matchesSearch && matchesStatus && matchesCronograma;
     });
-  }, [weeks, search, statusFilter]);
+  }, [weeks, search, statusFilter, cronogramaFilter]);
 
   const handleSaveWeek = (data: Partial<PlanningWeek>) => {
     if (editingWeek) {
@@ -2205,9 +2245,46 @@ export default function GestaoPlanejamento() {
         <CronogramasGestaoCards 
           weeks={weeks}
           onSelectCronograma={(id) => {
-            setSelectedCronograma(id);
+            // Toggle: se clicou no mesmo, limpa o filtro; senão, aplica o filtro
+            if (cronogramaFilter === id) {
+              setCronogramaFilter(null);
+            } else {
+              setCronogramaFilter(id);
+            }
+            // Também abre o modal de vinculação se clicar duas vezes
+            if (cronogramaFilter === id) {
+              setSelectedCronograma(id);
+            }
           }}
+          selectedCronogramaFilter={cronogramaFilter}
+          onClearFilter={() => setCronogramaFilter(null)}
         />
+
+        {/* Active Filter Indicator */}
+        {cronogramaFilter && (
+          <div className="flex items-center justify-between p-4 rounded-lg bg-primary/10 border border-primary/30">
+            <div className="flex items-center gap-3">
+              <Filter className="h-5 w-5 text-primary" />
+              <div>
+                <p className="font-semibold text-sm">
+                  Filtrando por: <span className="text-primary uppercase">{CRONOGRAMAS_CONFIG.find(c => c.id === cronogramaFilter)?.title || cronogramaFilter}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Mostrando apenas semanas deste cronograma • Clique no card novamente para abrir vinculação
+                </p>
+              </div>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setCronogramaFilter(null)}
+              className="gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Limpar Filtro
+            </Button>
+          </div>
+        )}
 
         {/* Filters & Search */}
         <Card>
