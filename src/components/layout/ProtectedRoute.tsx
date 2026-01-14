@@ -10,14 +10,14 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// P1-2 FIX: OWNER_EMAIL removido - usar role='owner' via useAuth()
 
 interface ProtectedRouteProps {
   children: ReactNode;
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading, role } = useAuth();
   const { 
     isLoading: onboardingLoading, 
     needsOnboarding, 
@@ -33,10 +33,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return () => window.clearTimeout(t);
   }, []);
 
-  // Owner bypass de friccão
+  // P1-2 FIX: Owner bypass via role (não email)
   const isOwner = useMemo(() => {
-    return user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
-  }, [user?.email]);
+    return role === 'owner';
+  }, [role]);
 
   // 🧪 PLANO B (UX) - BYPASS DE TESTE BETA: não travar rotas por flag 2FA
   // (não altera segurança server-side; só impede loop de redirect no client)

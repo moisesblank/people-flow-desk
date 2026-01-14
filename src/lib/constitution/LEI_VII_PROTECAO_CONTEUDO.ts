@@ -17,8 +17,11 @@ export const LEI_VII_CODENAME = 'SANCTUM_SHIELD';
 export const LEI_VII_ARTICLES = 127;
 export const LEI_VII_ACTIVE = true;
 
-/** Art. 1° - OWNER SUPREMO - IMUNIDADE TOTAL */
-export const OWNER_EMAIL = 'moisesblank@gmail.com';
+/** 
+ * Art. 1° - OWNER SUPREMO - IMUNIDADE TOTAL 
+ * @deprecated P1-2 FIX: Usar role='owner' para verificações. Email apenas para audit.
+ */
+export const OWNER_EMAIL = 'moisesblank@gmail.com'; // Legacy: apenas audit/log
 
 /** Art. 2° - NÍVEIS DE PROTEÇÃO */
 export type ProtectionLevel = 'OMEGA' | 'ALPHA' | 'BETA' | 'GAMMA';

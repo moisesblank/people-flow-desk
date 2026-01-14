@@ -12,6 +12,7 @@ import {
   THREAT_THRESHOLDS,
   EVENT_SEVERITIES,
   BLOCKED_SHORTCUTS,
+  // OWNER_EMAIL importado apenas para report legacy (deprecated)
   OWNER_EMAIL,
 } from './LEI_VII_PROTECAO_CONTEUDO';
 
@@ -23,6 +24,7 @@ export interface LeiVIIExecutionReport {
   executed: boolean;
   timestamp: string;
   protectionsActive: number;
+  /** @deprecated P1-2: Use role='owner' para verificações */
   ownerEmail: string;
   version: string;
   handlers: string[];
@@ -610,6 +612,7 @@ export function getLeiVIIExecutionStatus(): {
 // EXPORTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// P1-2: OWNER_EMAIL deprecated - usar role='owner' para verificações
 export { isOwner, getLeiVIIStatus, logLeiVIIStatus, OWNER_EMAIL };
 
 export default executeLeiVII;

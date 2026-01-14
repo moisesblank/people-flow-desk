@@ -14,11 +14,12 @@ export type {
 
 // Utilitários
 export {
-  OWNER_EMAIL,
+  // OWNER_EMAIL removido - P1-2 FIX: usar role='owner'
   SANCTUM_BUCKETS,
   VIOLATION_TYPES,
   SEVERITY_LEVELS,
-  isOwnerEmail,
+  isOwnerEmail, // deprecated - retorna false
+  isOwnerByRole,
   checkUserLock,
   getUserRiskScore,
   getSanctumStats,

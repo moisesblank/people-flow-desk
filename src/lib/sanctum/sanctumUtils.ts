@@ -9,7 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 // ============================================
 // CONSTANTES
 // ============================================
-export const OWNER_EMAIL = "moisesblank@gmail.com";
+/**
+ * @deprecated P1-2 FIX: OWNER_EMAIL removido. 
+ * Usar RPC check_is_owner() ou role='owner' para verificações seguras.
+ */
+// export const OWNER_EMAIL = "moisesblank@gmail.com"; // REMOVIDO - NÃO USAR
 
 export const SANCTUM_BUCKETS = {
   RAW: "ena-assets-raw",
@@ -46,11 +50,12 @@ export const SEVERITY_LEVELS = {
 
 /**
  * @deprecated P1-2 FIX: Use isOwnerByRole() para verificação segura
- * Esta função existe apenas para bypass de UX
+ * Esta função retorna SEMPRE FALSE por segurança.
  * A autorização REAL deve vir do banco via user_roles.role='owner'
  */
-export function isOwnerEmail(email?: string | null): boolean {
-  return email?.toLowerCase() === OWNER_EMAIL;
+export function isOwnerEmail(_email?: string | null): boolean {
+  // P1-2 SECURITY: Nunca usar email para verificar owner
+  return false;
 }
 
 /**
@@ -318,11 +323,12 @@ export const antiScreenshotCSS = `
 `;
 
 export default {
-  OWNER_EMAIL,
+  // OWNER_EMAIL removido - usar role='owner'
   SANCTUM_BUCKETS,
   VIOLATION_TYPES,
   SEVERITY_LEVELS,
-  isOwnerEmail,
+  isOwnerEmail, // deprecated - retorna false
+  isOwnerByRole,
   checkUserLock,
   getUserRiskScore,
   getSanctumStats,

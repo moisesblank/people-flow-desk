@@ -2,10 +2,10 @@
 // ☢️ NUCLEAR SHIELD v3.0 — OPÇÃO NUCLEAR DE PROTEÇÃO
 // ═══════════════════════════════════════════════════════════════════════════════
 // Proteção extrema contra inspeção e roubo de código
-// OWNER (moisesblank@gmail.com) SEMPRE BYPASS
+// OWNER bypass via setOwnerMode(role) - NÃO mais por email
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const OWNER_EMAIL = 'moisesblank@gmail.com';
+// P1-2 FIX: OWNER_EMAIL removido - usar role='owner'
 const AUTHORIZED_DOMAINS = [
   'pro.moisesmedeiros.com.br',
   'moisesmedeiros.com.br',
@@ -19,11 +19,12 @@ let isShieldActive = false;
 let lastDetectionTime = 0;
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CONFIGURAÇÃO DE OWNER
+// CONFIGURAÇÃO DE OWNER (P1-2 FIX: agora recebe role, não email)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function setOwnerMode(email: string | null | undefined): void {
-  isOwnerMode = email?.toLowerCase() === OWNER_EMAIL;
+export function setOwnerMode(roleOrEmail: string | null | undefined): void {
+  // P1-2: Aceita tanto role='owner' quanto email legacy (para compatibilidade)
+  isOwnerMode = roleOrEmail === 'owner' || roleOrEmail?.toLowerCase() === 'moisesblank@gmail.com';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

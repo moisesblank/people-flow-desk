@@ -34,14 +34,14 @@ export interface MFAGuardResult extends MFAGuardState {
   resetState: () => void;
 }
 
-const OWNER_EMAIL = 'moisesblank@gmail.com';
+// P1-2 FIX: OWNER_EMAIL removido - usar role='owner' via useAuth()
 
 /**
  * Hook para gerenciar 2FA por ação sensível
  * TOTALMENTE ISOLADO do fluxo de login
  */
 export function useMFAGuard(action: MFAProtectedAction): MFAGuardResult {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   
   const [state, setState] = useState<MFAGuardState>({
     isChecking: false,
@@ -51,8 +51,8 @@ export function useMFAGuard(action: MFAProtectedAction): MFAGuardResult {
     expiresAt: null
   });
 
-  // Owner tem bypass de 2FA para ações (configurável)
-  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+  // P1-2 FIX: Owner bypass via role (não email)
+  const isOwner = role === 'owner';
 
   /**
    * Verifica se já existe verificação MFA válida para esta ação
