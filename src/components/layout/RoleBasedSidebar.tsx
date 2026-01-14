@@ -244,6 +244,7 @@ const gestaoMenuGroups: MenuGroup[] = [
       { title: "Mapas Mentais", url: "/gestaofc/mapas-mentais", icon: Network, area: "mapas-mentais" },
       { title: "Livros Web", url: "/gestaofc/livros-web", icon: BookOpen, area: "livros-web" },
       { title: "Questões", url: "/gestaofc/questoes", icon: Brain, area: "questoes" },
+      { title: "Erro Questão", url: "/gestaofc/questoeserrosdomoisa", icon: Stethoscope, area: "questoes", badge: "FIX" },
       { title: "Lives", url: "/gestaofc/lives", icon: PlayCircle, area: "lives" },
       { title: "Laboratório", url: "/gestaofc/laboratorio", icon: Zap, area: "laboratorio" },
       { title: "Videoaulas", url: "/gestaofc/videoaulas", icon: PlayCircle, area: "videoaulas" },
