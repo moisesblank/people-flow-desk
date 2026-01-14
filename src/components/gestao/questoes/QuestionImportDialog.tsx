@@ -225,9 +225,16 @@ const COLUMN_MAPPINGS: Record<string, string[]> = {
   subtema: ['subtema', 'subtema_texto', 'subtopic', 'subassunto', 'sub_tema', 'sub tema'],
 
   // Extras
-  tags: ['tags', 'etiquetas', 'labels', 'keywords', 'palavras_chave', 'palavras chave'],
+  tags: ['tags', 'etiquetas', 'labels', 'keywords', 'palavras_chave', 'palavras chave', 'palavra_chave'],
   competencia_enem: ['competencia', 'competência', 'competencia_enem', 'competencia_area', 'competencia area', 'comp'],
   habilidade_enem: ['habilidade', 'habilidade_enem', 'habilidade_area', 'habilidade area', 'hab'],
+  
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // CAMPOS PEDAGÓGICOS EXPANDIDOS (SOMA v1.0 - Jan/2026)
+  // ═══════════════════════════════════════════════════════════════════════════════
+  main_formula: ['formula_principal', 'main_formula', 'formula', 'fórmula', 'formula_base'],
+  teacher_tip: ['dica_professor', 'teacher_tip', 'dica_docente', 'dica_prof', 'tip'],
+  common_error: ['erro_comum', 'common_error', 'erro_frequente', 'pegadinha', 'armadilha'],
   
   // Imagem ÚNICA do enunciado (legacy)
   image_url: ['imagem', 'image', 'image_url', 'imagem_url', 'img', 'foto', 'figura', 'picture', 'url_imagem', 'imagem_enunciado'],
@@ -2037,6 +2044,12 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           image_url: q.image_url || null,
           // MÚLTIPLAS imagens do enunciado (NOVO)
           image_urls: q.image_urls && q.image_urls.length > 0 ? q.image_urls : [],
+          // ═══════════════════════════════════════════════════════════════════════════════
+          // CAMPOS PEDAGÓGICOS EXPANDIDOS (SOMA v1.0 - Jan/2026)
+          // ═══════════════════════════════════════════════════════════════════════════════
+          main_formula: q.rawData?.main_formula || null,
+          teacher_tip: q.rawData?.teacher_tip || null,
+          common_error: q.rawData?.common_error || null,
           // Rastreabilidade (inclui fallbacks aplicados)
           campos_inferidos: camposInferidos,
           // RASTREABILIDADE v1.0: Vincular ao histórico de importação
