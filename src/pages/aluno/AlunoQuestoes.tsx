@@ -45,6 +45,7 @@ import { QuestionBadgesCompact } from "@/components/shared/QuestionMetadataBadge
 import { TreinoReviewModal } from "@/components/aluno/questoes/TreinoReviewModal";
 import { StudentPerformanceAnalytics } from "@/components/aluno/questoes/StudentPerformanceAnalytics";
 import { ModoProvaModal } from "@/components/aluno/questoes/ModoProvaModal";
+import { HistoricoQuestoes } from "@/components/aluno/questoes/HistoricoQuestoes";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 import { ReportQuestionError } from "@/components/shared/ReportQuestionError";
 
@@ -948,6 +949,7 @@ export default function AlunoQuestoes() {
 
   
   // State
+  const [mainTab, setMainTab] = useState<'praticar' | 'historico'>('praticar'); // Tabs principais [Praticar | Histórico]
   const [busca, setBusca] = useState("");
   const [dificuldade, setDificuldade] = useState("todas");
   const [banca, setBanca] = useState("todas");
@@ -1452,19 +1454,64 @@ export default function AlunoQuestoes() {
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
       {/* ══════════════════════════════════════════════════════════════
-          BLOCK_04: HEADER — Performance Tiered
+          TABS PRINCIPAIS — [Praticar] [Histórico]
       ══════════════════════════════════════════════════════════════ */}
-      <div className={cn(
-        "relative overflow-hidden rounded-xl border border-amber-500/20 p-5",
-        isHighEnd ? "bg-gradient-to-br from-amber-950/30 via-background to-yellow-950/20" : "bg-card"
-      )}>
-        {/* Background effects só em high-end */}
-        {isHighEnd && (
-          <>
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
-          </>
-        )}
+      <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'praticar' | 'historico')} className="w-full">
+        <TabsList className={cn(
+          "w-full grid grid-cols-2 gap-2 bg-transparent h-auto p-0 mb-6",
+          isHighEnd && "mb-8"
+        )}>
+          <TabsTrigger 
+            value="praticar" 
+            className={cn(
+              "relative flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-base font-bold transition-all",
+              isHighEnd 
+                ? "bg-gradient-to-br from-amber-500/20 via-yellow-500/10 to-orange-500/8 border-2 border-amber-400/30 shadow-lg shadow-amber-500/15 data-[state=active]:from-amber-500/35 data-[state=active]:via-yellow-500/25 data-[state=active]:to-orange-500/20 data-[state=active]:border-amber-400/60 data-[state=active]:shadow-amber-500/30 hover:from-amber-500/25 hover:border-amber-400/40" 
+                : "bg-amber-500/10 border border-amber-500/30 data-[state=active]:bg-amber-500/20 data-[state=active]:border-amber-500"
+            )}
+          >
+            {isHighEnd && mainTab === 'praticar' && (
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-amber-400/10 to-transparent animate-pulse" />
+            )}
+            <Play className={cn("h-5 w-5", mainTab === 'praticar' ? "text-amber-400" : "text-amber-400/70")} />
+            <span className={cn(mainTab === 'praticar' ? "text-amber-300" : "text-amber-400/80")}>Praticar</span>
+          </TabsTrigger>
+          
+          <TabsTrigger 
+            value="historico" 
+            className={cn(
+              "relative flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-base font-bold transition-all",
+              isHighEnd 
+                ? "bg-gradient-to-br from-cyan-500/20 via-blue-500/10 to-indigo-500/8 border-2 border-cyan-400/30 shadow-lg shadow-cyan-500/15 data-[state=active]:from-cyan-500/35 data-[state=active]:via-blue-500/25 data-[state=active]:to-indigo-500/20 data-[state=active]:border-cyan-400/60 data-[state=active]:shadow-cyan-500/30 hover:from-cyan-500/25 hover:border-cyan-400/40" 
+                : "bg-cyan-500/10 border border-cyan-500/30 data-[state=active]:bg-cyan-500/20 data-[state=active]:border-cyan-500"
+            )}
+          >
+            {isHighEnd && mainTab === 'historico' && (
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-cyan-400/10 to-transparent animate-pulse" />
+            )}
+            <BarChart3 className={cn("h-5 w-5", mainTab === 'historico' ? "text-cyan-400" : "text-cyan-400/70")} />
+            <span className={cn(mainTab === 'historico' ? "text-cyan-300" : "text-cyan-400/80")}>Histórico</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ══════════════════════════════════════════════════════════════
+            TAB: PRATICAR — Conteúdo original do banco de questões
+        ══════════════════════════════════════════════════════════════ */}
+        <TabsContent value="praticar" className="space-y-6 mt-0">
+          {/* ══════════════════════════════════════════════════════════════
+              BLOCK_04: HEADER — Performance Tiered
+          ══════════════════════════════════════════════════════════════ */}
+          <div className={cn(
+            "relative overflow-hidden rounded-xl border border-amber-500/20 p-5",
+            isHighEnd ? "bg-gradient-to-br from-amber-950/30 via-background to-yellow-950/20" : "bg-card"
+          )}>
+            {/* Background effects só em high-end */}
+            {isHighEnd && (
+              <>
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-500/10 via-transparent to-transparent" />
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+              </>
+            )}
         
         <div className="relative grid md:grid-cols-4 gap-4 items-center">
           {/* Título */}
@@ -2181,6 +2228,15 @@ export default function AlunoQuestoes() {
 
       {/* BLOCK_13: SEÇÃO DE MÉTRICAS E ANÁLISE POR ÁREAS */}
       <StudentPerformanceAnalytics />
+        </TabsContent>
+
+        {/* ══════════════════════════════════════════════════════════════
+            TAB: HISTÓRICO — Componente separado com filtros e métricas
+        ══════════════════════════════════════════════════════════════ */}
+        <TabsContent value="historico" className="mt-0">
+          <HistoricoQuestoes />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
