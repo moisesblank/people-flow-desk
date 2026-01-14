@@ -1,11 +1,11 @@
 // ============================================
 // FUTURISTIC VIDEO PLAYER - 2300 ULTRA LITE
-// AGORA USANDO FORTRESS VIDEO PLAYER
-// Player cinematográfico com proteção MÁXIMA
+// USANDO OMEGA FORTRESS PLAYER (7 CAMADAS)
+// Player cinematográfico com proteção MÁXIMA + SANCTUM 2.0
 // ============================================
 
 import { memo } from "react";
-import { FortressVideoPlayer } from "@/components/video";
+import { OmegaFortressPlayer } from "@/components/video";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 
 interface FuturisticVideoPlayerProps {
@@ -34,16 +34,16 @@ export const FuturisticVideoPlayer = memo(({
         <div className="absolute inset-0 bg-gradient-conic from-pink-500 via-purple-500 via-blue-500 to-pink-500 animate-spin-slow" />
       </div>
 
-      {/* FortressVideoPlayer */}
+      {/* OmegaFortressPlayer - 7 Camadas de Proteção */}
       <div className="relative rounded-2xl overflow-hidden">
-        <FortressVideoPlayer
+        <OmegaFortressPlayer
           videoId={videoId}
           type="youtube"
           title={title}
           thumbnail={thumbnailUrl}
           showSecurityBadge
-          showCustomControls
-          className="rounded-2xl"
+          showWatermark
+          autoplay={false}
         />
         
         {/* Bottom glow line */}

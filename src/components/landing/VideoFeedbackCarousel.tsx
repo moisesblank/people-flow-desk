@@ -21,7 +21,7 @@ import {
   ExternalLink,
   Shield
 } from "lucide-react";
-import { FortressVideoPlayer } from "@/components/video";
+import { OmegaFortressPlayer } from "@/components/video";
 
 // Lista de vídeos de feedback dos ex-alunos
 const feedbackVideos = [
@@ -234,14 +234,15 @@ const VideoModal = ({
             transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
           />
           
-          {/* FortressVideoPlayer */}
+          {/* OmegaFortressPlayer - 7 Camadas de Proteção */}
           <div className="relative rounded-xl overflow-hidden bg-black">
-            <FortressVideoPlayer
+            <OmegaFortressPlayer
               videoId={video.id}
               type="youtube"
               title={video.title}
               autoplay
               showSecurityBadge
+              showWatermark
             />
           </div>
           
