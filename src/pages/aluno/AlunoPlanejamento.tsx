@@ -1586,14 +1586,17 @@ export default function AlunoPlanejamento() {
                 <Badge className="bg-primary/20 text-primary border-primary/30">{Math.ceil(remainingMinutes / 60)}h</Badge>
               </div>
 
-              {/* Próxima Live */}
-              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-destructive/10 to-pink-500/10 rounded-xl border border-destructive/30 shadow-[0_0_15px_rgba(220,38,38,0.1)]">
+              {/* Próxima Live → REDIRECIONAMENTO PARA /alunos/lives */}
+              <a 
+                href="/alunos/lives"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-destructive/10 to-pink-500/10 rounded-xl border border-destructive/30 shadow-[0_0_15px_rgba(220,38,38,0.1)] hover:from-destructive/20 hover:to-pink-500/20 transition-all duration-200 cursor-pointer"
+              >
                 <div className="relative">
                   <Radio className="h-4 w-4 text-destructive" />
                   <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-destructive rounded-full animate-ping" />
                 </div>
-                <span className="text-sm font-medium">Próxima Live</span>
-              </div>
+                <span className="text-sm font-medium">LIVE:18:30 05/02</span>
+              </a>
 
               {/* Revisão */}
               {selectedWeek && (
