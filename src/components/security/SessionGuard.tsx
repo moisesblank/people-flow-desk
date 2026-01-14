@@ -54,7 +54,9 @@ export function SessionGuard({ children }: SessionGuardProps) {
   const BOOTSTRAP_RETRY_MS = 10_000;
   
   // 🏛️ CONSTITUIÇÃO: OWNER BYPASS ABSOLUTO para conflitos de sessão
-  const isOwner = user?.email?.toLowerCase() === 'moisesblank@gmail.com';
+  // 🛡️ SECURITY: Verificar via role='owner' (não por email)
+  const { role } = useAuth();
+  const isOwner = role === 'owner';
   const MAX_BOOTSTRAP_ATTEMPTS = 3;
   
   // 🎯 P0 FIX v4: Detectar se estamos em rota de onboarding

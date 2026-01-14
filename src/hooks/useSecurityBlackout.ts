@@ -12,7 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSecurityBlackoutStore, ViolationType } from "@/stores/securityBlackoutStore";
 import { useRecordingDetection } from "@/hooks/useRecordingDetection";
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// 🛡️ DEPRECATED: OWNER_EMAIL removido - usar role='owner' do useAuth
+// const OWNER_EMAIL = "moisesblank@gmail.com";
 // 🚨 v1.2: PROTEÇÃO GLOBAL - Aplica em TODO o sistema
 
 interface UseSecurityBlackoutOptions {
@@ -51,13 +52,13 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
   const isTargetRoute = !isPublicRoute; // Protege TUDO exceto rotas públicas
 
   // ═══════════════════════════════════════════════════════════
-  // VERIFICAR SE É OWNER
+  // VERIFICAR SE É OWNER via RPC (role='owner')
   // ═══════════════════════════════════════════════════════════
   useEffect(() => {
     const checkOwner = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        isOwnerRef.current = (user?.email || "").toLowerCase() === OWNER_EMAIL;
+        const { data, error } = await supabase.rpc('check_is_owner');
+        isOwnerRef.current = data === true && !error;
         
         // Se for owner, resetar qualquer bloqueio
         if (isOwnerRef.current) {
@@ -70,8 +71,10 @@ export function useSecurityBlackout(options: UseSecurityBlackoutOptions = {}) {
 
     checkOwner();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
-      isOwnerRef.current = (session?.user?.email || "").toLowerCase() === OWNER_EMAIL;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async () => {
+      // Re-verificar quando auth muda
+      const { data, error } = await supabase.rpc('check_is_owner');
+      isOwnerRef.current = data === true && !error;
       if (isOwnerRef.current) {
         resetAll();
       }

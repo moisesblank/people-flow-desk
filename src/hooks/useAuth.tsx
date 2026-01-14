@@ -12,7 +12,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { collectEnhancedFingerprint } from "@/lib/enhancedFingerprint";
 import { getPostLoginRedirect, type AppRole } from "@/core/urlAccessControl";
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// 🛡️ DEPRECATED: OWNER_EMAIL removido - verificação via role='owner' no banco
+// const OWNER_EMAIL = "moisesblank@gmail.com";
 const SESSION_TOKEN_KEY = "matriz_session_token";
 const HEARTBEAT_INTERVAL = 60_000; // 1 minuto
 const LAST_HEARTBEAT_KEY = "matriz_last_heartbeat";
@@ -115,14 +116,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [deviceValidation, setDeviceValidation] = useState<DeviceValidationResult | null>(null);
 
-  // ✅ REGRA MATRIZ: Role derivada SÍNCRONAMENTE do email (sem esperar banco)
-  // Garante que OWNER_EMAIL SEMPRE resulta em role="owner" IMEDIATAMENTE
+  // ✅ REGRA MATRIZ v2: Role derivada do banco (role='owner')
+  // Email não é mais usado para determinar owner - banco é fonte da verdade
   const derivedRole = useMemo((): AppRole | null => {
-    if (!user?.email) return role;
-    const email = user.email.toLowerCase();
-    if (email === OWNER_EMAIL) return "owner";
-    return role; // Para outros, usa a role do banco
-  }, [user?.email, role]);
+    // Prioriza role do banco
+    return role;
+  }, [role]);
 
   // Heartbeat refs
   const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -270,10 +269,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return newUser;
       });
 
-      const email = (newSession?.user?.email || "").toLowerCase();
-      if (email === OWNER_EMAIL) {
-        setRole("owner");
-      } else if (!newSession?.user) {
+      // 🛡️ v2: Não atribuir role por email - fetchUserRole busca do banco
+      if (!newSession?.user) {
         setRole(null);
         stopHeartbeatRef.current();
       }
@@ -347,10 +344,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return newUser;
       });
 
-      const email = (initialSession?.user?.email || "").toLowerCase();
-      if (email === OWNER_EMAIL) {
-        setRole("owner");
-      } else if (!initialSession?.user) {
+      // 🛡️ v2: Não atribuir role por email - fetchUserRole busca do banco
+      if (!initialSession?.user) {
         setRole(null);
       }
 
@@ -829,7 +824,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: user.email,
         derivedRole,
         dbRole: role,
-        isOwnerByEmail: user.email.toLowerCase() === OWNER_EMAIL,
+        isOwner: role === 'owner',
       });
     }
   }, [user?.email, derivedRole, role]);

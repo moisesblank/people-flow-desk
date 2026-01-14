@@ -51,14 +51,13 @@ export const SANCTUM_CONFIG = {
     '10.0.',
   ],
   
-  // Emails com bypass TOTAL
+  // 🛡️ DEPRECATED: Email allowlist removido - usar role='owner' via useAuth
+  // Emails mantidos apenas para bots/automações internas
   allowlistEmails: [
-    'moisesblank@gmail.com',
-    'suporte@moisesmedeiros.com.br',
+    // Emails de bots/automações (não pessoas)
     'bot@moisesmedeiros.com.br',
     'automacao@moisesmedeiros.com.br',
-    'teste@moisesmedeiros.com.br',
-    'dev@moisesmedeiros.com.br',
+    // Owner bypass via role='owner', não via email
   ],
   
   // User agents de automações internas

@@ -17,7 +17,8 @@ import { initNuclearShield } from "@/lib/security/nuclearShield";
 // ☢️ NUCLEAR SHIELD: ATIVO (2026-01-12)
 const DEVTOOLS_PROTECTION_ENABLED = true;
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// 🛡️ DEPRECATED: OWNER_EMAIL removido - usar RPC check_is_owner
+// const OWNER_EMAIL = "moisesblank@gmail.com";
 
 // Teclas bloqueadas em diferentes sistemas operacionais
 const BLOCKED_KEYS = [
@@ -97,10 +98,11 @@ export function useGlobalDevToolsBlock() {
     
     const checkOwner = async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        isOwnerRef.current = (user?.email || "").toLowerCase() === OWNER_EMAIL;
+        // 🛡️ v2: Verificar owner via RPC (não por email)
+        const { data: isOwnerData } = await supabase.rpc('check_is_owner');
+        isOwnerRef.current = isOwnerData === true;
+        
+        const { data: { user } } = await supabase.auth.getUser();
 
         // ☢️ NUCLEAR SHIELD: Inicializar com email do usuário
         nuclearCleanup = initNuclearShield(user?.email);
@@ -123,8 +125,9 @@ export function useGlobalDevToolsBlock() {
     // Listener de mudança de auth
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_, session) => {
-      isOwnerRef.current = (session?.user?.email || "").toLowerCase() === OWNER_EMAIL;
+    } = supabase.auth.onAuthStateChange(async () => {
+      const { data: isOwnerData } = await supabase.rpc('check_is_owner');
+      isOwnerRef.current = isOwnerData === true;
 
       if (isOwnerRef.current) {
         document.body.classList.add("owner-mode");

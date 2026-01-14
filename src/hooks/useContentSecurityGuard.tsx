@@ -11,7 +11,8 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { antiDebugger } from '@/lib/security/antiDebugger';
 
-const OWNER_EMAIL = 'moisesblank@gmail.com';
+// 🛡️ DEPRECATED: OWNER_EMAIL removido - usar isOwner via role='owner'
+// const OWNER_EMAIL = 'moisesblank@gmail.com';
 
 // ═══════════════════════════════════════════════════════════
 // TECLAS DE PRINT SCREEN (múltiplos formatos)
@@ -98,10 +99,10 @@ export function useContentSecurityGuard({
   onViolation,
   onSessionEnd,
 }: UseContentSecurityGuardOptions) {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   
-  // Detectar owner automaticamente se não passado
-  const isOwner = isOwnerProp ?? user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+  // Detectar owner automaticamente se não passado - 🛡️ v2: via role='owner'
+  const isOwner = isOwnerProp ?? role === 'owner';
   
   const isOwnerRef = useRef(isOwner);
   const warningThrottleRef = useRef(false);

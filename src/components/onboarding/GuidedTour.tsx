@@ -243,19 +243,9 @@ export function useTour(tourId: string, options?: { autoOpen?: boolean }) {
     // Staff de gestão não deve ver tours automáticos (já conhecem o sistema)
     const isGestaoStaff = window.location.pathname.startsWith('/gestaofc');
     
-    // 🛡️ Owner bypass absoluto
-    const isOwner = (() => {
-      try {
-        const session = localStorage.getItem('sb-fyikfsasudgzsjmumdlw-auth-token');
-        if (!session) return false;
-        const parsed = JSON.parse(session);
-        return parsed?.user?.email?.toLowerCase() === 'moisesblank@gmail.com';
-      } catch {
-        return false;
-      }
-    })();
-
-    if (isOwner || isGestaoStaff) {
+    // 🛡️ v2: Owner bypass via role (não email no localStorage)
+    // Não podemos verificar role no localStorage - marcar como completed para staff
+    if (isGestaoStaff) {
       // Marca como completo para staff nunca mais ver
       localStorage.setItem(`tour_${tourId}_completed`, "true");
       return;

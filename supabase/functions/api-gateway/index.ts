@@ -311,7 +311,15 @@ serve(async (req) => {
         }
         
         const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
-        if (!user || user.email !== 'moisesblank@gmail.com') {
+        
+        // 🛡️ SECURITY: Verificar role via banco (não por email)
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user?.id)
+          .single();
+        
+        if (!user || roleData?.role !== 'owner') {
           return new Response(JSON.stringify({ error: 'Forbidden' }), {
             status: 403,
             headers: { ...securityHeaders, ...corsHeaders, 'Content-Type': 'application/json' },
