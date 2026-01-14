@@ -376,82 +376,82 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
   if (phase === 'pdf') {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-lg p-0 gap-0 bg-gradient-to-b from-background via-background to-slate-900/50 border-cyan-500/30">
-          <DialogHeader className="relative p-6 pb-4 border-b border-cyan-500/20 bg-gradient-to-r from-cyan-950/30 via-background to-blue-950/30">
+        <DialogContent className="w-[95vw] max-w-lg p-0 gap-0 bg-gradient-to-b from-background via-background to-slate-900/50 border-cyan-500/30">
+          <DialogHeader className="relative p-4 sm:p-6 pb-3 sm:pb-4 border-b border-cyan-500/20 bg-gradient-to-r from-cyan-950/30 via-background to-blue-950/30">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
             
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="absolute inset-0 bg-cyan-500 rounded-xl blur-md opacity-40 animate-pulse" />
-                <div className="relative p-3 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600">
-                  <FileText className="h-6 w-6 text-white" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="relative flex-shrink-0">
+                <div className="absolute inset-0 bg-cyan-500 rounded-lg sm:rounded-xl blur-md opacity-40 animate-pulse" />
+                <div className="relative p-2 sm:p-3 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600">
+                  <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
               </div>
-              <div>
-                <DialogTitle className="text-xl font-black bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              <div className="min-w-0">
+                <DialogTitle className="text-lg sm:text-xl font-black bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent truncate">
                   📄 MODO PROVA
                 </DialogTitle>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
                   {questions.length} questões selecionadas
                 </p>
               </div>
             </div>
           </DialogHeader>
           
-          <div className="p-6 space-y-6">
+          <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 max-h-[60vh] overflow-y-auto">
             {/* Instruções */}
-            <div className="space-y-4">
-              <div className="flex items-start gap-3 p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/30">
-                <Printer className="h-5 w-5 text-cyan-400 mt-0.5 flex-shrink-0" />
-                <div className="space-y-1">
-                  <p className="font-semibold text-cyan-400">Passo 1: Imprimir</p>
-                  <p className="text-sm text-muted-foreground">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-cyan-500/10 border border-cyan-500/30">
+                <Printer className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-400 mt-0.5 flex-shrink-0" />
+                <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                  <p className="font-semibold text-cyan-400 text-sm sm:text-base">Passo 1: Imprimir</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Clique no botão abaixo para gerar o PDF da prova e imprimir.
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-start gap-3 p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
-                <ClipboardList className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
-                <div className="space-y-1">
-                  <p className="font-semibold text-blue-400">Passo 2: Responder no papel</p>
-                  <p className="text-sm text-muted-foreground">
-                    Resolva a prova impressa marcando as alternativas no cartão de respostas.
+              <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                <ClipboardList className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                  <p className="font-semibold text-blue-400 text-sm sm:text-base">Passo 2: Responder no papel</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Resolva a prova impressa marcando as alternativas no cartão.
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-start gap-3 p-4 rounded-lg bg-green-500/10 border border-green-500/30">
-                <CheckCircle2 className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" />
-                <div className="space-y-1">
-                  <p className="font-semibold text-green-400">Passo 3: Registrar aqui</p>
-                  <p className="text-sm text-muted-foreground">
-                    Após resolver, volte aqui e registre suas respostas para ver o resultado.
+              <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-400 mt-0.5 flex-shrink-0" />
+                <div className="space-y-0.5 sm:space-y-1 min-w-0">
+                  <p className="font-semibold text-green-400 text-sm sm:text-base">Passo 3: Registrar aqui</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Após resolver, volte aqui e registre suas respostas.
                   </p>
                 </div>
               </div>
             </div>
             
             {/* Ações */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2 sm:gap-3">
               <Button
                 onClick={generateAndPrintPDF}
                 disabled={isGeneratingPdf}
                 size="lg"
-                className="w-full gap-3 h-14 text-lg bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 hover:from-cyan-400 hover:via-blue-400 hover:to-cyan-400 text-white font-bold shadow-lg shadow-cyan-500/25"
+                className="w-full gap-2 sm:gap-3 h-12 sm:h-14 text-base sm:text-lg bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 hover:from-cyan-400 hover:via-blue-400 hover:to-cyan-400 text-white font-bold shadow-lg shadow-cyan-500/25"
               >
                 {isGeneratingPdf ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                 ) : (
-                  <Printer className="h-5 w-5" />
+                  <Printer className="h-4 w-4 sm:h-5 sm:w-5" />
                 )}
-                GERAR PDF E IMPRIMIR
+                <span className="truncate">GERAR PDF E IMPRIMIR</span>
               </Button>
               
               <Button
                 variant="ghost"
                 onClick={handleSkipToPrint}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground text-xs sm:text-sm"
               >
                 Já imprimi, ir para o cartão de respostas →
               </Button>
@@ -468,54 +468,53 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
   if (phase === 'responder') {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0 bg-gradient-to-b from-background via-background to-slate-900/50 border-cyan-500/30">
+        <DialogContent className="w-[98vw] sm:w-[95vw] max-w-4xl max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0 bg-gradient-to-b from-background via-background to-slate-900/50 border-cyan-500/30">
           
-          <DialogHeader className="relative p-4 pb-3 border-b border-cyan-500/20 bg-gradient-to-r from-cyan-950/30 via-background to-blue-950/30">
+          <DialogHeader className="relative p-3 sm:p-4 pb-2 sm:pb-3 border-b border-cyan-500/20 bg-gradient-to-r from-cyan-950/30 via-background to-blue-950/30">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
             
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-blue-500 rounded-xl blur-md opacity-40 animate-pulse" />
-                  <div className="relative p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600">
-                    <ClipboardList className="h-5 w-5 text-white" />
+            <div className="flex items-center justify-between gap-2 sm:gap-4">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="relative flex-shrink-0">
+                  <div className="absolute inset-0 bg-blue-500 rounded-lg sm:rounded-xl blur-md opacity-40 animate-pulse" />
+                  <div className="relative p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600">
+                    <ClipboardList className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                   </div>
                 </div>
-                <div>
-                  <DialogTitle className="text-lg font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400 bg-clip-text text-transparent">
+                <div className="min-w-0">
+                  <DialogTitle className="text-base sm:text-lg font-black bg-gradient-to-r from-blue-400 via-indigo-400 to-blue-400 bg-clip-text text-transparent truncate">
                     📝 CARTÃO DE RESPOSTAS
                   </DialogTitle>
-                  <p className="text-xs text-muted-foreground">
-                    Registre as alternativas que você marcou na prova impressa
+                  <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
+                    Registre as alternativas marcadas
                   </p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30">
-                <Target className="h-4 w-4 text-blue-400" />
-                <span className="text-sm font-bold text-blue-400">
+              <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 flex-shrink-0">
+                <Target className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400" />
+                <span className="text-xs sm:text-sm font-bold text-blue-400">
                   {answeredCount}/{questions.length}
                 </span>
               </div>
             </div>
             
-            <div className="mt-3">
-              <Progress value={progress} className="h-2 bg-slate-800" />
+            <div className="mt-2 sm:mt-3">
+              <Progress value={progress} className="h-1.5 sm:h-2 bg-slate-800" />
             </div>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 px-4 py-4">
-            <div className="space-y-4 pb-24">
+          <ScrollArea className="flex-1 px-2 sm:px-4 py-3 sm:py-4">
+            <div className="space-y-3 sm:space-y-4 pb-20 sm:pb-24">
               {/* Info box */}
-              <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                <p className="text-sm text-amber-400">
-                  <strong>💡 Dica:</strong> Marque abaixo exatamente o que você respondeu no papel. 
-                  Ao clicar em "VERIFICAR RESPOSTAS", o sistema mostrará seu resultado e as resoluções.
+              <div className="p-3 sm:p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                <p className="text-xs sm:text-sm text-amber-400">
+                  <strong>💡 Dica:</strong> Marque abaixo exatamente o que você respondeu no papel.
                 </p>
               </div>
               
-              {/* Grid de questões simplificado */}
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {/* Grid de questões simplificado - RESPONSIVO */}
+              <div className="grid gap-2 sm:gap-3 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {questions.map((q, index) => {
                   const selectedAnswer = answers[q.id];
                   const letters = ['A', 'B', 'C', 'D', 'E'];
@@ -524,28 +523,28 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
                     <Card 
                       key={q.id} 
                       className={cn(
-                        "p-4 transition-all",
+                        "p-3 sm:p-4 transition-all",
                         selectedAnswer 
                           ? "border-cyan-500/50 bg-cyan-500/5" 
                           : "border-slate-700/50 bg-slate-900/30"
                       )}
                     >
-                      <div className="flex items-center gap-3 mb-3">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3">
                         <div className={cn(
-                          "w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold",
+                          "w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0",
                           selectedAnswer 
                             ? "bg-cyan-500 text-white" 
                             : "bg-slate-700 text-slate-400"
                         )}>
                           {index + 1}
                         </div>
-                        <span className="text-xs text-muted-foreground truncate flex-1">
+                        <span className="text-[10px] sm:text-xs text-muted-foreground truncate flex-1">
                           {q.macro || 'Questão'}
                         </span>
                       </div>
                       
-                      {/* Botões A-E */}
-                      <div className="flex gap-1.5">
+                      {/* Botões A-E - Responsivo */}
+                      <div className="flex gap-1 sm:gap-1.5">
                         {q.options.slice(0, 5).map((opt, optIndex) => {
                           const letter = letters[optIndex];
                           const isSelected = selectedAnswer === opt.id;
@@ -555,7 +554,7 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
                               key={opt.id}
                               onClick={() => handleSelectAnswer(q.id, opt.id)}
                               className={cn(
-                                "flex-1 h-10 rounded-lg font-bold text-sm transition-all",
+                                "flex-1 h-8 sm:h-10 rounded-md sm:rounded-lg font-bold text-xs sm:text-sm transition-all",
                                 isSelected
                                   ? "bg-cyan-500 text-white shadow-lg shadow-cyan-500/30"
                                   : "bg-slate-700/50 text-slate-400 hover:bg-slate-600/50 hover:text-slate-300 border border-slate-600/50"
@@ -573,34 +572,36 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
             </div>
           </ScrollArea>
           
-          {/* Footer fixo */}
-          <div className="sticky bottom-0 p-4 border-t border-cyan-500/20 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900">
-            <div className="flex items-center justify-between gap-4">
-              <div className="text-sm text-muted-foreground">
+          {/* Footer fixo - RESPONSIVO */}
+          <div className="sticky bottom-0 p-3 sm:p-4 border-t border-cyan-500/20 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
                 {answeredCount} de {questions.length} respondidas
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-end">
                 <Button
                   variant="outline"
                   onClick={() => setPhase('pdf')}
-                  className="gap-2 border-slate-600"
+                  size="sm"
+                  className="gap-1.5 sm:gap-2 border-slate-600 text-xs sm:text-sm h-9 sm:h-10"
                 >
-                  <Printer className="h-4 w-4" />
-                  Reimprimir
+                  <Printer className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  <span className="hidden xs:inline">Reimprimir</span>
                 </Button>
                 
                 <Button
                   onClick={handleSubmitProva}
                   disabled={answeredCount === 0 || isSubmitting}
-                  className="gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold shadow-lg shadow-green-500/25"
+                  size="sm"
+                  className="gap-1.5 sm:gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold shadow-lg shadow-green-500/25 text-xs sm:text-sm h-9 sm:h-10"
                 >
                   {isSubmitting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
                   ) : (
-                    <CheckCircle2 className="h-4 w-4" />
+                    <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   )}
-                  VERIFICAR RESPOSTAS
+                  <span className="truncate">VERIFICAR</span>
                 </Button>
               </div>
             </div>
@@ -615,40 +616,40 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
   // ============================================
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-5xl max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0 bg-gradient-to-b from-background via-background to-slate-900/50 border-cyan-500/30">
+      <DialogContent className="w-[98vw] sm:w-[95vw] max-w-5xl max-h-[95vh] overflow-hidden flex flex-col p-0 gap-0 bg-gradient-to-b from-background via-background to-slate-900/50 border-cyan-500/30">
         
-        <DialogHeader className="relative p-4 pb-3 border-b border-cyan-500/20 bg-gradient-to-r from-cyan-950/30 via-background to-blue-950/30">
+        <DialogHeader className="relative p-3 sm:p-4 pb-2 sm:pb-3 border-b border-cyan-500/20 bg-gradient-to-r from-cyan-950/30 via-background to-blue-950/30">
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
           
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="absolute inset-0 bg-green-500 rounded-xl blur-md opacity-40 animate-pulse" />
-                <div className="relative p-2.5 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600">
-                  <Trophy className="h-5 w-5 text-white" />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="relative flex-shrink-0">
+                <div className="absolute inset-0 bg-green-500 rounded-lg sm:rounded-xl blur-md opacity-40 animate-pulse" />
+                <div className="relative p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-green-500 to-emerald-600">
+                  <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                 </div>
               </div>
-              <div>
-                <DialogTitle className="text-lg font-black bg-gradient-to-r from-green-400 via-emerald-400 to-green-400 bg-clip-text text-transparent">
+              <div className="min-w-0">
+                <DialogTitle className="text-base sm:text-lg font-black bg-gradient-to-r from-green-400 via-emerald-400 to-green-400 bg-clip-text text-transparent truncate">
                   🏆 RESULTADO DA PROVA
                 </DialogTitle>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                   {title || `${questions.length} questões • Sem XP`}
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/30">
-                <Target className="h-4 w-4 text-green-400" />
-                <span className="text-sm font-bold text-green-400">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-green-500/10 border border-green-500/30">
+                <Target className="h-3 w-3 sm:h-4 sm:w-4 text-green-400" />
+                <span className="text-xs sm:text-sm font-bold text-green-400">
                   {correctCount}/{questions.length} ({percentage}%)
                 </span>
               </div>
               
               <Badge 
                 className={cn(
-                  "text-sm font-bold px-3 py-1",
+                  "text-[10px] sm:text-sm font-bold px-2 sm:px-3 py-0.5 sm:py-1",
                   percentage >= 70 
                     ? "bg-green-500/20 text-green-400 border-green-500/30" 
                     : percentage >= 50 
@@ -656,14 +657,19 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
                       : "bg-red-500/20 text-red-400 border-red-500/30"
                 )}
               >
-                {percentage >= 70 ? '🎯 Excelente!' : percentage >= 50 ? '📈 Bom!' : '📚 Continue estudando!'}
+                <span className="hidden xs:inline">
+                  {percentage >= 70 ? '🎯 Excelente!' : percentage >= 50 ? '📈 Bom!' : '📚 Continue estudando!'}
+                </span>
+                <span className="xs:hidden">
+                  {percentage >= 70 ? '🎯' : percentage >= 50 ? '📈' : '📚'}
+                </span>
               </Badge>
             </div>
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-4 py-4">
-          <div className="space-y-6 pb-32">
+        <ScrollArea className="flex-1 px-2 sm:px-4 py-3 sm:py-4">
+          <div className="space-y-4 sm:space-y-6 pb-24 sm:pb-32">
             
             {questions.map((question, index) => {
               const selectedAnswer = answers[question.id];
@@ -675,7 +681,7 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
                 <div 
                   key={question.id}
                   className={cn(
-                    "relative rounded-xl border transition-all duration-300",
+                    "relative rounded-lg sm:rounded-xl border transition-all duration-300",
                     showResult 
                       ? isCorrect 
                         ? "border-green-500/40 bg-gradient-to-br from-green-950/20 to-background" 
@@ -684,9 +690,9 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
                   )}
                 >
                   {/* Question Number Badge */}
-                  <div className="absolute -top-3 left-4">
+                  <div className="absolute -top-2.5 sm:-top-3 left-3 sm:left-4">
                     <div className={cn(
-                      "px-3 py-1 rounded-full text-sm font-black shadow-lg",
+                      "px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-black shadow-lg",
                       showResult
                         ? isCorrect
                           ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
@@ -695,33 +701,33 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
                     )}>
                       {showResult && (
                         isCorrect 
-                          ? <CheckCircle2 className="inline h-3.5 w-3.5 mr-1" />
-                          : <XCircle className="inline h-3.5 w-3.5 mr-1" />
+                          ? <CheckCircle2 className="inline h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1" />
+                          : <XCircle className="inline h-3 w-3 sm:h-3.5 sm:w-3.5 mr-0.5 sm:mr-1" />
                       )}
-                      Questão {index + 1}
+                      <span className="hidden xs:inline">Questão </span>{index + 1}
                     </div>
                   </div>
                   
-                  <div className="p-5 pt-6 space-y-4">
+                  <div className="p-3 sm:p-5 pt-4 sm:pt-6 space-y-3 sm:space-y-4">
                     {/* Header da questão */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className={DIFFICULTY_COLORS[question.difficulty]}>
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                      <Badge variant="outline" className={cn(DIFFICULTY_COLORS[question.difficulty], "text-[10px] sm:text-xs")}>
                         {DIFFICULTY_LABELS[question.difficulty]}
                       </Badge>
                       {question.banca && (
-                        <Badge variant="outline" className="bg-slate-800/50 border-slate-600/50">
+                        <Badge variant="outline" className="bg-slate-800/50 border-slate-600/50 text-[10px] sm:text-xs">
                           {formatBancaHeader(question.banca, question.ano, '')}
                         </Badge>
                       )}
                       {question.macro && (
-                        <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/30">
+                        <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/30 text-[10px] sm:text-xs hidden sm:inline-flex">
                           {question.macro}
                         </Badge>
                       )}
                     </div>
                     
                     {/* Enunciado */}
-                    <div className="prose prose-invert prose-sm max-w-none">
+                    <div className="prose prose-invert prose-sm max-w-none text-xs sm:text-sm">
                       <QuestionEnunciado 
                         questionText={question.question_text} 
                         banca={question.banca}
@@ -730,7 +736,7 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
                     </div>
                     
                     {/* Alternativas com resultado */}
-                    <div className="space-y-2">
+                    <div className="space-y-1.5 sm:space-y-2">
                       {question.options.map((option, optIndex) => {
                         const letter = String.fromCharCode(65 + optIndex);
                         const isSelected = selectedAnswer === option.id;
@@ -740,7 +746,7 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
                           <div
                             key={option.id}
                             className={cn(
-                              "flex items-start gap-3 p-3 rounded-lg border",
+                              "flex items-start gap-2 sm:gap-3 p-2 sm:p-3 rounded-md sm:rounded-lg border",
                               isCorrectOption
                                 ? "border-green-500/50 bg-green-500/10"
                                 : isSelected && !isCorrectOption
@@ -748,22 +754,22 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
                                   : "border-slate-700/50 bg-slate-800/30"
                             )}
                           >
-                            <div className="flex items-start gap-2 flex-1">
+                            <div className="flex items-start gap-1.5 sm:gap-2 flex-1 min-w-0">
                               <span className={cn(
-                                "font-bold text-sm min-w-[20px]",
+                                "font-bold text-xs sm:text-sm min-w-[16px] sm:min-w-[20px] flex-shrink-0",
                                 isCorrectOption && "text-green-400",
                                 isSelected && !isCorrectOption && "text-red-400"
                               )}>
                                 {letter})
                               </span>
-                              <span className="text-sm leading-relaxed">
+                              <span className="text-xs sm:text-sm leading-relaxed">
                                 {option.text}
                               </span>
                               {isCorrectOption && (
-                                <CheckCircle2 className="h-4 w-4 text-green-400 ml-auto flex-shrink-0" />
+                                <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-400 ml-auto flex-shrink-0" />
                               )}
                               {isSelected && !isCorrectOption && (
-                                <XCircle className="h-4 w-4 text-red-400 ml-auto flex-shrink-0" />
+                                <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-400 ml-auto flex-shrink-0" />
                               )}
                             </div>
                           </div>
@@ -777,19 +783,19 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleResolution(question.id)}
-                        className="w-full mt-2 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10"
+                        className="w-full mt-1 sm:mt-2 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 text-xs sm:text-sm h-8 sm:h-9"
                       >
                         <ChevronDown className={cn(
-                          "h-4 w-4 mr-2 transition-transform",
+                          "h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2 transition-transform",
                           isResolutionOpen && "rotate-180"
                         )} />
-                        {isResolutionOpen ? 'Ocultar Resolução' : 'Ver Resolução Comentada'}
+                        {isResolutionOpen ? 'Ocultar' : 'Ver Resolução'}
                       </Button>
                     )}
                     
                     {/* Resolução Expandida */}
                     {isResolutionOpen && question.explanation && (
-                      <div className="mt-4 p-4 rounded-lg bg-slate-800/50 border border-cyan-500/20">
+                      <div className="mt-3 sm:mt-4 p-3 sm:p-4 rounded-md sm:rounded-lg bg-slate-800/50 border border-cyan-500/20">
                         <QuestionResolution resolutionText={question.explanation} />
                       </div>
                     )}
@@ -798,11 +804,11 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
               );
             })}
 
-            {/* Cartão de resumo */}
-            <Card className="p-4 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-cyan-500/30 shadow-2xl shadow-cyan-500/10">
-              <div className="flex flex-col gap-4">
+            {/* Cartão de resumo - RESPONSIVO */}
+            <Card className="p-3 sm:p-4 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-cyan-500/30 shadow-2xl shadow-cyan-500/10">
+              <div className="flex flex-col gap-3 sm:gap-4">
                 {/* Grid de respostas */}
-                <div className="flex flex-wrap gap-2 justify-center">
+                <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center">
                   {questions.map((q, i) => {
                     const correct = results[q.id];
                     const answered = !!answers[q.id];
@@ -811,7 +817,7 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
                       <div
                         key={q.id}
                         className={cn(
-                          "w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold transition-all",
+                          "w-7 h-7 sm:w-9 sm:h-9 rounded-md sm:rounded-lg flex items-center justify-center text-xs sm:text-sm font-bold transition-all",
                           answered
                             ? correct
                               ? "bg-green-500 text-white"
@@ -825,34 +831,38 @@ export function ModoProvaModal({ open, onClose, questions, title }: ModoProvaMod
                   })}
                 </div>
                 
-                {/* Ações */}
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm font-bold">
+                {/* Ações - RESPONSIVO */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+                  <span className="text-xs sm:text-sm font-bold text-center sm:text-left">
                     ✅ {correctCount} acertos • ❌ {Object.keys(results).length - correctCount} erros
                   </span>
                   
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 justify-center sm:justify-end">
                     <Button
                       variant="outline"
                       onClick={scrollToTop}
-                      className="gap-2 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+                      size="sm"
+                      className="gap-1.5 sm:gap-2 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 text-xs sm:text-sm h-8 sm:h-9"
                     >
-                      <ArrowUp className="h-4 w-4" />
-                      Voltar ao Topo
+                      <ArrowUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span className="hidden xs:inline">Voltar ao</span> Topo
                     </Button>
                     <Button
                       variant="outline"
                       onClick={handleReset}
-                      className="gap-2 border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+                      size="sm"
+                      className="gap-1.5 sm:gap-2 border-amber-500/30 text-amber-400 hover:bg-amber-500/10 text-xs sm:text-sm h-8 sm:h-9"
                     >
-                      <RotateCcw className="h-4 w-4" />
-                      Nova Prova
+                      <RotateCcw className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span className="hidden xs:inline">Nova Prova</span>
+                      <span className="xs:hidden">Nova</span>
                     </Button>
                     <Button
                       onClick={handleClose}
-                      className="gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold"
+                      size="sm"
+                      className="gap-1.5 sm:gap-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold text-xs sm:text-sm h-8 sm:h-9"
                     >
-                      <CheckCircle2 className="h-4 w-4" />
+                      <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       Concluir
                     </Button>
                   </div>
