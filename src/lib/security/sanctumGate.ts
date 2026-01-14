@@ -399,7 +399,8 @@ export async function sanctumGuard(
 
   // 5. BUSCAR ROLE DO USUÁRIO
   const userRole = await getUserRole(user.id, email);
-  const isOwner = isOwnerEmail(email);
+  // P1-2 SECURITY FIX: Owner verificado via role, não email
+  const isOwner = userRole === ROLES.OWNER;
 
   // 6. CONSTRUIR PRINCIPAL
   // 🎯 isGestaoStaff = qualquer role de staff (não mais "funcionario")

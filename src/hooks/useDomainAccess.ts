@@ -152,10 +152,10 @@ export function validateDomainAccessForLogin(
     areaAtual = "alunos";
   }
 
-  // P1-2: Owner bypass agora é via role === 'owner', não por email
-  // Mantendo compatibilidade: email OU role podem indicar owner
-  if (role === "owner" || userEmail?.toLowerCase() === OWNER_EMAIL) {
-    console.log("[AREA-ACCESS] Owner detectado (role ou email) - bypass supremo ativado");
+  // P1-2 SECURITY FIX: Owner bypass APENAS via role === 'owner'
+  // Email removido para evitar exposição no bundle
+  if (role === "owner") {
+    console.log("[AREA-ACCESS] Owner detectado (role) - bypass supremo ativado");
     return { permitido: true, dominioAtual, areaAtual };
   }
 

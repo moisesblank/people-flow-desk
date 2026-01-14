@@ -13,11 +13,8 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { antiDebugger } from '@/lib/security/antiDebugger';
 
-/**
- * @deprecated P1-2: OWNER_EMAIL mantido apenas como fallback.
- * Verificação primária é via role === 'owner'.
- */
-const OWNER_EMAIL = 'moisesblank@gmail.com';
+// P1-2 SECURITY FIX: OWNER_EMAIL removido completamente
+// Verificação de owner é via role === 'owner' (useRolePermissions)
 
 // ═══════════════════════════════════════════════════════════
 // TECLAS DE PRINT SCREEN (múltiplos formatos)

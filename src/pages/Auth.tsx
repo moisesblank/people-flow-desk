@@ -40,9 +40,8 @@ import professorPhoto from "@/assets/professor-moises-novo.jpg";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 import { useEditableContent } from "@/hooks/useEditableContent";
 import { OptimizedImage } from "@/components/ui/optimized-image";
-// P1-2: isOwnerEmail removido - usando helper local para bypass de turnstile
-const OWNER_EMAIL_BYPASS = 'moisesblank@gmail.com';
-const isOwnerEmailLocal = (email: string) => email?.toLowerCase() === OWNER_EMAIL_BYPASS;
+// P1-2 SECURITY FIX: Turnstile bypass agora via role, não email
+// Esta função será chamada apenas após login quando role estiver disponível
 
 import { getPostLoginRedirect } from "@/core/urlAccessControl";
 import { registerDeviceBeforeSession, getDeviceErrorMessage } from "@/lib/deviceRegistration";
@@ -910,9 +909,8 @@ export default function Auth() {
         return;
       }
 
-      // 🛡️ RESET DE SENHA: Turnstile obrigatório (evento de risco)
-      // 🧿 OWNER BYPASS: owner nunca deve ser bloqueado por desafio externo
-      if (!isOwnerEmailLocal(email) && (!isTurnstileVerified || !turnstileToken)) {
+      // 🛡️ RESET DE SENHA: Turnstile obrigatório para TODOS (P1-2 FIX)
+      if (!isTurnstileVerified || !turnstileToken) {
         toast.error("Verificação de segurança necessária", {
           description: "Para recuperar a senha, complete a verificação anti-bot.",
         });
@@ -1202,12 +1200,10 @@ export default function Auth() {
       return;
     }
 
-    // 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO no login para bloquear IAs/bots
+    // 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO para TODOS (P1-2 FIX)
     // Após incidente MANUS - bots conseguiam entrar sem CAPTCHA visual
-    // Owner bypass mantido para não travar acesso de emergência
-    const email = (formData.email || "").trim();
-    
-    if (!isOwnerEmailLocal(email) && (!isTurnstileVerified || !turnstileToken)) {
+    // P1-2: Owner bypass REMOVIDO - turnstile é obrigatório para segurança
+    if (!isTurnstileVerified || !turnstileToken) {
       console.error("[AUTH] ERROR: Turnstile não verificado no login");
       toast.error("Verificação de segurança necessária", {
         description: "Complete a verificação anti-bot para fazer login.",
@@ -1216,10 +1212,9 @@ export default function Auth() {
       return;
     }
 
-    console.log("[AUTH] 3. Estado Turnstile (obrigatório no login):", {
+    console.log("[AUTH] 3. Estado Turnstile verificado:", {
       verified: isTurnstileVerified,
       hasToken: Boolean(turnstileToken),
-      isOwner: isOwnerEmailLocal(email),
     });
 
     setIsLoading(true);
@@ -2361,12 +2356,10 @@ export default function Auth() {
                       )}
                     </div>
 
-                    {/* Cloudflare Turnstile - RESET DE SENHA (evento de risco) */}
-                    {!isOwnerEmailLocal((formData.email || "").trim()) && (
-                      <div className="py-2">
-                        <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
-                      </div>
-                    )}
+                    {/* Cloudflare Turnstile - RESET DE SENHA (obrigatório para todos) */}
+                    <div className="py-2">
+                      <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
+                    </div>
 
                     <Button
                       type="submit"
@@ -2519,13 +2512,10 @@ export default function Auth() {
                   </div>
                 )}
 
-                {/* 🛡️ ANTI-BOT v2.0: Cloudflare Turnstile OBRIGATÓRIO para login E signup */}
-                {/* Após incidente MANUS - bots/IAs conseguiam entrar sem verificação visual */}
-                {!isOwnerEmailLocal((formData.email || "").trim()) && (
-                  <div className="py-2">
-                    <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
-                  </div>
-                )}
+                {/* 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO para TODOS (P1-2 FIX) */}
+                <div className="py-2">
+                  <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
+                </div>
 
                 <Button
                   type="submit"

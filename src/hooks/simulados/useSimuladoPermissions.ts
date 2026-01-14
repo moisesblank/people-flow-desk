@@ -73,12 +73,8 @@ export interface SimuladoPermissions {
 export function useSimuladoPermissions(): SimuladoPermissions {
   const { user, role, isLoading } = useAuth();
   
-  const userEmail = user?.email || null;
-  
-  // P1-2: Role-first, email como fallback UX
-  const isOwnerByRole = role === 'owner';
-  const isOwnerByEmail = (userEmail || '').toLowerCase() === OWNER_EMAIL.toLowerCase();
-  const isOwner = isOwnerByRole || isOwnerByEmail;
+  // P1-2 SECURITY FIX: Owner APENAS via role (email removido do bundle)
+  const isOwner = role === 'owner';
   
   const isAdmin = role === 'admin';
   
