@@ -137,7 +137,7 @@ const MaterialCard = memo(function MaterialCard({ material, onView }: MaterialCa
           {/* Cover / Gradient Header */}
           <div className={cn(
             "relative h-28 bg-gradient-to-br flex items-center justify-center",
-            macroConfig?.gradient || 'from-primary/20 to-primary/5'
+            visual.gradient || 'from-primary/20 to-primary/5'
           )}>
             <MacroIcon className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform" />
             
@@ -228,7 +228,7 @@ const MacroSection = memo(function MacroSection({
           )}>
             <div className={cn(
               "h-20 md:h-24 bg-gradient-to-r",
-              config.gradient,
+              visual.gradient,
               "flex items-center justify-between px-4 md:px-6"
             )}>
               <div className="flex items-center gap-4">
@@ -237,7 +237,7 @@ const MacroSection = memo(function MacroSection({
                 </div>
                 <div>
                   <h2 className="text-xl md:text-2xl font-bold text-white">
-                    {config.label}
+                    {label}
                   </h2>
                   <p className="text-white/80 text-sm">
                     {materials.length} {materials.length === 1 ? 'material' : 'materiais'} disponíveis
