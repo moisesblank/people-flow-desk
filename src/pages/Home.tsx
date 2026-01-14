@@ -26,7 +26,7 @@ const VideoFeedbackCarousel = lazy(() => import("@/components/landing/VideoFeedb
 const TestimonialsSection = lazy(() => import("@/components/landing/TestimonialsSection").then(m => ({ default: m.TestimonialsSection })));
 const FeaturesSection = lazy(() => import("@/components/landing/FeaturesSection").then(m => ({ default: m.FeaturesSection })));
 const MaterialSection = lazy(() => import("@/components/landing/MaterialSection").then(m => ({ default: m.MaterialSection })));
-const AIAutomationsSection = lazy(() => import("@/components/landing/AIAutomationsSection").then(m => ({ default: m.AIAutomationsSection })));
+
 const CoursesSection = lazy(() => import("@/components/landing/CoursesSection").then(m => ({ default: m.CoursesSection })));
 const FAQSection = lazy(() => import("@/components/landing/FAQSection").then(m => ({ default: m.FAQSection })));
 const EpicCTASection = lazy(() => import("@/components/landing/EpicCTASection").then(m => ({ default: m.EpicCTASection })));
@@ -159,7 +159,6 @@ const Home = () => {
           <LazySection><TestimonialsSection /></LazySection>
           <LazySection><FeaturesSection /></LazySection>
           <LazySection><MaterialSection /></LazySection>
-          <LazySection><AIAutomationsSection /></LazySection>
           <LazySection><CoursesSection /></LazySection>
           <LazySection><FAQSection /></LazySection>
           <LazySection><EpicCTASection /></LazySection>
@@ -187,7 +186,7 @@ const Home = () => {
           <LazySection><TestimonialsSection /></LazySection>
           <LazySection><FeaturesSection /></LazySection>
           <LazySection><MaterialSection /></LazySection>
-          <LazySection><AIAutomationsSection /></LazySection>
+          
           <LazySection><CoursesSection /></LazySection>
           <LazySection><FAQSection /></LazySection>
           <LazySection><EpicCTASection /></LazySection>
