@@ -159,7 +159,7 @@ export const ProfessorSection = () => {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <h3 className="text-base font-bold text-white truncate">Prof. Moisés Medeiros</h3>
-                    <p className="text-gray-400 text-xs">Mestre em Química • 15+ anos</p>
+                    <p className="text-gray-400 text-xs">15+ anos de experiência</p>
                     
                     {/* Rating inline */}
                     <div className="flex items-center gap-1.5 mt-1">
