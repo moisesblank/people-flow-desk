@@ -44,6 +44,7 @@ import { QuestionBadgesCompact } from "@/components/shared/QuestionMetadataBadge
 import { TreinoReviewModal } from "@/components/aluno/questoes/TreinoReviewModal";
 import { StudentPerformanceAnalytics } from "@/components/aluno/questoes/StudentPerformanceAnalytics";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
+import { ReportQuestionError } from "@/components/shared/ReportQuestionError";
 
 // ============================================
 // BLOCK_03: DATA CONTRACT - TIPOS
