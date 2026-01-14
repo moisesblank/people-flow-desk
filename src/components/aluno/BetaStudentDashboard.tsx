@@ -38,8 +38,7 @@ import { DashboardRankingWidget } from "./DashboardRankingWidget";
 // 📅 Plano de Estudos ENEM 2030 (Dados Reais + IA)
 import { StudyPlanENEM2030 } from "./StudyPlanENEM2030";
 
-// 🎬 Video Player Netflix-style para Dashboard
-import { FortressVideoPlayer } from "@/components/video";
+// 🎬 Video removido - Perfil do usuário no topo agora
 
 export function BetaStudentDashboard() {
   const navigate = useNavigate();
@@ -141,31 +140,73 @@ export function BetaStudentDashboard() {
           </span>
         </div>
 
-        {/* 🎬 VÍDEO BOAS-VINDAS NETFLIX-STYLE — CANTO SUPERIOR */}
-        <div className="flex justify-end">
-          <div className="w-full sm:w-80 md:w-96">
-            <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-2xl shadow-primary/20">
-              {/* Glow effect */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500/30 via-purple-500/30 to-blue-500/30 blur-sm rounded-xl opacity-60" />
-              
-              <div className="relative bg-black/80 backdrop-blur-sm rounded-xl overflow-hidden">
-                <FortressVideoPlayer
-                  videoId="Md3pbv34TtY"
-                  type="youtube"
-                  title="Bem vindos 2025"
-                  thumbnail="https://img.youtube.com/vi/Md3pbv34TtY/maxresdefault.jpg"
-                  showSecurityBadge={false}
-                  showCustomControls
-                  className="aspect-video"
-                />
-                
-                {/* Bottom gradient with title */}
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3 pointer-events-none">
-                  <div className="flex items-center gap-2">
-                    <PlayCircle className="w-4 h-4 text-pink-400 flex-shrink-0" />
-                    <span className="text-xs font-medium text-white truncate">Bem vindos 2025</span>
-                  </div>
-                </div>
+        {/* 👤 PERFIL DO USUÁRIO — CANTO SUPERIOR */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 backdrop-blur-sm">
+          {/* Avatar + Nome */}
+          <div className="flex items-center gap-4">
+            {/* Avatar com glow */}
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-holo-cyan via-holo-purple to-holo-pink rounded-full blur-md opacity-60" />
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-holo-cyan/30 to-holo-purple/30 border-2 border-white/20 flex items-center justify-center overflow-hidden">
+                {user?.user_metadata?.avatar_url ? (
+                  <img 
+                    src={user.user_metadata.avatar_url} 
+                    alt="Avatar" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-2xl sm:text-3xl font-black bg-gradient-to-r from-holo-cyan to-holo-purple bg-clip-text text-transparent">
+                    {firstName.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            {/* Saudação */}
+            <div className="space-y-1">
+              <p className="text-xs sm:text-sm text-white/60 font-medium">Olá,</p>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-white">
+                Dr(a). <span className="bg-gradient-to-r from-holo-cyan via-holo-purple to-holo-pink bg-clip-text text-transparent">{firstName}</span>
+              </h2>
+              <p className="text-xs text-white/50">{user?.email}</p>
+            </div>
+          </div>
+          
+          {/* Métricas Rápidas */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+            {/* Aulas Assistidas */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20">
+              <PlayCircle className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
+              <div className="text-right">
+                <p className="text-lg sm:text-xl font-black text-white">{stats.aulasCompletadas}</p>
+                <p className="text-[10px] text-white/50 uppercase tracking-wider">Aulas</p>
+              </div>
+            </div>
+            
+            {/* Questões Respondidas */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+              <div className="text-right">
+                <p className="text-lg sm:text-xl font-black text-white">{stats.questoesResolvidas}</p>
+                <p className="text-[10px] text-white/50 uppercase tracking-wider">Questões</p>
+              </div>
+            </div>
+            
+            {/* XP / Pontuação */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
+              <div className="text-right">
+                <p className="text-lg sm:text-xl font-black text-white">{stats.xpTotal.toLocaleString()}</p>
+                <p className="text-[10px] text-white/50 uppercase tracking-wider">XP</p>
+              </div>
+            </div>
+            
+            {/* Nível */}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-holo-cyan/10 to-holo-purple/10 border border-holo-cyan/20">
+              <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-holo-cyan" />
+              <div className="text-right">
+                <p className="text-lg sm:text-xl font-black text-white">Nv. {stats.nivel}</p>
+                <p className="text-[10px] text-white/50 uppercase tracking-wider">{getTituloNivel(stats.nivel)}</p>
               </div>
             </div>
           </div>
