@@ -5,6 +5,7 @@
 // ============================================
 
 import { Calendar, Sparkles, ChevronRight } from "lucide-react";
+import { DateLock } from "@/components/ui/chronolock";
 
 // Imagens dos cronogramas
 import capaFevereiro from "@/assets/cronograma/capa-fevereiro.png";
@@ -72,55 +73,75 @@ export function CronogramaSelector({ onSelect }: CronogramaSelectorProps) {
 
       {/* Cards Grid - 5 cards responsivos, estilo módulos */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 max-w-7xl mx-auto">
-        {cronogramas.map((cronograma, index) => (
-          <button
-            key={cronograma.id}
-            onClick={() => onSelect(cronograma.id)}
-            style={{ animationDelay: `${index * 100}ms` }}
-            className="group relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 animate-fade-in transform-gpu transition-transform duration-300 hover:scale-[1.02]"
-          >
-            {/* Background Image */}
-            <img
-              src={cronograma.image}
-              alt={cronograma.title}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-            />
+        {cronogramas.map((cronograma, index) => {
+          // Fevereiro (primeiro card) é liberado, os demais são bloqueados até 31/01
+          const isLocked = cronograma.id !== 'fevereiro';
+          
+          const cardContent = (
+            <button
+              key={cronograma.id}
+              onClick={() => !isLocked && onSelect(cronograma.id)}
+              style={{ animationDelay: `${index * 100}ms` }}
+              className={`group relative aspect-[3/4] rounded-2xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary/50 animate-fade-in transform-gpu transition-transform duration-300 ${
+                isLocked ? 'cursor-not-allowed' : 'cursor-pointer hover:scale-[1.02]'
+              }`}
+            >
+              {/* Background Image */}
+              <img
+                src={cronograma.image}
+                alt={cronograma.title}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
 
-            {/* Overlay Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-60 transition-opacity duration-300" />
+              {/* Overlay Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent opacity-80 group-hover:opacity-60 transition-opacity duration-300" />
 
-            {/* Holographic Border on Hover */}
-            <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-primary/60 transition-all duration-300 group-hover:shadow-[0_0_30px_hsl(var(--primary)/0.3)]" />
+              {/* Holographic Border on Hover */}
+              <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-primary/60 transition-all duration-300 group-hover:shadow-[0_0_30px_hsl(var(--primary)/0.3)]" />
 
-            {/* Content Overlay */}
-            <div className="absolute inset-0 flex flex-col justify-end p-4">
-              {/* Highlight Badge */}
-              <div className="mb-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/90 text-primary-foreground text-xs md:text-sm font-black rounded-full shadow-[0_0_20px_hsl(var(--primary)/0.5)]">
-                  <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
-                  {cronograma.highlight}
-                </span>
+              {/* Content Overlay */}
+              <div className="absolute inset-0 flex flex-col justify-end p-4">
+                {/* Highlight Badge */}
+                <div className="mb-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/90 text-primary-foreground text-xs md:text-sm font-black rounded-full shadow-[0_0_20px_hsl(var(--primary)/0.5)]">
+                    <Sparkles className="h-3 w-3 md:h-4 md:w-4" />
+                    {cronograma.highlight}
+                  </span>
+                </div>
+
+                {/* Title */}
+                <h3 className="text-white text-sm md:text-base font-bold leading-tight mb-2 drop-shadow-lg line-clamp-2">
+                  {cronograma.title}
+                </h3>
+
+                {/* CTA Arrow */}
+                {!isLocked && (
+                  <div className="flex items-center gap-1 text-primary text-xs font-medium opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                    <span>Selecionar</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </div>
+                )}
               </div>
 
-              {/* Title */}
-              <h3 className="text-white text-sm md:text-base font-bold leading-tight mb-2 drop-shadow-lg line-clamp-2">
-                {cronograma.title}
-              </h3>
+              {/* Corner Accents */}
+              <div className="absolute top-2 left-2 w-4 h-4 border-l-2 border-t-2 border-white/30 rounded-tl-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute top-2 right-2 w-4 h-4 border-r-2 border-t-2 border-white/30 rounded-tr-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute bottom-2 left-2 w-4 h-4 border-l-2 border-b-2 border-white/30 rounded-bl-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="absolute bottom-2 right-2 w-4 h-4 border-r-2 border-b-2 border-white/30 rounded-br-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </button>
+          );
 
-              {/* CTA Arrow */}
-              <div className="flex items-center gap-1 text-primary text-xs font-medium opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                <span>Selecionar</span>
-                <ChevronRight className="h-4 w-4" />
-              </div>
-            </div>
+          // Se bloqueado, envolve com DateLock
+          if (isLocked) {
+            return (
+              <DateLock key={cronograma.id} releaseDate="31/01">
+                {cardContent}
+              </DateLock>
+            );
+          }
 
-            {/* Corner Accents */}
-            <div className="absolute top-2 left-2 w-4 h-4 border-l-2 border-t-2 border-white/30 rounded-tl-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="absolute top-2 right-2 w-4 h-4 border-r-2 border-t-2 border-white/30 rounded-tr-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="absolute bottom-2 left-2 w-4 h-4 border-l-2 border-b-2 border-white/30 rounded-bl-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="absolute bottom-2 right-2 w-4 h-4 border-r-2 border-b-2 border-white/30 rounded-br-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </button>
-        ))}
+          return cardContent;
+        })}
       </div>
     </div>
   );
