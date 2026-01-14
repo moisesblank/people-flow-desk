@@ -1579,40 +1579,53 @@ export default function AlunoPlanejamento() {
               </a>
             </div>
 
-            {/* Week Selector - Futuristic (DIREITA) */}
-            <Select
-              value={selectedWeek?.id || ""}
-              onValueChange={(value) => {
-                const week = weeks.find((w) => w.id === value);
-                if (week) setSelectedWeek(week);
-              }}
-            >
-              <SelectTrigger className="w-full max-w-md bg-gradient-to-r from-destructive to-pink-600 text-white border-0 hover:from-destructive/90 hover:to-pink-600/90 shadow-[0_0_25px_rgba(220,38,38,0.4)] rounded-xl h-11 transition-all duration-300">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 rounded-lg bg-white/20">
-                    <Video className="h-4 w-4" />
+            {/* Week Selector - NETFLIX PREMIUM 2300 */}
+            <div className="relative group/week">
+              {/* Outer Glow Netflix */}
+              <div className="absolute -inset-[2px] rounded-xl bg-gradient-to-r from-destructive via-pink-500 to-destructive opacity-70 blur-sm group-hover/week:opacity-100 transition-opacity duration-300" />
+              
+              <Select
+                value={selectedWeek?.id || ""}
+                onValueChange={(value) => {
+                  const week = weeks.find((w) => w.id === value);
+                  if (week) setSelectedWeek(week);
+                }}
+              >
+                <SelectTrigger className="relative w-full min-w-[320px] bg-gradient-to-r from-destructive via-pink-600 to-destructive text-white border-0 hover:from-destructive/95 hover:via-pink-500 hover:to-destructive/95 shadow-[0_0_30px_rgba(220,38,38,0.5),inset_0_1px_0_rgba(255,255,255,0.15)] rounded-xl h-12 transition-all duration-300">
+                  {/* Netflix Red Accent Line */}
+                  <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-white/40 to-transparent rounded-t-xl" />
+                  
+                  <div className="flex items-center gap-3 px-1">
+                    <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                      <Video className="h-4 w-4" />
+                    </div>
+                    <span className="font-bold tracking-wide text-base drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
+                      {selectedWeek ? `Semana ${selectedWeek.week_number} - ${selectedWeek.title}` : "Selecione uma semana"}
+                    </span>
                   </div>
-                  <span className="font-semibold">
-                    {selectedWeek ? `Semana ${selectedWeek.week_number} - ${selectedWeek.title}` : "Selecione uma semana"}
-                  </span>
-                </div>
-              </SelectTrigger>
-              <SelectContent className="bg-card/95 backdrop-blur-xl border-border/50">
-                {weeks.map((week) => {
-                  const wp = weekProgress[week.id];
-                  const isCompleted = wp?.is_completed;
-                  return (
-                    <SelectItem key={week.id} value={week.id}>
-                      <div className="flex items-center gap-2">
-                        {isCompleted && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
-                        <span>Semana {week.week_number} - {week.title}</span>
-                        {wp && <Badge variant="outline" className="ml-2 text-xs">{wp.progress_percent}%</Badge>}
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+                </SelectTrigger>
+                <SelectContent className="bg-gradient-to-b from-[#1a0a0f] to-card/98 backdrop-blur-xl border border-destructive/30 shadow-[0_10px_40px_rgba(220,38,38,0.3)]">
+                  {weeks.map((week) => {
+                    const wp = weekProgress[week.id];
+                    const isCompleted = wp?.is_completed;
+                    const isSelected = selectedWeek?.id === week.id;
+                    return (
+                      <SelectItem 
+                        key={week.id} 
+                        value={week.id}
+                        className={`transition-all duration-200 ${isSelected ? 'bg-destructive/20' : 'hover:bg-destructive/10'}`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {isCompleted && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
+                          <span className={isSelected ? 'font-semibold text-white' : ''}>Semana {week.week_number} - {week.title}</span>
+                          {wp && <Badge className="ml-2 text-xs bg-destructive/20 text-destructive-foreground border-destructive/40">{wp.progress_percent}%</Badge>}
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
