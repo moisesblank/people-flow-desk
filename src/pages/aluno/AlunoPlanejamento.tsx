@@ -264,41 +264,25 @@ function LessonInfo({
       {/* Holographic border */}
       <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary/50 via-holo-cyan/30 to-holo-purple/50 opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
       
-      <div className="relative bg-gradient-to-br from-card via-card/95 to-card/90 rounded-2xl p-6 space-y-5">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-holo-purple/10 border border-primary/30 shadow-[0_0_15px_hsl(var(--primary)/0.2)]">
-                <BookOpen className="h-5 w-5 text-primary" />
-              </div>
-              <h2 className="text-xl font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text">{lesson.title}</h2>
+      <div className="relative bg-gradient-to-br from-card via-card/95 to-card/90 rounded-2xl p-6 space-y-4">
+        {/* Header - Título + Botão */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-holo-pink/10 border border-primary/30 shadow-[0_0_15px_hsl(var(--primary)/0.2)]">
+              <BookOpen className="h-5 w-5 text-primary" />
             </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <Badge className="bg-gradient-to-r from-primary/20 to-primary/10 text-primary border-primary/30 shadow-[0_0_10px_hsl(var(--primary)/0.15)]">
-                <Clock className="h-3.5 w-3.5 mr-1.5" />
-                {lesson.duration_minutes || 0} min
-              </Badge>
-              <Badge className="bg-gradient-to-r from-holo-cyan/20 to-holo-cyan/10 text-holo-cyan border-holo-cyan/30">
-                {lesson.description || "Conceitos"}
-              </Badge>
-              {lesson.is_required && (
-                <Badge className="bg-gradient-to-r from-warning/20 to-warning/10 text-warning border-warning/30">
-                  <AlertCircle className="h-3 w-3 mr-1" />
-                  Obrigatória
-                </Badge>
-              )}
-            </div>
+            <h2 className="text-lg font-bold bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text line-clamp-2">{lesson.title}</h2>
           </div>
           
           {/* Complete button */}
           <Button
             onClick={onComplete}
             disabled={isCompleted || isPending}
-            className={`gap-2 shadow-lg transition-all duration-300 ${
+            size="sm"
+            className={`gap-2 shrink-0 shadow-lg transition-all duration-300 ${
               isCompleted 
                 ? 'bg-gradient-to-r from-success/80 to-success/60 text-white border-0 shadow-[0_0_20px_hsl(var(--success)/0.3)]'
-                : 'bg-gradient-to-r from-primary to-holo-purple text-white border-0 shadow-[0_0_25px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_35px_hsl(var(--primary)/0.5)]'
+                : 'bg-gradient-to-r from-primary to-holo-pink text-white border-0 shadow-[0_0_25px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_35px_hsl(var(--primary)/0.5)]'
             }`}
           >
             {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -306,9 +290,21 @@ function LessonInfo({
           </Button>
         </div>
 
-        {/* Divider with glow */}
-        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent blur-sm" />
+        {/* INFERIOR: Badges de tempo, conceitos e obrigatória */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge className="bg-gradient-to-r from-primary/20 to-holo-pink/10 text-primary border-primary/30 shadow-[0_0_10px_hsl(var(--primary)/0.15)]">
+            <Clock className="h-3.5 w-3.5 mr-1.5" />
+            {lesson.duration_minutes || 0} min
+          </Badge>
+          <Badge className="bg-gradient-to-r from-holo-cyan/20 to-holo-cyan/10 text-holo-cyan border-holo-cyan/30">
+            {lesson.description || "Conceitos"}
+          </Badge>
+          {lesson.is_required && (
+            <Badge className="bg-gradient-to-r from-warning/20 to-warning/10 text-warning border-warning/30">
+              <AlertCircle className="h-3 w-3 mr-1" />
+              Obrigatória
+            </Badge>
+          )}
         </div>
 
         <div className="flex items-center justify-between flex-wrap gap-4">
