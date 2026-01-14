@@ -381,8 +381,8 @@ export function useSecureStorage(options: UseSecureStorageOptions = {}) {
     
     // Utilitários
     userContext,
-    // P1-2 FIX: Preferir role-based check, fallback email
-    isOwner: userContext?.userRole === 'owner' || isOwner(user?.email),
+    // P1-2 FIX: Role-based check primário
+    isOwner: userContext?.userRole === 'owner',
     
     // Constantes
     BUCKETS,

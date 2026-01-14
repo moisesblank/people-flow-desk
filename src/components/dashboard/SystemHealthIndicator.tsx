@@ -11,7 +11,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
-// 🏛️ CONSTITUIÇÃO: OWNER EMAIL (IMUTÁVEL)
+/**
+ * @deprecated P1-2: OWNER_EMAIL mantido apenas como fallback.
+ * Verificação primária é via role === 'owner'.
+ */
 const OWNER_EMAIL = "moisesblank@gmail.com";
 
 interface HealthStatus {
@@ -22,10 +25,10 @@ interface HealthStatus {
 }
 
 export function SystemHealthIndicator() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   
-  // 🏛️ CONSTITUIÇÃO: VERIFICAÇÃO OWNER ABSOLUTA
-  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL;
+  // P1-2: VERIFICAÇÃO OWNER VIA ROLE (não email)
+  const isOwner = role === 'owner' || user?.email?.toLowerCase() === OWNER_EMAIL;
   
   const [health, setHealth] = useState<HealthStatus>({
     database: "healthy",

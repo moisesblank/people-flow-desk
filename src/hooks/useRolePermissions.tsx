@@ -240,13 +240,9 @@ export function useRolePermissions(): UseRolePermissionsReturn {
 
     const userEmail = (user.email || "").toLowerCase();
 
-    // ✅ OWNER BYPASS DETERMINÍSTICO (REGRA MATRIZ)
-    if (userEmail === OWNER_EMAIL) {
-      console.log("[ROLE] ✅ OWNER detectado por email - bypass imediato");
-      setRole("owner");
-      setIsLoading(false);
-      return;
-    }
+    // P1-2: Verificação por email removida - usar role do banco
+    // Legacy: authRole ou busca no banco determinam owner
+    // ❌ REMOVIDO: if (userEmail === OWNER_EMAIL) { setRole("owner"); }
 
     // ✅ Se useAuth já tem a role, usar ela (evita fetch duplicado)
     if (authRole) {

@@ -271,7 +271,8 @@ export async function secureLogin(options: LoginOptions): Promise<AuthAttemptRes
       ipHash,
       metadata: {
         email: email.substring(0, 3) + "***",
-        isOwner: isOwnerEmail(email),
+        // P1-2: isOwner agora é false (verificar via role no backend)
+        isOwner: false,
       },
     });
 
@@ -511,8 +512,8 @@ export async function checkAuth(): Promise<{
       authenticated: true,
       userId: user.id,
       email: user.email,
-      // P1-2: Manter email check apenas para log/metadata, não para autorização
-      isOwner: user.email ? isOwnerEmail(user.email) : false,
+      // P1-2: isOwner agora é false (verificar via role no backend)
+      isOwner: false,
     };
   } catch {
     return { authenticated: false };

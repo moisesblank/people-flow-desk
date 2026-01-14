@@ -30,6 +30,12 @@ import { useInvalidateCache } from "@/hooks/useDataCache";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocation } from "react-router-dom";
 
+/**
+ * @deprecated P1-2: OWNER_EMAIL mantido apenas como fallback UX.
+ * Verificação primária é via role === 'owner'.
+ */
+const OWNER_EMAIL = 'moisesblank@gmail.com';
+
 interface Message {
   id: string;
   type: "user" | "assistant";
@@ -48,7 +54,7 @@ interface QuickInsight {
   color: string;
 }
 
-const OWNER_EMAIL = 'moisesblank@gmail.com';
+// OWNER_EMAIL já definido acima (linha 37)
 
 // ========================================
 // 🎯 AÇÕES RÁPIDAS v3.0
