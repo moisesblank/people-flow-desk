@@ -125,6 +125,7 @@ interface MenuGroup {
   image: string;
   color: string;
   items: MenuItem[];
+  ownerOnly?: boolean; // 🔒 Grupos exclusivos do Owner
 }
 
 // ============================================
@@ -145,6 +146,15 @@ const gestaoMenuGroups: MenuGroup[] = [
       { title: "Integrações", url: "/gestaofc/integracoes", icon: Link2, area: "integracoes" },
       { title: "Calendário", url: "/gestaofc/calendario", icon: Calendar, area: "calendario" },
       { title: "Logs", url: "/gestaofc/logs", icon: Activity, area: "logs", badge: "LIVE" },
+    ],
+  },
+  {
+    id: "area-professor",
+    label: "Área do Professor",
+    image: dashboardImg,
+    color: "from-amber-600/80",
+    ownerOnly: true, // 🔒 OWNER ONLY
+    items: [
       { title: "Área Professor", url: "/gestaofc/area-professor", icon: ClipboardCheck, area: "area-professor" },
     ],
   },
@@ -166,6 +176,7 @@ const gestaoMenuGroups: MenuGroup[] = [
     label: "Marketing & Lançamento",
     image: marketingImg,
     color: "from-orange-600/80",
+    ownerOnly: true, // 🔒 OWNER ONLY
     items: [
       { title: "Central de Métricas", url: "/gestaofc/central-metricas", icon: Activity, area: "metricas", badge: "LIVE" },
       { title: "Marketing", url: "/gestaofc/marketing", icon: Megaphone, area: "marketing" },
@@ -191,6 +202,7 @@ const gestaoMenuGroups: MenuGroup[] = [
     label: "Finanças",
     image: financeImg,
     color: "from-green-600/80",
+    ownerOnly: true, // 🔒 OWNER ONLY
     items: [
       { title: "Finanças Pessoais", url: "/gestaofc/financas-pessoais", icon: Wallet, area: "financas-pessoais" },
       { title: "Finanças Empresa", url: "/gestaofc/financas-empresa", icon: Building2, area: "financas-empresa", badge: "CENTRAL" },
@@ -221,6 +233,7 @@ const gestaoMenuGroups: MenuGroup[] = [
     label: "Site",
     image: devImg,
     color: "from-cyan-600/80",
+    ownerOnly: true, // 🔒 OWNER ONLY
     items: [
       { title: "Gestão Site", url: "/gestaofc/gestao-site", icon: Globe, area: "gestao-site" },
       { title: "Site/Programador", url: "/gestaofc/site-programador", icon: Code, area: "site-programador" },
@@ -245,6 +258,7 @@ const gestaoMenuGroups: MenuGroup[] = [
     label: "Vida Pessoal",
     image: personalLifeImg,
     color: "from-pink-600/80",
+    ownerOnly: true, // 🔒 OWNER ONLY
     items: [
       { title: "Pessoal", url: "/gestaofc/pessoal", icon: User, area: "pessoal" },
       { title: "Vida Pessoal", url: "/gestaofc/vida-pessoal", icon: Heart, area: "vida-pessoal" },
@@ -265,6 +279,7 @@ const gestaoMenuGroups: MenuGroup[] = [
     label: "Modo Master",
     image: godModeImg,
     color: "from-purple-600/80 via-pink-600/80",
+    ownerOnly: true, // 🔒 OWNER ONLY (Área 51)
     items: [
       { title: "Monitoramento", url: "/gestaofc/monitoramento", icon: Activity, area: "monitoramento", badge: "MASTER" },
       { title: "Central WhatsApp", url: "/gestaofc/central-whatsapp", icon: MessageSquareText, area: "central-whatsapp", badge: "LIVE" },
@@ -494,7 +509,10 @@ export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>
     
     // Se estamos usando dados do banco, não adicionar dynamicItems (já estão no banco)
     if (hasDbData && isGestaoArea) {
+      const isOwnerUser = user?.email?.toLowerCase() === OWNER_EMAIL;
       return currentMenuGroups
+        // 🔒 Filtrar grupos ownerOnly para não-owners
+        .filter((group) => !group.ownerOnly || isOwnerUser)
         .map((group) => ({ ...group, items: group.items.filter((item) => hasAccess(item.area)) }))
         .filter((group) => group.items.length > 0);
     }
@@ -544,7 +562,12 @@ export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>
     // Não aplicar filtro hasAccess para Owner na área de alunos (menu idêntico aos estudantes)
     const isOwnerInAlunosArea = isAlunosArea && user?.email?.toLowerCase() === OWNER_EMAIL;
     
+    // 🔒 CONSTITUIÇÃO v11.x: Verificar se o usuário é Owner para mostrar grupos exclusivos
+    const isOwnerUser = user?.email?.toLowerCase() === OWNER_EMAIL;
+    
     return allGroups
+      // 🔒 Filtrar grupos ownerOnly para não-owners
+      .filter((group) => !group.ownerOnly || isOwnerUser)
       .map((group) => ({ 
         ...group, 
         items: group.items.filter((item) => isOwnerInAlunosArea ? true : hasAccess(item.area)) 
