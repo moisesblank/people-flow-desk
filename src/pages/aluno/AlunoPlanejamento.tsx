@@ -211,7 +211,7 @@ function VideoPlayer({
         {/* Video label overlay */}
         <div className="absolute top-4 left-4 z-30 bg-gradient-to-r from-black/90 via-black/80 to-transparent backdrop-blur-xl px-4 py-2.5 rounded-xl border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.5)] pointer-events-none">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_hsl(var(--primary))]" />
+            <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
             <span className="text-[10px] uppercase tracking-[0.2em] text-white/50 font-medium">AULA</span>
           </div>
           <p className="text-sm font-bold text-white mt-0.5 drop-shadow-lg">{lesson.description || "Conceitos"}</p>
@@ -276,7 +276,7 @@ function LessonInfo({
   return (
     <div className="relative rounded-2xl overflow-hidden group">
       {/* Holographic border */}
-      <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary/50 via-holo-cyan/30 to-holo-purple/50 opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
+      <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary/50 via-holo-cyan/30 to-holo-purple/50 opacity-60" />
       
       <div className="relative bg-gradient-to-br from-card via-card/95 to-card/90 rounded-2xl p-5 space-y-3">
         {/* Header - Título + Ícone */}
@@ -311,10 +311,10 @@ function LessonInfo({
             <Button
               onClick={onComplete}
               disabled={isCompleted || isPending}
-              className={`gap-2 px-5 py-2.5 h-auto text-sm font-medium shadow-lg transition-all duration-300 ${
+              className={`gap-2 px-5 py-2.5 h-auto text-sm font-medium shadow-lg ${
                 isCompleted 
                   ? 'bg-gradient-to-r from-success/80 to-success/60 text-white border-0 shadow-[0_0_20px_hsl(var(--success)/0.3)]'
-                  : 'bg-gradient-to-r from-primary to-holo-pink text-white border-0 shadow-[0_0_25px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_35px_hsl(var(--primary)/0.5)]'
+                  : 'bg-gradient-to-r from-primary to-holo-pink text-white border-0 shadow-[0_0_25px_hsl(var(--primary)/0.4)]'
               }`}
             >
               {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -325,10 +325,10 @@ function LessonInfo({
               variant="outline" 
               onClick={onOpenObservations}
               className={cn(
-                "gap-2 px-5 py-2.5 h-auto text-sm font-medium transition-all duration-200",
+                "gap-2 px-5 py-2.5 h-auto text-sm font-medium",
                 hasObservations 
-                  ? "bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 border-emerald-500/40 text-emerald-400 hover:border-emerald-500/60"
-                  : "bg-muted/30 border-border/50 hover:bg-muted/50 hover:border-primary/30"
+                  ? "bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 border-emerald-500/40 text-emerald-400"
+                  : "bg-muted/30 border-border/50"
               )}
             >
               <Pencil className="h-4 w-4" />
@@ -349,13 +349,13 @@ function LessonInfo({
                   onClick={() => setRating(star)}
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
-                  className="p-0.5 transition-all duration-300 hover:scale-125 active:scale-95"
+                  className="p-0.5"
                 >
                   <Star
-                    className={`h-5 w-5 transition-all duration-300 ${
+                    className={`h-5 w-5 ${
                       star <= (hoverRating || rating)
                         ? "fill-warning text-warning drop-shadow-[0_0_12px_hsl(var(--warning))]"
-                        : "text-muted-foreground/30 hover:text-muted-foreground/50"
+                        : "text-muted-foreground/30"
                     }`}
                   />
                 </button>
@@ -394,9 +394,9 @@ function LessonsSidebar({
     .reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
 
   return (
-    <div className="relative rounded-2xl overflow-hidden group/sidebar">
+    <div className="relative rounded-2xl overflow-hidden">
       {/* 🎬 NETFLIX PREMIUM OUTER GLOW - Cinematographic */}
-      <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-b from-destructive/80 via-primary/50 to-holo-cyan/60 opacity-60 group-hover/sidebar:opacity-90 transition-opacity duration-500 blur-[1px]" />
+      <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-b from-destructive/80 via-primary/50 to-holo-cyan/60 opacity-70 blur-[1px]" />
       
       <Card className="relative border-0 overflow-hidden bg-gradient-to-b from-[#0a0a0f] via-card to-card/95">
         {/* 🔴 Netflix Red Accent Line */}
@@ -513,7 +513,7 @@ function LessonsSidebar({
                               {lesson.title}
                             </h4>
                             {isActive && (
-                              <Badge className="bg-gradient-to-r from-success to-emerald-500 text-white text-[10px] px-2 py-0 border-0 shadow-lg animate-pulse">
+                              <Badge className="bg-gradient-to-r from-success to-emerald-500 text-white text-[10px] px-2 py-0 border-0 shadow-lg">
                                 ATUAL
                               </Badge>
                             )}
@@ -536,12 +536,12 @@ function LessonsSidebar({
                         {/* Play Button - VERDE para selecionado, Rosa para demais */}
                         <div className="shrink-0">
                           <div
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                               isCompleted
                                 ? "bg-gradient-to-br from-success to-success/80 text-white shadow-[0_0_15px_hsl(var(--success)/0.4)]"
                                 : isActive 
                                 ? "bg-gradient-to-br from-success via-emerald-500 to-success text-white shadow-[0_0_20px_hsl(var(--success)/0.5)]" 
-                                : "bg-gradient-to-br from-primary/20 to-holo-pink/20 text-primary group-hover/lesson:from-primary/40 group-hover/lesson:to-holo-pink/40 group-hover/lesson:shadow-[0_0_15px_hsl(var(--primary)/0.3)]"
+                                : "bg-gradient-to-br from-primary/20 to-holo-pink/20 text-primary"
                             }`}
                           >
                             <Play className="h-5 w-5 ml-0.5" />
@@ -748,7 +748,7 @@ function ForumSection({
           {/* Lista de dúvidas */}
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+              <div className="rounded-full h-6 w-6 border-b-2 border-primary" />
             </div>
           ) : questions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -879,9 +879,9 @@ function UnifiedStudyHub({
   lessonProgress?: Record<string, LessonProgress>;
 }) {
   return (
-    <div className="relative rounded-2xl overflow-hidden group mt-4 mb-6">
+    <div className="relative rounded-2xl overflow-hidden mt-4 mb-6">
       {/* Holographic border glow */}
-      <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-r from-primary via-holo-purple to-holo-cyan opacity-50 blur-sm group-hover:opacity-70 transition-opacity duration-500" />
+      <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-r from-primary via-holo-purple to-holo-cyan opacity-60 blur-sm" />
       <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary/60 via-holo-purple/40 to-holo-cyan/50" />
       
       {/* Main container */}
@@ -1009,9 +1009,9 @@ function SmartSchedule({
   ];
 
   return (
-    <div className="relative rounded-2xl overflow-hidden group">
-      {/* Animated gradient border */}
-      <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-r from-primary via-holo-purple to-holo-cyan opacity-60 blur-sm group-hover:opacity-80 transition-opacity duration-500" />
+    <div className="relative rounded-2xl overflow-hidden">
+      {/* Gradient border */}
+      <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-r from-primary via-holo-purple to-holo-cyan opacity-70 blur-sm" />
       <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-primary/70 via-holo-purple/50 to-holo-cyan/60" />
       
       <Card className="relative border-0 overflow-hidden bg-gradient-to-b from-card via-card/98 to-card/95">
@@ -1029,7 +1029,7 @@ function SmartSchedule({
                 <div className="flex items-center gap-3">
                   <CardTitle className="text-xl font-bold">Cronograma Inteligente</CardTitle>
                   <Badge className="bg-gradient-to-r from-primary/20 to-holo-purple/20 text-primary border-primary/30 shadow-[0_0_10px_hsl(var(--primary)/0.2)]">
-                    <Sparkles className="h-3 w-3 mr-1 animate-pulse" />
+                    <Sparkles className="h-3 w-3 mr-1" />
                     ENA vIA
                   </Badge>
                 </div>
@@ -1043,7 +1043,7 @@ function SmartSchedule({
               <div className="text-3xl font-black bg-gradient-to-r from-primary to-holo-purple bg-clip-text text-transparent">{progressPercent}%</div>
               <div className="w-24 h-2.5 bg-muted/50 rounded-full overflow-hidden mt-2 ring-1 ring-white/10">
                 <div 
-                  className="h-full bg-gradient-to-r from-primary via-holo-purple to-holo-cyan rounded-full transition-all duration-500 shadow-[0_0_15px_hsl(var(--primary)/0.5)]"
+                  className="h-full bg-gradient-to-r from-primary via-holo-purple to-holo-cyan rounded-full shadow-[0_0_15px_hsl(var(--primary)/0.5)]"
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
@@ -1073,10 +1073,10 @@ function SmartSchedule({
               return (
                 <div 
                   key={index} 
-                  className={`grid grid-cols-10 gap-2 items-center text-sm py-4 px-3 rounded-xl transition-all duration-300 ${
+                  className={`grid grid-cols-10 gap-2 items-center text-sm py-4 px-3 rounded-xl ${
                     isCompleted 
                       ? 'bg-gradient-to-r from-success/15 to-transparent border border-success/30 shadow-[0_0_15px_hsl(var(--success)/0.1)]' 
-                      : 'hover:bg-gradient-to-r hover:from-muted/40 hover:to-transparent border border-transparent hover:border-border/30'
+                      : 'border border-transparent'
                   }`}
                 >
                   {/* Atividade */}
@@ -1098,7 +1098,7 @@ function SmartSchedule({
                       activity.progress === 100 ? 'bg-success/30' : activity.progress > 0 ? 'bg-primary/20' : 'bg-muted/50'
                     }`}>
                       <div 
-                        className={`h-full transition-all duration-300 rounded-full ${
+                        className={`h-full rounded-full ${
                           activity.progress === 100 ? 'bg-gradient-to-r from-success to-success/80' : activity.progress > 0 ? 'bg-gradient-to-r from-primary to-holo-purple' : 'bg-info'
                         }`}
                         style={{ width: `${activity.progress}%` }}
@@ -1107,40 +1107,40 @@ function SmartSchedule({
                     <span className="text-xs font-medium w-8">{activity.progress}%</span>
                   </div>
 
-                  {/* Icons with hover effects */}
+                  {/* Icons */}
                   <div className="flex justify-center">
-                    <div className="p-2 rounded-lg hover:bg-primary/10 hover:shadow-[0_0_12px_hsl(var(--primary)/0.3)] transition-all cursor-pointer group/icon">
-                      <BookOpen className="h-4 w-4 text-muted-foreground group-hover/icon:text-primary transition-colors" />
+                    <div className="p-2 rounded-lg cursor-pointer">
+                      <BookOpen className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
 
                   <div className="flex justify-center">
-                    <div className="p-2 rounded-lg hover:bg-holo-purple/10 hover:shadow-[0_0_12px_hsl(var(--holo-purple)/0.3)] transition-all cursor-pointer group/icon">
-                      <BrainCircuit className="h-4 w-4 text-muted-foreground group-hover/icon:text-holo-purple transition-colors" />
+                    <div className="p-2 rounded-lg cursor-pointer">
+                      <BrainCircuit className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
 
                   <div className="flex justify-center">
-                    <div className="p-2 rounded-lg hover:bg-primary/10 hover:shadow-[0_0_12px_hsl(var(--primary)/0.3)] transition-all cursor-pointer group/icon">
-                      <FileText className="h-4 w-4 text-muted-foreground group-hover/icon:text-primary transition-colors" />
+                    <div className="p-2 rounded-lg cursor-pointer">
+                      <FileText className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
 
                   <div className="flex justify-center">
-                    <div className="p-2 rounded-lg hover:bg-warning/10 hover:shadow-[0_0_12px_hsl(var(--warning)/0.3)] transition-all cursor-pointer group/icon">
-                      <HelpCircle className="h-4 w-4 text-muted-foreground group-hover/icon:text-warning transition-colors" />
+                    <div className="p-2 rounded-lg cursor-pointer">
+                      <HelpCircle className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
 
                   <div className="flex justify-center">
-                    <div className="p-2 rounded-lg hover:bg-holo-cyan/10 hover:shadow-[0_0_12px_hsl(var(--holo-cyan)/0.3)] transition-all cursor-pointer group/icon">
-                      <ExternalLink className="h-4 w-4 text-muted-foreground group-hover/icon:text-holo-cyan transition-colors" />
+                    <div className="p-2 rounded-lg cursor-pointer">
+                      <ExternalLink className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
 
                   <div className="flex justify-center">
-                    <div className="p-2 rounded-lg hover:bg-holo-pink/10 hover:shadow-[0_0_12px_hsl(var(--holo-pink)/0.3)] transition-all cursor-pointer group/icon">
-                      <BrainCircuit className="h-4 w-4 text-muted-foreground group-hover/icon:text-holo-pink transition-colors" />
+                    <div className="p-2 rounded-lg cursor-pointer">
+                      <BrainCircuit className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
 
@@ -1151,7 +1151,7 @@ function SmartSchedule({
                         <CheckCircle2 className="h-5 w-5 text-success" />
                       </div>
                     ) : (
-                      <div className="w-6 h-6 rounded-lg border-2 border-muted-foreground/30 hover:border-primary hover:bg-primary/10 cursor-pointer transition-all duration-200" />
+                      <div className="w-6 h-6 rounded-lg border-2 border-muted-foreground/30 cursor-pointer" />
                     )}
                   </div>
                 </div>
@@ -1163,12 +1163,11 @@ function SmartSchedule({
           <div className="flex justify-center mt-6">
             <Button 
               variant="outline" 
-              className="relative gap-3 bg-gradient-to-r from-holo-pink/10 via-holo-purple/10 to-holo-pink/10 border-holo-pink/50 hover:border-holo-pink/80 shadow-[0_0_40px_hsl(var(--holo-pink)/0.25)] hover:shadow-[0_0_60px_hsl(var(--holo-pink)/0.4)] transition-all duration-500 px-8 py-6 overflow-hidden group/btn"
+              className="relative gap-3 bg-gradient-to-r from-holo-pink/10 via-holo-purple/10 to-holo-pink/10 border-holo-pink/50 shadow-[0_0_40px_hsl(var(--holo-pink)/0.25)] px-8 py-6 overflow-hidden"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-holo-pink/0 via-holo-pink/20 to-holo-pink/0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700" />
-              <Sparkles className="h-5 w-5 text-holo-pink animate-pulse relative z-10" />
+              <Sparkles className="h-5 w-5 text-holo-pink relative z-10" />
               <span className="font-black text-lg bg-gradient-to-r from-holo-pink via-holo-purple to-holo-pink bg-clip-text text-transparent relative z-10">TRAMON v8</span>
-              <Sparkles className="h-5 w-5 text-holo-pink animate-pulse relative z-10" />
+              <Sparkles className="h-5 w-5 text-holo-pink relative z-10" />
             </Button>
           </div>
         </CardContent>
@@ -1532,9 +1531,9 @@ export default function AlunoPlanejamento() {
           backgroundSize: '50px 50px'
         }} />
         
-        {/* Animated glow orbs - CSS only */}
-        <div className="absolute top-1/4 -left-32 w-64 h-64 bg-primary/20 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute bottom-1/4 -right-32 w-80 h-80 bg-holo-purple/15 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }} />
+        {/* Static glow orbs */}
+        <div className="absolute top-1/4 -left-32 w-64 h-64 bg-primary/20 rounded-full blur-[100px]" />
+        <div className="absolute bottom-1/4 -right-32 w-80 h-80 bg-holo-purple/15 rounded-full blur-[120px]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-holo-cyan/5 rounded-full blur-[150px]" />
       </div>
       {/* 🎛️ TOP BAR - HOLOGRAPHIC COMMAND CENTER */}
@@ -1569,11 +1568,11 @@ export default function AlunoPlanejamento() {
               {/* Próxima Live → REDIRECIONAMENTO PARA /alunos/lives */}
               <a 
                 href="/alunos/lives"
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-destructive/10 to-pink-500/10 rounded-xl border border-destructive/30 shadow-[0_0_15px_rgba(220,38,38,0.1)] hover:from-destructive/20 hover:to-pink-500/20 transition-all duration-200 cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-destructive/10 to-pink-500/10 rounded-xl border border-destructive/30 shadow-[0_0_15px_rgba(220,38,38,0.1)] cursor-pointer"
               >
                 <div className="relative">
                   <Radio className="h-4 w-4 text-destructive" />
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-destructive rounded-full animate-ping" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-destructive rounded-full" />
                 </div>
                 <span className="text-sm font-medium">LIVE:18:30 05/02</span>
               </a>
@@ -1582,7 +1581,7 @@ export default function AlunoPlanejamento() {
             {/* Week Selector - NETFLIX PREMIUM 2300 */}
             <div className="relative group/week">
               {/* Outer Glow Netflix */}
-              <div className="absolute -inset-[2px] rounded-xl bg-gradient-to-r from-destructive via-pink-500 to-destructive opacity-70 blur-sm group-hover/week:opacity-100 transition-opacity duration-300" />
+              <div className="absolute -inset-[2px] rounded-xl bg-gradient-to-r from-destructive via-pink-500 to-destructive opacity-80 blur-sm" />
               
               <Select
                 value={selectedWeek?.id || ""}
@@ -1591,7 +1590,7 @@ export default function AlunoPlanejamento() {
                   if (week) setSelectedWeek(week);
                 }}
               >
-                <SelectTrigger className="relative w-full min-w-[320px] bg-gradient-to-r from-destructive via-pink-600 to-destructive text-white border-0 hover:from-destructive/95 hover:via-pink-500 hover:to-destructive/95 shadow-[0_0_30px_rgba(220,38,38,0.5),inset_0_1px_0_rgba(255,255,255,0.15)] rounded-xl h-12 transition-all duration-300">
+                <SelectTrigger className="relative w-full min-w-[320px] bg-gradient-to-r from-destructive via-pink-600 to-destructive text-white border-0 shadow-[0_0_30px_rgba(220,38,38,0.5),inset_0_1px_0_rgba(255,255,255,0.15)] rounded-xl h-12">
                   {/* Netflix Red Accent Line */}
                   <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-white/40 to-transparent rounded-t-xl" />
                   
@@ -1613,7 +1612,7 @@ export default function AlunoPlanejamento() {
                       <SelectItem 
                         key={week.id} 
                         value={week.id}
-                        className={`transition-all duration-200 ${isSelected ? 'bg-destructive/20' : 'hover:bg-destructive/10'}`}
+                        className={isSelected ? 'bg-destructive/20' : ''}
                       >
                         <div className="flex items-center gap-2">
                           {isCompleted && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
