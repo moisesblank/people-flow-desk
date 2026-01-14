@@ -100,6 +100,13 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
+// Imagens dos cronogramas
+import capaFevereiro from "@/assets/cronograma/capa-fevereiro.png";
+import capaMarco from "@/assets/cronograma/capa-marco.png";
+import capaAbril from "@/assets/cronograma/capa-abril.png";
+import capaMaio from "@/assets/cronograma/capa-maio.png";
+import capaMonteSeu from "@/assets/cronograma/capa-monte-seu.png";
+
 // Types - Existing Lessons from lessons table
 interface ExistingLesson {
   id: string;
@@ -338,6 +345,187 @@ function ManagementCards({
           </motion.div>
         );
       })}
+    </div>
+  );
+}
+
+// ============================================
+// 🎯 5 CRONOGRAMA CARDS - Sync with /alunos/planejamento
+// Mostra os 5 tipos de cronograma para gestão
+// ============================================
+
+const CRONOGRAMAS_CONFIG = [
+  {
+    id: 'fevereiro',
+    title: 'EXTENSIVO FEVEREIRO',
+    semanas: 39,
+    highlight: '39 SEMANAS',
+    image: capaFevereiro,
+    status: 'active' as const,
+    description: 'Cronograma completo iniciando em fevereiro',
+  },
+  {
+    id: 'marco',
+    title: 'EXTENSIVO MARÇO',
+    semanas: 35,
+    highlight: '35 SEMANAS',
+    image: capaMarco,
+    status: 'coming_soon' as const,
+    description: 'Cronograma iniciando em março',
+  },
+  {
+    id: 'abril',
+    title: 'EXTENSIVO ABRIL',
+    semanas: 30,
+    highlight: '30 SEMANAS',
+    image: capaAbril,
+    status: 'coming_soon' as const,
+    description: 'Cronograma iniciando em abril',
+  },
+  {
+    id: 'maio',
+    title: 'EXTENSIVO MAIO',
+    semanas: 26,
+    highlight: '26 SEMANAS',
+    image: capaMaio,
+    status: 'coming_soon' as const,
+    description: 'Cronograma iniciando em maio',
+  },
+  {
+    id: 'inteligente',
+    title: 'INTELIGENTE',
+    semanas: null,
+    highlight: 'MONTE O SEU',
+    image: capaMonteSeu,
+    status: 'coming_soon' as const,
+    description: 'Cronograma personalizado pelo aluno',
+  },
+];
+
+function CronogramasGestaoCards({ 
+  weeks, 
+  onSelectCronograma,
+}: { 
+  weeks: PlanningWeek[];
+  onSelectCronograma: (id: string) => void;
+}) {
+  // Calcular stats por cronograma (baseado em templates ou semanas ativas)
+  const stats = useMemo(() => {
+    return CRONOGRAMAS_CONFIG.map(crono => {
+      const cronogramaWeeks = weeks.filter(w => 
+        w.title.toLowerCase().includes(crono.id) || 
+        (crono.id === 'fevereiro' && w.status === 'active')
+      );
+      return {
+        ...crono,
+        weekCount: cronogramaWeeks.length,
+        activeWeeks: cronogramaWeeks.filter(w => w.status === 'active').length,
+      };
+    });
+  }, [weeks]);
+
+  return (
+    <div className="space-y-4">
+      {/* Section Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-holo-purple/10 border border-primary/30">
+            <Calendar className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold">Cronogramas do Aluno</h2>
+            <p className="text-xs text-muted-foreground">
+              Sincronizado com /alunos/planejamento
+            </p>
+          </div>
+        </div>
+        <Badge className="bg-green-500/20 text-green-500 border-green-500/30 animate-pulse">
+          <Radio className="h-3 w-3 mr-1" />
+          REALTIME
+        </Badge>
+      </div>
+
+      {/* Cards Grid - 5 cards iguais ao aluno */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {stats.map((crono, index) => (
+          <div
+            key={crono.id}
+            onClick={() => onSelectCronograma(crono.id)}
+            style={{ animationDelay: `${index * 80}ms` }}
+            className="group relative aspect-[3/4] rounded-xl overflow-hidden cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 animate-fade-in transform-gpu transition-all duration-300 hover:scale-[1.02] border-2 border-transparent hover:border-primary/40"
+          >
+            {/* Background Image */}
+            <img
+              src={crono.image}
+              alt={crono.title}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+
+            {/* Overlay Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-85 group-hover:opacity-70 transition-opacity duration-300" />
+
+            {/* Status Indicator */}
+            <div className="absolute top-2 right-2">
+              {crono.status === 'active' ? (
+                <Badge className="bg-green-500/90 text-white text-[10px] px-2 py-0.5">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  ATIVO
+                </Badge>
+              ) : (
+                <Badge className="bg-yellow-500/90 text-black text-[10px] px-2 py-0.5">
+                  <Clock className="h-3 w-3 mr-1" />
+                  EM BREVE
+                </Badge>
+              )}
+            </div>
+
+            {/* Content Overlay */}
+            <div className="absolute inset-0 flex flex-col justify-end p-3">
+              {/* Highlight Badge */}
+              <div className="mb-1.5">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/90 text-primary-foreground text-[10px] font-black rounded-full shadow-[0_0_15px_hsl(var(--primary)/0.5)]">
+                  <Zap className="h-2.5 w-2.5" />
+                  {crono.highlight}
+                </span>
+              </div>
+
+              {/* Title */}
+              <h3 className="text-white text-xs font-bold leading-tight mb-1 drop-shadow-lg line-clamp-2">
+                {crono.title}
+              </h3>
+
+              {/* Stats */}
+              <div className="flex items-center gap-2 text-[10px] text-white/80">
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-2.5 w-2.5" />
+                  {crono.activeWeeks}/{crono.semanas || '∞'}
+                </span>
+                {crono.weekCount > 0 && (
+                  <span className="flex items-center gap-1">
+                    <BookOpen className="h-2.5 w-2.5" />
+                    {crono.weekCount} semanas
+                  </span>
+                )}
+              </div>
+
+              {/* CTA Arrow */}
+              <div className="flex items-center gap-1 text-primary text-[10px] font-medium opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300 mt-1">
+                <span>Gerenciar</span>
+                <ChevronRight className="h-3 w-3" />
+              </div>
+            </div>
+
+            {/* Corner Accents */}
+            <div className="absolute top-1.5 left-1.5 w-3 h-3 border-l-2 border-t-2 border-white/30 rounded-tl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute top-1.5 right-1.5 w-3 h-3 border-r-2 border-t-2 border-white/30 rounded-tr opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute bottom-1.5 left-1.5 w-3 h-3 border-l-2 border-b-2 border-white/30 rounded-bl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute bottom-1.5 right-1.5 w-3 h-3 border-r-2 border-b-2 border-white/30 rounded-br opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+            {/* Holographic Glow */}
+            <div className="absolute inset-0 rounded-xl group-hover:shadow-[0_0_30px_hsl(var(--primary)/0.3)] transition-shadow duration-300" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1439,6 +1627,18 @@ export default function GestaoPlanejamento() {
             setFormDialogOpen(true);
           }}
           onViewAll={() => setStatusFilter("all")}
+        />
+
+        {/* 🎯 5 CRONOGRAMA CARDS - Sync with /alunos/planejamento */}
+        <CronogramasGestaoCards 
+          weeks={weeks}
+          onSelectCronograma={(id) => {
+            toast.info(`Gerenciando cronograma: ${id.toUpperCase()}`);
+            // Filtrar semanas por cronograma selecionado
+            if (id === 'fevereiro') {
+              setStatusFilter("active");
+            }
+          }}
         />
 
         {/* Filters & Search */}
