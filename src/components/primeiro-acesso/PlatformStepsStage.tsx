@@ -6,12 +6,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  BookOpen, 
   Video, 
-  MessageSquare, 
+  BookOpen, 
+  FileQuestion, 
+  ClipboardList, 
   Trophy, 
-  Users, 
-  Shield,
+  CalendarCheck,
   ChevronRight,
   ChevronLeft,
   Sparkles
@@ -23,54 +23,64 @@ interface PlatformStepsStageProps {
   onComplete: () => void;
 }
 
+// ============================================
+// PASSOS REAIS DA PLATAFORMA - Áreas principais
+// Cada passo representa uma seção real do portal
+// ============================================
 const PLATFORM_STEPS = [
   {
     id: 1,
-    icon: BookOpen,
-    title: "Materiais de Estudo",
-    description: "Acesse livros digitais, apostilas e materiais exclusivos organizados por tema. Tudo pensado para otimizar seu aprendizado.",
-    tip: "Use os filtros para encontrar conteúdos específicos",
-    color: "from-blue-500 to-cyan-500",
+    icon: Video,
+    title: "Videoaulas",
+    description: "Assista aulas completas organizadas por assunto. Use o player inteligente com velocidade ajustável e marque seu progresso automaticamente.",
+    tip: "Acesse em /alunos/videoaulas — Clique em 'Minhas Aulas' no menu lateral",
+    color: "from-purple-500 to-pink-500",
+    route: "/alunos/videoaulas",
   },
   {
     id: 2,
-    icon: Video,
-    title: "Videoaulas",
-    description: "Assista às aulas gravadas no seu ritmo. Marque como assistida, faça anotações e acompanhe seu progresso.",
-    tip: "Você pode ajustar a velocidade de reprodução",
-    color: "from-purple-500 to-pink-500",
+    icon: BookOpen,
+    title: "Materiais e Livros",
+    description: "Biblioteca digital com PDFs, apostilas e livros interativos. Leia online com proteção anti-pirataria e faça anotações que ficam salvas.",
+    tip: "Acesse em /alunos/materiais e /alunos/livro-web — Use os Flash Cards para revisar!",
+    color: "from-blue-500 to-cyan-500",
+    route: "/alunos/materiais",
   },
   {
     id: 3,
-    icon: MessageSquare,
-    title: "Suporte e Dúvidas",
-    description: "Tire suas dúvidas diretamente com nossa equipe via WhatsApp ou através do chat da plataforma.",
-    tip: "Respostas em até 24 horas úteis",
-    color: "from-green-500 to-emerald-500",
+    icon: ClipboardList,
+    title: "Simulados",
+    description: "Faça simulados cronometrados estilo ENEM e vestibulares. Cada acerto vale XP e te coloca no ranking competitivo da plataforma!",
+    tip: "Acesse em /alunos/simulados — Primeiro acerto em cada questão vale 10 XP",
+    color: "from-orange-500 to-amber-500",
+    route: "/alunos/simulados",
   },
   {
     id: 4,
-    icon: Trophy,
-    title: "Sistema de Progresso",
-    description: "Ganhe XP, suba de nível e desbloqueie conquistas conforme avança nos estudos. Acompanhe sua evolução!",
-    tip: "Cada aula concluída vale pontos de experiência",
-    color: "from-yellow-500 to-orange-500",
+    icon: FileQuestion,
+    title: "Banco de Questões",
+    description: "Pratique com milhares de questões organizadas por tema e dificuldade. Modo treino para evoluir sem pressão do tempo.",
+    tip: "Acesse em /alunos/questoes — Modo treino não afeta seu ranking",
+    color: "from-green-500 to-emerald-500",
+    route: "/alunos/questoes",
   },
   {
     id: 5,
-    icon: Users,
-    title: "Comunidade",
-    description: "Participe da nossa comunidade exclusiva, interaja com outros alunos e compartilhe experiências.",
-    tip: "Networking é parte do aprendizado",
-    color: "from-red-500 to-rose-500",
+    icon: Trophy,
+    title: "Ranking e XP",
+    description: "Veja sua posição entre todos os alunos! Ganhe XP nos simulados, suba de nível e conquiste o pódio semanal ou global.",
+    tip: "Acesse em /alunos/ranking — Quanto mais simulados, mais XP!",
+    color: "from-yellow-500 to-orange-500",
+    route: "/alunos/ranking",
   },
   {
     id: 6,
-    icon: Shield,
-    title: "Segurança da Conta",
-    description: "Sua conta está protegida com autenticação em duas etapas. Mantenha seus dados de acesso sempre seguros.",
-    tip: "Nunca compartilhe sua senha com ninguém",
+    icon: CalendarCheck,
+    title: "Planejamento de Estudos",
+    description: "Organize sua rotina com cronograma personalizado, tutoria e acesso rápido a todas as áreas. Seu hub central de estudos.",
+    tip: "Acesse em /alunos/planejamento — É seu painel de controle!",
     color: "from-indigo-500 to-violet-500",
+    route: "/alunos/planejamento",
   },
 ];
 
