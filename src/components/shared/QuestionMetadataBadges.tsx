@@ -122,8 +122,8 @@ export function QuestionMetadataBadges({
         )}
         
         {/* MACRO (Identidade Principal) */}
-        <Badge className={cn("text-sm px-4 py-1.5 border-0 font-bold", macroConfig.badge)}>
-          {macroConfig.label}
+        <Badge className={cn("text-sm px-4 py-1.5 border-0 font-bold", macroBadgeClass)}>
+          {macroLabel}
         </Badge>
       </div>
 
@@ -234,8 +234,8 @@ export function QuestionBadgesCompact({ question, className }: { question: Quest
           🏛 {bancaAno}
         </Badge>
       )}
-      <Badge className={cn("text-xs px-2 py-0.5", macroConfig.badge)}>
-        {macroConfig.label}
+      <Badge className={cn("text-xs px-2 py-0.5", macroBadgeClass)}>
+        {macroLabel}
       </Badge>
       {question.micro && (
         <Badge className="text-xs px-2 py-0.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
