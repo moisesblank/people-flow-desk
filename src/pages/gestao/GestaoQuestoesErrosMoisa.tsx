@@ -1,7 +1,7 @@
 // ============================================
-// 🚨 ERROS REPORTADOS PELOS ALUNOS
-// Página para gerenciar erros de questões reportados
-// Tabela: question_error_reports
+// 🚨 CENTRO UNIFICADO DE ERROS DE QUESTÕES
+// 1. Erros de Sistema (dados incompletos)
+// 2. Erros Reportados pelos Alunos
 // CONSTITUIÇÃO v10.4 - REGRA PERMANENTE
 // ============================================
 
@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   AlertTriangle, 
   ChevronLeft, 
@@ -29,7 +30,10 @@ import {
   XCircle,
   Eye,
   Search,
-  Loader2
+  Loader2,
+  AlertCircle,
+  FileWarning,
+  Stethoscope
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -49,6 +53,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 // ============================================
 // TIPOS
@@ -84,6 +96,11 @@ interface Question {
   ano: number | null;
 }
 
+interface SystemErrorQuestion extends Question {
+  error_type: 'no_text' | 'few_options' | 'no_explanation';
+  error_label: string;
+}
+
 const STATUS_CONFIG = {
   pendente: { label: 'Pendente', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30', icon: Clock },
   em_analise: { label: 'Em Análise', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: Eye },
@@ -99,6 +116,9 @@ const ITEMS_PER_PAGE = 10;
 
 export default function GestaoQuestoesErrosMoisa() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<'sistema' | 'alunos'>('sistema');
+  
+  // Estados para erros de alunos
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -107,11 +127,92 @@ export default function GestaoQuestoesErrosMoisa() {
   const [isQuestionLoading, setIsQuestionLoading] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');
 
+  // Estados para erros de sistema
+  const [systemPage, setSystemPage] = useState(1);
+  const [systemFilter, setSystemFilter] = useState<string>('all');
+  const [selectedSystemQuestion, setSelectedSystemQuestion] = useState<SystemErrorQuestion | null>(null);
+
   // ============================================
-  // QUERY: Buscar erros reportados
+  // QUERY: Erros de Sistema (dados incompletos)
+  // ============================================
+
+  const { data: systemData, isLoading: isLoadingSystem, refetch: refetchSystem } = useQuery({
+    queryKey: ['system-question-errors', systemPage, systemFilter],
+    queryFn: async () => {
+      // Buscar questões com problemas
+      let query = supabase
+        .from('quiz_questions')
+        .select('id, question_text, options, correct_answer, explanation, macro, micro, difficulty, banca, ano', { count: 'exact' });
+
+      // Aplicar filtros de erro
+      if (systemFilter === 'no_text') {
+        query = query.or('question_text.is.null,question_text.eq.');
+      } else if (systemFilter === 'few_options') {
+        // Filtrar no cliente pois é JSONB
+      } else if (systemFilter === 'no_explanation') {
+        query = query.or('explanation.is.null,explanation.eq.');
+      } else {
+        // Todos: sem enunciado OU sem explicação
+        query = query.or('question_text.is.null,question_text.eq.,explanation.is.null,explanation.eq.');
+      }
+
+      const { data: questions, error, count } = await query
+        .order('id', { ascending: true })
+        .range((systemPage - 1) * ITEMS_PER_PAGE, systemPage * ITEMS_PER_PAGE - 1);
+
+      if (error) throw error;
+
+      // Processar e classificar erros
+      const processedQuestions: SystemErrorQuestion[] = (questions || []).map(q => {
+        let error_type: SystemErrorQuestion['error_type'] = 'no_text';
+        let error_label = '';
+
+        const hasNoText = !q.question_text || q.question_text.trim() === '';
+        const hasNoExplanation = !q.explanation || q.explanation.trim() === '';
+        const optionsCount = q.options ? Object.keys(q.options).length : 0;
+        const hasFewOptions = optionsCount < 3;
+
+        if (hasNoText) {
+          error_type = 'no_text';
+          error_label = 'Sem Enunciado';
+        } else if (hasFewOptions) {
+          error_type = 'few_options';
+          error_label = `Apenas ${optionsCount} alternativas`;
+        } else if (hasNoExplanation) {
+          error_type = 'no_explanation';
+          error_label = 'Sem Explicação';
+        }
+
+        return {
+          ...q,
+          error_type,
+          error_label
+        } as SystemErrorQuestion;
+      });
+
+      // Filtrar few_options no cliente se necessário
+      let filteredQuestions = processedQuestions;
+      if (systemFilter === 'few_options') {
+        filteredQuestions = processedQuestions.filter(q => {
+          const optionsCount = q.options ? Object.keys(q.options).length : 0;
+          return optionsCount < 3;
+        });
+      }
+
+      return {
+        questions: filteredQuestions,
+        totalCount: count || 0,
+        totalPages: Math.ceil((count || 0) / ITEMS_PER_PAGE)
+      };
+    },
+    staleTime: 30000,
+  });
+
+  // ============================================
+  // QUERY: Erros Reportados pelos Alunos
   // ============================================
   
-  const { data, isLoading, refetch } = useQuery({
+  const { data: studentData, isLoading: isLoadingStudent, refetch: refetchStudent } = useQuery({
     queryKey: ['question-error-reports-moisa', page, statusFilter, searchTerm],
     queryFn: async () => {
       let query = supabase
@@ -198,7 +299,7 @@ export default function GestaoQuestoesErrosMoisa() {
         .from('quiz_questions')
         .select('id, question_text, options, correct_answer, explanation, macro, micro, difficulty, banca, ano')
         .eq('id', report.question_id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setSelectedQuestion(data as Question);
@@ -215,8 +316,9 @@ export default function GestaoQuestoesErrosMoisa() {
   // CONTADORES
   // ============================================
 
-  const pendingCount = data?.reports?.filter(r => r.status === 'pendente').length || 0;
-  const totalCount = data?.totalCount || 0;
+  const systemErrorCount = systemData?.totalCount || 0;
+  const studentReportCount = studentData?.totalCount || 0;
+  const pendingStudentCount = studentData?.reports?.filter(r => r.status === 'pendente').length || 0;
 
   // ============================================
   // RENDER
@@ -228,171 +330,339 @@ export default function GestaoQuestoesErrosMoisa() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-lg bg-red-500/20">
-            <MessageSquareWarning className="w-6 h-6 text-red-400" />
+            <Stethoscope className="w-6 h-6 text-red-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Erros Reportados</h1>
+            <h1 className="text-2xl font-bold text-foreground">Central de Erros</h1>
             <p className="text-sm text-muted-foreground">
-              {totalCount} {totalCount === 1 ? 'reporte' : 'reportes'} • {pendingCount} pendente{pendingCount !== 1 && 's'}
+              {systemErrorCount} erros de sistema • {studentReportCount} reportes de alunos
             </p>
           </div>
         </div>
         
         <Button 
           variant="outline" 
-          onClick={() => refetch()}
-          disabled={isLoading}
+          onClick={() => {
+            refetchSystem();
+            refetchStudent();
+          }}
+          disabled={isLoadingSystem || isLoadingStudent}
           className="gap-2"
         >
-          <RefreshCw className={cn("w-4 h-4", isLoading && "animate-spin")} />
+          <RefreshCw className={cn("w-4 h-4", (isLoadingSystem || isLoadingStudent) && "animate-spin")} />
           Atualizar
         </Button>
       </div>
 
-      {/* Filtros */}
-      <Card className="mb-6">
-        <CardContent className="py-4">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por aluno, email ou mensagem..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setPage(1);
-                  }}
-                  className="pl-10"
-                />
-              </div>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'sistema' | 'alunos')} className="space-y-6">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="sistema" className="gap-2">
+            <FileWarning className="w-4 h-4" />
+            Sistema
+            {systemErrorCount > 0 && (
+              <Badge variant="destructive" className="ml-1 text-xs">
+                {systemErrorCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="alunos" className="gap-2">
+            <MessageSquareWarning className="w-4 h-4" />
+            Alunos
+            {pendingStudentCount > 0 && (
+              <Badge variant="destructive" className="ml-1 text-xs">
+                {pendingStudentCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ============================================ */}
+        {/* TAB: ERROS DE SISTEMA */}
+        {/* ============================================ */}
+        <TabsContent value="sistema" className="space-y-4">
+          {/* Filtros Sistema */}
+          <Card>
+            <CardContent className="py-4">
+              <Select
+                value={systemFilter}
+                onValueChange={(value) => {
+                  setSystemFilter(value);
+                  setSystemPage(1);
+                }}
+              >
+                <SelectTrigger className="w-full md:w-[250px]">
+                  <SelectValue placeholder="Filtrar por tipo de erro" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os Erros</SelectItem>
+                  <SelectItem value="no_text">Sem Enunciado</SelectItem>
+                  <SelectItem value="few_options">Poucas Alternativas (&lt;3)</SelectItem>
+                  <SelectItem value="no_explanation">Sem Explicação</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          {/* Loading */}
+          {isLoadingSystem && (
+            <div className="flex items-center justify-center py-20">
+              <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => {
-                setStatusFilter(value);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-full md:w-[180px]">
-                <SelectValue placeholder="Filtrar por status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="pendente">Pendentes</SelectItem>
-                <SelectItem value="em_analise">Em Análise</SelectItem>
-                <SelectItem value="resolvido">Resolvidos</SelectItem>
-                <SelectItem value="descartado">Descartados</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+          )}
 
-      {/* Loading */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-20">
-          <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
-        </div>
-      )}
-
-      {/* Lista de Reports */}
-      {!isLoading && data?.reports && (
-        <div className="space-y-4">
-          {data.reports.length === 0 ? (
-            <Card className="border-green-500/30 bg-green-500/5">
-              <CardContent className="py-10 text-center">
-                <Check className="w-12 h-12 mx-auto text-green-400 mb-3" />
-                <h3 className="text-lg font-semibold text-green-400">Nenhum reporte encontrado!</h3>
-                <p className="text-sm text-muted-foreground">
-                  {statusFilter !== 'all' ? 'Nenhum reporte com este status.' : 'Os alunos ainda não reportaram erros.'}
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            data.reports.map((report, index) => {
-              const statusConfig = STATUS_CONFIG[report.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pendente;
-              const StatusIcon = statusConfig.icon;
-
-              return (
-                <Card 
-                  key={report.id} 
-                  className="border-border/50 hover:border-primary/30 transition-colors cursor-pointer"
-                  onClick={() => handleOpenReport(report)}
-                >
-                  <CardContent className="py-4">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      {/* Info Principal */}
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant="outline" className="font-mono text-xs">
-                            #{(page - 1) * ITEMS_PER_PAGE + index + 1}
-                          </Badge>
-                          <Badge className={cn("text-xs gap-1", statusConfig.color)}>
-                            <StatusIcon className="w-3 h-3" />
-                            {statusConfig.label}
-                          </Badge>
-                          <Badge variant="secondary" className="text-xs">
-                            {report.source_page === 'simulados' ? '📝 Simulado' : '📚 Questões'}
-                          </Badge>
-                        </div>
-
-                        <p className="text-sm line-clamp-2">{report.error_message}</p>
-
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <User className="w-3 h-3" />
-                            {report.user_name || report.user_email || 'Aluno'}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {format(new Date(report.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Ação */}
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" className="gap-1">
-                          <Eye className="w-4 h-4" />
-                          Ver Detalhes
-                        </Button>
-                      </div>
-                    </div>
+          {/* Lista de Erros de Sistema */}
+          {!isLoadingSystem && systemData?.questions && (
+            <>
+              {systemData.questions.length === 0 ? (
+                <Card className="border-green-500/30 bg-green-500/5">
+                  <CardContent className="py-10 text-center">
+                    <Check className="w-12 h-12 mx-auto text-green-400 mb-3" />
+                    <h3 className="text-lg font-semibold text-green-400">Base de dados limpa!</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Nenhuma questão com dados incompletos foi encontrada.
+                    </p>
                   </CardContent>
                 </Card>
-              );
-            })
+              ) : (
+                <Card>
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[100px]">ID</TableHead>
+                          <TableHead>Enunciado</TableHead>
+                          <TableHead className="w-[150px]">Erro</TableHead>
+                          <TableHead className="w-[100px]">Macro</TableHead>
+                          <TableHead className="w-[100px] text-right">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {systemData.questions.map((question) => (
+                          <TableRow key={question.id}>
+                            <TableCell className="font-mono text-xs">
+                              {question.id.slice(0, 8)}...
+                            </TableCell>
+                            <TableCell className="max-w-[300px]">
+                              <p className="truncate text-sm">
+                                {question.question_text || <span className="text-red-400 italic">Sem enunciado</span>}
+                              </p>
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant="outline" 
+                                className={cn(
+                                  "text-xs",
+                                  question.error_type === 'no_text' && "border-red-500/50 text-red-400",
+                                  question.error_type === 'few_options' && "border-orange-500/50 text-orange-400",
+                                  question.error_type === 'no_explanation' && "border-yellow-500/50 text-yellow-400"
+                                )}
+                              >
+                                {question.error_label}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className="text-xs">
+                                {question.macro || 'N/A'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedSystemQuestion(question)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Paginação Sistema */}
+              {systemData.totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-6">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSystemPage(p => Math.max(1, p - 1))}
+                    disabled={systemPage === 1}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <span className="text-sm text-muted-foreground px-4">
+                    Página {systemPage} de {systemData.totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSystemPage(p => Math.min(systemData.totalPages, p + 1))}
+                    disabled={systemPage === systemData.totalPages}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              )}
+            </>
           )}
-        </div>
-      )}
+        </TabsContent>
 
-      {/* Paginação */}
-      {!isLoading && data && data.totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-6">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="text-sm text-muted-foreground px-4">
-            Página {page} de {data.totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage(p => Math.min(data.totalPages, p + 1))}
-            disabled={page === data.totalPages}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-      )}
+        {/* ============================================ */}
+        {/* TAB: ERROS REPORTADOS PELOS ALUNOS */}
+        {/* ============================================ */}
+        <TabsContent value="alunos" className="space-y-4">
+          {/* Filtros Alunos */}
+          <Card>
+            <CardContent className="py-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar por aluno, email ou mensagem..."
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setPage(1);
+                      }}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value) => {
+                    setStatusFilter(value);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-full md:w-[180px]">
+                    <SelectValue placeholder="Filtrar por status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="pendente">Pendentes</SelectItem>
+                    <SelectItem value="em_analise">Em Análise</SelectItem>
+                    <SelectItem value="resolvido">Resolvidos</SelectItem>
+                    <SelectItem value="descartado">Descartados</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
 
-      {/* Modal de Detalhes */}
+          {/* Loading */}
+          {isLoadingStudent && (
+            <div className="flex items-center justify-center py-20">
+              <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
+          {/* Lista de Reports */}
+          {!isLoadingStudent && studentData?.reports && (
+            <div className="space-y-4">
+              {studentData.reports.length === 0 ? (
+                <Card className="border-green-500/30 bg-green-500/5">
+                  <CardContent className="py-10 text-center">
+                    <Check className="w-12 h-12 mx-auto text-green-400 mb-3" />
+                    <h3 className="text-lg font-semibold text-green-400">Nenhum reporte encontrado!</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {statusFilter !== 'all' ? 'Nenhum reporte com este status.' : 'Os alunos ainda não reportaram erros.'}
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                studentData.reports.map((report, index) => {
+                  const statusConfig = STATUS_CONFIG[report.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pendente;
+                  const StatusIcon = statusConfig.icon;
+
+                  return (
+                    <Card 
+                      key={report.id} 
+                      className="border-border/50 hover:border-primary/30 transition-colors cursor-pointer"
+                      onClick={() => handleOpenReport(report)}
+                    >
+                      <CardContent className="py-4">
+                        <div className="flex flex-col md:flex-row md:items-center gap-4">
+                          {/* Info Principal */}
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Badge variant="outline" className="font-mono text-xs">
+                                #{(page - 1) * ITEMS_PER_PAGE + index + 1}
+                              </Badge>
+                              <Badge className={cn("text-xs gap-1", statusConfig.color)}>
+                                <StatusIcon className="w-3 h-3" />
+                                {statusConfig.label}
+                              </Badge>
+                              <Badge variant="secondary" className="text-xs">
+                                {report.source_page === 'simulados' ? '📝 Simulado' : '📚 Questões'}
+                              </Badge>
+                            </div>
+
+                            <p className="text-sm line-clamp-2">{report.error_message}</p>
+
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                {report.user_name || report.user_email || 'Aluno'}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {format(new Date(report.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Ação */}
+                          <div className="flex items-center gap-2">
+                            <Button variant="ghost" size="sm" className="gap-1">
+                              <Eye className="w-4 h-4" />
+                              Ver Detalhes
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          {/* Paginação Alunos */}
+          {!isLoadingStudent && studentData && studentData.totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-sm text-muted-foreground px-4">
+                Página {page} de {studentData.totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(p => Math.min(studentData.totalPages, p + 1))}
+                disabled={page === studentData.totalPages}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {/* ============================================ */}
+      {/* MODAL: Detalhes do Reporte do Aluno */}
+      {/* ============================================ */}
       <Dialog open={!!selectedReport} onOpenChange={(open) => !open && setSelectedReport(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -461,15 +731,15 @@ export default function GestaoQuestoesErrosMoisa() {
                               : "bg-background border-border"
                           )}
                         >
-                          <strong>{letter})</strong> {text}
+                          <strong>{letter})</strong> {String(text)}
                         </div>
                       ))}
                     </div>
                   </div>
                 ) : (
-                  <div className="p-4 rounded-lg bg-muted/50 border text-center text-muted-foreground">
-                    <XCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">Questão não encontrada</p>
+                  <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-center">
+                    <AlertCircle className="w-6 h-6 mx-auto text-yellow-400 mb-2" />
+                    <p className="text-sm text-yellow-400">Questão não encontrada no banco de dados</p>
                   </div>
                 )}
               </div>
@@ -478,10 +748,10 @@ export default function GestaoQuestoesErrosMoisa() {
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold">Notas Internas</h4>
                 <Textarea
+                  placeholder="Adicione notas internas sobre este reporte..."
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                  placeholder="Adicione observações internas sobre este reporte..."
-                  className="min-h-[80px]"
+                  rows={3}
                 />
               </div>
 
@@ -495,7 +765,7 @@ export default function GestaoQuestoesErrosMoisa() {
                     status: 'em_analise',
                     notes: adminNotes 
                   })}
-                  disabled={updateStatusMutation.isPending || selectedReport.status === 'em_analise'}
+                  disabled={updateStatusMutation.isPending}
                 >
                   <Eye className="w-4 h-4" />
                   Em Análise
@@ -510,8 +780,8 @@ export default function GestaoQuestoesErrosMoisa() {
                   })}
                   disabled={updateStatusMutation.isPending}
                 >
-                  <CheckCircle2 className="w-4 h-4" />
-                  Marcar Resolvido
+                  <Check className="w-4 h-4" />
+                  Resolvido
                 </Button>
                 <Button
                   variant="destructive"
@@ -523,8 +793,142 @@ export default function GestaoQuestoesErrosMoisa() {
                   })}
                   disabled={updateStatusMutation.isPending}
                 >
-                  <XCircle className="w-4 h-4" />
+                  <X className="w-4 h-4" />
                   Descartar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ============================================ */}
+      {/* MODAL: Detalhes da Questão com Erro de Sistema */}
+      {/* ============================================ */}
+      <Dialog open={!!selectedSystemQuestion} onOpenChange={(open) => !open && setSelectedSystemQuestion(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileWarning className="w-5 h-5 text-orange-400" />
+              Questão com Erro de Sistema
+            </DialogTitle>
+            <DialogDescription>
+              Dados incompletos detectados automaticamente
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedSystemQuestion && (
+            <div className="space-y-6 py-4">
+              {/* Tipo de Erro */}
+              <div className="flex items-center gap-2">
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "text-sm",
+                    selectedSystemQuestion.error_type === 'no_text' && "border-red-500/50 text-red-400",
+                    selectedSystemQuestion.error_type === 'few_options' && "border-orange-500/50 text-orange-400",
+                    selectedSystemQuestion.error_type === 'no_explanation' && "border-yellow-500/50 text-yellow-400"
+                  )}
+                >
+                  {selectedSystemQuestion.error_label}
+                </Badge>
+                <span className="text-xs text-muted-foreground font-mono">
+                  ID: {selectedSystemQuestion.id}
+                </span>
+              </div>
+
+              {/* Metadados */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {selectedSystemQuestion.banca && (
+                  <Badge variant="outline">{selectedSystemQuestion.banca}</Badge>
+                )}
+                {selectedSystemQuestion.ano && (
+                  <Badge variant="outline">{selectedSystemQuestion.ano}</Badge>
+                )}
+                {selectedSystemQuestion.macro && (
+                  <Badge variant="secondary">{selectedSystemQuestion.macro}</Badge>
+                )}
+                {selectedSystemQuestion.micro && (
+                  <Badge variant="secondary">{selectedSystemQuestion.micro}</Badge>
+                )}
+                {selectedSystemQuestion.difficulty && (
+                  <Badge variant="secondary">{selectedSystemQuestion.difficulty}</Badge>
+                )}
+              </div>
+
+              {/* Enunciado */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Enunciado</h4>
+                <div className={cn(
+                  "p-4 rounded-lg border",
+                  selectedSystemQuestion.question_text 
+                    ? "bg-muted/50" 
+                    : "bg-red-500/10 border-red-500/20"
+                )}>
+                  {selectedSystemQuestion.question_text || (
+                    <span className="text-red-400 italic">⚠️ Enunciado não encontrado</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Alternativas */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Alternativas</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  {selectedSystemQuestion.options && Object.keys(selectedSystemQuestion.options).length > 0 ? (
+                    Object.entries(selectedSystemQuestion.options).map(([letter, text]) => (
+                      <div 
+                        key={letter}
+                        className={cn(
+                          "p-3 rounded border text-sm",
+                          selectedSystemQuestion.correct_answer === letter 
+                            ? "bg-green-500/10 border-green-500/30" 
+                            : "bg-background border-border"
+                        )}
+                      >
+                        <strong>{letter})</strong> {String(text)}
+                        {selectedSystemQuestion.correct_answer === letter && (
+                          <Badge className="ml-2 text-xs bg-green-500/20 text-green-400">
+                            Correta
+                          </Badge>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20 text-center">
+                      <AlertCircle className="w-6 h-6 mx-auto text-orange-400 mb-2" />
+                      <p className="text-sm text-orange-400">Nenhuma alternativa cadastrada</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Explicação */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Explicação</h4>
+                <div className={cn(
+                  "p-4 rounded-lg border",
+                  selectedSystemQuestion.explanation 
+                    ? "bg-muted/50" 
+                    : "bg-yellow-500/10 border-yellow-500/20"
+                )}>
+                  {selectedSystemQuestion.explanation || (
+                    <span className="text-yellow-400 italic">⚠️ Explicação não encontrada</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Ações */}
+              <div className="flex gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => {
+                    window.open(`/gestaofc/questoes/${selectedSystemQuestion.id}`, '_blank');
+                  }}
+                >
+                  <Eye className="w-4 h-4" />
+                  Editar Questão
                 </Button>
               </div>
             </div>
