@@ -302,22 +302,13 @@ export const HeroSection = memo(() => {
             className="hidden lg:block relative"
           >
             <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-gray-900/80 to-black/80 aspect-[4/5]">
-              {/* Placeholder visual futurista */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="w-32 h-32 mx-auto rounded-2xl bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center mb-6 shadow-2xl shadow-red-600/30">
-                    <Atom className="w-16 h-16 text-white" />
-                  </div>
-                  <div className="text-white font-black text-2xl">Prof. Moisés</div>
-                  <div className="text-gray-400 text-sm mt-1">Mestre em Química</div>
-                  <div className="flex items-center justify-center gap-1 mt-3">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-4 h-4 text-amber-400" fill="currentColor" />
-                    ))}
-                    <span className="text-sm text-amber-400 ml-2">4.9</span>
-                  </div>
-                </div>
-              </div>
+              {/* Foto do Professor */}
+              <img 
+                src="/professor-moises-novo.png" 
+                alt="Professor Moisés Medeiros" 
+                className="absolute inset-0 w-full h-full object-cover object-center"
+                loading="lazy"
+              />
               
               {/* Grid de fundo */}
               <div 
