@@ -128,21 +128,12 @@ export default function AlunoRanking() {
         className="text-center space-y-4 will-change-transform transform-gpu"
       >
         <div className="flex items-center justify-center gap-3">
-          <motion.div
-            animate={shouldAnimate ? { rotate: [0, 10, -10, 0] } : {}}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <Trophy className="w-12 h-12 text-amber-400" />
-          </motion.div>
+          {/* 🎬 PERFORMANCE: Removido rotate infinito - estático */}
+          <Trophy className="w-12 h-12 text-amber-400" />
           <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500 bg-clip-text text-transparent">
             RANKING
           </h1>
-          <motion.div
-            animate={shouldAnimate ? { rotate: [0, -10, 10, 0] } : {}}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <Trophy className="w-12 h-12 text-amber-400" />
-          </motion.div>
+          <Trophy className="w-12 h-12 text-amber-400" />
         </div>
         <p className="text-muted-foreground text-lg max-w-md mx-auto">
           Competir é evoluir! Suba no ranking estudando e conquistando XP.
@@ -265,11 +256,10 @@ export default function AlunoRanking() {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
           >
+            {/* 🎬 PERFORMANCE: Removido y:[0,-5,0] infinito */}
             <motion.div 
               className="relative"
               whileHover={shouldAnimate ? { scale: 1.05 } : {}}
-              animate={shouldAnimate ? { y: [0, -5, 0] } : {}}
-              transition={{ duration: 2, repeat: Infinity }}
             >
               <div className="absolute -top-6 left-1/2 -translate-x-1/2">
                 <Sparkles className="w-8 h-8 text-yellow-400 animate-pulse" />

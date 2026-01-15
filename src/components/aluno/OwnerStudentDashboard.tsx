@@ -191,11 +191,11 @@ export function OwnerStudentDashboard() {
         animate={{ opacity: 1, y: 0 }}
         className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 p-6 md:p-8"
       >
-        {/* Efeitos visuais */}
+        {/* 🎬 PERFORMANCE: Efeitos visuais estáticos (removido animate-pulse e animate-float) */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-10 left-10 w-40 h-40 bg-white/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-10 right-10 w-48 h-48 bg-cyan-400/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-pink-400/10 rounded-full blur-2xl animate-float" />
+          <div className="absolute top-10 left-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-10 right-10 w-48 h-48 bg-cyan-400/15 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/3 w-32 h-32 bg-pink-400/10 rounded-full blur-2xl" />
         </div>
 
         <div className="relative z-10">

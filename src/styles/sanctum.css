@@ -96,9 +96,10 @@
   user-select: none;
   -webkit-user-select: none;
   transform: rotate(var(--sanctum-watermark-rotation));
-  animation: sanctum-watermark-drift 60s ease-in-out infinite;
+  /* 🎬 PERFORMANCE: Removido sanctum-watermark-drift 60s infinite - watermark agora estática */
 }
 
+/* DISABLED: sanctum-watermark-drift animação de 60s era desnecessária
 @keyframes sanctum-watermark-drift {
   0%, 100% {
     transform: translateY(0) rotate(var(--sanctum-watermark-rotation));
@@ -107,6 +108,7 @@
     transform: translateY(10px) rotate(calc(var(--sanctum-watermark-rotation) + 2deg));
   }
 }
+*/
 
 /* ============================================
  * WATERMARK OVERLAY CENTRAL
