@@ -252,8 +252,8 @@ export const TutoriaChat = memo(function TutoriaChat({ mode, lessonContext }: Tu
                     {[0, 1, 2].map((i) => (
                       <span 
                         key={i}
-                        className="w-2 h-2 bg-holo-cyan/50 rounded-full animate-bounce" 
-                        style={{ animationDelay: `${i * 150}ms` }} 
+                        className="w-2 h-2 bg-holo-cyan/50 rounded-full" 
+                        style={{ opacity: 0.4 + (i * 0.2) }} 
                       />
                     ))}
                   </div>

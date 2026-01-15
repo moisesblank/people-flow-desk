@@ -39,10 +39,10 @@ export function LoadingState({
           <div
             key={i}
             className={cn(
-              "rounded-full bg-primary animate-bounce",
+              "rounded-full bg-primary opacity-60",
               size === "sm" ? "w-2 h-2" : size === "md" ? "w-3 h-3" : "w-4 h-4"
             )}
-            style={{ animationDelay: `${i * 0.15}s` }}
+            style={{ opacity: 0.4 + (i * 0.2) }}
           />
         ))}
       </div>

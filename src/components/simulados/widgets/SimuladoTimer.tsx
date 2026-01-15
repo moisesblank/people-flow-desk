@@ -31,13 +31,13 @@ export function SimuladoTimer({
       className={cn(
         "flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-lg font-bold transition-all duration-300",
         // Estados visuais
-        isCritical && "bg-red-500/20 text-red-400 animate-pulse",
+        isCritical && "bg-red-500/20 text-red-400",
         isWarning && !isCritical && "bg-amber-500/20 text-amber-400",
         !isWarning && !isCritical && "bg-secondary/50 text-foreground"
       )}
     >
       {isCritical ? (
-        <AlertTriangle className="h-5 w-5 animate-bounce" />
+        <AlertTriangle className="h-5 w-5" />
       ) : (
         <Clock className="h-5 w-5" />
       )}

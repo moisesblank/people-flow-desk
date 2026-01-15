@@ -1,4 +1,5 @@
 // PulseIndicator - Componente extraído de IntegratedMetricsDashboard
+// Performance: Static indicator (animation removed)
 
 interface PulseIndicatorProps {
   color?: string;
@@ -14,7 +15,6 @@ export function PulseIndicator({ color = "emerald", size = "sm" }: PulseIndicato
 
   return (
     <span className="relative flex">
-      <span className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-${color}-400 opacity-75`} />
       <span className={`relative inline-flex rounded-full ${sizeClasses[size]} bg-${color}-500`} />
     </span>
   );
