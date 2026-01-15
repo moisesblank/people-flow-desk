@@ -67,6 +67,7 @@ import {
   Target,
   CalendarDays,
   Award,
+  QrCode,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -117,6 +118,7 @@ interface MenuItem {
   area: SystemArea;
   badge?: string;
   textColor?: string; // Cor personalizada para o item (ex: "text-red-500")
+  ownerOnly?: boolean; // Se true, exibe apenas para Owner
 }
 
 interface MenuGroup {
@@ -516,7 +518,14 @@ export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>
       return currentMenuGroups
         // 🔒 Filtrar grupos ownerOnly para não-owners
         .filter((group) => !group.ownerOnly || isOwnerUser)
-        .map((group) => ({ ...group, items: group.items.filter((item) => hasAccess(item.area)) }))
+        .map((group) => ({ 
+          ...group, 
+          items: group.items.filter((item) => {
+            // 🔒 Filtrar itens ownerOnly para não-owners
+            if (item.ownerOnly && !isOwnerUser) return false;
+            return hasAccess(item.area);
+          }) 
+        }))
         .filter((group) => group.items.length > 0);
     }
     
@@ -573,7 +582,14 @@ export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>
       .filter((group) => !group.ownerOnly || isOwnerUser)
       .map((group) => ({ 
         ...group, 
-        items: group.items.filter((item) => isOwnerInAlunosArea ? true : hasAccess(item.area)) 
+        items: group.items.filter((item) => {
+          // 🔒 Filtrar itens ownerOnly para não-owners
+          if ('ownerOnly' in item && item.ownerOnly && !isOwnerUser) return false;
+          // Owner na área de alunos vê tudo
+          if (isOwnerInAlunosArea) return true;
+          // Verificar permissão de acesso normal
+          return hasAccess(item.area);
+        }) 
       }))
       .filter((group) => group.items.length > 0);
   }, [hasAccess, dynamicItems, currentMenuGroups, hasDbData, isGestaoArea, isAlunosArea, user?.email]);
