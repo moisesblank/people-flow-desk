@@ -38,6 +38,19 @@
 - [ ] Broadcast `user-deleted` funciona
 - [ ] Owner imune a restrições
 
+### 6. QR Codes Repository (Owner Only)
+- **Rota:** `/alunos/qrcodes`
+- **Componentes:** `AlunoQrCodes.tsx`, `AlunoQrCodesPdfView.tsx`
+- **Arquitetura:** Repositório invisível para distribuição de PDFs via link direto
+- [ ] Menu "Qrcodes" visível apenas para Owner na sidebar (`ownerOnly: true`)
+- [ ] Área registrada em `src/core/areas/index.ts` (`aluno-qrcodes`)
+- [ ] 5 Books funcionais (Book 1-5)
+- [ ] PDFs protegidos com `ProtectedPDFViewerV2`
+- [ ] RLS: Owner CRUD completo, alunos read-only PDFs ativos
+- [ ] Contador de acessos incrementa via RPC (`increment_qrcode_pdf_access`)
+- [ ] Tabelas: `qrcode_books`, `qrcode_pdfs`
+- [ ] Alunos acessam apenas via links diretos (ex: `/alunos/qrcodes/book-1/pdf-id`)
+
 ---
 
 ## 🟠 IMPORTANTES (Últimas 24 horas) - PRIORIDADE P1
@@ -231,7 +244,12 @@ Após o deploy, execute em ordem:
 6. /alunos/planejamento
    → Vídeos mostram progresso? ✓/✗
 
-7. /gestaofc (como Owner)
+7. /alunos/qrcodes (como Owner)
+   → Menu "Qrcodes" visível na sidebar? ✓/✗
+   → 5 Books renderizam? ✓/✗
+   → PDFs abrem com proteção? ✓/✗
+
+8. /gestaofc (como Owner)
    → Acesso completo? ✓/✗
 ```
 
