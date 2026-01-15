@@ -153,6 +153,60 @@
 
 ---
 
+## ⚡ PERFORMANCE — 29 ANIMAÇÕES INFINITAS REMOVIDAS (AUTOMÁTICO)
+
+**Status:** ✅ Aplicado automaticamente após build normalizar  
+**Impacto:** CPU/GPU significativamente mais leves em `/alunos/*`
+
+### Substituições Antes × Depois:
+
+| Componente | Antes (Animado) | Depois (Estático) | Visual |
+|------------|-----------------|-------------------|--------|
+| **Orbes de fundo** (SimuladoRunningScreen) | 3× `animate-pulse` pulsando | Blur estático com opacidade | ✅ Mesmo efeito, sem CPU |
+| **Timer crítico** (SimuladoTimerBar) | `animate-pulse` + `animate-bounce` | Fundo vermelho sólido | ✅ Cor destaca urgência |
+| **Timer crítico** (SimuladoTimer) | `animate-pulse` + `animate-bounce` | Fundo vermelho/âmbar sólido | ✅ Cor destaca urgência |
+| **Dots de loading** (LoadingState) | 3 bolinhas quicando | Opacidade gradativa (0.4→0.6→0.8) | ✅ Indica "pensando" |
+| **Dots da IA** (TutoriaChat) | 3 bolinhas quicando | Opacidade gradativa | ✅ Mesmo padrão |
+| **Overlay suspensão** (SecurityBlackoutOverlay) | Círculo `animate-ping` + `animate-pulse` | Círculo amarelo estático | ✅ Cor chama atenção |
+| **PulseIndicator** (Dashboard) | `animate-ping` ondas infinitas | Bolinha sólida verde | ✅ Cor indica "live" |
+| **Troféus pódio** (AlunoRanking) | `rotate: [0,10,-10,0]` infinito | Troféu estático | ✅ Destaque por cor |
+| **Pódio 3D** (AlunoRanking) | `y: [0,-5,0]` flutuando | Pódio fixo | ✅ 3D estático |
+| **HUD Simulado** (AlunoSimulados) | `simulado-scan 4s infinite` | Estático | ✅ Grid visual mantido |
+| **Dashboard Owner** (OwnerStudentDashboard) | `animate-pulse` + `animate-float` | Estático | ✅ Cards fixos |
+| **CSS Dashboard** (dashboard-2300.css) | 6× keyframes infinite | Todos removidos | ✅ Gradientes estáticos |
+| **CSS Sanctum** (sanctum.css) | `sanctum-watermark-drift 60s` | Estático | ✅ Watermark fixo |
+| **UltraCommandCenter** | 4× `animate-pulse`/`bounce` | Estático | ✅ UI limpa |
+| **AITutorAlertWidget** | 5× `animate-ping`/`pulse`/`bounce` | Estático | ✅ Alerta por cor |
+| **AlunoUniversalDashboard** | `animate-pulse` + `animate-ping` loading | Estático | ✅ Skeleton padrão |
+| **AlunoDesempenho** | `animate-ping` badge "tempo real" | Estático verde | ✅ Cor indica status |
+
+### Verificação pelo Aluno:
+- **Automático:** Alunos verão mudanças assim que o build normalizar
+- **Não requer ação:** Cache limpo automaticamente pelo `useCacheManager`
+- **Backward compatible:** Visual mantido, apenas movimento removido
+
+### Arquivos Modificados:
+```
+src/components/simulados/screens/SimuladoRunningScreen.tsx
+src/components/simulados/widgets/SimuladoTimerBar.tsx
+src/components/simulados/widgets/SimuladoTimer.tsx
+src/components/LoadingState.tsx
+src/components/tutoria/TutoriaChat.tsx
+src/components/security/SecurityBlackoutOverlay.tsx
+src/components/dashboard/metrics/PulseIndicator.tsx
+src/pages/aluno/AlunoRanking.tsx
+src/pages/aluno/AlunoSimulados.tsx
+src/pages/aluno/OwnerStudentDashboard.tsx
+src/pages/aluno/AlunoUniversalDashboard.tsx
+src/pages/aluno/AlunoDesempenho.tsx
+src/components/aluno/UltraCommandCenter.tsx
+src/components/aluno/questoes/AITutorAlertWidget.tsx
+src/styles/dashboard-2300.css
+src/styles/sanctum.css
+```
+
+---
+
 ## 🧪 TESTE DE PRODUÇÃO RÁPIDO
 
 Após o deploy, execute em ordem:
