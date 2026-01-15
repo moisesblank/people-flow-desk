@@ -138,6 +138,7 @@ export const SYSTEM_AREAS = [
   "aluno-livro-web",
   "aluno-planejamento",
   "aluno-cursos",
+  "aluno-qrcodes",
 ] as const;
 
 // ============================================

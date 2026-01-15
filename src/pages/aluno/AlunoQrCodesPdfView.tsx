@@ -76,8 +76,6 @@ export default function AlunoQrCodesPdfView() {
       supabase.rpc("increment_qrcode_pdf_access", { pdf_id: pdf.id });
     }
   }, [pdf?.id]);
-    }
-  }, [pdf?.id]);
 
   const isLoading = authLoading || bookLoading || pdfLoading;
 
