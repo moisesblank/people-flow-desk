@@ -49,6 +49,11 @@ const AlunoMetas = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m =
 const AlunoAgenda = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoAgenda })));
 const AlunoCertificados = lazy(() => import("@/pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoCertificados })));
 
+// QR Codes - Área secreta
+const AlunoQrCodes = lazy(() => import("@/pages/aluno/AlunoQrCodes"));
+const AlunoQrCodesBook = lazy(() => import("@/pages/aluno/AlunoQrCodesBook"));
+const AlunoQrCodesPdfView = lazy(() => import("@/pages/aluno/AlunoQrCodesPdfView"));
+
 export const alunoRoutes = (
   <>
     {/* P0: Alias case-insensitive ANTES de qualquer outra rota /ALUNOS */}
@@ -91,5 +96,9 @@ export const alunoRoutes = (
     <Route path="/alunos/certificados" element={<ProtectedPage><AlunoCertificados /></ProtectedPage>} />
     <Route path="/alunos/perfil" element={<ProtectedPage><AlunoPerfil /></ProtectedPage>} />
     <Route path="/alunos/planejamento" element={<ProtectedPage><AlunoPlanejamento /></ProtectedPage>} />
+    {/* QR Codes - Área secreta (Owner vê tudo, alunos acessam via link) */}
+    <Route path="/alunos/qrcodes" element={<ProtectedPage><AlunoQrCodes /></ProtectedPage>} />
+    <Route path="/alunos/qrcodes/:bookSlug" element={<ProtectedPage><AlunoQrCodesBook /></ProtectedPage>} />
+    <Route path="/alunos/qrcodes/:bookSlug/:pdfSlug" element={<ProtectedPage><AlunoQrCodesPdfView /></ProtectedPage>} />
   </>
 );
