@@ -70,8 +70,12 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       return false;
     }
 
-    // Owner bypass
-    if (isOwner) {
+    // P0 FIX: Owner bypass - verifica role ATUAL (não stale)
+    // Também verifica email como fallback caso role ainda não carregou
+    const currentIsOwner = role === 'owner' || user?.email?.toLowerCase() === 'moisesblank@gmail.com';
+    
+    if (currentIsOwner) {
+      console.log("[DeviceMFAGuard] 👑 Owner bypass ativado (role ou email)");
       setState((prev) => ({
         ...prev,
         isChecking: false,
