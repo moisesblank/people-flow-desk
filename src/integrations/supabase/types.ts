@@ -9046,6 +9046,92 @@ export type Database = {
           },
         ]
       }
+      qrcode_books: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          position: number
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          position?: number
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          position?: number
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      qrcode_pdfs: {
+        Row: {
+          access_count: number
+          book_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          pdf_url: string
+          position: number
+          slug: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          access_count?: number
+          book_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          pdf_url: string
+          position?: number
+          slug: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          access_count?: number
+          book_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          pdf_url?: string
+          position?: number
+          slug?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qrcode_pdfs_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "qrcode_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       question_ai_intervention_logs: {
         Row: {
           action_description: string
@@ -19179,6 +19265,10 @@ export type Database = {
             Args: { p_campo: string; p_data: string; p_valor: number }
             Returns: undefined
           }
+      increment_qrcode_pdf_access: {
+        Args: { pdf_id: string }
+        Returns: undefined
+      }
       increment_tab_switch: { Args: { p_attempt_id: string }; Returns: Json }
       insert_system_log: {
         Args: {

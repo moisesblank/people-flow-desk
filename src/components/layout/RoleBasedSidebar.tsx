@@ -401,6 +401,8 @@ const alunoMenuGroups: MenuGroup[] = [
       // HIDDEN_ITEMS: Certificados removido do menu (mantido no sistema)
       // { title: "Certificados", url: "/alunos/certificados", icon: Award, area: "aluno-certificados" },
       { title: "Meu Perfil", url: "/alunos/perfil", icon: User, area: "aluno-perfil" },
+      // QR Codes - Visível apenas para Owner (verificação no componente)
+      { title: "Qrcodes", url: "/alunos/qrcodes", icon: QrCode, area: "aluno-qrcodes", ownerOnly: true },
     ],
   },
 ];
