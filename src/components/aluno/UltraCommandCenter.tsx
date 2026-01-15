@@ -247,7 +247,7 @@ export function UltraCommandCenter() {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white/20 rounded-xl animate-pulse">
+                    <div className="p-2 bg-white/20 rounded-xl">
                       <Focus className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -287,11 +287,11 @@ export function UltraCommandCenter() {
         animate={{ opacity: 1, y: 0 }}
         className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-purple-600 to-pink-600 p-6"
       >
-        {/* Partículas animadas */}
+        {/* Partículas estáticas - animações removidas para performance */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-5 left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-5 right-10 w-40 h-40 bg-cyan-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-1/2 left-1/3 w-20 h-20 bg-yellow-400/10 rounded-full blur-2xl animate-bounce" style={{ animationDelay: '0.5s' }} />
+          <div className="absolute top-5 left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-5 right-10 w-40 h-40 bg-cyan-400/20 rounded-full blur-3xl" />
+          <div className="absolute top-1/2 left-1/3 w-20 h-20 bg-yellow-400/10 rounded-full blur-2xl" />
         </div>
 
         <div className="relative z-10">
@@ -308,7 +308,7 @@ export function UltraCommandCenter() {
                   {gamification?.current_streak || 0} dias
                 </Badge>
                 {totalProgress === 100 && (
-                  <Badge className="bg-green-500/30 text-green-100 border-0 animate-bounce">
+                  <Badge className="bg-green-500/30 text-green-100 border-0">
                     <CheckCircle2 className="w-3 h-3 mr-1" />
                     Meta do dia ✓
                   </Badge>
@@ -489,7 +489,7 @@ export function UltraCommandCenter() {
               
               {/* Badge de prioridade */}
               {action.priority === 'urgent' && (
-                <Badge className="absolute top-3 right-3 bg-red-500 text-white border-0 animate-pulse">
+                <Badge className="absolute top-3 right-3 bg-red-500 text-white border-0">
                   Urgente
                 </Badge>
               )}
