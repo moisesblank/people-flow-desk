@@ -44,8 +44,7 @@ export default function AlunoUniversalDashboard() {
           className="text-center space-y-4 will-change-transform transform-gpu"
         >
           <div className="relative">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 animate-pulse mx-auto" />
-            <div className="absolute inset-0 w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 animate-ping opacity-50 mx-auto" />
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 mx-auto" />
           </div>
           <div className="space-y-2">
             <p className="text-lg font-semibold text-foreground">Preparando seu Santuário...</p>

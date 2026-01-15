@@ -161,16 +161,15 @@ function AITutorAlertWidget({
         <div className="flex items-start gap-6 mb-5">
           {/* Avatar Humanóide com Alarme */}
           <div className="relative shrink-0">
-            {/* Pulsing Ring */}
+            {/* Ring estático - animate-ping removido para performance */}
             {isActivated && !isLowEnd && (
-              <div className="absolute -inset-3 rounded-2xl border-2 border-rose-500/40 animate-ping opacity-30" />
+              <div className="absolute -inset-3 rounded-2xl border-2 border-rose-500/40 opacity-30" />
             )}
             <div className={cn(
               "w-28 h-28 rounded-2xl bg-gradient-to-br border flex items-center justify-center shadow-lg transition-all",
               isActivated 
                 ? "from-rose-500/20 to-orange-500/10 border-rose-500/40 shadow-rose-500/20" 
-                : "from-amber-500/20 to-orange-500/10 border-amber-500/30 shadow-amber-500/10",
-              isActivated && !isLowEnd && "animate-pulse"
+                : "from-amber-500/20 to-orange-500/10 border-amber-500/30 shadow-amber-500/10"
             )}>
               <div className="relative">
                 {/* Cabeça */}
@@ -185,17 +184,11 @@ function AITutorAlertWidget({
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-1 h-4 bg-current rounded-full opacity-60" />
                   <div className="absolute -top-2 right-3 w-1.5 h-3 bg-current rounded-full opacity-60" />
                   
-                  {/* Olhos - Expressivos */}
-                  <div className={cn(
-                    "absolute top-5 left-2 w-3 h-3 rounded-full bg-white shadow-lg",
-                    isActivated && "animate-pulse"
-                  )}>
+                  {/* Olhos - Expressivos (animate-pulse removido) */}
+                  <div className="absolute top-5 left-2 w-3 h-3 rounded-full bg-white shadow-lg">
                     <div className="absolute top-0.5 left-0.5 w-1.5 h-1.5 rounded-full bg-slate-800" />
                   </div>
-                  <div className={cn(
-                    "absolute top-5 right-2 w-3 h-3 rounded-full bg-white shadow-lg",
-                    isActivated && "animate-pulse"
-                  )}>
+                  <div className="absolute top-5 right-2 w-3 h-3 rounded-full bg-white shadow-lg">
                     <div className="absolute top-0.5 left-0.5 w-1.5 h-1.5 rounded-full bg-slate-800" />
                   </div>
                   
@@ -218,9 +211,9 @@ function AITutorAlertWidget({
               </div>
             </div>
             
-            {/* Alert Badge */}
+            {/* Alert Badge - animate-bounce removido para performance */}
             {isActivated && (
-              <div className="absolute -top-2 -right-2 p-1.5 rounded-full bg-rose-500 shadow-lg shadow-rose-500/50 animate-bounce">
+              <div className="absolute -top-2 -right-2 p-1.5 rounded-full bg-rose-500 shadow-lg shadow-rose-500/50">
                 <AlertTriangle className="w-4 h-4 text-white" />
               </div>
             )}
