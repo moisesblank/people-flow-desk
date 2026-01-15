@@ -183,11 +183,11 @@ const SecurityBlackoutOverlay = memo(() => {
         }}
       >
         <div className="text-center space-y-6 p-8 max-w-md mx-4">
-          {/* Ícone de espera */}
+          {/* Ícone de espera - static for performance */}
           <div className="relative mx-auto w-24 h-24">
-            <div className="absolute inset-0 rounded-full bg-yellow-500/20 animate-ping" />
+            <div className="absolute inset-0 rounded-full bg-yellow-500/20" />
             <div className="relative flex items-center justify-center w-24 h-24 rounded-full bg-yellow-500/30 border-2 border-yellow-500">
-              <Clock className="w-12 h-12 text-yellow-400 animate-pulse" />
+              <Clock className="w-12 h-12 text-yellow-400" />
             </div>
           </div>
 

@@ -39,12 +39,12 @@ export function SimuladoTimerBar({
       className={cn(
         "w-full py-2 flex items-center justify-center gap-2 font-mono text-sm font-bold transition-all duration-300",
         // Estados visuais - vermelho por padrão como no print
-        isCritical && "bg-red-600 text-white animate-pulse",
+        isCritical && "bg-red-600 text-white",
         isWarning && !isCritical && "bg-amber-600 text-white",
         !isWarning && !isCritical && "bg-red-600 text-white"
       )}
     >
-      <AlertTriangle className={cn("h-4 w-4", isCritical && "animate-bounce")} />
+      <AlertTriangle className="h-4 w-4" />
       <span>Tempo restante: {displayTime}</span>
     </div>
   );
