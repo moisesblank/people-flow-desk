@@ -24,7 +24,7 @@
     inset 0 1px 0 hsl(185 100% 80% / 0.15);
 }
 
-/* Holographic Scan Line */
+/* 🎬 PERFORMANCE: Holographic Scan Line DISABLED (era infinita)
 .dashboard-hero-2300::before {
   content: '';
   position: absolute;
@@ -34,16 +34,13 @@
     hsl(185 100% 50% / 0.05) 50%,
     transparent 100%
   );
-  animation: hero-scan 4s ease-in-out infinite;
   pointer-events: none;
 }
+*/
 
-@keyframes hero-scan {
-  0%, 100% { transform: translateY(-100%); opacity: 0; }
-  50% { transform: translateY(100%); opacity: 1; }
-}
+/* Static top accent - não animado */
 
-/* Corner Accents - Iron Man Style */
+/* Corner Accents - Iron Man Style - STATIC (removido hero-top-line infinito) */
 .dashboard-hero-2300::after {
   content: '';
   position: absolute;
@@ -58,12 +55,7 @@
     hsl(185 100% 50% / 0.8) 80%,
     transparent 100%
   );
-  animation: hero-top-line 3s ease-in-out infinite;
-}
-
-@keyframes hero-top-line {
-  0%, 100% { opacity: 0.7; filter: brightness(1); }
-  50% { opacity: 1; filter: brightness(1.5); }
+  /* 🎬 PERFORMANCE: Removido animation: hero-top-line 3s infinite */
 }
 
 /* ============================================
@@ -92,7 +84,7 @@
     inset 0 1px 0 hsl(185 100% 80% / 0.2);
 }
 
-/* Orb Glow Ring */
+/* 🎬 PERFORMANCE: Orb Glow Ring DISABLED (era orb-rotate 8s infinite)
 .stat-orb-2300::before {
   content: '';
   position: absolute;
@@ -108,7 +100,6 @@
     hsl(355 80% 50% / 0.3) 75%,
     hsl(185 100% 50% / 0) 100%
   );
-  animation: orb-rotate 8s linear infinite;
   z-index: -1;
   opacity: 0;
   transition: opacity 0.3s;
@@ -117,11 +108,7 @@
 .stat-orb-2300:hover::before {
   opacity: 1;
 }
-
-@keyframes orb-rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
+*/
 
 /* Orb Icon Container */
 .stat-orb-icon {
@@ -225,6 +212,7 @@
   overflow: hidden;
 }
 
+/* 🎬 PERFORMANCE: icon-shine DISABLED (era 3s infinite rotation)
 .section-header-2300 .icon-container::before {
   content: '';
   position: absolute;
@@ -234,13 +222,8 @@
     hsl(0 0% 100% / 0.3) 50%,
     transparent 100%
   );
-  animation: icon-shine 3s linear infinite;
 }
-
-@keyframes icon-shine {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
+*/
 
 /* ============================================
    PROGRESS BARS - ENERGY FLOW
@@ -270,12 +253,7 @@
     hsl(0 0% 100% / 0.3) 50%,
     transparent 100%
   );
-  animation: energy-flow 2s ease-in-out infinite;
-}
-
-@keyframes energy-flow {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+  /* 🎬 PERFORMANCE: Removido energy-flow 2s infinite */
 }
 
 /* ============================================
@@ -327,7 +305,7 @@
   box-shadow: 0 20px 40px hsl(0 0% 0% / 0.3);
 }
 
-/* AI Pulse Effect */
+/* 🎬 PERFORMANCE: AI Pulse Effect DISABLED (era ai-pulse 2s infinite)
 .rec-card-2300::before {
   content: '';
   position: absolute;
@@ -339,13 +317,9 @@
     hsl(280 100% 60% / 0.8) 0%,
     hsl(185 100% 50% / 0.8) 100%
   );
-  animation: ai-pulse 2s ease-in-out infinite;
+  opacity: 0.8;
 }
-
-@keyframes ai-pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
+*/
 
 /* ============================================
    PERFORMANCE SECTION - DATA VISUALIZATION
@@ -395,16 +369,12 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-shadow: 0 0 40px hsl(152 80% 50% / 0.3);
-  animation: score-pulse 3s ease-in-out infinite;
-}
-
-@keyframes score-pulse {
-  0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.2); }
+  /* 🎬 PERFORMANCE: Removido animation: score-pulse 3s infinite */
 }
 
 /* ============================================
    FLOATING PARTICLES - AMBIENT DECORATION
+   🎬 PERFORMANCE: particle-float animação REDUZIDA
    ============================================ */
 .particles-2300 {
   position: absolute;
@@ -413,26 +383,14 @@
   pointer-events: none;
 }
 
+/* 🎬 PERFORMANCE: Partículas agora são estáticas (removido animation: particle-float) */
 .particles-2300 .particle {
   position: absolute;
   width: 4px;
   height: 4px;
   border-radius: 50%;
   background: hsl(185 100% 70%);
-  animation: particle-float linear infinite;
-}
-
-@keyframes particle-float {
-  0% {
-    transform: translateY(100%) translateX(0);
-    opacity: 0;
-  }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% {
-    transform: translateY(-100%) translateX(20px);
-    opacity: 0;
-  }
+  opacity: 0.5;
 }
 
 /* ============================================

@@ -227,13 +227,7 @@ export default function AlunoSimulados() {
             }}
           />
           
-          {/* Animated Scan Line */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div 
-              className="absolute w-full h-[2px] bg-gradient-to-r from-transparent via-purple-400/60 to-transparent"
-              style={{ animation: 'simulado-scan 4s linear infinite' }}
-            />
-          </div>
+          {/* 🎬 PERFORMANCE: Scan line removida - animação infinita desnecessária */}
           
           {/* Top Mega Glow Line */}
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 shadow-[0_0_30px_rgba(168,85,247,0.8)]" />
