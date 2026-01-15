@@ -106,9 +106,11 @@ export default defineConfig(({ mode }) => ({
   },
   
   // ⚡ DOGMA IX: Definições para otimização
+  // ☢️ P0 FIX: Build ID automático para invalidação de cache
   define: {
     __DEV__: mode === "development",
     "process.env.NODE_ENV": JSON.stringify(mode),
+    __APP_BUILD_ID__: JSON.stringify(new Date().toISOString()),
   },
   
   // ☢️ CSS: Source maps DESABILITADOS
