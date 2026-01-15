@@ -221,6 +221,9 @@ export function SessionGuard({ children }: SessionGuardProps) {
   const bootstrapSessionTokenIfMissing = useCallback(async () => {
     if (!user) return;
     
+    // 🔐 P0 FIX: Owner bypass - verificar role + email (fallback assíncrono)
+    const currentIsOwner = role === 'owner' || user?.email?.toLowerCase() === 'moisesblank@gmail.com';
+    
     if (isOnboardingRoute) {
       console.log("[SessionGuard] ⏸️ Bootstrap suspenso - em rota de onboarding");
       return;
@@ -250,7 +253,14 @@ export function SessionGuard({ children }: SessionGuardProps) {
       
       const serverDeviceHash = localStorage.getItem('matriz_device_server_hash');
       if (!serverDeviceHash) {
+        // 🔐 P0 FIX: Owner bypass - não bloquear navegação por falta de hash
+        if (currentIsOwner) {
+          console.log("[SessionGuard] 👑 Owner sem hash - bypass ativado, navegação permitida");
+          isBootstrappingRef.current = false;
+          return; // Owner pode navegar mesmo sem sessão completa
+        }
         console.warn("[SessionGuard] ⚠️ Sem hash do servidor - dispositivo não registrado.");
+        isBootstrappingRef.current = false;
         return;
       }
 
@@ -277,7 +287,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
     } finally {
       isBootstrappingRef.current = false;
     }
-  }, [user, isOnboardingRoute, detectClientDeviceMeta]);
+  }, [user, role, isOnboardingRoute, detectClientDeviceMeta]);
 
   /**
    * Validar sessão consultando o BACKEND
