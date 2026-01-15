@@ -55,10 +55,9 @@ const SESSION_SECURITY_KEYS = [
 // ============================================
 
 // Prefixos de cache que PODEM ser removidos com segurança
+// ESCOPO P0: Apenas cache_* (persistentCache do SubspaceQuery)
 const CACHE_PREFIXES = [
-  "cache_",           // persistentCache do SubspaceQuery
-  "query_cache_",     // Cache de queries (se existir)
-  "lms_cache_",       // Cache do LMS (se existir)
+  "cache_",           // persistentCache do SubspaceQuery - ÚNICO ativo
 ] as const;
 
 // ============================================
