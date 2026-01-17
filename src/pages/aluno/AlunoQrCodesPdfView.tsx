@@ -1,7 +1,7 @@
 // ============================================
 // 📄 VISUALIZADOR DE PDF — ACESSO VIA LINK
 // Qualquer aluno logado pode acessar via link direto
-// Protegido com watermark forense
+// Protegido com ProtectedPDFViewerV2 + watermark forense
 // ============================================
 
 import { useEffect } from "react";
@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ArrowLeft, FileText, Lock, AlertTriangle } from "lucide-react";
+import { ProtectedPDFViewerV2 } from "@/components/security/ProtectedPDFViewerV2";
 
 interface QrCodePdf {
   id: string;
@@ -172,12 +173,13 @@ export default function AlunoQrCodesPdfView() {
         </div>
       </div>
 
-      {/* PDF Viewer embutido */}
+      {/* PDF Viewer PROTEGIDO com watermark forense */}
       <div className="flex-1 h-[calc(100vh-60px)]">
-        <iframe
-          src={pdf.pdf_url}
-          className="w-full h-full border-0"
+        <ProtectedPDFViewerV2
+          pdfUrl={pdf.pdf_url}
           title={pdf.title}
+          className="w-full h-full"
+          isModal={false}
         />
       </div>
     </div>
