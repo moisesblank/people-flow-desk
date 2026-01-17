@@ -154,7 +154,7 @@ export default function AlunoQrCodesBook() {
   // ============================================
   // UPLOAD DE UM ÚNICO ARQUIVO (PARA BULK)
   // ============================================
-  const uploadSingleFile = async (
+  const uploadSingleFile = useCallback(async (
     file: File, 
     position: number,
     updateProgress: (progress: number) => void
@@ -208,12 +208,12 @@ export default function AlunoQrCodesBook() {
       console.error("[Upload Error]", err);
       return { success: false, error: err.message || "Erro desconhecido" };
     }
-  };
+  }, [book]);
 
   // ============================================
   // PROCESSAR UPLOAD EM MASSA
   // ============================================
-  const processBulkUpload = async (files: File[]) => {
+  const processBulkUpload = useCallback(async (files: File[]) => {
     if (!book) {
       toast.error("Book não encontrado");
       return;
@@ -226,9 +226,9 @@ export default function AlunoQrCodesBook() {
       return;
     }
 
-    // Preparar fila de upload
-    const queue: UploadingFile[] = pdfFiles.map((file) => ({
-      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    // Preparar fila de upload com IDs únicos
+    const queue: UploadingFile[] = pdfFiles.map((file, index) => ({
+      id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2)}`,
       file,
       progress: 0,
       status: 'pending' as const,
@@ -294,7 +294,7 @@ export default function AlunoQrCodesBook() {
     if (errorCount > 0) {
       toast.error(`${errorCount} arquivo(s) falharam`);
     }
-  };
+  }, [book, pdfs?.length, queryClient, uploadSingleFile]);
 
   // ============================================
   // HANDLERS DE DRAG AND DROP
@@ -320,7 +320,8 @@ export default function AlunoQrCodesBook() {
     if (files.length > 0) {
       processBulkUpload(files);
     }
-  }, [book, pdfs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [book?.id, pdfs?.length, processBulkUpload]);
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
