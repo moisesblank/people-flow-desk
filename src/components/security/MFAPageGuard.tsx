@@ -12,6 +12,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 
+function formatError(err: unknown): string {
+  if (!err) return 'Erro desconhecido';
+  if (typeof err === 'string') return err;
+  if (err instanceof Error) return err.message || 'Erro desconhecido';
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
+}
+
 interface MFAPageGuardProps {
   action: MFAProtectedAction;
   children: ReactNode;
@@ -162,7 +173,7 @@ export function MFAPageGuard({
                   animate={{ opacity: 1, height: 'auto' }}
                   className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive text-center"
                 >
-                  {error}
+                  {formatError(error)}
                 </motion.div>
               )}
 

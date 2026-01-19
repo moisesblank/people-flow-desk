@@ -16,6 +16,17 @@ import { generateDeviceName, detectDeviceType } from "@/lib/deviceFingerprint";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
+function formatError(err: unknown): string {
+  if (!err) return 'Erro desconhecido';
+  if (typeof err === 'string') return err;
+  if (err instanceof Error) return err.message || 'Erro desconhecido';
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
+}
+
 interface DeviceMFAGuardProps {
   children: ReactNode;
 }
@@ -229,7 +240,7 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
                   animate={{ opacity: 1, height: "auto" }}
                   className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive text-center"
                 >
-                  {error}
+                  {formatError(error)}
                 </motion.div>
               )}
 
