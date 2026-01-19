@@ -2,7 +2,9 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  // Inclui header interno usado pelo cliente para evitar recursão do logger
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-system-log",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 interface LogEntry {
