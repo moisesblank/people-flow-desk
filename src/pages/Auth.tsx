@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { formatError } from "@/lib/utils/formatError";
 import { useAuth } from "@/hooks/useAuth";
 // 2FA Decision Engine (SYNAPSE Ω v10.x) com cache de confiança
 import { useDeviceFingerprint, decide2FA, setTrustCache } from "@/hooks/auth";
@@ -920,7 +921,7 @@ export default function Auth() {
 
       const { error } = await resetPassword(email);
       if (error) {
-        toast.error(error.message);
+        toast.error(formatError(error));
         resetTurnstile();
         setIsLoading(false);
         return;

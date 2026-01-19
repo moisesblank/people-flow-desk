@@ -12,6 +12,7 @@ import { QuestionMetadataBadges, QuestionModeBadge } from '@/components/shared/Q
 import QuestionAILogButton from '@/components/gestao/questoes/QuestionAILogButton';
 import GlobalAILogButton from '@/components/gestao/questoes/GlobalAILogButton';
 import { useQuestionsWithAILogs, useGlobalAILogsSummary } from '@/hooks/useQuestionAILogs';
+import { formatError } from '@/lib/utils/formatError';
 import { 
   Brain, 
   Plus, 
@@ -3355,7 +3356,7 @@ class GestaoQuestoesErrorBoundary extends Component<
               Ocorreu um erro ao renderizar o Banco de Questões.
             </p>
             <pre className="bg-background/50 p-3 rounded text-sm overflow-auto max-h-48 text-red-400">
-              {this.state.error?.message}
+              {formatError(this.state.error)}
             </pre>
           </div>
         </div>

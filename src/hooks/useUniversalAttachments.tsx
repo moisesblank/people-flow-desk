@@ -190,7 +190,7 @@ export function useUniversalAttachments(entityType: EntityType, entityId: string
       return typedAttachment;
     } catch (error: any) {
       console.error('Upload error:', error);
-      toast.error('Erro ao fazer upload: ' + error.message);
+      toast.error('Erro ao fazer upload: ' + formatError(error));
       return null;
     } finally {
       setIsUploading(false);
