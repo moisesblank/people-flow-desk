@@ -43,8 +43,7 @@ export default defineConfig(({ mode }) => ({
     minify: mode === "production" ? "terser" : "esbuild",
     // ☢️ SOURCE MAPS PERMANENTEMENTE DESABILITADOS
     sourcemap: false,
-    // ☢️ FIX CRÍTICO: cssCodeSplit DESABILITADO para garantir extensão .css
-    cssCodeSplit: false,
+    cssCodeSplit: true,
     cssMinify: true,
     
     // ⚡ Limites de chunk para performance
@@ -81,23 +80,9 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         // ☢️ NOMES DE ARQUIVOS 100% HASH - SEM PREFIXOS LEGÍVEIS
-        // Arquivos como: x9k2m.js, a8f3.js (NÃO GodModePanel.js)
         chunkFileNames: "assets/[hash].js",
         entryFileNames: "assets/[hash].js",
-        // ☢️ FIX CRÍTICO: Função para GARANTIR extensão em todos os assets
-        assetFileNames: (assetInfo) => {
-          // Garante que arquivos CSS sempre tenham extensão .css
-          const name = assetInfo.name || '';
-          if (name.endsWith('.css')) {
-            return 'assets/[hash].css';
-          }
-          // Para outros assets (imagens, fontes, etc)
-          const ext = name.split('.').pop();
-          if (ext && ext !== name) {
-            return `assets/[hash].${ext}`;
-          }
-          return 'assets/[hash][extname]';
-        },
+        assetFileNames: "assets/[hash][extname]",
         
         // ☢️ FORÇA NOMES HASH-ONLY PARA DYNAMIC IMPORTS
         manualChunks: undefined,
@@ -107,7 +92,6 @@ export default defineConfig(({ mode }) => ({
   },
   
   // ⚡ DOGMA IX: Definições para otimização
-  // ☢️ P0 FIX: Build ID automático para invalidação de cache
   define: {
     __DEV__: mode === "development",
     "process.env.NODE_ENV": JSON.stringify(mode),
