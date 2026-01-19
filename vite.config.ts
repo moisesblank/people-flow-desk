@@ -3,10 +3,12 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
+
 // ============================================
 // ⚡ EVANGELHO DA VELOCIDADE - VITE CONFIG ⚡
 // DOGMA VIII: Build otimizado com tree-shaking
 // ============================================
+
 
 export default defineConfig(({ mode }) => ({
   server: {
@@ -82,13 +84,8 @@ export default defineConfig(({ mode }) => ({
         // ☢️ NOMES DE ARQUIVOS 100% HASH - SEM PREFIXOS LEGÍVEIS
         chunkFileNames: "assets/[hash].js",
         entryFileNames: "assets/[hash].js",
-        // ☢️ FIX CRÍTICO: Função que GARANTE extensão correta para todos os assets
-        assetFileNames: (assetInfo) => {
-          // Extrai a extensão do arquivo original
-          const extType = assetInfo.name ? assetInfo.name.split('.').pop() : 'asset';
-          // Garante que CSS e outros assets tenham extensão correta
-          return `assets/[hash].${extType}`;
-        },
+        // ☢️ FIX CRÍTICO V2: Usa [extname] que é a forma correta do Rollup
+        assetFileNames: "assets/[hash][extname]",
         
         // ☢️ FORÇA NOMES HASH-ONLY PARA DYNAMIC IMPORTS
         manualChunks: undefined,
