@@ -291,7 +291,7 @@ const ResetSegurancaUsuario = () => {
           {error && (
             <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive">
               <AlertTriangle className="h-4 w-4 inline mr-2" />
-              {typeof error === 'string' ? error : 'Ocorreu um erro'}
+              {error || 'Ocorreu um erro'}
             </div>
           )}
         </CardContent>
