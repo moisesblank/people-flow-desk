@@ -59,6 +59,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
+import { formatError } from '@/lib/utils/formatError';
 import { useLiveChat, ChatMessage } from '@/hooks/useLiveChat';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -773,12 +774,12 @@ export const LiveChatPanel = memo(({
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               className="px-4 py-2.5 bg-red-500/10 border-t border-red-500/20"
-            >
-              <div className="flex items-center gap-2 text-red-400 text-sm">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                {state.error}
-              </div>
-            </motion.div>
+              >
+                <div className="flex items-center gap-2 text-red-400 text-sm">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  {formatError(state.error)}
+                </div>
+              </motion.div>
           )}
         </AnimatePresence>
 
