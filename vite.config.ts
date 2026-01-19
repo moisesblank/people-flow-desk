@@ -82,7 +82,13 @@ export default defineConfig(({ mode }) => ({
         // ☢️ NOMES DE ARQUIVOS 100% HASH - SEM PREFIXOS LEGÍVEIS
         chunkFileNames: "assets/[hash].js",
         entryFileNames: "assets/[hash].js",
-        assetFileNames: "assets/[hash].[ext]",
+        // ☢️ FIX CRÍTICO: Função que GARANTE extensão correta para todos os assets
+        assetFileNames: (assetInfo) => {
+          // Extrai a extensão do arquivo original
+          const extType = assetInfo.name ? assetInfo.name.split('.').pop() : 'asset';
+          // Garante que CSS e outros assets tenham extensão correta
+          return `assets/[hash].${extType}`;
+        },
         
         // ☢️ FORÇA NOMES HASH-ONLY PARA DYNAMIC IMPORTS
         manualChunks: undefined,
@@ -99,19 +105,3 @@ export default defineConfig(({ mode }) => ({
   },
   
   // ☢️ CSS: Source maps DESABILITADOS
-  css: {
-    devSourcemap: false,
-  },
-  
-  // ⚡ Preview config
-  preview: {
-    port: 8080,
-    strictPort: true,
-  },
-  
-  // ⚡ Esbuild config (usado apenas em DEV)
-  esbuild: mode === "development" ? {
-    legalComments: "none",
-    treeShaking: true,
-  } : undefined,
-}));
