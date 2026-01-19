@@ -87,13 +87,6 @@ export default defineConfig(({ mode }) => ({
         
         // ☢️ FORÇA NOMES HASH-ONLY PARA DYNAMIC IMPORTS
         manualChunks: undefined,
-        
-        // ☢️ SANITIZA NOMES PARA REMOVER QUALQUER PADRÃO LEGÍVEL
-        sanitizeFileName: (name: string) => {
-          // Remove qualquer caractere que não seja alfanumérico
-          // Isso força o Rollup a usar apenas o hash
-          return name.replace(/[^a-zA-Z0-9]/g, '');
-        },
       },
     },
     
