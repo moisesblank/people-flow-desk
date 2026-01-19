@@ -9,7 +9,9 @@
 // ============================================
 // ☢️ LAYER 3: REACT DEVTOOLS BLOCKING (PRIMEIRO!)
 // Deve executar ANTES de qualquer import React
+// ⚠️ TEMPORARIAMENTE DESABILITADO PARA DEBUG - ERRO #61
 // ============================================
+/*
 if (typeof window !== 'undefined' && import.meta.env.PROD) {
   // Desabilita React DevTools completamente em produção
   const disableReactDevTools = () => {
@@ -45,6 +47,7 @@ if (typeof window !== 'undefined' && import.meta.env.PROD) {
   
   disableReactDevTools();
 }
+*/
 
 // ============================================
 // TIPOS PARA WEB VITALS (Performance API)
@@ -70,7 +73,9 @@ import { initGlobalErrorCapture } from "@/hooks/useSystemLogs";
 // ☢️ LAYER 2: DEVTOOLS DETECTION & BLOCKING
 // Detecta abertura do DevTools e bloqueia a página
 // BYPASS: Ambiente Lovable Preview
+// ⚠️ TEMPORARIAMENTE DESABILITADO PARA DEBUG - ERRO #61
 // ============================================
+/*
 const isLovablePreview = () => {
   const hostname = window.location.hostname.toLowerCase();
   return hostname.includes('lovableproject.com') || 
@@ -201,6 +206,7 @@ if (typeof window !== 'undefined' && import.meta.env.PROD && !isLovablePreview()
     return false;
   }, { capture: true });
 }
+*/
 
 // 🚨 GLOBAL ERROR CAPTURE - Captura todos os erros do sistema
 // REGRA P0: nunca pode derrubar o bootstrap. Se falhar, segue sem logger.
