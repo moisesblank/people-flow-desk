@@ -101,11 +101,9 @@ export function useGlobalDevToolsBlock() {
         // 🛡️ v2: Verificar owner via RPC (não por email)
         const { data: isOwnerData } = await supabase.rpc('check_is_owner');
         isOwnerRef.current = isOwnerData === true;
-        
-        const { data: { user } } = await supabase.auth.getUser();
 
-        // ☢️ NUCLEAR SHIELD: Inicializar com email do usuário
-        nuclearCleanup = initNuclearShield(user?.email);
+        // ☢️ NUCLEAR SHIELD: inicializar com ROLE (evita depender de email no bundle)
+        nuclearCleanup = initNuclearShield(isOwnerRef.current ? 'owner' : null);
 
         // Se for owner, remover restrições de CSS
         if (isOwnerRef.current) {
@@ -115,7 +113,7 @@ export function useGlobalDevToolsBlock() {
         }
       } catch {
         isOwnerRef.current = false;
-        // ☢️ Inicializar Nuclear Shield sem email (proteção máxima)
+        // ☢️ Inicializar Nuclear Shield sem role (proteção máxima)
         nuclearCleanup = initNuclearShield(null);
       }
     };
