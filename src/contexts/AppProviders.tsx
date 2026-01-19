@@ -76,20 +76,15 @@ function StoreInitializer() {
 export function AppProviders({ children, queryClient }: AppProvidersProps) {
   return (
     // IMPORTANT:
-    // - "Sistema" aqui é um TEMA SOBERANO (não segue o SO).
-    // - Isolamento total: system | light | dark (sem herança automática).
-    // - "system" renomeado para "default" para evitar conflito com next-themes
+    // - "dark" é o tema padrão (não segue o SO).
+    // - Isolamento total: dark | light (sem herança automática).
+    // - P0 FIX: Removido prop 'value' que pode causar conflitos em produção
     <ThemeProvider
       attribute="class"
-      defaultTheme="default"
+      defaultTheme="dark"
       enableSystem={false}
-      themes={["default", "light", "dark"]}
+      themes={["light", "dark"]}
       storageKey="theme"
-      value={{
-        default: "system",
-        light: "light",
-        dark: "dark",
-      }}
     >
       <PerformanceProvider>
         <PerformanceStyles />
