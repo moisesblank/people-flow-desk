@@ -7,6 +7,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from './useAuth';
+import { formatError } from '@/lib/utils/formatError';
 
 // Tipos de entidades suportadas
 export type EntityType = 
