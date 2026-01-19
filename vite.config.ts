@@ -90,12 +90,6 @@ export default defineConfig(({ mode }) => ({
       },
     },
     
-    // ☢️ EXPERIMENTAL: Anonimiza completamente URLs de chunks
-    experimental: {
-      renderBuiltUrl(filename: string) {
-        return { relative: true };
-      },
-    },
   },
   
   // ⚡ DOGMA IX: Definições para otimização
