@@ -122,12 +122,13 @@ const AppContent = memo(() => {
 
   return (
     <>
-      {/* 🚨 BLACKOUT ANTI-PIRATARIA - TEMPORARIAMENTE DESABILITADO */}
-      {/* <SecurityBlackoutOverlay /> */}
+      {/* 🚨 GUARDS TEMPORARIAMENTE SIMPLIFICADOS PARA DIAGNÓSTICO */}
+      {/* SecurityBlackoutOverlay, DeviceGuard, DeviceMFAGuard desabilitados */}
       
       <SessionGuard>
-        <DeviceGuard>
-          <DeviceMFAGuard>
+        {/* DeviceGuard e DeviceMFAGuard DESABILITADOS - causando tela preta */}
+        {/* <DeviceGuard> */}
+        {/* <DeviceMFAGuard> */}
             <Suspense fallback={null}>
               <LazyGodModePanel />
               <LazyInlineEditor />
@@ -164,8 +165,8 @@ const AppContent = memo(() => {
                 </Routes>
               </Suspense>
             </ErrorBoundary>
-          </DeviceMFAGuard>
-        </DeviceGuard>
+          {/* </DeviceMFAGuard> */}
+        {/* </DeviceGuard> */}
       </SessionGuard>
     </>
   );
