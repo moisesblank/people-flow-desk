@@ -8,23 +8,34 @@ import { ReactiveKPICard, ReactiveKPIGrid, ReactiveGoalCard } from './ReactiveKP
 import { ReactiveConnectionStatus } from './ReactiveValue';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  DollarSign, 
-  Users, 
-  TrendingUp, 
-  Target, 
-  Wallet, 
+import {
+  DollarSign,
+  Users,
+  TrendingUp,
+  Target,
+  Wallet,
   UserPlus,
   Briefcase,
   RefreshCw,
   Zap,
   BarChart3,
   CheckCircle2,
-  Clock
+  Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
+
+function formatError(err: unknown): string {
+  if (!err) return 'Erro desconhecido';
+  if (typeof err === 'string') return err;
+  if (err instanceof Error) return err.message || 'Erro desconhecido';
+  try {
+    return JSON.stringify(err);
+  } catch {
+    return String(err);
+  }
+}
 
 interface ReactiveDashboardSectionProps {
   className?: string;
@@ -44,7 +55,7 @@ export function ReactiveDashboardSection({
     return (
       <Card className="border-destructive">
         <CardContent className="pt-6">
-          <p className="text-destructive">{error}</p>
+          <p className="text-destructive">{formatError(error)}</p>
           <Button onClick={forceRefresh} className="mt-4">
             <RefreshCw className="w-4 h-4 mr-2" />
             Tentar Novamente
