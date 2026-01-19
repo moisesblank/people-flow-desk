@@ -82,7 +82,7 @@ export default defineConfig(({ mode }) => ({
         // ☢️ NOMES DE ARQUIVOS 100% HASH - SEM PREFIXOS LEGÍVEIS
         chunkFileNames: "assets/[hash].js",
         entryFileNames: "assets/[hash].js",
-        assetFileNames: "assets/[hash][extname]",
+        assetFileNames: "assets/[hash].[ext]",
         
         // ☢️ FORÇA NOMES HASH-ONLY PARA DYNAMIC IMPORTS
         manualChunks: undefined,
