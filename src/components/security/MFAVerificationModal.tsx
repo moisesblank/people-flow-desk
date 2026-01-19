@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import type { MFAProtectedAction } from '@/hooks/useMFAGuard';
 import { cn } from '@/lib/utils';
+import { formatError } from '@/lib/utils/formatError';
 
 type MFAChannel = 'email' | 'sms' | 'whatsapp';
 
@@ -342,7 +343,7 @@ export function MFAVerificationModal({
               {error && (
                 <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
-                  {error}
+                  {formatError(error)}
                 </div>
               )}
 
@@ -403,7 +404,7 @@ export function MFAVerificationModal({
               {error && (
                 <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
-                  {error}
+                  {formatError(error)}
                 </div>
               )}
 

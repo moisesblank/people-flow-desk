@@ -40,6 +40,7 @@ import { useDeviceGateStore, CurrentDeviceInfo, DeviceInfo } from '@/state/devic
 import { revokeAndRegister, triggerSecurityLockdown } from '@/lib/deviceLimitApi';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { formatError } from '@/lib/utils/formatError';
 
 // ============================================
 // CONSTANTES
@@ -552,7 +553,7 @@ export default function DeviceLimitGate() {
               className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive"
             >
               <XCircle className="w-5 h-5 shrink-0" />
-              <p className="text-sm">{error}</p>
+              <p className="text-sm">{formatError(error)}</p>
             </motion.div>
           )}
 
