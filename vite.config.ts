@@ -43,7 +43,8 @@ export default defineConfig(({ mode }) => ({
     minify: mode === "production" ? "terser" : "esbuild",
     // ☢️ SOURCE MAPS PERMANENTEMENTE DESABILITADOS
     sourcemap: false,
-    cssCodeSplit: true,
+    // ☢️ FIX CRÍTICO: cssCodeSplit DESABILITADO para garantir extensão .css
+    cssCodeSplit: false,
     cssMinify: true,
     
     // ⚡ Limites de chunk para performance
@@ -83,7 +84,20 @@ export default defineConfig(({ mode }) => ({
         // Arquivos como: x9k2m.js, a8f3.js (NÃO GodModePanel.js)
         chunkFileNames: "assets/[hash].js",
         entryFileNames: "assets/[hash].js",
-        assetFileNames: "assets/[hash][extname]",
+        // ☢️ FIX CRÍTICO: Função para GARANTIR extensão em todos os assets
+        assetFileNames: (assetInfo) => {
+          // Garante que arquivos CSS sempre tenham extensão .css
+          const name = assetInfo.name || '';
+          if (name.endsWith('.css')) {
+            return 'assets/[hash].css';
+          }
+          // Para outros assets (imagens, fontes, etc)
+          const ext = name.split('.').pop();
+          if (ext && ext !== name) {
+            return `assets/[hash].${ext}`;
+          }
+          return 'assets/[hash][extname]';
+        },
         
         // ☢️ FORÇA NOMES HASH-ONLY PARA DYNAMIC IMPORTS
         manualChunks: undefined,
