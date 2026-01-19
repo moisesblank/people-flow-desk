@@ -25,6 +25,7 @@ import {
   Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatError } from '@/lib/utils/formatError';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { LIVE_5K_CONFIG, LiveMessage, LiveReaction } from '@/config/performance-5k';
@@ -173,7 +174,7 @@ export function LiveChat({ classId, className }: LiveChatProps) {
     return (
       <div className={cn('flex flex-col items-center justify-center h-full gap-3 p-4', className)}>
         <AlertCircle className="w-10 h-10 text-destructive" />
-        <p className="text-sm text-center text-muted-foreground">{error}</p>
+        <p className="text-sm text-center text-muted-foreground">{formatError(error)}</p>
         <p className="text-xs text-center text-muted-foreground">
           Se o problema persistir, atualize a página do navegador.
         </p>

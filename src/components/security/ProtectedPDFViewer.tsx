@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useContentSecurityGuard } from "@/hooks/useContentSecurityGuard";
 import { useAuth } from "@/hooks/useAuth";
+import { formatError } from "@/lib/utils/formatError";
 
 interface UserWatermarkData {
   nome?: string;
@@ -411,7 +412,7 @@ export const ProtectedPDFViewer = memo(({
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex flex-col items-center gap-3 text-destructive">
               <FileText className="w-12 h-12" />
-              <span className="text-sm">{error}</span>
+              <span className="text-sm">{formatError(error)}</span>
             </div>
           </div>
         )}

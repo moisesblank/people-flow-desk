@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { useSameTypeReplacementStore } from '@/state/sameTypeReplacementStore';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { formatError } from '@/lib/utils/formatError';
 
 // ============================================
 // CONSTANTES
@@ -672,7 +673,7 @@ export default function SameTypeReplacementGate() {
           {/* Error */}
           {error && (
             <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4">
-              <p className="text-sm text-destructive text-center">{error}</p>
+              <p className="text-sm text-destructive text-center">{formatError(error)}</p>
             </div>
           )}
 
