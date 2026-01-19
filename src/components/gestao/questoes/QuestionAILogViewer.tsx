@@ -56,6 +56,7 @@ import {
   extractEnunciadoSnippet,
   isValidAILog,
 } from '@/lib/audits/AUDIT_AI_LOG_POLICY_v2';
+import { formatError } from '@/lib/utils/formatError';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -431,7 +432,7 @@ const QuestionAILogViewer = memo(function QuestionAILogViewer({ questionId, isOp
               >
                 <AlertCircle className="h-12 w-12 text-destructive mb-4" />
                 <p className="text-destructive font-medium">Error loading logs</p>
-                <p className="text-muted-foreground text-sm">{String(error)}</p>
+                <p className="text-muted-foreground text-sm">{formatError(error)}</p>
               </motion.div>
             ) : logs.length === 0 ? (
               <motion.div
