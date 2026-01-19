@@ -703,7 +703,7 @@ export const BulkOrganizationImportDialog = forwardRef<HTMLDivElement, BulkOrgan
                   <AlertDescription>
                     <ScrollArea className="h-[100px] mt-2">
                       {parseErrors.map((err, i) => (
-                        <div key={i} className="text-xs">{err}</div>
+                        <div key={i} className="text-xs">{formatError(err)}</div>
                       ))}
                     </ScrollArea>
                   </AlertDescription>

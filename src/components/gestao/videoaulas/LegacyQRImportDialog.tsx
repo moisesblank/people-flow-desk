@@ -421,7 +421,7 @@ export const LegacyQRImportDialog = forwardRef<HTMLDivElement, LegacyQRImportDia
                   <ScrollArea className="h-24 mt-2">
                     <ul className="text-xs space-y-1">
                       {parseErrors.map((err, i) => (
-                        <li key={i}>• {err}</li>
+                        <li key={i}>• {formatError(err)}</li>
                       ))}
                     </ul>
                   </ScrollArea>
