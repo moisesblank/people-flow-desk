@@ -11,6 +11,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { formatError } from "@/lib/utils/formatError";
 
 // Tipos
 export interface SimuladoAttemptConfig {
@@ -107,10 +108,11 @@ export function useSimuladoAttempt() {
 
       if (error) {
         console.error("[useSimuladoAttempt] RPC error:", error);
-        setState(prev => ({ ...prev, status: "ERROR", error: error.message }));
+        const msg = formatError(error);
+        setState(prev => ({ ...prev, status: "ERROR", error: msg }));
         toast({
           title: "Erro ao iniciar simulado",
-          description: error.message,
+          description: msg,
           variant: "destructive",
         });
         return false;
@@ -192,10 +194,11 @@ export function useSimuladoAttempt() {
 
       if (error) {
         console.error("[useSimuladoAttempt] Finish RPC error:", error);
-        setState(prev => ({ ...prev, status: "ERROR", error: error.message }));
+        const msg = formatError(error);
+        setState(prev => ({ ...prev, status: "ERROR", error: msg }));
         toast({
           title: "Erro ao finalizar simulado",
-          description: error.message,
+          description: msg,
           variant: "destructive",
         });
         return null;

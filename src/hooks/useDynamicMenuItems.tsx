@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { formatError } from '@/lib/utils/formatError';
 
 export interface DynamicMenuItem {
   id: string;
@@ -92,7 +93,7 @@ export function useDynamicMenuItems() {
       console.error('Erro ao criar item de menu:', error);
       toast({
         title: 'Erro ao criar menu',
-        description: error.message || 'Tente novamente.',
+        description: formatError(error) || 'Tente novamente.',
         variant: 'destructive',
       });
       return false;
@@ -119,7 +120,7 @@ export function useDynamicMenuItems() {
       console.error('Erro ao atualizar item de menu:', error);
       toast({
         title: 'Erro ao atualizar',
-        description: error.message || 'Tente novamente.',
+        description: formatError(error) || 'Tente novamente.',
         variant: 'destructive',
       });
       return false;

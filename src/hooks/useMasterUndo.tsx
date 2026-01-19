@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useGodMode } from '@/stores/godModeStore';
+import { formatError } from '@/lib/utils/formatError';
 
 interface UndoAction {
   id: string;

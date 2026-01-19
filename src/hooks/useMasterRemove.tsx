@@ -10,6 +10,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { formatError } from '@/lib/utils/formatError';
 
 const OWNER_EMAIL = 'moisesblank@gmail.com';
 
@@ -610,11 +611,12 @@ export function useMasterRemove() {
 
     } catch (error: any) {
       console.error('Erro na remoção:', error);
-      toast.error('Erro ao remover', { description: error.message });
+      const msg = formatError(error);
+      toast.error('Erro ao remover', { description: msg });
       
       return {
         success: false,
-        message: error.message,
+        message: msg,
         removedItems,
         affectedTables,
         entityType,
@@ -713,10 +715,11 @@ export function useMasterRemove() {
       };
 
     } catch (error: any) {
-      toast.error('Erro ao remover', { description: error.message });
+      const msg = formatError(error);
+      toast.error('Erro ao remover', { description: msg });
       return {
         success: false,
-        message: error.message,
+        message: msg,
         removedItems: 0,
         affectedTables: [],
         entityType: tableName,

@@ -28,6 +28,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { formatError } from "@/lib/utils/formatError";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
@@ -241,7 +242,7 @@ function ContabilidadeContent() {
       await fetchData();
       setIsModalOpen(false);
     } catch (error: any) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      toast({ title: "Erro", description: formatError(error), variant: "destructive" });
     }
   };
 
@@ -271,7 +272,7 @@ function ContabilidadeContent() {
       await fetchData();
       setIsMetricaModalOpen(false);
     } catch (error: any) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+      toast({ title: "Erro", description: formatError(error), variant: "destructive" });
     }
   };
 
