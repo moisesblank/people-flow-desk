@@ -99,7 +99,7 @@ export function BetaStudentDashboard() {
           <CardContent className="pt-6 text-center space-y-4">
             <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
             <h2 className="text-xl font-bold">Erro ao carregar dados</h2>
-            <p className="text-muted-foreground">{error.message}</p>
+            <p className="text-muted-foreground">{typeof error === 'string' ? error : error?.message || 'Erro desconhecido'}</p>
             <Button onClick={() => window.location.reload()}>Tentar novamente</Button>
           </CardContent>
         </Card>

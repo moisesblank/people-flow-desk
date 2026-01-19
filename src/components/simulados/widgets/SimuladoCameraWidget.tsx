@@ -71,7 +71,7 @@ export function SimuladoCameraWidget({
       {error && (
         <div className="absolute -bottom-8 left-0 right-0 flex items-center justify-center gap-1 text-[10px] text-red-400">
           <AlertCircle className="h-3 w-3" />
-          <span className="truncate">{error}</span>
+          <span className="truncate">{typeof error === 'string' ? error : 'Erro de câmera'}</span>
         </div>
       )}
 
