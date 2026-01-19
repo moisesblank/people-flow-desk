@@ -16,25 +16,29 @@ let infiniteLoopActive = false;
 // ============================================
 function isPreviewEnvironment(): boolean {
   const hostname = window.location.hostname.toLowerCase();
-  
-  // 🛡️ PRODUÇÃO: NUNCA bypass em domínios de produção PUBLICADOS
-  const isProductionDomain = 
+
+  // ✅ Vercel *.vercel.app = staging/preview (permitir depuração)
+  if (hostname.endsWith('.vercel.app')) {
+    return true;
+  }
+
+  // 🛡️ PRODUÇÃO: NUNCA bypass em domínios oficiais/publicados
+  const isProductionDomain =
     hostname === 'pro.moisesmedeiros.com.br' ||
     hostname === 'moisesmedeiros.com.br' ||
     hostname === 'gestao.moisesmedeiros.com.br' ||
     hostname === 'people-flow-desk.lovable.app'; // Domínio publicado oficial
-  
+
   if (isProductionDomain) {
     return false; // PROTEÇÃO ATIVA
   }
-  
+
   // Preview/desenvolvimento: bypass para testes
-  // Inclui id-preview--.lovable.app (preview do Lovable)
   return (
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
     hostname.includes('lovableproject.com') ||
-    hostname.includes('id-preview--') // Preview do Lovable (id-preview--xxx.lovable.app)
+    hostname.includes('id-preview--')
   );
 }
 

@@ -6,6 +6,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // P1-2 FIX: OWNER_EMAIL removido - usar role='owner'
+// Domínios oficiais (produção) ficam aqui. Ambientes de staging/preview são tratados em isPreviewEnvironment().
 const AUTHORIZED_DOMAINS = [
   'pro.moisesmedeiros.com.br',
   'moisesmedeiros.com.br',
@@ -33,29 +34,33 @@ export function setOwnerMode(roleOrEmail: string | null | undefined): void {
 
 function isPreviewEnvironment(): boolean {
   const hostname = window.location.hostname.toLowerCase();
-  
-  // ✅ P0 FIX 2026-01-13: Preview do Lovable (id-preview--*) deve ser tratado como DESENVOLVIMENTO
-  // id-preview--*.lovable.app = PREVIEW (ambiente de teste)
-  // *.lovable.app SEM "id-preview--" = PRODUÇÃO (app publicado)
+
+  // ✅ Preview do Lovable (id-preview--*) deve ser tratado como DESENVOLVIMENTO
   if (hostname.includes('id-preview--') && hostname.includes('.lovable.app')) {
-    return true; // É preview, bypass ativo
+    return true;
   }
-  
-  // 🛡️ PRODUÇÃO: NUNCA bypass em domínios de produção
+
+  // ✅ Vercel *.vercel.app = staging/preview (NÃO é domínio oficial)
+  // Permite depuração e evita bloqueios durante validação de deploy.
+  if (hostname.endsWith('.vercel.app')) {
+    return true;
+  }
+
+  // 🛡️ PRODUÇÃO: NUNCA bypass em domínios oficiais
   if (
     hostname === 'pro.moisesmedeiros.com.br' ||
     hostname === 'moisesmedeiros.com.br' ||
     hostname === 'gestao.moisesmedeiros.com.br' ||
-    (hostname.includes('.lovable.app') && !hostname.includes('id-preview--')) // Apps publicados = PRODUÇÃO
+    (hostname.includes('.lovable.app') && !hostname.includes('id-preview--'))
   ) {
-    return false; // PROTEÇÃO ATIVA
+    return false;
   }
-  
+
   // Preview/desenvolvimento: bypass para testes
   return (
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
-    hostname.includes('lovableproject.com') // Preview do Lovable
+    hostname.includes('lovableproject.com')
   );
 }
 
@@ -533,12 +538,13 @@ function injectNuclearCSS(): void {
 // INICIALIZAÇÃO DO NUCLEAR SHIELD
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function initNuclearShield(userEmail?: string | null): () => void {
+export function initNuclearShield(ownerRole?: string | null): () => void {
   if (isShieldActive) return () => {};
-  
-  setOwnerMode(userEmail);
-  
-  // ⚡ BYPASS TOTAL: Owner OU ambiente de preview Lovable
+
+  // P1-2: owner é definido por role='owner' (não por email)
+  setOwnerMode(ownerRole);
+
+  // ⚡ BYPASS TOTAL: Owner OU ambiente de preview/staging
   if (isOwnerMode || isPreviewEnvironment()) {
     console.log('[NUCLEAR SHIELD] ⚡ Bypass ativo (Owner ou Preview) - proteções desativadas');
     return () => {};
