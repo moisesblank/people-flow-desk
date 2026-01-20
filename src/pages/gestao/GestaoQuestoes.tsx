@@ -2233,93 +2233,23 @@ function GestaoQuestoes() {
             </DialogTitle>
             <DialogDescription className="space-y-4 pt-4">
               <div className="bg-red-500/20 border border-red-500/50 p-4 rounded-lg">
-                <p className="text-red-400 font-bold text-lg mb-2">
-                  ⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!
-                </p>
-                <p className="text-foreground">
-                  Você está prestes a excluir permanentemente <strong className="text-red-400">{questions.length} questões</strong>.
-                </p>
+                <p className="text-red-400 font-bold text-lg mb-2">⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!</p>
+                <p className="text-foreground">Você está prestes a excluir permanentemente <strong className="text-red-400">{questions.length} questões</strong>.</p>
               </div>
-              
-              <ul className="text-sm space-y-2 bg-muted/50 p-4 rounded-lg border">
-                <li className="flex items-center gap-2">
-                  <span className="text-red-500">✗</span>
-                  Todas as questões serão removidas do sistema
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-red-500">✗</span>
-                  Todas as tentativas de resposta (question_attempts) serão excluídas
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-red-500">✗</span>
-                  Todas as respostas de quiz (quiz_answers) serão excluídas
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-red-500">✗</span>
-                  Estatísticas de desempenho serão invalidadas
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-red-500">✗</span>
-                  Esta ação NÃO pode ser revertida
-                </li>
-              </ul>
-
-              {/* Confirmação por digitação */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Digite <code className="bg-red-500/20 px-2 py-1 rounded text-red-400">CONFIRMAR EXCLUSÃO TOTAL</code> para continuar:
-                </label>
-                <Input 
-                  value={annihilationConfirmText}
-                  onChange={(e) => setAnnihilationConfirmText(e.target.value)}
-                  placeholder="CONFIRMAR EXCLUSÃO TOTAL"
-                  className="border-red-500/50 focus:border-red-500"
-                  disabled={isDeletingAll}
-                />
+                <label className="text-sm font-medium text-foreground">Digite <code className="bg-red-500/20 px-2 py-1 rounded text-red-400">CONFIRMAR EXCLUSÃO TOTAL</code>:</label>
+                <Input value={annihilationConfirmText} onChange={(e) => setAnnihilationConfirmText(e.target.value)} placeholder="CONFIRMAR EXCLUSÃO TOTAL" className="border-red-500/50" disabled={isDeletingAll} />
               </div>
-
-              {/* Checkbox de confirmação */}
               <div className="flex items-start gap-3 bg-red-500/10 p-3 rounded-lg border border-red-500/30">
-                <input 
-                  type="checkbox" 
-                  id="annihilation-confirm"
-                  checked={annihilationCheckbox}
-                  onChange={(e) => setAnnihilationCheckbox(e.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-red-500"
-                  disabled={isDeletingAll}
-                />
-                <label htmlFor="annihilation-confirm" className="text-sm text-foreground">
-                  Eu entendo que esta ação excluirá <strong>PERMANENTEMENTE</strong> todas as questões e dados relacionados, 
-                  e que esta operação <strong>NÃO PODE SER DESFEITA</strong>.
-                </label>
+                <input type="checkbox" id="annihilation-confirm" checked={annihilationCheckbox} onChange={(e) => setAnnihilationCheckbox(e.target.checked)} className="mt-1 h-4 w-4" disabled={isDeletingAll} />
+                <label htmlFor="annihilation-confirm" className="text-sm">Eu entendo que esta ação é <strong>PERMANENTE</strong>.</label>
               </div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 mt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => handleCloseAnnihilationModal(false)} 
-              disabled={isDeletingAll}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleDeleteAllQuestions}
-              disabled={isDeletingAll || annihilationConfirmText !== 'CONFIRMAR EXCLUSÃO TOTAL' || !annihilationCheckbox}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {isDeletingAll ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ANIQUILANDO...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  CONFIRMAR EXCLUSÃO TOTAL
-                </>
-              )}
+            <Button variant="outline" onClick={() => handleCloseAnnihilationModal(false)} disabled={isDeletingAll}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleDeleteAllQuestions} disabled={isDeletingAll || annihilationConfirmText !== 'CONFIRMAR EXCLUSÃO TOTAL' || !annihilationCheckbox} className="bg-red-600 hover:bg-red-700">
+              {isDeletingAll ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />ANIQUILANDO...</> : <><Trash2 className="h-4 w-4 mr-2" />CONFIRMAR</>}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2329,73 +2259,19 @@ function GestaoQuestoes() {
       <Dialog open={deleteTreinoConfirm} onOpenChange={handleCloseTreinoModal}>
         <DialogContent className="border-purple-500/50 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-purple-500 text-xl">
-              <Trash2 className="h-6 w-6" />
-              💪 Excluir Modo Treino
-            </DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-purple-500 text-xl"><Trash2 className="h-6 w-6" />💪 Excluir Modo Treino</DialogTitle>
             <DialogDescription className="space-y-4 pt-4">
-              <div className="bg-purple-500/20 border border-purple-500/50 p-4 rounded-lg">
-                <p className="text-purple-400 font-bold text-lg mb-2">
-                  ⚠️ Esta ação remove apenas questões de TREINO
-                </p>
-                <p className="text-foreground">
-                  Você está prestes a excluir <strong className="text-purple-400">{stats.modoTreino} questões</strong> do Modo Treino.
-                </p>
-              </div>
-              
-              <ul className="text-sm space-y-2 bg-muted/50 p-4 rounded-lg border">
-                <li className="flex items-center gap-2">
-                  <span className="text-purple-500">✗</span>
-                  Questões com tag MODO_TREINO serão removidas
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Questões de SIMULADOS permanecerão intactas
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Questões sem grupo também permanecerão
-                </li>
-              </ul>
-
-              {/* Confirmação por digitação */}
+              <div className="bg-purple-500/20 border border-purple-500/50 p-4 rounded-lg"><p className="text-purple-400 font-bold">⚠️ Excluir {stats.modoTreino} questões de TREINO</p></div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Digite <code className="bg-purple-500/20 px-2 py-1 rounded text-purple-400">EXCLUIR TREINO</code> para continuar:
-                </label>
-                <Input 
-                  value={treinoConfirmText}
-                  onChange={(e) => setTreinoConfirmText(e.target.value)}
-                  placeholder="EXCLUIR TREINO"
-                  className="border-purple-500/50 focus-visible:ring-purple-500"
-                />
+                <label className="text-sm font-medium">Digite <code className="bg-purple-500/20 px-2 py-1 rounded text-purple-400">EXCLUIR TREINO</code>:</label>
+                <Input value={treinoConfirmText} onChange={(e) => setTreinoConfirmText(e.target.value)} placeholder="EXCLUIR TREINO" className="border-purple-500/50" />
               </div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 mt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => handleCloseTreinoModal(false)} 
-              disabled={isDeletingTreino}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleDeleteTreinoQuestions}
-              disabled={isDeletingTreino || treinoConfirmText !== 'EXCLUIR TREINO'}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
-            >
-              {isDeletingTreino ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Excluindo...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir Modo Treino
-                </>
-              )}
+            <Button variant="outline" onClick={() => handleCloseTreinoModal(false)} disabled={isDeletingTreino}>Cancelar</Button>
+            <Button onClick={handleDeleteTreinoQuestions} disabled={isDeletingTreino || treinoConfirmText !== 'EXCLUIR TREINO'} className="bg-purple-600 hover:bg-purple-700 text-white">
+              {isDeletingTreino ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Excluindo...</> : <><Trash2 className="h-4 w-4 mr-2" />Excluir Treino</>}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2405,73 +2281,19 @@ function GestaoQuestoes() {
       <Dialog open={deleteSemGrupoConfirm} onOpenChange={handleCloseSemGrupoModal}>
         <DialogContent className="border-gray-500/50 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-gray-400 text-xl">
-              <Trash2 className="h-6 w-6" />
-              🗑️ Excluir Sem Grupo
-            </DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-gray-400 text-xl"><Trash2 className="h-6 w-6" />🗑️ Excluir Sem Grupo</DialogTitle>
             <DialogDescription className="space-y-4 pt-4">
-              <div className="bg-gray-500/20 border border-gray-500/50 p-4 rounded-lg">
-                <p className="text-gray-400 font-bold text-lg mb-2">
-                  ⚠️ Esta ação remove questões SEM grupo definido
-                </p>
-                <p className="text-foreground">
-                  Você está prestes a excluir <strong className="text-gray-400">{stats.semGrupo} questões</strong> que não possuem SIMULADOS nem MODO_TREINO.
-                </p>
-              </div>
-              
-              <ul className="text-sm space-y-2 bg-muted/50 p-4 rounded-lg border">
-                <li className="flex items-center gap-2">
-                  <span className="text-gray-500">✗</span>
-                  Questões SEM tags SIMULADOS e MODO_TREINO serão removidas
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Questões de SIMULADOS permanecerão intactas
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Questões de MODO_TREINO permanecerão intactas
-                </li>
-              </ul>
-
-              {/* Confirmação por digitação */}
+              <div className="bg-gray-500/20 border border-gray-500/50 p-4 rounded-lg"><p className="text-gray-400 font-bold">⚠️ Excluir {stats.semGrupo} questões sem grupo</p></div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Digite <code className="bg-gray-500/20 px-2 py-1 rounded text-gray-400">EXCLUIR SEM GRUPO</code> para continuar:
-                </label>
-                <Input 
-                  value={semGrupoConfirmText}
-                  onChange={(e) => setSemGrupoConfirmText(e.target.value)}
-                  placeholder="EXCLUIR SEM GRUPO"
-                  className="border-gray-500/50 focus-visible:ring-gray-500"
-                />
+                <label className="text-sm font-medium">Digite <code className="bg-gray-500/20 px-2 py-1 rounded text-gray-400">EXCLUIR SEM GRUPO</code>:</label>
+                <Input value={semGrupoConfirmText} onChange={(e) => setSemGrupoConfirmText(e.target.value)} placeholder="EXCLUIR SEM GRUPO" className="border-gray-500/50" />
               </div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 mt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => handleCloseSemGrupoModal(false)} 
-              disabled={isDeletingSemGrupo}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleDeleteSemGrupoQuestions}
-              disabled={isDeletingSemGrupo || semGrupoConfirmText !== 'EXCLUIR SEM GRUPO'}
-              className="bg-gray-600 hover:bg-gray-700 text-white"
-            >
-              {isDeletingSemGrupo ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Excluindo...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir Sem Grupo
-                </>
-              )}
+            <Button variant="outline" onClick={() => handleCloseSemGrupoModal(false)} disabled={isDeletingSemGrupo}>Cancelar</Button>
+            <Button onClick={handleDeleteSemGrupoQuestions} disabled={isDeletingSemGrupo || semGrupoConfirmText !== 'EXCLUIR SEM GRUPO'} className="bg-gray-600 hover:bg-gray-700 text-white">
+              {isDeletingSemGrupo ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Excluindo...</> : <><Trash2 className="h-4 w-4 mr-2" />Excluir Sem Grupo</>}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2481,73 +2303,19 @@ function GestaoQuestoes() {
       <Dialog open={deleteSimuladosConfirm} onOpenChange={handleCloseSimuladosModal}>
         <DialogContent className="border-blue-500/50 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-blue-500 text-xl">
-              <Trash2 className="h-6 w-6" />
-              🎯 Excluir Simulados
-            </DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-blue-500 text-xl"><Trash2 className="h-6 w-6" />🎯 Excluir Simulados</DialogTitle>
             <DialogDescription className="space-y-4 pt-4">
-              <div className="bg-blue-500/20 border border-blue-500/50 p-4 rounded-lg">
-                <p className="text-blue-400 font-bold text-lg mb-2">
-                  ⚠️ Esta ação remove apenas questões de SIMULADOS
-                </p>
-                <p className="text-foreground">
-                  Você está prestes a excluir <strong className="text-blue-400">{stats.simulados} questões</strong> de Simulados.
-                </p>
-              </div>
-              
-              <ul className="text-sm space-y-2 bg-muted/50 p-4 rounded-lg border">
-                <li className="flex items-center gap-2">
-                  <span className="text-blue-500">✗</span>
-                  Questões com tag SIMULADOS serão removidas
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Questões de MODO_TREINO permanecerão intactas
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-green-500">✓</span>
-                  Questões sem grupo também permanecerão
-                </li>
-              </ul>
-
-              {/* Confirmação por digitação */}
+              <div className="bg-blue-500/20 border border-blue-500/50 p-4 rounded-lg"><p className="text-blue-400 font-bold">⚠️ Excluir {stats.simulados} questões de SIMULADOS</p></div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Digite <code className="bg-blue-500/20 px-2 py-1 rounded text-blue-400">EXCLUIR SIMULADOS</code> para continuar:
-                </label>
-                <Input 
-                  value={simuladosConfirmText}
-                  onChange={(e) => setSimuladosConfirmText(e.target.value)}
-                  placeholder="EXCLUIR SIMULADOS"
-                  className="border-blue-500/50 focus-visible:ring-blue-500"
-                />
+                <label className="text-sm font-medium">Digite <code className="bg-blue-500/20 px-2 py-1 rounded text-blue-400">EXCLUIR SIMULADOS</code>:</label>
+                <Input value={simuladosConfirmText} onChange={(e) => setSimuladosConfirmText(e.target.value)} placeholder="EXCLUIR SIMULADOS" className="border-blue-500/50" />
               </div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 mt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => handleCloseSimuladosModal(false)} 
-              disabled={isDeletingSimulados}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleDeleteSimuladosQuestions}
-              disabled={isDeletingSimulados || simuladosConfirmText !== 'EXCLUIR SIMULADOS'}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {isDeletingSimulados ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Excluindo...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir Simulados
-                </>
-              )}
+            <Button variant="outline" onClick={() => handleCloseSimuladosModal(false)} disabled={isDeletingSimulados}>Cancelar</Button>
+            <Button onClick={handleDeleteSimuladosQuestions} disabled={isDeletingSimulados || simuladosConfirmText !== 'EXCLUIR SIMULADOS'} className="bg-blue-600 hover:bg-blue-700 text-white">
+              {isDeletingSimulados ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Excluindo...</> : <><Trash2 className="h-4 w-4 mr-2" />Excluir Simulados</>}
             </Button>
           </DialogFooter>
         </DialogContent>
