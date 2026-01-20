@@ -56,6 +56,7 @@ import { FuturisticPageHeader } from '@/components/ui/futuristic-page-header';
 import { ModulosGlobalManager } from '@/components/gestao/cursos/ModulosGlobalManager';
 import { CourseMasterMode } from '@/components/gestao/cursos/CourseMasterMode';
 import { ModuleImageUploader } from '@/components/gestao/cursos/ModuleImageUploader';
+import { StatOrb, SortableModuleItem, ModuleItem, type Module } from '@/components/gestao/cursos/CursoComponents';
 
 // ============================================
 // TIPOS (baseados no schema real do banco)
@@ -227,75 +228,8 @@ function useGestaoLMSRealtime(queryClient: ReturnType<typeof useQueryClient>) {
   }, [queryClient]);
 }
 
-// ============================================
-// STAT ORB COMPONENT — IRON MAN HUD STYLE
-// ============================================
-interface StatOrbProps {
-  icon: React.ReactNode;
-  value: number;
-  label: string;
-  color: 'blue' | 'purple' | 'green' | 'red' | 'amber';
-  delay?: number;
-}
-
-function StatOrb({ icon, value, label, color, delay = 0 }: StatOrbProps) {
-  const colorMap = {
-    blue: 'from-blue-500/20 to-blue-600/10 border-blue-500/30 shadow-blue-500/20',
-    purple: 'from-purple-500/20 to-purple-600/10 border-purple-500/30 shadow-purple-500/20',
-    green: 'from-green-500/20 to-green-600/10 border-green-500/30 shadow-green-500/20',
-    red: 'from-red-500/20 to-red-600/10 border-red-500/30 shadow-red-500/20',
-    amber: 'from-amber-500/20 to-amber-600/10 border-amber-500/30 shadow-amber-500/20',
-  };
-  
-  const iconColorMap = {
-    blue: 'text-blue-400',
-    purple: 'text-purple-400',
-    green: 'text-green-400',
-    red: 'text-red-400',
-    amber: 'text-amber-400',
-  };
-
-  return (
-    <div 
-      className={cn(
-        "relative group cursor-default",
-        "bg-gradient-to-br border rounded-2xl p-4",
-        "backdrop-blur-sm",
-        "transition-all duration-300 hover:scale-[1.02]",
-        "shadow-lg hover:shadow-xl",
-        "animate-fade-in",
-        colorMap[color]
-      )}
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      {/* Glow ring effect */}
-      <div className={cn(
-        "absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100",
-        "transition-opacity duration-500",
-        "bg-gradient-to-br",
-        colorMap[color]
-      )} />
-      
-      <div className="relative flex items-center gap-3">
-        <div className={cn(
-          "p-2 rounded-xl bg-background/50",
-          iconColorMap[color]
-        )}>
-          {icon}
-        </div>
-        <div>
-          <p className="text-2xl font-bold tracking-tight">{value}</p>
-          <p className="text-xs text-muted-foreground">{label}</p>
-        </div>
-      </div>
-      
-      {/* Scanline effect */}
-      <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none opacity-30">
-        <div className="absolute inset-0 scanline-effect" />
-      </div>
-    </div>
-  );
-}
+// StatOrb, SortableModuleItem e ModuleItem foram extraídos para:
+// src/components/gestao/cursos/CursoComponents.tsx
 
 // ============================================
 // COMPONENTE PRINCIPAL
