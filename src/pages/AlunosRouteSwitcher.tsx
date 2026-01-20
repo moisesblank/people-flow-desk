@@ -74,28 +74,11 @@ export default function AlunosRouteSwitcher() {
   // ============================================
 
   // OWNER - ACESSO SUPREMO (LEI IV)
-  // 🔐 P0 FIX: Owner NUNCA é forçado para /alunos/dashboard
-  // Owner pode navegar livremente para /gestaofc via URL direta
+  // ✅ REGRA DO OWNER (PATCH): entrada do sistema é SEMPRE /gestaofc
+  // Owner pode acessar /alunos manualmente, mas NÃO deve cair aqui ao "entrar".
   if (isOwner) {
-    // Em ambiente mono-domínio (pro.* ou preview), Owner vê a lista de alunos
-    // Isso permite que o Owner acesse /alunos sem ser redirecionado
-    console.log("[AlunosRouteSwitcher] 👑 Owner acessando /alunos → renderiza Gestão de Alunos");
-    return (
-      <>
-        <Helmet>
-          <title>Gestão de Alunos | Matriz Digital</title>
-          <meta
-            name="description"
-            content="Gestão de alunos: lista, filtros, status, auditoria e sincronização inteligente."
-          />
-          <link
-            rel="canonical"
-            href={typeof window !== "undefined" ? `${window.location.origin}/alunos` : "/alunos"}
-          />
-        </Helmet>
-        <Alunos />
-      </>
-    );
+    console.log("[AlunosRouteSwitcher] 👑 Owner em /alunos → Redirect para /gestaofc");
+    return <Navigate to="/gestaofc" replace />;
   }
 
   // BETA = Aluno pagante → REDIRECT para /alunos/dashboard
