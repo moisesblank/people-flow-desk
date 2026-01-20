@@ -851,6 +851,17 @@ export default function Auth() {
       }
 
       // ✅ REGRA DEFINITIVA: Usa função centralizada COM role
+      // 👑 P0 FIX OWNER: bypass por email ANTES de tudo
+      const ownerEmail = "moisesblank@gmail.com";
+      const isOwnerByEmail = session.user.email?.toLowerCase() === ownerEmail;
+      
+      // 👑 OWNER sempre vai para /gestaofc (bypass absoluto)
+      if (isOwnerByEmail || userRole === "owner") {
+        console.log("[AUTH] 👑 OWNER detectado - forçando /gestaofc (email:", session.user.email, ", role:", userRole, ")");
+        navigate("/gestaofc", { replace: true });
+        return;
+      }
+      
       const target = getPostLoginRedirect(userRole, session.user.email);
       console.log("[AUTH] ✅ SIGNED_IN + loginAttempted - redirecionando para", target, "(role:", userRole, ")");
       navigate(target, { replace: true });
