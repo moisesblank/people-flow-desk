@@ -88,7 +88,7 @@ export const IMMUNE_HEADERS = [
   'X-Panda-Signature',
   'X-Webhook-Secret',
   'X-WordPress-Auth',
-  'cf-turnstile-response',
+  // 'cf-turnstile-response', // ERRADICADO
 ] as const;
 
 // ============================================
