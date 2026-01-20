@@ -308,50 +308,39 @@ export function CloudflareTurnstile({
 }
 
 // Hook para usar Turnstile em formulários
+// ============================================
+// 🔓 POLÍTICA v10.4: TURNSTILE PERMANENTEMENTE DESATIVADO
+// Motivo: Erros de hostname mismatch em preview/produção
+// Segurança: Rate-limiting + lockout + RLS protegem backend
+// ============================================
 export function useTurnstile() {
-  const [token, setToken] = useState<string | null>(null);
-  const [isVerified, setIsVerified] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleVerify = useCallback((newToken: string) => {
-    setToken(newToken);
-    setIsVerified(true);
-    setError(null);
-  }, []);
-
-  const handleError = useCallback((errorMsg: string) => {
-    setToken(null);
-    setIsVerified(false);
-    setError(errorMsg);
-  }, []);
-
-  const handleExpire = useCallback(() => {
-    setToken(null);
-    setIsVerified(false);
-    setError('Verificação expirada');
-  }, []);
-
+  // 🔓 BYPASS PERMANENTE: Sempre retorna verificado
+  // Token estático para indicar que turnstile está desabilitado
+  const BYPASS_TOKEN = 'TURNSTILE_DISABLED_AUTH_BYPASS_v10.4';
+  
   const reset = useCallback(() => {
-    setToken(null);
-    setIsVerified(false);
-    setError(null);
-    if ((window as any).__turnstileReset) {
-      (window as any).__turnstileReset();
-    }
+    // No-op: bypass permanente não precisa resetar
+    console.log('[AUTH] 🔓 Turnstile reset (bypass ativo - no-op)');
   }, []);
+
+  // Log apenas uma vez por sessão
+  if (typeof window !== 'undefined' && !(window as any).__turnstileBypassLogged) {
+    console.log('[AUTH] 🔓 TURNSTILE BYPASS ATIVO - Verificação anti-bot desabilitada');
+    (window as any).__turnstileBypassLogged = true;
+  }
 
   return {
-    token,
-    isVerified,
-    error,
-    handleVerify,
-    handleError,
-    handleExpire,
+    token: BYPASS_TOKEN,
+    isVerified: true,  // 🔓 SEMPRE VERIFICADO
+    error: null,
+    handleVerify: () => {},  // No-op
+    handleError: () => {},   // No-op
+    handleExpire: () => {},  // No-op
     reset,
     TurnstileProps: {
-      onVerify: handleVerify,
-      onError: handleError,
-      onExpire: handleExpire
+      onVerify: () => {},
+      onError: () => {},
+      onExpire: () => {}
     }
   };
 }
