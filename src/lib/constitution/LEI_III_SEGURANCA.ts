@@ -1407,14 +1407,11 @@ export async function isLockedOut(_userId: string): Promise<boolean> {
 
 /**
  * Art. 92° - Configuração Cloudflare
- * Integração com WAF, Turnstile, Rate Limiting.
+ * 🛡️ ERRADICADO: Turnstile removido (anti-bot-eradication-protocol-v1-0-0)
+ * WAF e Rate Limiting permanecem ativos.
  */
 export const CLOUDFLARE_CONFIG = {
-  turnstile: {
-    siteKey: 'CLOUDFLARE_TURNSTILE_SITE_KEY',
-    secretKeyEnvVar: 'CLOUDFLARE_TURNSTILE_SECRET_KEY',
-    verifyEndpoint: 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-  },
+  // turnstile: ERRADICADO - removido permanentemente
   
   waf: {
     enabled: true,
@@ -1432,25 +1429,19 @@ export const CLOUDFLARE_CONFIG = {
   },
   
   botManagement: {
-    enabled: true,
-    challengeOnSuspicion: true,
+    enabled: false, // ERRADICADO
+    challengeOnSuspicion: false,
   },
 } as const;
 
 /**
  * Art. 93° - Verificação de Turnstile
+ * 🛡️ ERRADICADO: Sempre retorna true (anti-bot-eradication-protocol-v1-0-0)
  */
-export async function verifyTurnstile(token: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabase.functions.invoke('verify-turnstile', {
-      body: { token },
-    });
-    
-    if (error) return false;
-    return data?.success === true;
-  } catch {
-    return false;
-  }
+export async function verifyTurnstile(_token: string): Promise<boolean> {
+  // Stub permanente - Turnstile foi erradicado
+  console.log('[LEI_III] verifyTurnstile: ERRADICADO - retornando true');
+  return true;
 }
 
 /**
@@ -1478,7 +1469,7 @@ export const CRITICAL_EDGE_FUNCTIONS = [
   'sna-worker',
   'orchestrator',
   'hotmart-webhook-processor',
-  'verify-turnstile',
+  // 'verify-turnstile', // ERRADICADO
   'rate-limit-gateway',
   'video-authorize-omega',
   'sanctum-asset-manifest',
