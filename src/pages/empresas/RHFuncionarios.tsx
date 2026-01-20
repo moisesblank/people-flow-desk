@@ -8,50 +8,58 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useCSVExportWorker } from "@/hooks/useWebWorker";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Users, UserPlus, Check, Clock, AlertCircle, Trash2, Edit2,
-  Filter, Calendar, Paperclip, Receipt, Wallet, DollarSign,
-  ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Search,
-  MoreVertical, FolderOpen, Lock, Archive, RefreshCw,
-  CalendarDays, CalendarRange, History, BarChart3, Sparkles, TrendingUp,
-  AlertTriangle, CheckCircle2, XCircle, Bell, UserCheck, UserX, UserMinus,
-  Brain, Zap, Shield, Activity, PieChart, TrendingDown, CreditCard,
-  Banknote, ArrowUpRight, ArrowDownRight, Target, Gauge, Eye,
-  Download, Upload, Settings2, LayoutGrid, List, Mail, Phone,
-  Layers, Database, Globe, Command, Cpu, Home, FileText, FileSpreadsheet,
-  Bot, Star, Bookmark, Info, Copy, Landmark, Building2, Award, Briefcase,
-  GraduationCap, Heart, Coffee, Plane, BadgeCheck, Send
+  Users,
+  UserPlus,
+  AlertCircle,
+  Trash2,
+  Edit2,
+  Calendar,
+  DollarSign,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  MoreVertical,
+  Lock,
+  RefreshCw,
+  BarChart3,
+  CheckCircle2,
+  XCircle,
+  UserCheck,
+  Activity,
+  PieChart,
+  Download,
+  Mail,
+  Phone,
+  Award,
+  Plane,
+  Heart,
+  GraduationCap,
+  Landmark,
+  TrendingUp,
+  Briefcase,
+  AlertTriangle,
+  Send
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { 
-  ResizableDialog,
-  ResizableDialogContent,
-  ResizableDialogHeader,
-  ResizableDialogBody,
-  ResizableDialogFooter,
-  ResizableDialogTitle,
-} from "@/components/ui/resizable-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { format, parseISO, differenceInDays, differenceInYears, subMonths } from "date-fns";
+import { format, parseISO, differenceInYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, LineChart, Line, PieChart as RechartPieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip } from "recharts";
+import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, PieChart as RechartPieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip } from "recharts";
+import { EmployeeModal } from "@/components/empresas/rh/EmployeeModal";
 
 // ═══════════════════════════════════════════════════════════════
 // TIPOS E CONSTANTES
@@ -1352,226 +1360,18 @@ export default function RHFuncionarios() {
           </TabsContent>
         </Tabs>
 
-        {/* Modal de Funcionário */}
-        <ResizableDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <ResizableDialogContent className="max-w-2xl">
-            <ResizableDialogHeader>
-              <ResizableDialogTitle>
-                {editingEmployee ? "Editar Funcionário" : "Novo Funcionário"}
-              </ResizableDialogTitle>
-            </ResizableDialogHeader>
-            
-            <ResizableDialogBody>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Nome */}
-                <div className="md:col-span-2">
-                  <Label htmlFor="nome">Nome Completo *</Label>
-                  <Input
-                    id="nome"
-                    value={formData.nome}
-                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                    placeholder="Nome do funcionário"
-                  />
-                </div>
-
-                {/* Email */}
-                <div>
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="email@empresa.com"
-                  />
-                </div>
-
-                {/* Telefone */}
-                <div>
-                  <Label htmlFor="telefone">Telefone/WhatsApp</Label>
-                  <Input
-                    id="telefone"
-                    value={formData.telefone}
-                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                    placeholder="(11) 99999-9999"
-                  />
-                </div>
-
-                {/* Função/Cargo (descrição humana) */}
-                <div>
-                  <Label htmlFor="funcao">Cargo/Função</Label>
-                  <Input
-                    id="funcao"
-                    value={formData.funcao}
-                    onChange={(e) => setFormData({ ...formData, funcao: e.target.value })}
-                    placeholder="Ex: Desenvolvedor Sênior, Atendente"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Descrição do cargo (aparece no perfil)
-                  </p>
-                </div>
-
-                {/* Nível de Acesso (role de permissão) - NOVO! */}
-                <div>
-                  <Label htmlFor="nivel_acesso" className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-primary" />
-                    Nível de Acesso *
-                  </Label>
-                  <Select 
-                    value={formData.nivel_acesso} 
-                    onValueChange={(v) => setFormData({ ...formData, nivel_acesso: v as StaffRole })}
-                  >
-                    <SelectTrigger className="border-primary/30">
-                      <SelectValue placeholder="Selecione o nível" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STAFF_ROLE_OPTIONS.map((role) => (
-                        <SelectItem key={role.value} value={role.value}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{role.label}</span>
-                            <span className="text-xs text-muted-foreground">{role.description}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Define as permissões do funcionário no sistema
-                  </p>
-                </div>
-
-                {/* Setor */}
-                <div>
-                  <Label htmlFor="setor">Setor</Label>
-                  <Select value={formData.setor} onValueChange={(v) => setFormData({ ...formData, setor: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o setor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SETORES.filter(s => s.id !== "todos").map((setor) => (
-                        <SelectItem key={setor.id} value={setor.id}>
-                          <div className="flex items-center gap-2">
-                            <setor.icon className="h-4 w-4" />
-                            {setor.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Salário */}
-                <div>
-                  <Label htmlFor="salario">Salário (R$)</Label>
-                  <Input
-                    id="salario"
-                    type="number"
-                    step="0.01"
-                    value={formData.salario}
-                    onChange={(e) => setFormData({ ...formData, salario: e.target.value })}
-                    placeholder="3000.00"
-                  />
-                </div>
-
-                {/* Data Admissão */}
-                <div>
-                  <Label htmlFor="data_admissao">Data de Admissão</Label>
-                  <Input
-                    id="data_admissao"
-                    type="date"
-                    value={formData.data_admissao}
-                    onChange={(e) => setFormData({ ...formData, data_admissao: e.target.value })}
-                  />
-                </div>
-
-                {/* Status */}
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUS_OPTIONS.map((status) => (
-                        <SelectItem key={status.value} value={status.value}>
-                          <div className="flex items-center gap-2">
-                            <status.icon className="h-4 w-4" />
-                            {status.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Horário */}
-                <div>
-                  <Label htmlFor="horario">Horário de Trabalho</Label>
-                  <Input
-                    id="horario"
-                    value={formData.horario_trabalho}
-                    onChange={(e) => setFormData({ ...formData, horario_trabalho: e.target.value })}
-                    placeholder="08:00 - 17:00"
-                  />
-                </div>
-
-                {/* Senha para acesso (apenas novo funcionário ou funcionário sem acesso) */}
-                {(!editingEmployee || (editingEmployee && !editingEmployee.user_id)) && (
-                  <div className="md:col-span-2">
-                    <Separator className="my-4" />
-                    <Label htmlFor="senha">
-                      Senha de Acesso ao Sistema 
-                      <span className="text-muted-foreground ml-1">(opcional, será gerada automaticamente)</span>
-                    </Label>
-                    <Input
-                      id="senha"
-                      type="text"
-                      value={formData.senha}
-                      onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                      placeholder="Mínimo 6 caracteres (ou deixe em branco)"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Se deixar em branco, uma senha automática será gerada e enviada por email.
-                    </p>
-                  </div>
-                )}
-
-                {/* Info - Acesso ao Sistema */}
-                <div className="md:col-span-2">
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
-                    <Send className="h-4 w-4 text-primary" />
-                    <p className="text-sm text-muted-foreground">
-                      {editingEmployee 
-                        ? (editingEmployee.user_id 
-                            ? "Este funcionário já tem acesso ao sistema."
-                            : "Ao salvar, o funcionário receberá acesso ao sistema por email.")
-                        : "Ao cadastrar, o funcionário receberá automaticamente acesso ao sistema por email."}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </ResizableDialogBody>
-
-            <ResizableDialogFooter>
-              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave} disabled={isSaving}>
-                {isSaving ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                    Salvando...
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    {editingEmployee ? "Atualizar" : "Cadastrar"}
-                  </>
-                )}
-              </Button>
-            </ResizableDialogFooter>
-          </ResizableDialogContent>
-        </ResizableDialog>
+        <EmployeeModal
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          editingEmployee={editingEmployee}
+          formData={formData}
+          setFormData={setFormData}
+          staffRoleOptions={STAFF_ROLE_OPTIONS}
+          setores={SETORES}
+          statusOptions={STATUS_OPTIONS}
+          isSaving={isSaving}
+          onSave={handleSave}
+        />
 
         {/* Dialog de Confirmação de Exclusão */}
         <AlertDialog open={!!deleteDialogOpen} onOpenChange={() => setDeleteDialogOpen(null)}>
