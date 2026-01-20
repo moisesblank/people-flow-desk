@@ -123,14 +123,25 @@ export function useGlobalDevToolsBlock() {
     // Listener de mudança de auth
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async () => {
+    } = supabase.auth.onAuthStateChange(async (event) => {
+      // 🔑 P0 FIX: Limpar cache de owner no logout
+      if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('matriz_is_owner_cache');
+        isOwnerRef.current = false;
+        document.body.classList.remove("owner-mode");
+        return;
+      }
+      
       const { data: isOwnerData } = await supabase.rpc('check_is_owner');
       isOwnerRef.current = isOwnerData === true;
 
       if (isOwnerRef.current) {
         document.body.classList.add("owner-mode");
+        // 🔑 Atualizar cache síncrono
+        localStorage.setItem('matriz_is_owner_cache', 'true');
       } else {
         document.body.classList.remove("owner-mode");
+        localStorage.removeItem('matriz_is_owner_cache');
       }
     });
 

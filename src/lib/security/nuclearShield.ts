@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// ☢️ NUCLEAR SHIELD v3.0 — OPÇÃO NUCLEAR DE PROTEÇÃO
+// ☢️ NUCLEAR SHIELD v3.1 — OPÇÃO NUCLEAR DE PROTEÇÃO
 // ═══════════════════════════════════════════════════════════════════════════════
 // Proteção extrema contra inspeção e roubo de código
-// OWNER bypass via setOwnerMode(role) - NÃO mais por email
+// OWNER bypass via setOwnerMode(role) + cache síncrono
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // P1-2 FIX: OWNER_EMAIL removido - usar role='owner'
@@ -15,17 +15,59 @@ const AUTHORIZED_DOMAINS = [
   'lovable.app',
 ];
 
+// 🔑 CACHE KEY para bypass síncrono do owner (evita RPC delay)
+const OWNER_CACHE_KEY = 'matriz_is_owner_cache';
+const OWNER_EMAIL_CACHE = 'moisesblank@gmail.com';
+
 let isOwnerMode = false;
 let isShieldActive = false;
 let lastDetectionTime = 0;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// VERIFICAÇÃO SÍNCRONA DE OWNER (antes do RPC async)
+// ═══════════════════════════════════════════════════════════════════════════════
+function checkOwnerCacheSync(): boolean {
+  try {
+    // 1. Verificar cache no localStorage
+    const cached = localStorage.getItem(OWNER_CACHE_KEY);
+    if (cached === 'true') return true;
+    
+    // 2. Verificar email do usuário no localStorage (fallback)
+    const session = localStorage.getItem('sb-fyikfsasudgzsjmumdlw-auth-token');
+    if (session) {
+      const parsed = JSON.parse(session);
+      const email = parsed?.user?.email?.toLowerCase();
+      if (email === OWNER_EMAIL_CACHE) {
+        localStorage.setItem(OWNER_CACHE_KEY, 'true');
+        return true;
+      }
+    }
+  } catch {
+    // Silently fail
+  }
+  return false;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONFIGURAÇÃO DE OWNER (P1-2 FIX: agora recebe role, não email)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function setOwnerMode(roleOrEmail: string | null | undefined): void {
-  // P1-2 SECURITY FIX: Aceita APENAS role='owner' (email removido do bundle)
-  isOwnerMode = roleOrEmail === 'owner';
+  // P1-2 SECURITY FIX: Aceita role='owner' OU email legacy para redundância
+  const isOwnerByRole = roleOrEmail === 'owner';
+  const isOwnerByEmail = roleOrEmail?.toLowerCase() === OWNER_EMAIL_CACHE;
+  const isOwnerByCache = checkOwnerCacheSync();
+  
+  isOwnerMode = isOwnerByRole || isOwnerByEmail || isOwnerByCache;
+  
+  // Atualizar cache se confirmado owner
+  if (isOwnerMode) {
+    try {
+      localStorage.setItem(OWNER_CACHE_KEY, 'true');
+    } catch {
+      // Storage bloqueado
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -117,7 +159,8 @@ function enforceAuthorizedDomain(): void {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function detectDevToolsViaPerformance(): boolean {
-  if (isOwnerMode || isPreviewEnvironment()) return false;
+  // 🔑 SEMPRE verificar cache síncrono primeiro
+  if (isOwnerMode || checkOwnerCacheSync() || isPreviewEnvironment()) return false;
   
   const threshold = 100; // ms
   const t1 = performance.now();
@@ -133,7 +176,8 @@ function detectDevToolsViaPerformance(): boolean {
 }
 
 function detectDevToolsViaDimensions(): boolean {
-  if (isOwnerMode || isPreviewEnvironment()) return false;
+  // 🔑 SEMPRE verificar cache síncrono primeiro
+  if (isOwnerMode || checkOwnerCacheSync() || isPreviewEnvironment()) return false;
   
   const widthDiff = window.outerWidth - window.innerWidth;
   const heightDiff = window.outerHeight - window.innerHeight;
@@ -143,7 +187,8 @@ function detectDevToolsViaDimensions(): boolean {
 }
 
 function detectDevToolsViaDebugger(): boolean {
-  if (isOwnerMode || isPreviewEnvironment()) return false;
+  // 🔑 SEMPRE verificar cache síncrono primeiro
+  if (isOwnerMode || checkOwnerCacheSync() || isPreviewEnvironment()) return false;
   
   const start = performance.now();
   // eslint-disable-next-line no-debugger
@@ -156,7 +201,8 @@ function detectDevToolsViaDebugger(): boolean {
 
 // Detecção via Console getter trap
 function detectDevToolsViaConsoleTrap(): boolean {
-  if (isOwnerMode || isPreviewEnvironment()) return false;
+  // 🔑 SEMPRE verificar cache síncrono primeiro
+  if (isOwnerMode || checkOwnerCacheSync() || isPreviewEnvironment()) return false;
   
   let detected = false;
   const element = new Image();
@@ -179,7 +225,8 @@ function detectDevToolsViaConsoleTrap(): boolean {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function executeNuclearResponse(): void {
-  if (isOwnerMode || isPreviewEnvironment()) return;
+  // 🔑 BYPASS CRÍTICO: Owner NUNCA vê tela de violação
+  if (isOwnerMode || checkOwnerCacheSync() || isPreviewEnvironment()) return;
   
   // Previne chamadas múltiplas em sequência
   const now = Date.now();
@@ -268,11 +315,13 @@ function executeNuclearResponse(): void {
 let debuggerLoopActive = false;
 
 function startMassiveDebuggerLoop(): void {
-  if (isOwnerMode || debuggerLoopActive) return;
+  // 🔑 SEMPRE verificar cache síncrono primeiro
+  if (isOwnerMode || checkOwnerCacheSync() || debuggerLoopActive) return;
   debuggerLoopActive = true;
   
   const recursiveDebugger = (): void => {
-    if (isOwnerMode) {
+    // 🔑 Verificar em cada iteração
+    if (isOwnerMode || checkOwnerCacheSync()) {
       debuggerLoopActive = false;
       return;
     }
@@ -317,7 +366,8 @@ function setupNuclearKeyboardBlock(): void {
   ];
   
   const handler = (e: KeyboardEvent): boolean | void => {
-    if (isOwnerMode) return;
+    // 🔑 SEMPRE verificar cache síncrono primeiro
+    if (isOwnerMode || checkOwnerCacheSync()) return;
     
     const key = e.key?.toUpperCase() || '';
     
@@ -361,7 +411,8 @@ function setupNuclearKeyboardBlock(): void {
 
 function setupContextMenuBlock(): void {
   const handler = (e: MouseEvent): boolean | void => {
-    if (isOwnerMode) return;
+    // 🔑 SEMPRE verificar cache síncrono primeiro
+    if (isOwnerMode || checkOwnerCacheSync()) return;
     
     e.preventDefault();
     e.stopPropagation();
@@ -378,7 +429,8 @@ function setupContextMenuBlock(): void {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function setupSelfDefense(): void {
-  if (isOwnerMode) return;
+  // 🔑 SEMPRE verificar cache síncrono primeiro
+  if (isOwnerMode || checkOwnerCacheSync()) return;
   
   // Hash de verificação - se a função foi modificada, o hash muda
   const functionSignature = setupSelfDefense.toString();
@@ -403,11 +455,13 @@ function setupSelfDefense(): void {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function startContinuousMonitoring(): void {
-  if (isOwnerMode) return;
+  // 🔑 SEMPRE verificar cache síncrono primeiro
+  if (isOwnerMode || checkOwnerCacheSync()) return;
   
   // Verificação a cada 2 segundos
   setInterval(() => {
-    if (isOwnerMode) return;
+    // 🔑 Verificar cache em cada iteração
+    if (isOwnerMode || checkOwnerCacheSync()) return;
     
     // Checar múltiplos métodos de detecção
     const detected = 
@@ -421,7 +475,8 @@ function startContinuousMonitoring(): void {
   
   // Verificação via timing (menos frequente, mais intrusivo)
   setInterval(() => {
-    if (isOwnerMode) return;
+    // 🔑 Verificar cache em cada iteração
+    if (isOwnerMode || checkOwnerCacheSync()) return;
     
     if (detectDevToolsViaPerformance()) {
       executeNuclearResponse();
@@ -430,7 +485,8 @@ function startContinuousMonitoring(): void {
   
   // Verificação no resize (DevTools docked)
   window.addEventListener('resize', () => {
-    if (isOwnerMode) return;
+    // 🔑 Verificar cache em cada iteração
+    if (isOwnerMode || checkOwnerCacheSync()) return;
     
     if (detectDevToolsViaDimensions()) {
       executeNuclearResponse();
@@ -443,7 +499,8 @@ function startContinuousMonitoring(): void {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function stripConsoleInProduction(): void {
-  if (isOwnerMode) return;
+  // 🔑 SEMPRE verificar cache síncrono primeiro
+  if (isOwnerMode || checkOwnerCacheSync()) return;
   if (process.env.NODE_ENV !== 'production') return;
   
   const noop = (): void => {};
@@ -544,9 +601,12 @@ export function initNuclearShield(ownerRole?: string | null): () => void {
   // P1-2: owner é definido por role='owner' (não por email)
   setOwnerMode(ownerRole);
 
+  // 🔑 BYPASS CRÍTICO: Verificar cache síncrono ANTES de tudo
+  const isBypassActive = isOwnerMode || checkOwnerCacheSync() || isPreviewEnvironment();
+  
   // ⚡ BYPASS TOTAL: Owner OU ambiente de preview/staging
-  if (isOwnerMode || isPreviewEnvironment()) {
-    console.log('[NUCLEAR SHIELD] ⚡ Bypass ativo (Owner ou Preview) - proteções desativadas');
+  if (isBypassActive) {
+    console.log('[NUCLEAR SHIELD] ⚡ Bypass ativo (Owner/Cache/Preview) - proteções desativadas');
     return () => {};
   }
   
