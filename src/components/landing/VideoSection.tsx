@@ -161,7 +161,7 @@ export const VideoSection = () => {
           className="mt-12 text-center"
         >
           <a
-            href="https://www.moisesmedeiros.com.br"
+            href="https://moisesmedeiros.com.br/black-friday-2025"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-3 px-10 py-5 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white font-bold text-lg shadow-2xl shadow-pink-500/40 relative overflow-hidden hover:scale-105 transition-transform"
