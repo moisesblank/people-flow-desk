@@ -260,8 +260,8 @@ export interface RedirectLogEvent {
 }
 
 export function logLegacyRedirect(event: RedirectLogEvent): void {
-  // Log no console em desenvolvimento - usar import.meta.env.DEV (Vite nativo)
-  if (import.meta.env.DEV) {
+  // Log no console em desenvolvimento
+  if (process.env.NODE_ENV === "development") {
     console.log("[Legacy Redirect]", event.from, "→", event.to);
   }
   

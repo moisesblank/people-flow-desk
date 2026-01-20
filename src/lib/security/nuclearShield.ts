@@ -439,8 +439,7 @@ function startContinuousMonitoring(): void {
 
 function stripConsoleInProduction(): void {
   if (isOwnerMode) return;
-  // 🏛️ PRIME AVANÇADO: Usar import.meta.env.PROD (Vite nativo) em vez de process.env.NODE_ENV
-  if (!import.meta.env.PROD) return;
+  if (process.env.NODE_ENV !== 'production') return;
   
   const noop = (): void => {};
   const methods: (keyof Console)[] = [

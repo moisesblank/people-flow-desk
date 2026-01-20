@@ -16,9 +16,6 @@ const isDevEnvironment = () => {
   return (
     hostname === 'localhost' ||
     hostname.includes('lovableproject.com') ||
-    hostname.includes('lovable.app') ||
-    hostname.includes('lovable.dev') ||
-    hostname.includes('vercel.app') ||
     hostname.includes('127.0.0.1')
   );
 };
@@ -75,51 +72,8 @@ export function CloudflareTurnstile({
   const [domainError, setDomainError] = useState(false);
   const [errorCount, setErrorCount] = useState(0);
   const MAX_ERRORS_BEFORE_FALLBACK = 3;
-  const DEV_AUTO_BYPASS_TIMEOUT_MS = 2000; // 2 segundos para auto-bypass em dev (reduzido de 3s)
-  const autoBypassTriggeredRef = useRef(false);
-  const statusRef = useRef(status);
-  
-  // Manter ref sincronizada com status
-  useEffect(() => {
-    statusRef.current = status;
-  }, [status]);
 
-  // 🛡️ P0 FIX v2: Auto-bypass para ambientes de dev/preview
-  // Se o Turnstile não verificar em 2s OU se der erro, dispara bypass automaticamente
-  useEffect(() => {
-    if (!isDevEnvironment()) return;
-    if (autoBypassTriggeredRef.current) return; // Já disparou
-    
-    const successStates = ['verified', 'dev-bypass', 'fallback'];
-    
-    // Se verificou com sucesso ou já está em bypass, não fazer nada
-    if (successStates.includes(status)) {
-      return;
-    }
-    
-    // Se deu erro em dev, auto-bypass imediato
-    if (status === 'error') {
-      console.warn('[Turnstile] ⚠️ AUTO DEV BYPASS ativado após erro em dev');
-      autoBypassTriggeredRef.current = true;
-      setStatus('dev-bypass');
-      onVerify('DEV_BYPASS_AUTO_' + Date.now() + '_' + window.location.hostname);
-      return;
-    }
-    
-    // Timeout de 2s para qualquer outro status
-    const timer = setTimeout(() => {
-      if (autoBypassTriggeredRef.current) return;
-      const currentStatus = statusRef.current;
-      if (!successStates.includes(currentStatus)) {
-        console.warn('[Turnstile] ⚠️ AUTO DEV BYPASS ativado após timeout de 2s');
-        autoBypassTriggeredRef.current = true;
-        setStatus('dev-bypass');
-        onVerify('DEV_BYPASS_AUTO_' + Date.now() + '_' + window.location.hostname);
-      }
-    }, DEV_AUTO_BYPASS_TIMEOUT_MS);
-
-    return () => clearTimeout(timer);
-  }, [status, onVerify]);
+  // Carregar script do Turnstile
   useEffect(() => {
     console.log('[AUTH] 2. Turnstile script init');
 
