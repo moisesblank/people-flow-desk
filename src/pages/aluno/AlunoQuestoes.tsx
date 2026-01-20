@@ -15,6 +15,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   Search, Brain, Target, 
   CheckCircle2, XCircle, ChevronRight, Zap,
@@ -29,7 +40,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, getBancaLabel } from "@/constants/bancas";
-import QuestionEnunciado from "@/components/shared/QuestionEnunciado";
+import QuestionEnunciado, { formatBancaHeader } from "@/components/shared/QuestionEnunciado";
 import { VirtualizedStudentQuestionList } from "@/components/aluno/questoes/VirtualizedStudentQuestionList";
 import { useTaxonomyForSelects } from "@/hooks/useQuestionTaxonomy";
 import { QuestionBadgesCompact } from "@/components/shared/QuestionMetadataBadges";
@@ -38,11 +49,9 @@ import { StudentPerformanceAnalytics } from "@/components/aluno/questoes/Student
 import { ModoProvaModal } from "@/components/aluno/questoes/ModoProvaModal";
 import { HistoricoQuestoes } from "@/components/aluno/questoes/HistoricoQuestoes";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
-// ============================================
-// MODAIS EXTRAÍDOS PARA OTIMIZAÇÃO DE BUILD
-// ============================================
-import { QuestionModal, type Question, type QuestionAttempt } from "@/components/aluno/questoes/QuestionModal";
-import { RapidoTreinoModal } from "@/components/aluno/questoes/RapidoTreinoModal";
+import QuestionTextField from "@/components/shared/QuestionTextField";
+import QuestionResolution from "@/components/shared/QuestionResolution";
+import { ReportQuestionError } from "@/components/shared/ReportQuestionError";
 
 // ============================================
 // BLOCK_03: DATA CONTRACT - TIPOS
@@ -67,14 +76,11 @@ interface Question {
   points: number;
   is_active: boolean;
   created_at: string;
-  // Estrutura hierárquica (BLOCK_06: ACADEMIC_FILTERS)
   macro?: string | null;
   micro?: string | null;
   tema?: string | null;
   subtema?: string | null;
-  // QUESTION_DOMAIN: Agrupamento
   tags?: string[] | null;
-  // Imagens
   image_url?: string | null;
   image_urls?: any[] | null;
 }
