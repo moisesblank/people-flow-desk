@@ -95,7 +95,8 @@ export function NuclearAnnihilateButton() {
 
   // Executar aniquilação
   const handleExecuteAnnihilation = useCallback(async () => {
-    if (secretKey !== NUCLEAR_SECRET) {
+    const normalizedSecret = secretKey.trim();
+    if (normalizedSecret !== NUCLEAR_SECRET) {
       toast.error("Chave de autorização inválida");
       return;
     }
@@ -112,10 +113,10 @@ export function NuclearAnnihilateButton() {
       const { data, error: fnError } = await supabase.functions.invoke('nuclear-annihilate-students', {
         body: {
           confirmationPhrase: CONFIRMATION_PHRASE,
-          secretKey: secretKey,
+          secretKey: normalizedSecret,
         },
         headers: {
-          'x-nuclear-auth-key': secretKey,
+          'x-nuclear-auth-key': normalizedSecret,
         },
       });
 
