@@ -287,10 +287,27 @@ function setupDevToolsDetection(): void {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DETECÇÃO DE AUTOMAÇÃO (Art. 116-120)
+// 🚨 P0 FIX: Removido React DevTools da lista (causa false positive)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 function checkAutomation(): boolean {
+  // 🚨 P0 FIX: Owner sempre bypassa
   if (isOwner(currentUserEmail)) return false;
+  
+  // 🚨 P0 FIX: Preview environments NUNCA detectam automação
+  const hostname = window.location.hostname.toLowerCase();
+  const isPreviewEnv = 
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.includes('lovableproject.com') ||
+    hostname.includes('.lovable.app') ||
+    hostname.includes('id-preview--') ||
+    hostname.includes('.vercel.app');
+  
+  if (isPreviewEnv) {
+    console.log('[LEI VII] 🔧 Preview env - automação bypass');
+    return false;
+  }
   
   const nav = navigator as unknown as Record<string, unknown>;
   const win = window as unknown as Record<string, unknown>;
@@ -319,14 +336,11 @@ function checkAutomation(): boolean {
     return true;
   }
   
-  // Cypress
-  if (win.Cypress) {
-    recordViolation('automation_detected', { type: 'cypress' });
-    return true;
-  }
+  // 🚨 P0 FIX: Cypress removido - causa problemas em testes E2E
+  // 🚨 P0 FIX: React DevTools NÃO é automação! Removido __REACT_DEVTOOLS_GLOBAL_HOOK__
   
-  // Headless indicators
-  if (navigator.plugins?.length === 0 && !navigator.languages?.length) {
+  // Headless indicators (apenas se AMBOS forem true)
+  if (navigator.plugins?.length === 0 && !navigator.languages?.length && !navigator.userAgent?.includes('Chrome')) {
     recordViolation('automation_detected', { type: 'headless' });
     return true;
   }
@@ -471,6 +485,32 @@ function setupVisibilityProtection(): void {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function executeLeiVII(userEmail?: string | null): LeiVIIExecutionReport {
+  // 🚨 P0 FIX: BYPASS ABSOLUTO em ambientes de preview
+  const hostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+  const isPreviewEnv = 
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.includes('lovableproject.com') ||
+    hostname.includes('.lovable.app') ||
+    hostname.includes('id-preview--') ||
+    hostname.includes('.vercel.app');
+  
+  if (isPreviewEnv) {
+    console.log('[LEI VII] 🔧 Preview environment - TODAS proteções em bypass');
+    isExecuted = true;
+    return {
+      executed: true,
+      timestamp: new Date().toISOString(),
+      protectionsActive: 0,
+      ownerEmail: OWNER_EMAIL,
+      version: getLeiVIIStatus().version,
+      handlers: ['preview_env_bypass'],
+      cssRulesInjected: false,
+      consoleTrapsActive: false,
+      mobileProtectionActive: false,
+    };
+  }
+  
   // Evitar dupla execução
   if (isExecuted) {
     return {

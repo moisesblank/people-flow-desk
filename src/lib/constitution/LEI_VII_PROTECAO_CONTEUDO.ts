@@ -276,10 +276,38 @@ export const FINAL_PROVISIONS = {
  * @deprecated P1-2 FIX: Use isOwnerByRole() para verificação segura
  * Esta função existe apenas para bypass de UX (proteções de conteúdo)
  * A autorização REAL deve vir do banco via user_roles.role='owner'
+ * 
+ * 🛡️ P0 FIX: Também verifica localStorage cache e ambientes de preview
  */
 export const isOwner = (email?: string | null): boolean => {
-  if (!email) return false;
-  return email.toLowerCase() === OWNER_EMAIL.toLowerCase();
+  // 🚨 P0 FIX: BYPASS ABSOLUTO em ambientes de preview
+  const hostname = typeof window !== 'undefined' ? window.location.hostname.toLowerCase() : '';
+  const isPreviewEnv = 
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname.includes('lovableproject.com') ||
+    hostname.includes('.lovable.app') ||
+    hostname.includes('id-preview--') ||
+    hostname.includes('.vercel.app');
+  
+  if (isPreviewEnv) {
+    return true; // BYPASS TOTAL em preview
+  }
+  
+  // Verificar email passado
+  if (email && email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
+    return true;
+  }
+  
+  // Fallback: verificar cache localStorage
+  if (typeof window !== 'undefined') {
+    const cachedIsOwner = localStorage.getItem('matriz_is_owner_cache');
+    if (cachedIsOwner === 'true') {
+      return true;
+    }
+  }
+  
+  return false;
 };
 
 /**

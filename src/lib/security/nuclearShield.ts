@@ -34,8 +34,9 @@ export function setOwnerMode(roleOrEmail: string | null | undefined): void {
 function isPreviewEnvironment(): boolean {
   const hostname = window.location.hostname.toLowerCase();
   
-  // ✅ P0 FIX 2026-01-13: Preview do Lovable (id-preview--*) deve ser tratado como DESENVOLVIMENTO
+  // ✅ P0 FIX 2026-01-20: Preview do Lovable e Vercel = DESENVOLVIMENTO
   // id-preview--*.lovable.app = PREVIEW (ambiente de teste)
+  // *.vercel.app = PREVIEW (deploy de teste Vercel)
   // *.lovable.app SEM "id-preview--" = PRODUÇÃO (app publicado)
   if (hostname.includes('id-preview--') && hostname.includes('.lovable.app')) {
     return true; // É preview, bypass ativo
@@ -52,10 +53,12 @@ function isPreviewEnvironment(): boolean {
   }
   
   // Preview/desenvolvimento: bypass para testes
+  // 🚨 P0 FIX: Adicionado .vercel.app
   return (
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
-    hostname.includes('lovableproject.com') // Preview do Lovable
+    hostname.includes('lovableproject.com') ||
+    hostname.includes('.vercel.app')
   );
 }
 
