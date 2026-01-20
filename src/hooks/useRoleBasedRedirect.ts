@@ -46,13 +46,10 @@ export function useRoleBasedRedirect() {
     
     const userRole = roleData?.role;
 
-    // Owner: se está em /gestaofc, fica. Se não está, vai para /alunos ou home
+    // 👑 OWNER: landing obrigatório em /gestaofc (SYNAPSE Ω)
+    // Nota: owner ainda pode acessar /alunos manualmente, mas a home/entrada do sistema é /gestaofc.
     if (userRole === "owner") {
-      if (isInGestaofc) {
-        return "/gestaofc/dashboard";
-      }
-      // Owner fora de /gestaofc vai para área pública ou alunos
-      return "/";
+      return "/gestaofc";
     }
 
     try {
@@ -150,9 +147,9 @@ export function useUserHomePath() {
 
       const role = data?.role;
 
-      // Owner: se está em gestaofc, home é gestaofc. Se não, home é /
+      // 👑 OWNER: home obrigatória em /gestaofc
       if (role === "owner") {
-        setHomePath(isInGestaofc ? "/gestaofc/dashboard" : "/");
+        setHomePath("/gestaofc");
         return;
       }
 
