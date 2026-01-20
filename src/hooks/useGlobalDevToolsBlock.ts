@@ -145,6 +145,24 @@ export function useGlobalDevToolsBlock() {
       }
     });
 
+    // 🛡️ P0 FIX: Verificar ambiente de preview SÍNCRONAMENTE (antes de qualquer RPC)
+    const isPreviewEnv = (() => {
+      const hostname = window.location.hostname.toLowerCase();
+      return (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname.includes('lovableproject.com') ||
+        (hostname.includes('id-preview--') && hostname.includes('.lovable.app')) ||
+        hostname.includes('.vercel.app')
+      );
+    })();
+    
+    // 🛡️ BYPASS TOTAL para ambientes de preview
+    if (isPreviewEnv) {
+      console.log('🔧 [DevTools Protection] BYPASS: Ambiente de preview detectado');
+      return;
+    }
+
     // 🏛️ LEI I: ZERO console spam em produção - apenas toast
     const showWarning = (type: "devtools" | "screenshot" | "copy" = "devtools") => {
       if (warningShownRef.current) return;
