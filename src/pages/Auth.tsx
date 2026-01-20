@@ -11,7 +11,7 @@ import "@/styles/auth-spiderman-2300.css";
 import { useState, useEffect, lazy, Suspense, useCallback, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
-// 🛡️ ERRADICADO: CloudflareTurnstile removido (anti-bot-eradication-protocol-v1-0-0)
+import { CloudflareTurnstile, useTurnstile } from "@/components/security/CloudflareTurnstile";
 import {
   Mail,
   Lock,
@@ -690,12 +690,13 @@ export default function Auth() {
   const [pendingPassword, setPendingPassword] = useState<string | null>(null); // 🎯 FIX: Guardar senha para login automático
   const [isForceLoggingOut, setIsForceLoggingOut] = useState(false);
 
-  // 🛡️ ERRADICADO: Turnstile removido (anti-bot-eradication-protocol-v1-0-0)
-  // Stubs para evitar quebra de código sem mudanças funcionais
-  const turnstileToken = 'BYPASS_ERADICATED';
-  const isTurnstileVerified = true;
-  const TurnstileProps = {};
-  const resetTurnstile = () => {};
+  // Estado para Cloudflare Turnstile (Anti-Bot)
+  const {
+    token: turnstileToken,
+    isVerified: isTurnstileVerified,
+    TurnstileProps,
+    reset: resetTurnstile,
+  } = useTurnstile();
 
   // ============================================
   // 🛡️ POLÍTICA v10.0: ZERO SESSION PERSISTENCE
@@ -1200,9 +1201,22 @@ export default function Auth() {
       return;
     }
 
-    // 🛡️ ERRADICADO: Turnstile removido (anti-bot-eradication-protocol-v1-0-0)
-    // Autenticação agora flui diretamente sem verificação anti-bot
-    console.log("[AUTH] 3. Turnstile ERRADICADO - bypass permanente ativo");
+    // 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO para TODOS (P1-2 FIX)
+    // Após incidente MANUS - bots conseguiam entrar sem CAPTCHA visual
+    // P1-2: Owner bypass REMOVIDO - turnstile é obrigatório para segurança
+    if (!isTurnstileVerified || !turnstileToken) {
+      console.error("[AUTH] ERROR: Turnstile não verificado no login");
+      toast.error("Verificação de segurança necessária", {
+        description: "Complete a verificação anti-bot para fazer login.",
+      });
+      getDeviceGateActions().setLoginIntent(false);
+      return;
+    }
+
+    console.log("[AUTH] 3. Estado Turnstile verificado:", {
+      verified: isTurnstileVerified,
+      hasToken: Boolean(turnstileToken),
+    });
 
     setIsLoading(true);
 
@@ -1240,7 +1254,7 @@ export default function Auth() {
         });
         console.error("[AUTH] ERROR: validação de formulário", fieldErrors);
         setErrors(fieldErrors);
-        // resetTurnstile(); // ERRADICADO
+        resetTurnstile();
         setIsLoading(false);
         getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de validação
         return;
@@ -2572,7 +2586,10 @@ export default function Auth() {
                       )}
                     </div>
 
-                    {/* 🛡️ ERRADICADO: Turnstile removido (anti-bot-eradication-protocol-v1-0-0) */}
+                    {/* Cloudflare Turnstile - RESET DE SENHA (obrigatório para todos) */}
+                    <div className="py-2">
+                      <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
+                    </div>
 
                     <Button
                       type="submit"
@@ -2725,7 +2742,10 @@ export default function Auth() {
                   </div>
                 )}
 
-                {/* 🛡️ ERRADICADO: Turnstile removido (anti-bot-eradication-protocol-v1-0-0) */}
+                {/* 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO para TODOS (P1-2 FIX) */}
+                <div className="py-2">
+                  <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
+                </div>
 
                 <Button
                   type="submit"
