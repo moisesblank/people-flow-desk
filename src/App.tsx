@@ -1,8 +1,6 @@
 // ============================================
 // ⚡ MATRIZ DIGITAL - APP CORE v5.3 ⚡
-// ULTRA PERFORMANCE 3G - 5000 usuários simultâneos
-// 🛡️ Evangelho da Segurança v2.0 Integrado
-// 📍 ROTAS MODULARIZADAS + AppProviders
+// 🧪 MODO DIAGNÓSTICO: Isolando Providers/Guards
 // ============================================
 
 import { Toaster } from "@/components/ui/toaster";
@@ -11,7 +9,6 @@ import "@/styles/performance.css";
 import "@/styles/optimized-animations.css";
 import { BrowserRouter, Routes } from "react-router-dom";
 import { VisualEditMode } from "@/components/editor/VisualEditMode";
-// SessionTracker REMOVIDO - heartbeat já existe em useAuth (DOGMA I)
 import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortcutsOverlay";
 import { DuplicationClipboardIndicator } from "@/components/admin/DuplicationClipboardIndicator";
 import { SessionGuard } from "@/components/security/SessionGuard";
@@ -21,13 +18,12 @@ import { GestaoNoIndex } from "@/components/seo/GestaoNoIndex";
 import { LegacyRedirectHandler } from "@/components/routing/LegacyRedirectHandler";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { P0AliveBeacon } from "@/components/debug/P0AliveBeacon";
-// LegacyDomainBlocker REMOVIDO - domínio gestao.* descontinuado
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
-// 🔄 FORCE REFRESH AUTOMÁTICO - Quando admin publica, alunos recebem refresh
 import { useAppVersionCheck } from "@/hooks/useAppVersionCheck";
 // 🚨 BLACKOUT ANTI-PIRATARIA v1.1 - PROTEÇÃO GLOBAL
-import { SecurityBlackoutOverlay } from "@/components/security/SecurityBlackoutOverlay";
+// TEMPORARIAMENTE DESABILITADO PARA DIAGNÓSTICO
+// import { SecurityBlackoutOverlay } from "@/components/security/SecurityBlackoutOverlay";
 
 // ⚡ PROVIDERS CONSOLIDADOS
 import { AppProviders } from "@/contexts/AppProviders";
@@ -62,7 +58,6 @@ const LazyMasterDeleteOverlay = lazy(() =>
 const LazyMasterContextMenu = lazy(() =>
   import("@/components/admin/MasterContextMenu").then((m) => ({ default: m.MasterContextMenu })),
 );
-// 🆕 TRANSACTIONAL SAVE SYSTEM
 const LazyGlobalSaveBar = lazy(() =>
   import("@/components/admin/GlobalSaveBar").then((m) => ({ default: m.GlobalSaveBar })),
 );
@@ -127,14 +122,13 @@ const AppContent = memo(() => {
 
   return (
     <>
-      {/* 🚨 BLACKOUT ANTI-PIRATARIA v1.1 - GLOBAL */}
-      <SecurityBlackoutOverlay />
+      {/* 🚨 GUARDS TEMPORARIAMENTE SIMPLIFICADOS PARA DIAGNÓSTICO */}
+      {/* SecurityBlackoutOverlay, DeviceGuard, DeviceMFAGuard desabilitados */}
       
       <SessionGuard>
-        <DeviceGuard>
-          <DeviceMFAGuard>
-            {/* SessionTracker REMOVIDO - useAuth já gerencia heartbeat (DOGMA I) */}
-
+        {/* DeviceGuard e DeviceMFAGuard DESABILITADOS - causando tela preta */}
+        {/* <DeviceGuard> */}
+        {/* <DeviceMFAGuard> */}
             <Suspense fallback={null}>
               <LazyGodModePanel />
               <LazyInlineEditor />
@@ -143,7 +137,6 @@ const AppContent = memo(() => {
               <LazyMasterUndoIndicator />
               <LazyMasterDeleteOverlay />
               <LazyMasterContextMenu />
-              {/* 🆕 BARRA DE SALVAMENTO GLOBAL + GUARD DE NAVEGAÇÃO */}
               <LazyGlobalSaveBar />
               <LazyNavigationGuard />
               <LazyRealtimeEditOverlay />
@@ -172,8 +165,8 @@ const AppContent = memo(() => {
                 </Routes>
               </Suspense>
             </ErrorBoundary>
-          </DeviceMFAGuard>
-        </DeviceGuard>
+          {/* </DeviceMFAGuard> */}
+        {/* </DeviceGuard> */}
       </SessionGuard>
     </>
   );
