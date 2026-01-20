@@ -9,15 +9,9 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter 
-} from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
@@ -34,12 +28,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import QuestionTextField from "@/components/shared/QuestionTextField";
 import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, getBancaLabel } from "@/constants/bancas";
-import { formatBancaHeader } from "@/lib/bancaNormalizer";
-import QuestionEnunciado, { cleanQuestionText } from "@/components/shared/QuestionEnunciado";
+import QuestionEnunciado from "@/components/shared/QuestionEnunciado";
 import { VirtualizedStudentQuestionList } from "@/components/aluno/questoes/VirtualizedStudentQuestionList";
-import QuestionResolution from "@/components/shared/QuestionResolution";
 import { useTaxonomyForSelects } from "@/hooks/useQuestionTaxonomy";
 import { QuestionBadgesCompact } from "@/components/shared/QuestionMetadataBadges";
 import { TreinoReviewModal } from "@/components/aluno/questoes/TreinoReviewModal";
@@ -47,7 +38,11 @@ import { StudentPerformanceAnalytics } from "@/components/aluno/questoes/Student
 import { ModoProvaModal } from "@/components/aluno/questoes/ModoProvaModal";
 import { HistoricoQuestoes } from "@/components/aluno/questoes/HistoricoQuestoes";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
-import { ReportQuestionError } from "@/components/shared/ReportQuestionError";
+// ============================================
+// MODAIS EXTRAÍDOS PARA OTIMIZAÇÃO DE BUILD
+// ============================================
+import { QuestionModal, type Question, type QuestionAttempt } from "@/components/aluno/questoes/QuestionModal";
+import { RapidoTreinoModal } from "@/components/aluno/questoes/RapidoTreinoModal";
 
 // ============================================
 // BLOCK_03: DATA CONTRACT - TIPOS
