@@ -69,6 +69,7 @@ import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper
 import { VirtualTable } from "@/components/performance/VirtualTable";
 import { CriarAcessoOficialModal } from "@/components/students/CriarAcessoOficialModal";
 import { ImportStudentsModal } from "@/components/students/ImportStudentsModal";
+import { NuclearAnnihilateButton } from "@/components/students/NuclearAnnihilateButton";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStudentPresence, getPresenceStatus } from "@/hooks/useStudentPresence";
 import { useExportStudents } from "@/hooks/useExportStudents";
@@ -1056,6 +1057,9 @@ export default function Alunos() {
                         <Upload className="h-4 w-4 mr-2" />
                         IMPORTAR
                       </Button>
+                      
+                      {/* BOTÃO NUCLEAR — OWNER ONLY */}
+                      <NuclearAnnihilateButton />
                       
                       {/* BOTÃO EXPORTAR (VERDE) */}
                       <Button
