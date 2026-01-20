@@ -910,8 +910,9 @@ export default function Auth() {
         return;
       }
 
-      // 🛡️ RESET DE SENHA: Turnstile obrigatório para TODOS (P1-2 FIX)
-      if (!isTurnstileVerified || !turnstileToken) {
+      // 🛡️ RESET DE SENHA: Turnstile obrigatório (com bypass Owner)
+      const isOwnerEmail = email.toLowerCase() === "moisesblank@gmail.com";
+      if (!isOwnerEmail && (!isTurnstileVerified || !turnstileToken)) {
         toast.error("Verificação de segurança necessária", {
           description: "Para recuperar a senha, complete a verificação anti-bot.",
         });
@@ -1201,16 +1202,22 @@ export default function Auth() {
       return;
     }
 
-    // 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO para TODOS (P1-2 FIX)
+    // 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO (com bypass Owner)
     // Após incidente MANUS - bots conseguiam entrar sem CAPTCHA visual
-    // P1-2: Owner bypass REMOVIDO - turnstile é obrigatório para segurança
-    if (!isTurnstileVerified || !turnstileToken) {
+    // P0 FIX: Owner (moisesblank@gmail.com) tem bypass para evitar bloqueio
+    const isOwnerEmail = formData.email.trim().toLowerCase() === "moisesblank@gmail.com";
+    
+    if (!isOwnerEmail && (!isTurnstileVerified || !turnstileToken)) {
       console.error("[AUTH] ERROR: Turnstile não verificado no login");
       toast.error("Verificação de segurança necessária", {
         description: "Complete a verificação anti-bot para fazer login.",
       });
       getDeviceGateActions().setLoginIntent(false);
       return;
+    }
+    
+    if (isOwnerEmail) {
+      console.log("[AUTH] 👑 Owner bypass - Turnstile não obrigatório");
     }
 
     console.log("[AUTH] 3. Estado Turnstile verificado:", {
