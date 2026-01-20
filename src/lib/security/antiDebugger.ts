@@ -1,10 +1,13 @@
 // ============================================
-// 🛡️ ANTI-DEBUGGER LAYER v2.0
+// 🛡️ ANTI-DEBUGGER LAYER v2.1
 // Proteção adicional contra leitura de código
-// OWNER BYPASS via role='owner'
+// OWNER BYPASS via role='owner' + cache síncrono
 // ============================================
 
 // P1-2 FIX: OWNER_EMAIL removido - usar role='owner'
+const OWNER_CACHE_KEY = 'matriz_is_owner_cache';
+const OWNER_EMAIL_CACHE = 'moisesblank@gmail.com';
+
 let isOwnerMode = false;
 let antiDebugActive = false;
 let infiniteLoopActive = false;
@@ -43,11 +46,46 @@ function isPreviewEnvironment(): boolean {
 }
 
 // ============================================
-// CONFIGURAR OWNER MODE (P1-2 FIX: aceita role)
+// VERIFICAÇÃO SÍNCRONA DE OWNER (antes do RPC async)
+// ============================================
+function checkOwnerCacheSync(): boolean {
+  try {
+    const cached = localStorage.getItem(OWNER_CACHE_KEY);
+    if (cached === 'true') return true;
+    
+    const session = localStorage.getItem('sb-fyikfsasudgzsjmumdlw-auth-token');
+    if (session) {
+      const parsed = JSON.parse(session);
+      const email = parsed?.user?.email?.toLowerCase();
+      if (email === OWNER_EMAIL_CACHE) {
+        localStorage.setItem(OWNER_CACHE_KEY, 'true');
+        return true;
+      }
+    }
+  } catch {
+    // Silently fail
+  }
+  return false;
+}
+
+// ============================================
+// CONFIGURAR OWNER MODE (P1-2 FIX: aceita role + cache)
 // ============================================
 export function setOwnerMode(roleOrEmail: string | null | undefined): void {
-  // P1-2: Aceita tanto role='owner' quanto email legacy (para compatibilidade)
-  isOwnerMode = roleOrEmail === 'owner' || roleOrEmail?.toLowerCase() === 'moisesblank@gmail.com';
+  // P1-2: Aceita role='owner', email legacy, OU cache síncrono
+  const isOwnerByRole = roleOrEmail === 'owner';
+  const isOwnerByEmail = roleOrEmail?.toLowerCase() === OWNER_EMAIL_CACHE;
+  const isOwnerByCache = checkOwnerCacheSync();
+  
+  isOwnerMode = isOwnerByRole || isOwnerByEmail || isOwnerByCache;
+  
+  if (isOwnerMode) {
+    try {
+      localStorage.setItem(OWNER_CACHE_KEY, 'true');
+    } catch {
+      // Storage bloqueado
+    }
+  }
 }
 
 // ============================================
