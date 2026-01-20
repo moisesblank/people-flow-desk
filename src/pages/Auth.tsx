@@ -790,11 +790,12 @@ export default function Auth() {
 
       if ((event !== "SIGNED_IN" && event !== "INITIAL_SESSION") || !session?.user) return;
 
-      // 🛡️ PLANO B (UX):
-      // - SIGNED_IN: só redireciona quando usuário clicou em "Entrar" (evita saltos em novas abas)
-      // - INITIAL_SESSION: sessão restaurada pode redirecionar automaticamente
-      if (event === "SIGNED_IN" && !loginAttempted) {
-        console.log("[AUTH] 🛡️ SIGNED_IN detectado mas loginAttempted=false - BLOQUEANDO auto-redirect");
+      // 🛡️ P0 FIX v11.3: BLOQUEAR auto-redirect para TODOS os eventos
+      // Tanto SIGNED_IN quanto INITIAL_SESSION só redirecionam com loginAttempted=true
+      // Isso elimina loops infinitos causados por sessões "meia quebradas"
+      if (!loginAttempted) {
+        console.log("[AUTH] 🛡️ Evento", event, "detectado mas loginAttempted=false - BLOQUEANDO auto-redirect");
+        setIsCheckingSession(false); // Liberar UI para mostrar formulário de login
         return;
       }
 
