@@ -1451,19 +1451,12 @@ export const CLOUDFLARE_CONFIG = {
 } as const;
 
 /**
- * Art. 93° - Verificação de Turnstile
+ * Art. 93° - Verificação de Turnstile (REMOVIDO)
+ * @deprecated Turnstile foi removido do sistema. Esta função sempre retorna true.
  */
-export async function verifyTurnstile(token: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabase.functions.invoke('verify-turnstile', {
-      body: { token },
-    });
-    
-    if (error) return false;
-    return data?.success === true;
-  } catch {
-    return false;
-  }
+export async function verifyTurnstile(_token: string): Promise<boolean> {
+  console.log('[LEI_III] verifyTurnstile REMOVIDO - retornando true');
+  return true;
 }
 
 /**
@@ -1491,7 +1484,7 @@ export const CRITICAL_EDGE_FUNCTIONS = [
   'sna-worker',
   'orchestrator',
   'hotmart-webhook-processor',
-  'verify-turnstile',
+  // 'verify-turnstile', // REMOVIDO - anti-bot desativado
   'rate-limit-gateway',
   'video-authorize-omega',
   'sanctum-asset-manifest',

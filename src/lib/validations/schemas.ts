@@ -131,9 +131,7 @@ export const contactFormSchema = z.object({
     .refine(noSQLInjection, { message: "Caracteres inválidos" })
     .refine(noXSS, { message: "Conteúdo inválido" }),
   
-  captchaToken: z.string()
-    .min(1, "Complete a verificação de segurança")
-    .optional()
+  // captchaToken REMOVIDO - Turnstile desativado
 });
 
 // ===== PASSWORD RESET =====
