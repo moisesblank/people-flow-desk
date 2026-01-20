@@ -26,6 +26,8 @@ import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
 // 🔄 FORCE REFRESH AUTOMÁTICO - Quando admin publica, alunos recebem refresh
 import { useAppVersionCheck } from "@/hooks/useAppVersionCheck";
+// 🧹 CACHE EPOCH SYNC - Limpeza automática de cache a cada 24h
+import { useCacheEpochSync } from "@/hooks/useCacheEpochSync";
 // 🚨 BLACKOUT ANTI-PIRATARIA v1.1 - PROTEÇÃO GLOBAL
 import { SecurityBlackoutOverlay } from "@/components/security/SecurityBlackoutOverlay";
 
@@ -122,6 +124,9 @@ const AppContent = memo(() => {
   
   // 🔄 FORCE REFRESH: Escuta mudanças de versão e faz refresh automático para alunos
   useAppVersionCheck();
+  
+  // 🧹 CACHE EPOCH SYNC: Limpeza automática de cache a cada 24h (silenciosa)
+  useCacheEpochSync();
 
   const handleClose = useCallback(() => setIsOpen(false), [setIsOpen]);
 
