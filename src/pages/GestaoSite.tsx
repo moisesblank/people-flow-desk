@@ -33,7 +33,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { formatError } from "@/lib/utils/formatError";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
@@ -201,7 +200,7 @@ export default function GestaoSite() {
       await fetchPendencias();
       setIsModalOpen(false);
     } catch (error: any) {
-      toast({ title: "Erro", description: formatError(error), variant: "destructive" });
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
     }
   };
 

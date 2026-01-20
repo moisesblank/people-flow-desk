@@ -9,7 +9,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { formatError } from '@/lib/utils/formatError';
 import { 
   Plus, Search, Edit2, Trash2, GraduationCap, BookOpen, 
   Layers, ChevronRight, ChevronDown, Eye, EyeOff, 
@@ -367,7 +366,7 @@ export default function GestaoCursos() {
       resetCourseForm();
     },
     onError: (err: any) => {
-      toast({ title: '❌ Erro ao criar curso', description: formatError(err), variant: 'destructive' });
+      toast({ title: '❌ Erro ao criar curso', description: err.message, variant: 'destructive' });
     }
   });
   
@@ -388,7 +387,7 @@ export default function GestaoCursos() {
       resetCourseForm();
     },
     onError: (err: any) => {
-      toast({ title: '❌ Erro ao atualizar', description: formatError(err), variant: 'destructive' });
+      toast({ title: '❌ Erro ao atualizar', description: err.message, variant: 'destructive' });
     }
   });
   
@@ -409,7 +408,7 @@ export default function GestaoCursos() {
       }
     },
     onError: (err: any) => {
-      toast({ title: '❌ Erro ao excluir', description: formatError(err), variant: 'destructive' });
+      toast({ title: '❌ Erro ao excluir', description: err.message, variant: 'destructive' });
     }
   });
   
@@ -439,7 +438,7 @@ export default function GestaoCursos() {
       resetModuleForm();
     },
     onError: (err: any) => {
-      toast({ title: '❌ Erro ao criar módulo', description: formatError(err), variant: 'destructive' });
+      toast({ title: '❌ Erro ao criar módulo', description: err.message, variant: 'destructive' });
     }
   });
   
@@ -468,7 +467,7 @@ export default function GestaoCursos() {
       resetModuleForm();
     },
     onError: (err: any) => {
-      toast({ title: '❌ Erro ao atualizar', description: formatError(err), variant: 'destructive' });
+      toast({ title: '❌ Erro ao atualizar', description: err.message, variant: 'destructive' });
     }
   });
   
@@ -487,7 +486,7 @@ export default function GestaoCursos() {
       setDeleteDialog(null);
     },
     onError: (err: any) => {
-      toast({ title: '❌ Erro ao excluir', description: formatError(err), variant: 'destructive' });
+      toast({ title: '❌ Erro ao excluir', description: err.message, variant: 'destructive' });
     }
   });
   

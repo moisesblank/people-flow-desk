@@ -7,7 +7,6 @@
 import React, { memo, useEffect, useCallback, useMemo, useState } from "react";
 import { useSanctumOmega } from "@/hooks/useSanctumOmega";
 import { cn } from "@/lib/utils";
-import { formatError } from "@/lib/utils/formatError";
 import { Button } from "@/components/ui/button";
 import { 
   ChevronLeft, 
@@ -88,7 +87,7 @@ const ErrorState = memo(({
       {isLocked ? "Acesso Bloqueado" : "Erro ao Carregar"}
     </h3>
     <p className="text-muted-foreground text-sm text-center max-w-md">
-      {formatError(error)}
+      {error}
     </p>
     {errorCode && (
       <code className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">

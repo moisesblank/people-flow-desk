@@ -3,12 +3,10 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-
 // ============================================
 // ⚡ EVANGELHO DA VELOCIDADE - VITE CONFIG ⚡
 // DOGMA VIII: Build otimizado com tree-shaking
 // ============================================
-
 
 export default defineConfig(({ mode }) => ({
   server: {
@@ -82,19 +80,33 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         // ☢️ NOMES DE ARQUIVOS 100% HASH - SEM PREFIXOS LEGÍVEIS
+        // Arquivos como: x9k2m.js, a8f3.js (NÃO GodModePanel.js)
         chunkFileNames: "assets/[hash].js",
         entryFileNames: "assets/[hash].js",
-        // ☢️ FIX CRÍTICO V2: Usa [extname] que é a forma correta do Rollup
         assetFileNames: "assets/[hash][extname]",
         
         // ☢️ FORÇA NOMES HASH-ONLY PARA DYNAMIC IMPORTS
         manualChunks: undefined,
+        
+        // ☢️ SANITIZA NOMES PARA REMOVER QUALQUER PADRÃO LEGÍVEL
+        sanitizeFileName: (name: string) => {
+          // Remove qualquer caractere que não seja alfanumérico
+          // Isso força o Rollup a usar apenas o hash
+          return name.replace(/[^a-zA-Z0-9]/g, '');
+        },
       },
     },
     
+    // ☢️ EXPERIMENTAL: Anonimiza completamente URLs de chunks
+    experimental: {
+      renderBuiltUrl(filename: string) {
+        return { relative: true };
+      },
+    },
   },
   
   // ⚡ DOGMA IX: Definições para otimização
+  // ☢️ P0 FIX: Build ID automático para invalidação de cache
   define: {
     __DEV__: mode === "development",
     "process.env.NODE_ENV": JSON.stringify(mode),

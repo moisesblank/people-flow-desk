@@ -799,9 +799,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // 🎯 P0 FIX v3.1: Limpar flag de password change pendente no logout
       sessionStorage.removeItem("matriz_password_change_pending");
-      
-      // 🔑 P0 FIX v3.2: Limpar cache de owner do Nuclear Shield no logout
-      localStorage.removeItem("matriz_is_owner_cache");
 
       if (sessionToken) {
         await supabase.rpc("invalidate_session", {

@@ -462,7 +462,7 @@ export default function GestaoLogs() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-destructive">
               <AlertCircle className="h-5 w-5" />
-              <span>Erro ao carregar logs: {error || 'Erro desconhecido'}</span>
+              <span>Erro ao carregar logs: {error}</span>
             </div>
           </CardContent>
         </Card>

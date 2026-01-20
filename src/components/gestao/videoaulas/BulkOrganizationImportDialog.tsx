@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatError } from "@/lib/utils/formatError";
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -278,8 +277,8 @@ export const BulkOrganizationImportDialog = forwardRef<HTMLDivElement, BulkOrgan
         setHierarchyStats(analyzeHierarchy(records));
         setStep('preview');
       } catch (error: any) {
-        toast.error(`Erro ao processar arquivo: ${formatError(error)}`);
-        setParseErrors([formatError(error)]);
+        toast.error(`Erro ao processar arquivo: ${error.message}`);
+        setParseErrors([error.message]);
       }
     };
     reader.readAsText(uploadedFile);
@@ -703,7 +702,7 @@ export const BulkOrganizationImportDialog = forwardRef<HTMLDivElement, BulkOrgan
                   <AlertDescription>
                     <ScrollArea className="h-[100px] mt-2">
                       {parseErrors.map((err, i) => (
-                        <div key={i} className="text-xs">{formatError(err)}</div>
+                        <div key={i} className="text-xs">{err}</div>
                       ))}
                     </ScrollArea>
                   </AlertDescription>

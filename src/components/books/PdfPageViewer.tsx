@@ -9,7 +9,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, BookOpen, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { formatError } from '@/lib/utils/formatError';
 
 interface PdfPageViewerProps {
   pageNumber: number;
@@ -118,7 +117,7 @@ export const PdfPageViewer = memo(function PdfPageViewer({
         className
       )}>
         <AlertTriangle className="w-12 h-12 text-destructive" />
-        <p className="text-sm text-muted-foreground text-center max-w-xs">{formatError(error)}</p>
+        <p className="text-sm text-muted-foreground text-center max-w-xs">{error}</p>
         {onRetry && (
           <Button variant="outline" size="sm" onClick={onRetry}>
             <RefreshCw className="w-4 h-4 mr-2" />

@@ -11,17 +11,6 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSecurityDashboard } from '@/hooks/useFortalezaSupreme';
 
-function formatError(err: unknown): string {
-  if (!err) return 'Erro desconhecido';
-  if (typeof err === 'string') return err;
-  if (err instanceof Error) return err.message || 'Erro desconhecido';
-  try {
-    return JSON.stringify(err);
-  } catch {
-    return String(err);
-  }
-}
-
 interface MetricCardProps {
   title: string;
   value: number;
@@ -101,7 +90,7 @@ export const SecurityDashboard = memo(function SecurityDashboard({
       <Card className="bg-red-500/10 border-red-500/30">
         <CardContent className="p-4 text-center">
           <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-          <p className="text-red-500">{formatError(error)}</p>
+          <p className="text-red-500">{error}</p>
           <Button variant="outline" size="sm" onClick={refresh} className="mt-2">
             <RefreshCw className="h-4 w-4 mr-2" />
             Tentar novamente

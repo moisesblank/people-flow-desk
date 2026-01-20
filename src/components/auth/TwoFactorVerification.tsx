@@ -24,7 +24,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { formatError } from "@/lib/utils/formatError";
 
 interface TwoFactorVerificationProps {
   email: string;
@@ -672,7 +671,7 @@ export function TwoFactorVerification({
             >
               <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>{formatError(error)}</span>
+                <span>{error}</span>
               </div>
             </motion.div>
           )}

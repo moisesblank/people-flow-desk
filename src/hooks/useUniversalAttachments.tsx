@@ -7,7 +7,6 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAuth } from './useAuth';
-import { formatError } from '@/lib/utils/formatError';
 
 // Tipos de entidades suportadas
 export type EntityType = 
@@ -190,7 +189,7 @@ export function useUniversalAttachments(entityType: EntityType, entityId: string
       return typedAttachment;
     } catch (error: any) {
       console.error('Upload error:', error);
-      toast.error('Erro ao fazer upload: ' + formatError(error));
+      toast.error('Erro ao fazer upload: ' + error.message);
       return null;
     } finally {
       setIsUploading(false);

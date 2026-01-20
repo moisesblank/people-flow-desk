@@ -1,8 +1,7 @@
 // ============================================
-// HOOK: INICIALIZADOR DE TEMA v2.2
+// HOOK: INICIALIZADOR DE TEMA v2.1
 // Carrega tema salvo do usuário APENAS em áreas protegidas
-// Fora de /alunos ou /gestaofc → SEMPRE "dark"
-// P0 FIX: Simplificado para evitar conflitos com next-themes
+// Fora de /alunos ou /gestaofc → SEMPRE "default" (system)
 // ============================================
 
 import { useEffect, useRef } from "react";
@@ -25,7 +24,7 @@ function isProtectedThemeArea(pathname: string): boolean {
 /**
  * Hook que gerencia o tema:
  * - Áreas protegidas (/alunos, /gestaofc) + usuário logado → carrega preferência
- * - Qualquer outra rota → força tema "dark"
+ * - Qualquer outra rota → força tema "default" (system)
  * 
  * NOTA: Usa window.location.pathname pois é chamado fora do Router
  */
@@ -43,20 +42,20 @@ export function useThemeInitializer() {
     lastPath.current = currentPath;
 
     // 🎯 REGRA PRINCIPAL:
-    // Fora de área protegida → SEMPRE tema "dark"
+    // Fora de área protegida → SEMPRE tema "default" (system)
     if (!isProtected) {
-      if (theme !== 'dark') {
-        console.log('[ThemeInitializer] 🌐 Rota pública - forçando tema dark');
-        setTheme('dark');
+      if (theme !== 'default') {
+        console.log('[ThemeInitializer] 🌐 Rota pública - forçando tema system');
+        setTheme('default');
       }
       hasInitialized.current = false; // Reset para quando voltar
       return;
     }
 
-    // 🔐 Área protegida - mas sem usuário → manter dark
+    // 🔐 Área protegida - mas sem usuário → manter system
     if (!user?.id) {
-      if (theme !== 'dark') {
-        setTheme('dark');
+      if (theme !== 'default') {
+        setTheme('default');
       }
       return;
     }
@@ -80,11 +79,13 @@ export function useThemeInitializer() {
 
         if (data?.preferences && typeof data.preferences === 'object') {
           const prefs = data.preferences as { theme?: string };
-          if (prefs.theme && ['light', 'dark'].includes(prefs.theme)) {
+          if (prefs.theme && ['light', 'dark', 'system', 'default'].includes(prefs.theme)) {
+            // Mapear "system" legado para "default"
+            const mappedTheme = prefs.theme === 'system' ? 'default' : prefs.theme;
             // Só aplica se diferente do atual
-            if (prefs.theme !== theme) {
-              console.log('[ThemeInitializer] 🎨 Área protegida - aplicando tema do usuário:', prefs.theme);
-              setTheme(prefs.theme);
+            if (mappedTheme !== theme) {
+              console.log('[ThemeInitializer] 🎨 Área protegida - aplicando tema do usuário:', mappedTheme);
+              setTheme(mappedTheme);
             }
             hasInitialized.current = true;
           }

@@ -18,7 +18,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { formatError } from '@/lib/utils/formatError';
 import { cn } from '@/lib/utils';
 import {
   ChevronUp,
@@ -199,7 +198,7 @@ export function SubcategoryReorderModal({ open, onOpenChange, courses, allModule
       onOpenChange(false);
     },
     onError: (err: any) => {
-      toast({ title: '❌ Erro ao salvar', description: formatError(err), variant: 'destructive' });
+      toast({ title: '❌ Erro ao salvar', description: err.message, variant: 'destructive' });
     }
   });
 

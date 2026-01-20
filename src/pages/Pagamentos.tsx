@@ -46,7 +46,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { format, isPast, isToday, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { formatError } from "@/lib/utils/formatError";
 import { UniversalAttachments } from "@/components/attachments/UniversalAttachments";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -287,7 +286,7 @@ export default function Pagamentos() {
       await refresh();
       setIsModalOpen(false);
     } catch (error: any) {
-      toast({ title: "Erro", description: formatError(error), variant: "destructive" });
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
     }
   };
 

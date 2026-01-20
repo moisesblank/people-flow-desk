@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { formatError } from '@/lib/utils/formatError';
 import { cn } from '@/lib/utils';
 
 interface ModuleImageUploaderProps {
@@ -94,7 +93,7 @@ export function ModuleImageUploader({
       console.error('Erro no upload:', error);
       toast({
         title: 'Erro no upload',
-        description: formatError(error) || 'Não foi possível enviar a imagem.',
+        description: error.message || 'Não foi possível enviar a imagem.',
         variant: 'destructive'
       });
     } finally {

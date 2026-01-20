@@ -33,7 +33,6 @@ import {
   getTituloNivel,
   useStudentDashboardData,
 } from "@/hooks/student/useStudentDashboardData";
-import { formatError } from "@/lib/utils/formatError";
 
 type MirrorStudent = {
   userId: string;
@@ -419,7 +418,7 @@ export default function AlunoDashboardOwner() {
                         <div className="text-muted-foreground">Carregando dados do aluno...</div>
                       ) : (
                         <div className="text-destructive">
-                          Falha ao carregar dados do aluno: {formatError(dashError)}
+                          Falha ao carregar dados do aluno: {dashError instanceof Error ? dashError.message : "erro"}
                         </div>
                       )}
                     </CardContent>
