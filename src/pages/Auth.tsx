@@ -1374,13 +1374,11 @@ export default function Auth() {
         console.log("[AUTH] 6.2. Usuário não está banido, prosseguindo...");
 
         // ====================================================================
-        // 🔓 BYPASS C: TODAS AS CAMADAS DE PROTEÇÃO DESATIVADAS
-        // - 2FA: DESATIVADO
-        // - Device Registration: DESATIVADO
-        // - Session Creation RPC: DESATIVADO (session já existe via Supabase)
-        // Login vai direto para redirect
+        // 🛡️ RESTAURAÇÃO: Fluxo soberano pós-login (SEM BYPASS)
+        // - Registrar dispositivo (server hash) ANTES de entrar em rotas protegidas
+        // - Criar sessão única via RPC (matriz_session_token)
         // ====================================================================
-        console.log("[AUTH] 🔓 BYPASS C: Todas as camadas DESATIVADAS");
+        console.log("[AUTH] 🔐 Fluxo soberano: registrando dispositivo + criando sessão única...");
 
         // 🎯 P0 FIX v3.2: VERIFICAR password_change_required ANTES de redirecionar
         const { data: profileCheck } = await supabase
@@ -1390,7 +1388,7 @@ export default function Auth() {
           .maybeSingle();
 
         if (profileCheck?.password_change_required === true) {
-          console.log("[AUTH] 🔐 BYPASS C: Usuário precisa trocar senha - mostrando formulário");
+          console.log("[AUTH] 🔐 Usuário precisa trocar senha - mostrando formulário");
           sessionStorage.setItem("matriz_password_change_pending", "1");
           setPendingPasswordChangeUser({
             email: userFor2FA.email || "",
@@ -1403,7 +1401,126 @@ export default function Auth() {
 
         toast.success("Login realizado com sucesso!");
 
-        // Buscar role e redirecionar diretamente
+        // ============================================
+        // 🛡️ BLOCO 3: REGISTRAR DISPOSITIVO ANTES DA SESSÃO (pós-login)
+        // ============================================
+        console.log("[AUTH][BLOCO3] 🔐 Registrando dispositivo ANTES da sessão (pós-login)...");
+        const deviceResult = await registerDeviceBeforeSession();
+
+        if (!deviceResult.success) {
+          console.error("[AUTH][BLOCO3] ❌ Falha no registro de dispositivo pós-login:", deviceResult.error);
+
+          // Gate: limite de dispositivos
+          if (deviceResult.error === "DEVICE_LIMIT_EXCEEDED") {
+            if (deviceResult.gatePayload) {
+              useDeviceGateStore.getState().setPayload(deviceResult.gatePayload);
+            }
+
+            // NÃO fazer logout - manter sessão para que o Gate possa revogar dispositivos
+            setIsLoading(false);
+            navigate("/security/device-limit", { replace: true });
+            return;
+          }
+
+          // Gate: substituição do mesmo tipo
+          if (deviceResult.error === "SAME_TYPE_REPLACEMENT_REQUIRED") {
+            if (deviceResult.sameTypePayload) {
+              getSameTypeReplacementActions().setPayload(deviceResult.sameTypePayload);
+            }
+
+            // NÃO fazer logout - manter sessão para que o Gate possa concluir substituição
+            setIsLoading(false);
+            navigate("/security/same-type-replacement", { replace: true });
+            return;
+          }
+
+          // Outros erros de dispositivo
+          const errorMsg = getDeviceErrorMessage(deviceResult.error || "UNEXPECTED_ERROR");
+          toast.error(errorMsg.title, { description: errorMsg.description });
+          await supabase.auth.signOut();
+          resetTurnstile();
+          setIsLoading(false);
+          getDeviceGateActions().setLoginIntent(false);
+          return;
+        }
+
+        console.log("[AUTH][BLOCO3] ✅ Dispositivo vinculado pós-login:", deviceResult.deviceId);
+
+        // ============================================
+        // 🔐 BLOCO 4: CRIAR SESSÃO ÚNICA (RPC)
+        // ============================================
+        try {
+          const SESSION_TOKEN_KEY = "matriz_session_token";
+          const ua = navigator.userAgent;
+
+          let device_type = "desktop";
+          if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
+            device_type = /iPad|Tablet/i.test(ua) ? "tablet" : "mobile";
+          }
+
+          let browser = "unknown";
+          if (ua.includes("Firefox")) browser = "Firefox";
+          else if (ua.includes("Edg")) browser = "Edge";
+          else if (ua.includes("Chrome")) browser = "Chrome";
+          else if (ua.includes("Safari")) browser = "Safari";
+
+          let os = "unknown";
+          if (ua.includes("Windows")) os = "Windows";
+          else if (ua.includes("Mac")) os = "macOS";
+          else if (ua.includes("Linux")) os = "Linux";
+          else if (ua.includes("Android")) os = "Android";
+          else if (ua.includes("iPhone")) os = "iOS";
+
+          // 🔐 P0 FIX: Garantir hash do servidor com fallback seguro
+          const serverDeviceHash = deviceResult.deviceHash || localStorage.getItem("matriz_device_server_hash");
+          if (!serverDeviceHash) {
+            console.error("[AUTH][SESSAO] ❌ P0 VIOLATION: Sem hash do servidor!");
+            toast.error("Falha de segurança", { description: "Dispositivo não registrado corretamente." });
+            await supabase.auth.signOut();
+            resetTurnstile();
+            setIsLoading(false);
+            getDeviceGateActions().setLoginIntent(false);
+            return;
+          }
+
+          const { data, error } = await supabase.rpc("create_single_session", {
+            _ip_address: null,
+            _user_agent: navigator.userAgent.slice(0, 255),
+            _device_type: device_type,
+            _browser: browser,
+            _os: os,
+            _device_hash_from_server: serverDeviceHash,
+          });
+
+          if (error || !data?.[0]?.session_token) {
+            console.error("[AUTH][SESSAO] ❌ Falha ao criar sessão única (RPC):", error);
+            toast.error("Falha crítica de segurança", {
+              description: "Não foi possível iniciar a sessão única. Faça login novamente.",
+              duration: 9000,
+            });
+            await supabase.auth.signOut();
+            resetTurnstile();
+            setIsLoading(false);
+            getDeviceGateActions().setLoginIntent(false);
+            return;
+          }
+
+          localStorage.setItem(SESSION_TOKEN_KEY, data[0].session_token);
+          console.log("[AUTH][SESSAO] ✅ Sessão única criada (RPC) e token armazenado");
+        } catch (err) {
+          console.warn("[AUTH][SESSAO] Erro crítico ao criar sessão (RPC):", err);
+          toast.error("Falha crítica de segurança", {
+            description: "Não foi possível iniciar a sessão única. Faça login novamente.",
+            duration: 9000,
+          });
+          await supabase.auth.signOut();
+          resetTurnstile();
+          setIsLoading(false);
+          getDeviceGateActions().setLoginIntent(false);
+          return;
+        }
+
+        // Buscar role e redirecionar
         const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
@@ -1415,7 +1532,7 @@ export default function Auth() {
         console.log("[AUTH] ✅ Redirecionando para", target, "(role:", userRole, ")");
         setIsLoading(false);
         navigate(target, { replace: true });
-        return; // 🔓 BYPASS C: Encerra aqui após login bem-sucedido
+        return;
       }
 
       // SIGNUP
