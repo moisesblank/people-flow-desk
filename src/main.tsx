@@ -1,50 +1,19 @@
 // ╔══════════════════════════════════════════════════════════════════════════════╗
 // ║   🏛️ MATRIZ DIGITAL - ENTRADA SAGRADA                                       ║
-// ║   Evangelho da Velocidade v16.0 + Performance Omega                         ║
+// ║   Evangelho da Velocidade v17.0 + Performance Omega                         ║
 // ║   ANO 2300 — DESIGN FUTURISTA COM RENDIMENTO 3500                           ║
 // ║   🚀 TTI OPTIMIZATION: -60% via defer de inicializações                      ║
-// ║   ☢️ NUCLEAR SHIELD: DevTools + React DevTools Blocking                      ║
+// ║   🏛️ PRIME AVANÇADO: Bootstrap estável + Defesa contextual                  ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
 
 // ============================================
-// ☢️ LAYER 3: REACT DEVTOOLS BLOCKING (PRIMEIRO!)
-// Deve executar ANTES de qualquer import React
+// 🏛️ PRIME AVANÇADO v1.0 — BOOTSTRAP ESTÁVEL
 // ============================================
-if (typeof window !== 'undefined' && import.meta.env.PROD) {
-  // Desabilita React DevTools completamente em produção
-  const disableReactDevTools = () => {
-    const noop = () => undefined;
-    const hook = (window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__;
-    
-    if (hook) {
-      // Sobrescreve todos os métodos do hook
-      Object.keys(hook).forEach((key) => {
-        if (typeof hook[key] === 'function') {
-          hook[key] = noop;
-        }
-      });
-      hook.inject = noop;
-      hook.onCommitFiberRoot = noop;
-      hook.onCommitFiberUnmount = noop;
-    }
-    
-    // Previne instalação futura
-    Object.defineProperty(window, '__REACT_DEVTOOLS_GLOBAL_HOOK__', {
-      value: {
-        isDisabled: true,
-        supportsFiber: false,
-        inject: noop,
-        onCommitFiberRoot: noop,
-        onCommitFiberUnmount: noop,
-        checkDCE: noop,
-      },
-      writable: false,
-      configurable: false,
-    });
-  };
-  
-  disableReactDevTools();
-}
+// REMOVIDO: React DevTools hook no bootstrap (causa instabilidade)
+// REMOVIDO: DevTools detection no bootstrap (agressivo demais)
+// MANTIDO: Proteção contextual via useContentSecurityGuard
+// MANTIDO: nuclearShield/antiDebugger para páginas de conteúdo
+// ============================================
 
 // ============================================
 // TIPOS PARA WEB VITALS (Performance API)
@@ -67,140 +36,19 @@ import "./index.css";
 import { initGlobalErrorCapture } from "@/hooks/useSystemLogs";
 
 // ============================================
-// ☢️ LAYER 2: DEVTOOLS DETECTION & BLOCKING
-// Detecta abertura do DevTools e bloqueia a página
-// BYPASS: Ambiente Lovable Preview
+// 🏛️ PRIME AVANÇADO: DEFESA CONTEXTUAL
 // ============================================
-const isLovablePreview = () => {
-  const hostname = window.location.hostname.toLowerCase();
-  return hostname.includes('lovableproject.com') || 
-         hostname.includes('lovable.app') || 
-         hostname === 'localhost' ||
-         hostname === '127.0.0.1';
-};
-
-if (typeof window !== 'undefined' && import.meta.env.PROD && !isLovablePreview()) {
-  // Método 1: Timing attack (detecta breakpoints/debugger)
-  const detectDevToolsByTiming = () => {
-    const start = performance.now();
-    // debugger statement causa delay se DevTools está aberto
-    // eslint-disable-next-line no-debugger
-    debugger;
-    const end = performance.now();
-    return (end - start) > 100; // > 100ms indica DevTools aberto
-  };
-  
-  // Método 2: Console timing (console.log é lento com DevTools)
-  const detectDevToolsByConsole = () => {
-    const element = new Image();
-    let isOpen = false;
-    
-    Object.defineProperty(element, 'id', {
-      get: () => {
-        isOpen = true;
-        return '';
-      }
-    });
-    
-    console.log(element);
-    console.clear();
-    return isOpen;
-  };
-  
-  // Método 3: Window size (DevTools reduz viewport)
-  const detectDevToolsBySize = () => {
-    const widthThreshold = window.outerWidth - window.innerWidth > 160;
-    const heightThreshold = window.outerHeight - window.innerHeight > 160;
-    return widthThreshold || heightThreshold;
-  };
-  
-  // Handler quando DevTools é detectado
-  const handleDevToolsDetected = () => {
-    // Redireciona para página de violação de segurança
-    document.body.innerHTML = `
-      <div style="
-        position: fixed;
-        inset: 0;
-        background: #000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 999999;
-      ">
-        <div style="
-          text-align: center;
-          color: #ff0000;
-          font-family: monospace;
-          font-size: 24px;
-          padding: 40px;
-        ">
-          <div style="font-size: 64px; margin-bottom: 20px;">🛡️</div>
-          <div>ACESSO BLOQUEADO</div>
-          <div style="font-size: 14px; margin-top: 10px; color: #666;">
-            Ferramentas de desenvolvedor não são permitidas
-          </div>
-        </div>
-      </div>
-    `;
-    
-    // Para toda execução
-    throw new Error('DevTools detected - execution halted');
-  };
-  
-  // Monitoramento contínuo (a cada 1 segundo)
-  let devToolsCheckCount = 0;
-  const MAX_CHECKS = 3; // Só bloqueia após 3 detecções consecutivas
-  
-  const checkDevTools = () => {
-    try {
-      const isOpen = detectDevToolsBySize() || detectDevToolsByConsole();
-      
-      if (isOpen) {
-        devToolsCheckCount++;
-        if (devToolsCheckCount >= MAX_CHECKS) {
-          handleDevToolsDetected();
-        }
-      } else {
-        devToolsCheckCount = 0; // Reset se fechou
-      }
-    } catch {
-      // Silencioso - não pode quebrar o app
-    }
-  };
-  
-  // Inicia monitoramento após 3 segundos (não bloqueia TTI)
-  setTimeout(() => {
-    setInterval(checkDevTools, 1000);
-  }, 3000);
-  
-  // Bloqueia atalhos de DevTools
-  document.addEventListener('keydown', (e) => {
-    // F12
-    if (e.key === 'F12') {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    }
-    // Ctrl+Shift+I/J/C
-    if (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    }
-    // Ctrl+U (view source)
-    if (e.ctrlKey && e.key.toUpperCase() === 'U') {
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    }
-  }, { capture: true });
-  
-  // Bloqueia menu de contexto (right-click)
-  document.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    return false;
-  }, { capture: true });
-}
+// A proteção contra DevTools agora é CONTEXTUAL:
+// - Ativada APENAS em páginas de conteúdo protegido (PDF, livros, vídeos)
+// - Via useContentSecurityGuard e useBookSecurityGuard
+// - nuclearShield e antiDebugger são inicializados nesses hooks
+// 
+// BENEFÍCIOS:
+// - Bootstrap 100% estável (sem hooks que podem crashar)
+// - Proteção onde realmente importa (conteúdo de valor)
+// - Owner bypass robusto via RPC (não email no bundle)
+// - Zero risco de auto-bloqueio do desenvolvedor
+// ============================================
 
 // 🚨 GLOBAL ERROR CAPTURE - Captura todos os erros do sistema
 // REGRA P0: nunca pode derrubar o bootstrap. Se falhar, segue sem logger.
