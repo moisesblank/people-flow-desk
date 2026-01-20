@@ -12,11 +12,14 @@ const TURNSTILE_SITE_KEY = '0x4AAAAAACIzQHOgrmgkciqj';
 
 // Detectar ambiente de desenvolvimento/preview
 const isDevEnvironment = () => {
-  const hostname = window.location.hostname;
+  const hostname = window.location.hostname.toLowerCase();
   return (
     hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
     hostname.includes('lovableproject.com') ||
-    hostname.includes('127.0.0.1')
+    hostname.includes('.lovable.app') ||
+    hostname.includes('id-preview--') ||
+    hostname.includes('.vercel.app')
   );
 };
 
