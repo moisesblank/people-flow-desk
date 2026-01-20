@@ -71,7 +71,8 @@ export function CloudflareTurnstile({
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [domainError, setDomainError] = useState(false);
   const [errorCount, setErrorCount] = useState(0);
-  const MAX_ERRORS_BEFORE_FALLBACK = 3;
+  // 🚀 OTIMIZAÇÃO: Reduzido de 3 para 2 tentativas (fallback mais rápido)
+  const MAX_ERRORS_BEFORE_FALLBACK = 2;
 
   // Carregar script do Turnstile
   useEffect(() => {
@@ -138,7 +139,8 @@ export function CloudflareTurnstile({
         language: 'pt-br',
         appearance: 'always',
         retry: 'auto',
-        'retry-interval': 5000,
+        // 🚀 OTIMIZAÇÃO: Reduzido de 5000ms para 2000ms (resposta mais rápida)
+        'retry-interval': 2000,
         'refresh-expired': 'auto',
         callback: (token: string) => {
           setStatus('verified');
