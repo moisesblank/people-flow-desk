@@ -73,12 +73,12 @@ const MobileMenu = memo(({
                   Área Gratuita
                 </Button>
               </Link>
-              <Link to="/auth" onClick={onClose}>
+              <a href="http://pro.moisesmedeiros.com.br/auth" onClick={onClose}>
                 <Button className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white font-bold">
                   <Rocket className="w-4 h-4 mr-2" />
                   Área do Aluno
                 </Button>
-              </Link>
+              </a>
             </div>
           </div>
         </motion.div>
@@ -143,12 +143,12 @@ export const Navbar = memo(() => {
                   Área Gratuita
                 </Button>
               </Link>
-              <Link to="/auth">
+              <a href="http://pro.moisesmedeiros.com.br/auth">
                 <Button className="btn-cta-2300 text-white font-bold rounded-lg">
                   <Rocket className="w-4 h-4 mr-2" />
                   Área do Aluno
                 </Button>
-              </Link>
+              </a>
             </div>
             
             {/* Mobile button */}
@@ -228,12 +228,12 @@ export const Navbar = memo(() => {
                 Área Gratuita
               </Button>
             </Link>
-            <Link to="/auth">
+            <a href="http://pro.moisesmedeiros.com.br/auth">
               <Button className="btn-cta-2300 text-white font-bold rounded-lg">
                 <Rocket className="w-4 h-4 mr-2" />
                 Área do Aluno
               </Button>
-            </Link>
+            </a>
           </motion.div>
           
           {/* Mobile menu button */}
