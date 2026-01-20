@@ -790,12 +790,11 @@ export default function Auth() {
 
       if ((event !== "SIGNED_IN" && event !== "INITIAL_SESSION") || !session?.user) return;
 
-      // 🛡️ P0 FIX v11.3: BLOQUEAR auto-redirect para TODOS os eventos
-      // Tanto SIGNED_IN quanto INITIAL_SESSION só redirecionam com loginAttempted=true
-      // Isso elimina loops infinitos causados por sessões "meia quebradas"
-      if (!loginAttempted) {
-        console.log("[AUTH] 🛡️ Evento", event, "detectado mas loginAttempted=false - BLOQUEANDO auto-redirect");
-        setIsCheckingSession(false); // Liberar UI para mostrar formulário de login
+      // 🛡️ PLANO B (UX):
+      // - SIGNED_IN: só redireciona quando usuário clicou em "Entrar" (evita saltos em novas abas)
+      // - INITIAL_SESSION: sessão restaurada pode redirecionar automaticamente
+      if (event === "SIGNED_IN" && !loginAttempted) {
+        console.log("[AUTH] 🛡️ SIGNED_IN detectado mas loginAttempted=false - BLOQUEANDO auto-redirect");
         return;
       }
 
@@ -851,17 +850,6 @@ export default function Auth() {
       }
 
       // ✅ REGRA DEFINITIVA: Usa função centralizada COM role
-      // 👑 P0 FIX OWNER: bypass por email ANTES de tudo
-      const ownerEmail = "moisesblank@gmail.com";
-      const isOwnerByEmail = session.user.email?.toLowerCase() === ownerEmail;
-      
-      // 👑 OWNER sempre vai para /gestaofc (bypass absoluto)
-      if (isOwnerByEmail || userRole === "owner") {
-        console.log("[AUTH] 👑 OWNER detectado - forçando /gestaofc (email:", session.user.email, ", role:", userRole, ")");
-        navigate("/gestaofc", { replace: true });
-        return;
-      }
-      
       const target = getPostLoginRedirect(userRole, session.user.email);
       console.log("[AUTH] ✅ SIGNED_IN + loginAttempted - redirecionando para", target, "(role:", userRole, ")");
       navigate(target, { replace: true });
@@ -921,9 +909,8 @@ export default function Auth() {
         return;
       }
 
-      // 🛡️ RESET DE SENHA: Turnstile obrigatório (com bypass Owner)
-      const isOwnerEmail = email.toLowerCase() === "moisesblank@gmail.com";
-      if (!isOwnerEmail && (!isTurnstileVerified || !turnstileToken)) {
+      // 🛡️ RESET DE SENHA: Turnstile obrigatório para TODOS (P1-2 FIX)
+      if (!isTurnstileVerified || !turnstileToken) {
         toast.error("Verificação de segurança necessária", {
           description: "Para recuperar a senha, complete a verificação anti-bot.",
         });
@@ -1213,22 +1200,16 @@ export default function Auth() {
       return;
     }
 
-    // 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO (com bypass Owner)
+    // 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO para TODOS (P1-2 FIX)
     // Após incidente MANUS - bots conseguiam entrar sem CAPTCHA visual
-    // P0 FIX: Owner (moisesblank@gmail.com) tem bypass para evitar bloqueio
-    const isOwnerEmail = formData.email.trim().toLowerCase() === "moisesblank@gmail.com";
-    
-    if (!isOwnerEmail && (!isTurnstileVerified || !turnstileToken)) {
+    // P1-2: Owner bypass REMOVIDO - turnstile é obrigatório para segurança
+    if (!isTurnstileVerified || !turnstileToken) {
       console.error("[AUTH] ERROR: Turnstile não verificado no login");
       toast.error("Verificação de segurança necessária", {
         description: "Complete a verificação anti-bot para fazer login.",
       });
       getDeviceGateActions().setLoginIntent(false);
       return;
-    }
-    
-    if (isOwnerEmail) {
-      console.log("[AUTH] 👑 Owner bypass - Turnstile não obrigatório");
     }
 
     console.log("[AUTH] 3. Estado Turnstile verificado:", {
