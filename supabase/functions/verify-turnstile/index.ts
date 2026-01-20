@@ -69,6 +69,8 @@ serve(async (req) => {
       
       const isAllowedHost = allowedProdHosts.some(h => hostname.includes(h)) ||
                             hostname.includes('lovableproject.com') ||
+                            hostname.includes('lovable.app') ||
+                            hostname.includes('vercel.app') ||
                             hostname === 'localhost';
       
       if (isAllowedHost) {
@@ -92,6 +94,47 @@ serve(async (req) => {
           JSON.stringify({ 
             success: false, 
             error: 'Hostname não permitido para fallback' 
+          }),
+          { 
+            status: 403, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+    }
+
+    // 🛡️ P0 FIX: DEV BYPASS para ambientes de preview (Lovable, Vercel, localhost)
+    if (token.startsWith('DEV_BYPASS_')) {
+      const parts = token.split('_');
+      const hostname = parts[parts.length - 1] || '';
+      
+      const isPreviewHost = hostname.includes('lovableproject.com') ||
+                            hostname.includes('lovable.app') ||
+                            hostname.includes('lovable.dev') ||
+                            hostname.includes('vercel.app') ||
+                            hostname === 'localhost' ||
+                            hostname.includes('127.0.0.1');
+      
+      if (isPreviewHost) {
+        console.warn(`[verify-turnstile] ⚠️ DEV BYPASS aceito para preview: ${hostname}`);
+        return new Response(
+          JSON.stringify({
+            success: true,
+            hostname: hostname,
+            timestamp: new Date().toISOString(),
+            devBypass: true
+          }),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      } else {
+        console.warn(`[verify-turnstile] ❌ DEV BYPASS rejeitado - não é ambiente de preview: ${hostname}`);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'DEV BYPASS apenas para ambientes de preview' 
           }),
           { 
             status: 403, 

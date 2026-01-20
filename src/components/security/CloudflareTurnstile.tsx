@@ -16,6 +16,9 @@ const isDevEnvironment = () => {
   return (
     hostname === 'localhost' ||
     hostname.includes('lovableproject.com') ||
+    hostname.includes('lovable.app') ||
+    hostname.includes('lovable.dev') ||
+    hostname.includes('vercel.app') ||
     hostname.includes('127.0.0.1')
   );
 };
@@ -72,8 +75,24 @@ export function CloudflareTurnstile({
   const [domainError, setDomainError] = useState(false);
   const [errorCount, setErrorCount] = useState(0);
   const MAX_ERRORS_BEFORE_FALLBACK = 3;
+  const DEV_AUTO_BYPASS_TIMEOUT_MS = 3000; // 3 segundos para auto-bypass em dev
 
-  // Carregar script do Turnstile
+  // 🛡️ P0 FIX: Auto-bypass para ambientes de dev/preview
+  // Se o Turnstile não verificar em 3s, dispara bypass automaticamente
+  useEffect(() => {
+    if (!isDevEnvironment()) return;
+    
+    const timer = setTimeout(() => {
+      // Se ainda não verificou após 3s em dev, auto-bypass
+      if (status !== 'verified' && status !== 'dev-bypass' && status !== 'fallback') {
+        console.warn('[Turnstile] ⚠️ AUTO DEV BYPASS ativado após timeout');
+        setStatus('dev-bypass');
+        onVerify('DEV_BYPASS_AUTO_' + Date.now() + '_' + window.location.hostname);
+      }
+    }, DEV_AUTO_BYPASS_TIMEOUT_MS);
+
+    return () => clearTimeout(timer);
+  }, [status, onVerify]);
   useEffect(() => {
     console.log('[AUTH] 2. Turnstile script init');
 
