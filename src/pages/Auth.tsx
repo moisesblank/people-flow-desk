@@ -32,7 +32,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { formatError } from "@/lib/utils/formatError";
 import { useAuth } from "@/hooks/useAuth";
 // 2FA Decision Engine (SYNAPSE Ω v10.x) com cache de confiança
 import { useDeviceFingerprint, decide2FA, setTrustCache } from "@/hooks/auth";
@@ -921,7 +920,7 @@ export default function Auth() {
 
       const { error } = await resetPassword(email);
       if (error) {
-        toast.error(formatError(error));
+        toast.error(error.message);
         resetTurnstile();
         setIsLoading(false);
         return;
@@ -1266,8 +1265,9 @@ export default function Auth() {
         setLoginAttempted(true);
         console.log("[AUTH] 4. Verificando sessão ativa existente...");
 
-        // ✅ Sessões anteriores serão revogadas automaticamente pelo create_single_session RPC
-        console.log("[AUTH] ✅ Novo login irá sobrescrever sessões anteriores (Single Session Policy)");
+        // 🔓 BYPASS C: VERIFICAÇÃO DE SESSÃO ATIVA DESATIVADA
+        // Login sempre prossegue sem verificar sessões existentes
+        console.log("[AUTH] 🔓 BYPASS C: verificação de sessão ativa DESATIVADA - prosseguindo diretamente");
 
         console.log("[AUTH] ✅ Verificação de sessão concluída. Iniciando signInWithPassword...");
 
@@ -1373,10 +1373,16 @@ export default function Auth() {
 
         console.log("[AUTH] 6.2. Usuário não está banido, prosseguindo...");
 
-        // ============================================
-        // 🛡️ BLOCO 1: VERIFICAR password_change_required PRIMEIRO
-        // ============================================
-        console.log("[AUTH][BLOCO1] 🔐 Verificando password_change_required...");
+        // ====================================================================
+        // 🔓 BYPASS C: TODAS AS CAMADAS DE PROTEÇÃO DESATIVADAS
+        // - 2FA: DESATIVADO
+        // - Device Registration: DESATIVADO
+        // - Session Creation RPC: DESATIVADO (session já existe via Supabase)
+        // Login vai direto para redirect
+        // ====================================================================
+        console.log("[AUTH] 🔓 BYPASS C: Todas as camadas DESATIVADAS");
+
+        // 🎯 P0 FIX v3.2: VERIFICAR password_change_required ANTES de redirecionar
         const { data: profileCheck } = await supabase
           .from("profiles")
           .select("password_change_required")
@@ -1384,7 +1390,7 @@ export default function Auth() {
           .maybeSingle();
 
         if (profileCheck?.password_change_required === true) {
-          console.log("[AUTH][BLOCO1] 🔐 Usuário precisa trocar senha - mostrando formulário");
+          console.log("[AUTH] 🔐 BYPASS C: Usuário precisa trocar senha - mostrando formulário");
           sessionStorage.setItem("matriz_password_change_pending", "1");
           setPendingPasswordChangeUser({
             email: userFor2FA.email || "",
@@ -1392,62 +1398,12 @@ export default function Auth() {
           });
           setShowForcePasswordChange(true);
           setIsLoading(false);
-          return; // NÃO prosseguir - mostrar formulário de troca de senha
+          return; // NÃO redirecionar - mostrar formulário de troca de senha
         }
 
-        // ============================================
-        // 🛡️ BLOCO 2: REGISTRAR DISPOSITIVO ANTES DA SESSÃO
-        // ============================================
-        console.log("[AUTH][BLOCO2] 🔐 Registrando dispositivo ANTES da sessão...");
-        const deviceResult = await registerDeviceBeforeSession();
+        toast.success("Login realizado com sucesso!");
 
-        if (!deviceResult.success) {
-          console.error("[AUTH][BLOCO2] ❌ Falha no registro de dispositivo:", deviceResult.error);
-
-          // 🛡️ BEYOND_THE_3_DEVICES: Substituição do mesmo tipo
-          if (deviceResult.error === "SAME_TYPE_REPLACEMENT_REQUIRED") {
-            console.log("[AUTH][BEYOND_3] 🔄 Same-type replacement oferecida - redirecionando");
-
-            if (deviceResult.sameTypePayload) {
-              getSameTypeReplacementActions().setPayload(deviceResult.sameTypePayload);
-            }
-
-            setIsLoading(false);
-            navigate("/security/same-type-replacement", { replace: true });
-            return;
-          }
-
-          // FAIL-CLOSED: Bloquear login se limite excedido
-          if (deviceResult.error === "DEVICE_LIMIT_EXCEEDED") {
-            console.log("[AUTH][BLOCO2] 🛡️ Limite excedido - redirecionando para DeviceLimitGate");
-
-            if (deviceResult.gatePayload) {
-              useDeviceGateStore.getState().setPayload(deviceResult.gatePayload);
-            }
-
-            setIsLoading(false);
-            navigate("/security/device-limit", { replace: true });
-            return;
-          }
-
-          // Outros erros de dispositivo
-          const errorMsg = getDeviceErrorMessage(deviceResult.error || "UNEXPECTED_ERROR");
-          toast.error(errorMsg.title, { description: errorMsg.description });
-          await supabase.auth.signOut();
-          resetTurnstile();
-          setIsLoading(false);
-          getDeviceGateActions().setLoginIntent(false);
-          return;
-        }
-
-        console.log("[AUTH][BLOCO2] ✅ Dispositivo vinculado:", deviceResult.deviceId);
-
-        // ============================================
-        // 🛡️ BLOCO 3: DECISÃO DE 2FA (decide2FA Engine)
-        // ============================================
-        console.log("[AUTH][BLOCO3] 🔐 Iniciando decisão de 2FA...");
-
-        // 🔐 Owner bypass por role (verificar role primeiro)
+        // Buscar role e redirecionar diretamente
         const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
@@ -1455,197 +1411,11 @@ export default function Auth() {
           .maybeSingle();
 
         const userRole = roleData?.role || null;
-        const isOwnerRole = userRole === "owner";
-
-        // 🔐 Owner tem bypass de 2FA
-        if (isOwnerRole) {
-          console.log("[AUTH][BLOCO3] 👑 Owner detectado - bypass de 2FA ativado");
-
-          // Owner não precisa de 2FA, vai direto para sessão RPC
-          const SESSION_TOKEN_KEY = "matriz_session_token";
-          const ua = navigator.userAgent;
-          let device_type = "desktop";
-          if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
-            device_type = /iPad|Tablet/i.test(ua) ? "tablet" : "mobile";
-          }
-
-          let browser = "unknown";
-          if (ua.includes("Firefox")) browser = "Firefox";
-          else if (ua.includes("Edg")) browser = "Edge";
-          else if (ua.includes("Chrome")) browser = "Chrome";
-          else if (ua.includes("Safari")) browser = "Safari";
-
-          let os = "unknown";
-          if (ua.includes("Windows")) os = "Windows";
-          else if (ua.includes("Mac")) os = "macOS";
-          else if (ua.includes("Linux")) os = "Linux";
-          else if (ua.includes("Android")) os = "Android";
-          else if (ua.includes("iPhone")) os = "iOS";
-
-          const serverDeviceHash = deviceResult.deviceHash || localStorage.getItem('matriz_device_server_hash');
-          if (!serverDeviceHash) {
-            console.error("[AUTH][SESSAO] ❌ P0 VIOLATION: Sem hash do servidor!");
-            toast.error("Falha de segurança", { description: "Dispositivo não registrado corretamente." });
-            await supabase.auth.signOut();
-            resetTurnstile();
-            setIsLoading(false);
-            return;
-          }
-
-          const { data, error } = await supabase.rpc("create_single_session", {
-            _ip_address: null,
-            _user_agent: navigator.userAgent.slice(0, 255),
-            _device_type: device_type,
-            _browser: browser,
-            _os: os,
-            _device_hash_from_server: serverDeviceHash,
-          });
-
-          if (error || !data?.[0]?.session_token) {
-            console.error("[AUTH][SESSAO] ❌ Falha ao criar sessão única (RPC):", error);
-            toast.error("Falha crítica de segurança", {
-              description: "Não foi possível iniciar a sessão única. Faça login novamente.",
-              duration: 9000,
-            });
-            await supabase.auth.signOut();
-            setIsLoading(false);
-            return;
-          }
-
-          localStorage.setItem(SESSION_TOKEN_KEY, data[0].session_token);
-          console.log("[AUTH][SESSAO] ✅ Sessão única criada (Owner bypass) e token armazenado");
-
-          // Marcar mfa_verified = true para owner (bypass)
-          await supabase
-            .from("active_sessions")
-            .update({ mfa_verified: true })
-            .eq("session_token", data[0].session_token);
-
-          toast.success("Login realizado com sucesso!");
-          const target = getPostLoginRedirect(userRole, userFor2FA.email);
-          console.log("[AUTH] ✅ Owner redirecionando para", target);
-          setIsLoading(false);
-          navigate(target, { replace: true });
-          return;
-        }
-
-        // Coletar fingerprint para decisão de 2FA
-        const fingerprintResult = await collectFingerprint();
-
-        // Decidir se precisa de 2FA
-        const twoFADecision = await decide2FA({
-          userId: userFor2FA.id,
-          email: userFor2FA.email || "",
-          deviceHash: deviceResult.deviceHash || fingerprintResult.hash,
-          deviceSignals: {
-            isNewDevice: deviceResult.isNewDevice || false,
-            countryChanged: false,
-            rapidChange: false,
-            riskScore: 0,
-            deviceHash: deviceResult.deviceHash || fingerprintResult.hash,
-          },
-          isPasswordReset: false,
-        });
-
-        console.log("[AUTH][BLOCO3] Decisão de 2FA:", twoFADecision);
-
-        if (twoFADecision.requires2FA) {
-          console.log("[AUTH][BLOCO3] ⚠️ 2FA necessário:", twoFADecision.reason);
-
-          // Mostrar tela de 2FA
-          setPending2FAUser({
-            email: userFor2FA.email || "",
-            userId: userFor2FA.id,
-            nome: userFor2FA.user_metadata?.nome || userFor2FA.user_metadata?.name || "",
-            phone: userFor2FA.phone || "",
-            deviceHash: deviceResult.deviceHash || fingerprintResult.hash,
-          });
-          setShow2FA(true);
-          sessionStorage.setItem("matriz_2fa_pending", "1");
-          sessionStorage.setItem("matriz_2fa_user", JSON.stringify({
-            email: userFor2FA.email,
-            userId: userFor2FA.id,
-          }));
-          setIsLoading(false);
-          return; // Aguardar 2FA antes de continuar
-        }
-
-        // ============================================
-        // 🛡️ BLOCO 4: 2FA NÃO NECESSÁRIO - CRIAR SESSÃO DIRETAMENTE
-        // ============================================
-        console.log("[AUTH][BLOCO4] ✅ 2FA não necessário - criando sessão diretamente");
-
-        // Salvar cache de confiança
-        if (deviceResult.deviceHash) {
-          setTrustCache(userFor2FA.id, deviceResult.deviceHash);
-          console.log("[AUTH] ✅ Trust cache salvo para próximos logins");
-        }
-
-        const SESSION_TOKEN_KEY = "matriz_session_token";
-        const ua = navigator.userAgent;
-        let device_type = "desktop";
-        if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
-          device_type = /iPad|Tablet/i.test(ua) ? "tablet" : "mobile";
-        }
-
-        let browser = "unknown";
-        if (ua.includes("Firefox")) browser = "Firefox";
-        else if (ua.includes("Edg")) browser = "Edge";
-        else if (ua.includes("Chrome")) browser = "Chrome";
-        else if (ua.includes("Safari")) browser = "Safari";
-
-        let os = "unknown";
-        if (ua.includes("Windows")) os = "Windows";
-        else if (ua.includes("Mac")) os = "macOS";
-        else if (ua.includes("Linux")) os = "Linux";
-        else if (ua.includes("Android")) os = "Android";
-        else if (ua.includes("iPhone")) os = "iOS";
-
-        const serverDeviceHash = deviceResult.deviceHash || localStorage.getItem('matriz_device_server_hash');
-        if (!serverDeviceHash) {
-          console.error("[AUTH][SESSAO] ❌ P0 VIOLATION: Sem hash do servidor!");
-          toast.error("Falha de segurança", { description: "Dispositivo não registrado corretamente." });
-          await supabase.auth.signOut();
-          resetTurnstile();
-          setIsLoading(false);
-          return;
-        }
-
-        const { data, error } = await supabase.rpc("create_single_session", {
-          _ip_address: null,
-          _user_agent: navigator.userAgent.slice(0, 255),
-          _device_type: device_type,
-          _browser: browser,
-          _os: os,
-          _device_hash_from_server: serverDeviceHash,
-        });
-
-        if (error || !data?.[0]?.session_token) {
-          console.error("[AUTH][SESSAO] ❌ Falha ao criar sessão única (RPC):", error);
-          toast.error("Falha crítica de segurança", {
-            description: "Não foi possível iniciar a sessão única. Faça login novamente.",
-            duration: 9000,
-          });
-          await supabase.auth.signOut();
-          setIsLoading(false);
-          return;
-        }
-
-        localStorage.setItem(SESSION_TOKEN_KEY, data[0].session_token);
-        console.log("[AUTH][SESSAO] ✅ Sessão única criada (sem 2FA) e token armazenado");
-
-        // Marcar mfa_verified = true (dispositivo confiável dentro da janela de 24h)
-        await supabase
-          .from("active_sessions")
-          .update({ mfa_verified: true })
-          .eq("session_token", data[0].session_token);
-
-        toast.success("Login realizado com sucesso!");
         const target = getPostLoginRedirect(userRole, userFor2FA.email);
         console.log("[AUTH] ✅ Redirecionando para", target, "(role:", userRole, ")");
         setIsLoading(false);
         navigate(target, { replace: true });
-        return; // ✅ Fluxo completo restaurado
+        return; // 🔓 BYPASS C: Encerra aqui após login bem-sucedido
       }
 
       // SIGNUP
