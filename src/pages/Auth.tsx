@@ -11,7 +11,7 @@ import "@/styles/auth-spiderman-2300.css";
 import { useState, useEffect, lazy, Suspense, useCallback, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
-import { CloudflareTurnstile, useTurnstile } from "@/components/security/CloudflareTurnstile";
+// Turnstile REMOVIDO - login direto sem verificação anti-bot
 import {
   Mail,
   Lock,
@@ -702,13 +702,7 @@ export default function Auth() {
   const [pendingPassword, setPendingPassword] = useState<string | null>(null); // 🎯 FIX: Guardar senha para login automático
   const [isForceLoggingOut, setIsForceLoggingOut] = useState(false);
 
-  // Estado para Cloudflare Turnstile (Anti-Bot)
-  const {
-    token: turnstileToken,
-    isVerified: isTurnstileVerified,
-    TurnstileProps,
-    reset: resetTurnstile,
-  } = useTurnstile();
+  // Turnstile REMOVIDO - login direto sem verificação anti-bot
 
   // ============================================
   // 🛡️ POLÍTICA v10.0: ZERO SESSION PERSISTENCE
@@ -871,12 +865,7 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate, isUpdatePassword, loginAttempted]);
 
-  useEffect(() => {
-    console.log("[AUTH] 2. Turnstile hook status:", {
-      verified: isTurnstileVerified,
-      hasToken: Boolean(turnstileToken),
-    });
-  }, [isTurnstileVerified, turnstileToken]);
+  // Turnstile log REMOVIDO
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -922,19 +911,11 @@ export default function Auth() {
         return;
       }
 
-      // 🛡️ RESET DE SENHA: Turnstile obrigatório para TODOS (P1-2 FIX)
-      if (!isTurnstileVerified || !turnstileToken) {
-        toast.error("Verificação de segurança necessária", {
-          description: "Para recuperar a senha, complete a verificação anti-bot.",
-        });
-        setIsLoading(false);
-        return;
-      }
+      // Turnstile REMOVIDO - reset de senha direto
 
       const { error } = await resetPassword(email);
       if (error) {
         toast.error(error.message);
-        resetTurnstile();
         setIsLoading(false);
         return;
       }
@@ -1213,22 +1194,8 @@ export default function Auth() {
       return;
     }
 
-    // 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO para TODOS (P1-2 FIX)
-    // Após incidente MANUS - bots conseguiam entrar sem CAPTCHA visual
-    // P1-2: Owner bypass REMOVIDO - turnstile é obrigatório para segurança
-    if (!isTurnstileVerified || !turnstileToken) {
-      console.error("[AUTH] ERROR: Turnstile não verificado no login");
-      toast.error("Verificação de segurança necessária", {
-        description: "Complete a verificação anti-bot para fazer login.",
-      });
-      getDeviceGateActions().setLoginIntent(false);
-      return;
-    }
-
-    console.log("[AUTH] 3. Estado Turnstile verificado:", {
-      verified: isTurnstileVerified,
-      hasToken: Boolean(turnstileToken),
-    });
+    // Turnstile REMOVIDO - login direto sem verificação anti-bot
+    console.log("[AUTH] 3. Prosseguindo sem Turnstile (removido)");
 
     setIsLoading(true);
 
@@ -1266,7 +1233,6 @@ export default function Auth() {
         });
         console.error("[AUTH] ERROR: validação de formulário", fieldErrors);
         setErrors(fieldErrors);
-        resetTurnstile();
         setIsLoading(false);
         getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de validação
         return;
@@ -1305,7 +1271,6 @@ export default function Auth() {
             description:
               "Detectamos um risco elevado. Se você é você mesmo, fale com o suporte para liberar seu acesso.",
           });
-          resetTurnstile();
           setIsLoading(false);
           getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em bloqueio
           return;
@@ -1314,9 +1279,8 @@ export default function Auth() {
         if (result.needsChallenge) {
           toast.warning("Verificação adicional necessária", {
             description:
-              "Refaça a verificação anti-bot e tente novamente. Se persistir, vamos ajustar o filtro para não travar alunos reais.",
+              "Tente novamente. Se persistir, entre em contato com o suporte.",
           });
-          resetTurnstile();
           setIsLoading(false);
           getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em challenge
           return;
@@ -1337,7 +1301,6 @@ export default function Auth() {
               description: result.error.message,
             });
           }
-          resetTurnstile();
           setIsLoading(false);
           getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de login
           return;
@@ -1378,7 +1341,6 @@ export default function Auth() {
             description: "Sua conta foi suspensa. Entre em contato com o suporte.",
             duration: 10000,
           });
-          resetTurnstile();
           setIsLoading(false);
           getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em banimento
           return;
@@ -1451,7 +1413,6 @@ export default function Auth() {
           const errorMsg = getDeviceErrorMessage(deviceResult.error || "UNEXPECTED_ERROR");
           toast.error(errorMsg.title, { description: errorMsg.description });
           await supabase.auth.signOut();
-          resetTurnstile();
           setIsLoading(false);
           getDeviceGateActions().setLoginIntent(false);
           return;
@@ -1490,7 +1451,6 @@ export default function Auth() {
             console.error("[AUTH][SESSAO] ❌ P0 VIOLATION: Sem hash do servidor!");
             toast.error("Falha de segurança", { description: "Dispositivo não registrado corretamente." });
             await supabase.auth.signOut();
-            resetTurnstile();
             setIsLoading(false);
             getDeviceGateActions().setLoginIntent(false);
             return;
@@ -1512,7 +1472,6 @@ export default function Auth() {
               duration: 9000,
             });
             await supabase.auth.signOut();
-            resetTurnstile();
             setIsLoading(false);
             getDeviceGateActions().setLoginIntent(false);
             return;
@@ -1527,7 +1486,6 @@ export default function Auth() {
             duration: 9000,
           });
           await supabase.auth.signOut();
-          resetTurnstile();
           setIsLoading(false);
           getDeviceGateActions().setLoginIntent(false);
           return;
@@ -1551,14 +1509,7 @@ export default function Auth() {
       // SIGNUP
       console.log("[AUTH] 4. Iniciando signup...");
 
-      if (!isTurnstileVerified || !turnstileToken) {
-        console.error("[AUTH] ERROR: Turnstile ausente no signup");
-        toast.error("Verificação de segurança necessária", {
-          description: "Para criar uma conta, complete a verificação anti-bot.",
-        });
-        setIsLoading(false);
-        return;
-      }
+      // Turnstile REMOVIDO - signup direto
 
       const signupResult = await withTimeout("signUp", signUp(formData.email, formData.password, formData.nome));
 
@@ -1575,7 +1526,7 @@ export default function Auth() {
             description: signupResult.error.message,
           });
         }
-        resetTurnstile();
+        
         setIsLoading(false);
         return;
       }
@@ -2486,10 +2437,7 @@ export default function Auth() {
                       )}
                     </div>
 
-                    {/* Cloudflare Turnstile - RESET DE SENHA (obrigatório para todos) */}
-                    <div className="py-2">
-                      <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
-                    </div>
+                    {/* Turnstile REMOVIDO - reset de senha direto */}
 
                     <Button
                       type="submit"
@@ -2642,10 +2590,7 @@ export default function Auth() {
                   </div>
                 )}
 
-                {/* 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO para TODOS (P1-2 FIX) */}
-                <div className="py-2">
-                  <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
-                </div>
+                {/* Turnstile REMOVIDO - login direto */}
 
                 <Button
                   type="submit"
