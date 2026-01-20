@@ -708,6 +708,17 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
 
     // 7. Automation Detection
     const detectAutomation = () => {
+      // 🛡️ P0 FIX: Preview environment bypass
+      const hostname = window.location.hostname.toLowerCase();
+      const isPreviewEnv = 
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname.includes('lovableproject.com') ||
+        hostname.includes('.lovable.app') ||
+        hostname.includes('.vercel.app');
+      
+      if (isPreviewEnv) return;
+      
       const isAutomated = 
         (navigator as any).webdriver ||
         (window as any).__selenium_unwrapped ||

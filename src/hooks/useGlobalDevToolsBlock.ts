@@ -87,13 +87,34 @@ export function useGlobalDevToolsBlock() {
   const warningShownRef = useRef(false);
 
   useEffect(() => {
+    // ════════════════════════════════════════════════════════════════════════
+    // 🛡️ P0 FIX CRÍTICO: BYPASS SÍNCRONO PRIMEIRO (ANTES DE QUALQUER RPC/ASYNC)
+    // ════════════════════════════════════════════════════════════════════════
+    const hostname = window.location.hostname.toLowerCase();
+    const isPreviewEnv = 
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.includes('lovableproject.com') ||
+      hostname.includes('.lovable.app') ||
+      hostname.includes('.vercel.app');
+    
+    // 🛡️ BYPASS ABSOLUTO para ambientes de preview — EARLY RETURN IMEDIATO
+    if (isPreviewEnv) {
+      console.log('🔧 [DevTools Protection] ⚡ BYPASS IMEDIATO: Ambiente de preview');
+      isOwnerRef.current = true; // Tratar como owner para evitar qualquer bloqueio
+      document.body.classList.add("owner-mode");
+      return; // NENHUM código de proteção executa
+    }
+    
     // 🚨 PROTEÇÃO DESATIVADA - EARLY RETURN
     if (!DEVTOOLS_PROTECTION_ENABLED) {
       console.log('🔧 [DevTools Protection] DESATIVADO globalmente');
       return;
     }
 
-    // Verificar se usuário é owner
+    // ════════════════════════════════════════════════════════════════════════
+    // PRODUÇÃO: Verificar owner e ativar proteções
+    // ════════════════════════════════════════════════════════════════════════
     let nuclearCleanup: (() => void) | null = null;
     
     const checkOwner = async () => {
@@ -144,24 +165,6 @@ export function useGlobalDevToolsBlock() {
         localStorage.removeItem('matriz_is_owner_cache');
       }
     });
-
-    // 🛡️ P0 FIX: Verificar ambiente de preview SÍNCRONAMENTE (antes de qualquer RPC)
-    const isPreviewEnv = (() => {
-      const hostname = window.location.hostname.toLowerCase();
-      return (
-        hostname === 'localhost' ||
-        hostname === '127.0.0.1' ||
-        hostname.includes('lovableproject.com') ||
-        (hostname.includes('id-preview--') && hostname.includes('.lovable.app')) ||
-        hostname.includes('.vercel.app')
-      );
-    })();
-    
-    // 🛡️ BYPASS TOTAL para ambientes de preview
-    if (isPreviewEnv) {
-      console.log('🔧 [DevTools Protection] BYPASS: Ambiente de preview detectado');
-      return;
-    }
 
     // 🏛️ LEI I: ZERO console spam em produção - apenas toast
     const showWarning = (type: "devtools" | "screenshot" | "copy" = "devtools") => {
