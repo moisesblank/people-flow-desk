@@ -11,7 +11,8 @@ import "@/styles/auth-spiderman-2300.css";
 import { useState, useEffect, lazy, Suspense, useCallback, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
-import { CloudflareTurnstile, useTurnstile } from "@/components/security/CloudflareTurnstile";
+// 🔓 OPÇÃO A OFICIAL: Turnstile REMOVIDO do /auth - import mantido apenas para referência
+// import { CloudflareTurnstile, useTurnstile } from "@/components/security/CloudflareTurnstile";
 import {
   Mail,
   Lock,
@@ -690,13 +691,17 @@ export default function Auth() {
   const [pendingPassword, setPendingPassword] = useState<string | null>(null); // 🎯 FIX: Guardar senha para login automático
   const [isForceLoggingOut, setIsForceLoggingOut] = useState(false);
 
-  // Estado para Cloudflare Turnstile (Anti-Bot)
-  const {
-    token: turnstileToken,
-    isVerified: isTurnstileVerified,
-    TurnstileProps,
-    reset: resetTurnstile,
-  } = useTurnstile();
+  // ============================================
+  // 🛡️ OPÇÃO A OFICIAL: TURNSTILE REMOVIDO DO /auth
+  // Segurança mantida via rate-limiting e lockout policies no backend
+  // Turnstile disponível para outros forms (signup público, etc)
+  // Data: 2026-01-20
+  // ============================================
+  // const { token: turnstileToken, isVerified: isTurnstileVerified, TurnstileProps, reset: resetTurnstile } = useTurnstile();
+  // 🔓 BYPASS PERMANENTE: Turnstile desativado para /auth
+  const turnstileToken = 'TURNSTILE_DISABLED_AUTH';
+  const isTurnstileVerified = true;
+  const resetTurnstile = () => {}; // no-op
 
   // ============================================
   // 🛡️ POLÍTICA v10.0: ZERO SESSION PERSISTENCE
@@ -2357,10 +2362,7 @@ export default function Auth() {
                       )}
                     </div>
 
-                    {/* Cloudflare Turnstile - RESET DE SENHA (obrigatório para todos) */}
-                    <div className="py-2">
-                      <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
-                    </div>
+                    {/* 🔓 OPÇÃO A: Turnstile REMOVIDO do /auth - segurança via rate-limit/lockout */}
 
                     <Button
                       type="submit"
@@ -2513,10 +2515,7 @@ export default function Auth() {
                   </div>
                 )}
 
-                {/* 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO para TODOS (P1-2 FIX) */}
-                <div className="py-2">
-                  <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
-                </div>
+                {/* 🔓 OPÇÃO A: Turnstile REMOVIDO do /auth - segurança via rate-limit/lockout */}
 
                 <Button
                   type="submit"
