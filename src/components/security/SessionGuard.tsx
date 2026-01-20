@@ -63,19 +63,6 @@ export function SessionGuard({ children }: SessionGuardProps) {
   const isOnboardingRoute = ONBOARDING_ROUTES.some(route => 
     location.pathname.startsWith(route)
   );
-  
-  // 🚨 P0 FIX: Detectar ambiente de preview para bypass total
-  const isPreviewEnv = (() => {
-    const hostname = window.location.hostname.toLowerCase();
-    return (
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname.includes('lovableproject.com') ||
-      hostname.includes('.lovable.app') ||
-      hostname.includes('id-preview--') ||
-      hostname.includes('.vercel.app')
-    );
-  })();
 
   /**
    * 🔧 P0 FIX v3.0: Verifica no DB ANTES de mostrar overlay
@@ -85,12 +72,6 @@ export function SessionGuard({ children }: SessionGuardProps) {
     triggerSource: string,
     suspectedReason?: string
   ): Promise<boolean> => {
-    // 🚨 P0 FIX: Preview environments NUNCA mostram overlay
-    if (isPreviewEnv) {
-      console.log("[SessionGuard] ✅ PREVIEW ENV BYPASS - overlay suprimido");
-      return false;
-    }
-    
     // Bypass para owner
     if (isOwner) {
       console.log("[SessionGuard] ✅ OWNER BYPASS - overlay suprimido");
