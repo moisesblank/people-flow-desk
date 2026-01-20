@@ -70,6 +70,7 @@ import { VirtualTable } from "@/components/performance/VirtualTable";
 import { CriarAcessoOficialModal } from "@/components/students/CriarAcessoOficialModal";
 import { ImportStudentsModal } from "@/components/students/ImportStudentsModal";
 import { NuclearAnnihilateButton } from "@/components/students/NuclearAnnihilateButton";
+import { BulkImportCPFModal } from "@/components/students/BulkImportCPFModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStudentPresence, getPresenceStatus } from "@/hooks/useStudentPresence";
 import { useExportStudents } from "@/hooks/useExportStudents";
