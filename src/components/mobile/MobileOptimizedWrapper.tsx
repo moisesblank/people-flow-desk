@@ -26,18 +26,10 @@ export const MobileOptimizedWrapper = memo(function MobileOptimizedWrapper({
 }: MobileOptimizedWrapperProps) {
   const { shouldReduceMotion, isLowEndDevice, animationDuration, isMobile } = usePerformance();
   
-  // Skip animation entirely for reduced motion or low-end devices
-  if (shouldReduceMotion || isLowEndDevice || !animate) {
-    return (
-      <div className={cn('gpu-accelerate', className)}>
-        {children}
-      </div>
-    );
-  }
-  
   const duration = animationDuration / 1000;
   const offset = isMobile ? 10 : 20;
   
+  // 🏛️ PRIME AVANÇADO FIX: useMemo ANTES de qualquer early return (regra dos hooks)
   const variants = useMemo(() => {
     const initial: Record<string, any> = { opacity: 0 };
     const animate: Record<string, any> = { opacity: 1 };
@@ -67,6 +59,16 @@ export const MobileOptimizedWrapper = memo(function MobileOptimizedWrapper({
     
     return { initial, animate };
   }, [direction, offset]);
+  
+  // Skip animation entirely for reduced motion or low-end devices
+  // Early return APÓS todos os hooks
+  if (shouldReduceMotion || isLowEndDevice || !animate) {
+    return (
+      <div className={cn('gpu-accelerate', className)}>
+        {children}
+      </div>
+    );
+  }
   
   return (
     <motion.div
@@ -179,8 +181,8 @@ export const OptimizedSkeleton = memo(function OptimizedSkeleton({
 export const PerformanceIndicator = memo(function PerformanceIndicator() {
   const { metrics, isMobile, isLowEndDevice, connectionType } = usePerformance();
   
-  // Only show in development
-  if (process.env.NODE_ENV !== 'development') return null;
+  // Only show in development - usar import.meta.env.DEV (Vite nativo)
+  if (!import.meta.env.DEV) return null;
   
   const fpsColor = metrics.fps >= 50 ? 'text-stats-green' : 
                    metrics.fps >= 30 ? 'text-warning' : 'text-destructive';

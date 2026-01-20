@@ -97,8 +97,8 @@ export const LeiVIIEnforcer = memo(({ children }: LeiVIIEnforcerProps) => {
     const handleViolation = (e: CustomEvent) => {
       const { type, severity, count } = e.detail;
 
-      // Log violações no console (apenas dev)
-      if (process.env.NODE_ENV === "development") {
+      // Log violações no console (apenas dev) - usar import.meta.env.DEV (Vite nativo)
+      if (import.meta.env.DEV) {
         console.warn(`[LEI VII] Violação: ${type} (severity: ${severity}, count: ${count})`);
       }
 
