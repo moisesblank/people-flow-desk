@@ -110,9 +110,14 @@ Acessar Plataforma Agora
 ## 📌 RODAPÉ (Comum a todos os e-mails)
 
 ```
+![Logo do Curso](https://pro.moisesmedeiros.com.br/logo.png)
+
 Prof. Moisés Medeiros Melo
 MM CURSO DE QUÍMICA LTDA | O curso que mais aprova e comprova!
-WhatsApp: +55 83 9616-9222
+
+[WhatsApp: +55 83 9616-9222](https://wa.me/5583961629222)
+
+[Instagram](https://instagram.com/profmoisesmedeiros) | [YouTube](https://youtube.com/@profmoisesmedeiros)
 
 © 2026 MM Curso de Química Ltda.
 ```
@@ -131,11 +136,43 @@ WhatsApp: +55 83 9616-9222
 
 ---
 
+## 🔗 Como Adicionar Links e Imagens
+
+### Links Clicáveis:
+Use a sintaxe: `[Texto do Link](URL_DESTINO)`
+
+**Exemplos:**
+```
+[Clique aqui para acessar](https://pro.moisesmedeiros.com.br)
+[Fale conosco no WhatsApp](https://wa.me/5583961629222)
+[Siga no Instagram](https://instagram.com/profmoisesmedeiros)
+```
+
+### Imagens:
+Use a sintaxe: `![Descrição](URL_DA_IMAGEM)`
+
+**Exemplos:**
+```
+![Logo do Curso](https://pro.moisesmedeiros.com.br/logo.png)
+![Banner de Boas-Vindas](https://seusite.com/banner.jpg)
+```
+
+### Imagem com Link (Clicável):
+Use a sintaxe: `[![Descrição](URL_IMAGEM)](URL_DESTINO)`
+
+**Exemplo:**
+```
+[![Logo do Curso](https://pro.moisesmedeiros.com.br/logo.png)](https://pro.moisesmedeiros.com.br)
+```
+
+---
+
 ## ✏️ Como Editar
 
 1. **Copie este documento**
 2. **Altere apenas os textos** dentro dos blocos de código
-3. **Me envie de volta** com as alterações
-4. Eu atualizo os templates no sistema
+3. **Use a sintaxe de links e imagens** conforme explicado acima
+4. **Me envie de volta** com as alterações
+5. Eu atualizo os templates no sistema
 
-> **Dica:** Você pode adicionar emojis, mudar a ordem da lista, trocar textos de botões, etc.
+> **Dica:** Você pode adicionar emojis, mudar a ordem da lista, trocar textos de botões, incluir redes sociais, banners, etc.
