@@ -94,6 +94,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 import { supabase } from "@/integrations/supabase/client";
 import { StorageAndBackupWidget } from "./StorageAndBackupWidget";
+import { CacheClearWidget } from "./CacheClearWidget";
 import { SidebarNavDnd, type MenuGroup as DndMenuGroup } from "./SidebarNavDnd";
 
 // Imagens
@@ -651,7 +652,12 @@ export const RoleBasedSidebar = forwardRef<HTMLDivElement, Record<string, never>
           />
         </SidebarContent>
 
-        <SidebarFooter className="p-2">
+        <SidebarFooter className="p-2 space-y-2">
+          {/* 🧹 CACHE CLEAR: Exclusivo do OWNER e SOMENTE em /gestaofc */}
+          {isGestaoArea && user?.email?.toLowerCase() === OWNER_EMAIL ? (
+            <CacheClearWidget collapsed={collapsed} />
+          ) : null}
+
           {/* 🏛️ REGRA: Armazenamento/Backup é exclusivo do OWNER e SOMENTE em /gestaofc */}
           {isGestaoArea && user?.email?.toLowerCase() === OWNER_EMAIL ? (
             <StorageAndBackupWidget collapsed={collapsed} />
