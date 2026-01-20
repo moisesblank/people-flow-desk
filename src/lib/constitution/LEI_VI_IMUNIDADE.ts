@@ -72,7 +72,7 @@ export const IMMUNE_ROUTES = [
   '/sna-*',
   '/orchestrator*',
   '/api/*',
-  // '/verify-turnstile*', // REMOVIDO - anti-bot desativado
+  '/verify-turnstile*',
   '/c-*',
   '/event-*',
 ] as const;
@@ -88,7 +88,7 @@ export const IMMUNE_HEADERS = [
   'X-Panda-Signature',
   'X-Webhook-Secret',
   'X-WordPress-Auth',
-  // 'cf-turnstile-response', // REMOVIDO - anti-bot desativado
+  'cf-turnstile-response',
 ] as const;
 
 // ============================================
@@ -106,7 +106,7 @@ export const EDGE_FUNCTIONS_OMEGA = [
   'hotmart-webhook-processor',
   'hotmart-fast',
   'webhook-curso-quimica',
-  // 'verify-turnstile', // REMOVIDO - anti-bot desativado
+  'verify-turnstile',
   'rate-limit-gateway',
   'api-gateway',
   'api-fast',
@@ -323,7 +323,7 @@ export const UNTOUCHABLE_EDGE_FUNCTIONS = [
   'sna-worker',
   'orchestrator',
   'hotmart-webhook-processor',
-  // 'verify-turnstile', // REMOVIDO - anti-bot desativado
+  'verify-turnstile',
   'rate-limit-gateway',
   'video-authorize-omega',
   'sanctum-asset-manifest',
@@ -338,7 +338,7 @@ export const UNTOUCHABLE_SECRETS = [
   'HOTMART_CLIENT_SECRET',
   'PANDA_API_KEY',
   'WP_API_TOKEN',
-  // 'CLOUDFLARE_TURNSTILE_SECRET_KEY', // REMOVIDO - anti-bot desativado
+  'CLOUDFLARE_TURNSTILE_SECRET_KEY',
   'OPENAI_API_KEY',
   'ELEVENLABS_API_KEY',
   'FIRECRAWL_API_KEY',
@@ -392,7 +392,7 @@ export function hasImmuneHeader(headers: Record<string, string>): boolean {
   if (headers['x-panda-signature']) return true;
   if (headers['x-webhook-secret']) return true;
   if (headers['x-wordpress-auth']) return true;
-  // if (headers['cf-turnstile-response']) return true; // REMOVIDO - anti-bot desativado
+  if (headers['cf-turnstile-response']) return true;
   if (headers['x-client-info']?.includes('supabase')) return true;
   if (headers['apikey']) return true;
   

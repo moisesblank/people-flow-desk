@@ -31,22 +31,6 @@ interface SessionGuardProps {
 }
 
 export function SessionGuard({ children }: SessionGuardProps) {
-  // 🔥 BYPASS CRÍTICO PARA PRODUÇÃO - DEVE SER A PRIMEIRA COISA!
-  const hostname = window.location.hostname;
-  const isProduction = hostname.includes('pro.moisesmedeiros.com.br') || 
-                       hostname.includes('.vercel.app');
-  const isLocal = hostname === 'localhost' || 
-                  hostname === '127.0.0.1';
-  const isPreview = hostname.includes('.lovableproject.com') || 
-                    hostname.includes('.lovable.app') ||
-                    hostname.includes('.id-preview-');
-  
-  // ✅ BYPASS TOTAL - Renderiza direto sem verificações
-  if (isProduction || isLocal || isPreview) {
-    console.log('[SessionGuard] ✅ Bypass ativado para:', hostname);
-    return <>{children}</>;
-  }
-
   const { user, signOut } = useAuth();
   const location = useLocation();
   const isValidatingRef = useRef(false);

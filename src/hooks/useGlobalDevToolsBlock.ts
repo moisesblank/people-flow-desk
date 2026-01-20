@@ -87,34 +87,13 @@ export function useGlobalDevToolsBlock() {
   const warningShownRef = useRef(false);
 
   useEffect(() => {
-    // ════════════════════════════════════════════════════════════════════════
-    // 🛡️ P0 FIX CRÍTICO: BYPASS SÍNCRONO PRIMEIRO (ANTES DE QUALQUER RPC/ASYNC)
-    // ════════════════════════════════════════════════════════════════════════
-    const hostname = window.location.hostname.toLowerCase();
-    const isPreviewEnv = 
-      hostname === 'localhost' ||
-      hostname === '127.0.0.1' ||
-      hostname.includes('lovableproject.com') ||
-      hostname.includes('.lovable.app') ||
-      hostname.includes('.vercel.app');
-    
-    // 🛡️ BYPASS ABSOLUTO para ambientes de preview — EARLY RETURN IMEDIATO
-    if (isPreviewEnv) {
-      console.log('🔧 [DevTools Protection] ⚡ BYPASS IMEDIATO: Ambiente de preview');
-      isOwnerRef.current = true; // Tratar como owner para evitar qualquer bloqueio
-      document.body.classList.add("owner-mode");
-      return; // NENHUM código de proteção executa
-    }
-    
     // 🚨 PROTEÇÃO DESATIVADA - EARLY RETURN
     if (!DEVTOOLS_PROTECTION_ENABLED) {
       console.log('🔧 [DevTools Protection] DESATIVADO globalmente');
       return;
     }
 
-    // ════════════════════════════════════════════════════════════════════════
-    // PRODUÇÃO: Verificar owner e ativar proteções
-    // ════════════════════════════════════════════════════════════════════════
+    // Verificar se usuário é owner
     let nuclearCleanup: (() => void) | null = null;
     
     const checkOwner = async () => {

@@ -224,7 +224,7 @@ export const MainApprovedArt = () => {
           </motion.p>
           
           <a
-            href="https://moisesmedeiros.com.br/black-friday-2025"
+            href="https://www.moisesmedeiros.com.br"
             target="_blank"
             rel="noopener noreferrer"
           >

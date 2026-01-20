@@ -295,7 +295,7 @@ export const FirstPlaceShowcase = () => {
             Já é aluno? Acesse agora sua área exclusiva
           </motion.p>
           
-          <a href="http://pro.moisesmedeiros.com.br/auth">
+          <Link to="/auth">
             <div className="inline-block relative group">
               {/* Glow - apenas se animações habilitadas */}
               {shouldAnimate && (
@@ -330,7 +330,7 @@ export const FirstPlaceShowcase = () => {
                 <span className="ml-3">→</span>
               </Button>
             </div>
-          </a>
+          </Link>
 
           {/* Selo de garantia */}
           <motion.div

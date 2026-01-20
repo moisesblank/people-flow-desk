@@ -417,13 +417,31 @@ export function CriarAcessoOficialModal({
     setIsSubmitting(true);
     
     try {
-      // 🚀 OTIMIZADO: Apenas refreshSession (já inclui getSession internamente)
-      console.log('[CriarAcessoOficial] Renovando sessão...');
+      // 🎯 FIX CRÍTICO: Verificar e renovar sessão ANTES de chamar edge function
+      // O erro "Auth session missing!" acontece quando o token JWT referencia uma sessão
+      // que foi invalidada no servidor Supabase. Precisamos garantir uma sessão válida.
+      console.log('[CriarAcessoOficial] Verificando sessão antes de criar acesso...');
       
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        console.error('[CriarAcessoOficial] Sessão inválida:', sessionError?.message);
+        throw new Error('Sessão expirada. Faça logout e login novamente.');
+      }
+      
+      // Tentar refresh do token para garantir sessão ativa no servidor
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
       
-      if (refreshError || !refreshData.session) {
-        console.error('[CriarAcessoOficial] Sessão inválida:', refreshError?.message);
+      if (refreshError) {
+        console.error('[CriarAcessoOficial] Erro ao renovar sessão:', refreshError.message);
+        // Se não conseguiu renovar, a sessão está realmente inválida
+        if (refreshError.message?.includes('session') || refreshError.message?.includes('token')) {
+          throw new Error('Sessão expirada. Faça logout e login novamente.');
+        }
+      }
+      
+      if (!refreshData.session) {
+        console.error('[CriarAcessoOficial] Nenhuma sessão após refresh');
         throw new Error('Sessão expirada. Faça logout e login novamente.');
       }
       

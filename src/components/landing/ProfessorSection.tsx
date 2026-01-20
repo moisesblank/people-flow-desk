@@ -232,7 +232,7 @@ export const ProfessorSection = () => {
             {/* Social Links */}
             <div className="flex gap-3">
               <motion.a
-                href="https://www.instagram.com/moises.profquimica/"
+                href="https://www.instagram.com/moises.profaprova"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 text-pink-400 hover:bg-pink-500/30 transition-all text-sm"
@@ -242,7 +242,7 @@ export const ProfessorSection = () => {
                 <span className="font-medium">Instagram</span>
               </motion.a>
               <motion.a
-                href="https://www.youtube.com/@moises.profquimica"
+                href="https://www.youtube.com/@moisesmedeiros"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-500/20 to-pink-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 transition-all text-sm"
@@ -255,7 +255,7 @@ export const ProfessorSection = () => {
 
             {/* CTA */}
             <motion.a
-              href="https://www.youtube.com/watch?v=HHx5ZG3FFok"
+              href="https://youtu.be/aOzCtPc7byY"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-bold hover:scale-105 transition-transform shadow-lg shadow-pink-500/30"

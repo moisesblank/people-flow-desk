@@ -11,7 +11,7 @@ import "@/styles/auth-spiderman-2300.css";
 import { useState, useEffect, lazy, Suspense, useCallback, forwardRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
-// Turnstile REMOVIDO - login direto sem verificação anti-bot
+import { CloudflareTurnstile, useTurnstile } from "@/components/security/CloudflareTurnstile";
 import {
   Mail,
   Lock,
@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { formatError } from "@/lib/utils/formatError";
 import { useAuth } from "@/hooks/useAuth";
 // 2FA Decision Engine (SYNAPSE Ω v10.x) com cache de confiança
 import { useDeviceFingerprint, decide2FA, setTrustCache } from "@/hooks/auth";
@@ -657,19 +658,6 @@ export default function Auth() {
   const [isUpdatePassword, setIsUpdatePassword] = useState(false); // 🎯 P0 FIX: Estado para definir nova senha
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
-
-  // 🐕 WATCHDOG P0 FIX v11.3: Timeout de 5s para GARANTIR renderização do form
-  // Se isCheckingSession ficar true por mais de 5 segundos, forçar false
-  useEffect(() => {
-    if (!isCheckingSession) return; // Só ativar watchdog se estiver em estado de loading
-    
-    const watchdogTimeout = setTimeout(() => {
-      console.warn("[AUTH] 🐕 Watchdog ativado - forçando renderização do form após 5s de timeout");
-      setIsCheckingSession(false);
-    }, 5000); // 5 segundos
-    
-    return () => clearTimeout(watchdogTimeout);
-  }, [isCheckingSession]);
   const [showPassword, setShowPassword] = useState(true); // 🎯 Visível por padrão
   const [showConfirmPassword, setShowConfirmPassword] = useState(true); // 🎯 Visível por padrão
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -702,7 +690,13 @@ export default function Auth() {
   const [pendingPassword, setPendingPassword] = useState<string | null>(null); // 🎯 FIX: Guardar senha para login automático
   const [isForceLoggingOut, setIsForceLoggingOut] = useState(false);
 
-  // Turnstile REMOVIDO - login direto sem verificação anti-bot
+  // Estado para Cloudflare Turnstile (Anti-Bot)
+  const {
+    token: turnstileToken,
+    isVerified: isTurnstileVerified,
+    TurnstileProps,
+    reset: resetTurnstile,
+  } = useTurnstile();
 
   // ============================================
   // 🛡️ POLÍTICA v10.0: ZERO SESSION PERSISTENCE
@@ -865,7 +859,12 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate, isUpdatePassword, loginAttempted]);
 
-  // Turnstile log REMOVIDO
+  useEffect(() => {
+    console.log("[AUTH] 2. Turnstile hook status:", {
+      verified: isTurnstileVerified,
+      hasToken: Boolean(turnstileToken),
+    });
+  }, [isTurnstileVerified, turnstileToken]);
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -911,11 +910,19 @@ export default function Auth() {
         return;
       }
 
-      // Turnstile REMOVIDO - reset de senha direto
+      // 🛡️ RESET DE SENHA: Turnstile obrigatório para TODOS (P1-2 FIX)
+      if (!isTurnstileVerified || !turnstileToken) {
+        toast.error("Verificação de segurança necessária", {
+          description: "Para recuperar a senha, complete a verificação anti-bot.",
+        });
+        setIsLoading(false);
+        return;
+      }
 
       const { error } = await resetPassword(email);
       if (error) {
-        toast.error(error.message);
+        toast.error(formatError(error));
+        resetTurnstile();
         setIsLoading(false);
         return;
       }
@@ -1194,8 +1201,22 @@ export default function Auth() {
       return;
     }
 
-    // Turnstile REMOVIDO - login direto sem verificação anti-bot
-    console.log("[AUTH] 3. Prosseguindo sem Turnstile (removido)");
+    // 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO para TODOS (P1-2 FIX)
+    // Após incidente MANUS - bots conseguiam entrar sem CAPTCHA visual
+    // P1-2: Owner bypass REMOVIDO - turnstile é obrigatório para segurança
+    if (!isTurnstileVerified || !turnstileToken) {
+      console.error("[AUTH] ERROR: Turnstile não verificado no login");
+      toast.error("Verificação de segurança necessária", {
+        description: "Complete a verificação anti-bot para fazer login.",
+      });
+      getDeviceGateActions().setLoginIntent(false);
+      return;
+    }
+
+    console.log("[AUTH] 3. Estado Turnstile verificado:", {
+      verified: isTurnstileVerified,
+      hasToken: Boolean(turnstileToken),
+    });
 
     setIsLoading(true);
 
@@ -1233,6 +1254,7 @@ export default function Auth() {
         });
         console.error("[AUTH] ERROR: validação de formulário", fieldErrors);
         setErrors(fieldErrors);
+        resetTurnstile();
         setIsLoading(false);
         getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de validação
         return;
@@ -1244,9 +1266,8 @@ export default function Auth() {
         setLoginAttempted(true);
         console.log("[AUTH] 4. Verificando sessão ativa existente...");
 
-        // 🔓 BYPASS C: VERIFICAÇÃO DE SESSÃO ATIVA DESATIVADA
-        // Login sempre prossegue sem verificar sessões existentes
-        console.log("[AUTH] 🔓 BYPASS C: verificação de sessão ativa DESATIVADA - prosseguindo diretamente");
+        // ✅ Sessões anteriores serão revogadas automaticamente pelo create_single_session RPC
+        console.log("[AUTH] ✅ Novo login irá sobrescrever sessões anteriores (Single Session Policy)");
 
         console.log("[AUTH] ✅ Verificação de sessão concluída. Iniciando signInWithPassword...");
 
@@ -1271,6 +1292,7 @@ export default function Auth() {
             description:
               "Detectamos um risco elevado. Se você é você mesmo, fale com o suporte para liberar seu acesso.",
           });
+          resetTurnstile();
           setIsLoading(false);
           getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em bloqueio
           return;
@@ -1279,8 +1301,9 @@ export default function Auth() {
         if (result.needsChallenge) {
           toast.warning("Verificação adicional necessária", {
             description:
-              "Tente novamente. Se persistir, entre em contato com o suporte.",
+              "Refaça a verificação anti-bot e tente novamente. Se persistir, vamos ajustar o filtro para não travar alunos reais.",
           });
+          resetTurnstile();
           setIsLoading(false);
           getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em challenge
           return;
@@ -1301,6 +1324,7 @@ export default function Auth() {
               description: result.error.message,
             });
           }
+          resetTurnstile();
           setIsLoading(false);
           getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em erro de login
           return;
@@ -1341,6 +1365,7 @@ export default function Auth() {
             description: "Sua conta foi suspensa. Entre em contato com o suporte.",
             duration: 10000,
           });
+          resetTurnstile();
           setIsLoading(false);
           getDeviceGateActions().setLoginIntent(false); // 🛡️ Reset em banimento
           return;
@@ -1348,14 +1373,10 @@ export default function Auth() {
 
         console.log("[AUTH] 6.2. Usuário não está banido, prosseguindo...");
 
-        // ====================================================================
-        // 🛡️ RESTAURAÇÃO: Fluxo soberano pós-login (SEM BYPASS)
-        // - Registrar dispositivo (server hash) ANTES de entrar em rotas protegidas
-        // - Criar sessão única via RPC (matriz_session_token)
-        // ====================================================================
-        console.log("[AUTH] 🔐 Fluxo soberano: registrando dispositivo + criando sessão única...");
-
-        // 🎯 P0 FIX v3.2: VERIFICAR password_change_required ANTES de redirecionar
+        // ============================================
+        // 🛡️ BLOCO 1: VERIFICAR password_change_required PRIMEIRO
+        // ============================================
+        console.log("[AUTH][BLOCO1] 🔐 Verificando password_change_required...");
         const { data: profileCheck } = await supabase
           .from("profiles")
           .select("password_change_required")
@@ -1363,7 +1384,7 @@ export default function Auth() {
           .maybeSingle();
 
         if (profileCheck?.password_change_required === true) {
-          console.log("[AUTH] 🔐 Usuário precisa trocar senha - mostrando formulário");
+          console.log("[AUTH][BLOCO1] 🔐 Usuário precisa trocar senha - mostrando formulário");
           sessionStorage.setItem("matriz_password_change_pending", "1");
           setPendingPasswordChangeUser({
             email: userFor2FA.email || "",
@@ -1371,41 +1392,41 @@ export default function Auth() {
           });
           setShowForcePasswordChange(true);
           setIsLoading(false);
-          return; // NÃO redirecionar - mostrar formulário de troca de senha
+          return; // NÃO prosseguir - mostrar formulário de troca de senha
         }
 
-        toast.success("Login realizado com sucesso!");
-
         // ============================================
-        // 🛡️ BLOCO 3: REGISTRAR DISPOSITIVO ANTES DA SESSÃO (pós-login)
+        // 🛡️ BLOCO 2: REGISTRAR DISPOSITIVO ANTES DA SESSÃO
         // ============================================
-        console.log("[AUTH][BLOCO3] 🔐 Registrando dispositivo ANTES da sessão (pós-login)...");
+        console.log("[AUTH][BLOCO2] 🔐 Registrando dispositivo ANTES da sessão...");
         const deviceResult = await registerDeviceBeforeSession();
 
         if (!deviceResult.success) {
-          console.error("[AUTH][BLOCO3] ❌ Falha no registro de dispositivo pós-login:", deviceResult.error);
+          console.error("[AUTH][BLOCO2] ❌ Falha no registro de dispositivo:", deviceResult.error);
 
-          // Gate: limite de dispositivos
-          if (deviceResult.error === "DEVICE_LIMIT_EXCEEDED") {
-            if (deviceResult.gatePayload) {
-              useDeviceGateStore.getState().setPayload(deviceResult.gatePayload);
-            }
-
-            // NÃO fazer logout - manter sessão para que o Gate possa revogar dispositivos
-            setIsLoading(false);
-            navigate("/security/device-limit", { replace: true });
-            return;
-          }
-
-          // Gate: substituição do mesmo tipo
+          // 🛡️ BEYOND_THE_3_DEVICES: Substituição do mesmo tipo
           if (deviceResult.error === "SAME_TYPE_REPLACEMENT_REQUIRED") {
+            console.log("[AUTH][BEYOND_3] 🔄 Same-type replacement oferecida - redirecionando");
+
             if (deviceResult.sameTypePayload) {
               getSameTypeReplacementActions().setPayload(deviceResult.sameTypePayload);
             }
 
-            // NÃO fazer logout - manter sessão para que o Gate possa concluir substituição
             setIsLoading(false);
             navigate("/security/same-type-replacement", { replace: true });
+            return;
+          }
+
+          // FAIL-CLOSED: Bloquear login se limite excedido
+          if (deviceResult.error === "DEVICE_LIMIT_EXCEEDED") {
+            console.log("[AUTH][BLOCO2] 🛡️ Limite excedido - redirecionando para DeviceLimitGate");
+
+            if (deviceResult.gatePayload) {
+              useDeviceGateStore.getState().setPayload(deviceResult.gatePayload);
+            }
+
+            setIsLoading(false);
+            navigate("/security/device-limit", { replace: true });
             return;
           }
 
@@ -1413,20 +1434,36 @@ export default function Auth() {
           const errorMsg = getDeviceErrorMessage(deviceResult.error || "UNEXPECTED_ERROR");
           toast.error(errorMsg.title, { description: errorMsg.description });
           await supabase.auth.signOut();
+          resetTurnstile();
           setIsLoading(false);
           getDeviceGateActions().setLoginIntent(false);
           return;
         }
 
-        console.log("[AUTH][BLOCO3] ✅ Dispositivo vinculado pós-login:", deviceResult.deviceId);
+        console.log("[AUTH][BLOCO2] ✅ Dispositivo vinculado:", deviceResult.deviceId);
 
         // ============================================
-        // 🔐 BLOCO 4: CRIAR SESSÃO ÚNICA (RPC)
+        // 🛡️ BLOCO 3: DECISÃO DE 2FA (decide2FA Engine)
         // ============================================
-        try {
+        console.log("[AUTH][BLOCO3] 🔐 Iniciando decisão de 2FA...");
+
+        // 🔐 Owner bypass por role (verificar role primeiro)
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userFor2FA.id)
+          .maybeSingle();
+
+        const userRole = roleData?.role || null;
+        const isOwnerRole = userRole === "owner";
+
+        // 🔐 Owner tem bypass de 2FA
+        if (isOwnerRole) {
+          console.log("[AUTH][BLOCO3] 👑 Owner detectado - bypass de 2FA ativado");
+
+          // Owner não precisa de 2FA, vai direto para sessão RPC
           const SESSION_TOKEN_KEY = "matriz_session_token";
           const ua = navigator.userAgent;
-
           let device_type = "desktop";
           if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
             device_type = /iPad|Tablet/i.test(ua) ? "tablet" : "mobile";
@@ -1445,14 +1482,13 @@ export default function Auth() {
           else if (ua.includes("Android")) os = "Android";
           else if (ua.includes("iPhone")) os = "iOS";
 
-          // 🔐 P0 FIX: Garantir hash do servidor com fallback seguro
-          const serverDeviceHash = deviceResult.deviceHash || localStorage.getItem("matriz_device_server_hash");
+          const serverDeviceHash = deviceResult.deviceHash || localStorage.getItem('matriz_device_server_hash');
           if (!serverDeviceHash) {
             console.error("[AUTH][SESSAO] ❌ P0 VIOLATION: Sem hash do servidor!");
             toast.error("Falha de segurança", { description: "Dispositivo não registrado corretamente." });
             await supabase.auth.signOut();
+            resetTurnstile();
             setIsLoading(false);
-            getDeviceGateActions().setLoginIntent(false);
             return;
           }
 
@@ -1473,43 +1509,156 @@ export default function Auth() {
             });
             await supabase.auth.signOut();
             setIsLoading(false);
-            getDeviceGateActions().setLoginIntent(false);
             return;
           }
 
           localStorage.setItem(SESSION_TOKEN_KEY, data[0].session_token);
-          console.log("[AUTH][SESSAO] ✅ Sessão única criada (RPC) e token armazenado");
-        } catch (err) {
-          console.warn("[AUTH][SESSAO] Erro crítico ao criar sessão (RPC):", err);
+          console.log("[AUTH][SESSAO] ✅ Sessão única criada (Owner bypass) e token armazenado");
+
+          // Marcar mfa_verified = true para owner (bypass)
+          await supabase
+            .from("active_sessions")
+            .update({ mfa_verified: true })
+            .eq("session_token", data[0].session_token);
+
+          toast.success("Login realizado com sucesso!");
+          const target = getPostLoginRedirect(userRole, userFor2FA.email);
+          console.log("[AUTH] ✅ Owner redirecionando para", target);
+          setIsLoading(false);
+          navigate(target, { replace: true });
+          return;
+        }
+
+        // Coletar fingerprint para decisão de 2FA
+        const fingerprintResult = await collectFingerprint();
+
+        // Decidir se precisa de 2FA
+        const twoFADecision = await decide2FA({
+          userId: userFor2FA.id,
+          email: userFor2FA.email || "",
+          deviceHash: deviceResult.deviceHash || fingerprintResult.hash,
+          deviceSignals: {
+            isNewDevice: deviceResult.isNewDevice || false,
+            countryChanged: false,
+            rapidChange: false,
+            riskScore: 0,
+            deviceHash: deviceResult.deviceHash || fingerprintResult.hash,
+          },
+          isPasswordReset: false,
+        });
+
+        console.log("[AUTH][BLOCO3] Decisão de 2FA:", twoFADecision);
+
+        if (twoFADecision.requires2FA) {
+          console.log("[AUTH][BLOCO3] ⚠️ 2FA necessário:", twoFADecision.reason);
+
+          // Mostrar tela de 2FA
+          setPending2FAUser({
+            email: userFor2FA.email || "",
+            userId: userFor2FA.id,
+            nome: userFor2FA.user_metadata?.nome || userFor2FA.user_metadata?.name || "",
+            phone: userFor2FA.phone || "",
+            deviceHash: deviceResult.deviceHash || fingerprintResult.hash,
+          });
+          setShow2FA(true);
+          sessionStorage.setItem("matriz_2fa_pending", "1");
+          sessionStorage.setItem("matriz_2fa_user", JSON.stringify({
+            email: userFor2FA.email,
+            userId: userFor2FA.id,
+          }));
+          setIsLoading(false);
+          return; // Aguardar 2FA antes de continuar
+        }
+
+        // ============================================
+        // 🛡️ BLOCO 4: 2FA NÃO NECESSÁRIO - CRIAR SESSÃO DIRETAMENTE
+        // ============================================
+        console.log("[AUTH][BLOCO4] ✅ 2FA não necessário - criando sessão diretamente");
+
+        // Salvar cache de confiança
+        if (deviceResult.deviceHash) {
+          setTrustCache(userFor2FA.id, deviceResult.deviceHash);
+          console.log("[AUTH] ✅ Trust cache salvo para próximos logins");
+        }
+
+        const SESSION_TOKEN_KEY = "matriz_session_token";
+        const ua = navigator.userAgent;
+        let device_type = "desktop";
+        if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
+          device_type = /iPad|Tablet/i.test(ua) ? "tablet" : "mobile";
+        }
+
+        let browser = "unknown";
+        if (ua.includes("Firefox")) browser = "Firefox";
+        else if (ua.includes("Edg")) browser = "Edge";
+        else if (ua.includes("Chrome")) browser = "Chrome";
+        else if (ua.includes("Safari")) browser = "Safari";
+
+        let os = "unknown";
+        if (ua.includes("Windows")) os = "Windows";
+        else if (ua.includes("Mac")) os = "macOS";
+        else if (ua.includes("Linux")) os = "Linux";
+        else if (ua.includes("Android")) os = "Android";
+        else if (ua.includes("iPhone")) os = "iOS";
+
+        const serverDeviceHash = deviceResult.deviceHash || localStorage.getItem('matriz_device_server_hash');
+        if (!serverDeviceHash) {
+          console.error("[AUTH][SESSAO] ❌ P0 VIOLATION: Sem hash do servidor!");
+          toast.error("Falha de segurança", { description: "Dispositivo não registrado corretamente." });
+          await supabase.auth.signOut();
+          resetTurnstile();
+          setIsLoading(false);
+          return;
+        }
+
+        const { data, error } = await supabase.rpc("create_single_session", {
+          _ip_address: null,
+          _user_agent: navigator.userAgent.slice(0, 255),
+          _device_type: device_type,
+          _browser: browser,
+          _os: os,
+          _device_hash_from_server: serverDeviceHash,
+        });
+
+        if (error || !data?.[0]?.session_token) {
+          console.error("[AUTH][SESSAO] ❌ Falha ao criar sessão única (RPC):", error);
           toast.error("Falha crítica de segurança", {
             description: "Não foi possível iniciar a sessão única. Faça login novamente.",
             duration: 9000,
           });
           await supabase.auth.signOut();
           setIsLoading(false);
-          getDeviceGateActions().setLoginIntent(false);
           return;
         }
 
-        // Buscar role e redirecionar
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", userFor2FA.id)
-          .maybeSingle();
+        localStorage.setItem(SESSION_TOKEN_KEY, data[0].session_token);
+        console.log("[AUTH][SESSAO] ✅ Sessão única criada (sem 2FA) e token armazenado");
 
-        const userRole = roleData?.role || null;
+        // Marcar mfa_verified = true (dispositivo confiável dentro da janela de 24h)
+        await supabase
+          .from("active_sessions")
+          .update({ mfa_verified: true })
+          .eq("session_token", data[0].session_token);
+
+        toast.success("Login realizado com sucesso!");
         const target = getPostLoginRedirect(userRole, userFor2FA.email);
         console.log("[AUTH] ✅ Redirecionando para", target, "(role:", userRole, ")");
         setIsLoading(false);
         navigate(target, { replace: true });
-        return;
+        return; // ✅ Fluxo completo restaurado
       }
 
       // SIGNUP
       console.log("[AUTH] 4. Iniciando signup...");
 
-      // Turnstile REMOVIDO - signup direto
+      if (!isTurnstileVerified || !turnstileToken) {
+        console.error("[AUTH] ERROR: Turnstile ausente no signup");
+        toast.error("Verificação de segurança necessária", {
+          description: "Para criar uma conta, complete a verificação anti-bot.",
+        });
+        setIsLoading(false);
+        return;
+      }
 
       const signupResult = await withTimeout("signUp", signUp(formData.email, formData.password, formData.nome));
 
@@ -1526,7 +1675,7 @@ export default function Auth() {
             description: signupResult.error.message,
           });
         }
-        
+        resetTurnstile();
         setIsLoading(false);
         return;
       }
@@ -2437,7 +2586,10 @@ export default function Auth() {
                       )}
                     </div>
 
-                    {/* Turnstile REMOVIDO - reset de senha direto */}
+                    {/* Cloudflare Turnstile - RESET DE SENHA (obrigatório para todos) */}
+                    <div className="py-2">
+                      <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
+                    </div>
 
                     <Button
                       type="submit"
@@ -2590,7 +2742,10 @@ export default function Auth() {
                   </div>
                 )}
 
-                {/* Turnstile REMOVIDO - login direto */}
+                {/* 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO para TODOS (P1-2 FIX) */}
+                <div className="py-2">
+                  <CloudflareTurnstile {...TurnstileProps} theme="dark" size="flexible" showStatus={true} />
+                </div>
 
                 <Button
                   type="submit"

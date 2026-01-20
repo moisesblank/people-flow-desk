@@ -178,13 +178,13 @@ export const HeroSection = memo(() => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
-              <a href="https://moisesmedeiros.com.br/black-friday-2025" target="_blank" rel="noopener noreferrer">
+              <Link to="/auth">
                 <Button size="lg" className="bg-gradient-to-r from-red-600 to-red-700 text-white px-8 h-12 font-bold w-full sm:w-auto">
                   <Rocket className="w-5 h-5 mr-2" />
                   QUERO SER APROVADO
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
-              </a>
+              </Link>
               <a href="#video">
                 <Button size="lg" variant="outline" className="border-gray-600 bg-white/5 h-12 w-full sm:w-auto">
                   <Play className="w-4 h-4 mr-2 text-red-400" />
@@ -264,7 +264,7 @@ export const HeroSection = memo(() => {
               {...gpuAnimationProps.fadeUp}
               className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center lg:justify-start mb-8"
             >
-              <a href="https://moisesmedeiros.com.br/black-friday-2025" target="_blank" rel="noopener noreferrer">
+              <Link to="/auth">
                 <Button 
                   size="lg" 
                   className="bg-gradient-to-r from-red-600 to-red-700 text-white shadow-lg shadow-red-600/30 px-6 md:px-10 h-12 md:h-14 font-black w-full sm:w-auto hover:shadow-red-600/50 transition-shadow"
@@ -273,7 +273,7 @@ export const HeroSection = memo(() => {
                   QUERO SER APROVADO
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
-              </a>
+              </Link>
               <a href="#video">
                 <Button 
                   size="lg" 

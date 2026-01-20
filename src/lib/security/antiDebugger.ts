@@ -29,14 +29,12 @@ function isPreviewEnvironment(): boolean {
   }
   
   // Preview/desenvolvimento: bypass para testes
-  // 🚨 P0 FIX: Adicionado .vercel.app e .lovable.app
+  // Inclui id-preview--.lovable.app (preview do Lovable)
   return (
     hostname === 'localhost' ||
     hostname === '127.0.0.1' ||
     hostname.includes('lovableproject.com') ||
-    hostname.includes('.lovable.app') ||
-    hostname.includes('id-preview--') ||
-    hostname.includes('.vercel.app')
+    hostname.includes('id-preview--') // Preview do Lovable (id-preview--xxx.lovable.app)
   );
 }
 

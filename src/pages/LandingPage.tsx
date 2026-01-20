@@ -258,13 +258,13 @@ export default function LandingPage() {
                   Entrar
                 </Button>
               </Link>
-              <a href="http://pro.moisesmedeiros.com.br/auth">
+              <Link to="/auth">
                 <Button className="bg-primary hover:bg-primary-hover text-primary-foreground gap-2 rounded-xl shadow-wine">
                   <GraduationCap className="h-4 w-4" />
                   <span className="hidden sm:inline">Área do Aluno</span>
                   <span className="sm:hidden">Entrar</span>
                 </Button>
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -914,7 +914,7 @@ export default function LandingPage() {
                 <li><a href="#cursos" className="text-sm text-muted-foreground hover:text-primary transition-colors">Cursos</a></li>
                 <li><a href="#cronograma" className="text-sm text-muted-foreground hover:text-primary transition-colors">Cronograma</a></li>
                 <li><a href="#aprovados" className="text-sm text-muted-foreground hover:text-primary transition-colors">Aprovados</a></li>
-                <li><a href="http://pro.moisesmedeiros.com.br/auth" className="text-sm text-muted-foreground hover:text-primary transition-colors">Área do Aluno</a></li>
+                <li><Link to="/auth" className="text-sm text-muted-foreground hover:text-primary transition-colors">Área do Aluno</Link></li>
               </ul>
             </div>
 
