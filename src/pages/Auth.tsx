@@ -657,6 +657,19 @@ export default function Auth() {
   const [isUpdatePassword, setIsUpdatePassword] = useState(false); // 🎯 P0 FIX: Estado para definir nova senha
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  // 🐕 WATCHDOG P0 FIX v11.3: Timeout de 5s para GARANTIR renderização do form
+  // Se isCheckingSession ficar true por mais de 5 segundos, forçar false
+  useEffect(() => {
+    if (!isCheckingSession) return; // Só ativar watchdog se estiver em estado de loading
+    
+    const watchdogTimeout = setTimeout(() => {
+      console.warn("[AUTH] 🐕 Watchdog ativado - forçando renderização do form após 5s de timeout");
+      setIsCheckingSession(false);
+    }, 5000); // 5 segundos
+    
+    return () => clearTimeout(watchdogTimeout);
+  }, [isCheckingSession]);
   const [showPassword, setShowPassword] = useState(true); // 🎯 Visível por padrão
   const [showConfirmPassword, setShowConfirmPassword] = useState(true); // 🎯 Visível por padrão
   const [errors, setErrors] = useState<Record<string, string>>({});
