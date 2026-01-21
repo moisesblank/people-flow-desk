@@ -1284,6 +1284,7 @@ export default function Auth() {
           if (isOwnerEmail) {
             console.warn("[AUTH][SESSAO] 👑 Owner bypass: falha em create_single_session, prosseguindo");
             localStorage.setItem(SESSION_TOKEN_KEY, `owner-fallback-${Date.now()}`);
+            localStorage.setItem('matriz_login_timestamp', Date.now().toString());
           } else {
             toast.error("Falha ao criar sessão segura", { description: "Tente novamente." });
             await supabase.auth.signOut();
@@ -1293,6 +1294,10 @@ export default function Auth() {
         } else {
           const sessionToken = sessionData[0].session_token;
           localStorage.setItem(SESSION_TOKEN_KEY, sessionToken);
+          
+          // 🔒 P0 FIX: Salvar timestamp do login para grace period no SessionGuard
+          localStorage.setItem('matriz_login_timestamp', Date.now().toString());
+          
           console.log("[AUTH][SESSAO] ✅ Sessão única criada:", sessionToken.slice(0, 8) + "...");
           
           // 👑 OWNER FIX: Marcar mfa_verified = true automaticamente para Owner
@@ -1316,6 +1321,13 @@ export default function Auth() {
           .maybeSingle();
 
         const userRole = roleData?.role || null;
+        
+        // 🔒 P0 FIX: Salvar cache do Owner ANTES do redirect
+        if (userRole === OWNER_ROLE || userFor2FA.email?.toLowerCase() === OWNER_EMAIL) {
+          localStorage.setItem('matriz_is_owner_cache', 'true');
+          localStorage.setItem('matriz_user_role', OWNER_ROLE);
+        }
+        
         const target = getPostLoginRedirect(userRole, userFor2FA.email);
         console.log("[AUTH] ✅ Redirecionando para", target, "(role:", userRole, ")");
         setIsLoading(false);
@@ -1553,6 +1565,8 @@ export default function Auth() {
                 }
 
                 localStorage.setItem(SESSION_TOKEN_KEY, data[0].session_token);
+                // 🔒 P0 FIX: Salvar timestamp do login para grace period no SessionGuard
+                localStorage.setItem('matriz_login_timestamp', Date.now().toString());
                 console.log("[AUTH][SESSAO] ✅ Sessão única criada pós-2FA (RPC) e token armazenado");
               } catch (err) {
                 console.warn("[AUTH][SESSAO] Erro crítico ao criar sessão pós-2FA (RPC):", err);
@@ -1575,6 +1589,14 @@ export default function Auth() {
                   .maybeSingle();
 
                 const userRole = roleData?.role || null;
+                
+                // 🔒 P0 FIX: Salvar cache do Owner ANTES do redirect
+                const isOwnerUser = userRole === OWNER_ROLE || pending2FAUser.email?.toLowerCase() === OWNER_EMAIL;
+                if (isOwnerUser) {
+                  localStorage.setItem('matriz_is_owner_cache', 'true');
+                  localStorage.setItem('matriz_user_role', OWNER_ROLE);
+                }
+                
                 const target = getPostLoginRedirect(userRole, pending2FAUser.email);
 
                 console.log("[AUTH] ✅ 2FA completo - redirecionando para", target, "(role:", userRole, ")");
