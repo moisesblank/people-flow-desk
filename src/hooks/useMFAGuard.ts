@@ -1,11 +1,13 @@
 // ============================================
 // 🔐 MFA GUARD HOOK — 2FA Isolado por Ação
 // NÃO TOCA em login/sessão/dispositivo
+// 🛡️ P0 FIX: error é SEMPRE string (evita React Error #61)
 // ============================================
 
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { formatError } from '@/lib/utils/formatError';
 
 // Ações que requerem 2FA
 export type MFAProtectedAction = 
@@ -88,7 +90,7 @@ export function useMFAGuard(action: MFAProtectedAction): MFAGuardResult {
         setState(prev => ({ 
           ...prev, 
           isChecking: false, 
-          error: error.message 
+          error: formatError(error)
         }));
         return false;
       }
@@ -108,7 +110,7 @@ export function useMFAGuard(action: MFAProtectedAction): MFAGuardResult {
       setState(prev => ({ 
         ...prev, 
         isChecking: false, 
-        error: 'Erro ao verificar 2FA' 
+        error: formatError(err, 'Erro ao verificar 2FA')
       }));
       return false;
     }
@@ -130,7 +132,7 @@ export function useMFAGuard(action: MFAProtectedAction): MFAGuardResult {
         ...prev, 
         needsMFA: true, 
         isVerified: false,
-        error: 'Código inválido ou expirado'
+        error: formatError('Código inválido ou expirado')
       }));
       return;
     }
