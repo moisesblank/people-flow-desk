@@ -227,7 +227,7 @@ const ChatMessageItem = memo(({
               userRole === 'owner' && "bg-gradient-to-br from-amber-500 to-orange-600",
               userRole === 'admin' && "bg-gradient-to-br from-red-500 to-pink-600",
               userRole === 'moderator' && "bg-gradient-to-br from-purple-500 to-indigo-600",
-              userRole === 'beta' && "bg-gradient-to-br from-cyan-500 to-blue-600",
+              ['beta', 'aluno_presencial', 'beta_expira'].includes(userRole || '') && "bg-gradient-to-br from-cyan-500 to-blue-600",
               userRole === 'viewer' && "bg-gradient-to-br from-gray-600 to-gray-800"
             )}>
               {userName?.slice(0, 2).toUpperCase()}
