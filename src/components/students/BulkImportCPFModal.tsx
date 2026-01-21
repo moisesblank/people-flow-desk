@@ -41,6 +41,22 @@ interface ImportResult {
   status: 'success' | 'error' | 'skipped';
   error?: string;
   cpf_receita_nome?: string;
+  // Enriquecimento pós-import (para relatório detalhado)
+  user_id?: string;
+  role?: string;
+  expires_at?: string;
+  tipo_acesso?: string;
+  arquivo?: string;
+  importado_em?: string;
+}
+
+interface ImportRun {
+  id: string;
+  arquivo: string;
+  started_at: string;
+  finished_at: string;
+  total: number;
+  results: ImportResult[];
 }
 
 interface BulkImportCPFModalProps {
@@ -53,12 +69,17 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
   const [step, setStep] = useState<'upload' | 'preview' | 'importing' | 'results'>('upload');
   const [students, setStudents] = useState<StudentRow[]>([]);
   const [results, setResults] = useState<ImportResult[]>([]);
+  const [runs, setRuns] = useState<ImportRun[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [fileName, setFileName] = useState('');
   const [importStatus, setImportStatus] = useState<string>('');
   const resumeFromIndexRef = useRef(0);
   const cancelRef = useRef(false);
+
+  // Anti-travamento (telemetria local da UI)
+  const lastUiTickRef = useRef<number>(Date.now());
+  const currentBatchRef = useRef<{ batchIndex: number; batchTotal: number; startedAt: number } | null>(null);
 
   useEffect(() => {
     cancelRef.current = false;
@@ -90,7 +111,120 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
     setIsProcessing(false);
     setImportStatus('');
     resumeFromIndexRef.current = 0;
+    currentBatchRef.current = null;
   }, []);
+
+  const resetForNextFile = useCallback(() => {
+    // Mantém os runs anteriores (relatório consolidado dos 2 excels)
+    setStep('upload');
+    setStudents([]);
+    setResults([]);
+    setProgress(0);
+    setFileName('');
+    setIsProcessing(false);
+    setImportStatus('');
+    resumeFromIndexRef.current = 0;
+    currentBatchRef.current = null;
+  }, []);
+
+  const setStatus = useCallback((msg: string) => {
+    lastUiTickRef.current = Date.now();
+    setImportStatus(msg);
+  }, []);
+
+  const chunk = <T,>(arr: T[], size: number) => {
+    const out: T[][] = [];
+    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
+  };
+
+  const inferTipoAcesso = (r: ImportResult): string => {
+    if (r.status === 'success') return `Acesso CRIADO: ${r.role || 'beta_expira'} (1 ano)`;
+    const err = (r.error || '').toLowerCase();
+    if (err.includes('registrado sem acesso') || r.email?.includes('placeholder.local') || r.email === '(sem email)') {
+      return 'SEM ACESSO (sem email) — cadastrado como pendente';
+    }
+    if (err.includes('cpf já cadastrado') || err.includes('email já cadastrado')) {
+      if (r.role) return `JÁ EXISTIA — acesso atual: ${r.role}${r.expires_at ? ` (expira: ${new Date(r.expires_at).toLocaleDateString()})` : ''}`;
+      return 'JÁ EXISTIA — acesso atual: NÃO IDENTIFICADO';
+    }
+    if (r.status === 'skipped') return `PULADO — ${r.error || 'motivo não informado'}`;
+    return `FALHOU — ${r.error || 'erro desconhecido'}`;
+  };
+
+  const enrichResultsWithAccess = useCallback(async (base: ImportResult[], arquivo: string, startedAtISO: string) => {
+    // Enriquecimento via banco:
+    // - profiles: id, cpf, email
+    // - user_roles: role, expires_at
+    // Observação: quem não tem email não tem profile/user_roles.
+    const cpfs = Array.from(
+      new Set(
+        base
+          .map((r) => (r.cpf || '').replace(/\D/g, '').padStart(11, '0'))
+          .filter(Boolean),
+      ),
+    );
+
+    const cpfToProfile = new Map<string, { user_id: string; email?: string }>();
+    const userIdToRole = new Map<string, { role?: string; expires_at?: string }>();
+
+    // profiles por CPF (chunks)
+    for (const cpfChunk of chunk(cpfs, 200)) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id,email,cpf')
+        .in('cpf', cpfChunk);
+      (data || []).forEach((p: any) => {
+        if (p?.cpf && p?.id) cpfToProfile.set(String(p.cpf).padStart(11, '0'), { user_id: p.id, email: p.email });
+      });
+    }
+
+    const userIds = Array.from(new Set(Array.from(cpfToProfile.values()).map((v) => v.user_id).filter(Boolean)));
+    for (const idChunk of chunk(userIds, 200)) {
+      const { data } = await supabase
+        .from('user_roles')
+        .select('user_id,role,expires_at')
+        .in('user_id', idChunk);
+      (data || []).forEach((ur: any) => {
+        if (ur?.user_id) userIdToRole.set(ur.user_id, { role: ur.role, expires_at: ur.expires_at || undefined });
+      });
+    }
+
+    const finishedAtISO = new Date().toISOString();
+    const enriched = base.map((r) => {
+      const normalizedCpf = (r.cpf || '').replace(/\D/g, '').padStart(11, '0');
+      const prof = cpfToProfile.get(normalizedCpf);
+      const roleRow = prof ? userIdToRole.get(prof.user_id) : undefined;
+      const role = r.status === 'success' ? (roleRow?.role || 'beta_expira') : roleRow?.role;
+      const expires_at = roleRow?.expires_at;
+      const merged: ImportResult = {
+        ...r,
+        cpf: normalizedCpf,
+        arquivo,
+        importado_em: finishedAtISO,
+        user_id: prof?.user_id,
+        role,
+        expires_at,
+      };
+      merged.tipo_acesso = inferTipoAcesso(merged);
+      return merged;
+    });
+
+    // também registra no estado de runs
+    setRuns((prev) => [
+      ...prev,
+      {
+        id: `${startedAtISO}:${arquivo}`,
+        arquivo,
+        started_at: startedAtISO,
+        finished_at: finishedAtISO,
+        total: base.length,
+        results: enriched,
+      },
+    ]);
+
+    return enriched;
+  }, [setRuns]);
 
   const handleClose = useCallback(() => {
     if (!isProcessing) {
@@ -179,7 +313,8 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
     setStep('importing');
     setIsProcessing(true);
     setProgress(0);
-    setImportStatus('Inicializando importação...');
+    setStatus('Inicializando importação...');
+    const runStartedAtISO = new Date().toISOString();
 
     try {
       // Importação em lotes para evitar timeout/loop em planilhas grandes
@@ -205,7 +340,8 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
         const doneBefore = start;
         const doneBeforePct = Math.floor((doneBefore / total) * 100);
 
-        setImportStatus(`Lote ${batchIndex}/${batchTotal} — preparando (${batch.length} alunos)`);
+        currentBatchRef.current = { batchIndex, batchTotal, startedAt: Date.now() };
+        setStatus(`Lote ${batchIndex}/${batchTotal} — preparando (${batch.length} alunos)`);
         // UI: manter sempre >0 durante o primeiro lote para evidenciar que “rodou”
         // (o 1º lote pode demorar e ficava visualmente travado em 0%)
         setProgress(Math.min(99, Math.max(doneBeforePct, doneBefore === 0 ? 1 : doneBeforePct)));
@@ -214,7 +350,7 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
 
         toast.message(`Importando lote ${batchIndex}/${batchTotal}...`, { description: `${batch.length} alunos` });
 
-        setImportStatus(`Lote ${batchIndex}/${batchTotal} — enviando para o backend...`);
+        setStatus(`Lote ${batchIndex}/${batchTotal} — enviando para o backend...`);
         
         // RESILIENTE: tenta o lote, mas NÃO para se falhar - continua com próximos lotes
         try {
@@ -289,15 +425,17 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
         // progresso pós-lote (SEMPRE atualiza, mesmo com erro)
         const done = Math.min(start + batch.length, total);
         setProgress(Math.floor((done / total) * 100));
-        setImportStatus(`Lote ${batchIndex}/${batchTotal} — ${totalSuccess} ok, ${totalError} erros`);
+        setStatus(`Lote ${batchIndex}/${batchTotal} — ${totalSuccess} ok, ${totalError} erros`);
 
         // checkpoint após processamento
         resumeFromIndexRef.current = done;
       }
 
       setProgress(100);
-      setImportStatus('Finalizado. Gerando relatório...');
-      setResults(aggregatedResults);
+      setStatus('Finalizado. Validando tipo de acesso no banco (roles/expiração)...');
+      const enriched = await enrichResultsWithAccess(aggregatedResults, fileName || 'arquivo.xlsx', runStartedAtISO);
+      setStatus('Finalizado. Relatório pronto.');
+      setResults(enriched);
       setStep('results');
 
       if (totalSuccess > 0) {
@@ -323,8 +461,9 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
       setStep('preview');
     } finally {
       setIsProcessing(false);
+      currentBatchRef.current = null;
     }
-  }, [students, onSuccess]);
+  }, [students, onSuccess, fileName, enrichResultsWithAccess, setStatus]);
 
   const successResults = results.filter(r => r.status === 'success');
   const errorResults = results.filter(r => r.status === 'error');
@@ -332,12 +471,19 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
 
   // Exportar resultados para Excel
   const exportResults = useCallback(() => {
-    const exportData = results.map(r => ({
+    const combined = runs.length > 0 ? runs.flatMap((r) => r.results) : results;
+    const exportData = combined.map(r => ({
+      'Arquivo': r.arquivo || fileName || '-',
+      'Importado em': r.importado_em ? new Date(r.importado_em).toLocaleString() : '-',
       'Linha': r.row,
       'Nome': r.nome,
       'Email': r.email,
       'CPF': r.cpf,
       'Status': r.status === 'success' ? 'CRIADO' : r.status === 'error' ? 'ERRO' : 'PULADO',
+      'Tipo de Acesso': r.tipo_acesso || inferTipoAcesso(r),
+      'Role': r.role || '-',
+      'Expira em': r.expires_at ? new Date(r.expires_at).toLocaleDateString() : '-',
+      'User ID': r.user_id || '-',
       'Motivo': r.error || 'OK',
       'Nome Receita': r.cpf_receita_nome || '-'
     }));
@@ -348,7 +494,7 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
     XLSX.writeFile(wb, `resultado-importacao-${new Date().toISOString().split('T')[0]}.xlsx`);
     
     toast.success('Relatório exportado!');
-  }, [results]);
+  }, [results, runs, fileName]);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -508,6 +654,14 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
                       {importStatus}
                     </p>
                   )}
+
+                  {/* Anti-pânico: se estiver “parado” em 42% é quase sempre lote rodando (até 180s) */}
+                  {currentBatchRef.current && (
+                    <p className="text-[11px] text-muted-foreground mt-2">
+                      Lote {currentBatchRef.current.batchIndex}/{currentBatchRef.current.batchTotal} em execução há{' '}
+                      {Math.floor((Date.now() - currentBatchRef.current.startedAt) / 1000)}s (timeout: 180s)
+                    </p>
+                  )}
               </div>
               <Progress value={progress} className="h-2" />
               <p className="text-center text-sm text-muted-foreground">
@@ -591,9 +745,14 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
               <div className="flex justify-between gap-2">
                 <Button variant="outline" onClick={exportResults} className="border-amber-500/50">
                   <Download className="h-4 w-4 mr-2" />
-                  Exportar Relatório
+                  Exportar Relatório (consolidado)
                 </Button>
-                <Button variant="outline" onClick={handleClose}>Fechar</Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={resetForNextFile}>
+                    Importar 2º Excel
+                  </Button>
+                  <Button variant="outline" onClick={handleClose}>Fechar</Button>
+                </div>
               </div>
             </motion.div>
           )}
