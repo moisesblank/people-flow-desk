@@ -35,19 +35,15 @@ serve(async (req) => {
       );
     }
 
-    // Verificar quem está chamando - usar cliente do usuário para validar o token
+    // Verificar quem está chamando - usar supabaseAdmin.auth.getUser(token) com o JWT
     const token = authHeader.replace("Bearer ", "");
-    const supabaseUser = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } }
-    });
-    
-    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getUser();
-    const caller = claimsData?.user;
+    const { data: userData, error: authError } = await supabaseAdmin.auth.getUser(token);
+    const caller = userData?.user;
 
-    if (claimsError || !caller) {
-      console.error("[admin-ban-user] ❌ Token inválido:", claimsError);
+    if (authError || !caller) {
+      console.error("[admin-ban-user] ❌ Falha na validação do token:", authError?.message || "usuário não encontrado");
       return new Response(
-        JSON.stringify({ error: "Token inválido" }),
+        JSON.stringify({ error: "Não autorizado - token inválido" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
