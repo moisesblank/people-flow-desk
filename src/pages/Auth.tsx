@@ -32,7 +32,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { formatError } from "@/lib/utils/formatError";
 import { useAuth } from "@/hooks/useAuth";
 // 2FA Decision Engine (SYNAPSE Ω v10.x) com cache de confiança
 import { useDeviceFingerprint, decide2FA, setTrustCache } from "@/hooks/auth";
@@ -50,9 +49,6 @@ import { useDeviceGateStore, DeviceGatePayload, DeviceInfo, CurrentDeviceInfo } 
 import { useSameTypeReplacementStore } from "@/state/sameTypeReplacementStore";
 import { collectFingerprintRawData, generateDeviceName } from "@/lib/deviceFingerprintRaw";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
-
-// 🔒 OWNER GUARD — Centralização P0
-import { enforceOwnerRedirect, OWNER_HOME, OWNER_ROLE, OWNER_EMAIL } from "@/owner-guard";
 
 // 🛡️ CRITÉRIO EXPLÍCITO: Getter para setLoginIntent (evita re-render desnecessário)
 const getDeviceGateActions = () => useDeviceGateStore.getState();
@@ -79,20 +75,380 @@ const ForcePasswordChange = lazy(() =>
 
 // ============================================
 // 🕷️ SPIDER-MAN CINEMATIC 2300 COMPONENTS
-// EXTRAÍDOS para AuthSpiderComponents.tsx (otimização de build)
+// Performance: CSS-only GPU-accelerated animations
+// Cores: Vermelho/Azul heroico profundo
 // ============================================
-import {
-  SpiderBackground,
-  SpiderEyes,
-  SpiderVeins,
-  SpiderCardFrame,
-  HolographicGrid,
-  OrbitalRings,
-  DNAHelix,
-  CosmicBackground,
-  HoloCardFrame,
-  ApprovalHeroText,
-} from "@/components/auth/AuthSpiderComponents";
+
+// Spider-Man Deep Space Background (STATIC - no animations per user request)
+// ✅ forwardRef para evitar "Function components cannot be given refs"
+
+const SpiderBackground = forwardRef<HTMLDivElement>((_, ref) => (
+  <div
+    ref={ref}
+    className="absolute inset-0 pointer-events-none"
+    style={{
+      background: "linear-gradient(135deg, hsl(230 40% 6%) 0%, hsl(230 40% 3%) 100%)",
+    }}
+  />
+));
+SpiderBackground.displayName = "SpiderBackground";
+
+// Spider Eyes - DISABLED per user request (no animated glows)
+const SpiderEyes = forwardRef<HTMLDivElement>((_, ref) => <span ref={ref} />);
+SpiderEyes.displayName = "SpiderEyes";
+
+// Energy Veins - DISABLED per user request (no animated lines)
+const SpiderVeins = forwardRef<HTMLDivElement>((_, ref) => <span ref={ref} />);
+SpiderVeins.displayName = "SpiderVeins";
+
+// Spider Card Frame - Tech Interface
+function SpiderCardFrame() {
+  return (
+    <>
+      {/* Animated corner brackets - Red/Blue */}
+      <div className="absolute -top-1 -left-1 w-8 h-8 border-l-2 border-t-2 spider-corner spider-corner-red" />
+      <div
+        className="absolute -top-1 -right-1 w-8 h-8 border-r-2 border-t-2 spider-corner spider-corner-blue"
+        style={{ animationDelay: "0.6s" }}
+      />
+      <div
+        className="absolute -bottom-1 -left-1 w-8 h-8 border-l-2 border-b-2 spider-corner spider-corner-blue"
+        style={{ animationDelay: "1.2s" }}
+      />
+      <div
+        className="absolute -bottom-1 -right-1 w-8 h-8 border-r-2 border-b-2 spider-corner spider-corner-red"
+        style={{ animationDelay: "1.8s" }}
+      />
+
+      {/* Scanning beam effect - Red/Blue gradient */}
+      <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+        <div className="spider-card-scan absolute inset-x-0 h-[2px]" />
+      </div>
+    </>
+  );
+}
+
+// Holographic Grid 2300
+function HolographicGrid() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Primary hex grid */}
+      <svg className="absolute inset-0 w-full h-full opacity-[0.08]" preserveAspectRatio="none">
+        <defs>
+          <pattern id="hexGrid2300" x="0" y="0" width="50" height="43.4" patternUnits="userSpaceOnUse">
+            <path
+              d="M25,0 L50,14.4 L50,28.9 L25,43.4 L0,28.9 L0,14.4 Z"
+              fill="none"
+              stroke="url(#holoGradient)"
+              strokeWidth="0.5"
+            />
+          </pattern>
+          <linearGradient id="holoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="hsl(185 100% 50%)" />
+            <stop offset="50%" stopColor="hsl(280 100% 60%)" />
+            <stop offset="100%" stopColor="hsl(320 100% 60%)" />
+          </linearGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#hexGrid2300)" />
+      </svg>
+
+      {/* Energy flow lines */}
+      <div className="absolute inset-0">
+        <div
+          className="absolute h-px w-full auth-energy-flow"
+          style={{
+            top: "25%",
+            background: "linear-gradient(90deg, transparent, hsl(var(--holo-cyan) / 0.4), transparent)",
+          }}
+        />
+        <div
+          className="absolute h-px w-full auth-energy-flow-reverse"
+          style={{
+            top: "75%",
+            background: "linear-gradient(90deg, transparent, hsl(var(--holo-purple) / 0.4), transparent)",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// Orbital Ring System
+function OrbitalRings() {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+      {/* Ring 1 - Outer */}
+      <div
+        className="absolute w-[800px] h-[800px] rounded-full border border-holo-cyan/20 auth-orbital-ring"
+        style={{
+          boxShadow: "inset 0 0 60px hsl(var(--holo-cyan) / 0.1), 0 0 60px hsl(var(--holo-cyan) / 0.05)",
+        }}
+      />
+      {/* Ring 2 - Middle */}
+      <div
+        className="absolute w-[600px] h-[600px] rounded-full border border-holo-purple/20 auth-orbital-ring-reverse"
+        style={{
+          boxShadow: "inset 0 0 40px hsl(var(--holo-purple) / 0.1), 0 0 40px hsl(var(--holo-purple) / 0.05)",
+        }}
+      />
+      {/* Ring 3 - Inner */}
+      <div
+        className="absolute w-[400px] h-[400px] rounded-full border border-primary/30 auth-orbital-ring"
+        style={{
+          animationDuration: "15s",
+          boxShadow: "inset 0 0 30px hsl(var(--primary) / 0.15), 0 0 30px hsl(var(--primary) / 0.1)",
+        }}
+      />
+
+      {/* Orbital nodes */}
+      {[0, 60, 120, 180, 240, 300].map((angle, i) => (
+        <div
+          key={i}
+          className="absolute w-3 h-3 rounded-full auth-orbital-node"
+          style={{
+            background: i % 2 === 0 ? "hsl(var(--holo-cyan))" : "hsl(var(--holo-purple))",
+            boxShadow:
+              i % 2 === 0
+                ? "0 0 15px hsl(var(--holo-cyan)), 0 0 30px hsl(var(--holo-cyan) / 0.5)"
+                : "0 0 15px hsl(var(--holo-purple)), 0 0 30px hsl(var(--holo-purple) / 0.5)",
+            transform: `rotate(${angle}deg) translateX(300px)`,
+            animationDelay: `${i * 0.5}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// DNA Helix Animation
+function DNAHelix() {
+  return (
+    <div className="absolute left-8 top-0 bottom-0 w-16 overflow-hidden pointer-events-none opacity-40">
+      <div className="auth-dna-helix h-full">
+        {[...Array(12)].map((_, i) => (
+          <div key={i} className="absolute w-full flex justify-between items-center" style={{ top: `${i * 8.33}%` }}>
+            <div
+              className="w-3 h-3 rounded-full auth-dna-node-left"
+              style={{
+                background: "hsl(var(--holo-cyan))",
+                boxShadow: "0 0 10px hsl(var(--holo-cyan))",
+                animationDelay: `${i * 0.2}s`,
+              }}
+            />
+            <div
+              className="flex-1 h-px mx-1"
+              style={{
+                background: "linear-gradient(90deg, hsl(var(--holo-cyan) / 0.5), hsl(var(--holo-purple) / 0.5))",
+              }}
+            />
+            <div
+              className="w-3 h-3 rounded-full auth-dna-node-right"
+              style={{
+                background: "hsl(var(--holo-purple))",
+                boxShadow: "0 0 10px hsl(var(--holo-purple))",
+                animationDelay: `${i * 0.2 + 0.5}s`,
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Cosmic Background with Stars
+function CosmicBackground() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Deep space gradient */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at 30% 20%, hsl(280 40% 8% / 0.8) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, hsl(185 40% 5% / 0.6) 0%, transparent 50%)",
+        }}
+      />
+
+      {/* Twinkling stars */}
+      {[...Array(40)].map((_, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full auth-star"
+          style={{
+            width: `${1 + Math.random() * 2}px`,
+            height: `${1 + Math.random() * 2}px`,
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            background: "#fff",
+            animationDelay: `${Math.random() * 4}s`,
+            animationDuration: `${2 + Math.random() * 3}s`,
+          }}
+        />
+      ))}
+
+      {/* Nebula glow spots */}
+      <div
+        className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl"
+        style={{
+          background: "radial-gradient(circle, hsl(var(--primary) / 0.15) 0%, transparent 70%)",
+        }}
+      />
+      <div
+        className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-3xl"
+        style={{
+          background: "radial-gradient(circle, hsl(var(--holo-purple) / 0.1) 0%, transparent 70%)",
+        }}
+      />
+      <div
+        className="absolute top-1/2 right-1/3 w-64 h-64 rounded-full blur-3xl"
+        style={{
+          background: "radial-gradient(circle, hsl(var(--holo-cyan) / 0.08) 0%, transparent 70%)",
+        }}
+      />
+    </div>
+  );
+}
+
+// Holographic Card Frame
+function HoloCardFrame() {
+  return (
+    <>
+      {/* Animated corner brackets */}
+      <div className="absolute -top-1 -left-1 w-8 h-8 border-l-2 border-t-2 border-holo-cyan/60 auth-corner-pulse" />
+      <div
+        className="absolute -top-1 -right-1 w-8 h-8 border-r-2 border-t-2 border-holo-purple/60 auth-corner-pulse"
+        style={{ animationDelay: "0.5s" }}
+      />
+      <div
+        className="absolute -bottom-1 -left-1 w-8 h-8 border-l-2 border-b-2 border-holo-purple/60 auth-corner-pulse"
+        style={{ animationDelay: "1s" }}
+      />
+      <div
+        className="absolute -bottom-1 -right-1 w-8 h-8 border-r-2 border-b-2 border-holo-cyan/60 auth-corner-pulse"
+        style={{ animationDelay: "1.5s" }}
+      />
+
+      {/* Scanning beam effect */}
+      <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+        <div
+          className="auth-card-scan absolute inset-x-0 h-px"
+          style={{
+            background: "linear-gradient(90deg, transparent, hsl(var(--holo-cyan) / 0.8), transparent)",
+            boxShadow: "0 0 20px hsl(var(--holo-cyan) / 0.5)",
+          }}
+        />
+      </div>
+    </>
+  );
+}
+
+// Stats Display - Futuristic 2300 version
+function ApprovalHeroText() {
+  // 🏛️ LEI I - Performance Tiering (5000+ usuários)
+  const { shouldAnimate, shouldBlur, isLowEnd } = useConstitutionPerformance();
+
+  return (
+    <div className="relative text-center mt-6 w-full overflow-visible">
+      {/* 🔥 GLOW BACKGROUND - Apenas em high-end */}
+      {!isLowEnd && (
+        <div
+          className="absolute inset-0 -z-10 opacity-60 auth-hero-glow-bg"
+          style={{
+            background: "radial-gradient(ellipse 80% 50% at 50% 50%, hsl(320 90% 50% / 0.15), transparent 70%)",
+            filter: shouldBlur ? "blur(40px)" : "blur(20px)",
+          }}
+        />
+      )}
+
+      {/* ⚡ MAIN TITLE - CSS-only animations for stability */}
+      <div className={shouldAnimate ? "auth-hero-title-animated" : ""}>
+        <h2
+          className="text-3xl sm:text-4xl xl:text-5xl font-black text-white leading-[1.1] tracking-tight"
+          style={{ textShadow: !isLowEnd ? "0 0 60px hsl(0 0% 100% / 0.1)" : undefined }}
+        >
+          O Professor que
+        </h2>
+
+        {/* 🌟 HIGHLIGHT - "Mais Aprova" com GLOW otimizado */}
+        <div className={`relative inline-block py-2 ${shouldAnimate ? "auth-hero-highlight-animated" : ""}`}>
+          {/* Glow Layer - só em high-end */}
+          {!isLowEnd && (
+            <div
+              className="absolute inset-0 -z-10 rounded-lg auth-glow-layer"
+              style={{
+                background:
+                  "linear-gradient(90deg, hsl(280 90% 60% / 0.4), hsl(320 95% 55% / 0.5), hsl(0 90% 55% / 0.4))",
+                filter: shouldBlur ? "blur(25px)" : "blur(15px)",
+              }}
+            />
+          )}
+
+          <span
+            className="relative text-4xl sm:text-5xl xl:text-6xl font-black"
+            style={{
+              background: "linear-gradient(90deg, hsl(280 90% 65%), hsl(320 95% 60%), hsl(350 90% 58%))",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              filter: !isLowEnd
+                ? "drop-shadow(0 0 30px hsl(320 90% 55% / 0.6)) drop-shadow(0 0 60px hsl(320 90% 55% / 0.3))"
+                : "drop-shadow(0 0 15px hsl(320 90% 55% / 0.4))",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Mais Aprova
+          </span>
+        </div>
+
+        <h2
+          className={`text-3xl sm:text-4xl xl:text-5xl font-black text-white leading-[1.1] tracking-tight ${shouldAnimate ? "auth-hero-subtitle-animated" : ""}`}
+          style={{ textShadow: !isLowEnd ? "0 0 60px hsl(0 0% 100% / 0.1)" : undefined }}
+        >
+          em <span style={{ color: "hsl(210 100% 70%)" }}>Medicina</span> no Brasil
+        </h2>
+      </div>
+
+      {/* 📝 DESCRIPTION */}
+      <p
+        className={`mt-6 text-sm sm:text-base text-gray-300 max-w-sm mx-auto leading-relaxed ${shouldAnimate ? "auth-hero-desc-animated" : ""}`}
+      >
+        Química de alto nível com metodologia exclusiva.
+        <br />
+        <span className="text-gray-400">Milhares de alunos aprovados nas melhores faculdades do país.</span>
+      </p>
+
+      {/* ✨ DECORATIVE LINE */}
+      <div className={`flex items-center justify-center gap-4 mt-6 ${shouldAnimate ? "auth-hero-line-animated" : ""}`}>
+        <div
+          className="h-px w-16 sm:w-24"
+          style={{ background: "linear-gradient(90deg, transparent, hsl(320 90% 55% / 0.6), hsl(320 90% 55%))" }}
+        />
+        <div className="relative">
+          <div
+            className={`w-3 h-3 rounded-full ${shouldAnimate ? "auth-orb-animated" : ""}`}
+            style={{
+              background: "linear-gradient(135deg, hsl(320 90% 60%), hsl(280 90% 55%))",
+              boxShadow: !isLowEnd
+                ? "0 0 15px hsl(320 90% 55% / 0.8), 0 0 30px hsl(320 90% 55% / 0.4)"
+                : "0 0 10px hsl(320 90% 55% / 0.6)",
+            }}
+          />
+          {/* Orbiting Ring - só em high-end com animações */}
+          {!isLowEnd && shouldAnimate && (
+            <div
+              className="absolute inset-0 rounded-full border border-primary/30 auth-ring-animated"
+              style={{ transform: "scale(2.5)" }}
+            />
+          )}
+        </div>
+        <div
+          className="h-px w-16 sm:w-24"
+          style={{ background: "linear-gradient(90deg, hsl(320 90% 55%), hsl(320 90% 55% / 0.6), transparent)" }}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -106,7 +462,7 @@ export default function Auth() {
   const [resetToken, setResetToken] = useState<string | null>(null);
   const [resetTokenEmail, setResetTokenEmail] = useState<string | null>(null);
   const [validatingToken, setValidatingToken] = useState(false);
-  
+
   // 🎯 P0 FIX v3: Estado para first_access_token (NUNCA expira)
   const [firstAccessToken, setFirstAccessToken] = useState<string | null>(null);
   const [firstAccessData, setFirstAccessData] = useState<{
@@ -147,7 +503,7 @@ export default function Auth() {
 
           if (error || !data?.valid) {
             console.error("[AUTH] Token de primeiro acesso inválido:", error || data);
-            
+
             // Se já foi usado, mostrar mensagem amigável
             if (data?.already_used) {
               toast.info("Este link já foi utilizado", {
@@ -155,14 +511,14 @@ export default function Auth() {
               });
               // Preencher email para facilitar
               if (data?.email) {
-                setFormData(prev => ({ ...prev, email: data.email }));
+                setFormData((prev) => ({ ...prev, email: data.email }));
               }
             } else {
               toast.error("Link de acesso inválido", {
                 description: "Entre em contato com o suporte.",
               });
             }
-            
+
             setFirstAccessToken(null);
           } else {
             console.log("[AUTH] ✅ Token de primeiro acesso válido para:", data.email);
@@ -171,22 +527,22 @@ export default function Auth() {
               nome: data.nome,
               role: data.role,
             });
-            
+
             // Auto-login com senha temporária
             if (data.temp_password && data.email) {
               console.log("[AUTH] 🚀 Fazendo auto-login com senha temporária...");
-              
+
               const { error: signInError } = await supabase.auth.signInWithPassword({
                 email: data.email,
                 password: data.temp_password,
               });
-              
+
               if (signInError) {
                 console.error("[AUTH] Erro no auto-login:", signInError);
                 toast.error("Erro ao acessar automaticamente", {
                   description: "Por favor, faça login manualmente.",
                 });
-                setFormData(prev => ({ ...prev, email: data.email || "" }));
+                setFormData((prev) => ({ ...prev, email: data.email || "" }));
               } else {
                 console.log("[AUTH] ✅ Auto-login bem-sucedido! Redirecionando para /primeiro-acesso");
                 toast.success(`Bem-vindo(a), ${data.nome || "Aluno"}!`, {
@@ -344,20 +700,6 @@ export default function Auth() {
   } = useTurnstile();
 
   // ============================================
-  // 🐕 P0 WATCHDOG — ANTI-LOOP /auth
-  // Regra: /auth NUNCA pode ficar preso em "Verificando sessão…"
-  // Fail-open: após alguns segundos, libera o formulário.
-  // ============================================
-  useEffect(() => {
-    if (!isCheckingSession) return;
-    const t = window.setTimeout(() => {
-      console.warn("[AUTH] 🐕 Watchdog ativado — liberando formulário (fail-open)");
-      setIsCheckingSession(false);
-    }, 3500);
-    return () => window.clearTimeout(t);
-  }, [isCheckingSession]);
-
-  // ============================================
   // 🛡️ POLÍTICA v10.0: ZERO SESSION PERSISTENCE
   // Nova aba/navegador = SEMPRE mostrar formulário de login
   // NÃO redirecionar automaticamente com sessão existente
@@ -366,20 +708,6 @@ export default function Auth() {
   useEffect(() => {
     const pendingKey = "matriz_2fa_pending";
     const pendingUserKey = "matriz_2fa_user";
-
-    // Timeout curto para qualquer await dentro do bootstrap (evita promise pendurada)
-    const withTimeout = async <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> => {
-      let timeoutId: number | undefined;
-      try {
-        const timeout = new Promise<never>((_, reject) => {
-          timeoutId = window.setTimeout(() => reject(new Error(`TIMEOUT:${label}`)), ms);
-        });
-        // eslint-disable-next-line @typescript-eslint/await-thenable
-        return (await Promise.race([promise, timeout])) as T;
-      } finally {
-        if (timeoutId) window.clearTimeout(timeoutId);
-      }
-    };
 
     // Rodar async fora do corpo do effect (TS/React-safe)
     void (async () => {
@@ -412,140 +740,29 @@ export default function Auth() {
       sessionStorage.removeItem(pendingKey);
       sessionStorage.removeItem(pendingUserKey);
 
-       // ✅ PLANO B (UX): Se já existe sessão válida,
-       // redirecionar imediatamente para a área correta.
-       //
-       // P0 ANTI-LOOP (2026-01): antes de redirecionar, validar o token de sessão de segurança
-       // (matriz_session_token). Se estiver stale/inválido, NÃO redirecionar automaticamente.
-       // Isso evita o loop: /auth → redirect → SessionGuard detecta SESSION_NOT_FOUND → signOut → /auth.
+      // ✅ PLANO B (UX): Se já existe sessão válida,
+      // redirecionar imediatamente para a área correta.
       try {
         const {
           data: { session },
-        } = await withTimeout(supabase.auth.getSession(), 2000, "getSession");
+        } = await supabase.auth.getSession();
         if (session?.user) {
-          console.log("[AUTH] ✅ Sessão existente detectada em /auth");
+          console.log("[AUTH] ✅ Sessão existente detectada em /auth — redirecionando");
 
-           // 🔧 ANTI-LOOP: validar matriz_session_token (se existir) antes de qualquer redirect.
-           const existingSecurityToken = localStorage.getItem("matriz_session_token");
-           if (existingSecurityToken) {
-             try {
-               // supabase.rpc retorna um builder (thenable). Envolver em async garante Promise real p/ withTimeout.
-               const validatePromise = (async () => {
-                 return await supabase.rpc("validate_session_epoch", {
-                   p_session_token: existingSecurityToken,
-                 });
-               })();
+          const { data: roleData } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id)
+            .maybeSingle();
 
-               const validationRes = await withTimeout(validatePromise, 1500, "validate_session_epoch");
-
-               const validationData = (validationRes as any)?.data;
-               const validationError = (validationRes as any)?.error;
-               const result = (validationData as any)?.[0];
-               const status = result?.status;
-               const reason = result?.reason;
-
-               if (validationError || status !== "valid") {
-                 console.warn("[AUTH] ⚠️ matriz_session_token inválido/stale — evitando auto-redirect", {
-                   hasError: Boolean(validationError),
-                   status,
-                   reason,
-                 });
-                 localStorage.removeItem("matriz_session_token");
-                 // Segurança/UX: manter usuário em /auth para login explícito.
-                 setIsCheckingSession(false);
-                 return;
-               }
-             } catch (validationErr) {
-               // Fail-open para não travar, mas SEM auto-redirect (anti-loop)
-               console.warn(
-                 "[AUTH] ⚠️ Falha/timeout ao validar matriz_session_token — evitando auto-redirect",
-                 validationErr,
-               );
-               localStorage.removeItem("matriz_session_token");
-               setIsCheckingSession(false);
-               return;
-             }
-           }
-
-          // 🔐 P0 FIX v11.7: Se falta hash do servidor, registrar dispositivo COM TIMEOUT
-          const existingHash = localStorage.getItem('matriz_device_server_hash');
-          if (!existingHash) {
-            console.warn("[AUTH] ⚠️ Hash do servidor faltando - registrando dispositivo agora...");
-            try {
-              // P0 FIX: Timeout de 2s para registro de dispositivo
-              const regResult = await withTimeout(registerDeviceBeforeSession(), 2000, "registerDevice");
-              
-              if (regResult.success && regResult.deviceHash) {
-                localStorage.setItem('matriz_device_server_hash', regResult.deviceHash);
-                console.log("[AUTH] ✅ Dispositivo registrado com sucesso, hash salvo");
-              } else {
-                // Owner bypass: se é o owner, continuar mesmo sem registro
-                const isOwner = session.user.email?.toLowerCase() === 'moisesblank@gmail.com';
-                if (isOwner) {
-                  console.warn("[AUTH] 🛡️ OWNER BYPASS: Registro falhou mas continuando...");
-                } else {
-                  console.error("[AUTH] ❌ Falha ao registrar dispositivo:", regResult.error);
-                  // Não redirecionar, mostrar formulário para novo login
-                  setIsCheckingSession(false);
-                  return;
-                }
-              }
-            } catch (regErr) {
-              const isOwner = session.user.email?.toLowerCase() === 'moisesblank@gmail.com';
-              if (isOwner) {
-                console.warn("[AUTH] 🛡️ OWNER BYPASS: Erro/timeout de registro ignorado:", regErr);
-              } else {
-                console.warn("[AUTH] ⚠️ Timeout/erro ao registrar dispositivo (fail-open):", regErr);
-                // P0 FIX: Não bloquear usuário, continuar para formulário
-                setIsCheckingSession(false);
-                return;
-              }
-            }
-          }
-
-          // P0 FIX: Timeout de 1.5s para busca de role
-          try {
-            const rolePromise = (async () => {
-              const res = await supabase
-                .from("user_roles")
-                .select("role")
-                .eq("user_id", session.user.id)
-                .maybeSingle();
-              return res;
-            })();
-            
-            const { data: roleData } = await withTimeout(rolePromise, 1500, "fetchRole");
-
-            const userRole = roleData?.role || null;
-            
-            // 🔒 OWNER GUARD P0: Se é Owner, SEMPRE vai para /gestaofc
-            if (userRole === OWNER_ROLE || session.user.email?.toLowerCase() === OWNER_EMAIL) {
-              console.log("[AUTH] 🔒 OWNER GUARD: Redirecionando para", OWNER_HOME);
-              // Atualizar cache síncrono
-              localStorage.setItem('matriz_is_owner_cache', 'true');
-              localStorage.setItem('matriz_user_role', OWNER_ROLE);
-              navigate(OWNER_HOME, { replace: true });
-              setIsCheckingSession(false);
-              return;
-            }
-            
-            const target = getPostLoginRedirect(userRole, session.user.email);
-            console.log("[AUTH] ✅ Redirecionando para:", target);
-            navigate(target, { replace: true });
-            setIsCheckingSession(false);
-            return;
-          } catch (roleErr) {
-            console.warn("[AUTH] ⚠️ Timeout/erro ao buscar role (fail-open):", roleErr);
-            // P0 FIX: Se timeout, tentar redirecionar com role null
-            const fallbackTarget = getPostLoginRedirect(null, session.user.email);
-            console.log("[AUTH] 🔄 Fallback redirect para:", fallbackTarget);
-            navigate(fallbackTarget, { replace: true });
-            setIsCheckingSession(false);
-            return;
-          }
+          const userRole = roleData?.role || null;
+          const target = getPostLoginRedirect(userRole, session.user.email);
+          navigate(target, { replace: true });
+          setIsCheckingSession(false);
+          return;
         }
       } catch (err) {
-        console.warn("[AUTH] Falha/timeout ao verificar sessão existente em /auth (fail-open):", err);
+        console.warn("[AUTH] Falha ao verificar sessão existente em /auth (fail-open):", err);
       }
 
       // Sem sessão → mostrar formulário
@@ -634,15 +851,6 @@ export default function Auth() {
         return; // NÃO redirecionar
       }
 
-      // 🔒 OWNER GUARD P0: Se é Owner, SEMPRE vai para /gestaofc
-      if (userRole === OWNER_ROLE || session.user.email?.toLowerCase() === OWNER_EMAIL) {
-        console.log("[AUTH] 🔒 OWNER GUARD: Redirecionando Owner para", OWNER_HOME);
-        localStorage.setItem('matriz_is_owner_cache', 'true');
-        localStorage.setItem('matriz_user_role', OWNER_ROLE);
-        navigate(OWNER_HOME, { replace: true });
-        return;
-      }
-      
       // ✅ REGRA DEFINITIVA: Usa função centralizada COM role
       const target = getPostLoginRedirect(userRole, session.user.email);
       console.log("[AUTH] ✅ SIGNED_IN + loginAttempted - redirecionando para", target, "(role:", userRole, ")");
@@ -703,15 +911,18 @@ export default function Auth() {
         return;
       }
 
-      // 🔓 TURNSTILE DESATIVADO (v10.4): Bypass permanente para reset de senha
-      // Segurança mantida via rate-limiting e RLS no backend
-      if (!isTurnstileVerified) {
-        console.log("[AUTH] 🔓 Turnstile bypass ativo para reset de senha");
+      // 🛡️ RESET DE SENHA: Turnstile obrigatório para TODOS (P1-2 FIX)
+      if (!isTurnstileVerified || !turnstileToken) {
+        toast.error("Verificação de segurança necessária", {
+          description: "Para recuperar a senha, complete a verificação anti-bot.",
+        });
+        setIsLoading(false);
+        return;
       }
 
       const { error } = await resetPassword(email);
       if (error) {
-        toast.error(formatError(error));
+        toast.error(error.message);
         resetTurnstile();
         setIsLoading(false);
         return;
@@ -855,7 +1066,7 @@ export default function Auth() {
           code: (error as any).code,
         });
         toast.error("Erro ao encerrar outras sessões", {
-          description: formatError(error),
+          description: `${error.message}${(error as any).code ? ` (code: ${(error as any).code})` : ""}`,
         });
         setIsForceLoggingOut(false);
         return;
@@ -993,10 +1204,14 @@ export default function Auth() {
 
     // 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO para TODOS (P1-2 FIX)
     // Após incidente MANUS - bots conseguiam entrar sem CAPTCHA visual
-    // 🔓 TURNSTILE DESATIVADO (v10.4): Bypass permanente
-    // Segurança mantida via rate-limiting, lockout e RLS no backend
-    if (!isTurnstileVerified) {
-      console.log("[AUTH] 🔓 Turnstile bypass ativo (verificação automática)");
+    // P1-2: Owner bypass REMOVIDO - turnstile é obrigatório para segurança
+    if (!isTurnstileVerified || !turnstileToken) {
+      console.error("[AUTH] ERROR: Turnstile não verificado no login");
+      toast.error("Verificação de segurança necessária", {
+        description: "Complete a verificação anti-bot para fazer login.",
+      });
+      getDeviceGateActions().setLoginIntent(false);
+      return;
     }
 
     console.log("[AUTH] 3. Estado Turnstile verificado:", {
@@ -1161,12 +1376,15 @@ export default function Auth() {
         console.log("[AUTH] 6.2. Usuário não está banido, prosseguindo...");
 
         // ====================================================================
-        // 🛡️ FLUXO SOBERANO v11.4: Registro de dispositivo + Sessão única OBRIGATÓRIOS
-        // Restaurado após eliminação do BYPASS C que causava loops de redirecionamento
+        // 🔓 BYPASS C: TODAS AS CAMADAS DE PROTEÇÃO DESATIVADAS
+        // - 2FA: DESATIVADO
+        // - Device Registration: DESATIVADO
+        // - Session Creation RPC: DESATIVADO (session já existe via Supabase)
+        // Login vai direto para redirect
         // ====================================================================
-        console.log("[AUTH] 🛡️ Iniciando fluxo soberano v11.4...");
+        console.log("[AUTH] 🔓 BYPASS C: Todas as camadas DESATIVADAS");
 
-        // 🎯 P0 FIX v3.2: VERIFICAR password_change_required ANTES de continuar
+        // 🎯 P0 FIX v3.2: VERIFICAR password_change_required ANTES de redirecionar
         const { data: profileCheck } = await supabase
           .from("profiles")
           .select("password_change_required")
@@ -1174,7 +1392,7 @@ export default function Auth() {
           .maybeSingle();
 
         if (profileCheck?.password_change_required === true) {
-          console.log("[AUTH] 🔐 Usuário precisa trocar senha - mostrando formulário");
+          console.log("[AUTH] 🔐 BYPASS C: Usuário precisa trocar senha - mostrando formulário");
           sessionStorage.setItem("matriz_password_change_pending", "1");
           setPendingPasswordChangeUser({
             email: userFor2FA.email || "",
@@ -1185,136 +1403,9 @@ export default function Auth() {
           return; // NÃO redirecionar - mostrar formulário de troca de senha
         }
 
-        // ============================================
-        // 🛡️ BLOCO 3: REGISTRAR DISPOSITIVO ANTES DA SESSÃO
-        // ============================================
-        console.log("[AUTH][BLOCO3] 🔐 Registrando dispositivo ANTES da sessão...");
-
-        // 👑 OWNER BYPASS (UX-only): Owner pula device-reg para evitar loops
-        const isOwnerEmail = (userFor2FA.email || "").toLowerCase() === "moisesblank@gmail.com";
-        let deviceResult: { success: boolean; error?: string; deviceHash?: string; deviceId?: string; gatePayload?: DeviceGatePayload; sameTypePayload?: any } = { success: true };
-        
-        if (!isOwnerEmail) {
-          deviceResult = await registerDeviceBeforeSession();
-
-          if (!deviceResult.success) {
-            console.error("[AUTH][BLOCO3] ❌ Falha no registro de dispositivo:", deviceResult.error);
-
-            // 🛡️ BEYOND_THE_3_DEVICES: Substituição do mesmo tipo
-            if (deviceResult.error === "SAME_TYPE_REPLACEMENT_REQUIRED") {
-              console.log("[AUTH][BEYOND_3] 🔄 Same-type replacement oferecida - redirecionando");
-              if (deviceResult.sameTypePayload) {
-                getSameTypeReplacementActions().setPayload(deviceResult.sameTypePayload);
-              }
-              setIsLoading(false);
-              navigate("/security/same-type-replacement", { replace: true });
-              return;
-            }
-
-            // FAIL-CLOSED: Bloquear login se limite excedido
-            if (deviceResult.error === "DEVICE_LIMIT_EXCEEDED") {
-              console.log("[AUTH][BLOCO3] 🛡️ Limite excedido - redirecionando para DeviceLimitGate");
-              if (deviceResult.gatePayload) {
-                useDeviceGateStore.getState().setPayload(deviceResult.gatePayload);
-              }
-              setIsLoading(false);
-              navigate("/security/device-limit", { replace: true });
-              return;
-            }
-
-            // Outros erros de dispositivo
-            const errorMsg = getDeviceErrorMessage(deviceResult.error || "UNEXPECTED_ERROR");
-            toast.error(errorMsg.title, { description: errorMsg.description });
-            await supabase.auth.signOut();
-            setIsLoading(false);
-            return;
-          }
-
-          console.log("[AUTH][BLOCO3] ✅ Dispositivo vinculado:", deviceResult.deviceId);
-        } else {
-          console.log("[AUTH][BLOCO3] 👑 Owner bypass: pulando registro de dispositivo");
-        }
-
-        // ============================================
-        // 🛡️ SESSÃO ÚNICA: Criar sessão via RPC
-        // ============================================
-        console.log("[AUTH][SESSAO] 🔐 Criando sessão única...");
-
-        const SESSION_TOKEN_KEY = "matriz_session_token";
-        const ua = navigator.userAgent;
-        let device_type = "desktop";
-        if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
-          device_type = /iPad|Tablet/i.test(ua) ? "tablet" : "mobile";
-        }
-
-        let browser = "unknown";
-        if (ua.includes("Firefox")) browser = "Firefox";
-        else if (ua.includes("Edg")) browser = "Edge";
-        else if (ua.includes("Chrome")) browser = "Chrome";
-        else if (ua.includes("Safari")) browser = "Safari";
-
-        let os = "unknown";
-        if (ua.includes("Windows")) os = "Windows";
-        else if (ua.includes("Mac")) os = "macOS";
-        else if (ua.includes("Linux")) os = "Linux";
-        else if (ua.includes("Android")) os = "Android";
-        else if (ua.includes("iPhone")) os = "iOS";
-
-        // 🔐 Garantir hash do servidor (Owner usa placeholder)
-        const serverDeviceHash = isOwnerEmail 
-          ? "owner-bypass-hash" 
-          : (deviceResult.deviceHash || localStorage.getItem('matriz_device_server_hash') || "fallback-hash");
-        
-        if (!isOwnerEmail) {
-          localStorage.setItem('matriz_device_server_hash', serverDeviceHash);
-        }
-
-        const { data: sessionData, error: sessionError } = await supabase.rpc("create_single_session", {
-          _ip_address: null,
-          _user_agent: navigator.userAgent.slice(0, 255),
-          _device_type: device_type,
-          _browser: browser,
-          _os: os,
-          _device_hash_from_server: serverDeviceHash,
-        });
-
-        if (sessionError || !sessionData?.[0]?.session_token) {
-          console.error("[AUTH][SESSAO] ❌ Falha ao criar sessão única:", sessionError);
-          
-          // 👑 OWNER BYPASS: não travar Owner por falha de sessão
-          if (isOwnerEmail) {
-            console.warn("[AUTH][SESSAO] 👑 Owner bypass: falha em create_single_session, prosseguindo");
-            localStorage.setItem(SESSION_TOKEN_KEY, `owner-fallback-${Date.now()}`);
-            localStorage.setItem('matriz_login_timestamp', Date.now().toString());
-          } else {
-            toast.error("Falha ao criar sessão segura", { description: "Tente novamente." });
-            await supabase.auth.signOut();
-            setIsLoading(false);
-            return;
-          }
-        } else {
-          const sessionToken = sessionData[0].session_token;
-          localStorage.setItem(SESSION_TOKEN_KEY, sessionToken);
-          
-          // 🔒 P0 FIX: Salvar timestamp do login para grace period no SessionGuard
-          localStorage.setItem('matriz_login_timestamp', Date.now().toString());
-          
-          console.log("[AUTH][SESSAO] ✅ Sessão única criada:", sessionToken.slice(0, 8) + "...");
-          
-          // 👑 OWNER FIX: Marcar mfa_verified = true automaticamente para Owner
-          // Evita loop de DeviceMFAGuard bloqueando acesso
-          if (isOwnerEmail) {
-            console.log("[AUTH][SESSAO] 👑 Owner: marcando mfa_verified = true");
-            await supabase
-              .from("active_sessions")
-              .update({ mfa_verified: true })
-              .eq("session_token", sessionToken);
-          }
-        }
-
         toast.success("Login realizado com sucesso!");
 
-        // Buscar role e redirecionar
+        // Buscar role e redirecionar diretamente
         const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
@@ -1322,27 +1413,23 @@ export default function Auth() {
           .maybeSingle();
 
         const userRole = roleData?.role || null;
-        
-        // 🔒 P0 FIX: Salvar cache do Owner ANTES do redirect
-        if (userRole === OWNER_ROLE || userFor2FA.email?.toLowerCase() === OWNER_EMAIL) {
-          localStorage.setItem('matriz_is_owner_cache', 'true');
-          localStorage.setItem('matriz_user_role', OWNER_ROLE);
-        }
-        
         const target = getPostLoginRedirect(userRole, userFor2FA.email);
         console.log("[AUTH] ✅ Redirecionando para", target, "(role:", userRole, ")");
         setIsLoading(false);
         navigate(target, { replace: true });
-        return;
+        return; // 🔓 BYPASS C: Encerra aqui após login bem-sucedido
       }
 
       // SIGNUP
       console.log("[AUTH] 4. Iniciando signup...");
 
-      // 🔓 TURNSTILE DESATIVADO (v10.4): Bypass permanente para signup
-      // Segurança mantida via rate-limiting e RLS no backend
-      if (!isTurnstileVerified) {
-        console.log("[AUTH] 🔓 Turnstile bypass ativo para signup");
+      if (!isTurnstileVerified || !turnstileToken) {
+        console.error("[AUTH] ERROR: Turnstile ausente no signup");
+        toast.error("Verificação de segurança necessária", {
+          description: "Para criar uma conta, complete a verificação anti-bot.",
+        });
+        setIsLoading(false);
+        return;
       }
 
       const signupResult = await withTimeout("signUp", signUp(formData.email, formData.password, formData.nome));
@@ -1370,10 +1457,10 @@ export default function Auth() {
       });
       setIsLogin(true);
       setFormData({ nome: "", email: formData.email, password: "" });
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error("[AUTH] ERROR:", err);
       toast.error("Erro ao processar solicitação", {
-        description: formatError(err),
+        description: err?.message || "Falha inesperada",
       });
     } finally {
       setIsLoading(false);
@@ -1392,19 +1479,6 @@ export default function Auth() {
         <div className="flex flex-col items-center gap-3 text-center">
           <Loader2 className="h-7 w-7 text-primary animate-spin" />
           <p className="text-sm text-muted-foreground">Verificando sessão…</p>
-
-          {/* P0: Ação manual (nunca travar em loop) */}
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-            <Button variant="secondary" size="sm" onClick={() => setIsCheckingSession(false)}>
-              Continuar
-            </Button>
-            {user?.email && (
-              <Button variant="outline" size="sm" onClick={() => window.location.replace("/gestaofc/gestao-alunos")}
-              >
-                Ir para Gestão
-              </Button>
-            )}
-          </div>
         </div>
       </div>
     );
@@ -1427,240 +1501,161 @@ export default function Auth() {
             onVerified={async () => {
               console.log("[AUTH] ✅ 2FA verificado com sucesso, iniciando redirect...");
 
-              // 🛡️ P0 FIX: Wrapper de timeout para evitar loading infinito
-              const withTimeout = async <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> => {
-                let timeoutId: number | undefined;
-                const timeout = new Promise<never>((_, reject) => {
-                  timeoutId = window.setTimeout(() => reject(new Error(`TIMEOUT: ${label} (${ms}ms)`)), ms);
-                });
-                try {
-                  return await Promise.race([promise, timeout]);
-                } finally {
-                  if (timeoutId) window.clearTimeout(timeoutId);
-                }
-              };
+              // ✅ OTIMIZAÇÃO: Salvar cache de confiança após 2FA bem-sucedido
+              if (pending2FAUser.deviceHash) {
+                setTrustCache(pending2FAUser.userId, pending2FAUser.deviceHash);
+                console.log("[AUTH] ✅ Trust cache salvo para próximos logins");
+              }
 
-              // 🛡️ P0 FIX: Fallback absoluto - se não redirecionar em 15s, forçar
-              const fallbackRedirectTimeout = window.setTimeout(() => {
-                console.warn("[AUTH] ⚠️ FALLBACK: 15s sem redirect, forçando navegação");
-                window.location.replace("/gestaofc");
-              }, 15_000);
+              // ✅ P0 FIX: Limpar flags ANTES de qualquer redirect
+              sessionStorage.removeItem("matriz_2fa_pending");
+              sessionStorage.removeItem("matriz_2fa_user");
 
-              try {
-                // ✅ OTIMIZAÇÃO: Salvar cache de confiança após 2FA bem-sucedido
-                if (pending2FAUser.deviceHash) {
-                  setTrustCache(pending2FAUser.userId, pending2FAUser.deviceHash);
-                  console.log("[AUTH] ✅ Trust cache salvo para próximos logins");
-                }
+              // ============================================
+              // 🛡️ BLOCO 3: REGISTRAR DISPOSITIVO ANTES DA SESSÃO (pós-2FA)
+              // ============================================
+              console.log("[AUTH][BLOCO3] 🔐 Registrando dispositivo ANTES da sessão (pós-2FA)...");
+              const deviceResult = await registerDeviceBeforeSession();
 
-                // ✅ P0 FIX: Limpar flags ANTES de qualquer redirect
-                sessionStorage.removeItem("matriz_2fa_pending");
-                sessionStorage.removeItem("matriz_2fa_user");
+              if (!deviceResult.success) {
+                console.error("[AUTH][BLOCO3] ❌ Falha no registro de dispositivo pós-2FA:", deviceResult.error);
 
-                // ============================================
-                // 🛡️ BLOCO 3: REGISTRAR DISPOSITIVO ANTES DA SESSÃO (pós-2FA)
-                // ============================================
-                console.log("[AUTH][BLOCO3] 🔐 Registrando dispositivo ANTES da sessão (pós-2FA)...");
-                
-                let deviceResult;
-                try {
-                  deviceResult = await withTimeout(registerDeviceBeforeSession(), 8_000, "registerDeviceBeforeSession");
-                } catch (timeoutErr) {
-                  console.error("[AUTH][BLOCO3] ⏱️ Timeout no registro de dispositivo:", timeoutErr);
-                  // Fallback: continuar sem registro (Owner bypass ou guest mode)
-                  deviceResult = { success: false, error: "TIMEOUT" };
+                // 🛡️ BEYOND_THE_3_DEVICES: Substituição do mesmo tipo
+                if (deviceResult.error === "SAME_TYPE_REPLACEMENT_REQUIRED") {
+                  console.log("[AUTH][BEYOND_3] 🔄 Same-type replacement oferecida pós-2FA - redirecionando");
+
+                  if (deviceResult.sameTypePayload) {
+                    getSameTypeReplacementActions().setPayload(deviceResult.sameTypePayload);
+                  }
+
+                  setShow2FA(false);
+                  setPending2FAUser(null);
+                  navigate("/security/same-type-replacement", { replace: true });
+                  return;
                 }
 
-                if (!deviceResult.success) {
-                  console.error("[AUTH][BLOCO3] ❌ Falha no registro de dispositivo pós-2FA:", deviceResult.error);
+                // FAIL-CLOSED: Bloquear login se limite excedido
+                if (deviceResult.error === "DEVICE_LIMIT_EXCEEDED") {
+                  console.log("[AUTH][BLOCO3] 🛡️ Limite excedido pós-2FA - redirecionando para DeviceLimitGate");
 
-                  // 🛡️ BEYOND_THE_3_DEVICES: Substituição do mesmo tipo
-                  if (deviceResult.error === "SAME_TYPE_REPLACEMENT_REQUIRED") {
-                    console.log("[AUTH][BEYOND_3] 🔄 Same-type replacement oferecida pós-2FA - redirecionando");
-                    window.clearTimeout(fallbackRedirectTimeout);
-
-                    if (deviceResult.sameTypePayload) {
-                      getSameTypeReplacementActions().setPayload(deviceResult.sameTypePayload);
-                    }
-
-                    setShow2FA(false);
-                    setPending2FAUser(null);
-                    navigate("/security/same-type-replacement", { replace: true });
-                    return;
+                  // Salvar payload no store para o Gate
+                  if (deviceResult.gatePayload) {
+                    useDeviceGateStore.getState().setPayload(deviceResult.gatePayload);
                   }
 
-                  // FAIL-CLOSED: Bloquear login se limite excedido
-                  if (deviceResult.error === "DEVICE_LIMIT_EXCEEDED") {
-                    console.log("[AUTH][BLOCO3] 🛡️ Limite excedido pós-2FA - redirecionando para DeviceLimitGate");
-                    window.clearTimeout(fallbackRedirectTimeout);
-
-                    // Salvar payload no store para o Gate
-                    if (deviceResult.gatePayload) {
-                      useDeviceGateStore.getState().setPayload(deviceResult.gatePayload);
-                    }
-
-                    // NÃO fazer logout - manter sessão para que o Gate possa revogar dispositivos
-                    setShow2FA(false);
-                    setPending2FAUser(null);
-                    navigate("/security/device-limit", { replace: true });
-                    return;
-                  }
-
-                  // 👑 OWNER BYPASS (UX-only): não prender o Owner em loop
-                  const isOwnerEmail = (pending2FAUser?.email || "").toLowerCase() === "moisesblank@gmail.com";
-                  if (isOwnerEmail || deviceResult.error === "TIMEOUT") {
-                    console.warn("[AUTH][BLOCO3] 👑 Owner/Timeout bypass: prosseguindo sem device-reg");
-                  } else {
-                    // Outros erros de dispositivo - fazer logout
-                    const errorMsg = getDeviceErrorMessage(deviceResult.error || "UNEXPECTED_ERROR");
-                    toast.error(errorMsg.title, { description: errorMsg.description });
-                    window.clearTimeout(fallbackRedirectTimeout);
-                    await supabase.auth.signOut();
-                    setShow2FA(false);
-                    setPending2FAUser(null);
-                    return;
-                  }
+                  // NÃO fazer logout - manter sessão para que o Gate possa revogar dispositivos
+                  setShow2FA(false);
+                  setPending2FAUser(null);
+                  navigate("/security/device-limit", { replace: true });
+                  return;
                 }
 
-                console.log("[AUTH][BLOCO3] ✅ Dispositivo processado pós-2FA:", deviceResult.deviceId || "(bypass)");
-
-                // ✅ P0: Sessão única só NASCE após dispositivo vinculado + 2FA validado
-                try {
-                  const SESSION_TOKEN_KEY = "matriz_session_token";
-                  const ua = navigator.userAgent;
-                  let device_type = "desktop";
-                  if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
-                    device_type = /iPad|Tablet/i.test(ua) ? "tablet" : "mobile";
-                  }
-
-                  let browser = "unknown";
-                  if (ua.includes("Firefox")) browser = "Firefox";
-                  else if (ua.includes("Edg")) browser = "Edge";
-                  else if (ua.includes("Chrome")) browser = "Chrome";
-                  else if (ua.includes("Safari")) browser = "Safari";
-
-                  let os = "unknown";
-                  if (ua.includes("Windows")) os = "Windows";
-                  else if (ua.includes("Mac")) os = "macOS";
-                  else if (ua.includes("Linux")) os = "Linux";
-                  else if (ua.includes("Android")) os = "Android";
-                  else if (ua.includes("iPhone")) os = "iOS";
-
-                  // 🔐 P0 FIX: Garantir hash do servidor com fallback seguro
-                  const serverDeviceHash = deviceResult.deviceHash || localStorage.getItem('matriz_device_server_hash');
-                  
-                  // 👑 OWNER BYPASS: permitir acesso mesmo sem hash
-                  const isOwnerEmail = (pending2FAUser?.email || "").toLowerCase() === "moisesblank@gmail.com";
-                  
-                  if (!serverDeviceHash && !isOwnerEmail) {
-                    console.error("[AUTH][SESSAO] ❌ P0 VIOLATION: Sem hash do servidor!");
-                    toast.error("Falha de segurança", { description: "Dispositivo não registrado corretamente." });
-                    window.clearTimeout(fallbackRedirectTimeout);
-                    await supabase.auth.signOut();
-                    setShow2FA(false);
-                    setPending2FAUser(null);
-                    return;
-                  }
-
-                  if (serverDeviceHash) {
-                    const rpcPromise = Promise.resolve(
-                      supabase.rpc("create_single_session", {
-                        _ip_address: null,
-                        _user_agent: navigator.userAgent.slice(0, 255),
-                        _device_type: device_type,
-                        _browser: browser,
-                        _os: os,
-                        _device_hash_from_server: serverDeviceHash,
-                      })
-                    );
-
-                    const { data, error } = await withTimeout(
-                      rpcPromise,
-                      5_000,
-                      "create_single_session"
-                    );
-
-                    if (error || !data?.[0]?.session_token) {
-                      console.error("[AUTH][SESSAO] ❌ Falha ao criar sessão única pós-2FA (RPC):", error);
-                      // Continuar mesmo com erro - owner bypass ou fallback
-                      if (!isOwnerEmail) {
-                        toast.error("Falha crítica de segurança", {
-                          description: "Não foi possível iniciar a sessão única. Faça login novamente.",
-                          duration: 9000,
-                        });
-                        window.clearTimeout(fallbackRedirectTimeout);
-                        await supabase.auth.signOut();
-                        setShow2FA(false);
-                        setPending2FAUser(null);
-                        return;
-                      }
-                    } else {
-                      localStorage.setItem(SESSION_TOKEN_KEY, data[0].session_token);
-                      localStorage.setItem('matriz_login_timestamp', Date.now().toString());
-                      console.log("[AUTH][SESSAO] ✅ Sessão única criada pós-2FA (RPC) e token armazenado");
-                    }
-                  } else {
-                    console.warn("[AUTH][SESSAO] 👑 Owner bypass: sem hash, pulando create_single_session");
-                  }
-                } catch (err) {
-                  console.warn("[AUTH][SESSAO] Erro ao criar sessão pós-2FA (continuando):", err);
-                  // Não bloquear - fallback vai redirecionar
-                }
-
-                // ✅ P0 FIX CRÍTICO: Buscar role e fazer redirect EXPLÍCITO
-                try {
-                  const rolePromise = Promise.resolve(
-                    supabase
-                      .from("user_roles")
-                      .select("role")
-                      .eq("user_id", pending2FAUser.userId)
-                      .maybeSingle()
-                  );
-
-                  const { data: roleData } = await withTimeout(
-                    rolePromise,
-                    3_000,
-                    "fetch_user_role"
-                  );
-
-                  const userRole = roleData?.role || null;
-                  
-                  // 🔒 P0 FIX: Salvar cache do Owner ANTES do redirect
-                  const isOwnerUser = userRole === OWNER_ROLE || pending2FAUser.email?.toLowerCase() === OWNER_EMAIL;
-                  if (isOwnerUser) {
-                    localStorage.setItem('matriz_is_owner_cache', 'true');
-                    localStorage.setItem('matriz_user_role', OWNER_ROLE);
-                  }
-                  
-                  const target = getPostLoginRedirect(userRole, pending2FAUser.email);
-
-                  console.log("[AUTH] ✅ 2FA completo - redirecionando para", target, "(role:", userRole, ")");
-                  toast.success("Bem-vindo de volta!", {
-                    description: deviceResult.isNewDevice
-                      ? "Novo dispositivo registrado com sucesso."
-                      : "Dispositivo reconhecido.",
-                  });
-
-                  window.clearTimeout(fallbackRedirectTimeout);
-                  window.location.replace(target);
-                } catch (err) {
-                  console.error("[AUTH] Erro ao buscar role pós-2FA:", err);
-                  toast.success("Bem-vindo de volta!");
-                  window.clearTimeout(fallbackRedirectTimeout);
-                  window.location.replace("/gestaofc");
-                }
-
+                // Outros erros de dispositivo
+                const errorMsg = getDeviceErrorMessage(deviceResult.error || "UNEXPECTED_ERROR");
+                toast.error(errorMsg.title, { description: errorMsg.description });
+                await supabase.auth.signOut();
                 setShow2FA(false);
                 setPending2FAUser(null);
-              } catch (outerErr) {
-                console.error("[AUTH] ❌ Erro crítico em onVerified:", outerErr);
-                window.clearTimeout(fallbackRedirectTimeout);
-                toast.error("Erro ao finalizar login", {
-                  description: formatError(outerErr),
-                });
-                // Forçar redirect após erro
-                setTimeout(() => window.location.replace("/auth"), 2000);
+                return;
               }
+
+              console.log("[AUTH][BLOCO3] ✅ Dispositivo vinculado pós-2FA:", deviceResult.deviceId);
+
+              // ✅ P0: Sessão única só NASCE após dispositivo vinculado + 2FA validado
+              try {
+                const SESSION_TOKEN_KEY = "matriz_session_token";
+                const ua = navigator.userAgent;
+                let device_type = "desktop";
+                if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
+                  device_type = /iPad|Tablet/i.test(ua) ? "tablet" : "mobile";
+                }
+
+                let browser = "unknown";
+                if (ua.includes("Firefox")) browser = "Firefox";
+                else if (ua.includes("Edg")) browser = "Edge";
+                else if (ua.includes("Chrome")) browser = "Chrome";
+                else if (ua.includes("Safari")) browser = "Safari";
+
+                let os = "unknown";
+                if (ua.includes("Windows")) os = "Windows";
+                else if (ua.includes("Mac")) os = "macOS";
+                else if (ua.includes("Linux")) os = "Linux";
+                else if (ua.includes("Android")) os = "Android";
+                else if (ua.includes("iPhone")) os = "iOS";
+
+                // 🔐 P0 FIX: Garantir hash do servidor com fallback seguro
+                const serverDeviceHash = deviceResult.deviceHash || localStorage.getItem("matriz_device_server_hash");
+                if (!serverDeviceHash) {
+                  console.error("[AUTH][SESSAO] ❌ P0 VIOLATION: Sem hash do servidor!");
+                  toast.error("Falha de segurança", { description: "Dispositivo não registrado corretamente." });
+                  await supabase.auth.signOut();
+                  setShow2FA(false);
+                  setPending2FAUser(null);
+                  return;
+                }
+
+                const { data, error } = await supabase.rpc("create_single_session", {
+                  _ip_address: null,
+                  _user_agent: navigator.userAgent.slice(0, 255),
+                  _device_type: device_type,
+                  _browser: browser,
+                  _os: os,
+                  _device_hash_from_server: serverDeviceHash, // 🔐 P0 FIX: Hash do SERVIDOR obrigatório
+                });
+
+                if (error || !data?.[0]?.session_token) {
+                  console.error("[AUTH][SESSAO] ❌ Falha ao criar sessão única pós-2FA (RPC):", error);
+                  toast.error("Falha crítica de segurança", {
+                    description: "Não foi possível iniciar a sessão única. Faça login novamente.",
+                    duration: 9000,
+                  });
+                  await supabase.auth.signOut();
+                  setShow2FA(false);
+                  setPending2FAUser(null);
+                  return;
+                }
+
+                localStorage.setItem(SESSION_TOKEN_KEY, data[0].session_token);
+                console.log("[AUTH][SESSAO] ✅ Sessão única criada pós-2FA (RPC) e token armazenado");
+              } catch (err) {
+                console.warn("[AUTH][SESSAO] Erro crítico ao criar sessão pós-2FA (RPC):", err);
+                toast.error("Falha crítica de segurança", {
+                  description: "Não foi possível iniciar a sessão única. Faça login novamente.",
+                  duration: 9000,
+                });
+                await supabase.auth.signOut();
+                setShow2FA(false);
+                setPending2FAUser(null);
+                return;
+              }
+
+              // ✅ P0 FIX CRÍTICO: Buscar role e fazer redirect EXPLÍCITO
+              try {
+                const { data: roleData } = await supabase
+                  .from("user_roles")
+                  .select("role")
+                  .eq("user_id", pending2FAUser.userId)
+                  .maybeSingle();
+
+                const userRole = roleData?.role || null;
+                const target = getPostLoginRedirect(userRole, pending2FAUser.email);
+
+                console.log("[AUTH] ✅ 2FA completo - redirecionando para", target, "(role:", userRole, ")");
+                toast.success("Bem-vindo de volta!", {
+                  description: deviceResult.isNewDevice
+                    ? "Novo dispositivo registrado com sucesso."
+                    : "Dispositivo reconhecido.",
+                });
+
+                window.location.replace(target);
+              } catch (err) {
+                console.error("[AUTH] Erro ao buscar role pós-2FA:", err);
+                toast.success("Bem-vindo de volta!");
+                window.location.replace("/gestaofc");
+              }
+
+              setShow2FA(false);
+              setPending2FAUser(null);
             }}
             onCancel={async () => {
               // ✅ Fail-safe: nunca deixar usuário “meio logado” sem 2FA
@@ -1714,15 +1709,15 @@ export default function Auth() {
   // Detectar tipo de dispositivo atual
   const detectCurrentDevice = () => {
     const ua = navigator.userAgent;
-    
+
     // 🖥️ DESKTOP FIRST: macOS/Windows/Linux detection ANTES de Mobi check
-    const isDesktopOS = 
+    const isDesktopOS =
       (/Mac OS X|Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua)) ||
       (/Windows NT/i.test(ua) && !/Phone/i.test(ua)) ||
       (/Linux/i.test(ua) && !/Android/i.test(ua));
-    
+
     let deviceType: "desktop" | "tablet" | "mobile" = "desktop";
-    
+
     if (!isDesktopOS) {
       const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua);
       const isMobile = /iPhone|iPod|Android.*Mobile|Mobi/i.test(ua);
