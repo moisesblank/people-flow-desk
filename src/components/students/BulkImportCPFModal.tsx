@@ -74,6 +74,7 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
   const [progress, setProgress] = useState(0);
   const [fileName, setFileName] = useState('');
   const [importStatus, setImportStatus] = useState<string>('');
+  const [uiTick, setUiTick] = useState(0);
   const resumeFromIndexRef = useRef(0);
   const cancelRef = useRef(false);
 
@@ -87,6 +88,13 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
       cancelRef.current = true;
     };
   }, []);
+
+  // Mantém o contador “Lote ... há Xs” atualizado enquanto importa
+  useEffect(() => {
+    if (step !== 'importing') return;
+    const id = window.setInterval(() => setUiTick((v) => v + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [step]);
 
   const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -232,6 +240,15 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
       onOpenChange(false);
     }
   }, [isProcessing, resetState, onOpenChange]);
+
+  const cancelImport = useCallback(() => {
+    // UI-only: libera o modal e mantém checkpoint para retomar
+    cancelRef.current = true;
+    currentBatchRef.current = null;
+    setIsProcessing(false);
+    setStatus('Importação cancelada. Você pode retomar do ponto salvo.');
+    setStep('preview');
+  }, [setStatus]);
 
   const parseExcel = useCallback(async (file: File) => {
     setIsProcessing(true);
@@ -667,6 +684,12 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
               <p className="text-center text-sm text-muted-foreground">
                 {progress}% concluído
               </p>
+
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={cancelImport}>
+                    Cancelar / Retomar
+                  </Button>
+                </div>
             </motion.div>
           )}
 
