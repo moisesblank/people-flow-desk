@@ -579,13 +579,10 @@ export default function Auth() {
         return;
       }
 
-      // 🛡️ RESET DE SENHA: Turnstile obrigatório para TODOS (P1-2 FIX)
-      if (!isTurnstileVerified || !turnstileToken) {
-        toast.error("Verificação de segurança necessária", {
-          description: "Para recuperar a senha, complete a verificação anti-bot.",
-        });
-        setIsLoading(false);
-        return;
+      // 🔓 TURNSTILE DESATIVADO (v10.4): Bypass permanente para reset de senha
+      // Segurança mantida via rate-limiting e RLS no backend
+      if (!isTurnstileVerified) {
+        console.log("[AUTH] 🔓 Turnstile bypass ativo para reset de senha");
       }
 
       const { error } = await resetPassword(email);
@@ -872,14 +869,10 @@ export default function Auth() {
 
     // 🛡️ ANTI-BOT v2.0: Turnstile OBRIGATÓRIO para TODOS (P1-2 FIX)
     // Após incidente MANUS - bots conseguiam entrar sem CAPTCHA visual
-    // P1-2: Owner bypass REMOVIDO - turnstile é obrigatório para segurança
-    if (!isTurnstileVerified || !turnstileToken) {
-      console.error("[AUTH] ERROR: Turnstile não verificado no login");
-      toast.error("Verificação de segurança necessária", {
-        description: "Complete a verificação anti-bot para fazer login.",
-      });
-      getDeviceGateActions().setLoginIntent(false);
-      return;
+    // 🔓 TURNSTILE DESATIVADO (v10.4): Bypass permanente
+    // Segurança mantida via rate-limiting, lockout e RLS no backend
+    if (!isTurnstileVerified) {
+      console.log("[AUTH] 🔓 Turnstile bypass ativo (verificação automática)");
     }
 
     console.log("[AUTH] 3. Estado Turnstile verificado:", {
@@ -1091,13 +1084,10 @@ export default function Auth() {
       // SIGNUP
       console.log("[AUTH] 4. Iniciando signup...");
 
-      if (!isTurnstileVerified || !turnstileToken) {
-        console.error("[AUTH] ERROR: Turnstile ausente no signup");
-        toast.error("Verificação de segurança necessária", {
-          description: "Para criar uma conta, complete a verificação anti-bot.",
-        });
-        setIsLoading(false);
-        return;
+      // 🔓 TURNSTILE DESATIVADO (v10.4): Bypass permanente para signup
+      // Segurança mantida via rate-limiting e RLS no backend
+      if (!isTurnstileVerified) {
+        console.log("[AUTH] 🔓 Turnstile bypass ativo para signup");
       }
 
       const signupResult = await withTimeout("signUp", signUp(formData.email, formData.password, formData.nome));
