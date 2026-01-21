@@ -1,7 +1,7 @@
 // ============================================
 // BULK IMPORT WITH CPF VALIDATION MODAL
 // CONSTITUIÇÃO SYNAPSE Ω v10.x
-// MODO: prime ONLINE
+// MODO: Livro Web - BETA com 1 ano de expiração
 // ============================================
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -164,8 +164,9 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
         body: { 
           students, 
           defaultPassword: 'eneM2026@#',
-          tipoProduto: 'prime ONLINE',
-          fonte: 'Importação Bruna Lista ONLINE 20/01'
+          tipoProduto: 'Livro Web',
+          fonte: 'Importação Bruna Lista ONLINE 20/01',
+          expirationDays: 365, // 1 ANO de acesso BETA
         }
       });
 
@@ -242,7 +243,7 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-amber-400">
             <Shield className="h-5 w-5" />
-            Importação em Massa — prime ONLINE
+            Importação em Massa — Livro Web (BETA 1 ano)
           </DialogTitle>
           <DialogDescription>
             Critério mínimo: NOME + CPF válido. Senha padrão: eneM2026@#
@@ -353,9 +354,9 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
                 <div className="text-sm">
-                  <p className="font-medium text-amber-400">Modo: prime ONLINE</p>
+                  <p className="font-medium text-amber-400">Modo: Livro Web — Role: beta_expira (1 ano)</p>
                   <p className="text-muted-foreground">
-                    Cada CPF será validado. Senha padrão: <code className="bg-muted px-1 rounded">eneM2026@#</code>
+                    CPF validado na Receita. Senha: <code className="bg-muted px-1 rounded">eneM2026@#</code>. Acesso expira em 365 dias.
                   </p>
                 </div>
               </div>
