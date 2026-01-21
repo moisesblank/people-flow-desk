@@ -18549,6 +18549,7 @@ export type Database = {
       cleanup_old_security_events_v2: { Args: never; Returns: number }
       cleanup_old_security_logs: { Args: never; Returns: undefined }
       cleanup_old_sensitive_data: { Args: never; Returns: undefined }
+      cleanup_old_video_logs: { Args: never; Returns: undefined }
       cleanup_old_webhooks: { Args: never; Returns: number }
       cleanup_rate_limits: { Args: never; Returns: number }
       cleanup_rate_limits_v3: { Args: never; Returns: number }
