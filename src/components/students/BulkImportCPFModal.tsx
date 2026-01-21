@@ -155,47 +155,59 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
     setProgress(0);
 
     try {
-      // Simulate progress for UX
-      const progressInterval = setInterval(() => {
-        setProgress(prev => Math.min(prev + 1, 90));
-      }, 800);
+      // Importação em lotes para evitar timeout/loop em planilhas grandes
+      const BATCH_SIZE = 50;
+      const total = students.length;
+      const aggregatedResults: ImportResult[] = [];
+      let totalSuccess = 0;
+      let totalError = 0;
+      let totalSkipped = 0;
 
-      const { data, error } = await supabase.functions.invoke('bulk-import-students-cpf', {
-        body: { 
-          students, 
-          defaultPassword: 'eneM2026@#',
-          tipoProduto: 'Livro Web',
-          fonte: 'Importação Bruna Lista ONLINE 20/01',
-          expirationDays: 365, // 1 ANO de acesso BETA
-        }
-      });
+      for (let start = 0; start < total; start += BATCH_SIZE) {
+        const batch = students.slice(start, start + BATCH_SIZE);
+        const batchIndex = Math.floor(start / BATCH_SIZE) + 1;
+        const batchTotal = Math.ceil(total / BATCH_SIZE);
 
-      clearInterval(progressInterval);
+        setProgress(Math.floor((start / total) * 100));
+        toast.message(`Importando lote ${batchIndex}/${batchTotal}...`, {
+          description: `${batch.length} alunos`
+        });
+
+        const { data, error } = await supabase.functions.invoke('bulk-import-students-cpf', {
+          body: {
+            students: batch,
+            defaultPassword: 'eneM2026@#',
+            tipoProduto: 'Livro Web',
+            fonte: 'Importação Bruna Lista ONLINE 20/01',
+            expirationDays: 365, // 1 ANO de acesso BETA
+          }
+        });
+
+        if (error) throw new Error(error.message);
+        if (!data?.success) throw new Error(data?.error || 'Erro desconhecido');
+
+        aggregatedResults.push(...(data.results || []));
+        totalSuccess += data.successCount || 0;
+        totalError += data.errorCount || 0;
+        totalSkipped += data.skippedCount || 0;
+
+        // progresso pós-lote
+        const done = Math.min(start + batch.length, total);
+        setProgress(Math.floor((done / total) * 100));
+      }
+
       setProgress(100);
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (!data?.success) {
-        throw new Error(data?.error || 'Erro desconhecido');
-      }
-
-      setResults(data.results || []);
+      setResults(aggregatedResults);
       setStep('results');
 
-      const successCount = data.successCount || 0;
-      const errorCount = data.errorCount || 0;
-      const skippedCount = data.skippedCount || 0;
-
-      if (successCount > 0) {
-        toast.success(`${successCount} alunos criados com sucesso!`, {
-          description: `${errorCount} erros, ${skippedCount} pulados`
+      if (totalSuccess > 0) {
+        toast.success(`${totalSuccess} alunos criados com sucesso!`, {
+          description: `${totalError} erros, ${totalSkipped} pulados`
         });
         onSuccess?.();
-      } else if (skippedCount > 0) {
+      } else if (totalSkipped > 0) {
         toast.warning('Nenhum aluno novo criado', {
-          description: `${skippedCount} já existiam ou sem email`
+          description: `${totalSkipped} já existiam ou sem email`
         });
       } else {
         toast.error('Nenhum aluno foi importado', {
@@ -356,7 +368,7 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
                 <div className="text-sm">
                   <p className="font-medium text-amber-400">Modo: Livro Web — Role: beta_expira (1 ano)</p>
                   <p className="text-muted-foreground">
-                    CPF validado na Receita. Senha: <code className="bg-muted px-1 rounded">eneM2026@#</code>. Acesso expira em 365 dias.
+                    CPF validado localmente (dígitos verificadores). Senha: <code className="bg-muted px-1 rounded">eneM2026@#</code>. Acesso expira em 365 dias.
                   </p>
                 </div>
               </div>

@@ -339,10 +339,8 @@ serve(async (req) => {
       });
       successCount++;
 
-      // Rate limit protection (150ms delay)
-      if (i < students.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 150));
-      }
+      // Receita desativada: remove delay para não estourar timeout em lotes grandes
+      // (mantém o loop o mais rápido possível)
 
       // Log progresso a cada 10 alunos
       if ((i + 1) % 10 === 0) {
