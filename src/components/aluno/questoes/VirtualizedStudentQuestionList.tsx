@@ -322,12 +322,34 @@ export function VirtualizedStudentQuestionList({
     const container = containerRef.current;
     if (!container) return;
 
-    const resizeObserver = new ResizeObserver(([entry]) => {
-      setContainerHeight(entry.contentRect.height);
-    });
+    // P0 anti-tela-preta: alguns navegadores/WebViews não suportam ResizeObserver
+    // (isso causava crash + ErrorBoundary = "Ocorreu um erro inesperado")
+    const hasResizeObserver = typeof window !== 'undefined' && 'ResizeObserver' in window;
 
-    resizeObserver.observe(container);
-    return () => resizeObserver.disconnect();
+    const measure = () => {
+      const h = container.getBoundingClientRect().height;
+      if (Number.isFinite(h) && h > 0) setContainerHeight(h);
+    };
+
+    // Primeira medida
+    measure();
+
+    if (hasResizeObserver) {
+      const resizeObserver = new ResizeObserver(([entry]) => {
+        setContainerHeight(entry.contentRect.height);
+      });
+
+      resizeObserver.observe(container);
+      return () => resizeObserver.disconnect();
+    }
+
+    // Fallback: recalcula no resize da janela
+    const onResize = () => {
+      // evita layout trashing em sequência
+      requestAnimationFrame(measure);
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {

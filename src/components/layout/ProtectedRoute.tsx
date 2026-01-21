@@ -53,6 +53,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const isOnPrimeiroAcesso = location.pathname === "/primeiro-acesso" || 
                               location.pathname === "/primeiro-acesso-funcionario";
 
+  // 🛡️ P0 FIX: Owner bypass IMEDIATO — não espera onboarding
+  // Se já sabemos que é owner, renderiza imediatamente
+  if (isOwner && user) {
+    return <>{children}</>;
+  }
+
   // Loading: com fail-safe por timeout
   if (authLoading || onboardingLoading) {
     if (loadingTimeout) {

@@ -106,8 +106,19 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
     setState((prev) => ({ ...prev, isChecking: true, error: null }));
 
     try {
-      // Gerar fingerprint do dispositivo atual
-      const deviceHash = await generateDeviceFingerprint();
+      // 🔐 P0 FIX v11.4: PRIMEIRO tentar usar o hash do SERVIDOR (fonte da verdade)
+      // O hash do servidor inclui pepper e é o que foi registrado no 2FA
+      const serverHash = localStorage.getItem('matriz_device_server_hash');
+      
+      // Se temos hash do servidor, usar. Senão, gerar local (fallback para dispositivo novo)
+      let deviceHash: string;
+      if (serverHash) {
+        deviceHash = serverHash;
+        console.log(`[DeviceMFAGuard] 🔐 Usando hash do SERVIDOR: ${deviceHash.slice(0, 8)}...`);
+      } else {
+        deviceHash = await generateDeviceFingerprint();
+        console.log(`[DeviceMFAGuard] 🆕 Hash do servidor não encontrado, usando local: ${deviceHash.slice(0, 8)}...`);
+      }
 
       setState((prev) => ({ ...prev, deviceHash }));
 
@@ -151,6 +162,46 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
             expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           }));
           return true;
+        }
+        
+        // 🔐 P0 FIX v11.4: SESSÃO COM mfa_verified=false MAS HASH VERIFICADO
+        // Auto-reparar se o hash do servidor já foi verificado na tabela user_mfa_verifications
+        if (sessionData?.mfa_verified === false && serverHash) {
+          console.log(`[DeviceMFAGuard] 🔧 Sessão com mfa_verified=false, verificando se hash do servidor já foi validado...`);
+          
+          const { data: mfaCheck } = await supabase.rpc("check_device_mfa_valid", {
+            _user_id: user.id,
+            _device_hash: serverHash,
+          });
+          
+          if (mfaCheck === true) {
+            console.log(`[DeviceMFAGuard] 🔧 Hash do servidor já verificado! Auto-reparando sessão...`);
+            
+            // Auto-reparar: Marcar sessão como verificada e atualizar hash
+            const { error: updateError } = await supabase
+              .from("active_sessions")
+              .update({ mfa_verified: true, device_hash: serverHash })
+              .eq("session_token", sessionToken)
+              .eq("status", "active");
+            
+            if (!updateError) {
+              console.log(`[DeviceMFAGuard] ✅ Sessão auto-reparada com sucesso!`);
+              globalMFACache.set(cacheKey, {
+                verified: true,
+                expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+              });
+              setState((prev) => ({
+                ...prev,
+                isChecking: false,
+                isVerified: true,
+                needsMFA: false,
+                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              }));
+              return true;
+            } else {
+              console.error(`[DeviceMFAGuard] ⚠️ Falha ao auto-reparar:`, updateError);
+            }
+          }
         }
         
         console.log(`[DeviceMFAGuard] ⚠️ Sessão com mfa_verified=false - requer 2FA`);
