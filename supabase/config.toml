@@ -334,3 +334,8 @@ verify_jwt = true
 # 🟢 Requer JWT - Apenas Owner/Admin pode gerar sumários
 [functions.generate-book-toc]
 verify_jwt = true
+
+# --- Importação em Massa com Validação CPF (Receita Federal) ---
+# 🟢 Requer JWT - Apenas Owner/Admin pode importar alunos
+[functions.bulk-import-students-cpf]
+verify_jwt = true
