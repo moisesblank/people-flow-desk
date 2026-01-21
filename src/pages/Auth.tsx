@@ -1037,15 +1037,12 @@ export default function Auth() {
         console.log("[AUTH] 6.2. Usuário não está banido, prosseguindo...");
 
         // ====================================================================
-        // 🔓 BYPASS C: TODAS AS CAMADAS DE PROTEÇÃO DESATIVADAS
-        // - 2FA: DESATIVADO
-        // - Device Registration: DESATIVADO
-        // - Session Creation RPC: DESATIVADO (session já existe via Supabase)
-        // Login vai direto para redirect
+        // 🛡️ FLUXO SOBERANO v11.4: Registro de dispositivo + Sessão única OBRIGATÓRIOS
+        // Restaurado após eliminação do BYPASS C que causava loops de redirecionamento
         // ====================================================================
-        console.log("[AUTH] 🔓 BYPASS C: Todas as camadas DESATIVADAS");
+        console.log("[AUTH] 🛡️ Iniciando fluxo soberano v11.4...");
 
-        // 🎯 P0 FIX v3.2: VERIFICAR password_change_required ANTES de redirecionar
+        // 🎯 P0 FIX v3.2: VERIFICAR password_change_required ANTES de continuar
         const { data: profileCheck } = await supabase
           .from("profiles")
           .select("password_change_required")
@@ -1053,7 +1050,7 @@ export default function Auth() {
           .maybeSingle();
 
         if (profileCheck?.password_change_required === true) {
-          console.log("[AUTH] 🔐 BYPASS C: Usuário precisa trocar senha - mostrando formulário");
+          console.log("[AUTH] 🔐 Usuário precisa trocar senha - mostrando formulário");
           sessionStorage.setItem("matriz_password_change_pending", "1");
           setPendingPasswordChangeUser({
             email: userFor2FA.email || "",
@@ -1064,9 +1061,121 @@ export default function Auth() {
           return; // NÃO redirecionar - mostrar formulário de troca de senha
         }
 
+        // ============================================
+        // 🛡️ BLOCO 3: REGISTRAR DISPOSITIVO ANTES DA SESSÃO
+        // ============================================
+        console.log("[AUTH][BLOCO3] 🔐 Registrando dispositivo ANTES da sessão...");
+
+        // 👑 OWNER BYPASS (UX-only): Owner pula device-reg para evitar loops
+        const isOwnerEmail = (userFor2FA.email || "").toLowerCase() === "moisesblank@gmail.com";
+        let deviceResult: { success: boolean; error?: string; deviceHash?: string; deviceId?: string; gatePayload?: DeviceGatePayload; sameTypePayload?: any } = { success: true };
+        
+        if (!isOwnerEmail) {
+          deviceResult = await registerDeviceBeforeSession();
+
+          if (!deviceResult.success) {
+            console.error("[AUTH][BLOCO3] ❌ Falha no registro de dispositivo:", deviceResult.error);
+
+            // 🛡️ BEYOND_THE_3_DEVICES: Substituição do mesmo tipo
+            if (deviceResult.error === "SAME_TYPE_REPLACEMENT_REQUIRED") {
+              console.log("[AUTH][BEYOND_3] 🔄 Same-type replacement oferecida - redirecionando");
+              if (deviceResult.sameTypePayload) {
+                getSameTypeReplacementActions().setPayload(deviceResult.sameTypePayload);
+              }
+              setIsLoading(false);
+              navigate("/security/same-type-replacement", { replace: true });
+              return;
+            }
+
+            // FAIL-CLOSED: Bloquear login se limite excedido
+            if (deviceResult.error === "DEVICE_LIMIT_EXCEEDED") {
+              console.log("[AUTH][BLOCO3] 🛡️ Limite excedido - redirecionando para DeviceLimitGate");
+              if (deviceResult.gatePayload) {
+                useDeviceGateStore.getState().setPayload(deviceResult.gatePayload);
+              }
+              setIsLoading(false);
+              navigate("/security/device-limit", { replace: true });
+              return;
+            }
+
+            // Outros erros de dispositivo
+            const errorMsg = getDeviceErrorMessage(deviceResult.error || "UNEXPECTED_ERROR");
+            toast.error(errorMsg.title, { description: errorMsg.description });
+            await supabase.auth.signOut();
+            setIsLoading(false);
+            return;
+          }
+
+          console.log("[AUTH][BLOCO3] ✅ Dispositivo vinculado:", deviceResult.deviceId);
+        } else {
+          console.log("[AUTH][BLOCO3] 👑 Owner bypass: pulando registro de dispositivo");
+        }
+
+        // ============================================
+        // 🛡️ SESSÃO ÚNICA: Criar sessão via RPC
+        // ============================================
+        console.log("[AUTH][SESSAO] 🔐 Criando sessão única...");
+
+        const SESSION_TOKEN_KEY = "matriz_session_token";
+        const ua = navigator.userAgent;
+        let device_type = "desktop";
+        if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
+          device_type = /iPad|Tablet/i.test(ua) ? "tablet" : "mobile";
+        }
+
+        let browser = "unknown";
+        if (ua.includes("Firefox")) browser = "Firefox";
+        else if (ua.includes("Edg")) browser = "Edge";
+        else if (ua.includes("Chrome")) browser = "Chrome";
+        else if (ua.includes("Safari")) browser = "Safari";
+
+        let os = "unknown";
+        if (ua.includes("Windows")) os = "Windows";
+        else if (ua.includes("Mac")) os = "macOS";
+        else if (ua.includes("Linux")) os = "Linux";
+        else if (ua.includes("Android")) os = "Android";
+        else if (ua.includes("iPhone")) os = "iOS";
+
+        // 🔐 Garantir hash do servidor (Owner usa placeholder)
+        const serverDeviceHash = isOwnerEmail 
+          ? "owner-bypass-hash" 
+          : (deviceResult.deviceHash || localStorage.getItem('matriz_device_server_hash') || "fallback-hash");
+        
+        if (!isOwnerEmail) {
+          localStorage.setItem('matriz_device_server_hash', serverDeviceHash);
+        }
+
+        const { data: sessionData, error: sessionError } = await supabase.rpc("create_single_session", {
+          _ip_address: null,
+          _user_agent: navigator.userAgent.slice(0, 255),
+          _device_type: device_type,
+          _browser: browser,
+          _os: os,
+          _device_hash_from_server: serverDeviceHash,
+        });
+
+        if (sessionError || !sessionData?.[0]?.session_token) {
+          console.error("[AUTH][SESSAO] ❌ Falha ao criar sessão única:", sessionError);
+          
+          // 👑 OWNER BYPASS: não travar Owner por falha de sessão
+          if (isOwnerEmail) {
+            console.warn("[AUTH][SESSAO] 👑 Owner bypass: falha em create_single_session, prosseguindo");
+            localStorage.setItem(SESSION_TOKEN_KEY, `owner-fallback-${Date.now()}`);
+          } else {
+            toast.error("Falha ao criar sessão segura", { description: "Tente novamente." });
+            await supabase.auth.signOut();
+            setIsLoading(false);
+            return;
+          }
+        } else {
+          const sessionToken = sessionData[0].session_token;
+          localStorage.setItem(SESSION_TOKEN_KEY, sessionToken);
+          console.log("[AUTH][SESSAO] ✅ Sessão única criada:", sessionToken.slice(0, 8) + "...");
+        }
+
         toast.success("Login realizado com sucesso!");
 
-        // Buscar role e redirecionar diretamente
+        // Buscar role e redirecionar
         const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
@@ -1078,7 +1187,7 @@ export default function Auth() {
         console.log("[AUTH] ✅ Redirecionando para", target, "(role:", userRole, ")");
         setIsLoading(false);
         navigate(target, { replace: true });
-        return; // 🔓 BYPASS C: Encerra aqui após login bem-sucedido
+        return;
       }
 
       // SIGNUP
