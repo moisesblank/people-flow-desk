@@ -42,3 +42,6 @@ export {
   type EnforceOwnerRedirectParams,
   type EnforceOwnerRedirectResult 
 } from './enforceOwnerRedirect';
+
+// Bootstrap global (orquestra execução no Router)
+export { OwnerGuardBootstrap } from './OwnerGuardBootstrap';

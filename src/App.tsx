@@ -33,6 +33,9 @@ import { SecurityBlackoutOverlay } from "@/components/security/SecurityBlackoutO
 import { AppProviders } from "@/contexts/AppProviders";
 import { createSacredQueryClient } from "@/lib/performance/cacheConfig";
 
+// 🔒 OWNER GUARD — execução global dentro do Router
+import { OwnerGuardBootstrap } from "@/owner-guard";
+
 // 📍 ROTAS MODULARIZADAS
 import { publicRoutes, comunidadeRoutes, gestaoRoutes, alunoRoutes, legacyRoutes, PageLoader } from "@/routes";
 
@@ -186,6 +189,7 @@ const App = memo(() => (
     <Toaster />
     <Sonner />
     <BrowserRouter>
+      <OwnerGuardBootstrap />
       <GestaoNoIndex />
       <LegacyRedirectHandler />
       <P0AliveBeacon />
