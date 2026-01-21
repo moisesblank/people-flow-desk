@@ -11,6 +11,7 @@ import { Camera, CameraOff, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SimuladoCameraWidgetProps } from "@/components/simulados/types";
+import { formatError } from '@/lib/utils/formatError';
 
 export function SimuladoCameraWidget({
   isActive,
@@ -71,7 +72,7 @@ export function SimuladoCameraWidget({
       {error && (
         <div className="absolute -bottom-8 left-0 right-0 flex items-center justify-center gap-1 text-[10px] text-red-400">
           <AlertCircle className="h-3 w-3" />
-          <span className="truncate">{error}</span>
+          <span className="truncate">{formatError(error)}</span>
         </div>
       )}
 

@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatError } from '@/lib/utils/formatError';
 
 interface UserSecurityInfo {
   id: string;
@@ -291,7 +292,7 @@ const ResetSegurancaUsuario = () => {
           {error && (
             <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive">
               <AlertTriangle className="h-4 w-4 inline mr-2" />
-              {error}
+              {formatError(error)}
             </div>
           )}
         </CardContent>

@@ -28,6 +28,7 @@ import {
   calcularXpProximoNivel,
   getTituloNivel 
 } from "@/hooks/student/useStudentDashboardData";
+import { formatError } from '@/lib/utils/formatError';
 
 // Import 2300 styles
 import "@/styles/dashboard-2300.css";
@@ -99,7 +100,7 @@ export function BetaStudentDashboard() {
           <CardContent className="pt-6 text-center space-y-4">
             <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
             <h2 className="text-xl font-bold">Erro ao carregar dados</h2>
-            <p className="text-muted-foreground">{error.message}</p>
+            <p className="text-muted-foreground">{formatError(error)}</p>
             <Button onClick={() => window.location.reload()}>Tentar novamente</Button>
           </CardContent>
         </Card>

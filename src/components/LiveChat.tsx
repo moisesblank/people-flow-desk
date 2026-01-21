@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
+import { formatError } from '@/lib/utils/formatError';
 import { 
   Send, 
   Heart, 
@@ -173,7 +174,7 @@ export function LiveChat({ classId, className }: LiveChatProps) {
     return (
       <div className={cn('flex flex-col items-center justify-center h-full gap-3 p-4', className)}>
         <AlertCircle className="w-10 h-10 text-destructive" />
-        <p className="text-sm text-center text-muted-foreground">{error}</p>
+        <p className="text-sm text-center text-muted-foreground">{formatError(error)}</p>
         <p className="text-xs text-center text-muted-foreground">
           Se o problema persistir, atualize a página do navegador.
         </p>
