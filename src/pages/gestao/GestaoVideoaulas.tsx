@@ -19,6 +19,7 @@ import { OmegaFortressPlayer } from "@/components/video/OmegaFortressPlayer";
 import { getVideoTypeWithIntegrityGuard } from "@/lib/video/detectVideoProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatError } from "@/lib/utils/formatError";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -280,8 +281,8 @@ export default function GestaoVideoaulas() {
       setIsCreateOpen(false);
       queryClient.invalidateQueries({ queryKey: ['gestao-videoaulas'] });
     },
-    onError: (error) => {
-      toast.error(`Erro ao criar: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao criar: ${formatError(error)}`);
     }
   });
 
@@ -299,8 +300,8 @@ export default function GestaoVideoaulas() {
       setEditingLesson(null);
       queryClient.invalidateQueries({ queryKey: ['gestao-videoaulas'] });
     },
-    onError: (error) => {
-      toast.error(`Erro ao atualizar: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao atualizar: ${formatError(error)}`);
     }
   });
 

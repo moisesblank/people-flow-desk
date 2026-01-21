@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image, Upload, Trash2, Loader2, Eye, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatError } from "@/lib/utils/formatError";
 
 import {
   Dialog,
@@ -98,7 +99,7 @@ export function VideoOverlayConfigDialog({ open, onClose }: VideoOverlayConfigDi
       onClose();
     },
     onError: (error) => {
-      toast.error(`Erro ao salvar: ${error.message}`);
+      toast.error(`Erro ao salvar: ${formatError(error)}`);
     },
   });
 
@@ -144,9 +145,9 @@ export function VideoOverlayConfigDialog({ open, onClose }: VideoOverlayConfigDi
 
       // Salvar no settings
       await saveMutation.mutateAsync(publicUrl);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Upload error:", error);
-      toast.error(`Erro no upload: ${error.message}`);
+      toast.error(`Erro no upload: ${formatError(error)}`);
     } finally {
       setIsUploading(false);
     }

@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { formatError } from "@/lib/utils/formatError";
 import { 
   Book, 
   Plus, 
@@ -143,8 +144,8 @@ export default function AlunoQrCodes() {
       setNewPdf({ title: "", description: "", file: null });
       setSelectedBook(null);
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao adicionar PDF: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao adicionar PDF: ${formatError(error)}`);
     },
     onSettled: () => {
       setUploading(false);

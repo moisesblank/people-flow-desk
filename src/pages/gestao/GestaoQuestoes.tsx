@@ -5,6 +5,7 @@
 // ============================================
 
 import { memo, useState, useCallback, useEffect, useMemo, Component, ErrorInfo, ReactNode } from 'react';
+import { formatError } from '@/lib/utils/formatError';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
