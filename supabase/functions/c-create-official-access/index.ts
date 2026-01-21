@@ -407,6 +407,65 @@ async function sendWelcomeEmailWithMagicLink(
 }
 
 // ============================================
+// 🎯 P0 FIX: EMAIL PARA USUÁRIO COM SENHA PRÉ-DEFINIDA
+// Não precisa de magic link - já pode fazer login direto
+// ============================================
+async function sendWelcomeEmailWithPassword(
+  resend: Resend,
+  fromEmail: string,
+  toEmail: string,
+  nome: string,
+  role: StudentRole,
+  loginUrl: string,
+): Promise<{ success: boolean; error?: string }> {
+  const roleLabel = ROLE_LABELS[role];
+
+  const conteudo = `
+    <h2 style="margin:0 0 16px;font-size:20px;color:#E62B4A;">Bem-vindo(a), ${nome}!</h2>
+    <p style="margin:0 0 16px;color:#333333;font-size:15px;">Seu acesso à plataforma foi criado pela equipe de gestão.</p>
+    
+    <div style="background:#f5f5f5;padding:16px;border-radius:8px;margin:16px 0;">
+      <p style="margin:0 0 8px;color:#333333;font-size:14px;"><strong>✅ Sua senha já foi configurada!</strong></p>
+      <p style="margin:0;color:#666666;font-size:13px;">Acesse: <strong>${roleLabel}</strong></p>
+    </div>
+    
+    <p style="margin:16px 0 0;color:#666666;font-size:13px;">
+      Use seu email <strong>${toEmail}</strong> e a senha informada pela equipe para acessar.
+    </p>
+  `;
+
+  const htmlContent = getBaseTemplate(
+    "Seu acesso está pronto!",
+    conteudo,
+    "Fazer Login",
+    loginUrl
+  );
+
+  try {
+    console.log('[c-create-official-access] Sending welcome email (password pre-set) to:', toEmail);
+    
+    const { data, error } = await resend.emails.send({
+      from: fromEmail,
+      to: [toEmail],
+      subject: `🎉 Bem-vindo(a), ${nome}! Sua conta está pronta — Curso Moisés Medeiros`,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error('[c-create-official-access] Resend error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('[c-create-official-access] Welcome email (password pre-set) sent. ID:', data?.id);
+    return { success: true };
+    
+  } catch (err) {
+    console.error('[c-create-official-access] Email send exception:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+// ============================================
 // MAIN HANDLER
 // ============================================
 serve(async (req) => {
@@ -742,32 +801,42 @@ serve(async (req) => {
        passwordEmailSent = !payload.senha;
     } else {
       // ============================================
-      // 🎯 Usuário já existe - NÃO alterar senha (manter existente)
-      // Apenas atualizar metadata e enviar link de reset se necessário
+      // 🎯 Usuário já existe - ATUALIZAR SENHA SE FORNECIDA
+      // FIX P0: Senha pré-definida deve funcionar para usuários existentes
       // ============================================
-      console.log('[c-create-official-access] ℹ️ User already exists, updating metadata only');
+      console.log('[c-create-official-access] ℹ️ User already exists, updating metadata' + (payload.senha ? ' AND PASSWORD' : ''));
+      
+      const updatePayload: { email_confirm: boolean; password?: string; user_metadata: Record<string, unknown> } = { 
+        email_confirm: true, // Garantir email confirmado
+        user_metadata: {
+          nome: payload.nome,
+          updated_by: caller.email,
+          updated_via: 'c-create-official-access',
+          access_reactivated_at: new Date().toISOString(),
+          // 🎯 FIX: Atualizar flag de senha se fornecida
+          requires_password_setup: !payload.senha,
+        },
+      };
+      
+      // 🎯 P0 FIX: Se senha foi fornecida, atualizar a senha do usuário existente
+      if (payload.senha) {
+        updatePayload.password = payload.senha;
+        console.log('[c-create-official-access] 🔐 Updating password for existing user');
+      }
       
       const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
         userId!,
-        { 
-          email_confirm: true, // Garantir email confirmado
-          user_metadata: {
-            nome: payload.nome,
-            updated_by: caller.email,
-            updated_via: 'c-create-official-access',
-            access_reactivated_at: new Date().toISOString(),
-          },
-        }
+        updatePayload
       );
       
       if (updateError) {
-        console.error('[c-create-official-access] ⚠️ Error updating user metadata:', updateError.message);
+        console.error('[c-create-official-access] ⚠️ Error updating user:', updateError.message);
       } else {
-        console.log('[c-create-official-access] ✅ User metadata updated successfully');
+        console.log('[c-create-official-access] ✅ User updated successfully' + (payload.senha ? ' (with new password)' : ''));
       }
       
-      emailStatus = 'password_set';
-      passwordEmailSent = true; // Vai enviar link de setup
+      emailStatus = payload.senha ? 'password_set' : 'password_set';
+      passwordEmailSent = !payload.senha; // Só envia link de setup se NÃO tiver senha
       console.log('[c-create-official-access] ℹ️ Using existing user:', userId);
     }
 
@@ -802,13 +871,20 @@ serve(async (req) => {
       profileData.avatar_url = payload.foto_aluno;
     }
 
-    // 🎯 PRIMEIRO ACESSO: SEMPRE marca password_change_required para novos usuários
-    // O link no email vai permitir que o usuário defina sua própria senha
+    // 🎯 P0 FIX: Controle de password_change_required
+    // - SEM senha: marca true (vai redefinir via link)
+    // - COM senha: marca false (já está pronta para uso)
     if (!payload.senha) {
       profileData.password_change_required = true;
       profileData.onboarding_completed = false;
       profileData.platform_steps_completed = false;
       console.log('[c-create-official-access] 🔐 First access: will redirect to password setup via email link');
+    } else {
+      // 🎯 FIX CRÍTICO: Senha pré-definida = pronta para uso imediato
+      profileData.password_change_required = false;
+      profileData.onboarding_completed = true;
+      profileData.platform_steps_completed = true;
+      console.log('[c-create-official-access] ✅ Password pre-set: user ready for immediate login');
     }
 
     const { error: profileError } = await supabaseAdmin
@@ -941,68 +1017,101 @@ serve(async (req) => {
     console.log('[c-create-official-access] ✅ Role assigned:', payload.role, expiresAt ? `(expires: ${expiresAt})` : '');
 
     // ============================================
-    // 9. GERAR TOKEN PERSISTENTE DE PRIMEIRO ACESSO
-    // 🎯 P0 FIX v3: Token que NUNCA expira até ser usado
-    // Substitui magic links que expiram em 1 hora
+    // 9. GERAR TOKEN E ENVIAR EMAIL DE BOAS-VINDAS
+    // 🎯 P0 FIX v4: Comportamento diferente com/sem senha pré-definida
     // ============================================
-    console.log('[c-create-official-access] 📧 Generating persistent first-access token...');
     
     // 🎯 P0 FIX: URL dinâmica via env (fallback para produção)
     const siteUrl = Deno.env.get('SITE_URL') || 'https://pro.moisesmedeiros.com.br';
     console.log('[c-create-official-access] 📍 Using SITE_URL:', siteUrl);
     
-    // Gerar token único e seguro (32 bytes = 64 hex chars)
-    const tokenBytes = new Uint8Array(32);
-    crypto.getRandomValues(tokenBytes);
-    const persistentToken = Array.from(tokenBytes).map(b => b.toString(16).padStart(2, '0')).join('');
-    
-    // Invalidar tokens anteriores do mesmo usuário
-    await supabaseAdmin
-      .from('first_access_tokens')
-      .update({ is_used: true, used_at: new Date().toISOString() })
-      .eq('user_id', userId)
-      .eq('is_used', false);
-    
-    // Criar novo token persistente (SEM expiração!)
-    const { error: tokenError } = await supabaseAdmin
-      .from('first_access_tokens')
-      .insert({
-        user_id: userId,
-        email: payload.email,
-        token: persistentToken,
-        created_by: caller.id,
-        metadata: {
-          role: payload.role,
-          nome: payload.nome,
-          created_via: 'c-create-official-access',
-        },
-      });
-    
-    if (tokenError) {
-      console.error('[c-create-official-access] ❌ Failed to create persistent token:', tokenError);
+    if (payload.senha) {
+      // ============================================
+      // 🎯 FLUXO COM SENHA PRÉ-DEFINIDA
+      // Usuário pode fazer login imediatamente
+      // Email informa: "Sua senha já foi configurada"
+      // ============================================
+      console.log('[c-create-official-access] 📧 Sending welcome email (password pre-set, NO token needed)...');
+      
+      const loginUrl = `${siteUrl}/auth`;
+      
+      const emailResult = await sendWelcomeEmailWithPassword(
+        resend,
+        resendFrom,
+        payload.email,
+        payload.nome,
+        payload.role,
+        loginUrl,
+      );
+      
+      if (emailResult.success) {
+        welcomeEmailSent = true;
+        emailStatus = 'welcome_sent';
+        console.log('[c-create-official-access] ✅ Welcome email (pre-set password) sent successfully');
+      } else {
+        console.error('[c-create-official-access] ❌ Welcome email failed:', emailResult.error);
+        emailStatus = 'failed';
+      }
     } else {
-      console.log('[c-create-official-access] ✅ Persistent first-access token created (NEVER expires until used)');
-    }
-    
-    // URL com token persistente
-    const firstAccessUrl = `${siteUrl}/auth?first_access_token=${persistentToken}`;
-    
-    const emailResult = await sendWelcomeEmailWithMagicLink(
-      resend,
-      resendFrom,
-      payload.email,
-      payload.nome,
-      payload.role,
-      firstAccessUrl,
-    );
+      // ============================================
+      // 🎯 FLUXO SEM SENHA (ORIGINAL)
+      // Gera token persistente para primeiro acesso
+      // ============================================
+      console.log('[c-create-official-access] 📧 Generating persistent first-access token...');
+      
+      // Gerar token único e seguro (32 bytes = 64 hex chars)
+      const tokenBytes = new Uint8Array(32);
+      crypto.getRandomValues(tokenBytes);
+      const persistentToken = Array.from(tokenBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+      
+      // Invalidar tokens anteriores do mesmo usuário
+      await supabaseAdmin
+        .from('first_access_tokens')
+        .update({ is_used: true, used_at: new Date().toISOString() })
+        .eq('user_id', userId)
+        .eq('is_used', false);
+      
+      // Criar novo token persistente (SEM expiração!)
+      const { error: tokenError } = await supabaseAdmin
+        .from('first_access_tokens')
+        .insert({
+          user_id: userId,
+          email: payload.email,
+          token: persistentToken,
+          created_by: caller.id,
+          metadata: {
+            role: payload.role,
+            nome: payload.nome,
+            created_via: 'c-create-official-access',
+          },
+        });
+      
+      if (tokenError) {
+        console.error('[c-create-official-access] ❌ Failed to create persistent token:', tokenError);
+      } else {
+        console.log('[c-create-official-access] ✅ Persistent first-access token created (NEVER expires until used)');
+      }
+      
+      // URL com token persistente
+      const firstAccessUrl = `${siteUrl}/auth?first_access_token=${persistentToken}`;
+      
+      const emailResult = await sendWelcomeEmailWithMagicLink(
+        resend,
+        resendFrom,
+        payload.email,
+        payload.nome,
+        payload.role,
+        firstAccessUrl,
+      );
 
-    if (emailResult.success) {
-      welcomeEmailSent = true;
-      emailStatus = 'welcome_sent';
-      console.log('[c-create-official-access] ✅ Welcome email with persistent token sent successfully');
-    } else {
-      console.error('[c-create-official-access] ❌ Welcome email failed:', emailResult.error);
-      emailStatus = 'failed';
+      if (emailResult.success) {
+        welcomeEmailSent = true;
+        emailStatus = 'welcome_sent';
+        console.log('[c-create-official-access] ✅ Welcome email with persistent token sent successfully');
+      } else {
+        console.error('[c-create-official-access] ❌ Welcome email failed:', emailResult.error);
+        emailStatus = 'failed';
+      }
     }
 
     // ============================================
