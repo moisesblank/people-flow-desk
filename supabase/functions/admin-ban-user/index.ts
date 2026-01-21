@@ -27,20 +27,25 @@ serve(async (req) => {
 
     // Verificar autenticação
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      console.error("[admin-ban-user] ❌ Sem header de autorização");
+    if (!authHeader?.startsWith("Bearer ")) {
+      console.error("[admin-ban-user] ❌ Sem header de autorização válido");
       return new Response(
         JSON.stringify({ error: "Não autorizado" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verificar quem está chamando
+    // Verificar quem está chamando - usar cliente do usuário para validar o token
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user: caller }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    const supabaseUser = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    
+    const { data: claimsData, error: claimsError } = await supabaseUser.auth.getUser();
+    const caller = claimsData?.user;
 
-    if (authError || !caller) {
-      console.error("[admin-ban-user] ❌ Token inválido:", authError);
+    if (claimsError || !caller) {
+      console.error("[admin-ban-user] ❌ Token inválido:", claimsError);
       return new Response(
         JSON.stringify({ error: "Token inválido" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
