@@ -1171,6 +1171,16 @@ export default function Auth() {
           const sessionToken = sessionData[0].session_token;
           localStorage.setItem(SESSION_TOKEN_KEY, sessionToken);
           console.log("[AUTH][SESSAO] ✅ Sessão única criada:", sessionToken.slice(0, 8) + "...");
+          
+          // 👑 OWNER FIX: Marcar mfa_verified = true automaticamente para Owner
+          // Evita loop de DeviceMFAGuard bloqueando acesso
+          if (isOwnerEmail) {
+            console.log("[AUTH][SESSAO] 👑 Owner: marcando mfa_verified = true");
+            await supabase
+              .from("active_sessions")
+              .update({ mfa_verified: true })
+              .eq("session_token", sessionToken);
+          }
         }
 
         toast.success("Login realizado com sucesso!");
