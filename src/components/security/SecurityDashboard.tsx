@@ -1,6 +1,7 @@
 // ============================================
 // 🛡️ FORTALEZA SUPREME v3.0 - DASHBOARD
 // Dashboard de Segurança em Tempo Real
+// 🛡️ P0 FIX: error é SEMPRE string (evita React Error #61)
 // ============================================
 
 import { memo } from 'react';
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSecurityDashboard } from '@/hooks/useFortalezaSupreme';
+import { formatError } from '@/lib/utils/formatError';
 
 interface MetricCardProps {
   title: string;
@@ -90,7 +92,7 @@ export const SecurityDashboard = memo(function SecurityDashboard({
       <Card className="bg-red-500/10 border-red-500/30">
         <CardContent className="p-4 text-center">
           <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-2" />
-          <p className="text-red-500">{error}</p>
+          <p className="text-red-500">{formatError(error)}</p>
           <Button variant="outline" size="sm" onClick={refresh} className="mt-2">
             <RefreshCw className="h-4 w-4 mr-2" />
             Tentar novamente

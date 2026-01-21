@@ -2,6 +2,7 @@
 // 🔐 DEVICE MFA GUARD HOOK — 2FA por Dispositivo
 // Verifica se o dispositivo atual tem verificação válida (24h)
 // NÃO TOCA em login/sessão/dispositivo
+// 🛡️ P0 FIX: error é SEMPRE string (evita React Error #61)
 // ============================================
 
 import { useState, useCallback, useEffect, useRef } from "react";
@@ -9,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { generateDeviceFingerprint } from "@/lib/deviceFingerprint";
 import { registerDeviceBeforeSession } from "@/lib/deviceRegistration";
+import { formatError } from "@/lib/utils/formatError";
 
 export interface DeviceMFAGuardState {
   isChecking: boolean;
@@ -66,7 +68,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
    */
   const checkDeviceMFA = useCallback(async (): Promise<boolean> => {
     if (!user?.id) {
-      setState((prev) => ({ ...prev, isChecking: false, error: "Usuário não autenticado" }));
+      setState((prev) => ({ ...prev, isChecking: false, error: formatError("Usuário não autenticado") }));
       return false;
     }
 
@@ -219,7 +221,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         setState((prev) => ({
           ...prev,
           isChecking: false,
-          error: error.message,
+          error: formatError(error),
         }));
         return false;
       }
@@ -251,7 +253,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       setState((prev) => ({
         ...prev,
         isChecking: false,
-        error: "Erro ao verificar dispositivo",
+        error: formatError(err, "Erro ao verificar dispositivo"),
       }));
       return false;
     }
@@ -269,7 +271,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
           ...prev,
           needsMFA: true,
           isVerified: false,
-          error: "Código inválido ou expirado",
+          error: formatError("Código inválido ou expirado"),
         }));
         return;
       }
@@ -286,7 +288,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
           ...prev,
           needsMFA: true,
           isVerified: false,
-          error: "Erro interno: hash do dispositivo não encontrado.",
+          error: formatError("Erro interno: hash do dispositivo não encontrado."),
         }));
         return;
       }
