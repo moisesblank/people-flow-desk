@@ -307,6 +307,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // - INITIAL_SESSION: sessão restaurada (ex: segundo device abrindo com cookie)
         // P0: evita sessões simultâneas por falta de criação do token
         if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+          // 🔒 Anti-loop: quando o login é feito pela tela /auth,
+          // quem cria a sessão única é o próprio Auth.tsx (fluxo soberano).
+          // Se também criarmos aqui, podemos invalidar tokens recém-criados e gerar loop /auth ↔ app.
+          const isAuthPath =
+            typeof window !== "undefined" &&
+            (window.location.pathname === "/auth" || window.location.pathname.startsWith("/auth/"));
+          if (isAuthPath) {
+            return;
+          }
+
           const hasSecurityToken =
             typeof window !== "undefined" ? Boolean(localStorage.getItem(SESSION_TOKEN_KEY)) : false;
 
@@ -499,6 +509,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (postSignInTick === 0) return; // Ignora montagem inicial
     if (!postSignInPayloadRef.current) return;
+
+    // 🔒 Anti-loop: se por algum motivo disparou enquanto estamos em /auth, não criar sessão aqui.
+    // O Auth.tsx é o dono do fluxo de sessão única quando o usuário está logando.
+    const isAuthPath =
+      typeof window !== "undefined" &&
+      (window.location.pathname === "/auth" || window.location.pathname.startsWith("/auth/"));
+    if (isAuthPath) {
+      postSignInPayloadRef.current = null;
+      return;
+    }
 
     const { userId, email } = postSignInPayloadRef.current;
 
