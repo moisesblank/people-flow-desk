@@ -101,8 +101,14 @@ export function AlunoPerfilIdentidade({ aluno, profile, role }: AlunoIdentidadeP
 
           <div className="flex flex-wrap gap-2 justify-center">
             {role && (
-              <Badge className={role === 'beta' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}>
-                {role === 'beta' ? '👑 Beta' : '🆓 Gratuito'}
+              <Badge className={
+                ['beta', 'aluno_presencial', 'beta_expira'].includes(role) 
+                  ? 'bg-yellow-500/20 text-yellow-400' 
+                  : 'bg-green-500/20 text-green-400'
+              }>
+                {role === 'beta' ? '👑 Beta' : 
+                 role === 'beta_expira' ? '⏳ Beta Expira' :
+                 role === 'aluno_presencial' ? '🏫 Presencial' : '🆓 Gratuito'}
               </Badge>
             )}
             {aluno.status && (

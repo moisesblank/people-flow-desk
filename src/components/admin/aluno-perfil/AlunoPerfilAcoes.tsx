@@ -159,7 +159,11 @@ export function AlunoPerfilAcoes({
         <div className="p-4 rounded-lg bg-background/50 border border-border/50">
           <h4 className="text-sm font-medium text-foreground mb-3">Status Atual</h4>
           <div className="flex flex-wrap gap-2">
-            <Badge className={currentRole === 'beta' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-muted'}>
+            <Badge className={
+              ['beta', 'aluno_presencial', 'beta_expira'].includes(currentRole || '') 
+                ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' 
+                : 'bg-muted'
+            }>
               Role: {currentRole || 'Sem role'}
             </Badge>
             {userId && (
