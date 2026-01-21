@@ -215,34 +215,83 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
         toast.message(`Importando lote ${batchIndex}/${batchTotal}...`, { description: `${batch.length} alunos` });
 
         setImportStatus(`Lote ${batchIndex}/${batchTotal} — enviando para o backend...`);
-        const { data, error } = await withTimeout(
-          supabase.functions.invoke('bulk-import-students-cpf', {
-            body: {
-              students: batch,
-              defaultPassword: 'eneM2026@#',
-              tipoProduto: 'Livro Web',
-              fonte: 'Importação Bruna Lista ONLINE 20/01',
-              expirationDays: 365, // 1 ANO de acesso BETA
-            },
-          }),
-          invokeTimeoutMs,
-          `lote ${batchIndex}/${batchTotal}`
-        );
+        
+        // RESILIENTE: tenta o lote, mas NÃO para se falhar - continua com próximos lotes
+        try {
+          const { data, error } = await withTimeout(
+            supabase.functions.invoke('bulk-import-students-cpf', {
+              body: {
+                students: batch,
+                defaultPassword: 'eneM2026@#',
+                tipoProduto: 'Livro Web',
+                fonte: 'Importação Bruna Lista ONLINE 20/01',
+                expirationDays: 365, // 1 ANO de acesso BETA
+              },
+            }),
+            invokeTimeoutMs,
+            `lote ${batchIndex}/${batchTotal}`
+          );
 
-        if (error) throw new Error(error.message);
-        if (!data?.success) throw new Error(data?.error || 'Erro desconhecido');
+          if (error) {
+            console.error(`[IMPORT] Lote ${batchIndex} falhou:`, error.message);
+            toast.error(`Lote ${batchIndex} falhou`, { description: error.message });
+            // Marca todos do lote como erro para relatório
+            batch.forEach((s, idx) => {
+              aggregatedResults.push({
+                row: start + idx + 1,
+                nome: s.nome,
+                cpf: s.cpf || '',
+                email: s.email || '',
+                status: 'error' as const,
+                error: `Lote falhou: ${error.message}`
+              });
+            });
+            totalError += batch.length;
+          } else if (!data?.success) {
+            console.error(`[IMPORT] Lote ${batchIndex} erro:`, data?.error);
+            toast.error(`Lote ${batchIndex} erro`, { description: data?.error });
+            batch.forEach((s, idx) => {
+              aggregatedResults.push({
+                row: start + idx + 1,
+                nome: s.nome,
+                cpf: s.cpf || '',
+                email: s.email || '',
+                status: 'error' as const,
+                error: `Erro: ${data?.error || 'desconhecido'}`
+              });
+            });
+            totalError += batch.length;
+          } else {
+            // Sucesso do lote
+            aggregatedResults.push(...(data.results || []));
+            totalSuccess += data.successCount || 0;
+            totalError += data.errorCount || 0;
+            totalSkipped += data.skippedCount || 0;
+          }
+        } catch (batchErr) {
+          console.error(`[IMPORT] Lote ${batchIndex} exception:`, batchErr);
+          toast.error(`Lote ${batchIndex} timeout/erro`, { 
+            description: batchErr instanceof Error ? batchErr.message : 'Erro de rede' 
+          });
+          batch.forEach((s, idx) => {
+            aggregatedResults.push({
+              row: start + idx + 1,
+              nome: s.nome,
+              cpf: s.cpf || '',
+              email: s.email || '',
+              status: 'error' as const,
+              error: `Timeout/Erro: ${batchErr instanceof Error ? batchErr.message : 'desconhecido'}`
+            });
+          });
+          totalError += batch.length;
+        }
 
-        aggregatedResults.push(...(data.results || []));
-        totalSuccess += data.successCount || 0;
-        totalError += data.errorCount || 0;
-        totalSkipped += data.skippedCount || 0;
-
-        // progresso pós-lote
+        // progresso pós-lote (SEMPRE atualiza, mesmo com erro)
         const done = Math.min(start + batch.length, total);
         setProgress(Math.floor((done / total) * 100));
-        setImportStatus(`Lote ${batchIndex}/${batchTotal} — concluído (${done}/${total})`);
+        setImportStatus(`Lote ${batchIndex}/${batchTotal} — ${totalSuccess} ok, ${totalError} erros`);
 
-        // checkpoint após sucesso
+        // checkpoint após processamento
         resumeFromIndexRef.current = done;
       }
 
