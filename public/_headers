@@ -39,7 +39,7 @@
   Cache-Control: public, max-age=31536000, immutable
 
 # Favicon - Cache 1 semana
-/favicon.png
+/favicon.ico
   Cache-Control: public, max-age=604800
 
 # HTML - SEM CACHE (SPA - sempre buscar versão nova)

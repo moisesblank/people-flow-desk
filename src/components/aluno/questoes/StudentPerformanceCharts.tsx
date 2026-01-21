@@ -18,10 +18,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-// P0 ANTI-CRASH: Recharts ResponsiveContainer depende de ResizeObserver.
-// Em alguns WebViews (Android antigo) isso causa ReferenceError e cai no ErrorBoundary.
-const hasResizeObserverSupport = () => typeof window !== 'undefined' && 'ResizeObserver' in window;
-
 // =====================================================
 // CONSTANTES
 // =====================================================
@@ -660,17 +656,6 @@ function StudentPerformanceCharts({ macros, micros, temas = [], isLowEnd = false
     const totalErrors = macros.reduce((sum, m) => sum + m.errors, 0);
     return { totalQuestions, totalCorrect, totalErrors };
   }, [macros]);
-
-  if (!hasResizeObserverSupport()) {
-    return (
-      <div className="rounded-2xl border border-border/50 bg-card/50 p-4 text-center">
-        <div className="text-sm font-semibold">Gráficos indisponíveis neste dispositivo</div>
-        <div className="text-xs text-muted-foreground mt-1">
-          Atualize o navegador ou acesse pelo Chrome/Firefox para ver os gráficos.
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">

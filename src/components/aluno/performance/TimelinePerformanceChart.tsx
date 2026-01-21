@@ -19,8 +19,6 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 
-const hasResizeObserverSupport = () => typeof window !== 'undefined' && 'ResizeObserver' in window;
-
 // Cores base para os 5 macros (ordem canônica) - HSL based
 const MACRO_COLORS: Record<string, { hue: number; sat: number; light: number }> = {
   'Química Geral': { hue: 38, sat: 92, light: 50 },
@@ -547,21 +545,6 @@ function ChartContent({
     }
     return [];
   }, [groupBy, microInfoMap]);
-
-  // ============================================
-  // P0 ANTI-CRASH: Recharts ResponsiveContainer depende de ResizeObserver.
-  // Alguns WebViews/Android antigos não possuem a API → ReferenceError → ErrorBoundary.
-  // ============================================
-  if (!hasResizeObserverSupport()) {
-    return (
-      <div className="h-[220px] w-full rounded-lg border border-white/10 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center">
-        <div className="text-center px-4">
-          <div className="text-xs text-muted-foreground">Seu navegador não suporta gráficos em tempo real.</div>
-          <div className="text-[10px] text-muted-foreground/60 mt-1">Atualize o navegador ou use o Chrome/Firefox.</div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-[220px] w-full">
