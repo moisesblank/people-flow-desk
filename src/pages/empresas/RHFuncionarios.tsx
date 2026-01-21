@@ -555,10 +555,12 @@ export default function RHFuncionarios() {
 
       setDeleteDialogOpen(null);
       fetchData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[RH] Erro ao excluir funcionário:", error);
+      const errObj = error as Record<string, unknown>;
+      const errorMsg = typeof errObj?.message === 'string' ? errObj.message : typeof errObj?.details === 'string' ? errObj.details : "Tente novamente";
       toast.error("Erro ao excluir funcionário", {
-        description: error?.message || error?.details || "Tente novamente",
+        description: errorMsg,
       });
     } finally {
       setIsSaving(false);

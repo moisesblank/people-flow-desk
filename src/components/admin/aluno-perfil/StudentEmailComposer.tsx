@@ -71,10 +71,12 @@ export function StudentEmailComposer({
       } else {
         throw new Error(data?.error || "Erro desconhecido");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao enviar email:", error);
+      const errObj = error as Record<string, unknown>;
+      const errorMsg = typeof errObj?.message === 'string' ? errObj.message : "Tente novamente";
       toast.error("Erro ao enviar email", {
-        description: error.message || "Tente novamente",
+        description: errorMsg,
       });
     } finally {
       setIsSending(false);

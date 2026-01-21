@@ -798,7 +798,7 @@ export const WebBookViewer = memo(function WebBookViewer({
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 text-center">
         <AlertTriangle className="w-12 h-12 text-destructive" />
         <h3 className="text-lg font-semibold">Erro ao carregar livro</h3>
-        <p className="text-muted-foreground">{effectiveError || bookData?.error}</p>
+        <p className="text-muted-foreground">{typeof effectiveError === 'string' ? effectiveError : typeof bookData?.error === 'string' ? bookData.error : 'Erro ao carregar o livro'}</p>
         {onClose && (
           <Button variant="outline" onClick={onClose}>
             Voltar

@@ -170,12 +170,13 @@ export function NuclearAnnihilateButton() {
       } else {
         throw new Error(data?.error || "Operação falhou");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Nuclear annihilation error:", err);
-      setError(err.message || "Erro desconhecido");
+      const errorMsg = formatError(err);
+      setError(errorMsg);
       setStep('warning');
       toast.error("Falha na aniquilação", {
-        description: err.message
+        description: errorMsg
       });
     }
   }, [secretKey]);

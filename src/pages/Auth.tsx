@@ -1370,10 +1370,10 @@ export default function Auth() {
       });
       setIsLogin(true);
       setFormData({ nome: "", email: formData.email, password: "" });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[AUTH] ERROR:", err);
       toast.error("Erro ao processar solicitação", {
-        description: err?.message || "Falha inesperada",
+        description: formatError(err),
       });
     } finally {
       setIsLoading(false);
