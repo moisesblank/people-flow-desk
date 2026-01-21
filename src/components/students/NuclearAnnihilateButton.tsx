@@ -4,7 +4,7 @@
 // CONSTITUIÇÃO v10.4 — P0 CRÍTICO
 // ============================================
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Skull, AlertTriangle, Loader2, ShieldAlert, Lock, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,11 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerOwnerCheck } from "@/hooks/useServerOwnerCheck";
+
+// ============================================
+// OWNER EMAIL FALLBACK (CONSTITUIÇÃO v10.4)
+// ============================================
+const OWNER_EMAIL = "moisesblank@gmail.com";
 
 // ============================================
 // CONSTANTS
@@ -48,7 +53,7 @@ interface AnnihilationResult {
 // ============================================
 
 export function NuclearAnnihilateButton() {
-  const { isOwner, isLoading: isCheckingOwner } = useServerOwnerCheck();
+  const { isOwner: isOwnerFromHook, isLoading: isCheckingOwner } = useServerOwnerCheck();
   
   // Estados do fluxo de confirmação
   const [step, setStep] = useState<'closed' | 'warning' | 'phrase' | 'secret' | 'executing' | 'complete'>('closed');
@@ -56,6 +61,20 @@ export function NuclearAnnihilateButton() {
   const [secretKey, setSecretKey] = useState("");
   const [result, setResult] = useState<AnnihilationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  
+  // FALLBACK: Verificar email diretamente (CONSTITUIÇÃO v10.4)
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  
+  useEffect(() => {
+    const fetchUserEmail = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUserEmail(user?.email?.toLowerCase() || null);
+    };
+    fetchUserEmail();
+  }, []);
+  
+  // Owner = hook OR email fallback
+  const isOwner = isOwnerFromHook || (userEmail === OWNER_EMAIL.toLowerCase());
 
   // Reset do estado
   const resetState = useCallback(() => {
@@ -143,8 +162,12 @@ export function NuclearAnnihilateButton() {
     }
   }, [secretKey]);
 
-  // Não renderizar se não for owner ou estiver carregando
-  if (isCheckingOwner || !isOwner) {
+  // FALLBACK IMEDIATO: Se email do Owner, mostrar mesmo durante loading
+  const isOwnerByEmail = userEmail === OWNER_EMAIL.toLowerCase();
+  
+  // Não renderizar se não for owner e não estiver carregando (evita flash)
+  // MAS: Se é Owner por email, mostrar imediatamente
+  if (!isOwnerByEmail && (isCheckingOwner || !isOwner)) {
     return null;
   }
 
