@@ -19,6 +19,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { formatError } from "@/lib/utils/formatError";
 import { 
   ArrowLeft, 
   Plus, 
@@ -393,8 +394,8 @@ export default function AlunoQrCodesBook() {
       setIsAddPdfOpen(false);
       setNewPdf({ title: "", description: "", file: null });
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao adicionar PDF: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao adicionar PDF: ${formatError(error)}`);
     },
     onSettled: () => {
       setUploading(false);
@@ -416,8 +417,8 @@ export default function AlunoQrCodesBook() {
       queryClient.invalidateQueries({ queryKey: ["qrcode-pdfs", book?.id] });
       queryClient.invalidateQueries({ queryKey: ["qrcode-books"] });
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao remover PDF: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao remover PDF: ${formatError(error)}`);
     },
   });
 

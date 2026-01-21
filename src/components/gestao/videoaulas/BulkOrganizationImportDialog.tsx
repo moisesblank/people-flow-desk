@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatError } from "@/lib/utils/formatError";
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -276,9 +277,9 @@ export const BulkOrganizationImportDialog = forwardRef<HTMLDivElement, BulkOrgan
         setParsedData(records);
         setHierarchyStats(analyzeHierarchy(records));
         setStep('preview');
-      } catch (error: any) {
-        toast.error(`Erro ao processar arquivo: ${error.message}`);
-        setParseErrors([error.message]);
+      } catch (error: unknown) {
+        toast.error(`Erro ao processar arquivo: ${formatError(error)}`);
+        setParseErrors([formatError(error)]);
       }
     };
     reader.readAsText(uploadedFile);
@@ -323,7 +324,7 @@ export const BulkOrganizationImportDialog = forwardRef<HTMLDivElement, BulkOrgan
       .select('id')
       .single();
 
-    if (error) throw new Error(`Erro ao criar curso "${courseName}": ${error.message}`);
+    if (error) throw new Error(`Erro ao criar curso "${courseName}": ${formatError(error)}`);
 
     courseCache.set(courseName, created.id);
     console.log(`[BULK-IMPORT] ✅ Curso criado: "${courseName}" (${created.id})`);
@@ -370,7 +371,7 @@ export const BulkOrganizationImportDialog = forwardRef<HTMLDivElement, BulkOrgan
       .select('id')
       .single();
 
-    if (error) throw new Error(`Erro ao criar módulo "${moduleName}": ${error.message}`);
+    if (error) throw new Error(`Erro ao criar módulo "${moduleName}": ${formatError(error)}`);
 
     moduleCache.set(cacheKey, created.id);
     console.log(`[BULK-IMPORT] ✅ Módulo criado: "${moduleName}" (${created.id})`);

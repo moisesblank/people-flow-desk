@@ -6,6 +6,7 @@
 // ============================================
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { formatError } from '@/lib/utils/formatError';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
