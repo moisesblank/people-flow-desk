@@ -339,6 +339,7 @@ export default function Alunos() {
   const [formData, setFormData] = useState({ nome: "", email: "", curso: "", status: "Ativo" });
   const [isCriarAcessoModalOpen, setIsCriarAcessoModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isBulkImportCPFModalOpen, setIsBulkImportCPFModalOpen] = useState(false);
   
   // Estado para confirmação de exclusão (substitui confirm() nativo)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -1059,6 +1060,17 @@ export default function Alunos() {
                         IMPORTAR
                       </Button>
                       
+                      {/* BOTÃO IMPORTAR CPF (AMBER) — Validação Receita Federal */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsBulkImportCPFModalOpen(true)}
+                        className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 hover:border-amber-400"
+                      >
+                        <Shield className="h-4 w-4 mr-2" />
+                        IMPORTAR CPF
+                      </Button>
+                      
                       {/* BOTÃO NUCLEAR — OWNER ONLY */}
                       <NuclearAnnihilateButton />
                       
@@ -1297,6 +1309,13 @@ export default function Alunos() {
             open={isImportModalOpen}
             onOpenChange={setIsImportModalOpen}
             onImportComplete={refetch}
+          />
+          
+          {/* Modal Importar Alunos com Validação CPF */}
+          <BulkImportCPFModal
+            open={isBulkImportCPFModalOpen}
+            onOpenChange={setIsBulkImportCPFModalOpen}
+            onSuccess={refetch}
           />
           
           {/* AlertDialog de confirmação de exclusão (substitui confirm() nativo) */}
