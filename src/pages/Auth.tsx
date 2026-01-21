@@ -420,13 +420,13 @@ export default function Auth() {
         if (session?.user) {
           console.log("[AUTH] ✅ Sessão existente detectada em /auth");
 
-          // 🔐 P0 FIX v11.6: Se falta hash do servidor, registrar dispositivo ANTES de redirecionar
+          // 🔐 P0 FIX v11.7: Se falta hash do servidor, registrar dispositivo COM TIMEOUT
           const existingHash = localStorage.getItem('matriz_device_server_hash');
           if (!existingHash) {
             console.warn("[AUTH] ⚠️ Hash do servidor faltando - registrando dispositivo agora...");
             try {
-              // registerDeviceBeforeSession já obtém a sessão internamente
-              const regResult = await registerDeviceBeforeSession();
+              // P0 FIX: Timeout de 2s para registro de dispositivo
+              const regResult = await withTimeout(registerDeviceBeforeSession(), 2000, "registerDevice");
               
               if (regResult.success && regResult.deviceHash) {
                 localStorage.setItem('matriz_device_server_hash', regResult.deviceHash);
@@ -446,39 +446,56 @@ export default function Auth() {
             } catch (regErr) {
               const isOwner = session.user.email?.toLowerCase() === 'moisesblank@gmail.com';
               if (isOwner) {
-                console.warn("[AUTH] 🛡️ OWNER BYPASS: Erro de registro ignorado:", regErr);
+                console.warn("[AUTH] 🛡️ OWNER BYPASS: Erro/timeout de registro ignorado:", regErr);
               } else {
-                console.error("[AUTH] ❌ Erro crítico ao registrar dispositivo:", regErr);
+                console.warn("[AUTH] ⚠️ Timeout/erro ao registrar dispositivo (fail-open):", regErr);
+                // P0 FIX: Não bloquear usuário, continuar para formulário
                 setIsCheckingSession(false);
                 return;
               }
             }
           }
 
-          const { data: roleData } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", session.user.id)
-            .maybeSingle();
+          // P0 FIX: Timeout de 1.5s para busca de role
+          try {
+            const rolePromise = (async () => {
+              const res = await supabase
+                .from("user_roles")
+                .select("role")
+                .eq("user_id", session.user.id)
+                .maybeSingle();
+              return res;
+            })();
+            
+            const { data: roleData } = await withTimeout(rolePromise, 1500, "fetchRole");
 
-          const userRole = roleData?.role || null;
-          
-          // 🔒 OWNER GUARD P0: Se é Owner, SEMPRE vai para /gestaofc
-          if (userRole === OWNER_ROLE || session.user.email?.toLowerCase() === OWNER_EMAIL) {
-            console.log("[AUTH] 🔒 OWNER GUARD: Redirecionando para", OWNER_HOME);
-            // Atualizar cache síncrono
-            localStorage.setItem('matriz_is_owner_cache', 'true');
-            localStorage.setItem('matriz_user_role', OWNER_ROLE);
-            navigate(OWNER_HOME, { replace: true });
+            const userRole = roleData?.role || null;
+            
+            // 🔒 OWNER GUARD P0: Se é Owner, SEMPRE vai para /gestaofc
+            if (userRole === OWNER_ROLE || session.user.email?.toLowerCase() === OWNER_EMAIL) {
+              console.log("[AUTH] 🔒 OWNER GUARD: Redirecionando para", OWNER_HOME);
+              // Atualizar cache síncrono
+              localStorage.setItem('matriz_is_owner_cache', 'true');
+              localStorage.setItem('matriz_user_role', OWNER_ROLE);
+              navigate(OWNER_HOME, { replace: true });
+              setIsCheckingSession(false);
+              return;
+            }
+            
+            const target = getPostLoginRedirect(userRole, session.user.email);
+            console.log("[AUTH] ✅ Redirecionando para:", target);
+            navigate(target, { replace: true });
+            setIsCheckingSession(false);
+            return;
+          } catch (roleErr) {
+            console.warn("[AUTH] ⚠️ Timeout/erro ao buscar role (fail-open):", roleErr);
+            // P0 FIX: Se timeout, tentar redirecionar com role null
+            const fallbackTarget = getPostLoginRedirect(null, session.user.email);
+            console.log("[AUTH] 🔄 Fallback redirect para:", fallbackTarget);
+            navigate(fallbackTarget, { replace: true });
             setIsCheckingSession(false);
             return;
           }
-          
-          const target = getPostLoginRedirect(userRole, session.user.email);
-          console.log("[AUTH] ✅ Redirecionando para:", target);
-          navigate(target, { replace: true });
-          setIsCheckingSession(false);
-          return;
         }
       } catch (err) {
         console.warn("[AUTH] Falha/timeout ao verificar sessão existente em /auth (fail-open):", err);
