@@ -10,11 +10,14 @@
 //   Staff = Funcionários → vê Gestão de Alunos (/gestaofc)
 // ============================================
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useRolePermissions, isGestaoHost, isProHost, isPublicHost } from "@/hooks/useRolePermissions";
+
+// 🔒 OWNER GUARD — Centralização P0
+import { enforceOwnerRedirect, OWNER_HOME } from "@/owner-guard";
 
 // Importa apenas Alunos (gestão) - AlunoDashboard é acessado via redirect
 import Alunos from "@/pages/Alunos";
@@ -24,6 +27,17 @@ export default function AlunosRouteSwitcher() {
   const { role, isLoading: roleLoading, isBeta, isOwner } = useRolePermissions();
 
   const isLoading = adminLoading || roleLoading;
+  
+  // 🔒 P0 OWNER GUARD: Owner NUNCA deve estar em /alunos
+  useEffect(() => {
+    if (!isLoading && isOwner) {
+      const result = enforceOwnerRedirect({ role: 'owner', pathname: '/alunos' });
+      if (result.shouldRedirect && result.targetPath) {
+        console.log("[AlunosRouteSwitcher] 🔒 OWNER GUARD: Forçando redirect para", OWNER_HOME);
+        window.location.replace(result.targetPath);
+      }
+    }
+  }, [isLoading, isOwner]);
 
   // 🔴 P0 DEBUG: Log para diagnóstico de tela preta
   console.log("[AlunosRouteSwitcher] 🚀 RENDER", {
@@ -73,29 +87,11 @@ export default function AlunosRouteSwitcher() {
   // 4. Outros roles → redirecionados para /comunidade
   // ============================================
 
-  // OWNER - ACESSO SUPREMO (LEI IV)
-  // 🔐 P0 FIX: Owner NUNCA é forçado para /alunos/dashboard
-  // Owner pode navegar livremente para /gestaofc via URL direta
+  // 🔒 OWNER GUARD P0: Owner SEMPRE vai para /gestaofc, NUNCA /alunos
+  // Regra arquitetural centralizada em src/owner-guard/
   if (isOwner) {
-    // Em ambiente mono-domínio (pro.* ou preview), Owner vê a lista de alunos
-    // Isso permite que o Owner acesse /alunos sem ser redirecionado
-    console.log("[AlunosRouteSwitcher] 👑 Owner acessando /alunos → renderiza Gestão de Alunos");
-    return (
-      <>
-        <Helmet>
-          <title>Gestão de Alunos | Matriz Digital</title>
-          <meta
-            name="description"
-            content="Gestão de alunos: lista, filtros, status, auditoria e sincronização inteligente."
-          />
-          <link
-            rel="canonical"
-            href={typeof window !== "undefined" ? `${window.location.origin}/alunos` : "/alunos"}
-          />
-        </Helmet>
-        <Alunos />
-      </>
-    );
+    console.log("[AlunosRouteSwitcher] 🔒 Owner detectado → REDIRECT IMEDIATO para /gestaofc");
+    return <Navigate to={OWNER_HOME} replace />;
   }
 
   // BETA = Aluno pagante → REDIRECT para /alunos/dashboard

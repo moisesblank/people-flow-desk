@@ -50,6 +50,9 @@ import { useSameTypeReplacementStore } from "@/state/sameTypeReplacementStore";
 import { collectFingerprintRawData, generateDeviceName } from "@/lib/deviceFingerprintRaw";
 import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
 
+// 🔒 OWNER GUARD — Centralização P0
+import { enforceOwnerRedirect, OWNER_HOME, OWNER_ROLE, OWNER_EMAIL } from "@/owner-guard";
+
 // 🛡️ CRITÉRIO EXPLÍCITO: Getter para setLoginIntent (evita re-render desnecessário)
 const getDeviceGateActions = () => useDeviceGateStore.getState();
 // 🛡️ BEYOND_THE_3_DEVICES: Getter para SameTypeReplacementStore
@@ -459,6 +462,18 @@ export default function Auth() {
             .maybeSingle();
 
           const userRole = roleData?.role || null;
+          
+          // 🔒 OWNER GUARD P0: Se é Owner, SEMPRE vai para /gestaofc
+          if (userRole === OWNER_ROLE || session.user.email?.toLowerCase() === OWNER_EMAIL) {
+            console.log("[AUTH] 🔒 OWNER GUARD: Redirecionando para", OWNER_HOME);
+            // Atualizar cache síncrono
+            localStorage.setItem('matriz_is_owner_cache', 'true');
+            localStorage.setItem('matriz_user_role', OWNER_ROLE);
+            navigate(OWNER_HOME, { replace: true });
+            setIsCheckingSession(false);
+            return;
+          }
+          
           const target = getPostLoginRedirect(userRole, session.user.email);
           console.log("[AUTH] ✅ Redirecionando para:", target);
           navigate(target, { replace: true });
@@ -555,6 +570,15 @@ export default function Auth() {
         return; // NÃO redirecionar
       }
 
+      // 🔒 OWNER GUARD P0: Se é Owner, SEMPRE vai para /gestaofc
+      if (userRole === OWNER_ROLE || session.user.email?.toLowerCase() === OWNER_EMAIL) {
+        console.log("[AUTH] 🔒 OWNER GUARD: Redirecionando Owner para", OWNER_HOME);
+        localStorage.setItem('matriz_is_owner_cache', 'true');
+        localStorage.setItem('matriz_user_role', OWNER_ROLE);
+        navigate(OWNER_HOME, { replace: true });
+        return;
+      }
+      
       // ✅ REGRA DEFINITIVA: Usa função centralizada COM role
       const target = getPostLoginRedirect(userRole, session.user.email);
       console.log("[AUTH] ✅ SIGNED_IN + loginAttempted - redirecionando para", target, "(role:", userRole, ")");
