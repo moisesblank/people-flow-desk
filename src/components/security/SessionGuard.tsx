@@ -233,8 +233,9 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
   /**
    * Bootstrap do token de sessão
+   * 🔐 P0 FIX v4: Owner SEMPRE pode criar sessão mesmo com token dessincronizado
    */
-  const bootstrapSessionTokenIfMissing = useCallback(async () => {
+  const bootstrapSessionTokenIfMissing = useCallback(async (forceForOwner = false) => {
     if (!user) return;
     
     // 🔐 P0 FIX: Owner bypass - verificar role + email (fallback assíncrono)
@@ -246,13 +247,17 @@ export function SessionGuard({ children }: SessionGuardProps) {
     }
 
     const existing = localStorage.getItem(SESSION_TOKEN_KEY);
-    if (existing) return;
+    
+    // 🔐 P0 FIX v4: Owner pode forçar novo bootstrap mesmo com token existente
+    if (existing && !forceForOwner) return;
 
     const now = Date.now();
     if (isBootstrappingRef.current) return;
-    if (now - lastBootstrapAtRef.current < BOOTSTRAP_RETRY_MS) return;
+    
+    // 🔐 P0 FIX v4: Owner ignora cooldown de retry
+    if (!currentIsOwner && now - lastBootstrapAtRef.current < BOOTSTRAP_RETRY_MS) return;
 
-    if (bootstrapAttemptsRef.current >= MAX_BOOTSTRAP_ATTEMPTS) {
+    if (!currentIsOwner && bootstrapAttemptsRef.current >= MAX_BOOTSTRAP_ATTEMPTS) {
       console.warn("[SessionGuard] ⚠️ Máximo de tentativas de bootstrap atingido.");
       bootstrapAttemptsRef.current = 0;
       lastBootstrapAtRef.current = now + 60_000;
@@ -264,20 +269,29 @@ export function SessionGuard({ children }: SessionGuardProps) {
     isBootstrappingRef.current = true;
 
     try {
-      console.warn("[SessionGuard] ⚠️ Token ausente — bootstrap de sessão única (RPC)");
+      console.warn("[SessionGuard] ⚠️ Token ausente/inválido — bootstrap de sessão (RPC)");
       const meta = detectClientDeviceMeta();
       
-      const serverDeviceHash = localStorage.getItem('matriz_device_server_hash');
+      let serverDeviceHash = localStorage.getItem('matriz_device_server_hash');
+      
+      // 🔐 P0 FIX v4: Owner sem hash - gerar hash temporário para criar sessão
       if (!serverDeviceHash) {
-        // 🔐 P0 FIX: Owner bypass - não bloquear navegação por falta de hash
         if (currentIsOwner) {
-          console.log("[SessionGuard] 👑 Owner sem hash - bypass ativado, navegação permitida");
+          console.log("[SessionGuard] 👑 Owner sem hash - gerando hash temporário para bootstrap");
+          // Gerar um hash básico para o Owner poder criar sessão
+          serverDeviceHash = `owner_temp_${crypto.randomUUID()}`;
+          localStorage.setItem('matriz_device_server_hash', serverDeviceHash);
+        } else {
+          console.warn("[SessionGuard] ⚠️ Sem hash do servidor - dispositivo não registrado.");
           isBootstrappingRef.current = false;
-          return; // Owner pode navegar mesmo sem sessão completa
+          return;
         }
-        console.warn("[SessionGuard] ⚠️ Sem hash do servidor - dispositivo não registrado.");
-        isBootstrappingRef.current = false;
-        return;
+      }
+
+      // 🔐 P0 FIX v4: Para Owner, limpar token antigo antes de criar novo
+      if (currentIsOwner && forceForOwner) {
+        localStorage.removeItem(SESSION_TOKEN_KEY);
+        console.log("[SessionGuard] 👑 Owner: Token antigo removido, criando novo...");
       }
 
       const { data, error } = await supabase.rpc("create_single_session", {
@@ -292,14 +306,23 @@ export function SessionGuard({ children }: SessionGuardProps) {
       const token = data?.[0]?.session_token;
       if (error || !token) {
         console.error("[SessionGuard] ❌ Bootstrap falhou:", error);
+        // 🔐 P0 FIX v4: Owner continua mesmo sem token
+        if (currentIsOwner) {
+          console.log("[SessionGuard] 👑 Owner: Bootstrap falhou mas navegação permitida");
+        }
         return;
       }
 
       localStorage.setItem(SESSION_TOKEN_KEY, token);
+      localStorage.setItem(LOGIN_TIMESTAMP_KEY, Date.now().toString());
       console.log("[SessionGuard] ✅ Bootstrap OK: matriz_session_token criado");
       bootstrapAttemptsRef.current = 0;
     } catch (e) {
       console.error("[SessionGuard] ❌ Erro inesperado no bootstrap:", e);
+      // 🔐 P0 FIX v4: Owner continua mesmo com erro
+      if (currentIsOwner) {
+        console.log("[SessionGuard] 👑 Owner: Erro no bootstrap mas navegação permitida");
+      }
     } finally {
       isBootstrappingRef.current = false;
     }
@@ -307,9 +330,13 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
   /**
    * Validar sessão consultando o BACKEND
+   * 🔐 P0 FIX v4: Owner com token inválido = criar novo automaticamente
    */
   const validateSession = useCallback(async (): Promise<boolean> => {
     if (!user || isValidatingRef.current || hasLoggedOutRef.current) return true;
+    
+    // 🔐 P0 FIX v4: Detectar Owner antecipadamente
+    const currentIsOwner = role === 'owner' || user?.email?.toLowerCase() === 'moisesblank@gmail.com';
 
     const storedToken = localStorage.getItem(SESSION_TOKEN_KEY);
 
@@ -340,6 +367,14 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
         console.warn(`[SessionGuard] 🔴 Backend revogou: ${reason}`);
 
+        // 🔐 P0 FIX v4: Owner com sessão inválida = criar nova automaticamente
+        if (currentIsOwner && !isUserInitiatedLogout) {
+          console.log("[SessionGuard] 👑 Owner: Sessão inválida detectada - criando nova automaticamente...");
+          isValidatingRef.current = false;
+          await bootstrapSessionTokenIfMissing(true); // Force new session
+          return true; // Permitir navegação
+        }
+
         if (isUserInitiatedLogout) {
           await handleBackendRevocation(reason, false);
         } else {
@@ -356,9 +391,14 @@ export function SessionGuard({ children }: SessionGuardProps) {
     } catch (err) {
       console.error("[SessionGuard] Erro na validação:", err);
       isValidatingRef.current = false;
+      // 🔐 P0 FIX v4: Owner continua mesmo com erro de validação
+      if (currentIsOwner) {
+        console.log("[SessionGuard] 👑 Owner: Erro de validação ignorado");
+        return true;
+      }
       return true;
     }
-  }, [user, handleBackendRevocation, bootstrapSessionTokenIfMissing, verifyAndShowOverlay]);
+  }, [user, role, handleBackendRevocation, bootstrapSessionTokenIfMissing, verifyAndShowOverlay]);
 
   // ✅ Verificação periódica + visibilidade
   useEffect(() => {
