@@ -39,10 +39,14 @@ export function useOnboardingStatus(): OnboardingStatus {
   });
 
   // Owner bypass - NUNCA bloqueia owner no onboarding
-  // P1-2 FIX: Role como fonte da verdade
+  // 🔒 P0 FIX v5: Role como fonte primária + email como fallback
+  // CRÍTICO: Durante loading, role pode ser null - fallback por email garante bypass
   const isOwner = useMemo(() => {
-    return role === 'owner';
-  }, [role]);
+    if (role === 'owner') return true;
+    const email = user?.email?.toLowerCase();
+    if (email === 'moisesblank@gmail.com') return true;
+    return false;
+  }, [role, user?.email]);
 
   // 🛡️ v10.4.2: Determinar path de onboarding baseado no role
   const onboardingRedirectPath = useMemo(() => {
