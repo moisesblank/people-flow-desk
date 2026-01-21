@@ -118,8 +118,9 @@ function useGlobalShortcutsOverlay() {
   return { isOpen, setIsOpen };
 }
 
-// AppContent memoizado
-const AppContent = memo(() => {
+// AppContent - P0 FIX: Removido memo para evitar warnings de refs
+// O memo não trazia ganho real aqui pois o componente re-renderiza raramente
+function AppContent() {
   const { isOpen, setIsOpen } = useGlobalShortcutsOverlay();
   useGlobalDevToolsBlock();
   
@@ -180,8 +181,7 @@ const AppContent = memo(() => {
       </SessionGuard>
     </>
   );
-});
-AppContent.displayName = "AppContent";
+}
 
 // ⚡ App Principal com Providers Consolidados
 const App = memo(() => (

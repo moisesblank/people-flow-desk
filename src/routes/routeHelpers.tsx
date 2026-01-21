@@ -1,25 +1,27 @@
 // ============================================
 // 🛠️ ROUTE HELPERS
 // Componentes compartilhados para rotas
+// P0 FIX: Removido memo de ProtectedPage para evitar warnings de refs
 // ============================================
 
-import { memo, useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 
-// Protected route wrapper - memoized
+// Protected route wrapper
 // ✅ RESTAURADO: ProtectedRoute faz redirect para /auth se não autenticado
-// RoleProtectedRoute REMOVIDO para evitar tela preta
-export const ProtectedPage = memo(({ children }: { children: React.ReactNode }) => (
-  <ProtectedRoute>
-    <AppLayout>{children}</AppLayout>
-  </ProtectedRoute>
-));
-ProtectedPage.displayName = 'ProtectedPage';
+// 🔧 P0 FIX: SEM memo() para evitar warnings "Function components cannot be given refs"
+export function ProtectedPage({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute>
+      <AppLayout>{children}</AppLayout>
+    </ProtectedRoute>
+  );
+}
 
 // Ultra-fast loading - CSS only, minimal DOM
 // P0 anti-tela-preta: se o carregamento travar, mostramos ação de recuperação.
-export const PageLoader = memo(() => {
+export const PageLoader = memo(function PageLoader() {
   const [isStuck, setIsStuck] = useState(false);
 
   useEffect(() => {
@@ -52,4 +54,3 @@ export const PageLoader = memo(() => {
     </div>
   );
 });
-PageLoader.displayName = 'PageLoader';
