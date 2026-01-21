@@ -269,8 +269,10 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
           row.nome || row.Nome || row.NOME || row['Nome Completo'] || ''
         ).trim(),
         
-        // CPF: limpa formatação
-        cpf: String(row.cpf || row.CPF || row['CPF'] || '').trim(),
+        // CPF: limpa formatação + remove placeholders
+        cpf: String(row.cpf || row.CPF || row['CPF'] || '')
+          .replace(/\(none\)/gi, '')
+          .trim(),
         
         // Email
         email: String(row.email || row.Email || row.EMAIL || row['E-mail'] || '').trim().toLowerCase(),
@@ -291,12 +293,14 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
         cupom: String(row.cupom || row.Cupom || row.CUPOM || '').replace(/\(none\)/gi, '').trim() || undefined,
       }));
 
-      // Filtra linhas que tem pelo menos NOME E CPF
-      const valid = mapped.filter(s => s.nome && s.cpf);
+      // Filtra linhas que tem pelo menos NOME e (CPF ou EMAIL)
+      // Motivo: planilhas reais frequentemente vêm com CPF ausente para parte dos alunos,
+      // mas ainda precisamos cadastrá-los pelo email.
+      const valid = mapped.filter((s) => s.nome && (s.cpf || s.email));
       
       if (valid.length === 0) {
         toast.error('Nenhum aluno válido encontrado', {
-          description: 'Verifique se a planilha contém colunas: ALUNO (A) ou Nome, e CPF'
+          description: 'Verifique se a planilha contém pelo menos: ALUNO (A)/Nome e (CPF ou EMAIL)'
         });
         setIsProcessing(false);
         return;

@@ -12,8 +12,8 @@ const corsHeaders = {
 };
 
 interface StudentRow {
-  cpf: string;
-  email: string;
+  cpf?: string;
+  email?: string;
   nome: string;
   telefone?: string;
   cidade?: string;
@@ -171,42 +171,48 @@ serve(async (req) => {
       const rowNum = i + 1;
       
       // Normaliza campos
-      const cpfRaw = String(student.cpf || '').trim();
-      const cpfClean = normalizeCPF(cpfRaw);
-      const email = String(student.email || '').trim().toLowerCase();
+      const cpfRaw = String(student.cpf || '').replace(/\(none\)/gi, '').trim();
+      const cpfDigits = cpfRaw.replace(/\D/g, '');
+      const cpfClean = cpfDigits ? normalizeCPF(cpfRaw) : '';
+      const email = String(student.email || '').replace(/\(none\)/gi, '').trim().toLowerCase();
       const nome = String(student.nome || '').trim();
       const telefone = String(student.telefone || '').replace(/\D/g, '') || null;
 
-      // 1. Valida campos mínimos: NOME + CPF
+      // 1. Valida campos mínimos: NOME + (CPF ou EMAIL)
       if (!nome) {
         results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'skipped', error: 'Nome não informado' });
         skippedCount++;
         continue;
       }
 
-      if (!cpfRaw || cpfClean.length < 10) {
-        results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'skipped', error: 'CPF não informado ou inválido' });
+      const hasCpf = cpfClean.length >= 10;
+      const hasEmail = !!email;
+      if (!hasCpf && !hasEmail) {
+        results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'skipped', error: 'CPF e email ausentes' });
         skippedCount++;
         continue;
       }
 
-      // 2. Valida formato do CPF (dígitos verificadores)
-      if (!validateCPFFormat(cpfClean)) {
-        results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'error', error: 'CPF com dígitos verificadores inválidos' });
-        errorCount++;
-        continue;
+      // 2. Se CPF presente: valida formato e duplicidade
+      if (hasCpf) {
+        // Formato (dígitos verificadores)
+        if (!validateCPFFormat(cpfClean)) {
+          results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'error', error: 'CPF com dígitos verificadores inválidos' });
+          errorCount++;
+          continue;
+        }
+
+        // Duplicidade de CPF
+        const { data: existingCPF } = await adminClient.from('alunos').select('id, nome').eq('cpf', cpfClean).maybeSingle();
+        if (existingCPF) {
+          results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'skipped', error: `CPF já cadastrado (${existingCPF.nome})` });
+          skippedCount++;
+          continue;
+        }
       }
 
-      // 3. Verifica duplicidade de CPF
-      const { data: existingCPF } = await adminClient.from('alunos').select('id, nome').eq('cpf', cpfClean).maybeSingle();
-      if (existingCPF) {
-        results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'skipped', error: `CPF já cadastrado (${existingCPF.nome})` });
-        skippedCount++;
-        continue;
-      }
-
-      // 4. Verifica duplicidade de email (se informado)
-      if (email) {
+      // 3. Verifica duplicidade de email (se informado)
+      if (hasEmail) {
         const { data: existingEmail } = await adminClient.from('alunos').select('id, nome').eq('email', email).maybeSingle();
         if (existingEmail) {
           results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'skipped', error: `Email já cadastrado (${existingEmail.nome})` });
@@ -215,28 +221,30 @@ serve(async (req) => {
         }
       }
 
-      // 5. Valida CPF na Receita Federal (se API disponível)
-      const cpfValidation = await validateCPFReceita(cpfClean);
+      // 4. Valida CPF na Receita Federal (desativada) - apenas se CPF existir
+      const cpfValidation = hasCpf
+        ? await validateCPFReceita(cpfClean)
+        : { valid: true, nome: undefined as string | undefined };
       if (!cpfValidation.valid) {
-        results.push({ 
-          row: rowNum, 
-          cpf: cpfClean, 
-          email, 
-          nome, 
-          status: 'error', 
-          error: `CPF inválido: ${cpfValidation.error}` 
+        results.push({
+          row: rowNum,
+          cpf: cpfClean,
+          email,
+          nome,
+          status: 'error',
+          error: `CPF inválido: ${cpfValidation.error}`
         });
         errorCount++;
         continue;
       }
 
-      // 6. Se não tem email, não pode criar auth user - apenas registra no alunos
-      if (!email) {
+      // 5. Se não tem email, não pode criar auth user - apenas registra no alunos
+      if (!hasEmail) {
         // Registra apenas na tabela alunos (sem acesso ao sistema)
         await adminClient.from('alunos').insert({
           nome,
-          email: `sem-email-${cpfClean}@placeholder.local`,
-          cpf: cpfClean,
+          email: hasCpf ? `sem-email-${cpfClean}@placeholder.local` : `sem-email-${crypto.randomUUID()}@placeholder.local`,
+          cpf: hasCpf ? cpfClean : null,
           telefone,
           cidade: student.cidade || null,
           estado: student.estado || null,
@@ -249,15 +257,15 @@ serve(async (req) => {
           fonte,
           tipo_produto: tipoProduto,
           data_matricula: new Date().toISOString().split('T')[0],
-          observacoes: `Importado sem email. Cupom: ${student.cupom || 'N/A'}. Nome Receita: ${cpfValidation.nome || 'N/A'}`,
+          observacoes: `Importado sem email. CPF: ${hasCpf ? cpfClean : 'N/A'}. Cupom: ${student.cupom || 'N/A'}. Nome Receita: ${cpfValidation.nome || 'N/A'}`,
         });
 
-        results.push({ 
-          row: rowNum, 
-          cpf: cpfClean, 
-          email: '(sem email)', 
-          nome, 
-          status: 'skipped', 
+        results.push({
+          row: rowNum,
+          cpf: hasCpf ? cpfClean : '',
+          email: '(sem email)',
+          nome,
+          status: 'skipped',
           error: 'Registrado sem acesso (sem email)',
           cpf_receita_nome: cpfValidation.nome
         });
@@ -266,11 +274,14 @@ serve(async (req) => {
       }
 
       // 7. Cria usuário auth
+      const userMetadata: Record<string, unknown> = { nome };
+      if (hasCpf) userMetadata.cpf = cpfClean;
+
       const { data: authData, error: createAuthError } = await adminClient.auth.admin.createUser({
         email,
         password: defaultPassword,
         email_confirm: true,
-        user_metadata: { nome, cpf: cpfClean },
+        user_metadata: userMetadata,
       });
 
       if (createAuthError || !authData.user) {
@@ -293,7 +304,7 @@ serve(async (req) => {
         id: userId,
         email,
         nome,
-        cpf: cpfClean,
+        cpf: hasCpf ? cpfClean : null,
         phone: telefone,
         password_change_required: true,
         onboarding_completed: false,
@@ -313,7 +324,7 @@ serve(async (req) => {
       await adminClient.from('alunos').insert({
         nome,
         email,
-        cpf: cpfClean,
+        cpf: hasCpf ? cpfClean : null,
         telefone,
         cidade: student.cidade || null,
         estado: student.estado || null,
@@ -326,12 +337,12 @@ serve(async (req) => {
         fonte,
         tipo_produto: tipoProduto,
         data_matricula: new Date().toISOString().split('T')[0],
-        observacoes: `Cupom: ${student.cupom || 'N/A'}. Nome Receita: ${cpfValidation.nome || 'N/A'}`,
+        observacoes: `CPF: ${hasCpf ? cpfClean : 'N/A'}. Cupom: ${student.cupom || 'N/A'}. Nome Receita: ${cpfValidation.nome || 'N/A'}`,
       });
 
       results.push({ 
         row: rowNum, 
-        cpf: cpfClean, 
+        cpf: hasCpf ? cpfClean : '', 
         email, 
         nome, 
         status: 'success',
