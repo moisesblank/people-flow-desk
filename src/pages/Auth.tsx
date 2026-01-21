@@ -340,6 +340,20 @@ export default function Auth() {
   } = useTurnstile();
 
   // ============================================
+  // 🐕 P0 WATCHDOG — ANTI-LOOP /auth
+  // Regra: /auth NUNCA pode ficar preso em "Verificando sessão…"
+  // Fail-open: após alguns segundos, libera o formulário.
+  // ============================================
+  useEffect(() => {
+    if (!isCheckingSession) return;
+    const t = window.setTimeout(() => {
+      console.warn("[AUTH] 🐕 Watchdog ativado — liberando formulário (fail-open)");
+      setIsCheckingSession(false);
+    }, 3500);
+    return () => window.clearTimeout(t);
+  }, [isCheckingSession]);
+
+  // ============================================
   // 🛡️ POLÍTICA v10.0: ZERO SESSION PERSISTENCE
   // Nova aba/navegador = SEMPRE mostrar formulário de login
   // NÃO redirecionar automaticamente com sessão existente
@@ -348,6 +362,20 @@ export default function Auth() {
   useEffect(() => {
     const pendingKey = "matriz_2fa_pending";
     const pendingUserKey = "matriz_2fa_user";
+
+    // Timeout curto para qualquer await dentro do bootstrap (evita promise pendurada)
+    const withTimeout = async <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> => {
+      let timeoutId: number | undefined;
+      try {
+        const timeout = new Promise<never>((_, reject) => {
+          timeoutId = window.setTimeout(() => reject(new Error(`TIMEOUT:${label}`)), ms);
+        });
+        // eslint-disable-next-line @typescript-eslint/await-thenable
+        return (await Promise.race([promise, timeout])) as T;
+      } finally {
+        if (timeoutId) window.clearTimeout(timeoutId);
+      }
+    };
 
     // Rodar async fora do corpo do effect (TS/React-safe)
     void (async () => {
@@ -385,7 +413,7 @@ export default function Auth() {
       try {
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await withTimeout(supabase.auth.getSession(), 2000, "getSession");
         if (session?.user) {
           console.log("[AUTH] ✅ Sessão existente detectada em /auth — redirecionando");
 
@@ -402,7 +430,7 @@ export default function Auth() {
           return;
         }
       } catch (err) {
-        console.warn("[AUTH] Falha ao verificar sessão existente em /auth (fail-open):", err);
+        console.warn("[AUTH] Falha/timeout ao verificar sessão existente em /auth (fail-open):", err);
       }
 
       // Sem sessão → mostrar formulário
@@ -1119,6 +1147,19 @@ export default function Auth() {
         <div className="flex flex-col items-center gap-3 text-center">
           <Loader2 className="h-7 w-7 text-primary animate-spin" />
           <p className="text-sm text-muted-foreground">Verificando sessão…</p>
+
+          {/* P0: Ação manual (nunca travar em loop) */}
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+            <Button variant="secondary" size="sm" onClick={() => setIsCheckingSession(false)}>
+              Continuar
+            </Button>
+            {user?.email && (
+              <Button variant="outline" size="sm" onClick={() => window.location.replace("/gestaofc/gestao-alunos")}
+              >
+                Ir para Gestão
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );
