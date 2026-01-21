@@ -345,31 +345,23 @@ serve(async (req: Request) => {
       errors.push(`user_roles: ${e.message}`);
     }
 
-    // 8.12. Buscar emails dos alunos para deletar da tabela alunos
-    const { data: profiles } = await supabaseAdmin
-      .from('profiles')
-      .select('email')
-      .in('id', studentUserIds);
-    
-    const studentEmails = profiles?.map(p => p.email?.toLowerCase()).filter(Boolean) || [];
-
-    // 8.13. Deletar da tabela alunos (por email)
-    if (studentEmails.length > 0) {
-      try {
-        const { data: deleted, error } = await supabaseAdmin
-          .from('alunos')
-          .delete()
-          .in('email', studentEmails)
-          .select('id');
-        if (!error) {
-          tablesAffected.push('alunos');
-          console.log(`☢️ Deleted ${deleted?.length || 0} from alunos table`);
-        } else {
-          errors.push(`alunos: ${error.message}`);
-        }
-      } catch (e) {
-        errors.push(`alunos: ${e.message}`);
+    // 8.12. DELETAR TABELA ALUNOS COMPLETAMENTE (FIX CRÍTICO)
+    // A tabela alunos contém registros que podem NÃO estar vinculados a auth.users
+    // Por segurança, deletar TODOS os registros da tabela alunos
+    try {
+      const { data: deleted, error } = await supabaseAdmin
+        .from('alunos')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000') // Deleta tudo (workaround para delete all)
+        .select('id');
+      if (!error) {
+        tablesAffected.push('alunos');
+        console.log(`☢️ Deleted ${deleted?.length || 0} from alunos table (ALL RECORDS)`);
+      } else {
+        errors.push(`alunos: ${error.message}`);
       }
+    } catch (e) {
+      errors.push(`alunos: ${e.message}`);
     }
 
     // 8.14. Deletar profiles
