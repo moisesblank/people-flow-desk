@@ -6,24 +6,25 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Shield,
-  Mail,
-  RefreshCw,
-  Lock,
-  CheckCircle,
-  AlertCircle,
+import { 
+  Shield, 
+  Mail, 
+  RefreshCw, 
+  Lock, 
+  CheckCircle, 
+  AlertCircle, 
   Timer,
   AlertTriangle,
   ShieldAlert,
   MessageCircle,
   Smartphone,
-  Phone,
+  Phone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { formatError } from '@/lib/utils/formatError';
 
 interface TwoFactorVerificationProps {
   email: string;
@@ -42,7 +43,7 @@ export function TwoFactorVerification({
   userName,
   userPhone,
   onVerified,
-  onCancel,
+  onCancel
 }: TwoFactorVerificationProps) {
   // Estado de seleção de canal
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
@@ -63,7 +64,7 @@ export function TwoFactorVerification({
   const [lockoutTime, setLockoutTime] = useState(0);
   const [currentChannel, setCurrentChannel] = useState<Channel>("email");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
+  
   // 🛡️ Proteção contra chamadas duplicadas
   const verifyingRef = useRef(false);
   const lastVerifiedCodeRef = useRef<string | null>(null);
@@ -74,7 +75,11 @@ export function TwoFactorVerification({
     let cancelled = false;
 
     (async () => {
-      const { data, error } = await supabase.from("profiles").select("phone").eq("id", userId).maybeSingle();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("phone")
+        .eq("id", userId)
+        .maybeSingle();
 
       if (!cancelled && !error) {
         setProfilePhone(data?.phone || null);
@@ -116,126 +121,125 @@ export function TwoFactorVerification({
     await sendCode(channel);
   };
 
-  const sendCode = useCallback(
-    async (channel: Channel = currentChannel) => {
-      console.log(`[AUTH][2FA] Enviando código via ${channel}...`);
-      setIsResending(true);
-      setError("");
+  const sendCode = useCallback(async (channel: Channel = currentChannel) => {
+    console.log(`[AUTH][2FA] Enviando código via ${channel}...`);
+    setIsResending(true);
+    setError("");
 
-      const TIMEOUT_MS = 30_000;
-      const withTimeout = async <T,>(label: string, promise: Promise<T>): Promise<T> => {
-        let timeoutId: ReturnType<typeof setTimeout> | null = null;
-        try {
-          const timeoutPromise = new Promise<T>((_, reject) => {
-            timeoutId = setTimeout(() => reject(new Error(`Timeout ${TIMEOUT_MS}ms em: ${label}`)), TIMEOUT_MS);
-          });
-          return await Promise.race([promise, timeoutPromise]);
-        } finally {
-          if (timeoutId) clearTimeout(timeoutId);
-        }
-      };
-
+    const TIMEOUT_MS = 30_000;
+    const withTimeout = async <T,>(label: string, promise: Promise<T>): Promise<T> => {
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
       try {
-        const { data, error } = await withTimeout(
-          "send-2fa-code",
-          supabase.functions.invoke("send-2fa-code", {
-            body: {
-              email,
-              userId,
-              userName,
-              // ✅ usar telefone efetivo (prop OU perfil) para WhatsApp/SMS
-              phone: effectivePhone || userPhone,
-              channel,
-            },
-          }),
-        );
-
-        console.log("[AUTH][2FA] Resposta send-2fa-code:", {
-          hasError: Boolean(error),
-          hasData: Boolean(data),
-          channel: (data as any)?.channel,
+        const timeoutPromise = new Promise<T>((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error(`Timeout ${TIMEOUT_MS}ms em: ${label}`)), TIMEOUT_MS);
         });
+        return await Promise.race([promise, timeoutPromise]);
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+      }
+    };
 
-        if (error) throw error;
+    try {
+      const { data, error } = await withTimeout(
+        'send-2fa-code',
+        supabase.functions.invoke("send-2fa-code", {
+          body: {
+            email,
+            userId,
+            userName,
+            // ✅ usar telefone efetivo (prop OU perfil) para WhatsApp/SMS
+            phone: effectivePhone || userPhone,
+            channel,
+          },
+        })
+      );
 
-        if ((data as any)?.error) {
-          if ((data as any).retryAfter) {
-            toast.error("Muitas tentativas", {
-              description: "Aguarde 15 minutos para solicitar novo código",
-            });
-            return;
-          }
-          throw new Error((data as any).error);
-        }
+      console.log('[AUTH][2FA] Resposta send-2fa-code:', {
+        hasError: Boolean(error),
+        hasData: Boolean(data),
+        channel: (data as any)?.channel,
+      });
 
-        // Atualizar canal usado (pode ter sido fallback)
-        const usedChannel = (data as any)?.channel || channel;
-        setCurrentChannel(usedChannel);
+      if (error) throw error;
 
-        const channelLabels: Record<Channel, string> = {
-          email: "email",
-          sms: "SMS",
-          whatsapp: "WhatsApp",
-        };
-        const channelLabel = channelLabels[usedChannel as Channel] || usedChannel;
-        const destination = usedChannel === "email" ? email : formatPhone(effectivePhone);
-
-        toast.success(`Código enviado via ${channelLabel}!`, {
-          description: `Verifique seu ${channelLabel}: ${destination}`,
-        });
-
-        setCountdown(60);
-      } catch (err: any) {
-        console.error("[AUTH][2FA] ERROR sendCode:", err);
-
-        const status = err?.context?.status ?? err?.status;
-        const message = String(err?.message || "");
-
-        // 🛡️ AUDITORIA/RECOVERY: se o backend diz que o userId não existe,
-        // isso indica sessão/token local stale (ex: conta deletada/recriada).
-        // Regra: fail-closed → limpar artefatos e forçar reauth.
-        if (status === 404 || /usuário não encontrado/i.test(message)) {
-          try {
-            sessionStorage.removeItem("matriz_2fa_pending");
-            sessionStorage.removeItem("matriz_2fa_user");
-            sessionStorage.removeItem("matriz_password_change_pending");
-
-            const keysToRemove: string[] = [
-              "matriz_session_token",
-              "matriz_last_heartbeat",
-              "matriz_device_fingerprint",
-              "matriz_trusted_device",
-            ];
-            keysToRemove.forEach((k) => localStorage.removeItem(k));
-
-            // Remover tokens do client (sb-*-auth-token)
-            for (let i = localStorage.length - 1; i >= 0; i--) {
-              const k = localStorage.key(i);
-              if (k && /^sb-.*-auth-token$/.test(k)) localStorage.removeItem(k);
-            }
-
-            await supabase.auth.signOut();
-          } catch (cleanupErr) {
-            console.warn("[AUTH][2FA] Cleanup/reauth falhou (continuando):", cleanupErr);
-          }
-
-          toast.error("Sessão inválida", {
-            description: "Sua sessão estava desatualizada. Faça login novamente.",
+      if ((data as any)?.error) {
+        if ((data as any).retryAfter) {
+          toast.error("Muitas tentativas", {
+            description: "Aguarde 15 minutos para solicitar novo código"
           });
-          window.location.replace("/auth?reauth=1");
           return;
         }
-
-        setError(message || "Erro ao enviar código");
-        toast.error("Erro ao enviar código", {
-          description: message || "Tente novamente em alguns segundos",
-        });
-      } finally {
-        setIsResending(false);
+        throw new Error((data as any).error);
       }
-    },
-    [email, userId, userName, userPhone, currentChannel],
-  );
+
+      // Atualizar canal usado (pode ter sido fallback)
+      const usedChannel = (data as any)?.channel || channel;
+      setCurrentChannel(usedChannel);
+
+      const channelLabels: Record<Channel, string> = {
+        email: "email",
+        sms: "SMS",
+        whatsapp: "WhatsApp"
+      };
+      const channelLabel = channelLabels[usedChannel as Channel] || usedChannel;
+      const destination = usedChannel === "email"
+        ? email
+        : formatPhone(effectivePhone);
+
+      toast.success(`Código enviado via ${channelLabel}!`, {
+        description: `Verifique seu ${channelLabel}: ${destination}`,
+      });
+
+      setCountdown(60);
+    } catch (err: any) {
+      console.error('[AUTH][2FA] ERROR sendCode:', err);
+
+      const status = err?.context?.status ?? err?.status;
+      const message = String(err?.message || '');
+
+      // 🛡️ AUDITORIA/RECOVERY: se o backend diz que o userId não existe,
+      // isso indica sessão/token local stale (ex: conta deletada/recriada).
+      // Regra: fail-closed → limpar artefatos e forçar reauth.
+      if (status === 404 || /usuário não encontrado/i.test(message)) {
+        try {
+          sessionStorage.removeItem('matriz_2fa_pending');
+          sessionStorage.removeItem('matriz_2fa_user');
+          sessionStorage.removeItem('matriz_password_change_pending');
+
+          const keysToRemove: string[] = [
+            'matriz_session_token',
+            'matriz_last_heartbeat',
+            'matriz_device_fingerprint',
+            'matriz_trusted_device',
+          ];
+          keysToRemove.forEach((k) => localStorage.removeItem(k));
+
+          // Remover tokens do client (sb-*-auth-token)
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const k = localStorage.key(i);
+            if (k && /^sb-.*-auth-token$/.test(k)) localStorage.removeItem(k);
+          }
+
+          await supabase.auth.signOut();
+        } catch (cleanupErr) {
+          console.warn('[AUTH][2FA] Cleanup/reauth falhou (continuando):', cleanupErr);
+        }
+
+        toast.error('Sessão inválida', {
+          description: 'Sua sessão estava desatualizada. Faça login novamente.',
+        });
+        window.location.replace('/auth?reauth=1');
+        return;
+      }
+
+      setError(message || 'Erro ao enviar código');
+      toast.error('Erro ao enviar código', {
+        description: message || 'Tente novamente em alguns segundos',
+      });
+    } finally {
+      setIsResending(false);
+    }
+  }, [email, userId, userName, userPhone, currentChannel]);
 
   const handleInputChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
@@ -250,7 +254,7 @@ export function TwoFactorVerification({
       inputRefs.current[index + 1]?.focus();
     }
 
-    if (newCode.every((digit) => digit !== "") && newCode.join("").length === 6) {
+    if (newCode.every(digit => digit !== "") && newCode.join("").length === 6) {
       verifyCode(newCode.join(""));
     }
   };
@@ -264,9 +268,9 @@ export function TwoFactorVerification({
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     if (isLocked) return;
-
+    
     const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-
+    
     if (pastedData.length === 6) {
       const newCode = pastedData.split("");
       setCode(newCode);
@@ -277,17 +281,17 @@ export function TwoFactorVerification({
   const verifyCode = async (fullCode: string) => {
     // 🛡️ PROTEÇÃO: Evitar chamadas duplicadas
     if (verifyingRef.current) {
-      console.log("[AUTH][2FA] Verificação já em andamento, ignorando...");
+      console.log('[AUTH][2FA] Verificação já em andamento, ignorando...');
       return;
     }
-
+    
     // 🛡️ PROTEÇÃO: Não verificar o mesmo código duas vezes
     if (lastVerifiedCodeRef.current === fullCode) {
-      console.log("[AUTH][2FA] Código já foi verificado anteriormente, ignorando...");
+      console.log('[AUTH][2FA] Código já foi verificado anteriormente, ignorando...');
       return;
     }
 
-    console.log("[AUTH][2FA] Verificando código...");
+    console.log('[AUTH][2FA] Verificando código...');
     verifyingRef.current = true;
     setIsLoading(true);
     setError("");
@@ -307,10 +311,10 @@ export function TwoFactorVerification({
 
     try {
       const { data, error } = await withTimeout(
-        "verify-2fa-code",
+        'verify-2fa-code',
         supabase.functions.invoke("verify-2fa-code", {
-          body: { userId, code: fullCode },
-        }),
+          body: { userId, code: fullCode }
+        })
       );
 
       if (error || !(data as any)?.valid) {
@@ -336,15 +340,47 @@ export function TwoFactorVerification({
       lastVerifiedCodeRef.current = fullCode;
 
       toast.success("Verificação concluída!", {
-        description: "Bem-vindo(a) de volta!",
+        description: "Finalizando login..."
       });
 
-      onVerified();
+      // 🛡️ P0 FIX: Aguardar onVerified completar com timeout de segurança
+      console.log('[AUTH][2FA] ✅ Código válido, executando onVerified...');
+      
+      // Manter loading ativo durante onVerified
+      // Fallback: se onVerified travar por 20s, forçar reset
+      const onVerifiedTimeout = setTimeout(() => {
+        console.error('[AUTH][2FA] ⚠️ TIMEOUT: onVerified travou por 20s, resetando estado');
+        setIsLoading(false);
+        verifyingRef.current = false;
+        toast.error("Timeout no login", {
+          description: "Recarregando página...",
+        });
+        // Forçar reload após timeout
+        setTimeout(() => window.location.reload(), 1500);
+      }, 20_000);
+
+      try {
+        // Chamar onVerified e aguardar (pode ser async)
+        await Promise.resolve(onVerified());
+        console.log('[AUTH][2FA] ✅ onVerified completou com sucesso');
+      } catch (onVerifiedErr) {
+        console.error('[AUTH][2FA] ❌ Erro em onVerified:', onVerifiedErr);
+        toast.error("Erro ao finalizar login", {
+          description: formatError(onVerifiedErr),
+        });
+        // Em caso de erro, limpar estado
+        setIsLoading(false);
+        verifyingRef.current = false;
+      } finally {
+        clearTimeout(onVerifiedTimeout);
+      }
+
+      // Nota: NÃO resetar isLoading aqui - o redirect vai acontecer
+      // Se chegou aqui sem redirect, o timeout de 20s vai cuidar
     } catch (err: any) {
-      console.error("[AUTH][2FA] ERROR verifyCode:", err);
+      console.error('[AUTH][2FA] ERROR verifyCode:', err);
       setError(err?.message || "Erro ao verificar código. Tente novamente.");
       setCode(["", "", "", "", "", ""]);
-    } finally {
       setIsLoading(false);
       verifyingRef.current = false;
     }
@@ -353,18 +389,18 @@ export function TwoFactorVerification({
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const formatPhone = (phone: string) => {
-    const clean = phone.replace(/\D/g, "");
+    const clean = phone.replace(/\D/g, '');
     if (clean.length >= 11) {
       return `(**) *****-${clean.slice(-4)}`;
     }
     return `***-${clean.slice(-4)}`;
   };
 
-  const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, "$1***$3");
+  const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, '$1***$3');
 
   // ============================================
   // TELA DE SELEÇÃO DE CANAL
@@ -386,14 +422,18 @@ export function TwoFactorVerification({
               transition={{ type: "spring", delay: 0.1 }}
               className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
               style={{
-                background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--destructive)) 100%)",
+                background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--destructive)) 100%)"
               }}
             >
               <Shield className="w-10 h-10 text-white" />
             </motion.div>
 
-            <h2 className="text-2xl font-bold text-foreground mb-2">Verificação em Duas Etapas</h2>
-            <p className="text-muted-foreground text-sm">Onde você quer receber seu código de verificação?</p>
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              Verificação em Duas Etapas
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Onde você quer receber seu código de verificação?
+            </p>
           </div>
 
           {/* Opções de Canal */}
@@ -425,16 +465,13 @@ export function TwoFactorVerification({
               onClick={() => selectChannelAndSend("sms")}
               disabled={isResending || !hasWhatsApp}
               className={`w-full p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-4 group 
-                ${
-                  hasWhatsApp
-                    ? "border-border bg-background/50 hover:border-orange-500 hover:bg-orange-500/5"
-                    : "border-border/50 bg-muted/30 cursor-not-allowed opacity-50"
+                ${hasWhatsApp 
+                  ? "border-border bg-background/50 hover:border-orange-500 hover:bg-orange-500/5" 
+                  : "border-border/50 bg-muted/30 cursor-not-allowed opacity-50"
                 }`}
             >
-              <div
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors
-                ${hasWhatsApp ? "bg-orange-500/10 group-hover:bg-orange-500/20" : "bg-muted"}`}
-              >
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors
+                ${hasWhatsApp ? "bg-orange-500/10 group-hover:bg-orange-500/20" : "bg-muted"}`}>
                 <Phone className={`w-6 h-6 ${hasWhatsApp ? "text-orange-500" : "text-muted-foreground"}`} />
               </div>
               <div className="flex-1 text-left">
@@ -461,7 +498,10 @@ export function TwoFactorVerification({
                 className="mb-4"
               >
                 <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
-                  <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
                     <RefreshCw className="w-4 h-4" />
                   </motion.div>
                   <span>Enviando código...</span>
@@ -471,7 +511,12 @@ export function TwoFactorVerification({
           </AnimatePresence>
 
           {/* Cancel */}
-          <Button variant="outline" className="w-full" onClick={onCancel} disabled={isResending}>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={onCancel}
+            disabled={isResending}
+          >
             Cancelar
           </Button>
         </div>
@@ -487,7 +532,9 @@ export function TwoFactorVerification({
             <Smartphone className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
             <div className="text-sm text-muted-foreground">
               <p className="font-medium text-foreground mb-1">Mais segurança para você</p>
-              <p>A verificação em duas etapas protege sua conta mesmo que sua senha seja comprometida.</p>
+              <p>
+                A verificação em duas etapas protege sua conta mesmo que sua senha seja comprometida.
+              </p>
             </div>
           </div>
         </motion.div>
@@ -514,13 +561,13 @@ export function TwoFactorVerification({
             transition={{ type: "spring", delay: 0.1 }}
             className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center relative"
             style={{
-              background: isLocked
+              background: isLocked 
                 ? "linear-gradient(135deg, #991b1b 0%, #dc2626 100%)"
                 : currentChannel === "whatsapp"
                   ? "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
                   : currentChannel === "sms"
                     ? "linear-gradient(135deg, #f97316 0%, #ea580c 100%)"
-                    : "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--destructive)) 100%)",
+                    : "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--destructive)) 100%)"
             }}
           >
             {isLocked ? (
@@ -532,7 +579,7 @@ export function TwoFactorVerification({
             ) : (
               <Mail className="w-10 h-10 text-white" />
             )}
-
+            
             <motion.div
               className="absolute inset-0 rounded-full border-2 border-current opacity-50"
               animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
@@ -544,7 +591,7 @@ export function TwoFactorVerification({
             {isLocked ? "Conta Temporariamente Bloqueada" : "Digite o Código"}
           </h2>
           <p className="text-muted-foreground text-sm">
-            {isLocked
+            {isLocked 
               ? "Muitas tentativas incorretas detectadas"
               : `Enviamos um código de 6 dígitos para seu ${currentChannel === "whatsapp" ? "WhatsApp" : currentChannel === "sms" ? "SMS" : "email"}`}
           </p>
@@ -584,7 +631,9 @@ export function TwoFactorVerification({
                 <p className="text-center text-sm text-muted-foreground">
                   Por segurança, aguarde antes de tentar novamente
                 </p>
-                <div className="text-3xl font-bold text-destructive font-mono">{formatTime(lockoutTime)}</div>
+                <div className="text-3xl font-bold text-destructive font-mono">
+                  {formatTime(lockoutTime)}
+                </div>
               </div>
             </motion.div>
           )}
@@ -596,7 +645,7 @@ export function TwoFactorVerification({
             <label className="block text-sm font-medium text-muted-foreground mb-3 text-center">
               Digite o código de verificação
             </label>
-
+            
             <div className="flex justify-center gap-2" onPaste={handlePaste}>
               {code.map((digit, index) => (
                 <motion.div
@@ -655,7 +704,7 @@ export function TwoFactorVerification({
             >
               <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>{error}</span>
+                <span>{formatError(error)}</span>
               </div>
             </motion.div>
           )}
@@ -664,9 +713,17 @@ export function TwoFactorVerification({
         {/* Loading */}
         <AnimatePresence>
           {isLoading && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mb-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="mb-4"
+            >
               <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
-                <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                >
                   <RefreshCw className="w-4 h-4" />
                 </motion.div>
                 <span>Verificando código...</span>
@@ -679,7 +736,9 @@ export function TwoFactorVerification({
         {!isLocked && (
           <div className="text-center mb-6 space-y-3">
             <div>
-              <p className="text-sm text-muted-foreground mb-2">Não recebeu o código?</p>
+              <p className="text-sm text-muted-foreground mb-2">
+                Não recebeu o código?
+              </p>
               <Button
                 variant="ghost"
                 size="sm"
@@ -710,7 +769,12 @@ export function TwoFactorVerification({
         )}
 
         {/* Cancel */}
-        <Button variant="outline" className="w-full" onClick={onCancel} disabled={isLoading}>
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={onCancel}
+          disabled={isLoading}
+        >
           {isLocked ? "Voltar ao login" : "Cancelar"}
         </Button>
       </div>
@@ -727,8 +791,8 @@ export function TwoFactorVerification({
           <div className="text-sm text-muted-foreground">
             <p className="font-medium text-foreground mb-1">Dica de segurança</p>
             <p>
-              Nunca compartilhe seu código de verificação com ninguém. Nossa equipe <strong>jamais</strong> solicitará
-              esse código.
+              Nunca compartilhe seu código de verificação com ninguém. 
+              Nossa equipe <strong>jamais</strong> solicitará esse código.
             </p>
           </div>
         </div>
