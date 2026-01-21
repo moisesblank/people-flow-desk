@@ -28,6 +28,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { formatError } from "@/lib/utils/formatError";
 
 interface Dispute {
   id: string;
@@ -147,8 +148,8 @@ function useUpdateDispute() {
       queryClient.invalidateQueries({ queryKey: ["admin-disputes"] });
       toast.success("Contestação atualizada!");
     },
-    onError: (error: Error) => {
-      toast.error(`Erro: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro: ${formatError(error)}`);
     },
   });
 }

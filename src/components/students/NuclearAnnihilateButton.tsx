@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerOwnerCheck } from "@/hooks/useServerOwnerCheck";
+import { formatError } from "@/lib/utils/formatError";
 
 // ============================================
 // OWNER EMAIL FALLBACK (CONSTITUIÇÃO v10.4)
@@ -245,7 +246,7 @@ export function NuclearAnnihilateButton() {
 
                 {error && (
                   <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-400">
-                    Erro anterior: {error}
+                    Erro anterior: {formatError(error)}
                   </div>
                 )}
 
