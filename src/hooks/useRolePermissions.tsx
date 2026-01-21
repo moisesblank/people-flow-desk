@@ -117,7 +117,7 @@ export function validarAcessoPorDominio(
   return validarAcessoUrl(categoria, pathname, hostname);
 }
 
-// Tipos de roles do sistema
+// Tipos de roles do sistema - CONSTITUIÇÃO v10.x
 export type FullAppRole =
   | "owner"
   | "admin"
@@ -128,8 +128,10 @@ export type FullAppRole =
   | "afiliado"
   | "marketing"
   | "contabilidade"
-  | "beta" // ALUNO PAGANTE (365 dias)
-  | "aluno_gratuito"; // CADASTRO COMUM (apenas área gratuita)
+  | "beta" // ALUNO PAGANTE (permanente)
+  | "aluno_gratuito" // CADASTRO COMUM (apenas área gratuita)
+  | "aluno_presencial" // ALUNO PRESENCIAL (v10.x)
+  | "beta_expira"; // BETA COM EXPIRAÇÃO (v10.x)
 
 // 🎯 TIPOS RE-EXPORTADOS DA FONTE ÚNICA
 // SystemArea é importado de @/core/areas
@@ -154,6 +156,8 @@ export const ROLE_LABELS: Record<FullAppRole, string> = {
   employee: "Administrativo",
   beta: "Aluno BETA (Premium)",
   aluno_gratuito: "Usuário Gratuito",
+  aluno_presencial: "Aluno Presencial",
+  beta_expira: "BETA com Expiração",
 };
 
 // Cores para badges de cargo
@@ -169,6 +173,8 @@ export const ROLE_COLORS: Record<FullAppRole, string> = {
   employee: "bg-gradient-to-r from-gray-500 to-slate-500 text-white",
   beta: "bg-gradient-to-r from-amber-500 to-yellow-400 text-black",
   aluno_gratuito: "bg-gradient-to-r from-slate-400 to-gray-300 text-black",
+  aluno_presencial: "bg-gradient-to-r from-cyan-500 to-blue-400 text-white",
+  beta_expira: "bg-gradient-to-r from-amber-600 to-orange-500 text-white",
 };
 
 // Descrições dos cargos
@@ -184,6 +190,8 @@ export const ROLE_DESCRIPTIONS: Record<FullAppRole, string> = {
   employee: "Acesso básico ao sistema (somente leitura em algumas áreas).",
   beta: "Aluno Premium com acesso completo por 365 dias à área do aluno.",
   aluno_gratuito: "Acesso exclusivo à área gratuita (pré-login).",
+  aluno_presencial: "Aluno Premium presencial com acesso completo à área do aluno.",
+  beta_expira: "Aluno Premium com acesso temporário (expira após período definido).",
 };
 
 // OWNER_EMAIL já exportado no topo do arquivo
@@ -400,7 +408,8 @@ export const GESTAO_ALLOWED_ROLES: FullAppRole[] = [
   "employee",
 ];
 
-export const PRO_ALLOWED_ROLES: FullAppRole[] = ["owner", "beta", "aluno_gratuito"];
+// CONSTITUIÇÃO v10.x - Roles premium incluem beta, aluno_presencial, beta_expira
+export const PRO_ALLOWED_ROLES: FullAppRole[] = ["owner", "beta", "aluno_gratuito", "aluno_presencial", "beta_expira"];
 
 export interface DomainAccessResult {
   permitido: boolean;
