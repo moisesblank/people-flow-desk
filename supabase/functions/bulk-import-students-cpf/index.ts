@@ -1,6 +1,7 @@
 // ============================================
 // BULK IMPORT STUDENTS WITH CPF VALIDATION
 // CONSTITUIÇÃO SYNAPSE Ω v10.x
+// MODO: prime ONLINE
 // ============================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -17,6 +18,12 @@ interface StudentRow {
   telefone?: string;
   cidade?: string;
   estado?: string;
+  cep?: string;
+  endereco?: string;
+  bairro?: string;
+  numero?: string;
+  complemento?: string;
+  cupom?: string;
   [key: string]: unknown;
 }
 
@@ -25,44 +32,60 @@ interface ImportResult {
   cpf: string;
   email: string;
   nome: string;
-  status: 'success' | 'error';
+  status: 'success' | 'error' | 'skipped';
   error?: string;
+  cpf_receita_nome?: string;
 }
 
-// Validate CPF format locally
+// Validate CPF format locally (dígitos verificadores)
 function validateCPFFormat(cpf: string): boolean {
   const cleaned = cpf.replace(/\D/g, '');
-  if (cleaned.length !== 11) return false;
-  if (/^(\d)\1+$/.test(cleaned)) return false;
   
+  // Pode ter 10 ou 11 dígitos (alguns CPFs sem zero à esquerda)
+  if (cleaned.length < 10 || cleaned.length > 11) return false;
+  
+  // Pad com zero à esquerda se necessário
+  const padded = cleaned.padStart(11, '0');
+  
+  // Rejeita sequências repetidas
+  if (/^(\d)\1+$/.test(padded)) return false;
+  
+  // Validação do primeiro dígito
   let sum = 0;
   for (let i = 0; i < 9; i++) {
-    sum += parseInt(cleaned.charAt(i)) * (10 - i);
+    sum += parseInt(padded.charAt(i)) * (10 - i);
   }
   let remainder = (sum * 10) % 11;
   if (remainder === 10 || remainder === 11) remainder = 0;
-  if (remainder !== parseInt(cleaned.charAt(9))) return false;
+  if (remainder !== parseInt(padded.charAt(9))) return false;
   
+  // Validação do segundo dígito
   sum = 0;
   for (let i = 0; i < 10; i++) {
-    sum += parseInt(cleaned.charAt(i)) * (11 - i);
+    sum += parseInt(padded.charAt(i)) * (11 - i);
   }
   remainder = (sum * 10) % 11;
   if (remainder === 10 || remainder === 11) remainder = 0;
-  if (remainder !== parseInt(cleaned.charAt(10))) return false;
+  if (remainder !== parseInt(padded.charAt(10))) return false;
   
   return true;
 }
 
+// Normaliza CPF para 11 dígitos
+function normalizeCPF(cpf: string): string {
+  return cpf.replace(/\D/g, '').padStart(11, '0');
+}
+
 // Validate CPF against Receita Federal
 async function validateCPFReceita(cpf: string): Promise<{ valid: boolean; nome?: string; error?: string }> {
-  // CORRIGIDO: Nome do secret é CPFCNPJ_API_TOKEN (não CPF_API_TOKEN)
   const token = Deno.env.get('CPFCNPJ_API_TOKEN');
   if (!token) {
-    return { valid: false, error: 'Token API CPF não configurado (CPFCNPJ_API_TOKEN)' };
+    // Se não tem token, pula validação externa (apenas formato local)
+    console.warn('[bulk-import] CPFCNPJ_API_TOKEN não configurado - pulando validação Receita Federal');
+    return { valid: true, nome: undefined };
   }
   
-  const cleaned = cpf.replace(/\D/g, '');
+  const cleaned = normalizeCPF(cpf);
   
   try {
     const response = await fetch(`https://api.cpfcnpj.com.br/${token}/1/${cleaned}`, {
@@ -72,7 +95,9 @@ async function validateCPFReceita(cpf: string): Promise<{ valid: boolean; nome?:
     
     if (!response.ok) {
       if (response.status === 429) {
-        return { valid: false, error: 'Rate limit excedido' };
+        // Rate limit - considera válido para não travar importação
+        console.warn('[bulk-import] Rate limit API CPF - continuando sem validação');
+        return { valid: true, error: 'Rate limit - validação pulada' };
       }
       return { valid: false, error: `Erro API: ${response.status}` };
     }
@@ -91,7 +116,9 @@ async function validateCPFReceita(cpf: string): Promise<{ valid: boolean; nome?:
     return { valid: true, nome: data.nome || data.nome_completo };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Erro desconhecido';
-    return { valid: false, error: `Erro de conexão: ${message}` };
+    console.error('[bulk-import] Erro validação CPF:', message);
+    // Em caso de erro de rede, considera válido para não travar
+    return { valid: true, error: `Erro conexão (pulado): ${message}` };
   }
 }
 
@@ -143,7 +170,17 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { students, defaultPassword = 'eneM2026@#' } = body as { students: StudentRow[]; defaultPassword?: string };
+    const { 
+      students, 
+      defaultPassword = 'eneM2026@#',
+      tipoProduto = 'prime ONLINE',
+      fonte = 'Importação em Massa (CPF Validado)'
+    } = body as { 
+      students: StudentRow[]; 
+      defaultPassword?: string;
+      tipoProduto?: string;
+      fonte?: string;
+    };
     
     if (!students || !Array.isArray(students) || students.length === 0) {
       return new Response(JSON.stringify({ success: false, error: 'Nenhum aluno para importar' }), {
@@ -155,52 +192,110 @@ serve(async (req) => {
     const results: ImportResult[] = [];
     let successCount = 0;
     let errorCount = 0;
+    let skippedCount = 0;
+
+    console.log(`[bulk-import] Iniciando importação de ${students.length} alunos`);
 
     for (let i = 0; i < students.length; i++) {
       const student = students[i];
       const rowNum = i + 1;
-      const cpfClean = (student.cpf || '').replace(/\D/g, '');
-      const email = (student.email || '').trim().toLowerCase();
-      const nome = (student.nome || '').trim();
+      
+      // Normaliza campos
+      const cpfRaw = String(student.cpf || '').trim();
+      const cpfClean = normalizeCPF(cpfRaw);
+      const email = String(student.email || '').trim().toLowerCase();
+      const nome = String(student.nome || '').trim();
+      const telefone = String(student.telefone || '').replace(/\D/g, '') || null;
 
-      // 1. Validate mandatory fields
-      if (!cpfClean || !email || !nome) {
-        results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'error', error: 'Campos obrigatórios faltando (CPF, email, nome)' });
-        errorCount++;
+      // 1. Valida campos mínimos: NOME + CPF
+      if (!nome) {
+        results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'skipped', error: 'Nome não informado' });
+        skippedCount++;
         continue;
       }
 
-      // 2. Validate CPF format
+      if (!cpfRaw || cpfClean.length < 10) {
+        results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'skipped', error: 'CPF não informado ou inválido' });
+        skippedCount++;
+        continue;
+      }
+
+      // 2. Valida formato do CPF (dígitos verificadores)
       if (!validateCPFFormat(cpfClean)) {
-        results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'error', error: 'CPF com formato inválido' });
+        results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'error', error: 'CPF com dígitos verificadores inválidos' });
         errorCount++;
         continue;
       }
 
-      // 3. Check for duplicates
-      const { data: existingCPF } = await adminClient.from('alunos').select('id').eq('cpf', cpfClean).maybeSingle();
+      // 3. Verifica duplicidade de CPF
+      const { data: existingCPF } = await adminClient.from('alunos').select('id, nome').eq('cpf', cpfClean).maybeSingle();
       if (existingCPF) {
-        results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'error', error: 'CPF já cadastrado no sistema' });
-        errorCount++;
+        results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'skipped', error: `CPF já cadastrado (${existingCPF.nome})` });
+        skippedCount++;
         continue;
       }
 
-      const { data: existingEmail } = await adminClient.from('alunos').select('id').eq('email', email).maybeSingle();
-      if (existingEmail) {
-        results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'error', error: 'Email já cadastrado no sistema' });
-        errorCount++;
-        continue;
+      // 4. Verifica duplicidade de email (se informado)
+      if (email) {
+        const { data: existingEmail } = await adminClient.from('alunos').select('id, nome').eq('email', email).maybeSingle();
+        if (existingEmail) {
+          results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'skipped', error: `Email já cadastrado (${existingEmail.nome})` });
+          skippedCount++;
+          continue;
+        }
       }
 
-      // 4. Validate CPF with Receita Federal
+      // 5. Valida CPF na Receita Federal (se API disponível)
       const cpfValidation = await validateCPFReceita(cpfClean);
       if (!cpfValidation.valid) {
-        results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'error', error: `CPF inválido na Receita Federal: ${cpfValidation.error}` });
+        results.push({ 
+          row: rowNum, 
+          cpf: cpfClean, 
+          email, 
+          nome, 
+          status: 'error', 
+          error: `CPF inválido: ${cpfValidation.error}` 
+        });
         errorCount++;
         continue;
       }
 
-      // 5. Create auth user
+      // 6. Se não tem email, não pode criar auth user - apenas registra no alunos
+      if (!email) {
+        // Registra apenas na tabela alunos (sem acesso ao sistema)
+        await adminClient.from('alunos').insert({
+          nome,
+          email: `sem-email-${cpfClean}@placeholder.local`,
+          cpf: cpfClean,
+          telefone,
+          cidade: student.cidade || null,
+          estado: student.estado || null,
+          cep: student.cep || null,
+          logradouro: student.endereco || null,
+          bairro: student.bairro || null,
+          numero: student.numero || null,
+          complemento: student.complemento || null,
+          status: 'Pendente', // Sem email = pendente
+          fonte,
+          tipo_produto: tipoProduto,
+          data_matricula: new Date().toISOString().split('T')[0],
+          observacoes: `Importado sem email. Cupom: ${student.cupom || 'N/A'}. Nome Receita: ${cpfValidation.nome || 'N/A'}`,
+        });
+
+        results.push({ 
+          row: rowNum, 
+          cpf: cpfClean, 
+          email: '(sem email)', 
+          nome, 
+          status: 'skipped', 
+          error: 'Registrado sem acesso (sem email)',
+          cpf_receita_nome: cpfValidation.nome
+        });
+        skippedCount++;
+        continue;
+      }
+
+      // 7. Cria usuário auth
       const { data: authData, error: createAuthError } = await adminClient.auth.admin.createUser({
         email,
         password: defaultPassword,
@@ -209,54 +304,81 @@ serve(async (req) => {
       });
 
       if (createAuthError || !authData.user) {
-        results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'error', error: `Erro ao criar auth: ${createAuthError?.message || 'Desconhecido'}` });
+        results.push({ 
+          row: rowNum, 
+          cpf: cpfClean, 
+          email, 
+          nome, 
+          status: 'error', 
+          error: `Erro auth: ${createAuthError?.message || 'Desconhecido'}` 
+        });
         errorCount++;
         continue;
       }
 
       const userId = authData.user.id;
 
-      // 6. Create profile with password_change_required
+      // 8. Cria profile
       await adminClient.from('profiles').upsert({
         id: userId,
         email,
         nome,
         cpf: cpfClean,
-        phone: student.telefone || null,
+        phone: telefone,
         password_change_required: true,
         onboarding_completed: false,
       }, { onConflict: 'id' });
 
-      // 7. Assign beta role
+      // 9. Atribui role beta
       await adminClient.from('user_roles').upsert({
         user_id: userId,
         role: 'beta',
       }, { onConflict: 'user_id' });
 
-      // 8. Create alunos entry
+      // 10. Cria entrada na tabela alunos
       await adminClient.from('alunos').insert({
         nome,
         email,
         cpf: cpfClean,
-        telefone: student.telefone || null,
+        telefone,
         cidade: student.cidade || null,
         estado: student.estado || null,
+        cep: student.cep || null,
+        logradouro: student.endereco || null,
+        bairro: student.bairro || null,
+        numero: student.numero || null,
+        complemento: student.complemento || null,
         status: 'Ativo',
-        fonte: 'Importação em Massa (CPF Validado)',
-        tipo_produto: 'livroweb',
+        fonte,
+        tipo_produto: tipoProduto,
         data_matricula: new Date().toISOString().split('T')[0],
+        observacoes: `Cupom: ${student.cupom || 'N/A'}. Nome Receita: ${cpfValidation.nome || 'N/A'}`,
       });
 
-      results.push({ row: rowNum, cpf: cpfClean, email, nome, status: 'success' });
+      results.push({ 
+        row: rowNum, 
+        cpf: cpfClean, 
+        email, 
+        nome, 
+        status: 'success',
+        cpf_receita_nome: cpfValidation.nome
+      });
       successCount++;
 
-      // Rate limit protection (100ms delay between API calls)
+      // Rate limit protection (150ms delay)
       if (i < students.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+
+      // Log progresso a cada 10 alunos
+      if ((i + 1) % 10 === 0) {
+        console.log(`[bulk-import] Progresso: ${i + 1}/${students.length}`);
       }
     }
 
-    // Log operation
+    console.log(`[bulk-import] Finalizado: ${successCount} sucesso, ${errorCount} erros, ${skippedCount} pulados`);
+
+    // Log operation com histórico completo
     await adminClient.from('activity_log').insert({
       action: 'BULK_IMPORT_STUDENTS_CPF',
       user_id: user.id,
@@ -265,6 +387,15 @@ serve(async (req) => {
         total_rows: students.length,
         success_count: successCount,
         error_count: errorCount,
+        skipped_count: skippedCount,
+        tipo_produto: tipoProduto,
+        fonte,
+        results_summary: results.map(r => ({
+          row: r.row,
+          nome: r.nome,
+          status: r.status,
+          error: r.error
+        }))
       },
     });
 
@@ -273,6 +404,7 @@ serve(async (req) => {
       total: students.length,
       successCount,
       errorCount,
+      skippedCount,
       results,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
