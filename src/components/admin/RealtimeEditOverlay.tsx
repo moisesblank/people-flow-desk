@@ -339,5 +339,3 @@ export function RealtimeEditOverlay() {
     </AnimatePresence>
   );
 }
-
-export default RealtimeEditOverlay;

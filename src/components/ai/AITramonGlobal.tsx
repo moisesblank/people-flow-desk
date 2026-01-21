@@ -898,4 +898,3 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
 });
 
 AITramonGlobal.displayName = 'AITramonGlobal';
-export default AITramonGlobal;

@@ -370,5 +370,3 @@ function DuplicationHint() {
     </motion.div>
   );
 }
-
-export default GlobalDuplicationSystem;

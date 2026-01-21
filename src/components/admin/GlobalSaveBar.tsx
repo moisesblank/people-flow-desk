@@ -121,5 +121,3 @@ export const GlobalSaveBar = memo(function GlobalSaveBar() {
     </AnimatePresence>
   );
 });
-
-export default GlobalSaveBar;

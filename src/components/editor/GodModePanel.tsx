@@ -282,5 +282,3 @@ export function GodModePanel() {
     </>
   );
 }
-
-export default GodModePanel;
