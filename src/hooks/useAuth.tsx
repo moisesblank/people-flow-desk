@@ -11,6 +11,7 @@ import { User, Session, Provider } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { collectEnhancedFingerprint } from "@/lib/enhancedFingerprint";
 import { getPostLoginRedirect, type AppRole } from "@/core/urlAccessControl";
+import { emitSessionTokenChanged, subscribeSessionTokenChanged } from "@/lib/sessionTokenBus";
 
 // 🛡️ DEPRECATED: OWNER_EMAIL removido - verificação via role='owner' no banco
 // const OWNER_EMAIL = "moisesblank@gmail.com";
@@ -387,6 +388,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   // ============================================
+  // 🔧 P0 FIX: Sincronizar securitySessionReady quando o token muda
+  // Motivo: localStorage.setItem NÃO dispara evento no mesmo tab.
+  // SessionGuard pode bootstrapar o token e o useAuth precisa reagir.
+  // ============================================
+  useEffect(() => {
+    if (!user) return;
+
+    const sync = () => {
+      const token = localStorage.getItem(SESSION_TOKEN_KEY);
+      setSecuritySessionReady(Boolean(token));
+    };
+
+    // 1) Mesmo tab
+    const unsubscribe = subscribeSessionTokenChanged(() => sync());
+
+    // 2) Outras abas/janelas
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === SESSION_TOKEN_KEY) sync();
+    };
+    window.addEventListener('storage', onStorage);
+
+    // Sincroniza no mount
+    sync();
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', onStorage);
+    };
+  }, [user?.id]);
+
+  // ============================================
   // 🔥 DOGMA SUPREMO: LISTENER REALTIME PARA LOGOUT FORÇADO
   // Quando usuário é DELETADO, recebe broadcast e faz logout IMEDIATO
   // ============================================
@@ -590,11 +622,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           console.log("[AUTH][SESSAO] ✅ Sessão existente válida - last_activity_at atualizado");
           setSecuritySessionReady(true);
+          emitSessionTokenChanged({ token: existingToken, source: 'useAuth:existing-session' });
           startHeartbeatRef.current();
         } catch (err) {
           console.error("[AUTH][SESSAO] Erro ao validar sessão existente:", err);
           // Em caso de erro, manter token e continuar
           setSecuritySessionReady(true);
+          emitSessionTokenChanged({ token: existingToken, source: 'useAuth:existing-session-error' });
           startHeartbeatRef.current();
         }
       };
@@ -654,6 +688,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const sessionToken = data[0].session_token;
           localStorage.setItem(SESSION_TOKEN_KEY, sessionToken);
           setSecuritySessionReady(true);
+          emitSessionTokenChanged({ token: sessionToken, source: 'useAuth:create_single_session' });
           console.log("[AUTH][SESSAO] ✅ Sessão única criada com sucesso");
 
           // Iniciar heartbeat

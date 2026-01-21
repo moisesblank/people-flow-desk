@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { SessionRevokedOverlay } from "./SessionRevokedOverlay";
 import { useSessionValidator, type SessionValidationResult } from "@/hooks/useSessionValidator";
+import { emitSessionTokenChanged } from "@/lib/sessionTokenBus";
 
 const SESSION_TOKEN_KEY = "matriz_session_token";
 const SESSION_CHECK_INTERVAL = 30000; // 30s
@@ -291,6 +292,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
       // 🔐 P0 FIX v4: Para Owner, limpar token antigo antes de criar novo
       if (currentIsOwner && forceForOwner) {
         localStorage.removeItem(SESSION_TOKEN_KEY);
+        emitSessionTokenChanged({ token: null, source: 'SessionGuard:owner-force-clear' });
         console.log("[SessionGuard] 👑 Owner: Token antigo removido, criando novo...");
       }
 
@@ -314,6 +316,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
       }
 
       localStorage.setItem(SESSION_TOKEN_KEY, token);
+      emitSessionTokenChanged({ token, source: 'SessionGuard:bootstrap' });
       localStorage.setItem(LOGIN_TIMESTAMP_KEY, Date.now().toString());
       console.log("[SessionGuard] ✅ Bootstrap OK: matriz_session_token criado");
       bootstrapAttemptsRef.current = 0;
