@@ -31,13 +31,22 @@ interface OnboardingState {
 }
 
 export default function PrimeiroAcesso() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const navigate = useNavigate();
   const { setTheme } = useTheme();
   
   const [isLoading, setIsLoading] = useState(true);
   const [currentStage, setCurrentStage] = useState<OnboardingStage>('platform_steps');
   const [onboardingState, setOnboardingState] = useState<OnboardingState | null>(null);
+
+  // 🛡️ P0 FIX: Owner NUNCA deve estar nesta página — redirecionar imediatamente
+  const isOwner = role === 'owner';
+  useEffect(() => {
+    if (isOwner) {
+      console.log('[PrimeiroAcesso] 👑 Owner detectado, redirecionando para /gestaofc...');
+      navigate('/gestaofc', { replace: true });
+    }
+  }, [isOwner, navigate]);
 
   // Carregar estado do onboarding e aplicar tema salvo
   useEffect(() => {
@@ -93,10 +102,12 @@ export default function PrimeiroAcesso() {
 
         setOnboardingState(state);
 
-        // Se já completou, redirecionar para /alunos/dashboard
+        // Se já completou, redirecionar para destino correto por role
         if (state.onboarding_completed) {
-          console.log('[PrimeiroAcesso] Onboarding já completo, redirecionando para /alunos/dashboard...');
-          navigate('/alunos/dashboard', { replace: true });
+          // 🛡️ P0 FIX: Owner vai para /gestaofc, alunos vão para /alunos/dashboard
+          const destination = isOwner ? '/gestaofc' : '/alunos/dashboard';
+          console.log(`[PrimeiroAcesso] Onboarding já completo, redirecionando para ${destination}...`);
+          navigate(destination, { replace: true });
           return;
         }
 
@@ -212,9 +223,10 @@ export default function PrimeiroAcesso() {
 
       toast.success('Configuração concluída! Bem-vindo à plataforma.');
       
-      // Redirecionar para portal do aluno
+      // 🛡️ P0 FIX: Redirecionar para destino correto por role
+      const destination = isOwner ? '/gestaofc' : '/alunos/dashboard';
       setTimeout(() => {
-        navigate('/alunos/dashboard', { replace: true });
+        navigate(destination, { replace: true });
       }, 1500);
 
     } catch (err) {
