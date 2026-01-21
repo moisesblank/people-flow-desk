@@ -110,7 +110,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
     try {
       // 🔐 P0 FIX v11.4: PRIMEIRO tentar usar o hash do SERVIDOR (fonte da verdade)
       // O hash do servidor inclui pepper e é o que foi registrado no 2FA
-      const serverHash = localStorage.getItem('matriz_device_server_hash');
+      let serverHash = localStorage.getItem('matriz_device_server_hash');
       
       // Se temos hash do servidor, usar. Senão, gerar local (fallback para dispositivo novo)
       let deviceHash: string;
@@ -149,6 +149,20 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
           .eq("status", "active")
           .single();
 
+        // 🔐 P0 FIX v11.4.1: Se o hash do servidor não estiver no localStorage,
+        // mas a sessão ativa já tem device_hash, persistir para evitar loop eterno.
+        // (Isso acontece em alguns fluxos onde o registro do dispositivo foi feito,
+        // mas o client não persistiu o valor.)
+        if (!serverHash && sessionData?.device_hash) {
+          serverHash = sessionData.device_hash;
+          try {
+            localStorage.setItem('matriz_device_server_hash', serverHash);
+            console.log(`[DeviceMFAGuard] 🔧 Reparando localStorage: salvando serverHash da sessão (${serverHash.slice(0, 8)}...)`);
+          } catch {
+            // noop
+          }
+        }
+
         if (sessionData?.mfa_verified === true) {
           console.log(`[DeviceMFAGuard] ✅ Sessão já tem mfa_verified=true`);
           // Atualizar cache
@@ -186,23 +200,26 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
               .eq("session_token", sessionToken)
               .eq("status", "active");
             
-            if (!updateError) {
-              console.log(`[DeviceMFAGuard] ✅ Sessão auto-reparada com sucesso!`);
-              globalMFACache.set(cacheKey, {
-                verified: true,
-                expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-              });
-              setState((prev) => ({
-                ...prev,
-                isChecking: false,
-                isVerified: true,
-                needsMFA: false,
-                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-              }));
-              return true;
+            if (updateError) {
+              // ⚠️ Não bloquear o usuário em loop se a atualização falhar por RLS/latência.
+              // A fonte de verdade aqui é: mfaCheck === true (user_mfa_verifications).
+              console.error(`[DeviceMFAGuard] ⚠️ Falha ao auto-reparar sessão (seguindo mesmo assim):`, updateError);
             } else {
-              console.error(`[DeviceMFAGuard] ⚠️ Falha ao auto-reparar:`, updateError);
+              console.log(`[DeviceMFAGuard] ✅ Sessão auto-reparada com sucesso!`);
             }
+
+            globalMFACache.set(cacheKey, {
+              verified: true,
+              expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+            });
+            setState((prev) => ({
+              ...prev,
+              isChecking: false,
+              isVerified: true,
+              needsMFA: false,
+              expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            }));
+            return true;
           }
         }
         
@@ -310,6 +327,14 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       // 🔐 Hash final: preferir o do servidor, fallback para o local
       const finalHash = deviceReg.deviceHash || currentDeviceHash;
       console.log("[DeviceMFAGuard] 🔐 Hash final para MFA:", finalHash.slice(0, 8) + "...");
+
+      // 🔐 P0 FIX v11.4.1: Persistir o hash final no localStorage para que o próximo
+      // checkDeviceMFA use o hash correto e não gere um novo (causando loop eterno).
+      try {
+        localStorage.setItem('matriz_device_server_hash', finalHash);
+      } catch {
+        // noop
+      }
 
       if (!deviceReg.success) {
         console.warn("[DeviceMFAGuard] ⚠️ Registro retornou erro:", deviceReg.error);
