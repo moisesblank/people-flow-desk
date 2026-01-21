@@ -183,7 +183,9 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
 
     try {
       // Importação em lotes para evitar timeout/loop em planilhas grandes
-      const BATCH_SIZE = 50;
+      // OBS: 50 pode estourar timeout em operações que criam usuários (auth) e múltiplos inserts.
+      // Mantemos menor por padrão para estabilidade (evita “parar” em ~49% quando o 2º lote demora).
+      const BATCH_SIZE = 25;
       const total = students.length;
       const aggregatedResults: ImportResult[] = [];
       let totalSuccess = 0;
@@ -191,7 +193,7 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
       let totalSkipped = 0;
 
       const batchTotal = Math.ceil(total / BATCH_SIZE);
-      const invokeTimeoutMs = 90_000; // proteção contra travamento do fetch
+      const invokeTimeoutMs = 180_000; // proteção contra travamento do fetch (lotes menores + margem)
 
       for (let start = resumeFromIndexRef.current; start < total; start += BATCH_SIZE) {
         if (cancelRef.current) break;
