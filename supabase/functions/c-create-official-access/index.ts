@@ -68,8 +68,17 @@ interface CreateAccessResponse {
 
 // ============================================
 // ROLES PERMITIDAS PARA CHAMAR ESTA FUNÇÃO
+// CONSTITUIÇÃO v10.x — TODAS as roles de gestão
+// NÃO usar 'funcionario' (é CATEGORIA, não role!)
 // ============================================
-const ALLOWED_CALLER_ROLES = ['owner', 'admin', 'suporte'];
+const ALLOWED_CALLER_ROLES = [
+  'owner',           // Proprietário
+  'admin',           // Administrador
+  'coordenacao',     // Coordenação
+  'contabilidade',   // Contabilidade (pode criar acessos presenciais)
+  'suporte',         // Suporte (principal criador de acessos)
+  'monitoria',       // Monitoria
+];
 
 // ============================================
 // ROLE LABELS (CONSTITUIÇÃO v10.x)
