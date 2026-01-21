@@ -28,7 +28,7 @@ export const PERFORMANCE_FIXES = {
       DEPOIS: 
         - /assets/* → Cache 1 ano (immutable)
         - *.woff2 → Cache 1 ano (immutable)
-        - /favicon.ico → Cache 1 semana
+        - /favicon.png → Cache 1 semana
         - /index.html → No cache (sempre buscar versão nova)
     `,
     
