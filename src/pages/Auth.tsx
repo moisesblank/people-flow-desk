@@ -1224,6 +1224,18 @@ export default function Auth() {
                 // Outros erros de dispositivo
                 const errorMsg = getDeviceErrorMessage(deviceResult.error || "UNEXPECTED_ERROR");
                 toast.error(errorMsg.title, { description: errorMsg.description });
+
+                // 👑 OWNER BYPASS (UX-only): não prender o Owner em loop de logout por falha de device-reg
+                // Segurança server-side permanece (RLS/RPC/limites), isto só evita a tela travada.
+                const isOwnerEmail = (pending2FAUser?.email || "").toLowerCase() === "moisesblank@gmail.com";
+                if (isOwnerEmail) {
+                  console.warn("[AUTH][BLOCO3] 👑 Owner bypass: falha em device-reg pós-2FA, prosseguindo sem signOut");
+                  setShow2FA(false);
+                  setPending2FAUser(null);
+                  navigate("/gestaofc", { replace: true });
+                  return;
+                }
+
                 await supabase.auth.signOut();
                 setShow2FA(false);
                 setPending2FAUser(null);
@@ -1259,6 +1271,18 @@ export default function Auth() {
                 if (!serverDeviceHash) {
                   console.error("[AUTH][SESSAO] ❌ P0 VIOLATION: Sem hash do servidor!");
                   toast.error("Falha de segurança", { description: "Dispositivo não registrado corretamente." });
+
+                  // 👑 OWNER BYPASS (UX-only): permitir acesso mesmo sem hash, evitando loop em /auth
+                  // O SessionGuard já possui bypass do Owner para ausência de hash.
+                  const isOwnerEmail = (pending2FAUser?.email || "").toLowerCase() === "moisesblank@gmail.com";
+                  if (isOwnerEmail) {
+                    console.warn("[AUTH][SESSAO] 👑 Owner bypass: sem hash do servidor, pulando criação de sessão única");
+                    setShow2FA(false);
+                    setPending2FAUser(null);
+                    navigate("/gestaofc", { replace: true });
+                    return;
+                  }
+
                   await supabase.auth.signOut();
                   setShow2FA(false);
                   setPending2FAUser(null);
