@@ -1,50 +1,16 @@
 // ============================================
 // CLOUDFLARE TURNSTILE COMPONENT
 // LEI III - DOGMA SEGURANÇA: Anti-Bot Protection
-// Integração com Cloudflare Turnstile (CAPTCHA moderno)
+// 🔓 BYPASS PERMANENTE (v10.4): Componente NO-OP
+// Segurança mantida via rate-limiting + lockout + RLS
 // ============================================
 
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { Shield, AlertCircle, CheckCircle2, Loader2, AlertTriangle } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
-// Cloudflare Turnstile Site Key (pública)
-const TURNSTILE_SITE_KEY = '0x4AAAAAACIzQHOgrmgkciqj';
-
-// Detectar ambiente de desenvolvimento/preview
-const isDevEnvironment = () => {
-  const hostname = window.location.hostname;
-  return (
-    hostname === 'localhost' ||
-    hostname.includes('lovableproject.com') ||
-    hostname.includes('127.0.0.1')
-  );
-};
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (container: string | HTMLElement, options: TurnstileOptions) => string;
-      reset: (widgetId: string) => void;
-      remove: (widgetId: string) => void;
-      getResponse: (widgetId: string) => string | undefined;
-    };
-    onTurnstileLoad?: () => void;
-  }
-}
-
-interface TurnstileOptions {
-  sitekey: string;
-  callback?: (token: string) => void;
-  'error-callback'?: (error: string) => void;
-  'expired-callback'?: () => void;
-  theme?: 'light' | 'dark' | 'auto';
-  size?: 'normal' | 'compact' | 'flexible';
-  language?: string;
-  appearance?: 'always' | 'execute' | 'interaction-only';
-  retry?: 'auto' | 'never';
-  'retry-interval'?: number;
-  'refresh-expired'?: 'auto' | 'manual' | 'never';
-}
+// ============================================
+// TIPOS
+// ============================================
 
 interface CloudflareTurnstileProps {
   onVerify: (token: string) => void;
@@ -56,11 +22,13 @@ interface CloudflareTurnstileProps {
   showStatus?: boolean;
 }
 
+// Token de bypass (indica que turnstile está desabilitado)
+const BYPASS_TOKEN = 'TURNSTILE_DISABLED_BYPASS_v10.4';
+
 // ============================================
-// 🔓 TURNSTILE PERMANENTEMENTE DESATIVADO
-// O componente agora é NO-OP (não carrega script, não renderiza widget)
-// Motivo: Erro 400020 em preview (hostname não configurado)
-// Segurança: Rate-limiting + lockout + RLS protegem backend
+// 🔓 COMPONENTE TURNSTILE (NO-OP)
+// Não carrega script, não renderiza widget
+// Auto-verifica imediatamente no mount
 // ============================================
 export function CloudflareTurnstile({
   onVerify,
@@ -71,16 +39,25 @@ export function CloudflareTurnstile({
   className = '',
   showStatus = true
 }: CloudflareTurnstileProps) {
-  // 🔓 BYPASS TOTAL: Componente é NO-OP
-  // Não carrega script, não renderiza widget, apenas mostra status "verificado"
+  const hasVerifiedRef = useRef(false);
   
+  // 🔓 BYPASS: Auto-verificar imediatamente no mount
+  // Usar ref para garantir que só dispara uma vez
   useEffect(() => {
-    // Auto-verificar imediatamente (bypass)
-    console.log('[AUTH] 🔓 Turnstile BYPASS: Componente NO-OP (não carrega widget)');
-    onVerify('TURNSTILE_DISABLED_COMPONENT_BYPASS');
-  }, []);
+    if (hasVerifiedRef.current) return;
+    hasVerifiedRef.current = true;
+    
+    console.log('[AUTH] 🔓 Turnstile BYPASS: Auto-verificação imediata');
+    
+    // Chamar onVerify com pequeno delay para garantir que o estado do formulário está pronto
+    const timer = setTimeout(() => {
+      onVerify(BYPASS_TOKEN);
+    }, 50);
+    
+    return () => clearTimeout(timer);
+  }, [onVerify]);
   
-  // Renderizar apenas indicador visual de "verificado" (sem widget real)
+  // Renderizar indicador visual de "verificado"
   if (!showStatus) return null;
   
   return (
@@ -91,42 +68,55 @@ export function CloudflareTurnstile({
   );
 }
 
-// Hook para usar Turnstile em formulários
-
-// Hook para usar Turnstile em formulários
 // ============================================
-// 🔓 POLÍTICA v10.4: TURNSTILE PERMANENTEMENTE DESATIVADO
-// Motivo: Erros de hostname mismatch em preview/produção
-// Segurança: Rate-limiting + lockout + RLS protegem backend
+// 🔓 HOOK useTurnstile (BYPASS PERMANENTE)
+// Sempre retorna isVerified: true
 // ============================================
 export function useTurnstile() {
-  // 🔓 BYPASS PERMANENTE: Sempre retorna verificado
-  // Token estático para indicar que turnstile está desabilitado
-  const BYPASS_TOKEN = 'TURNSTILE_DISABLED_AUTH_BYPASS_v10.4';
+  const [isVerified, setIsVerified] = useState(true); // 🔓 Já inicia verificado
+  
+  const handleVerify = useCallback((token: string) => {
+    console.log('[AUTH] 🔓 Turnstile handleVerify chamado (bypass)');
+    setIsVerified(true);
+  }, []);
+  
+  const handleError = useCallback((error: string) => {
+    // No bypass, erros são ignorados
+    console.log('[AUTH] 🔓 Turnstile erro ignorado (bypass):', error);
+  }, []);
+  
+  const handleExpire = useCallback(() => {
+    // No bypass, expiração é ignorada (mantém verificado)
+    console.log('[AUTH] 🔓 Turnstile expiração ignorada (bypass)');
+  }, []);
   
   const reset = useCallback(() => {
-    // No-op: bypass permanente não precisa resetar
-    console.log('[AUTH] 🔓 Turnstile reset (bypass ativo - no-op)');
+    // No bypass, reset mantém verificado
+    console.log('[AUTH] 🔓 Turnstile reset (bypass - mantém verificado)');
+    setIsVerified(true);
   }, []);
 
   // Log apenas uma vez por sessão
-  if (typeof window !== 'undefined' && !(window as any).__turnstileBypassLogged) {
-    console.log('[AUTH] 🔓 TURNSTILE BYPASS ATIVO - Verificação anti-bot desabilitada');
-    (window as any).__turnstileBypassLogged = true;
-  }
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !(window as any).__turnstileBypassLogged) {
+      console.log('[AUTH] 🔓 TURNSTILE BYPASS ATIVO (v10.4) - Verificação anti-bot desabilitada');
+      (window as any).__turnstileBypassLogged = true;
+    }
+  }, []);
 
   return {
     token: BYPASS_TOKEN,
-    isVerified: true,  // 🔓 SEMPRE VERIFICADO
+    isVerified: true, // 🔓 SEMPRE TRUE
     error: null,
-    handleVerify: () => {},  // No-op
-    handleError: () => {},   // No-op
-    handleExpire: () => {},  // No-op
+    handleVerify,
+    handleError,
+    handleExpire,
     reset,
+    // Props para passar ao componente CloudflareTurnstile
     TurnstileProps: {
-      onVerify: () => {},
-      onError: () => {},
-      onExpire: () => {}
+      onVerify: handleVerify,
+      onError: handleError,
+      onExpire: handleExpire
     }
   };
 }
