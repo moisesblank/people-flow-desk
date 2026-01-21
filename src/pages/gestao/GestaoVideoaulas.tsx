@@ -318,8 +318,8 @@ export default function GestaoVideoaulas() {
       toast.success("Videoaula excluída!");
       queryClient.invalidateQueries({ queryKey: ['gestao-videoaulas'] });
     },
-    onError: (error) => {
-      toast.error(`Erro ao excluir: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao excluir: ${formatError(error)}`);
     }
   });
 
@@ -369,9 +369,9 @@ export default function GestaoVideoaulas() {
       setAnnihilateConfirmText("");
       setAnnihilateCheckbox(false);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[ANNIHILATE] ❌ Erro:", error);
-      toast.error(`Erro na aniquilação: ${error.message}`);
+      toast.error(`Erro na aniquilação: ${formatError(error)}`);
     } finally {
       setIsAnnihilating(false);
     }

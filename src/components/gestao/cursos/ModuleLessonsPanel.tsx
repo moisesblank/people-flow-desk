@@ -345,9 +345,9 @@ function LessonEditDialog({
       }));
 
       toast.success("PDF enviado com sucesso!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao fazer upload do PDF:', error);
-      toast.error(`Erro ao enviar PDF: ${error.message}`);
+      toast.error(`Erro ao enviar PDF: ${formatError(error)}`);
     } finally {
       setIsUploadingPdf(false);
     }
@@ -405,8 +405,8 @@ function LessonEditDialog({
       queryClient.invalidateQueries({ queryKey: ['gestao-module-lessons'] });
       onOpenChange(false);
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao criar: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao criar: ${formatError(error)}`);
     },
   });
 
@@ -442,8 +442,8 @@ function LessonEditDialog({
       queryClient.invalidateQueries({ queryKey: ['gestao-module-lessons'] });
       onOpenChange(false);
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao atualizar: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao atualizar: ${formatError(error)}`);
     },
   });
 
@@ -778,8 +778,8 @@ function DeleteConfirmDialog({
       queryClient.invalidateQueries({ queryKey: ['gestao-module-lessons'] });
       onOpenChange(false);
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao excluir: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao excluir: ${formatError(error)}`);
     },
   });
 
