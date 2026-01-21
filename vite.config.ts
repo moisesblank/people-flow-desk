@@ -49,27 +49,25 @@ export default defineConfig(({ mode }) => ({
     // ⚡ Limites de chunk para performance
     chunkSizeWarningLimit: 500,
     
-    // ☢️ TERSER OPTIONS: Destruição total da legibilidade
+    // ☢️ TERSER OPTIONS (SAFE BUILD): manter remoção de console/debugger,
+    // mas evitar flags agressivas que podem quebrar bundle/depências no publish.
     terserOptions: mode === "production" ? {
       compress: {
         drop_console: true,
         drop_debugger: true,
         dead_code: true,
-        passes: 3,
+        passes: 2,
         pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
-        unsafe: true,
-        unsafe_arrows: true,
-        unsafe_methods: true,
+        // ⚠️ Evitar unsafe* no build de produção (pode causar falha/timeout ou quebrar libs)
+        unsafe: false,
+        unsafe_arrows: false,
+        unsafe_methods: false,
       },
       mangle: {
-        eval: true,
+        // ⚠️ Evitar mangle agressivo (toplevel/eval/properties) que pode quebrar runtime/build
         keep_classnames: false,
         keep_fnames: false,
-        toplevel: true,
-        safari10: true,
-        properties: {
-          regex: /^_/,
-        },
+        toplevel: false,
       },
       format: {
         comments: false,
