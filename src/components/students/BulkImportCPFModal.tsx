@@ -1,6 +1,7 @@
 // ============================================
 // BULK IMPORT WITH CPF VALIDATION MODAL
 // CONSTITUIÇÃO SYNAPSE Ω v10.x
+// MODO: prime ONLINE
 // ============================================
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Upload, FileSpreadsheet, CheckCircle, XCircle, AlertTriangle, 
-  Shield, Loader2, Download, Eye 
+  Shield, Loader2, Download, Eye, SkipForward
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -24,6 +25,12 @@ interface StudentRow {
   telefone?: string;
   cidade?: string;
   estado?: string;
+  cep?: string;
+  endereco?: string;
+  bairro?: string;
+  numero?: string;
+  complemento?: string;
+  cupom?: string;
 }
 
 interface ImportResult {
@@ -31,8 +38,9 @@ interface ImportResult {
   cpf: string;
   email: string;
   nome: string;
-  status: 'success' | 'error';
+  status: 'success' | 'error' | 'skipped';
   error?: string;
+  cpf_receita_nome?: string;
 }
 
 interface BulkImportCPFModalProps {
@@ -76,22 +84,42 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
       const sheet = workbook.Sheets[sheetName];
       const rawData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
-      // Map columns (flexible naming)
+      // Map columns (flexível para múltiplos formatos)
       const mapped: StudentRow[] = rawData.map((row: any) => ({
+        // Nome: múltiplas variações
+        nome: String(
+          row['ALUNO (A)'] || row['ALUNO(A)'] || row['ALUNO'] || 
+          row.nome || row.Nome || row.NOME || row['Nome Completo'] || ''
+        ).trim(),
+        
+        // CPF: limpa formatação
         cpf: String(row.cpf || row.CPF || row['CPF'] || '').trim(),
+        
+        // Email
         email: String(row.email || row.Email || row.EMAIL || row['E-mail'] || '').trim().toLowerCase(),
-        nome: String(row.nome || row.Nome || row.NOME || row['Nome Completo'] || '').trim(),
+        
+        // Telefone
         telefone: String(row.telefone || row.Telefone || row.TELEFONE || row.celular || row.Celular || '').trim() || undefined,
+        
+        // Endereço
         cidade: String(row.cidade || row.Cidade || row.CIDADE || '').trim() || undefined,
         estado: String(row.estado || row.Estado || row.ESTADO || row.uf || row.UF || '').trim() || undefined,
+        cep: String(row.cep || row.CEP || '').trim() || undefined,
+        endereco: String(row['ENDEREÇO'] || row.endereco || row.Endereco || '').trim() || undefined,
+        bairro: String(row.bairro || row.Bairro || row.BAIRRO || '').trim() || undefined,
+        numero: String(row['NÚMERO'] || row.numero || row.Numero || '').trim() || undefined,
+        complemento: String(row.complemento || row.Complemento || row.COMPLEMENTO || '').replace(/\(none\)/gi, '').trim() || undefined,
+        
+        // Cupom
+        cupom: String(row.cupom || row.Cupom || row.CUPOM || '').replace(/\(none\)/gi, '').trim() || undefined,
       }));
 
-      // Filter valid rows (must have CPF, email, nome)
-      const valid = mapped.filter(s => s.cpf && s.email && s.nome);
+      // Filtra linhas que tem pelo menos NOME E CPF
+      const valid = mapped.filter(s => s.nome && s.cpf);
       
       if (valid.length === 0) {
         toast.error('Nenhum aluno válido encontrado', {
-          description: 'Verifique se a planilha contém colunas: CPF, Email, Nome'
+          description: 'Verifique se a planilha contém colunas: ALUNO (A) ou Nome, e CPF'
         });
         setIsProcessing(false);
         return;
@@ -129,11 +157,16 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
     try {
       // Simulate progress for UX
       const progressInterval = setInterval(() => {
-        setProgress(prev => Math.min(prev + 2, 90));
-      }, 500);
+        setProgress(prev => Math.min(prev + 1, 90));
+      }, 800);
 
       const { data, error } = await supabase.functions.invoke('bulk-import-students-cpf', {
-        body: { students, defaultPassword: 'eneM2026@#' }
+        body: { 
+          students, 
+          defaultPassword: 'eneM2026@#',
+          tipoProduto: 'prime ONLINE',
+          fonte: 'Importação Bruna Lista ONLINE 20/01'
+        }
       });
 
       clearInterval(progressInterval);
@@ -152,12 +185,17 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
 
       const successCount = data.successCount || 0;
       const errorCount = data.errorCount || 0;
+      const skippedCount = data.skippedCount || 0;
 
       if (successCount > 0) {
         toast.success(`${successCount} alunos criados com sucesso!`, {
-          description: errorCount > 0 ? `${errorCount} rejeitados por CPF inválido` : 'Todos com CPF validado na Receita Federal'
+          description: `${errorCount} erros, ${skippedCount} pulados`
         });
         onSuccess?.();
+      } else if (skippedCount > 0) {
+        toast.warning('Nenhum aluno novo criado', {
+          description: `${skippedCount} já existiam ou sem email`
+        });
       } else {
         toast.error('Nenhum aluno foi importado', {
           description: 'Verifique os erros no relatório'
@@ -176,17 +214,38 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
 
   const successResults = results.filter(r => r.status === 'success');
   const errorResults = results.filter(r => r.status === 'error');
+  const skippedResults = results.filter(r => r.status === 'skipped');
+
+  // Exportar resultados para Excel
+  const exportResults = useCallback(() => {
+    const exportData = results.map(r => ({
+      'Linha': r.row,
+      'Nome': r.nome,
+      'Email': r.email,
+      'CPF': r.cpf,
+      'Status': r.status === 'success' ? 'CRIADO' : r.status === 'error' ? 'ERRO' : 'PULADO',
+      'Motivo': r.error || 'OK',
+      'Nome Receita': r.cpf_receita_nome || '-'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Resultado Importação');
+    XLSX.writeFile(wb, `resultado-importacao-${new Date().toISOString().split('T')[0]}.xlsx`);
+    
+    toast.success('Relatório exportado!');
+  }, [results]);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden bg-background/95 backdrop-blur-xl border-emerald-500/30">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden bg-background/95 backdrop-blur-xl border-amber-500/30">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-emerald-400">
+          <DialogTitle className="flex items-center gap-2 text-amber-400">
             <Shield className="h-5 w-5" />
-            Importação em Massa com Validação CPF
+            Importação em Massa — prime ONLINE
           </DialogTitle>
           <DialogDescription>
-            Todos os CPFs serão validados na Receita Federal antes da criação
+            Critério mínimo: NOME + CPF válido. Senha padrão: eneM2026@#
           </DialogDescription>
         </DialogHeader>
 
@@ -200,8 +259,8 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
               exit={{ opacity: 0, y: -20 }}
               className="space-y-4"
             >
-              <div className="border-2 border-dashed border-emerald-500/30 rounded-lg p-8 text-center hover:border-emerald-500/50 transition-colors">
-                <FileSpreadsheet className="h-12 w-12 mx-auto text-emerald-400 mb-4" />
+              <div className="border-2 border-dashed border-amber-500/30 rounded-lg p-8 text-center hover:border-amber-500/50 transition-colors">
+                <FileSpreadsheet className="h-12 w-12 mx-auto text-amber-400 mb-4" />
                 <p className="text-muted-foreground mb-4">
                   Arraste uma planilha Excel ou clique para selecionar
                 </p>
@@ -214,7 +273,7 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
                   disabled={isProcessing}
                 />
                 <label htmlFor="bulk-import-file">
-                  <Button variant="outline" className="border-emerald-500/50" asChild disabled={isProcessing}>
+                  <Button variant="outline" className="border-amber-500/50" asChild disabled={isProcessing}>
                     <span>
                       {isProcessing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
                       Selecionar Arquivo
@@ -223,14 +282,17 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
                 </label>
               </div>
 
-              <div className="bg-muted/30 rounded-lg p-4 text-sm">
-                <p className="font-medium mb-2">Colunas obrigatórias:</p>
+              <div className="bg-amber-500/10 rounded-lg p-4 text-sm border border-amber-500/20">
+                <p className="font-medium mb-2 text-amber-400">Campos aceitos:</p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                  <li><strong>CPF</strong> - Será validado na Receita Federal</li>
-                  <li><strong>Email</strong> - Email único do aluno</li>
-                  <li><strong>Nome</strong> - Nome completo</li>
+                  <li><strong>ALUNO (A)</strong> ou <strong>Nome</strong> — Obrigatório</li>
+                  <li><strong>CPF</strong> — Obrigatório (validado na Receita Federal)</li>
+                  <li><strong>EMAIL</strong> — Necessário para criar acesso</li>
+                  <li><strong>TELEFONE, CIDADE, ESTADO, CEP, ENDEREÇO, BAIRRO</strong> — Opcionais</li>
                 </ul>
-                <p className="mt-2 text-muted-foreground">Opcionais: Telefone, Cidade, Estado</p>
+                <p className="mt-3 text-amber-400/80">
+                  ⚠️ Alunos sem email serão registrados mas NÃO terão acesso ao sistema
+                </p>
               </div>
             </motion.div>
           )}
@@ -246,7 +308,7 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Eye className="h-4 w-4 text-emerald-400" />
+                  <Eye className="h-4 w-4 text-amber-400" />
                   <span className="font-medium">Prévia: {students.length} alunos</span>
                 </div>
                 <Badge variant="outline" className="border-amber-500/50 text-amber-400">
@@ -262,21 +324,25 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
                       <th className="p-2 text-left">Nome</th>
                       <th className="p-2 text-left">Email</th>
                       <th className="p-2 text-left">CPF</th>
+                      <th className="p-2 text-left">Cidade</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {students.slice(0, 50).map((s, i) => (
+                    {students.slice(0, 100).map((s, i) => (
                       <tr key={i} className="border-t border-border/50">
                         <td className="p-2 text-muted-foreground">{i + 1}</td>
-                        <td className="p-2">{s.nome}</td>
-                        <td className="p-2 text-muted-foreground">{s.email}</td>
+                        <td className="p-2 truncate max-w-[150px]">{s.nome}</td>
+                        <td className="p-2 text-muted-foreground truncate max-w-[180px]">
+                          {s.email || <span className="text-amber-500">(sem email)</span>}
+                        </td>
                         <td className="p-2 font-mono text-xs">{s.cpf.substring(0, 3)}***</td>
+                        <td className="p-2 text-muted-foreground text-xs">{s.cidade || '-'}</td>
                       </tr>
                     ))}
-                    {students.length > 50 && (
+                    {students.length > 100 && (
                       <tr className="border-t">
-                        <td colSpan={4} className="p-2 text-center text-muted-foreground">
-                          ... e mais {students.length - 50} alunos
+                        <td colSpan={5} className="p-2 text-center text-muted-foreground">
+                          ... e mais {students.length - 100} alunos
                         </td>
                       </tr>
                     )}
@@ -287,10 +353,9 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
                 <div className="text-sm">
-                  <p className="font-medium text-amber-400">Atenção</p>
+                  <p className="font-medium text-amber-400">Modo: prime ONLINE</p>
                   <p className="text-muted-foreground">
-                    Cada CPF será validado na Receita Federal. Alunos com CPF inválido serão rejeitados.
-                    Senha padrão: <code className="bg-muted px-1 rounded">eneM2026@#</code>
+                    Cada CPF será validado. Senha padrão: <code className="bg-muted px-1 rounded">eneM2026@#</code>
                   </p>
                 </div>
               </div>
@@ -299,11 +364,11 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
                 <Button variant="outline" onClick={resetState}>Cancelar</Button>
                 <Button 
                   onClick={executeImport} 
-                  className="bg-emerald-600 hover:bg-emerald-700"
+                  className="bg-amber-600 hover:bg-amber-700"
                   disabled={isProcessing}
                 >
                   <Shield className="h-4 w-4 mr-2" />
-                  Importar com Validação CPF
+                  Iniciar Importação ({students.length})
                 </Button>
               </div>
             </motion.div>
@@ -319,10 +384,10 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
               className="space-y-6 py-8"
             >
               <div className="text-center">
-                <Loader2 className="h-12 w-12 animate-spin mx-auto text-emerald-400 mb-4" />
+                <Loader2 className="h-12 w-12 animate-spin mx-auto text-amber-400 mb-4" />
                 <p className="font-medium">Validando CPFs na Receita Federal...</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Processando {students.length} alunos
+                  Processando {students.length} alunos (pode demorar alguns minutos)
                 </p>
               </div>
               <Progress value={progress} className="h-2" />
@@ -341,34 +406,74 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
               exit={{ opacity: 0, y: -20 }}
               className="space-y-4"
             >
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4 text-center">
-                  <CheckCircle className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
+                  <CheckCircle className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-emerald-400">{successResults.length}</p>
-                  <p className="text-sm text-muted-foreground">Criados com sucesso</p>
+                  <p className="text-xs text-muted-foreground">Criados</p>
+                </div>
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 text-center">
+                  <SkipForward className="h-6 w-6 text-amber-400 mx-auto mb-2" />
+                  <p className="text-2xl font-bold text-amber-400">{skippedResults.length}</p>
+                  <p className="text-xs text-muted-foreground">Pulados</p>
                 </div>
                 <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-center">
-                  <XCircle className="h-8 w-8 text-red-400 mx-auto mb-2" />
+                  <XCircle className="h-6 w-6 text-red-400 mx-auto mb-2" />
                   <p className="text-2xl font-bold text-red-400">{errorResults.length}</p>
-                  <p className="text-sm text-muted-foreground">Rejeitados</p>
+                  <p className="text-xs text-muted-foreground">Erros</p>
                 </div>
               </div>
 
-              {errorResults.length > 0 && (
+              {/* Lista de Criados */}
+              {successResults.length > 0 && (
                 <div className="space-y-2">
-                  <p className="font-medium text-red-400">Erros encontrados:</p>
-                  <ScrollArea className="h-[200px] border border-red-500/20 rounded-lg">
-                    {errorResults.map((r, i) => (
-                      <div key={i} className="p-2 border-b border-border/50 text-sm">
-                        <span className="text-muted-foreground">Linha {r.row}:</span>{' '}
-                        <span className="font-medium">{r.nome}</span> - {r.error}
+                  <p className="font-medium text-emerald-400 text-sm">✅ Acessos Criados ({successResults.length}):</p>
+                  <ScrollArea className="h-[120px] border border-emerald-500/20 rounded-lg">
+                    {successResults.map((r, i) => (
+                      <div key={i} className="p-2 border-b border-border/50 text-sm flex justify-between">
+                        <span className="font-medium truncate max-w-[200px]">{r.nome}</span>
+                        <span className="text-muted-foreground text-xs">{r.email}</span>
                       </div>
                     ))}
                   </ScrollArea>
                 </div>
               )}
 
-              <div className="flex justify-end gap-2">
+              {/* Lista de Pulados */}
+              {skippedResults.length > 0 && (
+                <div className="space-y-2">
+                  <p className="font-medium text-amber-400 text-sm">⏭️ Pulados ({skippedResults.length}):</p>
+                  <ScrollArea className="h-[120px] border border-amber-500/20 rounded-lg">
+                    {skippedResults.map((r, i) => (
+                      <div key={i} className="p-2 border-b border-border/50 text-sm">
+                        <span className="text-muted-foreground">Linha {r.row}:</span>{' '}
+                        <span className="font-medium">{r.nome}</span> — {r.error}
+                      </div>
+                    ))}
+                  </ScrollArea>
+                </div>
+              )}
+
+              {/* Lista de Erros */}
+              {errorResults.length > 0 && (
+                <div className="space-y-2">
+                  <p className="font-medium text-red-400 text-sm">❌ Erros ({errorResults.length}):</p>
+                  <ScrollArea className="h-[120px] border border-red-500/20 rounded-lg">
+                    {errorResults.map((r, i) => (
+                      <div key={i} className="p-2 border-b border-border/50 text-sm">
+                        <span className="text-muted-foreground">Linha {r.row}:</span>{' '}
+                        <span className="font-medium">{r.nome}</span> — {r.error}
+                      </div>
+                    ))}
+                  </ScrollArea>
+                </div>
+              )}
+
+              <div className="flex justify-between gap-2">
+                <Button variant="outline" onClick={exportResults} className="border-amber-500/50">
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar Relatório
+                </Button>
                 <Button variant="outline" onClick={handleClose}>Fechar</Button>
               </div>
             </motion.div>
