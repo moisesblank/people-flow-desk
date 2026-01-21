@@ -224,7 +224,8 @@ export function useAlunosPaginados(
       // Buscar roles apenas para os emails desta página (evita N+1)
       const emails = (data || []).map(a => a.email?.toLowerCase()).filter(Boolean);
       
-      let roleMap: Record<string, 'beta' | 'aluno_gratuito'> = {};
+      // CONSTITUIÇÃO v10.x - 4 roles válidas de aluno
+      let roleMap: Record<string, StudentRoleType> = {};
       
       if (emails.length > 0) {
         const { data: rolesData } = await supabase
@@ -234,14 +235,24 @@ export function useAlunosPaginados(
             user_id,
             profiles!inner(email)
           `)
-          .in('role', ['beta', 'aluno_gratuito']);
+          // ✅ FIX: Incluir TODAS as 4 roles de aluno da CONSTITUIÇÃO v10.x
+          .in('role', ['beta', 'aluno_gratuito', 'aluno_presencial', 'beta_expira']);
 
-        // Mapear roles
+        // Mapear roles (prioridade: beta > beta_expira > aluno_presencial > aluno_gratuito)
+        const rolePriority: Record<StudentRoleType, number> = {
+          beta: 4,
+          beta_expira: 3,
+          aluno_presencial: 2,
+          aluno_gratuito: 1,
+        };
+        
         (rolesData || []).forEach((r: any) => {
           const email = r.profiles?.email?.toLowerCase();
+          const role = r.role as StudentRoleType;
           if (email && emails.includes(email)) {
-            if (roleMap[email] !== 'beta') {
-              roleMap[email] = r.role as 'beta' | 'aluno_gratuito';
+            // Se não existe ou a nova role tem maior prioridade
+            if (!roleMap[email] || rolePriority[role] > rolePriority[roleMap[email]]) {
+              roleMap[email] = role;
             }
           }
         });
