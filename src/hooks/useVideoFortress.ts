@@ -242,7 +242,8 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
             setError('USER_BANNED');
             return false;
           }
-          throw new Error(result?.error || 'Resposta inválida do servidor');
+          const errorMsg = typeof result?.error === 'string' ? result.error : 'Resposta inválida do servidor';
+          throw new Error(errorMsg);
         }
 
         // 🛡️ v11.0 FIX: A função SQL retorna watermark_text, não um objeto watermark

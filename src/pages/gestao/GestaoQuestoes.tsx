@@ -2353,7 +2353,7 @@ class GestaoQuestoesErrorBoundary extends Component<
               Ocorreu um erro ao renderizar o Banco de Questões.
             </p>
             <pre className="bg-background/50 p-3 rounded text-sm overflow-auto max-h-48 text-red-400">
-              {this.state.error?.message}
+              {this.state.error?.message || String(this.state.error) || 'Erro desconhecido'}
             </pre>
           </div>
         </div>
