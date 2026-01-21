@@ -174,6 +174,45 @@ function validateInput(payload: unknown): { valid: boolean; error?: string; data
 }
 
 // ============================================
+// 🔍 LOOKUP ROBUSTO: buscar usuário por email no Auth
+// Evita falso-negativo do listUsers() (padrão pagina)
+// e corrige o bug: tentar createUser → email_exists
+// ============================================
+async function getAuthUserByEmailSafe(
+  supabaseAdmin: any,
+  email: string
+): Promise<{ id: string; email?: string | null } | null> {
+  const normalized = (email || '').toLowerCase().trim();
+  if (!normalized) return null;
+
+  // Preferência: API específica (determinística)
+  try {
+    if (supabaseAdmin?.auth?.admin?.getUserByEmail) {
+      const { data, error } = await supabaseAdmin.auth.admin.getUserByEmail(normalized);
+      if (!error && data?.user?.id) return { id: data.user.id, email: data.user.email };
+    }
+  } catch (_e) {
+    // fallback abaixo
+  }
+
+  // Fallback: paginação manual (limite grande, mas finito)
+  // OBS: listUsers() por padrão pagina e pode retornar só os primeiros N.
+  try {
+    const perPage = 1000;
+    for (let page = 1; page <= 20; page++) {
+      const { data } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+      const found = data?.users?.find((u: any) => (u.email || '').toLowerCase().trim() === normalized);
+      if (found?.id) return { id: found.id, email: found.email };
+      if (!data?.users?.length || data.users.length < perPage) break;
+    }
+  } catch (_e) {
+    // última linha de defesa: null
+  }
+
+  return null;
+}
+
+// ============================================
 // 🔐 GERADOR DE SENHA FORTE ALEATÓRIA
 // Requisitos: 16 chars, maiúsculas, minúsculas, números, símbolos
 // ============================================
@@ -615,10 +654,8 @@ serve(async (req) => {
     let userAlreadyExists = false;
 
     // Verificar em auth.users primeiro (fonte primária de identidade)
-    const { data: existingAuthUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const existingAuthUser = existingAuthUsers?.users?.find(
-      u => u.email?.toLowerCase().trim() === payload.email
-    );
+    // ⚠️ BUG P0: listUsers() é paginado e pode não incluir o email procurado.
+    const existingAuthUser = await getAuthUserByEmailSafe(supabaseAdmin, payload.email);
 
     if (existingAuthUser) {
       userId = existingAuthUser.id;
@@ -654,7 +691,7 @@ serve(async (req) => {
     if (!userAlreadyExists) {
       console.log('[c-create-official-access] 🔐 Creating user with temporary password (will be reset via link)');
       
-      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email: payload.email,
         password: tempPassword,
         email_confirm: true, // Auto-confirma email
@@ -667,17 +704,42 @@ serve(async (req) => {
       });
 
       if (createError) {
-        console.error('[c-create-official-access] ❌ Error creating user:', createError);
-        return new Response(
-          JSON.stringify({ success: false, error: `Erro ao criar usuário: ${createError.message}` }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+         // 🎯 FIX P0: Se email já existe, recuperar user_id e seguir fluxo de reativação.
+         const msg = (createError as any)?.message || '';
+         const code = (createError as any)?.code || '';
+         const isEmailExists = code === 'email_exists' || msg.toLowerCase().includes('already been registered') || msg.toLowerCase().includes('email_exists');
+         if (isEmailExists) {
+           console.warn('[c-create-official-access] ⚠️ createUser email_exists — recuperando usuário existente');
+           const recovered = await getAuthUserByEmailSafe(supabaseAdmin, payload.email);
+           if (recovered?.id) {
+             userId = recovered.id;
+             userAlreadyExists = true;
+             console.log('[c-create-official-access] ✅ User recovered after email_exists:', userId);
+           } else {
+             console.error('[c-create-official-access] ❌ email_exists mas não foi possível recuperar o usuário por email');
+             return new Response(
+               JSON.stringify({ success: false, error: 'Email já existe, mas não foi possível recuperar o usuário para reativação. Contate o suporte técnico.' }),
+               { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+             );
+           }
+         } else {
+           console.error('[c-create-official-access] ❌ Error creating user:', createError);
+           return new Response(
+             JSON.stringify({ success: false, error: `Erro ao criar usuário: ${createError.message}` }),
+             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+           );
+         }
       }
 
-      userId = newUser.user.id;
-      emailStatus = 'password_set';
-      passwordEmailSent = !payload.senha;
-      console.log('[c-create-official-access] ✅ User created:', userId);
+       // Se criou agora, newUser existe. Se caiu no email_exists, userId foi recuperado.
+       if (newUser?.user?.id) {
+         userId = newUser.user.id;
+         userAlreadyExists = false;
+         console.log('[c-create-official-access] ✅ User created:', userId);
+       }
+
+       emailStatus = 'password_set';
+       passwordEmailSent = !payload.senha;
     } else {
       // ============================================
       // 🎯 Usuário já existe - NÃO alterar senha (manter existente)
