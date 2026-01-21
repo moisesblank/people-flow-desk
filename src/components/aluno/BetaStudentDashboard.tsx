@@ -140,6 +140,29 @@ export function BetaStudentDashboard() {
           </span>
         </div>
 
+        {/* 📢 BANNER COMUNICADO — AMARELO FIXO */}
+        <div className="relative overflow-hidden rounded-xl border border-amber-500/40 bg-amber-500/10 backdrop-blur-sm p-4 sm:p-5">
+          {/* Glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-amber-400/10 to-amber-500/5 pointer-events-none" />
+          
+          <div className="relative flex items-center gap-3 sm:gap-4">
+            {/* Ícone pulsante */}
+            <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 animate-pulse" />
+            </div>
+            
+            {/* Mensagem */}
+            <div className="flex-1 min-w-0">
+              <p className="text-amber-300 font-bold text-sm sm:text-base md:text-lg leading-snug">
+                🎉 Aproveitem a plataforma! Até o início das aulas dia 05/02 estará 100% pronta.
+              </p>
+              <p className="text-amber-400/70 text-xs sm:text-sm mt-1">
+                Explore os recursos disponíveis enquanto finalizamos os últimos ajustes.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* 👤 PERFIL DO USUÁRIO — CANTO SUPERIOR */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 sm:p-6 rounded-2xl bg-gradient-to-br from-white/5 to-white/[0.02] border border-white/10 backdrop-blur-sm">
           {/* Avatar + Nome */}
