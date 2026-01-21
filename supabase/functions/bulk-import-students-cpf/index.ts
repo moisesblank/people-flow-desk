@@ -56,9 +56,10 @@ function validateCPFFormat(cpf: string): boolean {
 
 // Validate CPF against Receita Federal
 async function validateCPFReceita(cpf: string): Promise<{ valid: boolean; nome?: string; error?: string }> {
-  const token = Deno.env.get('CPF_API_TOKEN');
+  // CORRIGIDO: Nome do secret é CPFCNPJ_API_TOKEN (não CPF_API_TOKEN)
+  const token = Deno.env.get('CPFCNPJ_API_TOKEN');
   if (!token) {
-    return { valid: false, error: 'Token API CPF não configurado' };
+    return { valid: false, error: 'Token API CPF não configurado (CPFCNPJ_API_TOKEN)' };
   }
   
   const cleaned = cpf.replace(/\D/g, '');
@@ -88,8 +89,9 @@ async function validateCPFReceita(cpf: string): Promise<{ valid: boolean; nome?:
     }
     
     return { valid: true, nome: data.nome || data.nome_completo };
-  } catch (err) {
-    return { valid: false, error: `Erro de conexão: ${err.message}` };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erro desconhecido';
+    return { valid: false, error: `Erro de conexão: ${message}` };
   }
 }
 
@@ -276,9 +278,10 @@ serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('[bulk-import-students-cpf] Error:', err);
-    return new Response(JSON.stringify({ success: false, error: err.message }), {
+    const message = err instanceof Error ? err.message : 'Erro desconhecido';
+    return new Response(JSON.stringify({ success: false, error: message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
