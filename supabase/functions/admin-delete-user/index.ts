@@ -204,8 +204,10 @@ serve(async (req) => {
     // ============================================
     console.log("[admin-delete-user] 🧹 Limpando dados auxiliares...");
 
-    // Tabelas que podem ter referência mas não CASCADE (INCLUINDO security_events que bloqueia FK)
-    const tablesToClean = [
+    // 🔥 P0 FIX: Tabelas COM FK para auth.users que BLOQUEIAM delete
+    // ORDEM CRÍTICA: deletar de baixo para cima na hierarquia de dependências
+    const criticalFKTables = [
+      // Primeiro: tabelas sem dependência de outras tabelas públicas
       "two_factor_codes",
       "security_risk_state",
       "user_presence",
@@ -214,16 +216,26 @@ serve(async (req) => {
       "security_events",           // 🔥 FK bloqueante - DEVE ser limpa antes de auth.users
       "active_sessions",           // 🔥 Sessões (além do UPDATE já feito)
       "user_roles",                // 🔥 Roles do usuário
-      "user_mfa_verifications",    // 🔥 CRÍTICO: Trust de dispositivo (impede reuso de verificação)
+      "user_mfa_verifications",    // 🔥 CRÍTICO: Trust de dispositivo
       "user_devices",              // 🔥 Dispositivos vinculados
+      "device_trust_scores",       // 🔥 Adicionado - pode ter FK
     ];
 
-    for (const table of tablesToClean) {
+    // 🔥 P0 FIX: Usar delete com verificação de sucesso
+    for (const table of criticalFKTables) {
       try {
-        await supabaseAdmin.from(table).delete().eq("user_id", resolvedUserId);
-        console.log(`[admin-delete-user] ✅ Limpo: ${table}`);
-      } catch (e) {
-        console.warn(`[admin-delete-user] ⚠️ Erro ao limpar ${table}:`, e);
+        const { error: delError, count } = await supabaseAdmin
+          .from(table)
+          .delete()
+          .eq("user_id", resolvedUserId);
+        
+        if (delError) {
+          console.error(`[admin-delete-user] ❌ FALHA ao limpar ${table}:`, delError.message);
+        } else {
+          console.log(`[admin-delete-user] ✅ Limpo: ${table}`);
+        }
+      } catch (e: any) {
+        console.error(`[admin-delete-user] ❌ EXCEÇÃO ao limpar ${table}:`, e?.message || e);
       }
     }
 
