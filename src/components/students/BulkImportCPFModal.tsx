@@ -3,7 +3,7 @@
 // CONSTITUIÇÃO SYNAPSE Ω v10.x
 // MODO: Livro Web - BETA com 1 ano de expiração
 // ============================================
-import { useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -56,6 +56,30 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [fileName, setFileName] = useState('');
+  const [importStatus, setImportStatus] = useState<string>('');
+  const resumeFromIndexRef = useRef(0);
+  const cancelRef = useRef(false);
+
+  useEffect(() => {
+    cancelRef.current = false;
+    return () => {
+      cancelRef.current = true;
+    };
+  }, []);
+
+  const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+  const withTimeout = async <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> => {
+    let timeoutId: number | undefined;
+    const timeoutPromise = new Promise<T>((_, reject) => {
+      timeoutId = window.setTimeout(() => reject(new Error(`Timeout (${label}) após ${Math.round(ms / 1000)}s`)), ms);
+    });
+    try {
+      return await Promise.race([promise, timeoutPromise]);
+    } finally {
+      if (timeoutId) window.clearTimeout(timeoutId);
+    }
+  };
 
   const resetState = useCallback(() => {
     setStep('upload');
@@ -64,6 +88,8 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
     setProgress(0);
     setFileName('');
     setIsProcessing(false);
+    setImportStatus('');
+    resumeFromIndexRef.current = 0;
   }, []);
 
   const handleClose = useCallback(() => {
@@ -153,6 +179,7 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
     setStep('importing');
     setIsProcessing(true);
     setProgress(0);
+    setImportStatus('Inicializando importação...');
 
     try {
       // Importação em lotes para evitar timeout/loop em planilhas grandes
@@ -163,25 +190,40 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
       let totalError = 0;
       let totalSkipped = 0;
 
-      for (let start = 0; start < total; start += BATCH_SIZE) {
+      const batchTotal = Math.ceil(total / BATCH_SIZE);
+      const invokeTimeoutMs = 90_000; // proteção contra travamento do fetch
+
+      for (let start = resumeFromIndexRef.current; start < total; start += BATCH_SIZE) {
+        if (cancelRef.current) break;
+
         const batch = students.slice(start, start + BATCH_SIZE);
         const batchIndex = Math.floor(start / BATCH_SIZE) + 1;
-        const batchTotal = Math.ceil(total / BATCH_SIZE);
+        resumeFromIndexRef.current = start; // checkpoint antes da chamada
 
-        setProgress(Math.floor((start / total) * 100));
-        toast.message(`Importando lote ${batchIndex}/${batchTotal}...`, {
-          description: `${batch.length} alunos`
-        });
+        const doneBefore = start;
+        const doneBeforePct = Math.floor((doneBefore / total) * 100);
 
-        const { data, error } = await supabase.functions.invoke('bulk-import-students-cpf', {
-          body: {
-            students: batch,
-            defaultPassword: 'eneM2026@#',
-            tipoProduto: 'Livro Web',
-            fonte: 'Importação Bruna Lista ONLINE 20/01',
-            expirationDays: 365, // 1 ANO de acesso BETA
-          }
-        });
+        setImportStatus(`Lote ${batchIndex}/${batchTotal} — preparando (${batch.length} alunos)`);
+        setProgress(doneBeforePct);
+        // garante render antes da requisição (evita UI “congelada” em planilhas grandes)
+        await sleep(0);
+
+        toast.message(`Importando lote ${batchIndex}/${batchTotal}...`, { description: `${batch.length} alunos` });
+
+        setImportStatus(`Lote ${batchIndex}/${batchTotal} — enviando para o backend...`);
+        const { data, error } = await withTimeout(
+          supabase.functions.invoke('bulk-import-students-cpf', {
+            body: {
+              students: batch,
+              defaultPassword: 'eneM2026@#',
+              tipoProduto: 'Livro Web',
+              fonte: 'Importação Bruna Lista ONLINE 20/01',
+              expirationDays: 365, // 1 ANO de acesso BETA
+            },
+          }),
+          invokeTimeoutMs,
+          `lote ${batchIndex}/${batchTotal}`
+        );
 
         if (error) throw new Error(error.message);
         if (!data?.success) throw new Error(data?.error || 'Erro desconhecido');
@@ -194,9 +236,14 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
         // progresso pós-lote
         const done = Math.min(start + batch.length, total);
         setProgress(Math.floor((done / total) * 100));
+        setImportStatus(`Lote ${batchIndex}/${batchTotal} — concluído (${done}/${total})`);
+
+        // checkpoint após sucesso
+        resumeFromIndexRef.current = done;
       }
 
       setProgress(100);
+      setImportStatus('Finalizado. Gerando relatório...');
       setResults(aggregatedResults);
       setStep('results');
 
@@ -219,6 +266,7 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
       toast.error('Erro na importação', {
         description: err instanceof Error ? err.message : 'Erro desconhecido'
       });
+      // Mantém o usuário na tela para não perder contexto; permite re-tentativa sem reimportar o Excel.
       setStep('preview');
     } finally {
       setIsProcessing(false);
@@ -402,6 +450,11 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
                 <p className="text-sm text-muted-foreground mt-1">
                   Importando {students.length} alunos (pode demorar alguns segundos)
                 </p>
+                  {importStatus && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {importStatus}
+                    </p>
+                  )}
               </div>
               <Progress value={progress} className="h-2" />
               <p className="text-center text-sm text-muted-foreground">
