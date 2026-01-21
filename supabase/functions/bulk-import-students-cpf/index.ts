@@ -1,7 +1,7 @@
 // ============================================
 // BULK IMPORT STUDENTS WITH CPF VALIDATION
 // CONSTITUIÇÃO SYNAPSE Ω v10.x
-// MODO: prime ONLINE
+// MODO: Livro Web - BETA com 1 ano de expiração
 // ============================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -173,14 +173,19 @@ serve(async (req) => {
     const { 
       students, 
       defaultPassword = 'eneM2026@#',
-      tipoProduto = 'prime ONLINE',
-      fonte = 'Importação em Massa (CPF Validado)'
+      tipoProduto = 'Livro Web',
+      fonte = 'Importação em Massa (CPF Validado)',
+      expirationDays = 365, // 1 ano de acesso BETA
     } = body as { 
       students: StudentRow[]; 
       defaultPassword?: string;
       tipoProduto?: string;
       fonte?: string;
+      expirationDays?: number;
     };
+    
+    // Role sempre beta_expira com data de expiração
+    const role = 'beta_expira';
     
     if (!students || !Array.isArray(students) || students.length === 0) {
       return new Response(JSON.stringify({ success: false, error: 'Nenhum aluno para importar' }), {
@@ -329,10 +334,14 @@ serve(async (req) => {
         onboarding_completed: false,
       }, { onConflict: 'id' });
 
-      // 9. Atribui role beta
+      // 9. Atribui role beta_expira com data de expiração (1 ano)
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + expirationDays);
+      
       await adminClient.from('user_roles').upsert({
         user_id: userId,
-        role: 'beta',
+        role: role,
+        expires_at: expiresAt.toISOString(),
       }, { onConflict: 'user_id' });
 
       // 10. Cria entrada na tabela alunos
