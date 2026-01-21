@@ -60,6 +60,8 @@ const ROLE_ICONS: Record<FullAppRole, React.ElementType> = {
   employee: UserCheck,
   beta: Sparkles,
   aluno_gratuito: Users2,
+  aluno_presencial: GraduationCap,
+  beta_expira: Sparkles,
 };
 
 // Cores de gradiente para cada cargo - USANDO TOKENS SEMÂNTICOS
@@ -75,6 +77,8 @@ const ROLE_GRADIENTS: Record<FullAppRole, string> = {
   employee: "from-role-employee via-muted-foreground to-border",
   beta: "from-role-beta via-warning to-role-marketing",
   aluno_gratuito: "from-role-aluno via-muted-foreground to-border",
+  aluno_presencial: "from-role-beta via-holo-cyan to-role-admin",
+  beta_expira: "from-role-beta via-warning to-role-marketing",
 };
 
 // Cores de fundo suave - USANDO TOKENS SEMÂNTICOS
@@ -90,6 +94,8 @@ const ROLE_BG: Record<FullAppRole, string> = {
   employee: "bg-role-employee/10 border-role-employee/30 hover:bg-role-employee/20",
   beta: "bg-role-beta/10 border-role-beta/30 hover:bg-role-beta/20",
   aluno_gratuito: "bg-role-aluno/10 border-role-aluno/30 hover:bg-role-aluno/20",
+  aluno_presencial: "bg-role-beta/10 border-role-beta/30 hover:bg-role-beta/20",
+  beta_expira: "bg-role-beta/10 border-role-beta/30 hover:bg-role-beta/20",
 };
 
 // Labels amigáveis para áreas principais
@@ -132,6 +138,8 @@ const ROLE_SHORT_DESC: Record<FullAppRole, string> = {
   employee: "Acesso básico limitado",
   beta: "Aluno Premium (365 dias)",
   aluno_gratuito: "Apenas área gratuita",
+  aluno_presencial: "Aluno Presencial Premium",
+  beta_expira: "Aluno Premium (temporário)",
 };
 
 export function RoleManagementWidget() {
