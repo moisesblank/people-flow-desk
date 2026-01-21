@@ -1326,17 +1326,18 @@ export default function Alunos() {
                   <AlertCircle className="h-5 w-5" />
                   Confirmar Exclusão Permanente
                 </AlertDialogTitle>
+                {/* P0 FIX: AlertDialogDescription geralmente renderiza <p>; não pode conter <p> dentro (React validateDOMNesting). */}
                 <AlertDialogDescription className="text-muted-foreground space-y-3">
-                  <p className="font-semibold text-yellow-400">
+                  <span className="block font-semibold text-yellow-400">
                     ⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!
-                  </p>
-                  <p>
-                    O aluno <span className="font-bold text-foreground">"{studentToDelete?.nome || studentToDelete?.email}"</span> será 
+                  </span>
+                  <span className="block">
+                    O aluno <span className="font-bold text-foreground">"{studentToDelete?.nome || studentToDelete?.email}"</span> será
                     EXCLUÍDO PERMANENTEMENTE de TODAS as camadas do sistema.
-                  </p>
-                  <p className="text-sm">
+                  </span>
+                  <span className="block text-sm">
                     Isso inclui: autenticação, sessões, dispositivos e todos os dados associados.
-                  </p>
+                  </span>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
