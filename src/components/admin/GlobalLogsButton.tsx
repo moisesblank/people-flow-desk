@@ -531,5 +531,3 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
     portalTarget
   );
 });
-
-export default GlobalLogsButton;
