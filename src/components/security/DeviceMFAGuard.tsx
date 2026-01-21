@@ -5,7 +5,8 @@
 // MOSTRA CONTADOR DE DISPOSITIVOS (1/3, 2/3, 3/3)
 // ============================================
 
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState, useEffect, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { useDeviceMFAGuard } from "@/hooks/useDeviceMFAGuard";
 import { MFAActionModal } from "./MFAActionModal";
 import { Shield, Smartphone, Loader2, Lock, Fingerprint, Monitor, Tablet } from "lucide-react";
@@ -22,9 +23,34 @@ interface DeviceMFAGuardProps {
 
 const MAX_DEVICES = 3;
 
+// 🎯 P0 / CONSTITUIÇÃO: Onboarding e flows sem sessão NÃO devem ser bloqueados pelo gate global.
+// A verificação de dispositivo nesses casos acontece no fluxo próprio (Primeiro Acesso / Trust Device).
+const DEVICE_MFA_BYPASS_PATHS = new Set<string>([
+  "/auth",
+  "/primeiro-acesso",
+  "/primeiro-acesso-funcionario",
+  "/security/device-limit",
+  "/security/same-type-replacement",
+]);
+
 export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
+  const location = useLocation();
   const { isChecking, isVerified, needsMFA, error, deviceHash, onVerificationComplete } = useDeviceMFAGuard();
   const { user } = useAuth();
+
+  // 🔓 Option A: recuperação de senha e onboarding NÃO exigem Device MFA.
+  // Motivo: recuperação é session-less; onboarding tem step próprio para confiar dispositivo.
+  const shouldBypass = useMemo(() => {
+    if (DEVICE_MFA_BYPASS_PATHS.has(location.pathname)) return true;
+
+    // Extra safety: /auth com reset_token / first_access_token
+    if (location.pathname === "/auth") {
+      const params = new URLSearchParams(location.search);
+      if (params.has("reset_token") || params.has("first_access_token")) return true;
+    }
+
+    return false;
+  }, [location.pathname, location.search]);
 
   const [showModal, setShowModal] = useState(false);
   const [deviceInfo, setDeviceInfo] = useState({ name: "", type: "desktop" as "desktop" | "mobile" | "tablet" });
@@ -104,6 +130,11 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
 
   // O número do dispositivo que será cadastrado
   const nextDeviceNumber = deviceCount + 1;
+
+  // 🔓 IMPORTANTE: retorno APÓS todos hooks (React rule)
+  if (shouldBypass) {
+    return <>{children}</>;
+  }
 
   // Loading state
   if (isChecking || isLoadingCount) {
