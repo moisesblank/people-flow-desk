@@ -411,14 +411,60 @@ export default function Auth() {
       sessionStorage.removeItem(pendingKey);
       sessionStorage.removeItem(pendingUserKey);
 
-      // ✅ PLANO B (UX): Se já existe sessão válida,
-      // redirecionar imediatamente para a área correta.
+       // ✅ PLANO B (UX): Se já existe sessão válida,
+       // redirecionar imediatamente para a área correta.
+       //
+       // P0 ANTI-LOOP (2026-01): antes de redirecionar, validar o token de sessão de segurança
+       // (matriz_session_token). Se estiver stale/inválido, NÃO redirecionar automaticamente.
+       // Isso evita o loop: /auth → redirect → SessionGuard detecta SESSION_NOT_FOUND → signOut → /auth.
       try {
         const {
           data: { session },
         } = await withTimeout(supabase.auth.getSession(), 2000, "getSession");
         if (session?.user) {
           console.log("[AUTH] ✅ Sessão existente detectada em /auth");
+
+           // 🔧 ANTI-LOOP: validar matriz_session_token (se existir) antes de qualquer redirect.
+           const existingSecurityToken = localStorage.getItem("matriz_session_token");
+           if (existingSecurityToken) {
+             try {
+               // supabase.rpc retorna um builder (thenable). Envolver em async garante Promise real p/ withTimeout.
+               const validatePromise = (async () => {
+                 return await supabase.rpc("validate_session_epoch", {
+                   p_session_token: existingSecurityToken,
+                 });
+               })();
+
+               const validationRes = await withTimeout(validatePromise, 1500, "validate_session_epoch");
+
+               const validationData = (validationRes as any)?.data;
+               const validationError = (validationRes as any)?.error;
+               const result = (validationData as any)?.[0];
+               const status = result?.status;
+               const reason = result?.reason;
+
+               if (validationError || status !== "valid") {
+                 console.warn("[AUTH] ⚠️ matriz_session_token inválido/stale — evitando auto-redirect", {
+                   hasError: Boolean(validationError),
+                   status,
+                   reason,
+                 });
+                 localStorage.removeItem("matriz_session_token");
+                 // Segurança/UX: manter usuário em /auth para login explícito.
+                 setIsCheckingSession(false);
+                 return;
+               }
+             } catch (validationErr) {
+               // Fail-open para não travar, mas SEM auto-redirect (anti-loop)
+               console.warn(
+                 "[AUTH] ⚠️ Falha/timeout ao validar matriz_session_token — evitando auto-redirect",
+                 validationErr,
+               );
+               localStorage.removeItem("matriz_session_token");
+               setIsCheckingSession(false);
+               return;
+             }
+           }
 
           // 🔐 P0 FIX v11.7: Se falta hash do servidor, registrar dispositivo COM TIMEOUT
           const existingHash = localStorage.getItem('matriz_device_server_hash');
