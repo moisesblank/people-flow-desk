@@ -415,7 +415,42 @@ export default function Auth() {
           data: { session },
         } = await withTimeout(supabase.auth.getSession(), 2000, "getSession");
         if (session?.user) {
-          console.log("[AUTH] ✅ Sessão existente detectada em /auth — redirecionando");
+          console.log("[AUTH] ✅ Sessão existente detectada em /auth");
+
+          // 🔐 P0 FIX v11.6: Se falta hash do servidor, registrar dispositivo ANTES de redirecionar
+          const existingHash = localStorage.getItem('matriz_device_server_hash');
+          if (!existingHash) {
+            console.warn("[AUTH] ⚠️ Hash do servidor faltando - registrando dispositivo agora...");
+            try {
+              // registerDeviceBeforeSession já obtém a sessão internamente
+              const regResult = await registerDeviceBeforeSession();
+              
+              if (regResult.success && regResult.deviceHash) {
+                localStorage.setItem('matriz_device_server_hash', regResult.deviceHash);
+                console.log("[AUTH] ✅ Dispositivo registrado com sucesso, hash salvo");
+              } else {
+                // Owner bypass: se é o owner, continuar mesmo sem registro
+                const isOwner = session.user.email?.toLowerCase() === 'moisesblank@gmail.com';
+                if (isOwner) {
+                  console.warn("[AUTH] 🛡️ OWNER BYPASS: Registro falhou mas continuando...");
+                } else {
+                  console.error("[AUTH] ❌ Falha ao registrar dispositivo:", regResult.error);
+                  // Não redirecionar, mostrar formulário para novo login
+                  setIsCheckingSession(false);
+                  return;
+                }
+              }
+            } catch (regErr) {
+              const isOwner = session.user.email?.toLowerCase() === 'moisesblank@gmail.com';
+              if (isOwner) {
+                console.warn("[AUTH] 🛡️ OWNER BYPASS: Erro de registro ignorado:", regErr);
+              } else {
+                console.error("[AUTH] ❌ Erro crítico ao registrar dispositivo:", regErr);
+                setIsCheckingSession(false);
+                return;
+              }
+            }
+          }
 
           const { data: roleData } = await supabase
             .from("user_roles")
@@ -425,6 +460,7 @@ export default function Auth() {
 
           const userRole = roleData?.role || null;
           const target = getPostLoginRedirect(userRole, session.user.email);
+          console.log("[AUTH] ✅ Redirecionando para:", target);
           navigate(target, { replace: true });
           setIsCheckingSession(false);
           return;
