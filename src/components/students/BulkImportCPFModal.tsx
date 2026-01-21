@@ -287,7 +287,7 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
                 <p className="font-medium mb-2 text-amber-400">Campos aceitos:</p>
                 <ul className="list-disc list-inside text-muted-foreground space-y-1">
                   <li><strong>ALUNO (A)</strong> ou <strong>Nome</strong> — Obrigatório</li>
-                  <li><strong>CPF</strong> — Obrigatório (validado na Receita Federal)</li>
+                  <li><strong>CPF</strong> — Obrigatório (formato válido — dígitos verificadores)</li>
                   <li><strong>EMAIL</strong> — Necessário para criar acesso</li>
                   <li><strong>TELEFONE, CIDADE, ESTADO, CEP, ENDEREÇO, BAIRRO</strong> — Opcionais</li>
                 </ul>
@@ -386,9 +386,9 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
             >
               <div className="text-center">
                 <Loader2 className="h-12 w-12 animate-spin mx-auto text-amber-400 mb-4" />
-                <p className="font-medium">Validando CPFs na Receita Federal...</p>
+                <p className="font-medium">Processando alunos...</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Processando {students.length} alunos (pode demorar alguns minutos)
+                  Importando {students.length} alunos (pode demorar alguns segundos)
                 </p>
               </div>
               <Progress value={progress} className="h-2" />

@@ -76,50 +76,15 @@ function normalizeCPF(cpf: string): string {
   return cpf.replace(/\D/g, '').padStart(11, '0');
 }
 
-// Validate CPF against Receita Federal
+// ============================================
+// VALIDAÇÃO RECEITA FEDERAL: DESATIVADA
+// Owner decidiu usar apenas validação local (dígitos verificadores)
+// para evitar looping/timeout em importações grandes.
+// ============================================
 async function validateCPFReceita(cpf: string): Promise<{ valid: boolean; nome?: string; error?: string }> {
-  const token = Deno.env.get('CPFCNPJ_API_TOKEN');
-  if (!token) {
-    // Se não tem token, pula validação externa (apenas formato local)
-    console.warn('[bulk-import] CPFCNPJ_API_TOKEN não configurado - pulando validação Receita Federal');
-    return { valid: true, nome: undefined };
-  }
-  
-  const cleaned = normalizeCPF(cpf);
-  
-  try {
-    const response = await fetch(`https://api.cpfcnpj.com.br/${token}/1/${cleaned}`, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-    });
-    
-    if (!response.ok) {
-      if (response.status === 429) {
-        // Rate limit - considera válido para não travar importação
-        console.warn('[bulk-import] Rate limit API CPF - continuando sem validação');
-        return { valid: true, error: 'Rate limit - validação pulada' };
-      }
-      return { valid: false, error: `Erro API: ${response.status}` };
-    }
-    
-    const data = await response.json();
-    
-    if (data.erro || data.status === 'ERROR') {
-      return { valid: false, error: 'CPF não encontrado na Receita Federal' };
-    }
-    
-    const situacao = data.situacao_cadastral || data.situacao || 'REGULAR';
-    if (situacao.toUpperCase().includes('CANCELAD')) {
-      return { valid: false, error: `CPF cancelado: ${situacao}` };
-    }
-    
-    return { valid: true, nome: data.nome || data.nome_completo };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Erro desconhecido';
-    console.error('[bulk-import] Erro validação CPF:', message);
-    // Em caso de erro de rede, considera válido para não travar
-    return { valid: true, error: `Erro conexão (pulado): ${message}` };
-  }
+  // Retorna sempre válido - validação de formato já é feita por validateCPFFormat()
+  console.log(`[bulk-import] CPF ${normalizeCPF(cpf).slice(0,3)}.***: Validação Receita DESATIVADA (apenas formato local)`);
+  return { valid: true, nome: undefined };
 }
 
 serve(async (req) => {
