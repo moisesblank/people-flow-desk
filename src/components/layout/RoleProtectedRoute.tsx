@@ -77,14 +77,19 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // Email NÃO é mais usado para controle de acesso
   // ============================================
 
-  // ✅ P1-2 FIX: Verificação APENAS por role
+  // 🔒 P0 FIX v5: Verificação por role COM fallback por email
+  // CRÍTICO: Durante loading, role pode ser null - fallback por email garante bypass
   const isOwnerByRole = useMemo(() => {
-    return role === "owner";
-  }, [role]);
+    if (role === "owner") return true;
+    // Fallback de emergência para race condition de loading
+    const email = user?.email?.toLowerCase();
+    if (email === 'moisesblank@gmail.com') return true;
+    return false;
+  }, [role, user?.email]);
 
-  // ✅ BYPASS calculado via role, não email
+  // ✅ BYPASS calculado via role + email fallback
   const shouldBypassForOwner = useMemo(() => {
-    // 1. Verificar role (fonte da verdade)
+    // 1. Verificar role + email fallback
     if (isOwnerByRole && user) return true;
     // 2. Verificar isOwner do hook (pode estar disponível antes de role)
     if (isOwner && user) return true;

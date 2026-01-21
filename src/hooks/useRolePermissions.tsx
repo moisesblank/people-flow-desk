@@ -310,8 +310,9 @@ export function useRolePermissions(): UseRolePermissionsReturn {
 
   const userEmail = user?.email || null;
 
-  // P1-2 FIX: Role como fonte da verdade (email é apenas log/fallback UX)
-  const isOwner = role === "owner";
+  // 🔒 P0 FIX v5: Role como fonte primária + email como fallback OBRIGATÓRIO
+  // CRÍTICO: Durante loading, role pode ser null - fallback por email garante bypass imediato
+  const isOwner = role === "owner" || userEmail?.toLowerCase() === 'moisesblank@gmail.com';
   const isAdmin = role === "admin";
   // CONSTITUIÇÃO v10.x - Roles premium incluem beta, aluno_presencial, beta_expira
   const roleStr = role as string;
