@@ -148,9 +148,6 @@ export const CORE_VERSION = "3.0-DESACOPLADO";
 export const CORE_BUILD_DATE = "2024-12-28";
 
 // ============================================
-// ESTATÍSTICAS DO CORE (LAZY - só calcula quando chamado)
-// ============================================
-// ============================================
 // ESTATÍSTICAS DO CORE (calculadas sob demanda)
 // ============================================
 
