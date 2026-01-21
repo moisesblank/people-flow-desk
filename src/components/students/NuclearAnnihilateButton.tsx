@@ -62,19 +62,36 @@ export function NuclearAnnihilateButton() {
   const [result, setResult] = useState<AnnihilationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // FALLBACK: Verificar email diretamente (CONSTITUIÇÃO v10.4)
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  // FALLBACK SÍNCRONO: Verificar email diretamente (CONSTITUIÇÃO v10.4)
+  // Usar getSession() que é síncrono do cache local
+  const [userEmail, setUserEmail] = useState<string | null>(() => {
+    // Tentativa síncrona inicial do localStorage
+    try {
+      const sessionStr = localStorage.getItem('sb-fyikfsasudgzsjmumdlw-auth-token');
+      if (sessionStr) {
+        const session = JSON.parse(sessionStr);
+        return session?.user?.email?.toLowerCase() || null;
+      }
+    } catch {
+      // Fallback assíncrono
+    }
+    return null;
+  });
   
   useEffect(() => {
     const fetchUserEmail = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      setUserEmail(user?.email?.toLowerCase() || null);
+      const email = user?.email?.toLowerCase() || null;
+      if (email !== userEmail) {
+        setUserEmail(email);
+      }
     };
     fetchUserEmail();
   }, []);
   
-  // Owner = hook OR email fallback
-  const isOwner = isOwnerFromHook || (userEmail === OWNER_EMAIL.toLowerCase());
+  // Owner = hook OR email fallback (verificação imediata)
+  const isOwnerByEmail = userEmail === OWNER_EMAIL.toLowerCase();
+  const isOwner = isOwnerFromHook || isOwnerByEmail;
 
   // Reset do estado
   const resetState = useCallback(() => {
@@ -162,9 +179,6 @@ export function NuclearAnnihilateButton() {
     }
   }, [secretKey]);
 
-  // FALLBACK IMEDIATO: Se email do Owner, mostrar mesmo durante loading
-  const isOwnerByEmail = userEmail === OWNER_EMAIL.toLowerCase();
-  
   // Não renderizar se não for owner e não estiver carregando (evita flash)
   // MAS: Se é Owner por email, mostrar imediatamente
   if (!isOwnerByEmail && (isCheckingOwner || !isOwner)) {
