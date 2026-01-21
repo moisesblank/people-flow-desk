@@ -18,6 +18,11 @@ const SESSION_CHECK_INTERVAL = 30000; // 30s
 // 🕐 JANELA DE SUPRESSÃO: Revogações mais antigas que 2 horas não mostram overlay
 const REVOCATION_STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000; // 2 horas
 
+// 🔒 P0 FIX: Grace period após login para evitar race condition
+// Não validar sessão nos primeiros 5 segundos após login
+const LOGIN_GRACE_PERIOD_MS = 5000;
+const LOGIN_TIMESTAMP_KEY = "matriz_login_timestamp";
+
 // 🎯 Rotas onde NÃO devemos mostrar conflito de sessão (primeiro acesso)
 const ONBOARDING_ROUTES = [
   '/primeiro-acesso',
@@ -103,6 +108,16 @@ export function SessionGuard({ children }: SessionGuardProps) {
     if (!result.isValid && !result.shouldShowOverlay) {
       console.log(`[SessionGuard] 🔄 Sessão inválida mas sem overlay: ${result.reason}`);
       
+      // 🔒 P0 FIX: Verificar grace period antes de fazer signOut silencioso
+      // Evita race condition onde login acabou de acontecer mas sessão ainda não propagou
+      const loginTimestamp = localStorage.getItem(LOGIN_TIMESTAMP_KEY);
+      const timeSinceLogin = loginTimestamp ? Date.now() - parseInt(loginTimestamp, 10) : Infinity;
+      
+      if (result.reason === 'SESSION_NOT_FOUND' && timeSinceLogin < LOGIN_GRACE_PERIOD_MS) {
+        console.log(`[SessionGuard] ⏸️ Grace period ativo (${Math.round(timeSinceLogin/1000)}s) - NÃO fazer signOut`);
+        return false; // Não fazer nada, aguardar propagação
+      }
+      
       if (result.reason === 'USER_LOGOUT' || result.reason === 'SESSION_NOT_FOUND') {
         // Limpar e redirecionar silenciosamente
         const keysToRemove = [
@@ -111,6 +126,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
           "matriz_device_fingerprint",
           "matriz_trusted_device",
           "mfa_trust_cache",
+          LOGIN_TIMESTAMP_KEY, // Limpar também o timestamp
         ];
         keysToRemove.forEach((key) => localStorage.removeItem(key));
         sessionStorage.clear();
