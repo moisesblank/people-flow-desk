@@ -348,7 +348,7 @@ export function useImportStudents() {
           studentsUpdated++;
           
         } catch (err) {
-          errors.push(`Erro inesperado para ${matched.student_id}: ${err}`);
+          errors.push(`Erro inesperado para ${matched.student_id}: ${formatError(err)}`);
         }
       }
       
