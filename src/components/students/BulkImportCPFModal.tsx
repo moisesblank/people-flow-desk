@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import * as XLSX from 'xlsx';
+import { formatError } from '@/lib/utils/formatError';
 
 interface StudentRow {
   cpf: string;
@@ -400,7 +401,7 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
                 cpf: s.cpf || '',
                 email: s.email || '',
                 status: 'error' as const,
-                error: `Lote falhou: ${error.message}`
+                error: `Lote falhou: ${formatError(error)}`
               });
             });
             totalError += batch.length;
