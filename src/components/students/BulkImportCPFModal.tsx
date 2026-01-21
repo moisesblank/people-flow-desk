@@ -206,7 +206,9 @@ export function BulkImportCPFModal({ open, onOpenChange, onSuccess }: BulkImport
         const doneBeforePct = Math.floor((doneBefore / total) * 100);
 
         setImportStatus(`Lote ${batchIndex}/${batchTotal} — preparando (${batch.length} alunos)`);
-        setProgress(doneBeforePct);
+        // UI: manter sempre >0 durante o primeiro lote para evidenciar que “rodou”
+        // (o 1º lote pode demorar e ficava visualmente travado em 0%)
+        setProgress(Math.min(99, Math.max(doneBeforePct, doneBefore === 0 ? 1 : doneBeforePct)));
         // garante render antes da requisição (evita UI “congelada” em planilhas grandes)
         await sleep(0);
 
