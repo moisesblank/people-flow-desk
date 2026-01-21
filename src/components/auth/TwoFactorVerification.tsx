@@ -340,15 +340,47 @@ export function TwoFactorVerification({
       lastVerifiedCodeRef.current = fullCode;
 
       toast.success("Verificação concluída!", {
-        description: "Bem-vindo(a) de volta!"
+        description: "Finalizando login..."
       });
 
-      onVerified();
+      // 🛡️ P0 FIX: Aguardar onVerified completar com timeout de segurança
+      console.log('[AUTH][2FA] ✅ Código válido, executando onVerified...');
+      
+      // Manter loading ativo durante onVerified
+      // Fallback: se onVerified travar por 20s, forçar reset
+      const onVerifiedTimeout = setTimeout(() => {
+        console.error('[AUTH][2FA] ⚠️ TIMEOUT: onVerified travou por 20s, resetando estado');
+        setIsLoading(false);
+        verifyingRef.current = false;
+        toast.error("Timeout no login", {
+          description: "Recarregando página...",
+        });
+        // Forçar reload após timeout
+        setTimeout(() => window.location.reload(), 1500);
+      }, 20_000);
+
+      try {
+        // Chamar onVerified e aguardar (pode ser async)
+        await Promise.resolve(onVerified());
+        console.log('[AUTH][2FA] ✅ onVerified completou com sucesso');
+      } catch (onVerifiedErr) {
+        console.error('[AUTH][2FA] ❌ Erro em onVerified:', onVerifiedErr);
+        toast.error("Erro ao finalizar login", {
+          description: formatError(onVerifiedErr),
+        });
+        // Em caso de erro, limpar estado
+        setIsLoading(false);
+        verifyingRef.current = false;
+      } finally {
+        clearTimeout(onVerifiedTimeout);
+      }
+
+      // Nota: NÃO resetar isLoading aqui - o redirect vai acontecer
+      // Se chegou aqui sem redirect, o timeout de 20s vai cuidar
     } catch (err: any) {
       console.error('[AUTH][2FA] ERROR verifyCode:', err);
       setError(err?.message || "Erro ao verificar código. Tente novamente.");
       setCode(["", "", "", "", "", ""]);
-    } finally {
       setIsLoading(false);
       verifyingRef.current = false;
     }

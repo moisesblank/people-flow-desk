@@ -1427,195 +1427,240 @@ export default function Auth() {
             onVerified={async () => {
               console.log("[AUTH] ✅ 2FA verificado com sucesso, iniciando redirect...");
 
-              // ✅ OTIMIZAÇÃO: Salvar cache de confiança após 2FA bem-sucedido
-              if (pending2FAUser.deviceHash) {
-                setTrustCache(pending2FAUser.userId, pending2FAUser.deviceHash);
-                console.log("[AUTH] ✅ Trust cache salvo para próximos logins");
-              }
-
-              // ✅ P0 FIX: Limpar flags ANTES de qualquer redirect
-              sessionStorage.removeItem("matriz_2fa_pending");
-              sessionStorage.removeItem("matriz_2fa_user");
-
-              // ============================================
-              // 🛡️ BLOCO 3: REGISTRAR DISPOSITIVO ANTES DA SESSÃO (pós-2FA)
-              // ============================================
-              console.log("[AUTH][BLOCO3] 🔐 Registrando dispositivo ANTES da sessão (pós-2FA)...");
-              const deviceResult = await registerDeviceBeforeSession();
-
-              if (!deviceResult.success) {
-                console.error("[AUTH][BLOCO3] ❌ Falha no registro de dispositivo pós-2FA:", deviceResult.error);
-
-                // 🛡️ BEYOND_THE_3_DEVICES: Substituição do mesmo tipo
-                if (deviceResult.error === "SAME_TYPE_REPLACEMENT_REQUIRED") {
-                  console.log("[AUTH][BEYOND_3] 🔄 Same-type replacement oferecida pós-2FA - redirecionando");
-
-                  if (deviceResult.sameTypePayload) {
-                    getSameTypeReplacementActions().setPayload(deviceResult.sameTypePayload);
-                  }
-
-                  setShow2FA(false);
-                  setPending2FAUser(null);
-                  navigate("/security/same-type-replacement", { replace: true });
-                  return;
+              // 🛡️ P0 FIX: Wrapper de timeout para evitar loading infinito
+              const withTimeout = async <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> => {
+                let timeoutId: number | undefined;
+                const timeout = new Promise<never>((_, reject) => {
+                  timeoutId = window.setTimeout(() => reject(new Error(`TIMEOUT: ${label} (${ms}ms)`)), ms);
+                });
+                try {
+                  return await Promise.race([promise, timeout]);
+                } finally {
+                  if (timeoutId) window.clearTimeout(timeoutId);
                 }
+              };
 
-                // FAIL-CLOSED: Bloquear login se limite excedido
-                if (deviceResult.error === "DEVICE_LIMIT_EXCEEDED") {
-                  console.log("[AUTH][BLOCO3] 🛡️ Limite excedido pós-2FA - redirecionando para DeviceLimitGate");
+              // 🛡️ P0 FIX: Fallback absoluto - se não redirecionar em 15s, forçar
+              const fallbackRedirectTimeout = window.setTimeout(() => {
+                console.warn("[AUTH] ⚠️ FALLBACK: 15s sem redirect, forçando navegação");
+                window.location.replace("/gestaofc");
+              }, 15_000);
 
-                  // Salvar payload no store para o Gate
-                  if (deviceResult.gatePayload) {
-                    useDeviceGateStore.getState().setPayload(deviceResult.gatePayload);
-                  }
-
-                  // NÃO fazer logout - manter sessão para que o Gate possa revogar dispositivos
-                  setShow2FA(false);
-                  setPending2FAUser(null);
-                  navigate("/security/device-limit", { replace: true });
-                  return;
-                }
-
-                // Outros erros de dispositivo
-                const errorMsg = getDeviceErrorMessage(deviceResult.error || "UNEXPECTED_ERROR");
-                toast.error(errorMsg.title, { description: errorMsg.description });
-
-                // 👑 OWNER BYPASS (UX-only): não prender o Owner em loop de logout por falha de device-reg
-                // Segurança server-side permanece (RLS/RPC/limites), isto só evita a tela travada.
-                const isOwnerEmail = (pending2FAUser?.email || "").toLowerCase() === "moisesblank@gmail.com";
-                if (isOwnerEmail) {
-                  console.warn("[AUTH][BLOCO3] 👑 Owner bypass: falha em device-reg pós-2FA, prosseguindo sem signOut");
-                  setShow2FA(false);
-                  setPending2FAUser(null);
-                  navigate("/gestaofc", { replace: true });
-                  return;
-                }
-
-                await supabase.auth.signOut();
-                setShow2FA(false);
-                setPending2FAUser(null);
-                return;
-              }
-
-              console.log("[AUTH][BLOCO3] ✅ Dispositivo vinculado pós-2FA:", deviceResult.deviceId);
-
-              // ✅ P0: Sessão única só NASCE após dispositivo vinculado + 2FA validado
               try {
-                const SESSION_TOKEN_KEY = "matriz_session_token";
-                const ua = navigator.userAgent;
-                let device_type = "desktop";
-                if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
-                  device_type = /iPad|Tablet/i.test(ua) ? "tablet" : "mobile";
+                // ✅ OTIMIZAÇÃO: Salvar cache de confiança após 2FA bem-sucedido
+                if (pending2FAUser.deviceHash) {
+                  setTrustCache(pending2FAUser.userId, pending2FAUser.deviceHash);
+                  console.log("[AUTH] ✅ Trust cache salvo para próximos logins");
                 }
 
-                let browser = "unknown";
-                if (ua.includes("Firefox")) browser = "Firefox";
-                else if (ua.includes("Edg")) browser = "Edge";
-                else if (ua.includes("Chrome")) browser = "Chrome";
-                else if (ua.includes("Safari")) browser = "Safari";
+                // ✅ P0 FIX: Limpar flags ANTES de qualquer redirect
+                sessionStorage.removeItem("matriz_2fa_pending");
+                sessionStorage.removeItem("matriz_2fa_user");
 
-                let os = "unknown";
-                if (ua.includes("Windows")) os = "Windows";
-                else if (ua.includes("Mac")) os = "macOS";
-                else if (ua.includes("Linux")) os = "Linux";
-                else if (ua.includes("Android")) os = "Android";
-                else if (ua.includes("iPhone")) os = "iOS";
+                // ============================================
+                // 🛡️ BLOCO 3: REGISTRAR DISPOSITIVO ANTES DA SESSÃO (pós-2FA)
+                // ============================================
+                console.log("[AUTH][BLOCO3] 🔐 Registrando dispositivo ANTES da sessão (pós-2FA)...");
+                
+                let deviceResult;
+                try {
+                  deviceResult = await withTimeout(registerDeviceBeforeSession(), 8_000, "registerDeviceBeforeSession");
+                } catch (timeoutErr) {
+                  console.error("[AUTH][BLOCO3] ⏱️ Timeout no registro de dispositivo:", timeoutErr);
+                  // Fallback: continuar sem registro (Owner bypass ou guest mode)
+                  deviceResult = { success: false, error: "TIMEOUT" };
+                }
 
-                // 🔐 P0 FIX: Garantir hash do servidor com fallback seguro
-                const serverDeviceHash = deviceResult.deviceHash || localStorage.getItem('matriz_device_server_hash');
-                if (!serverDeviceHash) {
-                  console.error("[AUTH][SESSAO] ❌ P0 VIOLATION: Sem hash do servidor!");
-                  toast.error("Falha de segurança", { description: "Dispositivo não registrado corretamente." });
+                if (!deviceResult.success) {
+                  console.error("[AUTH][BLOCO3] ❌ Falha no registro de dispositivo pós-2FA:", deviceResult.error);
 
-                  // 👑 OWNER BYPASS (UX-only): permitir acesso mesmo sem hash, evitando loop em /auth
-                  // O SessionGuard já possui bypass do Owner para ausência de hash.
-                  const isOwnerEmail = (pending2FAUser?.email || "").toLowerCase() === "moisesblank@gmail.com";
-                  if (isOwnerEmail) {
-                    console.warn("[AUTH][SESSAO] 👑 Owner bypass: sem hash do servidor, pulando criação de sessão única");
+                  // 🛡️ BEYOND_THE_3_DEVICES: Substituição do mesmo tipo
+                  if (deviceResult.error === "SAME_TYPE_REPLACEMENT_REQUIRED") {
+                    console.log("[AUTH][BEYOND_3] 🔄 Same-type replacement oferecida pós-2FA - redirecionando");
+                    window.clearTimeout(fallbackRedirectTimeout);
+
+                    if (deviceResult.sameTypePayload) {
+                      getSameTypeReplacementActions().setPayload(deviceResult.sameTypePayload);
+                    }
+
                     setShow2FA(false);
                     setPending2FAUser(null);
-                    navigate("/gestaofc", { replace: true });
+                    navigate("/security/same-type-replacement", { replace: true });
                     return;
                   }
 
-                  await supabase.auth.signOut();
-                  setShow2FA(false);
-                  setPending2FAUser(null);
-                  return;
+                  // FAIL-CLOSED: Bloquear login se limite excedido
+                  if (deviceResult.error === "DEVICE_LIMIT_EXCEEDED") {
+                    console.log("[AUTH][BLOCO3] 🛡️ Limite excedido pós-2FA - redirecionando para DeviceLimitGate");
+                    window.clearTimeout(fallbackRedirectTimeout);
+
+                    // Salvar payload no store para o Gate
+                    if (deviceResult.gatePayload) {
+                      useDeviceGateStore.getState().setPayload(deviceResult.gatePayload);
+                    }
+
+                    // NÃO fazer logout - manter sessão para que o Gate possa revogar dispositivos
+                    setShow2FA(false);
+                    setPending2FAUser(null);
+                    navigate("/security/device-limit", { replace: true });
+                    return;
+                  }
+
+                  // 👑 OWNER BYPASS (UX-only): não prender o Owner em loop
+                  const isOwnerEmail = (pending2FAUser?.email || "").toLowerCase() === "moisesblank@gmail.com";
+                  if (isOwnerEmail || deviceResult.error === "TIMEOUT") {
+                    console.warn("[AUTH][BLOCO3] 👑 Owner/Timeout bypass: prosseguindo sem device-reg");
+                  } else {
+                    // Outros erros de dispositivo - fazer logout
+                    const errorMsg = getDeviceErrorMessage(deviceResult.error || "UNEXPECTED_ERROR");
+                    toast.error(errorMsg.title, { description: errorMsg.description });
+                    window.clearTimeout(fallbackRedirectTimeout);
+                    await supabase.auth.signOut();
+                    setShow2FA(false);
+                    setPending2FAUser(null);
+                    return;
+                  }
                 }
 
-                const { data, error } = await supabase.rpc("create_single_session", {
-                  _ip_address: null,
-                  _user_agent: navigator.userAgent.slice(0, 255),
-                  _device_type: device_type,
-                  _browser: browser,
-                  _os: os,
-                  _device_hash_from_server: serverDeviceHash, // 🔐 P0 FIX: Hash do SERVIDOR obrigatório
-                });
+                console.log("[AUTH][BLOCO3] ✅ Dispositivo processado pós-2FA:", deviceResult.deviceId || "(bypass)");
 
-                if (error || !data?.[0]?.session_token) {
-                  console.error("[AUTH][SESSAO] ❌ Falha ao criar sessão única pós-2FA (RPC):", error);
-                  toast.error("Falha crítica de segurança", {
-                    description: "Não foi possível iniciar a sessão única. Faça login novamente.",
-                    duration: 9000,
+                // ✅ P0: Sessão única só NASCE após dispositivo vinculado + 2FA validado
+                try {
+                  const SESSION_TOKEN_KEY = "matriz_session_token";
+                  const ua = navigator.userAgent;
+                  let device_type = "desktop";
+                  if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
+                    device_type = /iPad|Tablet/i.test(ua) ? "tablet" : "mobile";
+                  }
+
+                  let browser = "unknown";
+                  if (ua.includes("Firefox")) browser = "Firefox";
+                  else if (ua.includes("Edg")) browser = "Edge";
+                  else if (ua.includes("Chrome")) browser = "Chrome";
+                  else if (ua.includes("Safari")) browser = "Safari";
+
+                  let os = "unknown";
+                  if (ua.includes("Windows")) os = "Windows";
+                  else if (ua.includes("Mac")) os = "macOS";
+                  else if (ua.includes("Linux")) os = "Linux";
+                  else if (ua.includes("Android")) os = "Android";
+                  else if (ua.includes("iPhone")) os = "iOS";
+
+                  // 🔐 P0 FIX: Garantir hash do servidor com fallback seguro
+                  const serverDeviceHash = deviceResult.deviceHash || localStorage.getItem('matriz_device_server_hash');
+                  
+                  // 👑 OWNER BYPASS: permitir acesso mesmo sem hash
+                  const isOwnerEmail = (pending2FAUser?.email || "").toLowerCase() === "moisesblank@gmail.com";
+                  
+                  if (!serverDeviceHash && !isOwnerEmail) {
+                    console.error("[AUTH][SESSAO] ❌ P0 VIOLATION: Sem hash do servidor!");
+                    toast.error("Falha de segurança", { description: "Dispositivo não registrado corretamente." });
+                    window.clearTimeout(fallbackRedirectTimeout);
+                    await supabase.auth.signOut();
+                    setShow2FA(false);
+                    setPending2FAUser(null);
+                    return;
+                  }
+
+                  if (serverDeviceHash) {
+                    const rpcPromise = Promise.resolve(
+                      supabase.rpc("create_single_session", {
+                        _ip_address: null,
+                        _user_agent: navigator.userAgent.slice(0, 255),
+                        _device_type: device_type,
+                        _browser: browser,
+                        _os: os,
+                        _device_hash_from_server: serverDeviceHash,
+                      })
+                    );
+
+                    const { data, error } = await withTimeout(
+                      rpcPromise,
+                      5_000,
+                      "create_single_session"
+                    );
+
+                    if (error || !data?.[0]?.session_token) {
+                      console.error("[AUTH][SESSAO] ❌ Falha ao criar sessão única pós-2FA (RPC):", error);
+                      // Continuar mesmo com erro - owner bypass ou fallback
+                      if (!isOwnerEmail) {
+                        toast.error("Falha crítica de segurança", {
+                          description: "Não foi possível iniciar a sessão única. Faça login novamente.",
+                          duration: 9000,
+                        });
+                        window.clearTimeout(fallbackRedirectTimeout);
+                        await supabase.auth.signOut();
+                        setShow2FA(false);
+                        setPending2FAUser(null);
+                        return;
+                      }
+                    } else {
+                      localStorage.setItem(SESSION_TOKEN_KEY, data[0].session_token);
+                      localStorage.setItem('matriz_login_timestamp', Date.now().toString());
+                      console.log("[AUTH][SESSAO] ✅ Sessão única criada pós-2FA (RPC) e token armazenado");
+                    }
+                  } else {
+                    console.warn("[AUTH][SESSAO] 👑 Owner bypass: sem hash, pulando create_single_session");
+                  }
+                } catch (err) {
+                  console.warn("[AUTH][SESSAO] Erro ao criar sessão pós-2FA (continuando):", err);
+                  // Não bloquear - fallback vai redirecionar
+                }
+
+                // ✅ P0 FIX CRÍTICO: Buscar role e fazer redirect EXPLÍCITO
+                try {
+                  const rolePromise = Promise.resolve(
+                    supabase
+                      .from("user_roles")
+                      .select("role")
+                      .eq("user_id", pending2FAUser.userId)
+                      .maybeSingle()
+                  );
+
+                  const { data: roleData } = await withTimeout(
+                    rolePromise,
+                    3_000,
+                    "fetch_user_role"
+                  );
+
+                  const userRole = roleData?.role || null;
+                  
+                  // 🔒 P0 FIX: Salvar cache do Owner ANTES do redirect
+                  const isOwnerUser = userRole === OWNER_ROLE || pending2FAUser.email?.toLowerCase() === OWNER_EMAIL;
+                  if (isOwnerUser) {
+                    localStorage.setItem('matriz_is_owner_cache', 'true');
+                    localStorage.setItem('matriz_user_role', OWNER_ROLE);
+                  }
+                  
+                  const target = getPostLoginRedirect(userRole, pending2FAUser.email);
+
+                  console.log("[AUTH] ✅ 2FA completo - redirecionando para", target, "(role:", userRole, ")");
+                  toast.success("Bem-vindo de volta!", {
+                    description: deviceResult.isNewDevice
+                      ? "Novo dispositivo registrado com sucesso."
+                      : "Dispositivo reconhecido.",
                   });
-                  await supabase.auth.signOut();
-                  setShow2FA(false);
-                  setPending2FAUser(null);
-                  return;
+
+                  window.clearTimeout(fallbackRedirectTimeout);
+                  window.location.replace(target);
+                } catch (err) {
+                  console.error("[AUTH] Erro ao buscar role pós-2FA:", err);
+                  toast.success("Bem-vindo de volta!");
+                  window.clearTimeout(fallbackRedirectTimeout);
+                  window.location.replace("/gestaofc");
                 }
 
-                localStorage.setItem(SESSION_TOKEN_KEY, data[0].session_token);
-                // 🔒 P0 FIX: Salvar timestamp do login para grace period no SessionGuard
-                localStorage.setItem('matriz_login_timestamp', Date.now().toString());
-                console.log("[AUTH][SESSAO] ✅ Sessão única criada pós-2FA (RPC) e token armazenado");
-              } catch (err) {
-                console.warn("[AUTH][SESSAO] Erro crítico ao criar sessão pós-2FA (RPC):", err);
-                toast.error("Falha crítica de segurança", {
-                  description: "Não foi possível iniciar a sessão única. Faça login novamente.",
-                  duration: 9000,
-                });
-                await supabase.auth.signOut();
                 setShow2FA(false);
                 setPending2FAUser(null);
-                return;
-              }
-
-              // ✅ P0 FIX CRÍTICO: Buscar role e fazer redirect EXPLÍCITO
-              try {
-                const { data: roleData } = await supabase
-                  .from("user_roles")
-                  .select("role")
-                  .eq("user_id", pending2FAUser.userId)
-                  .maybeSingle();
-
-                const userRole = roleData?.role || null;
-                
-                // 🔒 P0 FIX: Salvar cache do Owner ANTES do redirect
-                const isOwnerUser = userRole === OWNER_ROLE || pending2FAUser.email?.toLowerCase() === OWNER_EMAIL;
-                if (isOwnerUser) {
-                  localStorage.setItem('matriz_is_owner_cache', 'true');
-                  localStorage.setItem('matriz_user_role', OWNER_ROLE);
-                }
-                
-                const target = getPostLoginRedirect(userRole, pending2FAUser.email);
-
-                console.log("[AUTH] ✅ 2FA completo - redirecionando para", target, "(role:", userRole, ")");
-                toast.success("Bem-vindo de volta!", {
-                  description: deviceResult.isNewDevice
-                    ? "Novo dispositivo registrado com sucesso."
-                    : "Dispositivo reconhecido.",
+              } catch (outerErr) {
+                console.error("[AUTH] ❌ Erro crítico em onVerified:", outerErr);
+                window.clearTimeout(fallbackRedirectTimeout);
+                toast.error("Erro ao finalizar login", {
+                  description: formatError(outerErr),
                 });
-
-                window.location.replace(target);
-              } catch (err) {
-                console.error("[AUTH] Erro ao buscar role pós-2FA:", err);
-                toast.success("Bem-vindo de volta!");
-                window.location.replace("/gestaofc");
+                // Forçar redirect após erro
+                setTimeout(() => window.location.replace("/auth"), 2000);
               }
-
-              setShow2FA(false);
-              setPending2FAUser(null);
             }}
             onCancel={async () => {
               // ✅ Fail-safe: nunca deixar usuário “meio logado” sem 2FA
