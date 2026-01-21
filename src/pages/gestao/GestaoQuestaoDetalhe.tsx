@@ -733,7 +733,8 @@ function GestaoQuestaoDetalhe() {
               <ImageOff className="h-5 w-5" />
               Remover Imagens da Questão
             </DialogTitle>
-            <DialogDescription>
+            {/* P0 FIX: DialogDescription renderiza <p> - ul não pode estar dentro de <p> (React #61) */}
+            <div className="text-sm text-muted-foreground">
               <strong className="text-destructive">ATENÇÃO:</strong> Esta ação irá:
               <ul className="list-disc list-inside mt-2 space-y-1">
                 <li>Deletar TODAS as imagens do storage</li>
@@ -741,7 +742,7 @@ function GestaoQuestaoDetalhe() {
                 <li>Propagar imediatamente para simulados e modo treino</li>
                 <li>Esta ação é <strong>IRREVERSÍVEL</strong></li>
               </ul>
-            </DialogDescription>
+            </div>
           </DialogHeader>
           <DialogFooter>
             <Button 

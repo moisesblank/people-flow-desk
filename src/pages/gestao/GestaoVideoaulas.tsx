@@ -561,9 +561,10 @@ export default function GestaoVideoaulas() {
 
           <div className="space-y-4 py-4">
             <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
-              <p className="text-sm font-medium text-destructive">
+              {/* P0 FIX: <ul> não pode estar como sibling direto de <p> no mesmo container causando React #61 */}
+              <div className="text-sm font-medium text-destructive">
                 ⚠️ ATENÇÃO: Serão excluídos permanentemente:
-              </p>
+              </div>
               <ul className="mt-2 text-sm text-destructive/80 list-disc list-inside space-y-1">
                 <li>Todas as <strong>{stats.total}</strong> videoaulas (lessons)</li>
                 <li>Todos os módulos vinculados</li>
