@@ -49,17 +49,17 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
 
       try {
         const { count, error } = await supabase
-          .from("user_devices")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .eq("is_active", true);
+          .from('user_devices')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('is_active', true);
 
         if (!error && count !== null) {
           setDeviceCount(count);
           console.log(`[DeviceMFAGuard] 📱 Dispositivos ativos: ${count}/${MAX_DEVICES}`);
         }
       } catch (err) {
-        console.error("[DeviceMFAGuard] Erro ao buscar contagem:", err);
+        console.error('[DeviceMFAGuard] Erro ao buscar contagem:', err);
       } finally {
         setIsLoadingCount(false);
       }
@@ -139,7 +139,11 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
           <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-card to-card/80">
             <CardHeader className="text-center pb-4">
               {/* 🔐 CONTADOR DE DISPOSITIVOS */}
-              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4"
+              >
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
                   <Shield className="w-4 h-4 text-primary" />
                   <span className="text-sm font-semibold text-primary">
@@ -198,15 +202,15 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
                       slot <= deviceCount
                         ? "bg-primary"
                         : slot === nextDeviceNumber
-                          ? "bg-primary/50 animate-pulse"
-                          : "bg-muted-foreground/20"
+                        ? "bg-primary/50 animate-pulse"
+                        : "bg-muted-foreground/20"
                     }`}
                     title={
                       slot <= deviceCount
                         ? `Dispositivo ${slot} (ativo)`
                         : slot === nextDeviceNumber
-                          ? "Este dispositivo"
-                          : "Slot disponível"
+                        ? "Este dispositivo"
+                        : "Slot disponível"
                     }
                   />
                 ))}
