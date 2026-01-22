@@ -59,41 +59,46 @@ export function useValidateCPFReal(): UseValidateCPFRealReturn {
     const maxRetries = 2;
     
     const attemptValidation = async (attempt: number): Promise<{ data: unknown; error: Error | null }> => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      console.log(`[useValidateCPFReal] Tentativa ${attempt}/${maxRetries} - CPF: ${cpf.replace(/\D/g, '').slice(0,3)}***`);
       
       try {
+        // 🔒 P0 FIX v12.5: Promise.race corrigido - timeout como Promise que resolve com erro
+        const timeoutPromise = new Promise<{ data: null; error: Error }>((resolve) => {
+          setTimeout(() => {
+            resolve({ data: null, error: new Error('Tempo esgotado ao consultar a Receita Federal') });
+          }, timeoutMs);
+        });
+
         const invokePromise = supabase.functions.invoke('validate-cpf-real', {
           body: { cpf, validate_only: validateOnly }
         });
 
         // Race entre a função e o timeout
-        const result = await Promise.race([
-          invokePromise,
-          new Promise<{ data: null; error: Error }>((_, reject) => {
-            controller.signal.addEventListener('abort', () => {
-              reject({ data: null, error: new Error('Tempo esgotado ao consultar a Receita Federal') });
-            });
-          })
-        ]);
-
-        clearTimeout(timeoutId);
-        return result;
-      } catch (err) {
-        clearTimeout(timeoutId);
+        const result = await Promise.race([invokePromise, timeoutPromise]);
         
-        // Retry automático em caso de timeout
-        if (attempt < maxRetries && err instanceof Error && err.message.includes('Tempo esgotado')) {
-          console.log(`[useValidateCPFReal] Tentativa ${attempt + 1}/${maxRetries} falhou, retentando...`);
+        // Se timeout retornou erro, verificar retry
+        if (result.error && result.error.message?.includes('Tempo esgotado') && attempt < maxRetries) {
+          console.log(`[useValidateCPFReal] Timeout na tentativa ${attempt}, retentando...`);
           toast.info('Aguarde...', {
-            description: `Receita Federal lenta, tentando novamente (${attempt + 1}/${maxRetries})`,
+            description: `Receita Federal lenta, tentando novamente (${attempt}/${maxRetries})`,
             duration: 3000
           });
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Aguarda 1s antes de retentar
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return attemptValidation(attempt + 1);
+        }
+
+        return result;
+      } catch (err) {
+        console.error(`[useValidateCPFReal] Erro fatal na tentativa ${attempt}:`, err);
+        
+        // Retry automático em caso de erro de rede
+        if (attempt < maxRetries) {
+          console.log(`[useValidateCPFReal] Erro de rede, retentando...`);
+          await new Promise(resolve => setTimeout(resolve, 1500));
           return attemptValidation(attempt + 1);
         }
         
-        throw err;
+        return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
       }
     };
 
