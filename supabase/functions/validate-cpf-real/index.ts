@@ -193,34 +193,19 @@ serve(async (req) => {
       );
     }
     
-    // ============================================
-    // 🛡️ CONSTITUIÇÃO v10.x — ROLES DE GESTÃO PERMITIDAS
-    // Atualizado: Inclui TODAS as roles de gestão válidas
-    // NÃO usar 'funcionario' (é CATEGORIA, não role!)
-    // ============================================
+    // Verificar role (apenas owner/admin podem validar CPF na Receita)
     const { data: userRole } = await supabaseClient
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
       .single();
     
-    // CONSTITUIÇÃO v10.x — TODAS as roles de gestão podem validar CPF
-    const allowedRoles = [
-      'owner',           // Proprietário
-      'admin',           // Administrador
-      'coordenacao',     // Coordenação
-      'contabilidade',   // Contabilidade
-      'suporte',         // Suporte (cria acessos)
-      'monitoria',       // Monitoria
-      'marketing',       // Marketing
-      'afiliado',        // Afiliado
-    ];
+    const allowedRoles = ['owner', 'admin', 'funcionario'];
     const isOwner = user.email?.toLowerCase() === 'moisesblank@gmail.com';
     
     if (!isOwner && (!userRole || !allowedRoles.includes(userRole.role))) {
-      console.warn(`[validate-cpf-real] ❌ Role não permitida: ${userRole?.role || 'sem role'}`);
       return new Response(
-        JSON.stringify({ success: false, error: 'Acesso restrito a equipe de gestão' }),
+        JSON.stringify({ success: false, error: 'Acesso restrito a administradores' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
