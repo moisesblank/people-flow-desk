@@ -1125,17 +1125,21 @@ export default function Auth() {
 
         if (result.error) {
           console.error("[AUTH] ERROR: signIn retornou erro:", result.error);
-          if (result.error.message.includes("Invalid login credentials")) {
+          // 🛡️ P0 FIX: Extrair mensagem de erro de forma segura
+          const errorMessage = formatError(result.error);
+          
+          if (errorMessage.includes("Invalid login credentials")) {
             toast.error("Credenciais inválidas", {
               description: "Verifique seu email e senha e tente novamente.",
             });
-          } else if (result.error.message.includes("Email not confirmed")) {
+          } else if (errorMessage.includes("Email not confirmed")) {
             toast.warning("Email não confirmado", {
               description: "Verifique sua caixa de entrada para confirmar seu email.",
             });
           } else {
+            // 🛡️ P0 FIX: Usar formatError para evitar React Error #61
             toast.error("Erro no login", {
-              description: result.error.message,
+              description: errorMessage,
             });
           }
           resetTurnstile();
@@ -1378,13 +1382,17 @@ export default function Auth() {
 
       if (signupResult.error) {
         console.error("[AUTH] ERROR: signUp retornou erro:", signupResult.error);
-        if (signupResult.error.message.includes("User already registered")) {
+        // 🛡️ P0 FIX: Extrair mensagem de erro de forma segura
+        const errorMessage = formatError(signupResult.error);
+        
+        if (errorMessage.includes("User already registered")) {
           toast.error("Email já cadastrado", {
             description: "Este email já possui uma conta. Tente fazer login.",
           });
         } else {
+          // 🛡️ P0 FIX: Usar formatError para evitar React Error #61
           toast.error("Erro no cadastro", {
-            description: signupResult.error.message,
+            description: errorMessage,
           });
         }
         resetTurnstile();

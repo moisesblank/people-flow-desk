@@ -232,9 +232,11 @@ export function TwoFactorVerification({
         return;
       }
 
-      setError(message || 'Erro ao enviar código');
+      // 🛡️ P0 FIX: Usar formatError para evitar React Error #61
+      const safeMessage = formatError(err, 'Erro ao enviar código');
+      setError(safeMessage);
       toast.error('Erro ao enviar código', {
-        description: message || 'Tente novamente em alguns segundos',
+        description: safeMessage || 'Tente novamente em alguns segundos',
       });
     } finally {
       setIsResending(false);
@@ -330,7 +332,8 @@ export function TwoFactorVerification({
           setAttemptsRemaining((data as any).attemptsRemaining);
         }
 
-        setError((data as any)?.error || "Código inválido");
+        // 🛡️ P0 FIX: Usar formatError para evitar React Error #61
+        setError(formatError((data as any)?.error, "Código inválido"));
         setCode(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
         return;
@@ -379,7 +382,8 @@ export function TwoFactorVerification({
       // Se chegou aqui sem redirect, o timeout de 20s vai cuidar
     } catch (err: any) {
       console.error('[AUTH][2FA] ERROR verifyCode:', err);
-      setError(err?.message || "Erro ao verificar código. Tente novamente.");
+      // 🛡️ P0 FIX: Usar formatError para evitar React Error #61
+      setError(formatError(err, "Erro ao verificar código. Tente novamente."));
       setCode(["", "", "", "", "", ""]);
       setIsLoading(false);
       verifyingRef.current = false;
