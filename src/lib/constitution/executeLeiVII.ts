@@ -287,50 +287,14 @@ function setupDevToolsDetection(): void {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DETECÇÃO DE AUTOMAÇÃO (Art. 116-120)
+// ⚠️ DESATIVADO 2026-01-22: Causava falsos positivos no fluxo de 2FA
+// Outras camadas de proteção (RLS, watermark, DevTools detection) permanecem ativas
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function checkAutomation(): boolean {
-  if (isOwner(currentUserEmail)) return false;
-  
-  const nav = navigator as unknown as Record<string, unknown>;
-  const win = window as unknown as Record<string, unknown>;
-  
-  // Selenium/Puppeteer
-  if (nav.webdriver === true) {
-    recordViolation('automation_detected', { type: 'webdriver' });
-    return true;
-  }
-  
-  // PhantomJS
-  if (win.callPhantom || win._phantom) {
-    recordViolation('automation_detected', { type: 'phantom' });
-    return true;
-  }
-  
-  // Nightmare
-  if (win.__nightmare) {
-    recordViolation('automation_detected', { type: 'nightmare' });
-    return true;
-  }
-  
-  // Selenium DOM
-  if (win.domAutomation || win.domAutomationController) {
-    recordViolation('automation_detected', { type: 'selenium' });
-    return true;
-  }
-  
-  // Cypress
-  if (win.Cypress) {
-    recordViolation('automation_detected', { type: 'cypress' });
-    return true;
-  }
-  
-  // Headless indicators
-  if (navigator.plugins?.length === 0 && !navigator.languages?.length) {
-    recordViolation('automation_detected', { type: 'headless' });
-    return true;
-  }
-  
+  // 🛡️ DESATIVADO - Retorna sempre false para não bloquear usuários legítimos
+  // A proteção é redundante: RLS + watermark + DevTools detection cobrem o mesmo cenário
   return false;
 }
 
@@ -509,11 +473,9 @@ export function executeLeiVII(userEmail?: string | null): LeiVIIExecutionReport 
   const handlers: string[] = [];
   
   try {
-    // 1. Verificar automação primeiro
-    if (checkAutomation()) {
-      console.error('[LEI VII] ❌ AUTOMAÇÃO DETECTADA - Acesso será bloqueado');
-    }
-    handlers.push('automation_check');
+    // 1. Verificar automação - DESATIVADO 2026-01-22 (causava falsos positivos no 2FA)
+    // checkAutomation() agora retorna sempre false
+    // handlers.push('automation_check'); // Removido do relatório
     
     // 2. Injetar CSS de proteção
     injectProtectionCSS();

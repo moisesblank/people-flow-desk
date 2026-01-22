@@ -1305,11 +1305,13 @@ export function detectSuspiciousActivity(): ThreatAnalysis {
   }
   
   // Automação/Bot
-  const nav = navigator as Navigator & { webdriver?: boolean };
-  if (nav.webdriver) {
-    reasons.push('WebDriver detectado');
-    riskScore += 50;
-  }
+  // ⚠️ DESATIVADO 2026-01-22: Causava falsos positivos no fluxo de 2FA
+  // Outras camadas (RLS, watermark, DevTools detection) permanecem ativas
+  // const nav = navigator as Navigator & { webdriver?: boolean };
+  // if (nav.webdriver) {
+  //   reasons.push('WebDriver detectado');
+  //   riskScore += 50;
+  // }
   
   // Sinais suspeitos no window
   for (const signal of THREAT_DETECTION_CONFIG.suspiciousSignals) {
