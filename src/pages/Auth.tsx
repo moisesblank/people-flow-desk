@@ -346,12 +346,12 @@ function HoloCardFrame() {
 function ApprovalHeroText() {
   // 🏛️ LEI I - Performance Tiering (5000+ usuários)
   const { shouldAnimate, shouldBlur, isLowEnd } = useConstitutionPerformance();
-
+  
   return (
     <div className="relative text-center mt-6 w-full overflow-visible">
       {/* 🔥 GLOW BACKGROUND - Apenas em high-end */}
       {!isLowEnd && (
-        <div
+        <div 
           className="absolute inset-0 -z-10 opacity-60 auth-hero-glow-bg"
           style={{
             background: "radial-gradient(ellipse 80% 50% at 50% 50%, hsl(320 90% 50% / 0.15), transparent 70%)",
@@ -359,38 +359,37 @@ function ApprovalHeroText() {
           }}
         />
       )}
-
+      
       {/* ⚡ MAIN TITLE - CSS-only animations for stability */}
       <div className={shouldAnimate ? "auth-hero-title-animated" : ""}>
-        <h2
+        <h2 
           className="text-3xl sm:text-4xl xl:text-5xl font-black text-white leading-[1.1] tracking-tight"
           style={{ textShadow: !isLowEnd ? "0 0 60px hsl(0 0% 100% / 0.1)" : undefined }}
         >
           O Professor que
         </h2>
-
+        
         {/* 🌟 HIGHLIGHT - "Mais Aprova" com GLOW otimizado */}
         <div className={`relative inline-block py-2 ${shouldAnimate ? "auth-hero-highlight-animated" : ""}`}>
           {/* Glow Layer - só em high-end */}
           {!isLowEnd && (
-            <div
+            <div 
               className="absolute inset-0 -z-10 rounded-lg auth-glow-layer"
               style={{
-                background:
-                  "linear-gradient(90deg, hsl(280 90% 60% / 0.4), hsl(320 95% 55% / 0.5), hsl(0 90% 55% / 0.4))",
+                background: "linear-gradient(90deg, hsl(280 90% 60% / 0.4), hsl(320 95% 55% / 0.5), hsl(0 90% 55% / 0.4))",
                 filter: shouldBlur ? "blur(25px)" : "blur(15px)",
               }}
             />
           )}
-
-          <span
+          
+          <span 
             className="relative text-4xl sm:text-5xl xl:text-6xl font-black"
             style={{
               background: "linear-gradient(90deg, hsl(280 90% 65%), hsl(320 95% 60%), hsl(350 90% 58%))",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               backgroundClip: "text",
-              filter: !isLowEnd
+              filter: !isLowEnd 
                 ? "drop-shadow(0 0 30px hsl(320 90% 55% / 0.6)) drop-shadow(0 0 60px hsl(320 90% 55% / 0.3))"
                 : "drop-shadow(0 0 15px hsl(320 90% 55% / 0.4))",
               letterSpacing: "-0.02em",
@@ -399,49 +398,48 @@ function ApprovalHeroText() {
             Mais Aprova
           </span>
         </div>
-
-        <h2
+        
+        <h2 
           className={`text-3xl sm:text-4xl xl:text-5xl font-black text-white leading-[1.1] tracking-tight ${shouldAnimate ? "auth-hero-subtitle-animated" : ""}`}
           style={{ textShadow: !isLowEnd ? "0 0 60px hsl(0 0% 100% / 0.1)" : undefined }}
         >
           em <span style={{ color: "hsl(210 100% 70%)" }}>Medicina</span> no Brasil
         </h2>
       </div>
-
+      
       {/* 📝 DESCRIPTION */}
-      <p
+      <p 
         className={`mt-6 text-sm sm:text-base text-gray-300 max-w-sm mx-auto leading-relaxed ${shouldAnimate ? "auth-hero-desc-animated" : ""}`}
       >
-        Química de alto nível com metodologia exclusiva.
-        <br />
+        Química de alto nível com metodologia exclusiva.<br />
         <span className="text-gray-400">Milhares de alunos aprovados nas melhores faculdades do país.</span>
       </p>
-
+      
       {/* ✨ DECORATIVE LINE */}
       <div className={`flex items-center justify-center gap-4 mt-6 ${shouldAnimate ? "auth-hero-line-animated" : ""}`}>
-        <div
+        <div 
           className="h-px w-16 sm:w-24"
           style={{ background: "linear-gradient(90deg, transparent, hsl(320 90% 55% / 0.6), hsl(320 90% 55%))" }}
         />
         <div className="relative">
-          <div
+          <div 
             className={`w-3 h-3 rounded-full ${shouldAnimate ? "auth-orb-animated" : ""}`}
-            style={{
+            style={{ 
               background: "linear-gradient(135deg, hsl(320 90% 60%), hsl(280 90% 55%))",
-              boxShadow: !isLowEnd
+              boxShadow: !isLowEnd 
                 ? "0 0 15px hsl(320 90% 55% / 0.8), 0 0 30px hsl(320 90% 55% / 0.4)"
                 : "0 0 10px hsl(320 90% 55% / 0.6)",
             }}
           />
           {/* Orbiting Ring - só em high-end com animações */}
           {!isLowEnd && shouldAnimate && (
-            <div
+            <div 
               className="absolute inset-0 rounded-full border border-primary/30 auth-ring-animated"
               style={{ transform: "scale(2.5)" }}
             />
           )}
         </div>
-        <div
+        <div 
           className="h-px w-16 sm:w-24"
           style={{ background: "linear-gradient(90deg, hsl(320 90% 55%), hsl(320 90% 55% / 0.6), transparent)" }}
         />
@@ -462,7 +460,7 @@ export default function Auth() {
   const [resetToken, setResetToken] = useState<string | null>(null);
   const [resetTokenEmail, setResetTokenEmail] = useState<string | null>(null);
   const [validatingToken, setValidatingToken] = useState(false);
-
+  
   // 🎯 P0 FIX v3: Estado para first_access_token (NUNCA expira)
   const [firstAccessToken, setFirstAccessToken] = useState<string | null>(null);
   const [firstAccessData, setFirstAccessData] = useState<{
@@ -503,7 +501,7 @@ export default function Auth() {
 
           if (error || !data?.valid) {
             console.error("[AUTH] Token de primeiro acesso inválido:", error || data);
-
+            
             // Se já foi usado, mostrar mensagem amigável
             if (data?.already_used) {
               toast.info("Este link já foi utilizado", {
@@ -511,14 +509,14 @@ export default function Auth() {
               });
               // Preencher email para facilitar
               if (data?.email) {
-                setFormData((prev) => ({ ...prev, email: data.email }));
+                setFormData(prev => ({ ...prev, email: data.email }));
               }
             } else {
               toast.error("Link de acesso inválido", {
                 description: "Entre em contato com o suporte.",
               });
             }
-
+            
             setFirstAccessToken(null);
           } else {
             console.log("[AUTH] ✅ Token de primeiro acesso válido para:", data.email);
@@ -527,22 +525,22 @@ export default function Auth() {
               nome: data.nome,
               role: data.role,
             });
-
+            
             // Auto-login com senha temporária
             if (data.temp_password && data.email) {
               console.log("[AUTH] 🚀 Fazendo auto-login com senha temporária...");
-
+              
               const { error: signInError } = await supabase.auth.signInWithPassword({
                 email: data.email,
                 password: data.temp_password,
               });
-
+              
               if (signInError) {
                 console.error("[AUTH] Erro no auto-login:", signInError);
                 toast.error("Erro ao acessar automaticamente", {
                   description: "Por favor, faça login manualmente.",
                 });
-                setFormData((prev) => ({ ...prev, email: data.email || "" }));
+                setFormData(prev => ({ ...prev, email: data.email || "" }));
               } else {
                 console.log("[AUTH] ✅ Auto-login bem-sucedido! Redirecionando para /primeiro-acesso");
                 toast.success(`Bem-vindo(a), ${data.nome || "Aluno"}!`, {
@@ -1584,7 +1582,7 @@ export default function Auth() {
                 else if (ua.includes("iPhone")) os = "iOS";
 
                 // 🔐 P0 FIX: Garantir hash do servidor com fallback seguro
-                const serverDeviceHash = deviceResult.deviceHash || localStorage.getItem("matriz_device_server_hash");
+                const serverDeviceHash = deviceResult.deviceHash || localStorage.getItem('matriz_device_server_hash');
                 if (!serverDeviceHash) {
                   console.error("[AUTH][SESSAO] ❌ P0 VIOLATION: Sem hash do servidor!");
                   toast.error("Falha de segurança", { description: "Dispositivo não registrado corretamente." });
@@ -1709,15 +1707,15 @@ export default function Auth() {
   // Detectar tipo de dispositivo atual
   const detectCurrentDevice = () => {
     const ua = navigator.userAgent;
-
+    
     // 🖥️ DESKTOP FIRST: macOS/Windows/Linux detection ANTES de Mobi check
-    const isDesktopOS =
+    const isDesktopOS = 
       (/Mac OS X|Macintosh/i.test(ua) && !/iPhone|iPad/i.test(ua)) ||
       (/Windows NT/i.test(ua) && !/Phone/i.test(ua)) ||
       (/Linux/i.test(ua) && !/Android/i.test(ua));
-
+    
     let deviceType: "desktop" | "tablet" | "mobile" = "desktop";
-
+    
     if (!isDesktopOS) {
       const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua);
       const isMobile = /iPhone|iPod|Android.*Mobile|Mobi/i.test(ua);
