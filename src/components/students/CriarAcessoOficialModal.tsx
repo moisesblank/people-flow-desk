@@ -1075,9 +1075,8 @@ export function CriarAcessoOficialModal({
                         disabled={isSubmitting}
                       />
                     </FormControl>
-                    {/* P0 FIX: Substituído FormDescription (<p>) por <div> para evitar React #61 (ul inside p) */}
-                    <div className="text-xs text-muted-foreground space-y-2">
-                      <span className="block">
+                    <FormDescription className="text-xs space-y-2">
+                      <span className="block text-muted-foreground">
                         Se vazio, um email será enviado para o aluno definir a senha.
                       </span>
                       <div className="bg-muted/50 rounded-md p-2 border border-border/50">
@@ -1096,7 +1095,7 @@ export function CriarAcessoOficialModal({
                           </code>
                         </div>
                       </div>
-                    </div>
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
