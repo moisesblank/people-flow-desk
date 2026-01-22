@@ -211,10 +211,16 @@ export function MFAActionModal({ isOpen, onClose, onSuccess, action, title, desc
       setStep("success");
       toast.success("Verificação concluída!");
 
-      // Delay para mostrar animação de sucesso
-      setTimeout(() => {
-        onSuccess();
-      }, 800);
+      // 🔐 P0 FIX v12: Chamar onSuccess DIRETAMENTE (sem timeout)
+      // O timeout causava race conditions onde o modal fechava antes de onSuccess terminar
+      // O callback handleVerificationSuccess no DeviceMFAGuard agora é async e aguarda
+      console.log('[MFAActionModal] ✅ Chamando onSuccess...');
+      try {
+        await Promise.resolve(onSuccess());
+        console.log('[MFAActionModal] ✅ onSuccess concluído');
+      } catch (err) {
+        console.error('[MFAActionModal] ❌ Erro no onSuccess:', err);
+      }
     } catch (err: any) {
       console.error("[MFAActionModal] Erro ao verificar código:", err);
       setError(err.message || "Código inválido ou expirado");
