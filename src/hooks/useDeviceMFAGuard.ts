@@ -23,7 +23,7 @@ export interface DeviceMFAGuardState {
 
 export interface DeviceMFAGuardResult extends DeviceMFAGuardState {
   checkDeviceMFA: () => Promise<boolean>;
-  onVerificationComplete: (success: boolean) => void;
+  onVerificationComplete: (success: boolean) => Promise<void>;
   resetState: () => void;
 }
 

@@ -75,8 +75,18 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
     }
   }, [needsMFA, isVerified]);
 
-  const handleVerificationSuccess = () => {
-    onVerificationComplete(true);
+  // 🔐 P0 FIX v12: handleVerificationSuccess DEVE ser async e AGUARDAR onVerificationComplete
+  // O callback onVerificationComplete atualiza mfa_verified no banco e precisa completar
+  // ANTES de fechar o modal e liberar a navegação.
+  const handleVerificationSuccess = async () => {
+    console.log('[DeviceMFAGuard] ⏳ Aguardando onVerificationComplete...');
+    try {
+      await onVerificationComplete(true);
+      console.log('[DeviceMFAGuard] ✅ onVerificationComplete concluído, fechando modal');
+    } catch (err) {
+      console.error('[DeviceMFAGuard] ❌ Erro em onVerificationComplete:', err);
+      // Mesmo com erro, fechar o modal para não travar o usuário
+    }
     setShowModal(false);
   };
 
