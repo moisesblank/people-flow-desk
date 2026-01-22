@@ -65,13 +65,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { formatError } from "@/lib/utils/formatError";
 import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper";
 import { VirtualTable } from "@/components/performance/VirtualTable";
 import { CriarAcessoOficialModal } from "@/components/students/CriarAcessoOficialModal";
 import { ImportStudentsModal } from "@/components/students/ImportStudentsModal";
-import { NuclearAnnihilateButton } from "@/components/students/NuclearAnnihilateButton";
-import { BulkImportCPFModal } from "@/components/students/BulkImportCPFModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStudentPresence, getPresenceStatus } from "@/hooks/useStudentPresence";
 import { useExportStudents } from "@/hooks/useExportStudents";
@@ -340,7 +337,6 @@ export default function Alunos() {
   const [formData, setFormData] = useState({ nome: "", email: "", curso: "", status: "Ativo" });
   const [isCriarAcessoModalOpen, setIsCriarAcessoModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isBulkImportCPFModalOpen, setIsBulkImportCPFModalOpen] = useState(false);
   
   // Estado para confirmação de exclusão (substitui confirm() nativo)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -427,37 +423,29 @@ export default function Alunos() {
       const { data, count, error } = await query;
       if (error) throw error;
 
-      // Buscar roles apenas para IDs desta página (evita N+1)
-      // P0: evitar JOIN `profiles!inner(email)` (pode retornar 400 se relação não existir)
-      // Estratégia: mapear por user_id (assumimos alunos.id == user_id)
-      const ids = (data || []).map((a) => a.id).filter(Boolean);
-      let roleMapByUserId: Record<string, StudentRoleType> = {};
-
-      if (ids.length > 0) {
-        const { data: rolesData, error: rolesError } = await supabase
+      // Buscar roles apenas para emails desta página (evita N+1)
+      // CONSTITUIÇÃO v10.x - 4 roles de aluno válidas
+      const emails = (data || []).map(a => a.email?.toLowerCase()).filter(Boolean);
+      let roleMap: Record<string, StudentRoleType> = {};
+      
+      if (emails.length > 0) {
+        const { data: rolesData } = await supabase
           .from('user_roles')
-          .select('role, user_id')
-          .in('role', ['beta', 'aluno_gratuito', 'aluno_presencial', 'beta_expira'])
-          .in('user_id', ids);
-
-        if (rolesError) {
-          console.warn('[Alunos] Falha ao buscar roles (fail-open):', rolesError);
-        }
+          .select(`role, profiles!inner(email)`)
+          .in('role', ['beta', 'aluno_gratuito', 'aluno_presencial', 'beta_expira']);
 
         (rolesData || []).forEach((r: any) => {
-          const userId = r.user_id as string | undefined;
-          if (!userId) return;
-
-          // Prioridade: beta > beta_expira > aluno_presencial > aluno_gratuito
-          const currentRole = roleMapByUserId[userId];
-          const newRole = r.role as StudentRoleType;
-          if (
-            !currentRole ||
-            newRole === 'beta' ||
-            (newRole === 'beta_expira' && currentRole !== 'beta') ||
-            (newRole === 'aluno_presencial' && currentRole === 'aluno_gratuito')
-          ) {
-            roleMapByUserId[userId] = newRole;
+          const email = r.profiles?.email?.toLowerCase();
+          if (email && emails.includes(email)) {
+            // Prioridade: beta > beta_expira > aluno_presencial > aluno_gratuito
+            const currentRole = roleMap[email];
+            const newRole = r.role as StudentRoleType;
+            if (!currentRole || 
+                (newRole === 'beta') || 
+                (newRole === 'beta_expira' && currentRole !== 'beta') ||
+                (newRole === 'aluno_presencial' && currentRole === 'aluno_gratuito')) {
+              roleMap[email] = newRole;
+            }
           }
         });
       }
@@ -469,7 +457,7 @@ export default function Alunos() {
         status: a.status || 'Ativo',
         fonte: a.fonte || null,
         tipo_produto: a.tipo_produto || null,
-        role: roleMapByUserId[a.id] || null,
+        role: roleMap[(a.email || '').toLowerCase()] || null,
         created_at: a.created_at || '',
       }));
 
@@ -573,7 +561,7 @@ export default function Alunos() {
       setIsModalOpen(false);
     } catch (error: any) {
       console.error("Error saving student:", error);
-      toast.error(formatError(error, "Erro ao salvar"));
+      toast.error(error.message || "Erro ao salvar");
     }
   };
 
@@ -1069,20 +1057,6 @@ export default function Alunos() {
                         IMPORTAR
                       </Button>
                       
-                      {/* BOTÃO IMPORTAR CPF (AMBER) — Validação Receita Federal */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsBulkImportCPFModalOpen(true)}
-                        className="border-amber-500/50 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 hover:border-amber-400"
-                      >
-                        <Shield className="h-4 w-4 mr-2" />
-                        IMPORTAR CPF
-                      </Button>
-                      
-                      {/* BOTÃO NUCLEAR — OWNER ONLY */}
-                      <NuclearAnnihilateButton />
-                      
                       {/* BOTÃO EXPORTAR (VERDE) */}
                       <Button
                         variant="outline"
@@ -1320,13 +1294,6 @@ export default function Alunos() {
             onImportComplete={refetch}
           />
           
-          {/* Modal Importar Alunos com Validação CPF */}
-          <BulkImportCPFModal
-            open={isBulkImportCPFModalOpen}
-            onOpenChange={setIsBulkImportCPFModalOpen}
-            onSuccess={refetch}
-          />
-          
           {/* AlertDialog de confirmação de exclusão (substitui confirm() nativo) */}
           <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
             <AlertDialogContent className="bg-background border-red-500/30">
@@ -1335,18 +1302,17 @@ export default function Alunos() {
                   <AlertCircle className="h-5 w-5" />
                   Confirmar Exclusão Permanente
                 </AlertDialogTitle>
-                {/* P0 FIX: AlertDialogDescription geralmente renderiza <p>; não pode conter <p> dentro (React validateDOMNesting). */}
                 <AlertDialogDescription className="text-muted-foreground space-y-3">
-                  <span className="block font-semibold text-yellow-400">
+                  <p className="font-semibold text-yellow-400">
                     ⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!
-                  </span>
-                  <span className="block">
-                    O aluno <span className="font-bold text-foreground">"{studentToDelete?.nome || studentToDelete?.email}"</span> será
+                  </p>
+                  <p>
+                    O aluno <span className="font-bold text-foreground">"{studentToDelete?.nome || studentToDelete?.email}"</span> será 
                     EXCLUÍDO PERMANENTEMENTE de TODAS as camadas do sistema.
-                  </span>
-                  <span className="block text-sm">
+                  </p>
+                  <p className="text-sm">
                     Isso inclui: autenticação, sessões, dispositivos e todos os dados associados.
-                  </span>
+                  </p>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
