@@ -90,6 +90,62 @@ interface Question {
   image_urls?: any[] | null;
 }
 
+// ============================================
+// P0 FIX — HARDENING CONTRA React Error #61
+// Motivo: alguns registros antigos podem ter campos JSON/objeto onde
+// o frontend espera string (ex: question_text). Isso explode em:
+// - .toLowerCase() / .length
+// - QuestionEnunciado.cleanQuestionText (usa .replace)
+// => ErrorBoundary mostra "Algo deu errado".
+// ============================================
+const toSafeString = (v: unknown, fallback = ""): string => {
+  if (typeof v === "string") return v;
+  if (v === null || v === undefined) return fallback;
+  return String(v);
+};
+
+const normalizeQuestionOptions = (raw: unknown): QuestionOption[] => {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((opt: any, idx: number): QuestionOption | null => {
+      // Opção pode vir como string simples
+      if (typeof opt === "string") {
+        return { id: String(idx), text: opt };
+      }
+      if (!opt || typeof opt !== "object") return null;
+
+      const id = toSafeString(opt.id ?? opt.key ?? idx);
+      const text = toSafeString(opt.text ?? opt.label ?? opt.value, "");
+      const image_url = typeof opt.image_url === "string" ? opt.image_url : undefined;
+      return { id, text, image_url };
+    })
+    .filter(Boolean) as QuestionOption[];
+};
+
+const normalizeQuestionRecord = (q: any): Question => {
+  const difficultyRaw = toSafeString(q?.difficulty, "medio");
+  const difficulty = (difficultyRaw === "facil" || difficultyRaw === "medio" || difficultyRaw === "dificil"
+    ? difficultyRaw
+    : "medio") as "facil" | "medio" | "dificil";
+
+  return {
+    ...q,
+    id: toSafeString(q?.id),
+    question_text: toSafeString(q?.question_text),
+    correct_answer: toSafeString(q?.correct_answer),
+    explanation: q?.explanation == null ? null : toSafeString(q?.explanation),
+    banca: q?.banca == null ? null : toSafeString(q?.banca),
+    macro: q?.macro == null ? null : toSafeString(q?.macro),
+    micro: q?.micro == null ? null : toSafeString(q?.micro),
+    tema: q?.tema == null ? null : toSafeString(q?.tema),
+    subtema: q?.subtema == null ? null : toSafeString(q?.subtema),
+    options: normalizeQuestionOptions(q?.options),
+    difficulty,
+    image_url: q?.image_url == null ? null : toSafeString(q?.image_url),
+    image_urls: Array.isArray(q?.image_urls) ? q.image_urls : null,
+  } as Question;
+};
+
 interface QuestionAttempt {
   id?: string;
   user_id: string;
@@ -311,11 +367,7 @@ export default function AlunoQuestoes() {
 
       if (error) throw error;
 
-      const mapped = (data || []).map(q => ({
-        ...q,
-        options: Array.isArray(q.options) ? (q.options as unknown as QuestionOption[]) : [],
-        difficulty: (q.difficulty || 'medio') as "facil" | "medio" | "dificil",
-      })) as Question[];
+      const mapped = (data || []).map(normalizeQuestionRecord) as Question[];
 
       return { data: mapped, totalCount: count || 0 };
     },
@@ -569,11 +621,7 @@ export default function AlunoQuestoes() {
 
       if (error) throw error;
 
-      const mapped = (data || []).map(q => ({
-        ...q,
-        options: Array.isArray(q.options) ? (q.options as unknown as QuestionOption[]) : [],
-        difficulty: (q.difficulty || 'medio') as "facil" | "medio" | "dificil",
-      })) as Question[];
+      const mapped = (data || []).map(normalizeQuestionRecord) as Question[];
 
       if (mapped.length === 0) {
         toast.error('Nenhuma questão disponível para treino com esses filtros');
@@ -640,11 +688,7 @@ export default function AlunoQuestoes() {
 
       if (error) throw error;
 
-      const mapped = (data || []).map(q => ({
-        ...q,
-        options: Array.isArray(q.options) ? (q.options as unknown as QuestionOption[]) : [],
-        difficulty: (q.difficulty || 'medio') as "facil" | "medio" | "dificil",
-      })) as Question[];
+      const mapped = (data || []).map(normalizeQuestionRecord) as Question[];
 
       if (mapped.length === 0) {
         toast.error('Nenhuma questão disponível com esses filtros');
