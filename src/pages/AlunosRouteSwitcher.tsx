@@ -10,14 +10,11 @@
 //   Staff = Funcionários → vê Gestão de Alunos (/gestaofc)
 // ============================================
 
-import { useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useRolePermissions, isGestaoHost, isProHost, isPublicHost } from "@/hooks/useRolePermissions";
-
-// 🔒 OWNER GUARD — Centralização P0
-import { enforceOwnerRedirect, OWNER_HOME } from "@/owner-guard";
 
 // Importa apenas Alunos (gestão) - AlunoDashboard é acessado via redirect
 import Alunos from "@/pages/Alunos";
@@ -27,17 +24,6 @@ export default function AlunosRouteSwitcher() {
   const { role, isLoading: roleLoading, isBeta, isOwner } = useRolePermissions();
 
   const isLoading = adminLoading || roleLoading;
-  
-  // 🔒 P0 OWNER GUARD: Owner NUNCA deve estar em /alunos
-  useEffect(() => {
-    if (!isLoading && isOwner) {
-      const result = enforceOwnerRedirect({ role: 'owner', pathname: '/alunos' });
-      if (result.shouldRedirect && result.targetPath) {
-        console.log("[AlunosRouteSwitcher] 🔒 OWNER GUARD: Forçando redirect para", OWNER_HOME);
-        window.location.replace(result.targetPath);
-      }
-    }
-  }, [isLoading, isOwner]);
 
   // 🔴 P0 DEBUG: Log para diagnóstico de tela preta
   console.log("[AlunosRouteSwitcher] 🚀 RENDER", {
@@ -88,10 +74,10 @@ export default function AlunosRouteSwitcher() {
   // ============================================
 
   // 🔒 OWNER GUARD P0: Owner SEMPRE vai para /gestaofc, NUNCA /alunos
-  // Regra arquitetural centralizada em src/owner-guard/
+  // Regra inline (folder owner-guard removida)
   if (isOwner) {
     console.log("[AlunosRouteSwitcher] 🔒 Owner detectado → REDIRECT IMEDIATO para /gestaofc");
-    return <Navigate to={OWNER_HOME} replace />;
+    return <Navigate to="/gestaofc" replace />;
   }
 
   // BETA = Aluno pagante → REDIRECT para /alunos/dashboard
