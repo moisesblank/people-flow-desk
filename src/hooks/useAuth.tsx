@@ -11,7 +11,6 @@ import { User, Session, Provider } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { collectEnhancedFingerprint } from "@/lib/enhancedFingerprint";
 import { getPostLoginRedirect, type AppRole } from "@/core/urlAccessControl";
-import { emitSessionTokenChanged, subscribeSessionTokenChanged } from "@/lib/sessionTokenBus";
 
 // 🛡️ DEPRECATED: OWNER_EMAIL removido - verificação via role='owner' no banco
 // const OWNER_EMAIL = "moisesblank@gmail.com";
@@ -308,16 +307,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // - INITIAL_SESSION: sessão restaurada (ex: segundo device abrindo com cookie)
         // P0: evita sessões simultâneas por falta de criação do token
         if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-          // 🔒 Anti-loop: quando o login é feito pela tela /auth,
-          // quem cria a sessão única é o próprio Auth.tsx (fluxo soberano).
-          // Se também criarmos aqui, podemos invalidar tokens recém-criados e gerar loop /auth ↔ app.
-          const isAuthPath =
-            typeof window !== "undefined" &&
-            (window.location.pathname === "/auth" || window.location.pathname.startsWith("/auth/"));
-          if (isAuthPath) {
-            return;
-          }
-
           const hasSecurityToken =
             typeof window !== "undefined" ? Boolean(localStorage.getItem(SESSION_TOKEN_KEY)) : false;
 
@@ -385,37 +374,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const token = localStorage.getItem(SESSION_TOKEN_KEY);
     setSecuritySessionReady(Boolean(token));
-  }, [user?.id]);
-
-  // ============================================
-  // 🔧 P0 FIX: Sincronizar securitySessionReady quando o token muda
-  // Motivo: localStorage.setItem NÃO dispara evento no mesmo tab.
-  // SessionGuard pode bootstrapar o token e o useAuth precisa reagir.
-  // ============================================
-  useEffect(() => {
-    if (!user) return;
-
-    const sync = () => {
-      const token = localStorage.getItem(SESSION_TOKEN_KEY);
-      setSecuritySessionReady(Boolean(token));
-    };
-
-    // 1) Mesmo tab
-    const unsubscribe = subscribeSessionTokenChanged(() => sync());
-
-    // 2) Outras abas/janelas
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === SESSION_TOKEN_KEY) sync();
-    };
-    window.addEventListener('storage', onStorage);
-
-    // Sincroniza no mount
-    sync();
-
-    return () => {
-      unsubscribe();
-      window.removeEventListener('storage', onStorage);
-    };
   }, [user?.id]);
 
   // ============================================
@@ -542,16 +500,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (postSignInTick === 0) return; // Ignora montagem inicial
     if (!postSignInPayloadRef.current) return;
 
-    // 🔒 Anti-loop: se por algum motivo disparou enquanto estamos em /auth, não criar sessão aqui.
-    // O Auth.tsx é o dono do fluxo de sessão única quando o usuário está logando.
-    const isAuthPath =
-      typeof window !== "undefined" &&
-      (window.location.pathname === "/auth" || window.location.pathname.startsWith("/auth/"));
-    if (isAuthPath) {
-      postSignInPayloadRef.current = null;
-      return;
-    }
-
     const { userId, email } = postSignInPayloadRef.current;
 
     // ✅ OWNER: Também precisa de sessão para SessionGuard funcionar
@@ -622,13 +570,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           console.log("[AUTH][SESSAO] ✅ Sessão existente válida - last_activity_at atualizado");
           setSecuritySessionReady(true);
-          emitSessionTokenChanged({ token: existingToken, source: 'useAuth:existing-session' });
           startHeartbeatRef.current();
         } catch (err) {
           console.error("[AUTH][SESSAO] Erro ao validar sessão existente:", err);
           // Em caso de erro, manter token e continuar
           setSecuritySessionReady(true);
-          emitSessionTokenChanged({ token: existingToken, source: 'useAuth:existing-session-error' });
           startHeartbeatRef.current();
         }
       };
@@ -688,7 +634,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const sessionToken = data[0].session_token;
           localStorage.setItem(SESSION_TOKEN_KEY, sessionToken);
           setSecuritySessionReady(true);
-          emitSessionTokenChanged({ token: sessionToken, source: 'useAuth:create_single_session' });
           console.log("[AUTH][SESSAO] ✅ Sessão única criada com sucesso");
 
           // Iniciar heartbeat
@@ -816,48 +761,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
-    // 🛡️ v12.2: Timeout defensivo de 15s para evitar loop eterno
-    const TIMEOUT_MS = 15000;
-    
-    const timeoutPromise = new Promise<{ error: Error }>((_, reject) => {
-      setTimeout(() => reject(new Error("Tempo limite excedido. Verifique sua conexão e tente novamente.")), TIMEOUT_MS);
-    });
-    
-    const resetPromise = (async () => {
-      try {
-        console.log("[AUTH] 🔄 Iniciando reset de senha para:", email.trim().toLowerCase());
-        
-        // 🎯 CONSTITUIÇÃO v10.x: Usar fluxo customizado - REVELA se email não existe
-        const { data, error } = await supabase.functions.invoke("custom-password-reset", {
-          body: { action: "request", email: email.trim().toLowerCase() },
-        });
-
-        console.log("[AUTH] 📧 Resposta do reset:", { data, error });
-
-        if (error) {
-          console.error("[AUTH] Erro no reset customizado:", error);
-          return { error: new Error("Erro ao processar solicitação. Tente novamente.") };
-        }
-
-        // 🎯 NOVO: Se a edge function retornou erro, propagar
-        if (data?.error) {
-          console.log("[AUTH] ❌ Email não cadastrado:", data.error);
-          return { error: new Error(data.error) };
-        }
-
-        console.log("[AUTH] ✅ Reset de senha processado com sucesso");
-        return { error: null };
-      } catch (err: any) {
-        console.error("[AUTH] Erro inesperado no reset:", err);
-        return { error: new Error("Erro ao processar solicitação.") };
-      }
-    })();
-    
     try {
-      return await Promise.race([resetPromise, timeoutPromise]);
-    } catch (timeoutError: any) {
-      console.error("[AUTH] ⏱️ Timeout no reset de senha:", timeoutError);
-      return { error: timeoutError };
+      // 🎯 CONSTITUIÇÃO v10.x: Usar fluxo customizado - REVELA se email não existe
+      const { data, error } = await supabase.functions.invoke("custom-password-reset", {
+        body: { action: "request", email: email.trim().toLowerCase() },
+      });
+
+      if (error) {
+        console.error("[AUTH] Erro no reset customizado:", error);
+        return { error: new Error("Erro ao processar solicitação. Tente novamente.") };
+      }
+
+      // 🎯 NOVO: Se a edge function retornou erro, propagar
+      if (data?.error) {
+        console.log("[AUTH] ❌ Email não cadastrado:", data.error);
+        return { error: new Error(data.error) };
+      }
+
+      return { error: null };
+    } catch (err: any) {
+      console.error("[AUTH] Erro inesperado no reset:", err);
+      return { error: new Error("Erro ao processar solicitação.") };
     }
   };
 
