@@ -29,6 +29,7 @@ export {
   resolveRoleFromDatabase,
   isOwnerSync,
   isOwnerAsync,
+  hasLocalSession, // 🛡️ v12.1: Verificação de sessão local
   type RoleResolution,
   type RoleSource 
 } from './resolveRole';

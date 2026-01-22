@@ -1,6 +1,7 @@
 // ============================================
 // 🔒 OWNER GUARD — RESOLUÇÃO DE ROLE
 // P0: Múltiplas fontes para garantir detecção
+// v12.1: Exige token local para validar sessão
 // ============================================
 
 import { OWNER_ROLE, OWNER_EMAIL } from './constants';
@@ -16,10 +17,30 @@ export interface RoleResolution {
 }
 
 /**
+ * 🛡️ v12.1: Verifica se existe sessão LOCAL válida
+ * Em aba anônima/limpa, isso SEMPRE retorna false
+ */
+export function hasLocalSession(): boolean {
+  try {
+    const sessionToken = localStorage.getItem('matriz_session_token');
+    const userRole = localStorage.getItem('matriz_user_role');
+    // Precisa ter pelo menos UM dos dois para considerar sessão válida
+    return !!(sessionToken || userRole);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Resolve role do cache local (mais rápido)
  */
 export function resolveRoleFromCache(): RoleResolution {
   try {
+    // 🛡️ v12.1: Se não tem sessão local, retorna vazio IMEDIATAMENTE
+    if (!hasLocalSession()) {
+      return { role: null, source: null, isOwner: false };
+    }
+
     const cachedRole = localStorage.getItem('matriz_user_role');
     const isOwnerCache = localStorage.getItem('matriz_is_owner_cache') === 'true';
     
@@ -46,6 +67,12 @@ export function resolveRoleFromCache(): RoleResolution {
  */
 export async function resolveRoleFromSession(): Promise<RoleResolution> {
   try {
+    // 🛡️ v12.1: CRÍTICO - Se não tem sessão LOCAL, ignorar sessão do Supabase
+    // Isso impede que cookies vazados de outras abas causem redirect indevido
+    if (!hasLocalSession()) {
+      return { role: null, source: null, isOwner: false };
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
     
     if (!session?.user) {
@@ -141,6 +168,8 @@ export async function resolveRole(): Promise<RoleResolution> {
  * Verifica se é Owner de forma síncrona (usa cache)
  */
 export function isOwnerSync(): boolean {
+  // 🛡️ v12.1: Sem sessão local = não é owner (aba anônima limpa)
+  if (!hasLocalSession()) return false;
   const cached = resolveRoleFromCache();
   return cached.isOwner;
 }
