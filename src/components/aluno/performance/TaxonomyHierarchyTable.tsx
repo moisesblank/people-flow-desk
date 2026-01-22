@@ -2,6 +2,7 @@
 // TaxonomyHierarchyTable - Design Year 2300 Cinematic HUD
 // MACRO → MICRO → TEMA (se houver)
 // Acurácia %, Total, Erros - Visual Premium Integrado
+// P0 FIX: Hardening contra React Error #61
 // =====================================================
 
 import React from "react";
@@ -11,6 +12,30 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Target, ChevronRight, Zap, AlertTriangle, CheckCircle2, Layers } from "lucide-react";
 import type { TaxonomyNode } from "@/hooks/student-performance";
+
+// ============================================
+// P0 FIX — HARDENING CONTRA React Error #61
+// ============================================
+const toSafeString = (v: unknown, fallback = ""): string => {
+  if (typeof v === "string") return v;
+  if (v === null || v === undefined) return fallback;
+  if (typeof v === "object") {
+    const obj = v as Record<string, unknown>;
+    if (typeof obj.name === "string") return obj.name;
+    if (typeof obj.label === "string") return obj.label;
+    try { return JSON.stringify(v); } catch { return fallback; }
+  }
+  return String(v);
+};
+
+const toSafeNumber = (v: unknown, fallback = 0): number => {
+  if (typeof v === "number" && !isNaN(v)) return v;
+  if (typeof v === "string") {
+    const parsed = parseFloat(v);
+    return isNaN(parsed) ? fallback : parsed;
+  }
+  return fallback;
+};
 
 interface TaxonomyHierarchyTableProps {
   data: TaxonomyNode[];
@@ -50,8 +75,14 @@ function MacroCard({
   macro: TaxonomyNode; 
   children: React.ReactNode;
 }) {
-  const config = getAccuracyConfig(macro.accuracyPercent);
-  const errors = macro.totalAttempts - macro.correctAttempts;
+  // P0 FIX: Garantir valores seguros
+  const macroName = toSafeString(macro?.name, "Sem Nome");
+  const macroAccuracy = toSafeNumber(macro?.accuracyPercent, 0);
+  const macroTotal = toSafeNumber(macro?.totalAttempts, 0);
+  const macroCorrect = toSafeNumber(macro?.correctAttempts, 0);
+  
+  const config = getAccuracyConfig(macroAccuracy);
+  const errors = macroTotal - macroCorrect;
   
   return (
     <div className={cn(
@@ -76,9 +107,9 @@ function MacroCard({
             <Target className={cn("h-4 w-4", config.color)} />
           </div>
           <div>
-            <h3 className="font-semibold text-foreground">{macro.name}</h3>
+            <h3 className="font-semibold text-foreground">{macroName}</h3>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{macro.totalAttempts} questões</span>
+              <span>{macroTotal} questões</span>
               <span>•</span>
               <span className={errors > 0 ? "text-rose-400" : "text-emerald-400"}>
                 {errors} erros
@@ -91,11 +122,11 @@ function MacroCard({
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Progress 
-              value={macro.accuracyPercent} 
+              value={macroAccuracy} 
               className="h-2 w-20"
             />
             <span className={cn("text-lg font-bold tabular-nums", config.color)}>
-              {macro.accuracyPercent.toFixed(0)}%
+              {macroAccuracy.toFixed(0)}%
             </span>
           </div>
         </div>
@@ -117,8 +148,14 @@ function MicroRow({
   micro: TaxonomyNode; 
   temas: TaxonomyNode[];
 }) {
-  const config = getAccuracyConfig(micro.accuracyPercent);
-  const errors = micro.totalAttempts - micro.correctAttempts;
+  // P0 FIX: Garantir valores seguros
+  const microName = toSafeString(micro?.name, "Sem Nome");
+  const microAccuracy = toSafeNumber(micro?.accuracyPercent, 0);
+  const microTotal = toSafeNumber(micro?.totalAttempts, 0);
+  const microCorrect = toSafeNumber(micro?.correctAttempts, 0);
+  
+  const config = getAccuracyConfig(microAccuracy);
+  const errors = microTotal - microCorrect;
   const StatusIcon = config.icon;
   
   return (
@@ -128,18 +165,18 @@ function MicroRow({
         <div className="flex items-center gap-2">
           <ChevronRight className="h-3 w-3 text-muted-foreground" />
           <StatusIcon className={cn("h-3.5 w-3.5", config.color)} />
-          <span className="text-sm font-medium text-foreground/90">{micro.name}</span>
+          <span className="text-sm font-medium text-foreground/90">{microName}</span>
         </div>
         
         <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">
-            <Progress value={micro.accuracyPercent} className="h-1.5 w-12" />
+            <Progress value={microAccuracy} className="h-1.5 w-12" />
             <span className={cn("font-semibold tabular-nums", config.color)}>
-              {micro.accuracyPercent.toFixed(0)}%
+              {microAccuracy.toFixed(0)}%
             </span>
           </div>
           <span className="text-muted-foreground tabular-nums w-8 text-right">
-            {micro.totalAttempts}
+            {microTotal}
           </span>
           <span className={cn(
             "tabular-nums w-6 text-right font-medium",
@@ -153,26 +190,32 @@ function MicroRow({
       {/* Temas (se houver) */}
       {temas.length > 0 && (
         <div className="ml-6 pl-3 border-l border-border/30 space-y-1 pb-1">
-          {temas.map(tema => {
-            const temaConfig = getAccuracyConfig(tema.accuracyPercent);
-            const temaErrors = tema.totalAttempts - tema.correctAttempts;
+          {temas.map((tema, idx) => {
+            // P0 FIX: Garantir valores seguros
+            const temaName = toSafeString(tema?.name, "Sem Nome");
+            const temaAccuracy = toSafeNumber(tema?.accuracyPercent, 0);
+            const temaTotal = toSafeNumber(tema?.totalAttempts, 0);
+            const temaCorrect = toSafeNumber(tema?.correctAttempts, 0);
+            
+            const temaConfig = getAccuracyConfig(temaAccuracy);
+            const temaErrors = temaTotal - temaCorrect;
             
             return (
               <div 
-                key={`tema-${tema.name}`}
+                key={`tema-${temaName}-${idx}`}
                 className="flex items-center justify-between py-1 text-xs"
               >
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Layers className="h-3 w-3" />
-                  <span>{tema.name}</span>
+                  <span>{temaName}</span>
                 </div>
                 
                 <div className="flex items-center gap-4">
                   <span className={cn("font-medium tabular-nums", temaConfig.color)}>
-                    {tema.accuracyPercent.toFixed(0)}%
+                    {temaAccuracy.toFixed(0)}%
                   </span>
                   <span className="text-muted-foreground tabular-nums w-8 text-right">
-                    {tema.totalAttempts}
+                    {temaTotal}
                   </span>
                   <span className={cn(
                     "tabular-nums w-6 text-right",
