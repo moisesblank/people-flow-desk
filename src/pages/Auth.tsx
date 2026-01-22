@@ -1380,17 +1380,9 @@ export default function Auth() {
           // 🔒 P0 FIX: Salvar timestamp do login para grace period no SessionGuard
           localStorage.setItem('matriz_login_timestamp', Date.now().toString());
           
-          console.log("[AUTH][SESSAO] ✅ Sessão única criada:", sessionToken.slice(0, 8) + "...");
-          
-          // 🔐 P0 FIX UNIVERSAL: Marcar mfa_verified = true para TODOS após login bem-sucedido
-          // Motivo: O fluxo soberano v11.4 já registrou o dispositivo e criou sessão única.
-          // Se chegou aqui, o usuário é legítimo e o dispositivo está registrado.
-          // DeviceMFAGuard exigia 2FA porque mfa_verified era false — agora é true para todos.
-          console.log("[AUTH][SESSAO] 🔐 Marcando mfa_verified = true para sessão");
-          await supabase
-            .from("active_sessions")
-            .update({ mfa_verified: true })
-            .eq("session_token", sessionToken);
+          // 🔐 P0 FIX v11.5: mfa_verified = true agora é definido direto na RPC create_single_session
+          // SECURITY DEFINER ignora RLS, evitando falha silenciosa do UPDATE no cliente
+          console.log("[AUTH][SESSAO] ✅ Sessão única criada (mfa_verified=true via RPC):", sessionToken.slice(0, 8) + "...");
         }
 
         toast.success("Login realizado com sucesso!");
