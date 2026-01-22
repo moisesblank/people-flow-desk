@@ -53,27 +53,52 @@ export function useValidateCPFReal(): UseValidateCPFRealReturn {
     setIsValidating(true);
     setError(null);
 
-    // 🔒 TIMEOUT DE 15 SEGUNDOS para evitar looping eterno
-    const timeoutMs = 15000;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    // 🔒 P0 FIX: TIMEOUT DE 30 SEGUNDOS + RETRY AUTOMÁTICO
+    // API da Receita Federal pode demorar mais em horários de pico
+    const timeoutMs = 30000;
+    const maxRetries = 2;
+    
+    const attemptValidation = async (attempt: number): Promise<{ data: unknown; error: Error | null }> => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      
+      try {
+        const invokePromise = supabase.functions.invoke('validate-cpf-real', {
+          body: { cpf, validate_only: validateOnly }
+        });
+
+        // Race entre a função e o timeout
+        const result = await Promise.race([
+          invokePromise,
+          new Promise<{ data: null; error: Error }>((_, reject) => {
+            controller.signal.addEventListener('abort', () => {
+              reject({ data: null, error: new Error('Tempo esgotado ao consultar a Receita Federal') });
+            });
+          })
+        ]);
+
+        clearTimeout(timeoutId);
+        return result;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        
+        // Retry automático em caso de timeout
+        if (attempt < maxRetries && err instanceof Error && err.message.includes('Tempo esgotado')) {
+          console.log(`[useValidateCPFReal] Tentativa ${attempt + 1}/${maxRetries} falhou, retentando...`);
+          toast.info('Aguarde...', {
+            description: `Receita Federal lenta, tentando novamente (${attempt + 1}/${maxRetries})`,
+            duration: 3000
+          });
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Aguarda 1s antes de retentar
+          return attemptValidation(attempt + 1);
+        }
+        
+        throw err;
+      }
+    };
 
     try {
-      const invokePromise = supabase.functions.invoke('validate-cpf-real', {
-        body: { cpf, validate_only: validateOnly }
-      });
-
-      // Race entre a função e o timeout
-      const { data, error: fnError } = await Promise.race([
-        invokePromise,
-        new Promise<{ data: null; error: Error }>((_, reject) => {
-          controller.signal.addEventListener('abort', () => {
-            reject({ data: null, error: new Error('Tempo esgotado ao consultar a Receita Federal') });
-          });
-        })
-      ]);
-
-      clearTimeout(timeoutId);
+      const { data, error: fnError } = await attemptValidation(1);
 
       if (fnError) {
         console.error('[useValidateCPFReal] Erro na função:', fnError);
@@ -85,8 +110,10 @@ export function useValidateCPFReal(): UseValidateCPFRealReturn {
         return null;
       }
 
-      if (!data?.success) {
-        const errorMsg = traduzirErroCPF(data?.error || 'Erro desconhecido na validação');
+      const typedData = data as { success: boolean; result?: CPFValidationResult; error?: string } | null;
+
+      if (!typedData?.success) {
+        const errorMsg = traduzirErroCPF(typedData?.error || 'Erro desconhecido na validação');
         setError(errorMsg);
         toast.error('Falha na Validação do CPF', {
           description: errorMsg
@@ -94,7 +121,7 @@ export function useValidateCPFReal(): UseValidateCPFRealReturn {
         return null;
       }
 
-      const result = data.result as CPFValidationResult;
+      const result = typedData.result as CPFValidationResult;
       setLastResult(result);
 
       // Feedback visual baseado no resultado
@@ -113,7 +140,6 @@ export function useValidateCPFReal(): UseValidateCPFRealReturn {
 
       return result;
     } catch (err) {
-      clearTimeout(timeoutId);
       const errorMsg = err instanceof Error ? err.message : 'Erro de conexão';
       console.error('[useValidateCPFReal] Erro:', err);
       const mensagemErro = traduzirErroCPF(errorMsg);
