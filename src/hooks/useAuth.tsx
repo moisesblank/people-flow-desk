@@ -816,27 +816,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
+    // 🛡️ v12.2: Timeout defensivo de 15s para evitar loop eterno
+    const TIMEOUT_MS = 15000;
+    
+    const timeoutPromise = new Promise<{ error: Error }>((_, reject) => {
+      setTimeout(() => reject(new Error("Tempo limite excedido. Verifique sua conexão e tente novamente.")), TIMEOUT_MS);
+    });
+    
+    const resetPromise = (async () => {
+      try {
+        console.log("[AUTH] 🔄 Iniciando reset de senha para:", email.trim().toLowerCase());
+        
+        // 🎯 CONSTITUIÇÃO v10.x: Usar fluxo customizado - REVELA se email não existe
+        const { data, error } = await supabase.functions.invoke("custom-password-reset", {
+          body: { action: "request", email: email.trim().toLowerCase() },
+        });
+
+        console.log("[AUTH] 📧 Resposta do reset:", { data, error });
+
+        if (error) {
+          console.error("[AUTH] Erro no reset customizado:", error);
+          return { error: new Error("Erro ao processar solicitação. Tente novamente.") };
+        }
+
+        // 🎯 NOVO: Se a edge function retornou erro, propagar
+        if (data?.error) {
+          console.log("[AUTH] ❌ Email não cadastrado:", data.error);
+          return { error: new Error(data.error) };
+        }
+
+        console.log("[AUTH] ✅ Reset de senha processado com sucesso");
+        return { error: null };
+      } catch (err: any) {
+        console.error("[AUTH] Erro inesperado no reset:", err);
+        return { error: new Error("Erro ao processar solicitação.") };
+      }
+    })();
+    
     try {
-      // 🎯 CONSTITUIÇÃO v10.x: Usar fluxo customizado - REVELA se email não existe
-      const { data, error } = await supabase.functions.invoke("custom-password-reset", {
-        body: { action: "request", email: email.trim().toLowerCase() },
-      });
-
-      if (error) {
-        console.error("[AUTH] Erro no reset customizado:", error);
-        return { error: new Error("Erro ao processar solicitação. Tente novamente.") };
-      }
-
-      // 🎯 NOVO: Se a edge function retornou erro, propagar
-      if (data?.error) {
-        console.log("[AUTH] ❌ Email não cadastrado:", data.error);
-        return { error: new Error(data.error) };
-      }
-
-      return { error: null };
-    } catch (err: any) {
-      console.error("[AUTH] Erro inesperado no reset:", err);
-      return { error: new Error("Erro ao processar solicitação.") };
+      return await Promise.race([resetPromise, timeoutPromise]);
+    } catch (timeoutError: any) {
+      console.error("[AUTH] ⏱️ Timeout no reset de senha:", timeoutError);
+      return { error: timeoutError };
     }
   };
 

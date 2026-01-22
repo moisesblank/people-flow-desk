@@ -763,12 +763,20 @@ export default function Auth() {
     e.preventDefault();
     setErrors({});
     setIsLoading(true);
+    
+    // 🛡️ v12.2: Timeout máximo de segurança (20s) para NUNCA travar
+    const safetyTimeout = setTimeout(() => {
+      console.warn("[AUTH] ⏱️ Safety timeout atingido - liberando formulário");
+      setIsLoading(false);
+      toast.error("A solicitação demorou demais. Tente novamente.");
+    }, 20000);
 
     try {
       const email = (formData.email || "").trim();
 
       if (!email || !email.includes("@")) {
         setErrors({ email: "Digite um email válido" });
+        clearTimeout(safetyTimeout);
         setIsLoading(false);
         return;
       }
@@ -779,7 +787,11 @@ export default function Auth() {
         console.log("[AUTH] 🔓 Turnstile bypass ativo para reset de senha");
       }
 
+      console.log("[AUTH] 📧 Solicitando reset de senha para:", email);
       const { error } = await resetPassword(email);
+      
+      clearTimeout(safetyTimeout);
+      
       if (error) {
         toast.error(formatError(error));
         resetTurnstile();
@@ -789,9 +801,11 @@ export default function Auth() {
 
       setResetEmailSent(true);
       toast.success("Email de recuperação enviado!");
-    } catch {
+    } catch (err) {
+      console.error("[AUTH] Erro no handleForgotPassword:", err);
       toast.error("Erro ao enviar email de recuperação");
     } finally {
+      clearTimeout(safetyTimeout);
       setIsLoading(false);
     }
   };
