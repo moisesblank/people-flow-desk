@@ -8,7 +8,7 @@
 
 import "@/styles/auth-spiderman-2300.css";
 
-import { useState, useEffect, lazy, Suspense, useCallback, forwardRef } from "react";
+import { useState, useEffect, lazy, Suspense, useCallback, forwardRef, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
 import { CloudflareTurnstile, useTurnstile } from "@/components/security/CloudflareTurnstile";
@@ -123,6 +123,7 @@ export default function Auth() {
     return () => {
       console.log("[AUTH] Componente desmontado - resetando loginIntent");
       getDeviceGateActions().setLoginIntent(false);
+      loginAttemptedRef.current = false;
     };
   }, []);
 
@@ -569,8 +570,11 @@ export default function Auth() {
     })();
   }, [isUpdatePassword, navigate]);
 
-  // 🛡️ POLÍTICA v10.0: Flag para garantir que redirect só ocorre após login EXPLÍCITO
-  const [loginAttempted, setLoginAttempted] = useState(false);
+  // 🛡️ POLÍTICA v10.0: redirect só ocorre após login EXPLÍCITO
+  // P0 FIX (race condition): setState é assíncrono e o onAuthStateChange pode disparar
+  // antes do React aplicar loginAttempted=true. Usamos ref síncrona como fonte imediata.
+  const loginAttemptedRef = useRef(false);
+  const [loginAttempted, setLoginAttempted] = useState(false); // UI/debug
 
   // Listener: login bem-sucedido deve sair de /auth
   // ✅ P0 FIX: Buscar role do banco ANTES de redirecionar
@@ -596,7 +600,7 @@ export default function Auth() {
       // Isso inclui INITIAL_SESSION (era o bug que causava session bleeding!)
       // - SIGNED_IN: só redireciona quando usuário clicou em "Entrar"
       // - INITIAL_SESSION: TAMBÉM exige clique explícito (FIX do session bleeding)
-      if (!loginAttempted) {
+       if (!loginAttemptedRef.current) {
         console.log(`[AUTH] 🛡️ ${event} detectado mas loginAttempted=false - BLOQUEANDO auto-redirect (anti-session-bleeding)`);
         
         // 🛡️ FIX: Se não há matriz_session_token, fazer signOut para limpar sessão fantasma
@@ -675,7 +679,7 @@ export default function Auth() {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, isUpdatePassword, loginAttempted]);
+   }, [navigate, isUpdatePassword]);
 
   useEffect(() => {
     console.log("[AUTH] 2. Turnstile hook status:", {
@@ -1080,6 +1084,7 @@ export default function Auth() {
       if (isLogin) {
         // 🛡️ POLÍTICA v10.0: Sinaliza que o usuário CLICOU em "Entrar"
         // Isso habilita o redirect no onAuthStateChange listener
+        loginAttemptedRef.current = true; // síncrono (evita race)
         setLoginAttempted(true);
         console.log("[AUTH] 4. Verificando sessão ativa existente...");
 
