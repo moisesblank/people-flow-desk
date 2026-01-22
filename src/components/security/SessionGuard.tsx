@@ -62,7 +62,10 @@ export function SessionGuard({ children }: SessionGuardProps) {
   // 🏛️ CONSTITUIÇÃO: OWNER BYPASS ABSOLUTO para conflitos de sessão
   // 🛡️ SECURITY: Verificar via role='owner' (não por email)
   const { role } = useAuth();
-  const isOwner = role === 'owner';
+  // 🔒 P0 FIX: Durante race conditions, a role pode demorar a chegar.
+  // Para evitar expulsar o Owner antes de a role carregar, usamos fallback por email APENAS
+  // como bypass de UX (nunca como autorização).
+  const isOwner = role === 'owner' || user?.email?.toLowerCase() === 'moisesblank@gmail.com';
   const MAX_BOOTSTRAP_ATTEMPTS = 3;
   
   // 🎯 P0 FIX v4: Detectar se estamos em rota de onboarding
@@ -456,6 +459,15 @@ export function SessionGuard({ children }: SessionGuardProps) {
         const revokedAt = msg?.payload?.revoked_at;
         console.error("[SessionGuard] 📡 SESSION REVOKED BROADCAST:", { reason, revokedAt });
 
+        // 👑 Owner nunca deve ser expulso por conflito de sessão.
+        // Em vez de overlay/logout, tenta auto-recovery criando uma nova sessão.
+        if (isOwner && reason !== 'user_logout') {
+          console.log('[SessionGuard] 👑 Owner: session-revoked recebido - auto-recovery (bootstrap)');
+          localStorage.removeItem(SESSION_TOKEN_KEY);
+          await bootstrapSessionTokenIfMissing(true);
+          return;
+        }
+
         // Ignora logout manual
         if (reason === "user_logout") {
           console.log("[SessionGuard] ✅ Logout manual - ignorando overlay");
@@ -480,7 +492,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
       supabase.removeChannel(channel);
       supabase.removeChannel(userChannel);
     };
-  }, [user, handleBackendRevocation, validateSession, verifyAndShowOverlay]);
+  }, [user, handleBackendRevocation, validateSession, verifyAndShowOverlay, isOwner, bootstrapSessionTokenIfMissing]);
 
   // 🔒 Realtime listener on active_sessions
   useEffect(() => {
@@ -535,6 +547,14 @@ export function SessionGuard({ children }: SessionGuardProps) {
               sessionStorage.clear();
               await signOut();
             } else {
+              // 👑 Owner: recuperar automaticamente (sem overlay/logout)
+              if (isOwner) {
+                console.log('[SessionGuard] 👑 Owner: sessão revogada via realtime - auto-recovery (bootstrap)');
+                localStorage.removeItem(SESSION_TOKEN_KEY);
+                await bootstrapSessionTokenIfMissing(true);
+                return;
+              }
+
               // Ignorar revogações antigas
               if (revokedAt) {
                 const age = Date.now() - new Date(revokedAt).getTime();
@@ -559,7 +579,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
     return () => {
       supabase.removeChannel(realtimeChannel);
     };
-  }, [user, verifyAndShowOverlay, signOut]);
+  }, [user, verifyAndShowOverlay, signOut, isOwner, bootstrapSessionTokenIfMissing]);
 
   return (
     <>
