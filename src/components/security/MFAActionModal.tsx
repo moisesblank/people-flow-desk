@@ -1,7 +1,6 @@
 // ============================================
 // 🔐 MFA ACTION MODAL — Modal de Verificação 2FA
 // Isolado do fluxo de login (para ações sensíveis)
-// 🛡️ P0 FIX: error é SEMPRE string (evita React Error #61)
 // ============================================
 
 import React, { useState, useCallback, useEffect } from "react";
@@ -14,7 +13,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import type { MFAProtectedAction } from "@/hooks/useMFAGuard";
 import { cn } from "@/lib/utils";
-import { formatError } from "@/lib/utils/formatError";
 
 type MFAChannel = "email" | "sms" | "whatsapp";
 
@@ -188,19 +186,6 @@ export function MFAActionModal({ isOpen, onClose, onSuccess, action, title, desc
     setIsLoading(true);
     setError(null);
 
-     // 🛡️ P0: Nunca permitir spinner infinito (principalmente quando onSuccess é async)
-     const withTimeout = async <T,>(label: string, promise: Promise<T>, timeoutMs: number): Promise<T> => {
-       let timeoutId: ReturnType<typeof setTimeout> | null = null;
-       try {
-         const timeoutPromise = new Promise<T>((_, reject) => {
-           timeoutId = setTimeout(() => reject(new Error(`Timeout ${timeoutMs}ms em: ${label}`)), timeoutMs);
-         });
-         return await Promise.race([promise, timeoutPromise]);
-       } finally {
-         if (timeoutId) clearTimeout(timeoutId);
-       }
-     };
-
     try {
       const { data, error: verifyError } = await supabase.functions.invoke("verify-2fa-code", {
         body: {
@@ -224,21 +209,13 @@ export function MFAActionModal({ isOpen, onClose, onSuccess, action, title, desc
       setStep("success");
       toast.success("Verificação concluída!");
 
-      // 🔐 P0 FIX v12: Chamar onSuccess DIRETAMENTE (sem timeout)
-      // O timeout causava race conditions onde o modal fechava antes de onSuccess terminar
-      // O callback handleVerificationSuccess no DeviceMFAGuard agora é async e aguarda
-      console.log('[MFAActionModal] ✅ Chamando onSuccess...');
-      try {
-        // ⏳ onSuccess pode registrar dispositivo, RPC e atualizar sessão; aplicar timeout.
-        await withTimeout('onSuccess', Promise.resolve(onSuccess()), 20_000);
-        console.log('[MFAActionModal] ✅ onSuccess concluído');
-      } catch (err) {
-        console.error('[MFAActionModal] ❌ Erro no onSuccess:', err);
-        setError(formatError(err, 'Falha ao finalizar verificação'));
-      }
+      // Delay para mostrar animação de sucesso
+      setTimeout(() => {
+        onSuccess();
+      }, 800);
     } catch (err: any) {
       console.error("[MFAActionModal] Erro ao verificar código:", err);
-      setError(formatError(err, "Código inválido ou expirado"));
+      setError(err.message || "Código inválido ou expirado");
     } finally {
       setIsLoading(false);
       verifyingRef.current = false;
@@ -336,7 +313,7 @@ export function MFAActionModal({ isOpen, onClose, onSuccess, action, title, desc
               {error && (
                 <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
-                  {formatError(error)}
+                  {error}
                 </div>
               )}
 
@@ -384,7 +361,7 @@ export function MFAActionModal({ isOpen, onClose, onSuccess, action, title, desc
               {error && (
                 <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
-                  {formatError(error)}
+                  {error}
                 </div>
               )}
 
