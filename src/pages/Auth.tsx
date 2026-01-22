@@ -648,6 +648,20 @@ export default function Auth() {
       const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
       if (is2FAPending) return;
 
+       // 👑 OWNER FAST-PATH (P0): se o email do Owner já está presente na sessão,
+       // NÃO depender de fetch de role/RLS para redirecionar.
+       // Motivo: em cenários de latência/timeout/RLS, o owner pode ficar preso em /auth.
+       // Segurança server-side permanece: isso só orquestra UX para o destino canônico.
+       const sessionEmail = (session.user.email || "").toLowerCase();
+       if (sessionEmail === OWNER_EMAIL) {
+         console.log("[AUTH] 👑 OWNER FAST-PATH: redirect imediato para", OWNER_HOME);
+         localStorage.setItem('matriz_is_owner_cache', 'true');
+         localStorage.setItem('matriz_user_role', OWNER_ROLE);
+         // Usar replace do browser para cortar qualquer loop de router/histórico
+         window.location.replace(OWNER_HOME);
+         return;
+       }
+
       // ✅ P0 FIX CRÍTICO: Buscar role E verificar password_change_required
       let userRole: string | null = null;
       let needsPasswordChange = false;
