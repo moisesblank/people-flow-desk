@@ -4,12 +4,12 @@
 // REGRA PERMANENTE: Todo erro deve ser visível ao owner
 // ============================================
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { RealtimeChannel } from '@supabase/supabase-js';
+import { useState, useEffect, useCallback, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
-export type LogSeverity = 'info' | 'warning' | 'error' | 'critical';
+export type LogSeverity = "info" | "warning" | "error" | "critical";
 
 export interface SystemLog {
   id: string;
@@ -64,9 +64,10 @@ let logFailStreak = 0;
 function getSessionId(): string {
   if (!sessionId) {
     try {
-      sessionId = (globalThis.crypto && 'randomUUID' in globalThis.crypto)
-        ? globalThis.crypto.randomUUID()
-        : `sess_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+      sessionId =
+        globalThis.crypto && "randomUUID" in globalThis.crypto
+          ? globalThis.crypto.randomUUID()
+          : `sess_${Date.now()}_${Math.random().toString(16).slice(2)}`;
     } catch {
       sessionId = `sess_${Date.now()}_${Math.random().toString(16).slice(2)}`;
     }
@@ -85,7 +86,7 @@ export async function sendSystemLog(
     triggeredAction?: string;
     stackTrace?: string;
     metadata?: Record<string, unknown>;
-  } = {}
+  } = {},
 ): Promise<void> {
   // Fail-fast se o logger entrou em modo supresso (evita tela preta por loops)
   if (Date.now() < logSuppressedUntil) return;
@@ -98,32 +99,29 @@ export async function sendSystemLog(
     const fetchImpl = rawFetch ?? window.fetch;
 
     // Enviar para edge function que salva em TXT + banco
-    const response = await fetchImpl(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/log-writer`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          // marcação explícita para qualquer outro interceptor futuro
-          'X-System-Log': '1',
-        },
-        body: JSON.stringify({
-          timestamp: now.toISOString(),
-          severity,
-          affected_url_or_area: options.affectedUrl || window.location.pathname,
-          triggered_action: options.triggeredAction || category,
-          error_message: errorMessage.slice(0, 2000),
-        }),
-      }
-    );
+    const response = await fetchImpl(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/log-writer`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        // marcação explícita para qualquer outro interceptor futuro
+        "X-System-Log": "1",
+      },
+      body: JSON.stringify({
+        timestamp: now.toISOString(),
+        severity,
+        affected_url_or_area: options.affectedUrl || window.location.pathname,
+        triggered_action: options.triggeredAction || category,
+        error_message: errorMessage.slice(0, 2000),
+      }),
+    });
 
     if (!response.ok) {
       // Fallback: enviar direto ao banco se edge function falhar
-      await supabase.rpc('insert_system_log', {
+      await supabase.rpc("insert_system_log", {
         p_severity: severity,
         p_category: category,
-        p_source: options.source || 'frontend',
+        p_source: options.source || "frontend",
         p_affected_url: options.affectedUrl || window.location.pathname,
         p_triggered_action: options.triggeredAction || null,
         p_error_message: errorMessage.slice(0, 2000),
@@ -145,7 +143,7 @@ export async function sendSystemLog(
     // Fallback final: NUNCA use o console interceptado (pode reentrar em loop)
     const safeConsoleError = rawConsoleError ?? console.error;
     try {
-      safeConsoleError('[SystemLog] Failed to send log (suppressed):', {
+      safeConsoleError("[SystemLog] Failed to send log (suppressed):", {
         message: (err as Error)?.message || String(err),
         backoffMs,
       });
@@ -161,8 +159,8 @@ export function initGlobalErrorCapture(): void {
   globalLoggerInitialized = true;
 
   // Capturar erros JavaScript não tratados
-  window.addEventListener('error', (event) => {
-    sendSystemLog('error', 'javascript_error', event.message, {
+  window.addEventListener("error", (event) => {
+    sendSystemLog("error", "javascript_error", event.message, {
       affectedUrl: window.location.pathname,
       stackTrace: event.error?.stack,
       metadata: {
@@ -174,13 +172,13 @@ export function initGlobalErrorCapture(): void {
   });
 
   // Capturar promises rejeitadas não tratadas
-  window.addEventListener('unhandledrejection', (event) => {
+  window.addEventListener("unhandledrejection", (event) => {
     const message = event.reason?.message || String(event.reason);
-    sendSystemLog('error', 'unhandled_rejection', message, {
+    sendSystemLog("error", "unhandled_rejection", message, {
       affectedUrl: window.location.pathname,
       stackTrace: event.reason?.stack,
       metadata: {
-        type: 'unhandledrejection',
+        type: "unhandledrejection",
       },
     });
   });
@@ -192,11 +190,11 @@ export function initGlobalErrorCapture(): void {
   window.fetch = async (...args) => {
     // Nunca interceptar o próprio pipeline de logs
     try {
-      const url = typeof args[0] === 'string' ? args[0] : args[0].toString();
+      const url = typeof args[0] === "string" ? args[0] : args[0].toString();
       const headers = (args[1] as RequestInit | undefined)?.headers as any;
       const isSystemLog =
-        url.includes('/functions/v1/log-writer') ||
-        (headers && (headers['X-System-Log'] === '1' || headers['x-system-log'] === '1'));
+        url.includes("/functions/v1/log-writer") ||
+        (headers && (headers["X-System-Log"] === "1" || headers["x-system-log"] === "1"));
       if (isSystemLog) {
         return await originalFetch(...args);
       }
@@ -207,28 +205,28 @@ export function initGlobalErrorCapture(): void {
     try {
       const response = await originalFetch(...args);
       if (!response.ok && response.status >= 400) {
-        const url = typeof args[0] === 'string' ? args[0] : args[0].toString();
+        const url = typeof args[0] === "string" ? args[0] : args[0].toString();
         sendSystemLog(
-          response.status >= 500 ? 'error' : 'warning',
-          'api_error',
+          response.status >= 500 ? "error" : "warning",
+          "api_error",
           `HTTP ${response.status}: ${response.statusText}`,
           {
-            source: 'fetch_interceptor',
+            source: "fetch_interceptor",
             affectedUrl: url,
             metadata: {
               status: response.status,
               statusText: response.statusText,
-              method: (args[1] as RequestInit)?.method || 'GET',
+              method: (args[1] as RequestInit)?.method || "GET",
             },
-          }
+          },
         );
       }
 
       return response;
     } catch (err) {
-      const url = typeof args[0] === 'string' ? args[0] : args[0].toString();
-      sendSystemLog('error', 'network_error', (err as Error).message, {
-        source: 'fetch_interceptor',
+      const url = typeof args[0] === "string" ? args[0] : args[0].toString();
+      sendSystemLog("error", "network_error", (err as Error).message, {
+        source: "fetch_interceptor",
         affectedUrl: url,
         stackTrace: (err as Error).stack,
       });
@@ -245,13 +243,13 @@ export function initGlobalErrorCapture(): void {
 
   const safeSerialize = (arg: unknown): string => {
     try {
-      if (typeof arg === 'string') return arg;
+      if (typeof arg === "string") return arg;
       if (arg instanceof Error) return `${arg.name}: ${arg.message}`;
-      if (typeof arg === 'object' && arg !== null) {
+      if (typeof arg === "object" && arg !== null) {
         const seen = new WeakSet<object>();
         return JSON.stringify(arg, (_k, v) => {
-          if (typeof v === 'object' && v !== null) {
-            if (seen.has(v as object)) return '[Circular]';
+          if (typeof v === "object" && v !== null) {
+            if (seen.has(v as object)) return "[Circular]";
             seen.add(v as object);
           }
           return v;
@@ -262,7 +260,7 @@ export function initGlobalErrorCapture(): void {
       try {
         return String(arg);
       } catch {
-        return '[Unserializable]';
+        return "[Unserializable]";
       }
     }
   };
@@ -277,17 +275,17 @@ export function initGlobalErrorCapture(): void {
       if (now - lastConsoleLogTime < 2000) return;
 
       // Filtrar logs do próprio sistema e ruído para evitar loop/spam
-      const message = args.map(safeSerialize).join(' ');
+      const message = args.map(safeSerialize).join(" ");
 
       // Lista de padrões a ignorar (sistema + ruído + perf)
       const ignorePatterns = [
-        '[SystemLog]',
-        '[MATRIZ]',
-        '[PERF',
-        '[BrowserLogs]',
-        'Long Task',
-        'Failed to fetch',
-        'forwardRef',
+        "[SystemLog]",
+        "[MATRIZ]",
+        "[PERF",
+        "[BrowserLogs]",
+        "Long Task",
+        "Failed to fetch",
+        "forwardRef",
       ];
 
       const shouldIgnore = ignorePatterns.some((pattern) => message.includes(pattern));
@@ -295,8 +293,8 @@ export function initGlobalErrorCapture(): void {
       if (!shouldIgnore) {
         lastConsoleLogTime = now;
         // fire-and-forget (sem await) para nunca bloquear UI
-        void sendSystemLog('error', 'console_error', message.slice(0, 1000), {
-          source: 'console_interceptor',
+        void sendSystemLog("error", "console_error", message.slice(0, 1000), {
+          source: "console_interceptor",
           affectedUrl: window.location.pathname,
         });
       }
@@ -305,7 +303,7 @@ export function initGlobalErrorCapture(): void {
     }
   };
 
-  console.log('[SystemLog] ✅ Global error capture initialized');
+  console.log("[SystemLog] ✅ Global error capture initialized");
 }
 
 // Hook para visualização de logs
@@ -319,24 +317,24 @@ export function useSystemLogs(limit: number = 100): UseSystemLogsReturn {
   // Calcular estatísticas
   const stats = {
     total: logs.length,
-    info: logs.filter(l => l.severity === 'info').length,
-    warning: logs.filter(l => l.severity === 'warning').length,
-    error: logs.filter(l => l.severity === 'error').length,
-    critical: logs.filter(l => l.severity === 'critical').length,
+    info: logs.filter((l) => l.severity === "info").length,
+    warning: logs.filter((l) => l.severity === "warning").length,
+    error: logs.filter((l) => l.severity === "error").length,
+    critical: logs.filter((l) => l.severity === "critical").length,
   };
 
   // Buscar logs iniciais
   const fetchLogs = useCallback(async () => {
     if (!user) return;
-    
+
     setIsLoading(true);
     setError(null);
 
     try {
       const { data, error: fetchError } = await supabase
-        .from('system_realtime_logs')
-        .select('*')
-        .order('timestamp', { ascending: false })
+        .from("system_realtime_logs")
+        .select("*")
+        .order("timestamp", { ascending: false })
         .limit(limit);
 
       if (fetchError) throw fetchError;
@@ -344,7 +342,7 @@ export function useSystemLogs(limit: number = 100): UseSystemLogsReturn {
       setLogs((data as SystemLog[]) || []);
     } catch (err) {
       setError((err as Error).message);
-      console.error('[useSystemLogs] Error fetching logs:', err);
+      console.error("[useSystemLogs] Error fetching logs:", err);
     } finally {
       setIsLoading(false);
     }
@@ -363,18 +361,18 @@ export function useSystemLogs(limit: number = 100): UseSystemLogsReturn {
 
     // Subscrever para updates em tempo real
     channelRef.current = supabase
-      .channel('system-logs-realtime')
+      .channel("system-logs-realtime")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'system_realtime_logs',
+          event: "INSERT",
+          schema: "public",
+          table: "system_realtime_logs",
         },
         (payload) => {
           const newLog = payload.new as SystemLog;
-          setLogs(prev => [newLog, ...prev.slice(0, limit - 1)]);
-        }
+          setLogs((prev) => [newLog, ...prev.slice(0, limit - 1)]);
+        },
       )
       .subscribe();
 
@@ -396,14 +394,14 @@ export function useSystemLogs(limit: number = 100): UseSystemLogsReturn {
 }
 
 // Exportar helpers para uso em outros lugares
-export const logInfo = (message: string, category = 'general', metadata?: Record<string, unknown>) => 
-  sendSystemLog('info', category, message, { metadata });
+export const logInfo = (message: string, category = "general", metadata?: Record<string, unknown>) =>
+  sendSystemLog("info", category, message, { metadata });
 
-export const logWarning = (message: string, category = 'general', metadata?: Record<string, unknown>) => 
-  sendSystemLog('warning', category, message, { metadata });
+export const logWarning = (message: string, category = "general", metadata?: Record<string, unknown>) =>
+  sendSystemLog("warning", category, message, { metadata });
 
-export const logError = (message: string, category = 'general', metadata?: Record<string, unknown>) => 
-  sendSystemLog('error', category, message, { metadata });
+export const logError = (message: string, category = "general", metadata?: Record<string, unknown>) =>
+  sendSystemLog("error", category, message, { metadata });
 
-export const logCritical = (message: string, category = 'general', metadata?: Record<string, unknown>) => 
-  sendSystemLog('critical', category, message, { metadata });
+export const logCritical = (message: string, category = "general", metadata?: Record<string, unknown>) =>
+  sendSystemLog("critical", category, message, { metadata });
