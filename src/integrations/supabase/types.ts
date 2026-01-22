@@ -13206,8 +13206,10 @@ export type Database = {
         Row: {
           auth_enabled: boolean
           auth_epoch: number
+          cache_epoch: number | null
           created_at: string
           id: string
+          last_cache_clear_at: string | null
           last_lockdown_at: string | null
           last_lockdown_by: string | null
           last_lockdown_reason: string | null
@@ -13217,8 +13219,10 @@ export type Database = {
         Insert: {
           auth_enabled?: boolean
           auth_epoch?: number
+          cache_epoch?: number | null
           created_at?: string
           id?: string
+          last_cache_clear_at?: string | null
           last_lockdown_at?: string | null
           last_lockdown_by?: string | null
           last_lockdown_reason?: string | null
@@ -13228,8 +13232,10 @@ export type Database = {
         Update: {
           auth_enabled?: boolean
           auth_epoch?: number
+          cache_epoch?: number | null
           created_at?: string
           id?: string
+          last_cache_clear_at?: string | null
           last_lockdown_at?: string | null
           last_lockdown_by?: string | null
           last_lockdown_reason?: string | null
@@ -18543,6 +18549,7 @@ export type Database = {
       cleanup_old_security_events_v2: { Args: never; Returns: number }
       cleanup_old_security_logs: { Args: never; Returns: undefined }
       cleanup_old_sensitive_data: { Args: never; Returns: undefined }
+      cleanup_old_video_logs: { Args: never; Returns: undefined }
       cleanup_old_webhooks: { Args: never; Returns: number }
       cleanup_rate_limits: { Args: never; Returns: number }
       cleanup_rate_limits_v3: { Args: never; Returns: number }
@@ -19256,6 +19263,7 @@ export type Database = {
         Returns: boolean
       }
       hash_session_token: { Args: { token: string }; Returns: string }
+      increment_cache_epoch: { Args: never; Returns: undefined }
       increment_metrica_diaria:
         | {
             Args: { p_campo: string; p_data: string; p_valor: number }
