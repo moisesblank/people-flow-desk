@@ -595,20 +595,19 @@ export default function Auth() {
 
       if ((event !== "SIGNED_IN" && event !== "INITIAL_SESSION") || !session?.user) return;
 
-      // 🛡️ P0 FIX SESSION BLEEDING v12.0:
-      // Bloquear TODOS os eventos de sessão se loginAttempted === false
-      // Isso inclui INITIAL_SESSION (era o bug que causava session bleeding!)
+      // 🛡️ P0 FIX SESSION BLEEDING v12.1:
+      // Bloquear apenas o REDIRECT automático se loginAttempted === false
+      // CRÍTICO: NÃO fazer signOut() aqui! Isso causa loop de login impossível
+      // porque o signOut destrói sessões legítimas antes do usuário poder logar.
       // - SIGNED_IN: só redireciona quando usuário clicou em "Entrar"
-      // - INITIAL_SESSION: TAMBÉM exige clique explícito (FIX do session bleeding)
-       if (!loginAttemptedRef.current) {
-        console.log(`[AUTH] 🛡️ ${event} detectado mas loginAttempted=false - BLOQUEANDO auto-redirect (anti-session-bleeding)`);
-        
-        // 🛡️ FIX: Se não há matriz_session_token, fazer signOut para limpar sessão fantasma
-        const existingToken = localStorage.getItem("matriz_session_token");
-        if (!existingToken) {
-          console.warn("[AUTH] 🚫 SESSION BLEEDING via onAuthStateChange - fazendo signOut");
-          supabase.auth.signOut();
-        }
+      // - INITIAL_SESSION: só redireciona se loginAttemptedRef.current === true
+      if (!loginAttemptedRef.current) {
+        console.log(`[AUTH] 🛡️ ${event} detectado mas loginAttempted=false - BLOQUEANDO auto-redirect (usuário deve clicar Entrar)`);
+        // 🔒 P0 FIX v12.1: NÃO fazer signOut! Apenas bloquear redirect.
+        // O signOut aqui DESTRUÍA sessões legítimas e impedia login.
+        // Se o usuário tem sessão de cookie mas não clicou "Entrar", 
+        // deixamos a sessão existir e ele pode clicar "Entrar" normalmente.
+        setIsCheckingSession(false); // Liberar UI para usuário interagir
         return;
       }
 
