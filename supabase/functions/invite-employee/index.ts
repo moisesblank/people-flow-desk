@@ -218,13 +218,13 @@ const handler = async (req: Request): Promise<Response> => {
           }
         }
         
-        // Create profile and role
+        // 🎯 CONTRATO: Funcionário NÃO passa por onboarding de aluno
         await supabase.from("profiles").upsert({
           id: newUser.user.id,
           email: email,
           nome: nome,
-          password_change_required: true,
-          onboarding_completed: false,
+          password_change_required: false, // Senha já definida pelo admin
+          onboarding_completed: true, // Funcionário vai DIRETO para /gestaofc
         }, { onConflict: "id" });
         
         await supabase.from("user_roles").upsert({ 
@@ -232,14 +232,9 @@ const handler = async (req: Request): Promise<Response> => {
           role: assignedRole
         }, { onConflict: "user_id", ignoreDuplicates: false });
         
-        // Send welcome email
+        // 🎯 CONTRATO: Email com link DIRETO para /auth + credenciais
         try {
           const siteUrl = Deno.env.get('SITE_URL') || 'https://pro.moisesmedeiros.com.br';
-          const { data: linkData } = await supabase.auth.admin.generateLink({
-            type: 'magiclink',
-            email: email,
-            options: { redirectTo: `${siteUrl}/primeiro-acesso` },
-          });
           
           await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
             method: "POST",
@@ -249,15 +244,16 @@ const handler = async (req: Request): Promise<Response> => {
             },
             body: JSON.stringify({
               to: email,
-              type: "welcome_staff_magic",
+              type: "welcome_staff", // Template COM credenciais e link DIRETO /auth
               data: { 
                 nome,
                 email,
-                access_link: linkData?.properties?.action_link || `${siteUrl}/auth`,
+                senha, // Senha definida pelo admin
                 funcao: funcao || 'Funcionário',
               },
             }),
           });
+          console.log("[INVITE] Welcome email with credentials sent to:", email);
         } catch (emailErr) {
           console.warn("[INVITE] Email error:", emailErr);
         }
@@ -301,11 +297,25 @@ const handler = async (req: Request): Promise<Response> => {
           .eq("id", employee_id);
       }
 
-      console.log(`[INVITE] Password updated for existing user: ${email}`);
+      // 🎯 CONTRATO: UPSERT profile e role para usuário existente
+      await supabase.from("profiles").upsert({
+        id: existingUser.id,
+        email: email,
+        nome: nome,
+        password_change_required: false, // Senha já definida pelo admin
+        onboarding_completed: true, // Funcionário não passa por onboarding de aluno
+      }, { onConflict: "id" });
       
-      // 🎯 FIX: Enviar email via fetch direto COM SENHA
+      await supabase.from("user_roles").upsert({ 
+        user_id: existingUser.id, 
+        role: assignedRole
+      }, { onConflict: "user_id", ignoreDuplicates: false });
+
+      console.log(`[INVITE] Profile/role updated for existing user: ${email}, role: ${assignedRole}`);
+      
+      // 🎯 CONTRATO: Email com credenciais + link DIRETO para /auth
       try {
-        const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
+        await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -313,22 +323,16 @@ const handler = async (req: Request): Promise<Response> => {
           },
           body: JSON.stringify({
             to: email,
-            type: "welcome_staff", // Template específico com senha
+            type: "welcome_staff",
             data: { 
               nome,
-              senha, // ✅ P0 FIX: Incluir senha no email
-              email, // Para exibir login
+              senha,
+              email,
+              funcao: funcao || 'Funcionário',
             },
           }),
         });
-
-        if (emailResponse.ok) {
-          const emailData = await emailResponse.json();
-          console.log("[INVITE] Welcome email sent to existing user", emailData);
-        } else {
-          const errText = await emailResponse.text();
-          console.warn("[INVITE] Email sending may have failed:", errText);
-        }
+        console.log("[INVITE] Welcome email sent to existing user:", email);
       } catch (emailErr) {
         console.warn("[INVITE] Email error:", emailErr);
       }
@@ -336,7 +340,7 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: "Acesso atualizado com sucesso! O funcionário receberá um email.",
+          message: "Acesso atualizado com sucesso! O funcionário receberá um email com as credenciais.",
           user_id: existingUser.id
         }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
