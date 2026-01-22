@@ -577,6 +577,8 @@ export default function RHFuncionarios() {
     }
 
     try {
+      const INVITE_TIMEOUT_MS = 15000;
+
       // Senha forte gerada automaticamente se não fornecida (mín 8 + min/maiúscula/número/especial)
       const generateStrongPassword = () => {
         const lower = "abcdefghijklmnopqrstuvwxyz";
@@ -600,8 +602,8 @@ export default function RHFuncionarios() {
       const senhaGerada = formData.senha?.trim() || generateStrongPassword();
       
       console.log("[RH] Enviando convite:", { email, nome, employee_id: employeeId, role: formData.nivel_acesso });
-      
-      const { data, error } = await supabase.functions.invoke("invite-employee", {
+
+      const invokePromise = supabase.functions.invoke("invite-employee", {
         body: {
           email,
           nome,
@@ -611,6 +613,15 @@ export default function RHFuncionarios() {
           employee_id: employeeId || editingEmployee?.id || undefined,
         },
       });
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error("Timeout ao criar acesso (convite) — tente novamente")), INVITE_TIMEOUT_MS);
+      });
+
+      const { data, error } = (await Promise.race([invokePromise, timeoutPromise])) as {
+        data: any;
+        error: any;
+      };
 
       if (error) {
         console.error("[RH] Erro no invoke:", error);
