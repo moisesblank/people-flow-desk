@@ -62,14 +62,14 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (authLoading || roleLoading) {
-        console.warn("[RoleProtectedRoute] Timeout de 5s atingido - prosseguindo com estado atual");
+      if (authLoading || roleLoading || onboardingLoading) {
+        console.warn("[RoleProtectedRoute] Timeout de 5s atingido (auth/role/onboarding) - aplicando fallback seguro");
         setLoadingTimeout(true);
       }
     }, 5000);
 
     return () => clearTimeout(timeout);
-  }, [authLoading, roleLoading]);
+  }, [authLoading, roleLoading, onboardingLoading]);
 
   // ============================================
   // 🔥 OWNER BYPASS VIA ROLE (P1-2 FIX)
@@ -164,6 +164,18 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
       </div>
     );
+  }
+
+  // 🛡️ Fallback seguro: se o onboarding ficou pendurado (rede/RLS/etc),
+  // não podemos liberar acesso a rotas protegidas sem saber.
+  if (user && onboardingLoading && loadingTimeout && !isOnPrimeiroAcesso && !shouldBypassForOwner) {
+    console.warn("[RoleProtectedRoute] Onboarding ainda carregando após timeout → redirect onboarding", {
+      path: location.pathname,
+      email: user.email,
+      role,
+      onboardingRedirectPath,
+    });
+    return <Navigate to={onboardingRedirectPath} replace />;
   }
 
   // Not authenticated
