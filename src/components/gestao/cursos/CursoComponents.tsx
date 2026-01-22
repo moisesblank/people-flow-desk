@@ -232,12 +232,10 @@ export function ModuleItem({
       
       if (uploadError) throw uploadError;
       
-      const { data: urlData } = supabase.storage.from('materiais').getPublicUrl(filePath);
-      
-      if (urlData?.publicUrl) {
-        onImageUpdate(module.id, urlData.publicUrl);
-        toast({ title: '✅ Imagem enviada!' });
-      }
+      // 🛡️ P0 FIX: Salvar apenas o PATH no banco (não URL pública)
+      // O frontend irá gerar URL assinada quando precisar exibir
+      onImageUpdate(module.id, filePath);
+      toast({ title: '✅ Imagem enviada!' });
     } catch (error: any) {
       toast({ title: 'Erro no upload', description: error.message, variant: 'destructive' });
     } finally {
