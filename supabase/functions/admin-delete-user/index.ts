@@ -277,13 +277,18 @@ serve(async (req) => {
     }
 
     // Demais tabelas: deletar por user_id (onde o histórico não precisa ficar)
+    // 🔥 P0 FIX: material_access_logs é FK bloqueante - DEVE ser limpa
     const deleteRefs = [
+      "material_access_logs",       // 🔥 FK bloqueante identificado via logs
       "user_sessions",
       "notifications",
       "book_chat_messages",
       "book_chat_threads",
       "book_reading_sessions",
       "book_ratings",
+      "book_user_annotations",      // Anotações em livros
+      "book_user_bookmarks",        // Favoritos em livros
+      "book_user_page_overlays",    // Desenhos em livros
       "calendar_tasks",
       "xp_history",
       "user_gamification",
