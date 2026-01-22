@@ -428,17 +428,20 @@ export function detectSuspiciousActivity(): {
       riskScore += 20;
     }
 
-    // Detectar automação (webdriver)
-    if ((navigator as any).webdriver) {
-      reasons.push('Automation detected');
-      riskScore += 50;
-    }
+    // ⚠️ DESATIVADO 2026-01-22: Detecção de automação causava falsos positivos no fluxo de 2FA
+    // A proteção é redundante - RLS + watermark + DevTools detection cobrem o cenário
+    // 
+    // Detectar automação (webdriver) - REMOVIDO
+    // if ((navigator as any).webdriver) {
+    //   reasons.push('Automation detected');
+    //   riskScore += 50;
+    // }
 
-    // Detectar headless browser
-    if (!navigator.languages || navigator.languages.length === 0) {
-      reasons.push('Possible headless browser');
-      riskScore += 30;
-    }
+    // Detectar headless browser - REMOVIDO
+    // if (!navigator.languages || navigator.languages.length === 0) {
+    //   reasons.push('Possible headless browser');
+    //   riskScore += 30;
+    // }
 
     // Detectar múltiplas abas
     const tabCount = parseInt(sessionStorage.getItem('_tabCount') || '0', 10);
