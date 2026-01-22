@@ -1499,6 +1499,10 @@ export default function Auth() {
             onVerified={async () => {
               console.log("[AUTH] ✅ 2FA verificado com sucesso, iniciando redirect...");
 
+              // 🛡️ P0: proteger fluxo crítico contra Promise rejection sem tratamento
+              // (quando alguma etapa lança exceção, o app pode “voltar ao início”).
+              try {
+
               // ✅ OTIMIZAÇÃO: Salvar cache de confiança após 2FA bem-sucedido
               if (pending2FAUser.deviceHash) {
                 setTrustCache(pending2FAUser.userId, pending2FAUser.deviceHash);
@@ -1512,8 +1516,8 @@ export default function Auth() {
               // ============================================
               // 🛡️ BLOCO 3: REGISTRAR DISPOSITIVO ANTES DA SESSÃO (pós-2FA)
               // ============================================
-              console.log("[AUTH][BLOCO3] 🔐 Registrando dispositivo ANTES da sessão (pós-2FA)...");
-              const deviceResult = await registerDeviceBeforeSession();
+               console.log("[AUTH][BLOCO3] 🔐 Registrando dispositivo ANTES da sessão (pós-2FA)...");
+               const deviceResult = await registerDeviceBeforeSession();
 
               if (!deviceResult.success) {
                 console.error("[AUTH][BLOCO3] ❌ Falha no registro de dispositivo pós-2FA:", deviceResult.error);
@@ -1652,8 +1656,16 @@ export default function Auth() {
                 window.location.replace("/gestaofc");
               }
 
-              setShow2FA(false);
-              setPending2FAUser(null);
+               setShow2FA(false);
+               setPending2FAUser(null);
+              } catch (err: any) {
+                console.error('[AUTH] ❌ Falha inesperada no fluxo pós-2FA:', err);
+                toast.error('Falha ao finalizar autenticação', {
+                  description: String(err?.message || 'Tente novamente. Se persistir, faça login do zero.'),
+                  duration: 9000,
+                });
+                // Não forçar logout aqui para evitar loop; o usuário permanece na tela 2FA.
+              }
             }}
             onCancel={async () => {
               // ✅ Fail-safe: nunca deixar usuário “meio logado” sem 2FA

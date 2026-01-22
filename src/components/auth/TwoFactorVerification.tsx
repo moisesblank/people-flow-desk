@@ -342,7 +342,16 @@ export function TwoFactorVerification({
         description: "Bem-vindo(a) de volta!"
       });
 
-      onVerified();
+      // 🔐 P0: onVerified pode executar steps críticos (registrar dispositivo, criar sessão, redirect)
+      // Se ele falhar e a Promise ficar sem tratamento, o app pode “resetar”/voltar ao início.
+      try {
+        await Promise.resolve(onVerified());
+      } catch (e: any) {
+        console.error('[AUTH][2FA] ❌ Erro no onVerified (pós-2FA):', e);
+        const msg = String(e?.message || 'Falha ao finalizar verificação. Tente novamente.');
+        setError(msg);
+        toast.error('Falha ao finalizar 2FA', { description: msg });
+      }
     } catch (err: any) {
       console.error('[AUTH][2FA] ERROR verifyCode:', err);
       setError(err?.message || "Erro ao verificar código. Tente novamente.");
