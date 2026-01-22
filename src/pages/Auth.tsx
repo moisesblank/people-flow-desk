@@ -929,8 +929,9 @@ export default function Auth() {
 
         if (result.error) {
           console.error("[AUTH] Erro no login automático:", result.error);
+          // 🛡️ P0 FIX: Usar formatError para evitar React Error #61
           toast.error("Erro no login", {
-            description: result.error.message || "Tente novamente.",
+            description: formatError(result.error, "Tente novamente."),
           });
           setIsForceLoggingOut(false);
           return;
@@ -991,9 +992,12 @@ export default function Auth() {
         setPendingEmail(null);
         setPendingPassword(null);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[AUTH] Erro crítico ao forçar logout:", err);
-      toast.error("Erro inesperado ao encerrar sessões");
+      // 🛡️ P0 FIX: Usar formatError para evitar React Error #61
+      toast.error("Erro inesperado ao encerrar sessões", {
+        description: formatError(err, "Tente novamente."),
+      });
     } finally {
       setIsForceLoggingOut(false);
     }
