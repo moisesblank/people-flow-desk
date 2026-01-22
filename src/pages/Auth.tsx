@@ -709,6 +709,15 @@ export default function Auth() {
 
     // Rodar async fora do corpo do effect (TS/React-safe)
     void (async () => {
+      // 🎯 P0 FIX v12.5: Persistir modo recovery por sessão (não depender do hash)
+      // - Evita loop quando o hash é consumido/limpo antes do React processar
+      // - Expira automaticamente para não “contaminar” futuras visitas ao /auth
+      const RECOVERY_UNTIL_KEY = "matriz_recovery_flow_until";
+      const now = Date.now();
+      const recoveryUntilRaw = sessionStorage.getItem(RECOVERY_UNTIL_KEY);
+      const recoveryUntil = recoveryUntilRaw ? Number(recoveryUntilRaw) : 0;
+      const isRecoveryStickyActive = Number.isFinite(recoveryUntil) && recoveryUntil > now;
+
       // 🎯 P0 FIX v12.4: Verificar se veio de link de recovery ANTES de qualquer coisa
       // Supabase usa hash fragment: #access_token=XXX&type=recovery
       const urlParams = new URLSearchParams(window.location.search);
@@ -725,10 +734,23 @@ export default function Auth() {
 
       if (isRecoveryFromUrl) {
         console.log("[AUTH] 🔐 Link de recovery detectado via URL/hash - ativando modo update password");
+        // ✅ Marcar modo recovery com expiração de 15 minutos
+        sessionStorage.setItem(RECOVERY_UNTIL_KEY, String(Date.now() + 15 * 60 * 1000));
         setIsUpdatePassword(true); // 🎯 FIX CRÍTICO: Setar estado ANTES de qualquer redirect
         setIsCheckingSession(false);
         return; // NÃO verificar sessão, NÃO redirecionar
       }
+
+      // ✅ Se recovery sticky ainda está ativo (hash pode ter sumido), manter formulário
+      if (isRecoveryStickyActive) {
+        console.log("[AUTH] 🔐 Recovery sticky ativo - mantendo formulário de nova senha");
+        setIsUpdatePassword(true);
+        setIsCheckingSession(false);
+        return;
+      }
+
+      // Se não estamos em recovery, limpar sticky (fail-safe)
+      sessionStorage.removeItem(RECOVERY_UNTIL_KEY);
 
       // 🎯 FIX: Não redirecionar se já estamos no modo de update password
       if (isUpdatePassword) {
@@ -797,10 +819,16 @@ export default function Auth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const RECOVERY_UNTIL_KEY = "matriz_recovery_flow_until";
+      const recoveryUntilRaw = sessionStorage.getItem(RECOVERY_UNTIL_KEY);
+      const recoveryUntil = recoveryUntilRaw ? Number(recoveryUntilRaw) : 0;
+      const isRecoveryStickyActive = Number.isFinite(recoveryUntil) && recoveryUntil > Date.now();
+
       // 🎯 FIX: Quando usuário clica no link de recovery, Supabase dispara PASSWORD_RECOVERY
       // Neste caso, devemos mostrar o formulário de definição de senha, NÃO redirecionar
       if (event === "PASSWORD_RECOVERY") {
         console.log("[AUTH] 🔐 PASSWORD_RECOVERY event - mostrando formulário de nova senha");
+        sessionStorage.setItem(RECOVERY_UNTIL_KEY, String(Date.now() + 15 * 60 * 1000));
         setIsUpdatePassword(true);
         setIsCheckingSession(false);
         return; // NÃO redirecionar, deixar usuário definir senha
@@ -814,6 +842,15 @@ export default function Auth() {
       const isRecoveryHash = currentHash.includes("type=recovery");
       if (isRecoveryHash) {
         console.log("[AUTH] 🔐 Hash de recovery detectado no onAuthStateChange - ativando modo update password");
+        sessionStorage.setItem(RECOVERY_UNTIL_KEY, String(Date.now() + 15 * 60 * 1000));
+        setIsUpdatePassword(true);
+        setIsCheckingSession(false);
+        return;
+      }
+
+      // ✅ Sticky recovery: se ainda ativo, nunca redirecionar
+      if (isRecoveryStickyActive) {
+        console.log("[AUTH] 🔐 Recovery sticky ativo no onAuthStateChange - bloqueando redirect");
         setIsUpdatePassword(true);
         setIsCheckingSession(false);
         return;
