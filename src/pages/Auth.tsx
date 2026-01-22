@@ -1037,7 +1037,9 @@ export default function Auth() {
     setShow2FA(false);
     setPending2FAUser(null);
 
-    const TIMEOUT_MS = 30_000;
+    // ⚠️ Estabilidade (P0): Em horários de pico, o endpoint de token pode levar >30s.
+    // Mantemos um limite alto para evitar falsos negativos de login, mas ainda com teto.
+    const TIMEOUT_MS = 180_000;
     const withTimeout = async <T,>(label: string, promise: Promise<T>): Promise<T> => {
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
       try {
