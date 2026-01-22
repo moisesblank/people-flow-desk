@@ -1,7 +1,8 @@
 // ============================================
-// 📄 PDF PREVIEW CARD v1.0
+// 📄 PDF PREVIEW CARD v1.1
 // Card visual com preview da primeira página do PDF
 // Fallback para ícone genérico se não houver preview
+// Suporta signed URLs para bucket privado pdf-previews
 // ============================================
 
 import React, { memo, useState } from 'react';
@@ -10,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { usePreviewSignedUrl } from '@/hooks/usePreviewSignedUrl';
 
 // ============================================
 // TIPOS
@@ -132,7 +134,10 @@ export const PdfPreviewCard = memo(function PdfPreviewCard({
   const [imageError, setImageError] = useState(false);
   const config = SIZE_CONFIG[size];
 
-  const hasValidPreview = previewUrl && previewStatus === 'ready' && !imageError;
+  // Gerar signed URL dinamicamente (bucket pdf-previews é privado)
+  const { signedUrl, isLoading: isLoadingUrl } = usePreviewSignedUrl(previewUrl);
+
+  const hasValidPreview = signedUrl && previewStatus === 'ready' && !imageError && !isLoadingUrl;
 
   return (
     <Card
@@ -159,11 +164,11 @@ export const PdfPreviewCard = memo(function PdfPreviewCard({
         {/* Preview Image */}
         {hasValidPreview ? (
           <>
-            {!imageLoaded && (
+            {(!imageLoaded || isLoadingUrl) && (
               <Skeleton className="absolute inset-0" />
             )}
             <img
-              src={previewUrl}
+              src={signedUrl}
               alt={`Preview de ${title}`}
               className={cn(
                 'w-full h-full object-cover object-top transition-opacity duration-300',
@@ -172,6 +177,7 @@ export const PdfPreviewCard = memo(function PdfPreviewCard({
               loading="lazy"
               onLoad={() => setImageLoaded(true)}
               onError={() => setImageError(true)}
+            />
             />
           </>
         ) : (
