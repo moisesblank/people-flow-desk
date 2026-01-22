@@ -24,7 +24,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { formatError } from '@/lib/utils/formatError';
 
 interface TwoFactorVerificationProps {
   email: string;
@@ -232,11 +231,9 @@ export function TwoFactorVerification({
         return;
       }
 
-      // 🛡️ P0 FIX: Usar formatError para evitar React Error #61
-      const safeMessage = formatError(err, 'Erro ao enviar código');
-      setError(safeMessage);
+      setError(message || 'Erro ao enviar código');
       toast.error('Erro ao enviar código', {
-        description: safeMessage || 'Tente novamente em alguns segundos',
+        description: message || 'Tente novamente em alguns segundos',
       });
     } finally {
       setIsResending(false);
@@ -332,8 +329,7 @@ export function TwoFactorVerification({
           setAttemptsRemaining((data as any).attemptsRemaining);
         }
 
-        // 🛡️ P0 FIX: Usar formatError para evitar React Error #61
-        setError(formatError((data as any)?.error, "Código inválido"));
+        setError((data as any)?.error || "Código inválido");
         setCode(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
         return;
@@ -343,48 +339,15 @@ export function TwoFactorVerification({
       lastVerifiedCodeRef.current = fullCode;
 
       toast.success("Verificação concluída!", {
-        description: "Finalizando login..."
+        description: "Bem-vindo(a) de volta!"
       });
 
-      // 🛡️ P0 FIX: Aguardar onVerified completar com timeout de segurança
-      console.log('[AUTH][2FA] ✅ Código válido, executando onVerified...');
-      
-      // Manter loading ativo durante onVerified
-      // Fallback: se onVerified travar por 20s, forçar reset
-      const onVerifiedTimeout = setTimeout(() => {
-        console.error('[AUTH][2FA] ⚠️ TIMEOUT: onVerified travou por 20s, resetando estado');
-        setIsLoading(false);
-        verifyingRef.current = false;
-        toast.error("Timeout no login", {
-          description: "Recarregando página...",
-        });
-        // Forçar reload após timeout
-        setTimeout(() => window.location.reload(), 1500);
-      }, 20_000);
-
-      try {
-        // Chamar onVerified e aguardar (pode ser async)
-        await Promise.resolve(onVerified());
-        console.log('[AUTH][2FA] ✅ onVerified completou com sucesso');
-      } catch (onVerifiedErr) {
-        console.error('[AUTH][2FA] ❌ Erro em onVerified:', onVerifiedErr);
-        toast.error("Erro ao finalizar login", {
-          description: formatError(onVerifiedErr),
-        });
-        // Em caso de erro, limpar estado
-        setIsLoading(false);
-        verifyingRef.current = false;
-      } finally {
-        clearTimeout(onVerifiedTimeout);
-      }
-
-      // Nota: NÃO resetar isLoading aqui - o redirect vai acontecer
-      // Se chegou aqui sem redirect, o timeout de 20s vai cuidar
+      onVerified();
     } catch (err: any) {
       console.error('[AUTH][2FA] ERROR verifyCode:', err);
-      // 🛡️ P0 FIX: Usar formatError para evitar React Error #61
-      setError(formatError(err, "Erro ao verificar código. Tente novamente."));
+      setError(err?.message || "Erro ao verificar código. Tente novamente.");
       setCode(["", "", "", "", "", ""]);
+    } finally {
       setIsLoading(false);
       verifyingRef.current = false;
     }
@@ -708,7 +671,7 @@ export function TwoFactorVerification({
             >
               <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
                 <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>{formatError(error)}</span>
+                <span>{error}</span>
               </div>
             </motion.div>
           )}
