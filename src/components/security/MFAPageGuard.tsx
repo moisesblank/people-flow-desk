@@ -89,8 +89,13 @@ export function MFAPageGuard({
     }
   }, [needsMFA, isVerified]);
 
-  const handleVerificationSuccess = () => {
-    onVerificationComplete(true);
+  // 🔐 P0 FIX v12: handleVerificationSuccess DEVE ser async e AGUARDAR onVerificationComplete
+  const handleVerificationSuccess = async () => {
+    try {
+      await onVerificationComplete(true);
+    } catch (err) {
+      console.error('[MFAPageGuard] ❌ Erro em onVerificationComplete:', err);
+    }
     setShowModal(false);
   };
 

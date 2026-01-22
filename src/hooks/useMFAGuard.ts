@@ -32,7 +32,7 @@ export interface MFAGuardState {
 export interface MFAGuardResult extends MFAGuardState {
   checkMFA: () => Promise<boolean>;
   requestMFA: () => void;
-  onVerificationComplete: (success: boolean) => void;
+  onVerificationComplete: (success: boolean) => Promise<void>;
   resetState: () => void;
 }
 
