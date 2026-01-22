@@ -177,10 +177,9 @@ export default function AlunoQrCodesBook() {
       if (uploadError) throw uploadError;
       updateProgress(50);
 
-      // 2. Obter URL pública
-      const { data: urlData } = supabase.storage
-        .from("materiais")
-        .getPublicUrl(fileName);
+      // 🛡️ P0 FIX: Salvar apenas o PATH no banco (não URL pública)
+      // O frontend irá gerar URL assinada quando precisar exibir
+      const storagePath = fileName;
 
       updateProgress(70);
 
@@ -189,7 +188,7 @@ export default function AlunoQrCodesBook() {
       const baseSlug = generateSlugFromFilename(file.name);
       const slug = `${baseSlug}-${uniqueId.slice(-6)}`;
 
-      // 4. Criar registro no banco
+      // 4. Criar registro no banco COM PATH (não URL)
       const { error } = await supabase
         .from("qrcode_pdfs")
         .insert({
@@ -197,14 +196,14 @@ export default function AlunoQrCodesBook() {
           title,
           slug,
           description: null,
-          pdf_url: urlData.publicUrl,
+          pdf_url: storagePath, // PATH, não URL pública
           position,
         });
 
       if (error) throw error;
       updateProgress(100);
 
-      return { success: true, url: urlData.publicUrl, slug };
+      return { success: true, url: storagePath, slug };
     } catch (err: any) {
       console.error("[Upload Error]", err);
       return { success: false, error: err.message || "Erro desconhecido" };
@@ -360,9 +359,8 @@ export default function AlunoQrCodesBook() {
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
-        .from("materiais")
-        .getPublicUrl(fileName);
+      // 🛡️ P0 FIX: Salvar apenas o PATH no banco (não URL pública)
+      const storagePath = fileName;
 
       const slug = title
         .toLowerCase()
@@ -378,7 +376,7 @@ export default function AlunoQrCodesBook() {
           title,
           slug,
           description,
-          pdf_url: urlData.publicUrl,
+          pdf_url: storagePath, // PATH, não URL pública
           position: (pdfs?.length || 0) + 1,
         })
         .select()

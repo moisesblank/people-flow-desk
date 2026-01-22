@@ -77,18 +77,13 @@ export function ModuleImageUploader({
         throw uploadError;
       }
 
-      // Obter URL pública
-      const { data: urlData } = supabase.storage
-        .from('materiais')
-        .getPublicUrl(filePath);
-
-      if (urlData?.publicUrl) {
-        onChange(urlData.publicUrl);
-        toast({
-          title: '✅ Imagem enviada',
-          description: 'A imagem foi carregada com sucesso.',
-        });
-      }
+      // 🛡️ P0 FIX: Salvar apenas o PATH no banco (não URL pública)
+      // O frontend irá gerar URL assinada quando precisar exibir
+      onChange(filePath);
+      toast({
+        title: '✅ Imagem enviada',
+        description: 'A imagem foi carregada com sucesso.',
+      });
     } catch (error: any) {
       console.error('Erro no upload:', error);
       toast({

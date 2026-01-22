@@ -332,12 +332,8 @@ function LessonEditDialog({
 
       if (error) throw error;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('materiais')
-        .getPublicUrl(path);
-
-      // Update form
+      // 🛡️ P0 FIX: Salvar apenas o PATH no banco (não URL pública)
+      // O frontend irá gerar URL assinada quando precisar exibir
       setFormData(prev => ({
         ...prev,
         material_url: path, // Store path, not full URL
