@@ -178,7 +178,6 @@ export const PdfPreviewCard = memo(function PdfPreviewCard({
               onLoad={() => setImageLoaded(true)}
               onError={() => setImageError(true)}
             />
-            />
           </>
         ) : (
           <FallbackIcon status={previewStatus} iconSize={config.icon} />
