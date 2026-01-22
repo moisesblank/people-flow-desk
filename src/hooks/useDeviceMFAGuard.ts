@@ -38,6 +38,21 @@ const globalMFACache = new Map<string, { verified: boolean; expiresAt: number }>
 // Gerar chave de cache única por usuário+dispositivo
 const getCacheKey = (userId: string, deviceHash: string) => `${userId}:${deviceHash}`;
 
+// 🛡️ P0: timeout helper sem hooks (evita mudança de ordem de hooks em HMR/chunks)
+async function withTimeout<T>(label: string, promiseLike: PromiseLike<T>, timeoutMs: number): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const promise = Promise.resolve(promiseLike);
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error(`Timeout ${timeoutMs}ms em: ${label}`)), timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
 /**
  * Hook para gerenciar 2FA por DISPOSITIVO
  * Cada dispositivo diferente precisa verificar 2FA separadamente
@@ -46,23 +61,6 @@ const getCacheKey = (userId: string, deviceHash: string) => `${userId}:${deviceH
 export function useDeviceMFAGuard(): DeviceMFAGuardResult {
   const { user, role } = useAuth();
   const hasChecked = useRef(false);
-
-  // 🛡️ P0: utilitário local para impedir travamentos (loading infinito)
-  const withTimeout = useCallback(<T,>(label: string, promiseLike: PromiseLike<T>, timeoutMs: number): Promise<T> => {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    const promise = Promise.resolve(promiseLike);
-
-    return (async () => {
-      const timeoutPromise = new Promise<T>((_, reject) => {
-        timeoutId = setTimeout(() => reject(new Error(`Timeout ${timeoutMs}ms em: ${label}`)), timeoutMs);
-      });
-      try {
-        return await Promise.race([promise, timeoutPromise]);
-      } finally {
-        if (timeoutId) clearTimeout(timeoutId);
-      }
-    })();
-  }, []);
 
   const [state, setState] = useState<DeviceMFAGuardState>({
     isChecking: true, // Começa verificando
@@ -438,7 +436,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
 
       console.log("[DeviceMFAGuard] 🎉 Dispositivo cadastrado e verificado com sucesso!");
     },
-    [user?.id, state.deviceHash, withTimeout],
+    [user?.id, state.deviceHash],
   );
 
   /**
