@@ -33,17 +33,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return () => window.clearTimeout(t);
   }, []);
 
-  // 🔒 P0 FIX v5: Owner bypass via role COM fallback por email
-  // CRÍTICO: Durante loading inicial, role pode ser null/undefined
-  // Fallback por email garante que Owner NUNCA fica preso em loading/redirect
+  // P1-2 FIX: Owner bypass via role (não email)
   const isOwner = useMemo(() => {
-    // Fonte primária: role do banco
-    if (role === 'owner') return true;
-    // Fallback de emergência: email (para race condition de loading)
-    const email = user?.email?.toLowerCase();
-    if (email === 'moisesblank@gmail.com') return true;
-    return false;
-  }, [role, user?.email]);
+    return role === 'owner';
+  }, [role]);
 
   // 🧪 PLANO B (UX) - BYPASS DE TESTE BETA: não travar rotas por flag 2FA
   // (não altera segurança server-side; só impede loop de redirect no client)
@@ -59,12 +52,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   // Não redirecionar se já estamos na página de primeiro acesso (qualquer uma)
   const isOnPrimeiroAcesso = location.pathname === "/primeiro-acesso" || 
                               location.pathname === "/primeiro-acesso-funcionario";
-
-  // 🛡️ P0 FIX: Owner bypass IMEDIATO — não espera onboarding
-  // Se já sabemos que é owner, renderiza imediatamente
-  if (isOwner && user) {
-    return <>{children}</>;
-  }
 
   // Loading: com fail-safe por timeout
   if (authLoading || onboardingLoading) {

@@ -13,7 +13,6 @@ import { motion } from 'framer-motion';
 import { useSimuladoPermissions } from '@/hooks/simulados/useSimuladoPermissions';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { formatError } from '@/lib/utils/formatError';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -401,8 +400,8 @@ function useCreateSimulado() {
       queryClient.invalidateQueries({ queryKey: ['gestao-simulados-full'] });
       toast.success('Simulado criado como rascunho!');
     },
-    onError: (error: unknown) => {
-      toast.error(`Erro ao criar simulado: ${formatError(error)}`);
+    onError: (error: Error) => {
+      toast.error(`Erro ao criar simulado: ${error.message}`);
     },
   });
 }
@@ -423,8 +422,8 @@ function useUpdateSimulado() {
       queryClient.invalidateQueries({ queryKey: ['gestao-simulados-full'] });
       toast.success('Simulado atualizado!');
     },
-    onError: (error: unknown) => {
-      toast.error(`Erro: ${formatError(error)}`);
+    onError: (error: Error) => {
+      toast.error(`Erro: ${error.message}`);
     },
   });
 }
@@ -445,8 +444,8 @@ function useDeleteSimulado() {
       queryClient.invalidateQueries({ queryKey: ['gestao-simulados-full'] });
       toast.success('Simulado excluído');
     },
-    onError: (error: unknown) => {
-      toast.error(`Erro ao excluir: ${formatError(error)}`);
+    onError: (error: Error) => {
+      toast.error(`Erro ao excluir: ${error.message}`);
     },
   });
 }
@@ -469,8 +468,8 @@ function useCreateRankingSnapshot() {
       queryClient.invalidateQueries({ queryKey: ['ranking-snapshots'] });
       toast.success('Snapshot do ranking criado!');
     },
-    onError: (error: unknown) => {
-      toast.error(`Erro: ${formatError(error)}`);
+    onError: (error: Error) => {
+      toast.error(`Erro: ${error.message}`);
     },
   });
 }

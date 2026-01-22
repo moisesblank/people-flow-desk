@@ -7,7 +7,6 @@
 // ============================================
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { formatError } from "@/lib/utils/formatError";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
@@ -648,7 +647,7 @@ function FinancasEmpresaContent() {
 
       if (error) {
         console.error('[FINANÇAS] Erro RPC:', error);
-        toast.error(`Erro ao atualizar: ${formatError(error)}`);
+        toast.error(`Erro ao atualizar: ${error.message}`);
         return;
       }
 

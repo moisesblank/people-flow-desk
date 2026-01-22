@@ -217,8 +217,7 @@ export const SacredImage = memo(function SacredImage({
             // DOGMA III.1 - Native lazy loading
             loading={priority ? "eager" : "lazy"}
             decoding="async"
-            // P0 FIX: Usar atributo HTML nativo para evitar React warning
-            {...{ fetchpriority: priority ? "high" : "auto" } as React.ImgHTMLAttributes<HTMLImageElement>}
+            fetchPriority={priority ? "high" : "auto"}
             onLoad={handleLoad}
             onError={handleError}
             className={cn(

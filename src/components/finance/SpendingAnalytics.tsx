@@ -109,9 +109,7 @@ export function SpendingAnalytics({ categories, total }: SpendingAnalyticsProps)
         <div className="space-y-2">
           {topCategories.map((category, idx) => {
             const percent = ((category.value / total) * 100).toFixed(1);
-            // P0 FIX: Removido Math.random() que causa hydration mismatch (React Error #61)
-            // Usa trend fornecido ou valor determinístico baseado no índice
-            const trend = category.trend ?? (idx % 2 === 0 ? 5 : -3);
+            const trend = category.trend || (Math.random() > 0.5 ? 5 : -3);
             
             return (
               <motion.div

@@ -23,7 +23,6 @@ import {
   Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatError } from '@/lib/utils/formatError';
 import { motion } from 'framer-motion';
 import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 
@@ -45,7 +44,7 @@ export function ReactiveDashboardSection({
     return (
       <Card className="border-destructive">
         <CardContent className="pt-6">
-          <p className="text-destructive">{formatError(error)}</p>
+          <p className="text-destructive">{error}</p>
           <Button onClick={forceRefresh} className="mt-4">
             <RefreshCw className="w-4 h-4 mr-2" />
             Tentar Novamente

@@ -885,14 +885,16 @@ function ModuleCard({
 
       if (uploadError) throw uploadError;
 
-      // 🛡️ P0 FIX: Salvar apenas o PATH no banco (não URL pública)
-      // O frontend irá gerar URL assinada quando precisar exibir
-      const storagePath = filePath;
+      const { data: urlData } = supabase.storage
+        .from('materiais')
+        .getPublicUrl(filePath);
 
-      // Atualizar módulo com o PATH (não URL)
+      const publicUrl = urlData.publicUrl;
+
+      // Atualizar módulo com a nova URL
       const { error: updateError } = await supabase
         .from('modules')
-        .update({ thumbnail_url: storagePath })
+        .update({ thumbnail_url: publicUrl })
         .eq('id', module.id);
 
       if (updateError) throw updateError;

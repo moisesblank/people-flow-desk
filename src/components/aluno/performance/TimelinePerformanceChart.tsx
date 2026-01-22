@@ -2,7 +2,6 @@
 // TIMELINE PERFORMANCE CHART
 // Gráfico de evolução temporal: questões por data × Macro/Micro
 // Year 2300 Cinematic HUD Design
-// P0 FIX: Hardening contra React Error #61
 // ============================================
 
 import { useMemo, useState, Suspense } from 'react';
@@ -19,23 +18,6 @@ import { ChartSkeleton } from '@/components/performance/LazyRecharts';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-
-// ============================================
-// P0 FIX — HARDENING CONTRA React Error #61
-// ============================================
-const toSafeString = (v: unknown, fallback = ""): string => {
-  if (typeof v === "string") return v;
-  if (v === null || v === undefined) return fallback;
-  if (typeof v === "object") {
-    const obj = v as Record<string, unknown>;
-    if (typeof obj.name === "string") return obj.name;
-    if (typeof obj.label === "string") return obj.label;
-    try { return JSON.stringify(v); } catch { return fallback; }
-  }
-  return String(v);
-};
-
-const hasResizeObserverSupport = () => typeof window !== 'undefined' && 'ResizeObserver' in window;
 
 // Cores base para os 5 macros (ordem canônica) - HSL based
 const MACRO_COLORS: Record<string, { hue: number; sat: number; light: number }> = {
@@ -149,20 +131,16 @@ export function TimelinePerformanceChart({
     const microIndexByMacro = new Map<string, number>();
     
     attempts.forEach(a => {
-      // P0 FIX: Garantir valores seguros
-      const microName = toSafeString(a?.micro);
-      const macroName = toSafeString(a?.macro);
-      
-      if (microName && macroName) {
-        if (!map.has(microName)) {
-          const macroKey = macroName;
+      if (a.micro && a.macro) {
+        if (!map.has(a.micro)) {
+          const macroKey = a.macro;
           const currentIndex = microIndexByMacro.get(macroKey) || 0;
           microIndexByMacro.set(macroKey, currentIndex + 1);
           
-          map.set(microName, {
-            name: microName,
-            macro: macroName,
-            color: getMicroColor(macroName, currentIndex),
+          map.set(a.micro, {
+            name: a.micro,
+            macro: a.macro,
+            color: getMicroColor(a.macro, currentIndex),
           });
         }
       }
@@ -226,13 +204,12 @@ export function TimelinePerformanceChart({
       if (dayData) {
         dayData.total += 1;
         
-        // P0 FIX: Garantir valores seguros
-        const macro = toSafeString(attempt?.macro, 'Sem Macro');
+        const macro = attempt.macro || 'Sem Macro';
         if (macro in MACRO_COLORS) {
           (dayData[macro] as number) += 1;
         }
         
-        const micro = toSafeString(attempt?.micro);
+        const micro = attempt.micro;
         if (micro && microInfoMap.has(micro)) {
           (dayData[micro] as number) += 1;
         }
@@ -568,21 +545,6 @@ function ChartContent({
     }
     return [];
   }, [groupBy, microInfoMap]);
-
-  // ============================================
-  // P0 ANTI-CRASH: Recharts ResponsiveContainer depende de ResizeObserver.
-  // Alguns WebViews/Android antigos não possuem a API → ReferenceError → ErrorBoundary.
-  // ============================================
-  if (!hasResizeObserverSupport()) {
-    return (
-      <div className="h-[220px] w-full rounded-lg border border-white/10 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center">
-        <div className="text-center px-4">
-          <div className="text-xs text-muted-foreground">Seu navegador não suporta gráficos em tempo real.</div>
-          <div className="text-[10px] text-muted-foreground/60 mt-1">Atualize o navegador ou use o Chrome/Firefox.</div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-[220px] w-full">

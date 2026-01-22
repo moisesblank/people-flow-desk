@@ -355,13 +355,12 @@ function convertNodesToHierarchy(flatNodes: unknown[]): MindmapNode[] {
   const rootNodes: MindmapNode[] = [];
   
   // Primeiro passo: criar todos os nós
-  // P0 FIX: Usar índice como fallback em vez de Math.random() (evita hydration mismatch)
-  flatNodes.forEach((item, index) => {
+  flatNodes.forEach((item) => {
     if (typeof item !== 'object' || item === null) return;
     const obj = item as Record<string, unknown>;
     
     const node: MindmapNode = {
-      id: String(obj.id || `node-${index}`),
+      id: String(obj.id || `node-${Math.random()}`),
       label: String(obj.label || obj.name || ''),
       type: (obj.type as MindmapNode['type']) || 'leaf',
       color: obj.color ? String(obj.color) : undefined,

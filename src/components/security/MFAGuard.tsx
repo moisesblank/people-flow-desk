@@ -53,11 +53,17 @@ function MFAGuardComponent({ children, requireMFA = true }: MFAGuardProps) {
       }
 
       try {
-        // 🔒 P0 FIX: Não acessar user_mfa_settings diretamente (RLS bloqueia para alunos)
-        // Usar apenas active_sessions.mfa_verified como fonte de verdade
-        
+        // Verificar se MFA está configurado
+        const { data: mfaSettings } = await supabase
+          .from('user_mfa_settings')
+          .select('mfa_enabled')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        const mfaEnabled = mfaSettings?.mfa_enabled ?? false;
+
         // Verificar se sessão atual tem MFA verificado
-        const { data: session, error: sessionError } = await supabase
+        const { data: session } = await supabase
           .from('active_sessions')
           .select('mfa_verified')
           .eq('user_id', user.id)
@@ -66,24 +72,16 @@ function MFAGuardComponent({ children, requireMFA = true }: MFAGuardProps) {
           .limit(1)
           .maybeSingle();
 
-        if (sessionError) {
-          console.warn('[MFA Guard] Erro ao verificar sessão:', sessionError.message);
-        }
-
         const mfaVerified = session?.mfa_verified ?? false;
-        
-        // Para admins: se tem mfa_verified = true, considera MFA configurado e verificado
-        // Se não tem, considera que precisa setup (comportamento conservador)
-        const mfaEnabled = mfaVerified; // Simplificação: se verificou, está habilitado
 
         setMfaStatus({
           enabled: mfaEnabled,
           verified: mfaVerified,
-          needsSetup: !mfaEnabled && ADMIN_ROLES.includes(role),
+          needsSetup: !mfaEnabled,
         });
 
         // Se MFA não configurado e é rota admin, mostrar aviso
-        if (!mfaEnabled && requireMFA && ADMIN_ROLES.includes(role)) {
+        if (!mfaEnabled && requireMFA) {
           toast.warning('MFA obrigatório', {
             description: 'Você precisa configurar a autenticação de dois fatores para acessar esta área.',
             duration: 5000,

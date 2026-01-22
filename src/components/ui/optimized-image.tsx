@@ -153,8 +153,7 @@ export const OptimizedImage = memo(({
           style={imageStyle}
           loading={priority ? 'eager' : 'lazy'}
           decoding="async"
-          // P0 FIX: Usar atributo HTML nativo para evitar React warning
-          {...{ fetchpriority: priority ? 'high' : 'low' } as React.ImgHTMLAttributes<HTMLImageElement>}
+          fetchPriority={priority ? 'high' : 'low'}
           onLoad={handleLoad}
           onError={handleError}
         />

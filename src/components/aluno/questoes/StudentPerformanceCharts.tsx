@@ -2,7 +2,6 @@
 // StudentPerformanceCharts v3.0 - YEAR 2300 HUD
 // Inspirado no print: Tempo, Pizza, Barras, Top10, Tabelas
 // Performance: Lazy loaded + memoizado
-// P0 FIX: Hardening contra React Error #61
 // =====================================================
 
 import { memo, useMemo } from "react";
@@ -18,34 +17,6 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
-// ============================================
-// P0 FIX — HARDENING CONTRA React Error #61
-// ============================================
-const toSafeString = (v: unknown, fallback = ""): string => {
-  if (typeof v === "string") return v;
-  if (v === null || v === undefined) return fallback;
-  if (typeof v === "object") {
-    const obj = v as Record<string, unknown>;
-    if (typeof obj.name === "string") return obj.name;
-    if (typeof obj.label === "string") return obj.label;
-    try { return JSON.stringify(v); } catch { return fallback; }
-  }
-  return String(v);
-};
-
-const toSafeNumber = (v: unknown, fallback = 0): number => {
-  if (typeof v === "number" && !isNaN(v)) return v;
-  if (typeof v === "string") {
-    const parsed = parseFloat(v);
-    return isNaN(parsed) ? fallback : parsed;
-  }
-  return fallback;
-};
-
-// P0 ANTI-CRASH: Recharts ResponsiveContainer depende de ResizeObserver.
-// Em alguns WebViews (Android antigo) isso causa ReferenceError e cai no ErrorBoundary.
-const hasResizeObserverSupport = () => typeof window !== 'undefined' && 'ResizeObserver' in window;
 
 // =====================================================
 // CONSTANTES
@@ -157,11 +128,10 @@ const QuantityDonutChart = memo(function QuantityDonutChart({
   isLowEnd: boolean;
   total: number;
 }) {
-  // P0 FIX: Garantir valores seguros antes de renderizar
   const pieData = data.map(d => ({
-    name: toSafeString(d?.name, "Sem Nome"),
-    value: toSafeNumber(d?.total, 0),
-    color: MACRO_COLORS[toSafeString(d?.name)] || CHART_COLORS[0],
+    name: d.name,
+    value: d.total,
+    color: MACRO_COLORS[d.name] || CHART_COLORS[0],
   }));
 
   if (pieData.length === 0 || total === 0) {
@@ -312,16 +282,12 @@ const TotalVsCorrectChart = memo(function TotalVsCorrectChart({
     );
   }
 
-  // P0 FIX: Garantir valores seguros antes de renderizar
-  const chartData = data.slice(0, 10).map(d => {
-    const name = toSafeString(d?.name, "Sem Nome");
-    return {
-      name: name.length > 12 ? name.slice(0, 12) + '...' : name,
-      fullName: name,
-      Total: toSafeNumber(d?.total, 0),
-      Acertos: toSafeNumber(d?.correct, 0),
-    };
-  });
+  const chartData = data.slice(0, 10).map(d => ({
+    name: d.name.length > 12 ? d.name.slice(0, 12) + '...' : d.name,
+    fullName: d.name,
+    Total: d.total,
+    Acertos: d.correct,
+  }));
 
   return (
     <HoloCard className="col-span-1 lg:col-span-2">
@@ -373,22 +339,17 @@ const ErrorDistributionPie = memo(function ErrorDistributionPie({
   data: ProcessedItem[]; 
   isLowEnd: boolean;
 }) {
-  // P0 FIX: Garantir valores seguros antes de renderizar
   const pieData = data
-    .filter(d => toSafeNumber(d?.errors, 0) > 0)
-    .sort((a, b) => toSafeNumber(b?.errors, 0) - toSafeNumber(a?.errors, 0))
+    .filter(d => d.errors > 0)
+    .sort((a, b) => b.errors - a.errors)
     .slice(0, 10)
-    .map((d, idx) => {
-      const name = toSafeString(d?.name, "Sem Nome");
-      const errors = toSafeNumber(d?.errors, 0);
-      return {
-        name: name.length > 18 ? name.slice(0, 18) + '...' : name,
-        fullName: name,
-        value: errors,
-        percent: 0,
-        color: MACRO_COLORS[name] || CHART_COLORS[idx % CHART_COLORS.length],
-      };
-    });
+    .map((d, idx) => ({
+      name: d.name.length > 18 ? d.name.slice(0, 18) + '...' : d.name,
+      fullName: d.name,
+      value: d.errors,
+      percent: 0,
+      color: MACRO_COLORS[d.name] || CHART_COLORS[idx % CHART_COLORS.length],
+    }));
 
   const totalErrors = pieData.reduce((sum, d) => sum + d.value, 0);
   pieData.forEach(d => { d.percent = totalErrors > 0 ? (d.value / totalErrors) * 100 : 0; });
@@ -461,20 +422,16 @@ const Top10PerformanceChart = memo(function Top10PerformanceChart({
   data: ProcessedItem[]; 
   isLowEnd: boolean;
 }) {
-  // P0 FIX: Garantir valores seguros antes de renderizar
   const top10 = data
-    .filter(d => toSafeNumber(d?.total, 0) >= 1)
-    .sort((a, b) => toSafeNumber(b?.accuracy, 0) - toSafeNumber(a?.accuracy, 0))
+    .filter(d => d.total >= 1)
+    .sort((a, b) => b.accuracy - a.accuracy)
     .slice(0, 10)
-    .map(d => {
-      const name = toSafeString(d?.name, "Sem Nome");
-      return {
-        name: name.length > 20 ? name.slice(0, 20) + '...' : name,
-        fullName: name,
-        accuracy: toSafeNumber(d?.accuracy, 0),
-        total: toSafeNumber(d?.total, 0),
-      };
-    });
+    .map(d => ({
+      name: d.name.length > 20 ? d.name.slice(0, 20) + '...' : d.name,
+      fullName: d.name,
+      accuracy: d.accuracy,
+      total: d.total,
+    }));
 
   if (top10.length === 0) {
     return (
@@ -699,17 +656,6 @@ function StudentPerformanceCharts({ macros, micros, temas = [], isLowEnd = false
     const totalErrors = macros.reduce((sum, m) => sum + m.errors, 0);
     return { totalQuestions, totalCorrect, totalErrors };
   }, [macros]);
-
-  if (!hasResizeObserverSupport()) {
-    return (
-      <div className="rounded-2xl border border-border/50 bg-card/50 p-4 text-center">
-        <div className="text-sm font-semibold">Gráficos indisponíveis neste dispositivo</div>
-        <div className="text-xs text-muted-foreground mt-1">
-          Atualize o navegador ou acesse pelo Chrome/Firefox para ver os gráficos.
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-4">

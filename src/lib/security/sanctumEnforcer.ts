@@ -264,10 +264,21 @@ function checkWatermarkElements(): boolean {
 }
 
 function checkAutomationBlocked(): boolean {
-  // ⚠️ DESATIVADO 2026-01-22: Causava falsos positivos no fluxo de 2FA
-  // Outras camadas (RLS, watermark, DevTools detection) permanecem ativas
-  // Agora sempre retorna true (automação "bloqueada" = sem detecção ativa)
-  return true;
+  try {
+    const nav = navigator as unknown as Record<string, unknown>;
+    const win = window as unknown as Record<string, unknown>;
+    
+    // Se automação está presente, retornar false
+    if (nav.webdriver === true) return false;
+    if (win.callPhantom || win._phantom) return false;
+    if (win.__nightmare) return false;
+    if (win.domAutomation || win.domAutomationController) return false;
+    if (win.Cypress) return false;
+    
+    return true;
+  } catch {
+    return true;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

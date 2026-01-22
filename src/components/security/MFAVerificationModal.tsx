@@ -1,7 +1,6 @@
 // ============================================
 // 🔐 MFA VERIFICATION MODAL — Modal de Verificação 2FA
 // Isolado do fluxo de login
-// 🛡️ P0 FIX: error é SEMPRE string (evita React Error #61)
 // ============================================
 
 import React, { useState, useCallback, useEffect } from 'react';
@@ -14,7 +13,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import type { MFAProtectedAction } from '@/hooks/useMFAGuard';
 import { cn } from '@/lib/utils';
-import { formatError } from '@/lib/utils/formatError';
 
 type MFAChannel = 'email' | 'sms' | 'whatsapp';
 
@@ -344,7 +342,7 @@ export function MFAVerificationModal({
               {error && (
                 <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
-                  {formatError(error)}
+                  {error}
                 </div>
               )}
 
@@ -405,7 +403,7 @@ export function MFAVerificationModal({
               {error && (
                 <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
-                  {formatError(error)}
+                  {error}
                 </div>
               )}
 

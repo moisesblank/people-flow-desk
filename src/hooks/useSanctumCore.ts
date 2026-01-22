@@ -84,10 +84,9 @@ const THREAT_SEVERITY_MAP: Record<ThreatType, number> = {
   drag_attempt_blocked: 15,
   selection_attempt_blocked: 10,
   printscreen_attempt: 40,
-  // ⚠️ DESATIVADO 2026-01-22: Causava falsos positivos no 2FA
-  automation_webdriver: 0,  // Era 95
-  automation_phantom: 0,    // Era 95
-  automation_nightwatch: 0, // Era 95
+  automation_webdriver: 95,
+  automation_phantom: 95,
+  automation_nightwatch: 95,
   dom_mutation_detected: 15,
   dom_tampering_detected: 50,
   visibility_change_suspicious: 20,
@@ -620,13 +619,41 @@ export function useSanctumCore(ctx: SanctumContext) {
   }, [isOwner, bump, reportViolation, punish]);
 
   // Detector de automação
-  // ⚠️ DESATIVADO 2026-01-22: Causava falsos positivos no fluxo de 2FA
-  // Outras camadas (RLS, watermark, DevTools detection) permanecem ativas
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const checkAutomation = useCallback(() => {
-    // 🛡️ DESATIVADO - Não faz nada para evitar falsos positivos
-    return;
-  }, []);
+    if (isOwner) return;
+
+    const nav = navigator as unknown as Record<string, unknown>;
+    const win = window as unknown as Record<string, unknown>;
+
+    // Selenium, Puppeteer, etc.
+    if (nav.webdriver === true) {
+      void reportViolation({
+        type: "automation_webdriver",
+        severity: THREAT_SEVERITY_MAP.automation_webdriver,
+      });
+      void punish(95, "navigator.webdriver");
+      return;
+    }
+
+    // PhantomJS
+    if (win.callPhantom || win._phantom) {
+      void reportViolation({
+        type: "automation_phantom",
+        severity: THREAT_SEVERITY_MAP.automation_phantom,
+      });
+      void punish(95, "PhantomJS");
+      return;
+    }
+
+    // Nightwatch
+    if (win.nightwatch) {
+      void reportViolation({
+        type: "automation_nightwatch",
+        severity: THREAT_SEVERITY_MAP.automation_nightwatch,
+      });
+      void punish(95, "Nightwatch");
+    }
+  }, [isOwner, reportViolation, punish]);
 
   // ============================================
   // REGISTRAR SUPERFÍCIE PROTEGIDA

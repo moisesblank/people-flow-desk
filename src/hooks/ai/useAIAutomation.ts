@@ -9,7 +9,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
-import { formatError } from '@/lib/utils/formatError';
 
 // ============================================================
 // TIPOS
@@ -249,9 +248,9 @@ export function useAIAutomation() {
       
       toast.success('🚀 Job criado com sucesso');
       return data;
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error('Erro ao criar job:', err);
-      toast.error(`❌ Erro: ${formatError(err)}`);
+      toast.error(`❌ Erro: ${err.message}`);
       return null;
     } finally {
       setIsLoading(false);
@@ -350,8 +349,8 @@ export function useAIAutomation() {
       if (error) throw error;
       toast.success('🛑 Job cancelado');
       return true;
-    } catch (err: unknown) {
-      toast.error(`❌ Erro: ${formatError(err)}`);
+    } catch (err: any) {
+      toast.error(`❌ Erro: ${err.message}`);
       return false;
     }
   }, []);
@@ -373,8 +372,8 @@ export function useAIAutomation() {
       if (error) throw error;
       toast.success('🔄 Job reagendado');
       return true;
-    } catch (err: unknown) {
-      toast.error(`❌ Erro: ${formatError(err)}`);
+    } catch (err: any) {
+      toast.error(`❌ Erro: ${err.message}`);
       return false;
     }
   }, []);
@@ -476,8 +475,8 @@ export function useFeatureFlags() {
       toast.success(`${enabled ? '✅' : '🔴'} ${flagKey} ${enabled ? 'ativado' : 'desativado'}`);
       fetchFlags();
       return true;
-    } catch (err: unknown) {
-      toast.error(`❌ Erro: ${formatError(err)}`);
+    } catch (err: any) {
+      toast.error(`❌ Erro: ${err.message}`);
       return false;
     }
   }, [fetchFlags]);
@@ -494,8 +493,8 @@ export function useFeatureFlags() {
       toast.success(`📊 Rollout atualizado para ${percentage}%`);
       fetchFlags();
       return true;
-    } catch (err: unknown) {
-      toast.error(`❌ Erro: ${formatError(err)}`);
+    } catch (err: any) {
+      toast.error(`❌ Erro: ${err.message}`);
       return false;
     }
   }, [fetchFlags]);

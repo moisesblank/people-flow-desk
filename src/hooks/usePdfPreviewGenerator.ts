@@ -135,14 +135,23 @@ export function usePdfPreviewGenerator() {
         throw new Error(`Upload falhou: ${uploadError.message}`);
       }
 
-      // 7. Retornar o PATH (não URL) - componentes devem gerar signed URL dinamicamente
-      // Bucket pdf-previews é privado, URLs assinadas expiram
+      // 7. Obter URL pública
+      const { data: urlData } = supabase.storage
+        .from(PREVIEW_BUCKET)
+        .getPublicUrl(targetPath);
+
+      const previewUrl = urlData?.publicUrl;
+
+      if (!previewUrl) {
+        throw new Error('Não foi possível obter URL pública');
+      }
+
+      // 8. Cleanup
       pdf.destroy();
 
-      console.log('[PdfPreviewGenerator] Preview salva com sucesso, path:', targetPath);
+      console.log('[PdfPreviewGenerator] Preview gerada com sucesso:', previewUrl);
 
-      // Retornamos o path para ser salvo no banco - componentes usarão getPreviewSignedUrl()
-      return { success: true, previewUrl: targetPath };
+      return { success: true, previewUrl };
 
     } catch (error: any) {
       console.error('[PdfPreviewGenerator] Erro:', error);
@@ -220,49 +229,10 @@ export function usePdfPreviewGenerator() {
     return true;
   }, []);
 
-  /**
-   * Gera signed URL para exibir preview
-   * @param previewPath Path salvo no banco (preview_url ou cover_url)
-   * @param ttl Tempo de vida em segundos (default: 3600 = 1h)
-   */
-  const getPreviewSignedUrl = useCallback(async (
-    previewPath: string | null | undefined,
-    ttl: number = 3600
-  ): Promise<string | null> => {
-    if (!previewPath) return null;
-    
-    // Se já é uma URL completa (legacy), retornar como está
-    if (previewPath.startsWith('http://') || previewPath.startsWith('https://')) {
-      // Tentar extrair path de URL antiga
-      const match = previewPath.match(/\/storage\/v1\/object\/(?:public|sign)\/pdf-previews\/(.+)/);
-      if (match) {
-        const extractedPath = match[1].split('?')[0]; // Remove query params
-        const { data } = await supabase.storage
-          .from(PREVIEW_BUCKET)
-          .createSignedUrl(extractedPath, ttl);
-        return data?.signedUrl || null;
-      }
-      return previewPath; // URL externa, retornar como está
-    }
-    
-    // Path relativo - gerar signed URL
-    const { data, error } = await supabase.storage
-      .from(PREVIEW_BUCKET)
-      .createSignedUrl(previewPath, ttl);
-    
-    if (error) {
-      console.error('[PdfPreviewGenerator] Erro ao gerar signed URL:', error);
-      return null;
-    }
-    
-    return data?.signedUrl || null;
-  }, []);
-
   return {
     generatePreview,
     generatePreviewFromFile,
     updateRecordPreview,
-    getPreviewSignedUrl,
   };
 }
 

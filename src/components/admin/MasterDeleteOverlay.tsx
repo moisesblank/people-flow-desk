@@ -358,3 +358,4 @@ export const MasterDeleteOverlay = forwardRef<HTMLDivElement, Record<string, nev
 });
 
 MasterDeleteOverlay.displayName = 'MasterDeleteOverlay';
+export default MasterDeleteOverlay;

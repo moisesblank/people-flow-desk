@@ -66,13 +66,8 @@ export function MFAActionGuard({
     onBlocked?.();
   }, [isVerified, onVerified, onBlocked]);
 
-  // 🔐 P0 FIX v12: handleVerificationSuccess DEVE ser async e AGUARDAR onVerificationComplete
-  const handleVerificationSuccess = useCallback(async () => {
-    try {
-      await onVerificationComplete(true);
-    } catch (err) {
-      console.error('[MFAActionGuard] ❌ Erro em onVerificationComplete:', err);
-    }
+  const handleVerificationSuccess = useCallback(() => {
+    onVerificationComplete(true);
     setShowModal(false);
     onVerified?.();
   }, [onVerificationComplete, onVerified]);
@@ -197,13 +192,8 @@ export function MFAProtectedButton({
     setShowModal(true);
   }, [isVerified, onClick]);
 
-  // 🔐 P0 FIX v12: AGUARDAR onVerificationComplete antes de executar ação
   const handleVerificationSuccess = useCallback(async () => {
-    try {
-      await onVerificationComplete(true);
-    } catch (err) {
-      console.error('[MFAProtectedButton] ❌ Erro em onVerificationComplete:', err);
-    }
+    onVerificationComplete(true);
     setShowModal(false);
     setIsExecuting(true);
     try {

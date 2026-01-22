@@ -500,27 +500,11 @@ export const FnUpload = memo<FnUploadProps>(({
       
       if (error) throw error;
       
-      // Para buckets privados (ex: materiais), usar URL assinada
-      // Para buckets públicos, usar getPublicUrl
-      const PRIVATE_BUCKETS = ['materiais'];
-      let finalUrl: string;
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(data.path);
       
-      if (PRIVATE_BUCKETS.includes(bucket)) {
-        const { data: signedData, error: signError } = await supabase.storage
-          .from(bucket)
-          .createSignedUrl(data.path, 3600);
-        if (signError || !signedData?.signedUrl) {
-          throw new Error('Falha ao gerar URL assinada');
-        }
-        finalUrl = signedData.signedUrl;
-      } else {
-        const { data: { publicUrl } } = supabase.storage
-          .from(bucket)
-          .getPublicUrl(data.path);
-        finalUrl = publicUrl;
-      }
-      
-      await onUpload(finalUrl, file);
+      await onUpload(publicUrl, file);
       
       await trackFnEvent(fn, "upload", true, {
         userId,

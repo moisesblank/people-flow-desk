@@ -2,13 +2,11 @@
 // MOISÉS MEDEIROS v9.1 - MATERIALS TAB
 // Exibição de materiais complementares (PDF)
 // COM MODO LEITURA (Fabric.js) - TEMPORÁRIO
-// P0 FIX v2.0: Migrado para URLs ASSINADAS
 // ============================================
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { 
   FileText, 
   Download, 
@@ -118,57 +116,37 @@ export function MaterialsTab({ lessonId }: MaterialsTabProps) {
                   <span className="hidden sm:inline">Modo Leitura</span>
                 </Button>
 
-                {/* 🛡️ P0 FIX: Nova Aba com URL Assinada */}
                 <Button
                   variant="outline"
                   size="sm"
                   className="gap-2 border-cyan-500/50 hover:bg-cyan-500/10 text-cyan-400"
-                  onClick={async () => {
-                    try {
-                      const { data, error } = await supabase.storage
-                        .from('materiais')
-                        .createSignedUrl(lesson.material_url, 3600); // 1 hora
-                      
-                      if (error || !data?.signedUrl) {
-                        toast.error('Erro ao gerar link seguro');
-                        return;
-                      }
-                      window.open(data.signedUrl, '_blank');
-                    } catch (err) {
-                      toast.error('Erro ao abrir material');
-                    }
+                  onClick={() => {
+                    // Gera URL pública para abrir em nova aba
+                    const { data: { publicUrl } } = supabase.storage
+                      .from('materiais')
+                      .getPublicUrl(lesson.material_url);
+                    window.open(publicUrl, '_blank');
                   }}
                 >
                   <ExternalLink className="h-4 w-4" />
                   <span className="hidden sm:inline">Nova Aba</span>
                 </Button>
                 
-                {/* 🛡️ P0 FIX: Download com URL Assinada */}
                 <Button
                   variant="outline"
                   size="sm"
                   className="gap-2 border-orange-500/50 hover:bg-orange-500/10 text-orange-400"
-                  onClick={async () => {
-                    try {
-                      const { data, error } = await supabase.storage
-                        .from('materiais')
-                        .createSignedUrl(lesson.material_url, 300); // 5 min para download
-                      
-                      if (error || !data?.signedUrl) {
-                        toast.error('Erro ao gerar link de download');
-                        return;
-                      }
-                      
-                      const link = document.createElement('a');
-                      link.href = data.signedUrl;
-                      link.download = fileName;
-                      link.target = '_blank';
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                    } catch (err) {
-                      toast.error('Erro ao baixar material');
-                    }
+                  onClick={() => {
+                    const { data: { publicUrl } } = supabase.storage
+                      .from('materiais')
+                      .getPublicUrl(lesson.material_url);
+                    const link = document.createElement('a');
+                    link.href = publicUrl;
+                    link.download = fileName;
+                    link.target = '_blank';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
                   }}
                 >
                   <Download className="h-4 w-4" />

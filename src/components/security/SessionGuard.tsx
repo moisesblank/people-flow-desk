@@ -64,16 +64,6 @@ export function SessionGuard({ children }: SessionGuardProps) {
     location.pathname.startsWith(route)
   );
 
-  // 🎯 P0 FIX v12.5: Recovery sticky (anti-loop)
-  // Durante /auth em modo recovery, não podemos derrubar a sessão do backend
-  // (reset password precisa de sessão válida do provedor de auth, mas pode ainda não ter matriz_session_token)
-  const RECOVERY_UNTIL_KEY = "matriz_recovery_flow_until";
-  const recoveryUntilRaw = typeof window !== "undefined" ? sessionStorage.getItem(RECOVERY_UNTIL_KEY) : null;
-  const recoveryUntil = recoveryUntilRaw ? Number(recoveryUntilRaw) : 0;
-  const isRecoveryStickyActive = Number.isFinite(recoveryUntil) && recoveryUntil > Date.now();
-  const isAuthRoute = location.pathname.startsWith('/auth');
-  const shouldBypassSingleSessionEnforcement = isAuthRoute && isRecoveryStickyActive;
-
   /**
    * 🔧 P0 FIX v3.0: Verifica no DB ANTES de mostrar overlay
    * Só mostra se revogação for CONFIRMADA e REAL
@@ -114,14 +104,6 @@ export function SessionGuard({ children }: SessionGuardProps) {
       console.log(`[SessionGuard] 🔄 Sessão inválida mas sem overlay: ${result.reason}`);
       
       if (result.reason === 'USER_LOGOUT' || result.reason === 'SESSION_NOT_FOUND') {
-        // ✅ Anti-loop: durante recovery em /auth, NÃO fazer signOut()
-        // Apenas remover tokens do Single Session para permitir que o fluxo de reset prossiga.
-        if (shouldBypassSingleSessionEnforcement) {
-          console.warn('[SessionGuard] 🔐 Recovery ativo em /auth: ignorando logout por SESSION_NOT_FOUND/USER_LOGOUT (client-side)');
-          localStorage.removeItem(SESSION_TOKEN_KEY);
-          return false;
-        }
-
         // Limpar e redirecionar silenciosamente
         const keysToRemove = [
           "matriz_session_token",
@@ -137,7 +119,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
     }
 
     return false;
-  }, [isOwner, isOnboardingRoute, validateSessionWithRetry, logOverlayEvent, user?.id, signOut, shouldBypassSingleSessionEnforcement]);
+  }, [isOwner, isOnboardingRoute, validateSessionWithRetry, logOverlayEvent, user?.id, signOut]);
 
   /**
    * Callback de retry do overlay
@@ -313,11 +295,6 @@ export function SessionGuard({ children }: SessionGuardProps) {
   const validateSession = useCallback(async (): Promise<boolean> => {
     if (!user || isValidatingRef.current || hasLoggedOutRef.current) return true;
 
-    // ✅ Anti-loop: não validar sessão única durante recovery em /auth
-    if (shouldBypassSingleSessionEnforcement) {
-      return true;
-    }
-
     const storedToken = localStorage.getItem(SESSION_TOKEN_KEY);
 
     if (!storedToken) {
@@ -365,7 +342,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
       isValidatingRef.current = false;
       return true;
     }
-  }, [user, handleBackendRevocation, bootstrapSessionTokenIfMissing, verifyAndShowOverlay, shouldBypassSingleSessionEnforcement]);
+  }, [user, handleBackendRevocation, bootstrapSessionTokenIfMissing, verifyAndShowOverlay]);
 
   // ✅ Verificação periódica + visibilidade
   useEffect(() => {

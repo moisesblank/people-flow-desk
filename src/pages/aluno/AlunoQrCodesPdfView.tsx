@@ -1,7 +1,7 @@
 // ============================================
 // 📄 VISUALIZADOR DE PDF — ACESSO VIA LINK
 // Qualquer aluno logado pode acessar via link direto
-// Protegido com ProtectedPDFViewerV2 + watermark forense
+// Protegido com watermark forense
 // ============================================
 
 import { useEffect } from "react";
@@ -13,33 +13,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, ArrowLeft, FileText, Lock, AlertTriangle } from "lucide-react";
-import { ProtectedPDFViewerV2 } from "@/components/security/ProtectedPDFViewerV2";
-
-// Helper para normalizar path do PDF
-// Aceita tanto URLs públicas antigas quanto paths diretos (novo formato)
-const normalizeFilePath = (urlOrPath: string): string => {
-  // Se já é um path simples (não começa com http), retornar diretamente
-  if (!urlOrPath.startsWith('http')) {
-    return urlOrPath;
-  }
-  
-  // URL típica antiga: https://xxx.supabase.co/storage/v1/object/public/materiais/qrcodes/book-id/xxx.pdf
-  // Precisamos extrair: qrcodes/book-id/xxx.pdf
-  try {
-    const urlObj = new URL(urlOrPath);
-    const pathParts = urlObj.pathname.split('/materiais/');
-    if (pathParts.length > 1) {
-      return pathParts[1];
-    }
-    // Fallback: pegar última parte após /materiais/
-    const match = urlOrPath.match(/\/materiais\/(.+)$/);
-    if (match) return match[1];
-    // Se não conseguir extrair, retornar como está
-    return urlOrPath;
-  } catch {
-    return urlOrPath;
-  }
-};
 
 interface QrCodePdf {
   id: string;
@@ -199,15 +172,12 @@ export default function AlunoQrCodesPdfView() {
         </div>
       </div>
 
-      {/* PDF Viewer PROTEGIDO com watermark forense */}
-      {/* ProtectedPDFViewerV2 espera filePath (path no bucket) não URL completa */}
-      {/* Extrair o path da URL: materiais/qrcodes/book-id/xxx.pdf */}
+      {/* PDF Viewer embutido */}
       <div className="flex-1 h-[calc(100vh-60px)]">
-        <ProtectedPDFViewerV2
-          filePath={normalizeFilePath(pdf.pdf_url)}
+        <iframe
+          src={pdf.pdf_url}
+          className="w-full h-full border-0"
           title={pdf.title}
-          className="w-full h-full"
-          isModal={false}
         />
       </div>
     </div>

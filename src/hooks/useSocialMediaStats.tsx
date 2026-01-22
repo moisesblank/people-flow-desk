@@ -81,12 +81,10 @@ export function useSocialMediaStats() {
       } else {
         throw new Error(data?.error || 'Erro ao atualizar');
       }
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error('Erro ao atualizar métricas:', err);
-      const errObj = err as Record<string, unknown>;
-      const errorMsg = typeof errObj?.message === 'string' ? errObj.message : 'Erro desconhecido';
       toast.error("Erro ao atualizar métricas", {
-        description: errorMsg
+        description: err.message
       });
     } finally {
       setIsFetching(false);

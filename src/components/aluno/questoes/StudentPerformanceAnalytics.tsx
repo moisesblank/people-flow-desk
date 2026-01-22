@@ -60,32 +60,6 @@ function getMacroAnalyticsConfig(macroLabel: string) {
 // =====================================================
 // TIPOS
 // =====================================================
-// ============================================
-// P0 FIX — HARDENING CONTRA React Error #61
-// Garante que todos os valores renderizados sejam strings/numbers seguros
-// ============================================
-const toSafeString = (v: unknown, fallback = ""): string => {
-  if (typeof v === "string") return v;
-  if (v === null || v === undefined) return fallback;
-  if (typeof v === "object") {
-    // Se for objeto, tenta extrair .name ou .label, senão stringifica
-    const obj = v as Record<string, unknown>;
-    if (typeof obj.name === "string") return obj.name;
-    if (typeof obj.label === "string") return obj.label;
-    try { return JSON.stringify(v); } catch { return fallback; }
-  }
-  return String(v);
-};
-
-const toSafeNumber = (v: unknown, fallback = 0): number => {
-  if (typeof v === "number" && !isNaN(v)) return v;
-  if (typeof v === "string") {
-    const parsed = parseFloat(v);
-    return isNaN(parsed) ? fallback : parsed;
-  }
-  return fallback;
-};
-
 interface ProcessedItem {
   name: string;
   total: number;
@@ -522,40 +496,28 @@ export function StudentPerformanceAnalytics() {
     let totalCorrect = 0;
 
     taxonomyData.array.forEach((macro) => {
-      // P0 FIX: Garantir valores seguros antes de usar
-      const macroName = toSafeString(macro?.name, "Sem Nome");
-      const macroTotal = toSafeNumber(macro?.totalAttempts, 0);
-      const macroCorrect = toSafeNumber(macro?.correctAttempts, 0);
-      const macroAccuracy = toSafeNumber(macro?.accuracyPercent, 0);
-
-      totalQuestions += macroTotal;
-      totalCorrect += macroCorrect;
+      totalQuestions += macro.totalAttempts;
+      totalCorrect += macro.correctAttempts;
 
       macros.push({
-        name: macroName,
-        total: macroTotal,
-        correct: macroCorrect,
-        errors: macroTotal - macroCorrect,
-        accuracy: macroAccuracy,
+        name: macro.name,
+        total: macro.totalAttempts,
+        correct: macro.correctAttempts,
+        errors: macro.totalAttempts - macro.correctAttempts,
+        accuracy: macro.accuracyPercent,
       });
 
       const macroMicros: ProcessedItem[] = [];
       
       if (macro.children && macro.children.size > 0) {
         macro.children.forEach((micro) => {
-          // P0 FIX: Garantir valores seguros
-          const microName = toSafeString(micro?.name, "Sem Nome");
-          const microTotal = toSafeNumber(micro?.totalAttempts, 0);
-          const microCorrect = toSafeNumber(micro?.correctAttempts, 0);
-          const microAccuracy = toSafeNumber(micro?.accuracyPercent, 0);
-
           const microItem: ProcessedItem = {
-            name: microName,
-            total: microTotal,
-            correct: microCorrect,
-            errors: microTotal - microCorrect,
-            accuracy: microAccuracy,
-            parentMacro: macroName,
+            name: micro.name,
+            total: micro.totalAttempts,
+            correct: micro.correctAttempts,
+            errors: micro.totalAttempts - micro.correctAttempts,
+            accuracy: micro.accuracyPercent,
+            parentMacro: macro.name,
           };
           macroMicros.push(microItem);
           allMicros.push(microItem);
@@ -563,19 +525,13 @@ export function StudentPerformanceAnalytics() {
           const microTemas: ProcessedItem[] = [];
           if (micro.children && micro.children.size > 0) {
             micro.children.forEach((tema) => {
-              // P0 FIX: Garantir valores seguros
-              const temaName = toSafeString(tema?.name, "Sem Nome");
-              const temaTotal = toSafeNumber(tema?.totalAttempts, 0);
-              const temaCorrect = toSafeNumber(tema?.correctAttempts, 0);
-              const temaAccuracy = toSafeNumber(tema?.accuracyPercent, 0);
-
               const temaItem: ProcessedItem = {
-                name: temaName,
-                total: temaTotal,
-                correct: temaCorrect,
-                errors: temaTotal - temaCorrect,
-                accuracy: temaAccuracy,
-                parentMacro: macroName,
+                name: tema.name,
+                total: tema.totalAttempts,
+                correct: tema.correctAttempts,
+                errors: tema.totalAttempts - tema.correctAttempts,
+                accuracy: tema.accuracyPercent,
+                parentMacro: macro.name,
               };
               microTemas.push(temaItem);
               allTemas.push(temaItem);

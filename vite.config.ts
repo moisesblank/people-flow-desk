@@ -49,25 +49,27 @@ export default defineConfig(({ mode }) => ({
     // ⚡ Limites de chunk para performance
     chunkSizeWarningLimit: 500,
     
-    // ☢️ TERSER OPTIONS (SAFE BUILD): manter remoção de console/debugger,
-    // mas evitar flags agressivas que podem quebrar bundle/depências no publish.
+    // ☢️ TERSER OPTIONS: Destruição total da legibilidade
     terserOptions: mode === "production" ? {
       compress: {
         drop_console: true,
         drop_debugger: true,
         dead_code: true,
-        passes: 2,
+        passes: 3,
         pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
-        // ⚠️ Evitar unsafe* no build de produção (pode causar falha/timeout ou quebrar libs)
-        unsafe: false,
-        unsafe_arrows: false,
-        unsafe_methods: false,
+        unsafe: true,
+        unsafe_arrows: true,
+        unsafe_methods: true,
       },
       mangle: {
-        // ⚠️ Evitar mangle agressivo (toplevel/eval/properties) que pode quebrar runtime/build
+        eval: true,
         keep_classnames: false,
         keep_fnames: false,
-        toplevel: false,
+        toplevel: true,
+        safari10: true,
+        properties: {
+          regex: /^_/,
+        },
       },
       format: {
         comments: false,
@@ -86,9 +88,19 @@ export default defineConfig(({ mode }) => ({
         // ☢️ FORÇA NOMES HASH-ONLY PARA DYNAMIC IMPORTS
         manualChunks: undefined,
         
-        // ⚠️ P0 BUILD INTEGRITY: NÃO sanitizar nomes de arquivos.
-        // Sanitização agressiva remove "." e pode gerar assets sem extensão,
-        // quebrando MIME e (em alguns hosts) o publish.
+        // ☢️ SANITIZA NOMES PARA REMOVER QUALQUER PADRÃO LEGÍVEL
+        sanitizeFileName: (name: string) => {
+          // Remove qualquer caractere que não seja alfanumérico
+          // Isso força o Rollup a usar apenas o hash
+          return name.replace(/[^a-zA-Z0-9]/g, '');
+        },
+      },
+    },
+    
+    // ☢️ EXPERIMENTAL: Anonimiza completamente URLs de chunks
+    experimental: {
+      renderBuiltUrl(filename: string) {
+        return { relative: true };
       },
     },
   },

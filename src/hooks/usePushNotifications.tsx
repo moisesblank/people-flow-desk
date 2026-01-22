@@ -108,8 +108,8 @@ export function usePushNotifications() {
       try {
         const notification = new Notification(title, {
           body,
-          icon: options?.icon || "/favicon.png",
-          badge: options?.badge || "/favicon.png",
+          icon: options?.icon || "/favicon.ico",
+          badge: options?.badge || "/favicon.ico",
           tag: options?.tag,
           requireInteraction: options?.requireInteraction ?? false,
           data: options?.data,

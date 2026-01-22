@@ -148,17 +148,8 @@ export const CORE_VERSION = "3.0-DESACOPLADO";
 export const CORE_BUILD_DATE = "2024-12-28";
 
 // ============================================
-// ESTATÍSTICAS DO CORE (calculadas sob demanda)
+// ESTATÍSTICAS DO CORE (LAZY - só calcula quando chamado)
 // ============================================
-
-// Import síncrono para stats - módulos já carregados via re-exports acima
-import { ROUTES as _R } from "./routes";
-import { ACTIONS as _A } from "./actions";
-import { BUCKETS as _B } from "./storage";
-import _FM from "./functionMatrix";
-import { NAV_ROUTE_MAP as _NRM } from "./nav/navRouteMap";
-import { PUBLIC_PATHS as _PP, GESTAO_ROLES as _GR, ALUNO_ROLES as _AR } from "./urlAccessControl";
-
 let _coreStats: {
   routes: number;
   actions: number;
@@ -173,15 +164,23 @@ let _coreStats: {
 export function getCoreStats() {
   if (_coreStats) return _coreStats;
   
+  // Import lazy para evitar carregamento no boot
+  const { ROUTES: R } = require("./routes");
+  const { ACTIONS: A } = require("./actions");
+  const { BUCKETS: B } = require("./storage");
+  const { default: FM } = require("./functionMatrix");
+  const { NAV_ROUTE_MAP } = require("./nav/navRouteMap");
+  const { PUBLIC_PATHS, GESTAO_ROLES, ALUNO_ROLES } = require("./urlAccessControl");
+  
   _coreStats = {
-    routes: Object.keys(_R).length,
-    actions: Object.keys(_A).length,
-    buckets: Object.keys(_B).length,
-    functions: _FM.length,
-    navItems: Object.keys(_NRM).length,
-    publicPaths: _PP.length,
-    gestaoRoles: _GR.length,
-    alunoRoles: _AR.length,
+    routes: Object.keys(R).length,
+    actions: Object.keys(A).length,
+    buckets: Object.keys(B).length,
+    functions: FM.length,
+    navItems: Object.keys(NAV_ROUTE_MAP).length,
+    publicPaths: PUBLIC_PATHS.length,
+    gestaoRoles: GESTAO_ROLES.length,
+    alunoRoles: ALUNO_ROLES.length,
   };
   
   return _coreStats;
@@ -204,7 +203,7 @@ export const CORE_STATS = {
 // ============================================
 
 /**
- * Verifica integridade do core
+ * Verifica integridade do core (LAZY)
  */
 export function verifyCoreIntegrity(): {
   valid: boolean;

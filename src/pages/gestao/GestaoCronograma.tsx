@@ -27,7 +27,6 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { formatError } from "@/lib/utils/formatError";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -413,8 +412,8 @@ export default function GestaoCronograma() {
       toast.success("Plano criado com sucesso!");
       setPlanDialogOpen(false);
     },
-    onError: (err: unknown) => {
-      toast.error(`Erro: ${formatError(err)}`);
+    onError: (err: Error) => {
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
@@ -429,8 +428,8 @@ export default function GestaoCronograma() {
       setPlanDialogOpen(false);
       setSelectedPlan(null);
     },
-    onError: (err: unknown) => {
-      toast.error(`Erro: ${formatError(err)}`);
+    onError: (err: Error) => {
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
@@ -443,8 +442,8 @@ export default function GestaoCronograma() {
       queryClient.invalidateQueries({ queryKey: ["study-plans"] });
       toast.success("Plano excluído!");
     },
-    onError: (err: unknown) => {
-      toast.error(`Erro: ${formatError(err)}`);
+    onError: (err: Error) => {
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
@@ -467,8 +466,8 @@ export default function GestaoCronograma() {
       queryClient.invalidateQueries({ queryKey: ["study-plans"] });
       toast.success("Plano duplicado!");
     },
-    onError: (err: unknown) => {
-      toast.error(`Erro: ${formatError(err)}`);
+    onError: (err: Error) => {
+      toast.error(`Erro: ${err.message}`);
     },
   });
 

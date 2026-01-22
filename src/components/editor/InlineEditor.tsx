@@ -345,3 +345,5 @@ export function InlineEditor() {
     </AnimatePresence>
   );
 }
+
+export default InlineEditor;

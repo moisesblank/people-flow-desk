@@ -2,7 +2,6 @@
 // 🌌🔥 SANCTUM ASSET VIEWER ULTRA v3.0 🔥🌌
 // Visualizador de Conteúdo Protegido Nível NASA
 // Otimizado para 3G + 5000 usuários simultâneos
-// 🛡️ P0 FIX: error é SEMPRE string (evita React Error #61)
 // ============================================
 
 import React, { memo, useEffect, useCallback, useMemo, useState } from "react";
@@ -20,7 +19,6 @@ import {
   RefreshCw
 } from "lucide-react";
 import { SacredImage } from "@/components/performance/SacredImage";
-import { formatError } from "@/lib/utils/formatError";
 
 // ============================================
 // WATERMARK OVERLAY (CSS Grid dinâmico)
@@ -89,7 +87,7 @@ const ErrorState = memo(({
       {isLocked ? "Acesso Bloqueado" : "Erro ao Carregar"}
     </h3>
     <p className="text-muted-foreground text-sm text-center max-w-md">
-      {formatError(error)}
+      {error}
     </p>
     {errorCode && (
       <code className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">

@@ -1305,27 +1305,19 @@ export function detectSuspiciousActivity(): ThreatAnalysis {
   }
   
   // Automação/Bot
-  // ⚠️ DESATIVADO 2026-01-22: Causava falsos positivos no fluxo de 2FA
-  // Outras camadas (RLS, watermark, DevTools detection) permanecem ativas
-  // const nav = navigator as Navigator & { webdriver?: boolean };
-  // if (nav.webdriver) {
-  //   reasons.push('WebDriver detectado');
-  //   riskScore += 50;
-  // }
+  const nav = navigator as Navigator & { webdriver?: boolean };
+  if (nav.webdriver) {
+    reasons.push('WebDriver detectado');
+    riskScore += 50;
+  }
   
   // Sinais suspeitos no window
-  // ⚠️ DESATIVADO 2026-01-22: Causava falsos positivos no fluxo de 2FA
-  // A verificação de sinais de automação (webdriver, selenium, phantom, etc.)
-  // foi desativada pois navegadores modernos e extensões podem definir esses sinais
-  // legitimamente, causando bloqueios indevidos durante o processo de login/2FA.
-  // Outras camadas (RLS, watermark, DevTools detection) permanecem ativas.
-  // 
-  // for (const signal of THREAT_DETECTION_CONFIG.suspiciousSignals) {
-  //   if (signal in window) {
-  //     reasons.push(`Sinal suspeito: ${signal}`);
-  //     riskScore += 20;
-  //   }
-  // }
+  for (const signal of THREAT_DETECTION_CONFIG.suspiciousSignals) {
+    if (signal in window) {
+      reasons.push(`Sinal suspeito: ${signal}`);
+      riskScore += 20;
+    }
+  }
   
   // Debugger timing - DESATIVADO
   // O statement "debugger" pausa a execução e bloqueia funcionalidades críticas

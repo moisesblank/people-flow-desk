@@ -6,7 +6,6 @@
 
 import { ReactNode, useState, useEffect } from 'react';
 import { useMFAGuard, MFAProtectedAction } from '@/hooks/useMFAGuard';
-import { formatError } from '@/lib/utils/formatError';
 import { MFAActionModal } from './MFAActionModal';
 import { Shield, Lock, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -89,13 +88,8 @@ export function MFAPageGuard({
     }
   }, [needsMFA, isVerified]);
 
-  // 🔐 P0 FIX v12: handleVerificationSuccess DEVE ser async e AGUARDAR onVerificationComplete
-  const handleVerificationSuccess = async () => {
-    try {
-      await onVerificationComplete(true);
-    } catch (err) {
-      console.error('[MFAPageGuard] ❌ Erro em onVerificationComplete:', err);
-    }
+  const handleVerificationSuccess = () => {
+    onVerificationComplete(true);
     setShowModal(false);
   };
 
@@ -168,7 +162,7 @@ export function MFAPageGuard({
                   animate={{ opacity: 1, height: 'auto' }}
                   className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive text-center"
                 >
-                  {formatError(error)}
+                  {error}
                 </motion.div>
               )}
 

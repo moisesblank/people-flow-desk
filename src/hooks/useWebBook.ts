@@ -698,11 +698,10 @@ export function useWebBookLibrary() {
         console.error('[WebBookLibrary] RPC returned success=false:', result);
         setError(result?.error || 'Erro ao carregar livros');
       }
-    } catch (err: unknown) {
+    } catch (err) {
       console.error('[WebBookLibrary] Erro:', err);
-      const errObj = err as Record<string, unknown>;
-      const errorMsg = typeof errObj?.message === 'string' ? errObj.message : 'Erro ao carregar biblioteca';
-      setError(errorMsg);
+      const anyErr = err as any;
+      setError(anyErr?.message || 'Erro ao carregar biblioteca');
     } finally {
       setIsLoading(false);
     }

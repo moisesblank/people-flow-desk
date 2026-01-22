@@ -242,8 +242,7 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
             setError('USER_BANNED');
             return false;
           }
-          const errorMsg = typeof result?.error === 'string' ? result.error : 'Resposta inválida do servidor';
-          throw new Error(errorMsg);
+          throw new Error(result?.error || 'Resposta inválida do servidor');
         }
 
         // 🛡️ v11.0 FIX: A função SQL retorna watermark_text, não um objeto watermark
@@ -708,12 +707,21 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
     }
 
     // 7. Automation Detection
-    // ⚠️ DESATIVADO 2026-01-22: Causava falsos positivos no fluxo de 2FA
-    // Outras camadas (RLS, watermark, DevTools detection) permanecem ativas
-    // const detectAutomation = () => { ... };
-    // detectAutomation();
-    // const automationInterval = setInterval(detectAutomation, 30000);
-    // cleanupFns.push(() => clearInterval(automationInterval));
+    const detectAutomation = () => {
+      const isAutomated = 
+        (navigator as any).webdriver ||
+        (window as any).__selenium_unwrapped ||
+        (window as any).__webdriver_evaluate ||
+        (document as any).__webdriver_unwrapped;
+      
+      if (isAutomated) {
+        reportViolation('unknown', 8, { reason: 'automation_detected' });
+      }
+    };
+
+    detectAutomation();
+    const automationInterval = setInterval(detectAutomation, 30000);
+    cleanupFns.push(() => clearInterval(automationInterval));
 
     // Retornar função de cleanup
     return () => {

@@ -409,10 +409,6 @@ export async function sanctumGuard(
     ROLES.SUPORTE, ROLES.MONITORIA, ROLES.MARKETING, ROLES.AFILIADO
   ].includes(userRole as any) || isOwner;
   
-  // CONSTITUIÇÃO v10.x - Roles premium incluem beta, aluno_presencial, beta_expira
-  const premiumRoles = ['beta', 'aluno_presencial', 'beta_expira'];
-  const isBetaRole = premiumRoles.includes(userRole || '');
-  
   const principal: SanctumPrincipal = {
     userId: user.id,
     email,
@@ -420,7 +416,7 @@ export async function sanctumGuard(
     isOwner,
     isAdmin: userRole === ROLES.ADMIN || isOwner,
     isFuncionario: isGestaoStaff, // Agora verifica TODAS as roles de staff
-    isBeta: isBetaRole || isGestaoStaff,
+    isBeta: userRole === ROLES.BETA || isGestaoStaff,
     sessionId: session.access_token.substring(0, 16),
     correlationId,
   };

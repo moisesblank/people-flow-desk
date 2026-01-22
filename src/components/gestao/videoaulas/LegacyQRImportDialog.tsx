@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatError } from "@/lib/utils/formatError";
 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -187,9 +186,9 @@ export const LegacyQRImportDialog = forwardRef<HTMLDivElement, LegacyQRImportDia
 
       setParsedData(records);
       setStep('preview');
-    } catch (error: unknown) {
-      toast.error(`Erro ao processar arquivo: ${formatError(error)}`);
-      setParseErrors([formatError(error)]);
+    } catch (error: any) {
+      toast.error(`Erro ao processar arquivo: ${error.message}`);
+      setParseErrors([error.message]);
     }
   }, []);
 

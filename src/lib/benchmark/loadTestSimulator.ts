@@ -6,7 +6,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { RATE_LIMIT_CONFIG } from "@/lib/rateLimiter";
-import { formatError } from "@/lib/utils/formatError";
 
 export interface BenchmarkResult {
   name: string;
@@ -356,7 +355,7 @@ async function benchmarkConcurrentSimulation(concurrency: number = 5): Promise<B
       return data;
     } catch (err) {
       times.push(performance.now() - queryStart);
-      errors.push(`Request ${idx}: ${formatError(err)}`);
+      errors.push(`Request ${idx}: ${err}`);
       return null;
     }
   });
@@ -462,7 +461,7 @@ export async function runQuickBenchmark(): Promise<{ passed: boolean; score: num
     return {
       passed: false,
       score: 0,
-      message: `❌ Erro no benchmark: ${formatError(err)}`
+      message: `❌ Erro no benchmark: ${err}`
     };
   }
 }

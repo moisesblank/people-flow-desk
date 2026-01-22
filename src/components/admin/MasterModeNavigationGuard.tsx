@@ -247,3 +247,5 @@ export function MasterModeNavigationGuard() {
     </>
   );
 }
+
+export default MasterModeNavigationGuard;

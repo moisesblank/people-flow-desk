@@ -14,10 +14,8 @@ import { initNuclearShield } from "@/lib/security/nuclearShield";
 // ═══════════════════════════════════════════════════════════
 // 🔧 MASTER KILL SWITCH - PROTEÇÃO DE DEVTOOLS
 // ═══════════════════════════════════════════════════════════
-// ☢️ NUCLEAR SHIELD: DESATIVADO (2026-01-21)
-// 🚨 BYPASS PLANO A NUCLEAR: Falsos positivos em produção
-// 🔧 TODO: Recalibrar thresholds de detecção antes de reativar
-const DEVTOOLS_PROTECTION_ENABLED = false;
+// ☢️ NUCLEAR SHIELD: ATIVO (2026-01-12)
+const DEVTOOLS_PROTECTION_ENABLED = true;
 
 // 🛡️ DEPRECATED: OWNER_EMAIL removido - usar RPC check_is_owner
 // const OWNER_EMAIL = "moisesblank@gmail.com";

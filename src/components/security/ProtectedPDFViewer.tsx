@@ -1,7 +1,6 @@
 // ============================================
 // 🔥 PROTECTED PDF VIEWER - DOGMA III
 // Visualizador de PDF blindado contra cópia
-// 🛡️ P0 FIX: error é SEMPRE string (evita React Error #61)
 // ============================================
 
 import { useState, useEffect, useRef, useCallback, memo } from "react";
@@ -20,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useContentSecurityGuard } from "@/hooks/useContentSecurityGuard";
 import { useAuth } from "@/hooks/useAuth";
-import { formatError } from "@/lib/utils/formatError";
 
 interface UserWatermarkData {
   nome?: string;
@@ -413,7 +411,7 @@ export const ProtectedPDFViewer = memo(({
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex flex-col items-center gap-3 text-destructive">
               <FileText className="w-12 h-12" />
-              <span className="text-sm">{formatError(error)}</span>
+              <span className="text-sm">{error}</span>
             </div>
           </div>
         )}

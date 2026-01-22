@@ -5,7 +5,6 @@
 // ============================================
 
 import { memo, useState, useCallback, useEffect, useMemo, Component, ErrorInfo, ReactNode } from 'react';
-import { formatError } from '@/lib/utils/formatError';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
@@ -51,7 +50,6 @@ import {
   SingleImageUploader,
   type QuestionImage 
 } from '@/components/gestao/questoes/QuestionImageUploader';
-import { QuestionDialog, type Question } from '@/components/gestao/questoes/QuestionDialog';
 import { QuestionImportDialog } from '@/components/gestao/questoes/QuestionImportDialog';
 import { QuestionImportHistory } from '@/components/gestao/questoes/QuestionImportHistory';
 import { VirtualizedQuestionList } from '@/components/gestao/questoes/VirtualizedQuestionList';
@@ -126,7 +124,31 @@ interface QuestionOption {
   image?: QuestionOptionImage | null; // Imagem opcional da alternativa
 }
 
-// Question type importado de QuestionDialog.tsx
+interface Question {
+  id: string;
+  area_id?: string | null;
+  lesson_id?: string | null;
+  quiz_id?: string | null;
+  question_text: string;
+  question_type: string;
+  options: QuestionOption[];
+  correct_answer: string;
+  explanation?: string | null;
+  difficulty: string;
+  banca?: string | null;
+  ano?: number | null;
+  macro?: string | null;
+  micro?: string | null;
+  tema?: string | null;
+  subtema?: string | null;
+  tags?: string[] | null;
+  image_url?: string | null; // URL da imagem do enunciado
+  points: number;
+  position: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 interface QuestionStats {
   total: number;
@@ -150,7 +172,755 @@ const DIFFICULTY_MAP = {
   dificil: { label: 'Difícil', color: 'bg-red-500/20 text-red-500 border-red-500/30' },
 };
 
-// QuestionDialog importado de @/components/gestao/questoes/QuestionDialog
+// ============================================
+// DIALOG: CRIAR/EDITAR QUESTÃO
+// ============================================
+
+interface QuestionDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  question?: Question | null;
+}
+
+const QuestionDialog = memo(function QuestionDialog({ 
+  open, 
+  onClose, 
+  onSuccess, 
+  question 
+}: QuestionDialogProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
+  
+  // Hook dinâmico com Realtime - sincronizado com TaxonomyManager
+  const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
+  const [form, setForm] = useState({
+    question_text: '',
+    question_type: 'multiple_choice',
+    options: [
+      { id: 'a', text: '' },
+      { id: 'b', text: '' },
+      { id: 'c', text: '' },
+      { id: 'd', text: '' },
+      { id: 'e', text: '' },
+    ] as QuestionOption[],
+    correct_answer: 'a',
+    explanation: '',
+    difficulty: 'medio' as 'facil' | 'medio' | 'dificil',
+    banca: 'enem',
+    ano: null as number | null, // NOVA REGRA: Questões sem ano ficam SEM ANO
+    tags: [] as string[],
+    points: 10,
+    is_active: true,
+    // Estrutura hierárquica
+    macro: '',
+    micro: '',
+    tema: '',
+    subtema: '',
+    orgao_cargo: '',
+    // Resolução em vídeo
+    has_video_resolution: false,
+    video_provider: '' as '' | 'youtube' | 'panda',
+    video_url: '',
+    // Multidisciplinar
+    is_multidisciplinar: false,
+    // Competências e Habilidades (Matriz ENEM)
+    competencia: '' as '' | 'C1' | 'C2' | 'C3' | 'C4' | 'C5' | 'C6' | 'C7',
+    habilidade: '',
+    // Tipo Pedagógico
+    tipo_pedagogico: 'direta' as 'direta' | 'contextualizada',
+    // Imagens do enunciado
+    images: [] as QuestionImage[],
+  });
+
+  // Preencher form ao editar
+  useEffect(() => {
+    if (question) {
+      setForm({
+        question_text: question.question_text || '',
+        question_type: question.question_type || 'multiple_choice',
+        options: question.options?.length ? question.options : [
+          { id: 'a', text: '' },
+          { id: 'b', text: '' },
+          { id: 'c', text: '' },
+          { id: 'd', text: '' },
+          { id: 'e', text: '' },
+        ],
+        correct_answer: question.correct_answer || 'a',
+        explanation: question.explanation || '',
+        difficulty: (question.difficulty as 'facil' | 'medio' | 'dificil') || 'medio',
+        banca: question.banca || 'enem',
+        ano: question.ano ?? null, // NOVA REGRA: Preservar null se não tiver ano
+        tags: question.tags || [],
+        points: question.points || 10,
+        is_active: question.is_active ?? true,
+        // Estrutura hierárquica
+        macro: (question as any).macro || '',
+        micro: (question as any).micro || '',
+        tema: (question as any).tema || '',
+        subtema: (question as any).subtema || '',
+        orgao_cargo: (question as any).orgao_cargo || '',
+        // Resolução em vídeo
+        has_video_resolution: (question as any).has_video_resolution || false,
+        video_provider: (question as any).video_provider || '',
+        video_url: (question as any).video_url || '',
+        // Multidisciplinar
+        is_multidisciplinar: (question as any).is_multidisciplinar || false,
+        // Competências e Habilidades
+        competencia: (question as any).competencia || '',
+        habilidade: (question as any).habilidade || '',
+        // Tipo Pedagógico
+        tipo_pedagogico: (question as any).tipo_pedagogico || 'direta',
+        // Imagens do enunciado - usando image_urls (nome correto da coluna no banco)
+        images: ((question as any).image_urls || []) as QuestionImage[],
+      });
+    } else {
+      // Reset para nova questão
+      setForm({
+        question_text: '',
+        question_type: 'multiple_choice',
+        options: [
+          { id: 'a', text: '' },
+          { id: 'b', text: '' },
+          { id: 'c', text: '' },
+          { id: 'd', text: '' },
+          { id: 'e', text: '' },
+        ],
+        correct_answer: 'a',
+        explanation: '',
+        difficulty: 'medio',
+        banca: 'enem',
+        ano: null,
+        tags: [],
+        points: 10,
+        is_active: true,
+        // Estrutura hierárquica
+        macro: '',
+        micro: '',
+        tema: '',
+        subtema: '',
+        orgao_cargo: '',
+        // Resolução em vídeo
+        has_video_resolution: false,
+        video_provider: '',
+        video_url: '',
+        // Multidisciplinar
+        is_multidisciplinar: false,
+        // Competências e Habilidades
+        competencia: '',
+        habilidade: '',
+        // Tipo Pedagógico
+        tipo_pedagogico: 'direta',
+        // Imagens do enunciado
+        images: [],
+      });
+    }
+  }, [question, open]);
+
+  const handleOptionChange = (index: number, text: string) => {
+    const newOptions = [...form.options];
+    newOptions[index] = { ...newOptions[index], text };
+    setForm(f => ({ ...f, options: newOptions }));
+  };
+
+  const handleSubmit = async () => {
+    if (!form.question_text.trim()) {
+      toast.error('Digite o enunciado da questão');
+      return;
+    }
+
+    // Verificar se tem pelo menos 2 alternativas preenchidas
+    const filledOptions = form.options.filter(o => o.text.trim());
+    if (filledOptions.length < 2) {
+      toast.error('Preencha pelo menos 2 alternativas');
+      return;
+    }
+
+    // Verificar se a resposta correta tem texto
+    const correctOption = form.options.find(o => o.id === form.correct_answer);
+    if (!correctOption?.text.trim()) {
+      toast.error('A alternativa correta precisa ter texto');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Serializar options para JSON (compatível com Supabase)
+      const optionsJson = form.options
+        .filter(o => o.text.trim())
+        .map(o => ({
+          id: o.id,
+          text: o.text,
+          ...(o.image ? { image: { id: o.image.id, url: o.image.url, path: o.image.path, name: o.image.name } } : {})
+        }));
+
+      const payload = {
+        question_text: form.question_text.trim(),
+        question_type: form.question_type,
+        options: optionsJson as unknown as Record<string, unknown>[],
+        correct_answer: form.correct_answer,
+        explanation: form.explanation.trim() || null,
+        difficulty: form.difficulty,
+        banca: form.banca,
+        ano: form.ano,
+        tags: form.tags,
+        points: form.points,
+        is_active: form.is_active,
+        // Estrutura hierárquica
+        macro: form.macro || null,
+        micro: form.micro || null,
+        tema: form.tema || null,
+        subtema: form.subtema || null,
+        orgao_cargo: form.orgao_cargo || null,
+        // Resolução em vídeo
+        has_video_resolution: form.has_video_resolution,
+        video_provider: form.has_video_resolution && form.video_provider ? form.video_provider : null,
+        video_url: form.has_video_resolution && form.video_url ? form.video_url.trim() : null,
+        // Imagens do enunciado - usando image_urls (nome correto da coluna no banco)
+        image_urls: form.images.map(img => ({
+          id: img.id, url: img.url, path: img.path, name: img.name, size: img.size, position: img.position
+        })) as unknown as Record<string, unknown>[],
+      };
+
+      if (question?.id) {
+        // Atualizar
+        const { error } = await supabase
+          .from('quiz_questions')
+          .update({ ...payload, updated_at: new Date().toISOString() } as any)
+          .eq('id', question.id);
+
+        if (error) throw error;
+        toast.success('Questão atualizada com sucesso!');
+      } else {
+        // Criar nova
+        const { error } = await supabase
+          .from('quiz_questions')
+          .insert([payload as any]);
+
+        if (error) throw error;
+        toast.success('Questão criada com sucesso!');
+      }
+
+      // PROPAGAÇÃO GLOBAL - Invalida todos os caches de questões
+      invalidateAllQuestionCaches(queryClient, question?.id);
+      
+      onSuccess();
+      onClose();
+    } catch (err) {
+      console.error('Erro ao salvar questão:', err);
+      toast.error('Erro ao salvar questão');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-primary" />
+            {question ? 'Editar Questão' : 'Nova Questão'}
+          </DialogTitle>
+          <DialogDescription>
+            {question ? 'Edite os campos da questão' : 'Preencha os campos para criar uma nova questão'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-6 py-4">
+          {/* ============================================ */}
+          {/* ESTRUTURA HIERÁRQUICA: MACRO → MICRO → TEMA → SUBTEMA */}
+          {/* ============================================ */}
+          <div className="space-y-4 p-4 rounded-lg border border-primary/20 bg-primary/5">
+            <div className="flex items-center gap-2 mb-2">
+              <Target className="h-4 w-4 text-primary" />
+              <Label className="font-semibold text-primary">Classificação Hierárquica</Label>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* MACRO */}
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Macro</Label>
+                <Select 
+                  value={form.macro} 
+                  onValueChange={(v) => setForm(f => ({ ...f, macro: v, micro: '', tema: '', subtema: '' }))}
+                  disabled={taxonomyLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={taxonomyLoading ? "Carregando..." : "Selecione..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {macros.map(m => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* MICRO */}
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Micro</Label>
+                <Select 
+                  value={form.micro} 
+                  onValueChange={(v) => setForm(f => ({ ...f, micro: v, tema: '', subtema: '' }))}
+                  disabled={!form.macro || taxonomyLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getMicrosForSelect(form.macro).map(m => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* TEMA */}
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Tema</Label>
+                <Select 
+                  value={form.tema} 
+                  onValueChange={(v) => setForm(f => ({ ...f, tema: v, subtema: '' }))}
+                  disabled={!form.micro || taxonomyLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getTemasForSelect(form.micro).map(t => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* SUBTEMA */}
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Subtema</Label>
+                <Select 
+                  value={form.subtema} 
+                  onValueChange={(v) => setForm(f => ({ ...f, subtema: v }))}
+                  disabled={!form.tema || taxonomyLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getSubtemasForSelect(form.tema).map(s => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {/* Resolução em Vídeo */}
+          <div className="space-y-4 p-4 rounded-lg border border-amber-500/20 bg-amber-500/5">
+            <div className="flex items-center gap-3">
+              <Switch
+                id="has_video_resolution"
+                checked={form.has_video_resolution}
+                onCheckedChange={(checked) => setForm(f => ({ 
+                  ...f, 
+                  has_video_resolution: checked,
+                  video_provider: checked ? f.video_provider || 'youtube' : '',
+                  video_url: checked ? f.video_url : ''
+                }))}
+              />
+              <Label htmlFor="has_video_resolution" className="font-semibold text-amber-600 dark:text-amber-400 cursor-pointer flex items-center gap-2">
+                <Video className="h-4 w-4" />
+                Tem Resolução em Vídeo
+              </Label>
+            </div>
+            
+            {form.has_video_resolution && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Provedor</Label>
+                  <Select 
+                    value={form.video_provider} 
+                    onValueChange={(v: 'youtube' | 'panda') => setForm(f => ({ ...f, video_provider: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="youtube">
+                        <span className="flex items-center gap-2">
+                          <span className="text-red-500">▶</span> YouTube
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="panda">
+                        <span className="flex items-center gap-2">
+                          <span className="text-green-500">🐼</span> Panda Video
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {form.video_provider === 'youtube' ? 'URL ou ID do YouTube' : 'ID do Panda Video'}
+                  </Label>
+                  <Input
+                    placeholder={form.video_provider === 'youtube' 
+                      ? 'https://youtube.com/watch?v=... ou ID do vídeo' 
+                      : 'ID do vídeo no Panda'
+                    }
+                    value={form.video_url}
+                    onChange={(e) => setForm(f => ({ ...f, video_url: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {form.video_provider === 'youtube' 
+                      ? 'Cole a URL completa ou apenas o ID do vídeo' 
+                      : 'Cole o ID do vídeo da plataforma Panda'
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Formato da Questão */}
+          <div className="space-y-2">
+            <Label>Formato da Questão *</Label>
+            <Select
+              value={form.question_type}
+              onValueChange={(v) => setForm(f => ({ ...f, question_type: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="multiple_choice">📝 Múltipla Escolha (A, B, C, D, E)</SelectItem>
+                <SelectItem value="discursive">✍️ Discursiva</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Tipo Pedagógico */}
+          <div className="space-y-2">
+            <Label>Tipo da Questão (Pedagógico)</Label>
+            <Select
+              value={form.tipo_pedagogico}
+              onValueChange={(v: 'direta' | 'contextualizada') => setForm(f => ({ ...f, tipo_pedagogico: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="direta">
+                  <div className="flex flex-col">
+                    <span>🎯 Direta</span>
+                    <span className="text-xs text-muted-foreground">Objetiva, foco conceitual ou cálculo simples</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="contextualizada">
+                  <div className="flex flex-col">
+                    <span>📊 Contextualizada</span>
+                    <span className="text-xs text-muted-foreground">Situação-problema, interpretação de texto/gráfico</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Enunciado */}
+          <div className="space-y-2">
+            <Label>Enunciado da Questão *</Label>
+            <Textarea
+              placeholder="Digite o enunciado completo da questão..."
+              value={form.question_text}
+              onChange={(e) => setForm(f => ({ ...f, question_text: e.target.value }))}
+              className="min-h-[120px]"
+            />
+          </div>
+
+          {/* Upload de Imagens do Enunciado */}
+          <div className="p-4 rounded-lg border border-blue-500/20 bg-blue-500/5">
+            <div className="flex items-center gap-2 mb-3">
+              <ImageIcon className="h-4 w-4 text-blue-400" />
+              <Label className="font-semibold text-blue-400">Imagens do Enunciado</Label>
+            </div>
+            <QuestionImageUploader
+              images={form.images}
+              onChange={(images) => setForm(f => ({ ...f, images }))}
+              maxImages={5}
+              description="Adicione gráficos, tabelas ou ilustrações à questão"
+            />
+          </div>
+
+          {/* Alternativas - Apenas para Múltipla Escolha */}
+          {form.question_type === 'multiple_choice' && (
+            <div className="space-y-3">
+              <Label>Alternativas *</Label>
+              <RadioGroup
+                value={form.correct_answer}
+                onValueChange={(v) => setForm(f => ({ ...f, correct_answer: v }))}
+              >
+                {form.options.map((option, idx) => (
+                  <div key={option.id} className="flex items-center gap-3">
+                    <RadioGroupItem value={option.id} id={option.id} />
+                    <Label 
+                      htmlFor={option.id}
+                      className={cn(
+                        "w-8 h-8 flex items-center justify-center rounded-full border-2 font-bold text-sm cursor-pointer",
+                        form.correct_answer === option.id 
+                          ? "border-green-500 bg-green-500/20 text-green-500" 
+                          : "border-muted-foreground/30"
+                      )}
+                    >
+                      {option.id.toUpperCase()}
+                    </Label>
+                    <Input
+                      placeholder={`Alternativa ${option.id.toUpperCase()}`}
+                      value={option.text}
+                      onChange={(e) => handleOptionChange(idx, e.target.value)}
+                      className="flex-1"
+                    />
+                    {/* Upload de imagem na alternativa */}
+                    <SingleImageUploader
+                      image={option.image ? { ...option.image, size: 0, position: 0 } : null}
+                      onChange={(img) => {
+                        const newOptions = [...form.options];
+                        newOptions[idx] = { ...newOptions[idx], image: img ? { id: img.id, url: img.url, path: img.path, name: img.name } : undefined };
+                        setForm(f => ({ ...f, options: newOptions }));
+                      }}
+                      compact
+                    />
+                  </div>
+                ))}
+              </RadioGroup>
+              <p className="text-xs text-muted-foreground">
+                Selecione o radio button para marcar a alternativa correta. Clique no ícone 📷 para adicionar imagem à alternativa.
+              </p>
+            </div>
+          )}
+
+          {/* Gabarito Discursivo - Apenas para Discursiva */}
+          {form.question_type === 'discursive' && (
+            <div className="space-y-2 bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
+              <Label className="text-amber-400">Gabarito / Resposta Esperada</Label>
+              <Textarea
+                placeholder="Descreva a resposta esperada para a questão discursiva..."
+                value={form.correct_answer}
+                onChange={(e) => setForm(f => ({ ...f, correct_answer: e.target.value }))}
+                className="min-h-[100px]"
+              />
+              <p className="text-xs text-muted-foreground">
+                Insira a resposta modelo que será usada como referência na correção
+              </p>
+            </div>
+          )}
+
+          {/* Grid 3 colunas */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label>Dificuldade</Label>
+              <Select 
+                value={form.difficulty} 
+                onValueChange={(v: 'facil' | 'medio' | 'dificil') => setForm(f => ({ ...f, difficulty: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="facil">🟢 Fácil</SelectItem>
+                  <SelectItem value="medio">🟡 Médio</SelectItem>
+                  <SelectItem value="dificil">🔴 Difícil</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Banca</Label>
+              <Select 
+                value={form.banca} 
+                onValueChange={(v) => setForm(f => ({ ...f, banca: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {Object.entries(BANCAS_POR_CATEGORIA).map(([categoria, bancas]) => (
+                    <div key={categoria}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
+                        {CATEGORIA_LABELS[categoria as keyof typeof CATEGORIA_LABELS]}
+                      </div>
+                      {bancas.map(b => (
+                        <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
+                      ))}
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Ano</Label>
+              <Input
+                type="number"
+                min={2000}
+                max={2030}
+                value={form.ano}
+                onChange={(e) => setForm(f => ({ ...f, ano: e.target.value ? parseInt(e.target.value) : null }))}
+              />
+            </div>
+          </div>
+
+          {/* Grid 2 colunas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Pontuação</Label>
+              <Input
+                type="number"
+                min={1}
+                max={100}
+                value={form.points}
+                onChange={(e) => setForm(f => ({ ...f, points: parseInt(e.target.value) || 10 }))}
+              />
+            </div>
+
+            <div className="space-y-2 flex items-center justify-between pt-6">
+              <Label>Questão Ativa</Label>
+              <Switch
+                checked={form.is_active}
+                onCheckedChange={(v) => setForm(f => ({ ...f, is_active: v }))}
+              />
+            </div>
+
+            <div className="space-y-2 flex items-center justify-between pt-2">
+              <div>
+                <Label>Multidisciplinar</Label>
+                <p className="text-xs text-muted-foreground">Envolve mais de uma área</p>
+              </div>
+              <Switch
+                checked={form.is_multidisciplinar}
+                onCheckedChange={(v) => setForm(f => ({ ...f, is_multidisciplinar: v }))}
+              />
+            </div>
+          </div>
+
+          {/* Competências e Habilidades ENEM */}
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-4">
+            <div className="flex items-center gap-2 text-blue-400">
+              <Target className="h-4 w-4" />
+              <span className="text-sm font-semibold">Competências e Habilidades (Matriz ENEM)</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Competência (Ciências da Natureza)</Label>
+                <Select
+                  value={form.competencia || undefined}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, competencia: (v === '__none__' ? '' : (v as any)) }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Nenhuma</SelectItem>
+                    <SelectItem value="C1">C1 - Compreender ciências naturais e tecnologias</SelectItem>
+                    <SelectItem value="C2">C2 - Identificar situações-problema</SelectItem>
+                    <SelectItem value="C3">C3 - Associar conhecimentos</SelectItem>
+                    <SelectItem value="C4">C4 - Avaliar propostas de intervenção</SelectItem>
+                    <SelectItem value="C5">C5 - Fenômenos naturais e processos tecnológicos</SelectItem>
+                    <SelectItem value="C6">C6 - Apropriar-se de conhecimentos da Química</SelectItem>
+                    <SelectItem value="C7">C7 - Apropriar-se de conhecimentos da Biologia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Habilidade</Label>
+                <Select
+                  value={form.habilidade || undefined}
+                  onValueChange={(v) => setForm((f) => ({ ...f, habilidade: v === '__none__' ? '' : v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    <SelectItem value="__none__">Nenhuma</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C1 - Habilidades</div>
+                    <SelectItem value="H1">H1</SelectItem>
+                    <SelectItem value="H2">H2</SelectItem>
+                    <SelectItem value="H3">H3</SelectItem>
+                    <SelectItem value="H4">H4</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C2 - Habilidades</div>
+                    <SelectItem value="H5">H5</SelectItem>
+                    <SelectItem value="H6">H6</SelectItem>
+                    <SelectItem value="H7">H7</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C3 - Habilidades</div>
+                    <SelectItem value="H8">H8</SelectItem>
+                    <SelectItem value="H9">H9</SelectItem>
+                    <SelectItem value="H10">H10</SelectItem>
+                    <SelectItem value="H11">H11</SelectItem>
+                    <SelectItem value="H12">H12</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C4 - Habilidades</div>
+                    <SelectItem value="H13">H13</SelectItem>
+                    <SelectItem value="H14">H14</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C5 - Habilidades</div>
+                    <SelectItem value="H15">H15</SelectItem>
+                    <SelectItem value="H16">H16</SelectItem>
+                    <SelectItem value="H17">H17</SelectItem>
+                    <SelectItem value="H18">H18</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C6 - Habilidades</div>
+                    <SelectItem value="H19">H19</SelectItem>
+                    <SelectItem value="H20">H20</SelectItem>
+                    <SelectItem value="H21">H21</SelectItem>
+                    <SelectItem value="H22">H22</SelectItem>
+                    <SelectItem value="H23">H23</SelectItem>
+                    <SelectItem value="H24">H24</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C7 - Habilidades</div>
+                    <SelectItem value="H25">H25</SelectItem>
+                    <SelectItem value="H26">H26</SelectItem>
+                    <SelectItem value="H27">H27</SelectItem>
+                    <SelectItem value="H28">H28</SelectItem>
+                    <SelectItem value="H29">H29</SelectItem>
+                    <SelectItem value="H30">H30</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Resolução da Questão</Label>
+            <Textarea
+              placeholder="Explique o raciocínio e a resolução passo a passo..."
+              value={form.explanation}
+              onChange={(e) => setForm(f => ({ ...f, explanation: e.target.value }))}
+              className="min-h-[80px]"
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                {question ? 'Atualizar' : 'Criar Questão'}
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+});
 
 // ============================================
 // COMPONENTE PRINCIPAL
@@ -2234,23 +3004,93 @@ function GestaoQuestoes() {
             </DialogTitle>
             <DialogDescription className="space-y-4 pt-4">
               <div className="bg-red-500/20 border border-red-500/50 p-4 rounded-lg">
-                <p className="text-red-400 font-bold text-lg mb-2">⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!</p>
-                <p className="text-foreground">Você está prestes a excluir permanentemente <strong className="text-red-400">{questions.length} questões</strong>.</p>
+                <p className="text-red-400 font-bold text-lg mb-2">
+                  ⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!
+                </p>
+                <p className="text-foreground">
+                  Você está prestes a excluir permanentemente <strong className="text-red-400">{questions.length} questões</strong>.
+                </p>
               </div>
+              
+              <ul className="text-sm space-y-2 bg-muted/50 p-4 rounded-lg border">
+                <li className="flex items-center gap-2">
+                  <span className="text-red-500">✗</span>
+                  Todas as questões serão removidas do sistema
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-500">✗</span>
+                  Todas as tentativas de resposta (question_attempts) serão excluídas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-500">✗</span>
+                  Todas as respostas de quiz (quiz_answers) serão excluídas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-500">✗</span>
+                  Estatísticas de desempenho serão invalidadas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-500">✗</span>
+                  Esta ação NÃO pode ser revertida
+                </li>
+              </ul>
+
+              {/* Confirmação por digitação */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Digite <code className="bg-red-500/20 px-2 py-1 rounded text-red-400">CONFIRMAR EXCLUSÃO TOTAL</code>:</label>
-                <Input value={annihilationConfirmText} onChange={(e) => setAnnihilationConfirmText(e.target.value)} placeholder="CONFIRMAR EXCLUSÃO TOTAL" className="border-red-500/50" disabled={isDeletingAll} />
+                <label className="text-sm font-medium text-foreground">
+                  Digite <code className="bg-red-500/20 px-2 py-1 rounded text-red-400">CONFIRMAR EXCLUSÃO TOTAL</code> para continuar:
+                </label>
+                <Input 
+                  value={annihilationConfirmText}
+                  onChange={(e) => setAnnihilationConfirmText(e.target.value)}
+                  placeholder="CONFIRMAR EXCLUSÃO TOTAL"
+                  className="border-red-500/50 focus:border-red-500"
+                  disabled={isDeletingAll}
+                />
               </div>
+
+              {/* Checkbox de confirmação */}
               <div className="flex items-start gap-3 bg-red-500/10 p-3 rounded-lg border border-red-500/30">
-                <input type="checkbox" id="annihilation-confirm" checked={annihilationCheckbox} onChange={(e) => setAnnihilationCheckbox(e.target.checked)} className="mt-1 h-4 w-4" disabled={isDeletingAll} />
-                <label htmlFor="annihilation-confirm" className="text-sm">Eu entendo que esta ação é <strong>PERMANENTE</strong>.</label>
+                <input 
+                  type="checkbox" 
+                  id="annihilation-confirm"
+                  checked={annihilationCheckbox}
+                  onChange={(e) => setAnnihilationCheckbox(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-red-500"
+                  disabled={isDeletingAll}
+                />
+                <label htmlFor="annihilation-confirm" className="text-sm text-foreground">
+                  Eu entendo que esta ação excluirá <strong>PERMANENTEMENTE</strong> todas as questões e dados relacionados, 
+                  e que esta operação <strong>NÃO PODE SER DESFEITA</strong>.
+                </label>
               </div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 mt-4">
-            <Button variant="outline" onClick={() => handleCloseAnnihilationModal(false)} disabled={isDeletingAll}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleDeleteAllQuestions} disabled={isDeletingAll || annihilationConfirmText !== 'CONFIRMAR EXCLUSÃO TOTAL' || !annihilationCheckbox} className="bg-red-600 hover:bg-red-700">
-              {isDeletingAll ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />ANIQUILANDO...</> : <><Trash2 className="h-4 w-4 mr-2" />CONFIRMAR</>}
+            <Button 
+              variant="outline" 
+              onClick={() => handleCloseAnnihilationModal(false)} 
+              disabled={isDeletingAll}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteAllQuestions}
+              disabled={isDeletingAll || annihilationConfirmText !== 'CONFIRMAR EXCLUSÃO TOTAL' || !annihilationCheckbox}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeletingAll ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ANIQUILANDO...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  CONFIRMAR EXCLUSÃO TOTAL
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2260,19 +3100,73 @@ function GestaoQuestoes() {
       <Dialog open={deleteTreinoConfirm} onOpenChange={handleCloseTreinoModal}>
         <DialogContent className="border-purple-500/50 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-purple-500 text-xl"><Trash2 className="h-6 w-6" />💪 Excluir Modo Treino</DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-purple-500 text-xl">
+              <Trash2 className="h-6 w-6" />
+              💪 Excluir Modo Treino
+            </DialogTitle>
             <DialogDescription className="space-y-4 pt-4">
-              <div className="bg-purple-500/20 border border-purple-500/50 p-4 rounded-lg"><p className="text-purple-400 font-bold">⚠️ Excluir {stats.modoTreino} questões de TREINO</p></div>
+              <div className="bg-purple-500/20 border border-purple-500/50 p-4 rounded-lg">
+                <p className="text-purple-400 font-bold text-lg mb-2">
+                  ⚠️ Esta ação remove apenas questões de TREINO
+                </p>
+                <p className="text-foreground">
+                  Você está prestes a excluir <strong className="text-purple-400">{stats.modoTreino} questões</strong> do Modo Treino.
+                </p>
+              </div>
+              
+              <ul className="text-sm space-y-2 bg-muted/50 p-4 rounded-lg border">
+                <li className="flex items-center gap-2">
+                  <span className="text-purple-500">✗</span>
+                  Questões com tag MODO_TREINO serão removidas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-500">✓</span>
+                  Questões de SIMULADOS permanecerão intactas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-500">✓</span>
+                  Questões sem grupo também permanecerão
+                </li>
+              </ul>
+
+              {/* Confirmação por digitação */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Digite <code className="bg-purple-500/20 px-2 py-1 rounded text-purple-400">EXCLUIR TREINO</code>:</label>
-                <Input value={treinoConfirmText} onChange={(e) => setTreinoConfirmText(e.target.value)} placeholder="EXCLUIR TREINO" className="border-purple-500/50" />
+                <label className="text-sm font-medium text-foreground">
+                  Digite <code className="bg-purple-500/20 px-2 py-1 rounded text-purple-400">EXCLUIR TREINO</code> para continuar:
+                </label>
+                <Input 
+                  value={treinoConfirmText}
+                  onChange={(e) => setTreinoConfirmText(e.target.value)}
+                  placeholder="EXCLUIR TREINO"
+                  className="border-purple-500/50 focus-visible:ring-purple-500"
+                />
               </div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 mt-4">
-            <Button variant="outline" onClick={() => handleCloseTreinoModal(false)} disabled={isDeletingTreino}>Cancelar</Button>
-            <Button onClick={handleDeleteTreinoQuestions} disabled={isDeletingTreino || treinoConfirmText !== 'EXCLUIR TREINO'} className="bg-purple-600 hover:bg-purple-700 text-white">
-              {isDeletingTreino ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Excluindo...</> : <><Trash2 className="h-4 w-4 mr-2" />Excluir Treino</>}
+            <Button 
+              variant="outline" 
+              onClick={() => handleCloseTreinoModal(false)} 
+              disabled={isDeletingTreino}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleDeleteTreinoQuestions}
+              disabled={isDeletingTreino || treinoConfirmText !== 'EXCLUIR TREINO'}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              {isDeletingTreino ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir Modo Treino
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2282,19 +3176,73 @@ function GestaoQuestoes() {
       <Dialog open={deleteSemGrupoConfirm} onOpenChange={handleCloseSemGrupoModal}>
         <DialogContent className="border-gray-500/50 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-gray-400 text-xl"><Trash2 className="h-6 w-6" />🗑️ Excluir Sem Grupo</DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-gray-400 text-xl">
+              <Trash2 className="h-6 w-6" />
+              🗑️ Excluir Sem Grupo
+            </DialogTitle>
             <DialogDescription className="space-y-4 pt-4">
-              <div className="bg-gray-500/20 border border-gray-500/50 p-4 rounded-lg"><p className="text-gray-400 font-bold">⚠️ Excluir {stats.semGrupo} questões sem grupo</p></div>
+              <div className="bg-gray-500/20 border border-gray-500/50 p-4 rounded-lg">
+                <p className="text-gray-400 font-bold text-lg mb-2">
+                  ⚠️ Esta ação remove questões SEM grupo definido
+                </p>
+                <p className="text-foreground">
+                  Você está prestes a excluir <strong className="text-gray-400">{stats.semGrupo} questões</strong> que não possuem SIMULADOS nem MODO_TREINO.
+                </p>
+              </div>
+              
+              <ul className="text-sm space-y-2 bg-muted/50 p-4 rounded-lg border">
+                <li className="flex items-center gap-2">
+                  <span className="text-gray-500">✗</span>
+                  Questões SEM tags SIMULADOS e MODO_TREINO serão removidas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-500">✓</span>
+                  Questões de SIMULADOS permanecerão intactas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-500">✓</span>
+                  Questões de MODO_TREINO permanecerão intactas
+                </li>
+              </ul>
+
+              {/* Confirmação por digitação */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Digite <code className="bg-gray-500/20 px-2 py-1 rounded text-gray-400">EXCLUIR SEM GRUPO</code>:</label>
-                <Input value={semGrupoConfirmText} onChange={(e) => setSemGrupoConfirmText(e.target.value)} placeholder="EXCLUIR SEM GRUPO" className="border-gray-500/50" />
+                <label className="text-sm font-medium text-foreground">
+                  Digite <code className="bg-gray-500/20 px-2 py-1 rounded text-gray-400">EXCLUIR SEM GRUPO</code> para continuar:
+                </label>
+                <Input 
+                  value={semGrupoConfirmText}
+                  onChange={(e) => setSemGrupoConfirmText(e.target.value)}
+                  placeholder="EXCLUIR SEM GRUPO"
+                  className="border-gray-500/50 focus-visible:ring-gray-500"
+                />
               </div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 mt-4">
-            <Button variant="outline" onClick={() => handleCloseSemGrupoModal(false)} disabled={isDeletingSemGrupo}>Cancelar</Button>
-            <Button onClick={handleDeleteSemGrupoQuestions} disabled={isDeletingSemGrupo || semGrupoConfirmText !== 'EXCLUIR SEM GRUPO'} className="bg-gray-600 hover:bg-gray-700 text-white">
-              {isDeletingSemGrupo ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Excluindo...</> : <><Trash2 className="h-4 w-4 mr-2" />Excluir Sem Grupo</>}
+            <Button 
+              variant="outline" 
+              onClick={() => handleCloseSemGrupoModal(false)} 
+              disabled={isDeletingSemGrupo}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleDeleteSemGrupoQuestions}
+              disabled={isDeletingSemGrupo || semGrupoConfirmText !== 'EXCLUIR SEM GRUPO'}
+              className="bg-gray-600 hover:bg-gray-700 text-white"
+            >
+              {isDeletingSemGrupo ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir Sem Grupo
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2304,19 +3252,73 @@ function GestaoQuestoes() {
       <Dialog open={deleteSimuladosConfirm} onOpenChange={handleCloseSimuladosModal}>
         <DialogContent className="border-blue-500/50 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-blue-500 text-xl"><Trash2 className="h-6 w-6" />🎯 Excluir Simulados</DialogTitle>
+            <DialogTitle className="flex items-center gap-2 text-blue-500 text-xl">
+              <Trash2 className="h-6 w-6" />
+              🎯 Excluir Simulados
+            </DialogTitle>
             <DialogDescription className="space-y-4 pt-4">
-              <div className="bg-blue-500/20 border border-blue-500/50 p-4 rounded-lg"><p className="text-blue-400 font-bold">⚠️ Excluir {stats.simulados} questões de SIMULADOS</p></div>
+              <div className="bg-blue-500/20 border border-blue-500/50 p-4 rounded-lg">
+                <p className="text-blue-400 font-bold text-lg mb-2">
+                  ⚠️ Esta ação remove apenas questões de SIMULADOS
+                </p>
+                <p className="text-foreground">
+                  Você está prestes a excluir <strong className="text-blue-400">{stats.simulados} questões</strong> de Simulados.
+                </p>
+              </div>
+              
+              <ul className="text-sm space-y-2 bg-muted/50 p-4 rounded-lg border">
+                <li className="flex items-center gap-2">
+                  <span className="text-blue-500">✗</span>
+                  Questões com tag SIMULADOS serão removidas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-500">✓</span>
+                  Questões de MODO_TREINO permanecerão intactas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-500">✓</span>
+                  Questões sem grupo também permanecerão
+                </li>
+              </ul>
+
+              {/* Confirmação por digitação */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Digite <code className="bg-blue-500/20 px-2 py-1 rounded text-blue-400">EXCLUIR SIMULADOS</code>:</label>
-                <Input value={simuladosConfirmText} onChange={(e) => setSimuladosConfirmText(e.target.value)} placeholder="EXCLUIR SIMULADOS" className="border-blue-500/50" />
+                <label className="text-sm font-medium text-foreground">
+                  Digite <code className="bg-blue-500/20 px-2 py-1 rounded text-blue-400">EXCLUIR SIMULADOS</code> para continuar:
+                </label>
+                <Input 
+                  value={simuladosConfirmText}
+                  onChange={(e) => setSimuladosConfirmText(e.target.value)}
+                  placeholder="EXCLUIR SIMULADOS"
+                  className="border-blue-500/50 focus-visible:ring-blue-500"
+                />
               </div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 mt-4">
-            <Button variant="outline" onClick={() => handleCloseSimuladosModal(false)} disabled={isDeletingSimulados}>Cancelar</Button>
-            <Button onClick={handleDeleteSimuladosQuestions} disabled={isDeletingSimulados || simuladosConfirmText !== 'EXCLUIR SIMULADOS'} className="bg-blue-600 hover:bg-blue-700 text-white">
-              {isDeletingSimulados ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Excluindo...</> : <><Trash2 className="h-4 w-4 mr-2" />Excluir Simulados</>}
+            <Button 
+              variant="outline" 
+              onClick={() => handleCloseSimuladosModal(false)} 
+              disabled={isDeletingSimulados}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleDeleteSimuladosQuestions}
+              disabled={isDeletingSimulados || simuladosConfirmText !== 'EXCLUIR SIMULADOS'}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {isDeletingSimulados ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir Simulados
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2353,7 +3355,7 @@ class GestaoQuestoesErrorBoundary extends Component<
               Ocorreu um erro ao renderizar o Banco de Questões.
             </p>
             <pre className="bg-background/50 p-3 rounded text-sm overflow-auto max-h-48 text-red-400">
-              {this.state.error?.message || String(this.state.error) || 'Erro desconhecido'}
+              {this.state.error?.message}
             </pre>
           </div>
         </div>

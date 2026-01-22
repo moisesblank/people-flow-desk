@@ -1,10 +1,10 @@
 // ============================================
-// 📄 MATERIAL PDF RENDERER v2.0
-// Renderizador com URLs ASSINADAS (bucket privado)
-// P0 FIX: Migrado de getPublicUrl → createSignedUrl
+// 📄 MATERIAL PDF RENDERER v1.0
+// Renderizador específico para o bucket 'materiais' (público)
+// Usa PDF.js diretamente com URL pública
 // ============================================
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { supabase } from '@/integrations/supabase/client';
@@ -39,7 +39,6 @@ const BUCKET_NAME = 'materiais';
 const RENDER_SCALE = 1.5;
 const JPEG_QUALITY = 0.85;
 const PAGE_CACHE_SIZE = 10;
-const SIGNED_URL_TTL = 3600; // 1 hora
 
 // ============================================
 // HOOK: useMaterialPdfRenderer
@@ -56,34 +55,16 @@ export function useMaterialPdfRenderer(filePath?: string) {
 
   const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null);
   const pageCache = useRef<Map<number, PdfPageRender>>(new Map());
-  const signedUrlCache = useRef<{ url: string; expiresAt: number } | null>(null);
 
-  // 🛡️ P0 FIX: Obter URL ASSINADA do PDF (bucket privado)
-  const getPdfUrl = useCallback(async (): Promise<string | null> => {
+  // Obter URL pública do PDF
+  const getPdfUrl = useCallback((): string | null => {
     if (!filePath) return null;
     
-    // Verificar cache de URL assinada (com margem de 5 min antes de expirar)
-    const now = Date.now();
-    if (signedUrlCache.current && signedUrlCache.current.expiresAt > now + 300000) {
-      return signedUrlCache.current.url;
-    }
-    
-    const { data, error } = await supabase.storage
+    const { data } = supabase.storage
       .from(BUCKET_NAME)
-      .createSignedUrl(filePath, SIGNED_URL_TTL);
+      .getPublicUrl(filePath);
     
-    if (error || !data?.signedUrl) {
-      console.error('[MaterialPdfRenderer] Erro ao gerar URL assinada:', error);
-      return null;
-    }
-    
-    // Cachear URL assinada
-    signedUrlCache.current = {
-      url: data.signedUrl,
-      expiresAt: now + (SIGNED_URL_TTL * 1000),
-    };
-    
-    return data.signedUrl;
+    return data?.publicUrl || null;
   }, [filePath]);
 
   // Carregar documento PDF
@@ -96,11 +77,10 @@ export function useMaterialPdfRenderer(filePath?: string) {
     setState(s => ({ ...s, isLoading: true, error: null }));
 
     try {
-      // 🛡️ P0 FIX: Agora usa URL assinada (async)
-      const url = await getPdfUrl();
-      if (!url) throw new Error('Não foi possível obter URL assinada do PDF');
+      const url = getPdfUrl();
+      if (!url) throw new Error('Não foi possível obter URL do PDF');
 
-      console.log('[MaterialPdfRenderer] Carregando PDF com URL assinada...', filePath);
+      console.log('[MaterialPdfRenderer] Carregando PDF...', filePath);
 
       const loadingTask = pdfjsLib.getDocument({ url });
       const pdf = await loadingTask.promise;

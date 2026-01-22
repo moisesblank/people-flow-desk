@@ -85,9 +85,12 @@ export function usePdfUploadWithPreview() {
 
       setProgress(50);
 
-      // 3. Para buckets privados, retornar o path (não URL pública)
-      // A URL assinada será gerada no momento da leitura
-      const pdfUrl = pdfPath; // Salvar path, não URL
+      // 3. Obter URL do PDF
+      const { data: pdfUrlData } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(pdfPath);
+
+      const pdfUrl = pdfUrlData?.publicUrl;
 
       // 4. Gerar preview da primeira página
       console.log('[PdfUploadWithPreview] Gerando preview...');

@@ -123,8 +123,7 @@ export const CPFInput = forwardRef<HTMLInputElement, CPFInputProps>(({
             onValidationComplete?.(true, result.nome);
           } else {
             setValidationState('invalid');
-            const errorMsg = typeof result?.error === 'string' ? result.error : 'CPF não validado';
-            setLocalError(errorMsg);
+            setLocalError(result?.error || 'CPF não validado');
             onValidationComplete?.(false);
           }
         });
@@ -192,8 +191,7 @@ export const CPFInput = forwardRef<HTMLInputElement, CPFInputProps>(({
       onValidationComplete?.(true, result.nome);
     } else {
       setValidationState('invalid');
-      const errorMsg = typeof result?.error === 'string' ? result.error : 'CPF não validado';
-      setLocalError(errorMsg);
+      setLocalError(result?.error || 'CPF não validado');
       onValidationComplete?.(false);
     }
   }, [value, validateOnBlur, formatOnly, validateCPF, onValidationComplete, props.onBlur]);

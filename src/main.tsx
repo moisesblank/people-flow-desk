@@ -68,128 +68,112 @@ import { initGlobalErrorCapture } from "@/hooks/useSystemLogs";
 
 // ============================================
 // ☢️ LAYER 2: DEVTOOLS DETECTION & BLOCKING
-// 🚨 DESATIVADO (2026-01-21) — Falsos positivos bloqueando Owner
-// TODO: Reimplementar com verificação de sessão robusta
+// Detecta abertura do DevTools e bloqueia a página
+// BYPASS: Ambiente Lovable Preview
 // ============================================
-// const isLovablePreview = () => {
-//   const hostname = window.location.hostname.toLowerCase();
-//   return hostname.includes('lovableproject.com') || 
-//          hostname.includes('lovable.app') || 
-//          hostname === 'localhost' ||
-//          hostname === '127.0.0.1';
-// };
+const isLovablePreview = () => {
+  const hostname = window.location.hostname.toLowerCase();
+  return hostname.includes('lovableproject.com') || 
+         hostname.includes('lovable.app') || 
+         hostname === 'localhost' ||
+         hostname === '127.0.0.1';
+};
 
-// 🛡️ P0 FIX 2026-01-21: PROTEÇÃO DESATIVADA
-// MOTIVO: Código executa ANTES do React montar, impossível verificar Owner
-// O bloqueio estava impedindo o Owner de acessar /gestaofc
-// Proteção será reimplementada no useGlobalDevToolsBlock.ts (pós-auth)
-const DEVTOOLS_LAYER2_ENABLED = false;
-
-if (typeof window !== 'undefined' && import.meta.env.PROD && DEVTOOLS_LAYER2_ENABLED) {
-  // Código de proteção mantido mas desativado
-  const isLovablePreview = () => {
-    const hostname = window.location.hostname.toLowerCase();
-    return hostname.includes('lovableproject.com') || 
-           hostname.includes('lovable.app') || 
-           hostname === 'localhost' ||
-           hostname === '127.0.0.1';
+if (typeof window !== 'undefined' && import.meta.env.PROD && !isLovablePreview()) {
+  // Método 1: Timing attack (detecta breakpoints/debugger)
+  const detectDevToolsByTiming = () => {
+    const start = performance.now();
+    // debugger statement causa delay se DevTools está aberto
+    // eslint-disable-next-line no-debugger
+    debugger;
+    const end = performance.now();
+    return (end - start) > 100; // > 100ms indica DevTools aberto
   };
   
-  if (!isLovablePreview()) {
-    // Método 1: Timing attack (detecta breakpoints/debugger)
-    const detectDevToolsByTiming = () => {
-      const start = performance.now();
-      // debugger statement causa delay se DevTools está aberto
-      // eslint-disable-next-line no-debugger
-      debugger;
-      const end = performance.now();
-      return (end - start) > 100; // > 100ms indica DevTools aberto
-    };
+  // Método 2: Console timing (console.log é lento com DevTools)
+  const detectDevToolsByConsole = () => {
+    const element = new Image();
+    let isOpen = false;
     
-    // Método 2: Console timing (console.log é lento com DevTools)
-    const detectDevToolsByConsole = () => {
-      const element = new Image();
-      let isOpen = false;
-      
-      Object.defineProperty(element, 'id', {
-        get: () => {
-          isOpen = true;
-          return '';
-        }
-      });
-      
-      console.log(element);
-      console.clear();
-      return isOpen;
-    };
+    Object.defineProperty(element, 'id', {
+      get: () => {
+        isOpen = true;
+        return '';
+      }
+    });
     
-    // Método 3: Window size (DevTools reduz viewport)
-    const detectDevToolsBySize = () => {
-      const widthThreshold = window.outerWidth - window.innerWidth > 160;
-      const heightThreshold = window.outerHeight - window.innerHeight > 160;
-      return widthThreshold || heightThreshold;
-    };
-    
-    // Handler quando DevTools é detectado
-    const handleDevToolsDetected = () => {
-      // Redireciona para página de violação de segurança
-      document.body.innerHTML = `
+    console.log(element);
+    console.clear();
+    return isOpen;
+  };
+  
+  // Método 3: Window size (DevTools reduz viewport)
+  const detectDevToolsBySize = () => {
+    const widthThreshold = window.outerWidth - window.innerWidth > 160;
+    const heightThreshold = window.outerHeight - window.innerHeight > 160;
+    return widthThreshold || heightThreshold;
+  };
+  
+  // Handler quando DevTools é detectado
+  const handleDevToolsDetected = () => {
+    // Redireciona para página de violação de segurança
+    document.body.innerHTML = `
+      <div style="
+        position: fixed;
+        inset: 0;
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999999;
+      ">
         <div style="
-          position: fixed;
-          inset: 0;
-          background: #000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 999999;
+          text-align: center;
+          color: #ff0000;
+          font-family: monospace;
+          font-size: 24px;
+          padding: 40px;
         ">
-          <div style="
-            text-align: center;
-            color: #ff0000;
-            font-family: monospace;
-            font-size: 24px;
-            padding: 40px;
-          ">
-            <div style="font-size: 64px; margin-bottom: 20px;">🛡️</div>
-            <div>ACESSO BLOQUEADO</div>
-            <div style="font-size: 14px; margin-top: 10px; color: #666;">
-              Ferramentas de desenvolvedor não são permitidas
-            </div>
+          <div style="font-size: 64px; margin-bottom: 20px;">🛡️</div>
+          <div>ACESSO BLOQUEADO</div>
+          <div style="font-size: 14px; margin-top: 10px; color: #666;">
+            Ferramentas de desenvolvedor não são permitidas
           </div>
         </div>
-      `;
+      </div>
+    `;
+    
+    // Para toda execução
+    throw new Error('DevTools detected - execution halted');
+  };
+  
+  // Monitoramento contínuo (a cada 1 segundo)
+  let devToolsCheckCount = 0;
+  const MAX_CHECKS = 3; // Só bloqueia após 3 detecções consecutivas
+  
+  const checkDevTools = () => {
+    try {
+      const isOpen = detectDevToolsBySize() || detectDevToolsByConsole();
       
-      // Para toda execução
-      throw new Error('DevTools detected - execution halted');
-    };
-    
-    // Monitoramento contínuo (a cada 1 segundo)
-    let devToolsCheckCount = 0;
-    const MAX_CHECKS = 3; // Só bloqueia após 3 detecções consecutivas
-    
-    const checkDevTools = () => {
-      try {
-        const isOpen = detectDevToolsBySize() || detectDevToolsByConsole();
-        
-        if (isOpen) {
-          devToolsCheckCount++;
-          if (devToolsCheckCount >= MAX_CHECKS) {
-            handleDevToolsDetected();
-          }
-        } else {
-          devToolsCheckCount = 0; // Reset se fechou
+      if (isOpen) {
+        devToolsCheckCount++;
+        if (devToolsCheckCount >= MAX_CHECKS) {
+          handleDevToolsDetected();
         }
-      } catch {
-        // Silencioso - não pode quebrar o app
+      } else {
+        devToolsCheckCount = 0; // Reset se fechou
       }
-    };
-    
-    // Inicia monitoramento após 3 segundos (não bloqueia TTI)
-    setTimeout(() => {
-      setInterval(checkDevTools, 1000);
-    }, 3000);
-  }
-  // Bloqueia atalhos de DevTools (dentro do if DEVTOOLS_LAYER2_ENABLED)
+    } catch {
+      // Silencioso - não pode quebrar o app
+    }
+  };
+  
+  // Inicia monitoramento após 3 segundos (não bloqueia TTI)
+  setTimeout(() => {
+    setInterval(checkDevTools, 1000);
+  }, 3000);
+  
+  // Bloqueia atalhos de DevTools
   document.addEventListener('keydown', (e) => {
     // F12
     if (e.key === 'F12') {
@@ -217,8 +201,6 @@ if (typeof window !== 'undefined' && import.meta.env.PROD && DEVTOOLS_LAYER2_ENA
     return false;
   }, { capture: true });
 }
-
-// 🛡️ FIM DO LAYER 2 DESATIVADO
 
 // 🚨 GLOBAL ERROR CAPTURE - Captura todos os erros do sistema
 // REGRA P0: nunca pode derrubar o bootstrap. Se falhar, segue sem logger.

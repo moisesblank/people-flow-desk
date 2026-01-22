@@ -5,7 +5,6 @@
 // ============================================
 
 import { supabase } from "@/integrations/supabase/client";
-import { formatError } from "@/lib/utils/formatError";
 
 /**
  * DOGMA IV.2 - Wrapper para queries com timing
@@ -85,7 +84,7 @@ export async function checkConnectionHealth(): Promise<{
       return {
         isHealthy: false,
         latencyMs,
-        message: `Connection error: ${formatError(error)}`,
+        message: `Connection error: ${error.message}`,
       };
     }
     
@@ -103,7 +102,7 @@ export async function checkConnectionHealth(): Promise<{
     return {
       isHealthy: false,
       latencyMs: performance.now() - start,
-      message: `Critical error: ${formatError(error)}`,
+      message: `Critical error: ${error}`,
     };
   }
 }

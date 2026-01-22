@@ -1,0 +1,60 @@
+{
+  "PARTE": "7/14",
+  "STATUS": "BLOQUEIO",
+  "ARQUIVOS_TOCADOS": [
+    { "caminho": "src/components/students/AlunosUniverseSelector.tsx", "acao": "lido", "motivo": "Verificar filtros existentes para produto web/físico" },
+    { "caminho": "src/hooks/useAlunosPaginados.ts", "acao": "lido", "motivo": "Verificar estrutura de query atual" }
+  ],
+  "MUDANCAS_DIFF": "NENHUMA — BLOQUEIO antes de implementação",
+  "QUERIES_TABELAS": [
+    { "tabela": "alunos", "colunas": ["id", "nome", "email", "curso_id", "fonte", "status", "hotmart_transaction_id"], "operacao": "SELECT", "filtro": "Verificação de dados", "resultado": "curso_id=NULL para todos, fonte='Hotmart' uniforme" },
+    { "tabela": "courses", "colunas": ["id", "title", "tipo", "category"], "operacao": "SELECT", "filtro": "Verificação de dados", "resultado": "TABELA VAZIA — 0 registros" },
+    { "tabela": "transacoes_hotmart_completo", "colunas": ["product_id", "product_name"], "operacao": "SELECT", "filtro": "DISTINCT + GROUP BY", "resultado": "TABELA VAZIA — 0 registros" },
+    { "tabela": "transacoes_hotmart_secure", "colunas": ["product_id", "product_name"], "operacao": "SELECT", "filtro": "DISTINCT + GROUP BY", "resultado": "TABELA VAZIA — 0 registros" },
+    { "tabela": "usuarios_wordpress_sync", "colunas": ["grupos"], "operacao": "SELECT", "filtro": "DISTINCT grupos", "resultado": "GRUPOS VAZIO — 0 registros com grupos populados" },
+    { "tabela": "sales", "colunas": ["produto"], "operacao": "SELECT", "filtro": "DISTINCT", "resultado": "TABELA VAZIA — 0 registros" }
+  ],
+  "PRODUTO_FONTE": "BLOQUEIO",
+  "BLOQUEIO": {
+    "motivo": "Não encontrei coluna/tabela (nem mapping existente) para diferenciar Livro Web vs Livro Físico",
+    "evidencias": [
+      "alunos.curso_id = NULL para todos os 20+ registros verificados",
+      "alunos.fonte = 'Hotmart' uniforme (sem variação)",
+      "courses: 0 registros — tabela vazia",
+      "transacoes_hotmart_completo: 0 registros — tabela vazia",
+      "transacoes_hotmart_secure: 0 registros — tabela vazia", 
+      "sales.produto: 0 registros — tabela vazia",
+      "usuarios_wordpress_sync.grupos: sem dados populados",
+      "AlunosUniverseSelector.tsx usa filtros fallback (|| true) indicando ausência de dados reais"
+    ],
+    "codigo_atual": {
+      "arquivo": "src/components/students/AlunosUniverseSelector.tsx",
+      "linhas": "77-78, 87-88",
+      "problema": "Filtros terminam com '|| true' — sempre retornam true, sem classificação real"
+    },
+    "decisao_necessaria_do_owner": [
+      "OPÇÃO A: Criar coluna em alunos (ex: tipo_produto ENUM('web','fisico')) e popular via webhook Hotmart",
+      "OPÇÃO B: Usar product_id/product_name de transacoes_hotmart e fazer JOIN, mas precisa popular os dados primeiro",
+      "OPÇÃO C: Usar grupos do WordPress quando sincronizados (requer sync ativo)",
+      "OPÇÃO D: Remover subseleção de produto da UI até haver dados reais",
+      "OPÇÃO E: Manter UI atual com filtros fallback (|| true) — todos os alunos aparecem em ambas opções"
+    ]
+  },
+  "RISCO": {
+    "nivel": "N/A — BLOQUEIO",
+    "justificativa": "Não foi feita nenhuma mudança. Aguardando decisão do owner sobre fonte de dados."
+  },
+  "CHECKLIST_POS_PARTE": {
+    "compila_sem_erro": true,
+    "tela_carrega_sem_branco": true,
+    "console_sem_erros_vermelhos": true,
+    "funcionalidade_testada_manual": "N/A — BLOQUEIO",
+    "zero_regressao_confirmada": true
+  },
+  "ROLLBACK": {
+    "necessario": false,
+    "como_reverter": "Nenhuma mudança foi feita"
+  },
+  "PRONTO_PARA": "AGUARDANDO_DECISAO_OWNER",
+  "PROXIMOS_PASSOS": "Owner deve escolher uma das opções (A/B/C/D/E) para prosseguir. Sem fonte de dados, o filtro de produto não pode ser implementado corretamente."
+}

@@ -38,29 +38,6 @@ function validateStrongPassword(password: string): string | null {
   return null;
 }
 
-async function safePostJson(
-  url: string,
-  body: unknown,
-  headers: Record<string, string>,
-  timeoutMs: number
-): Promise<void> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...headers,
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
 interface InviteRequest {
   email: string;
   nome: string;
@@ -148,150 +125,25 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`[INVITE] Creating user: ${email} (${nome})`);
 
-    // ============================================
-    // 🔐 P0 FIX: Buscar usuário DIRETAMENTE em auth.users
-    // Problema: profiles pode não existir, mas auth.users sim
-    // Solução: Tentar criar e capturar erro email_exists
-    // ============================================
+    // Check if user already exists (OTIMIZADO: busca direta, não listUsers)
+    // P1 FIX: listUsers() não escala com +10k usuários
     let existingUser = null;
-    
-    // Primeiro, tentar buscar via profile (mais rápido se existir)
     try {
+      // Buscar pelo profiles (indexado por email) - mais rápido que auth.admin.listUsers
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('id')
-        .ilike('email', email)
+        .select('id, email')
+        .ilike('email', email.trim())
         .limit(1)
-        .maybeSingle();
+        .single();
       
       if (profileData?.id) {
         const { data: userData } = await supabase.auth.admin.getUserById(profileData.id);
-        existingUser = userData?.user || null;
-        console.log(`[INVITE] User found via profile: ${email}`);
+        existingUser = userData?.user;
       }
-    } catch (checkErr) {
-      console.warn("[INVITE] Profile check error:", checkErr);
-    }
-    
-    // Se não encontrou via profile, tentar criar - capturar email_exists
-    if (!existingUser) {
-      console.log(`[INVITE] User not found via profile, attempting creation: ${email}`);
-      
-      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-        email: email,
-        password: senha,
-        email_confirm: true,
-        user_metadata: {
-          nome: nome,
-          funcao: funcao,
-          invited: true,
-          employee_id: employee_id,
-        },
-      });
-      
-      if (createError) {
-        // Se erro for email_exists, buscar o usuário existente
-        if (createError.message?.includes('already been registered') || 
-            (createError as any).code === 'email_exists') {
-          console.log(`[INVITE] Email exists in auth.users, fetching via listUsers: ${email}`);
-          
-          // Buscar via listUsers (última opção)
-          const { data: usersData } = await supabase.auth.admin.listUsers({
-            page: 1,
-            perPage: 1000, // Buscar mais para encontrar o email
-          });
-          
-          if (usersData?.users) {
-            existingUser = usersData.users.find(
-              (u) => u.email?.toLowerCase() === email.toLowerCase()
-            ) || null;
-          }
-          
-          if (!existingUser) {
-            console.error("[INVITE] Email exists but user not found - inconsistent state");
-            return new Response(
-              JSON.stringify({ error: "Email já registrado mas não encontrado. Contate o suporte." }),
-              { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-            );
-          }
-        } else {
-          // Outro erro na criação
-          console.error("[INVITE] Error creating user:", createError);
-          return new Response(
-            JSON.stringify({ error: `Erro ao criar usuário: ${createError.message}` }),
-            { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
-          );
-        }
-      } else if (newUser?.user) {
-        // Usuário criado com sucesso! Continuar com o resto do fluxo
-        console.log(`[INVITE] User created successfully: ${email}, ID: ${newUser.user.id}`);
-        
-        // Update employee record if employee_id provided
-        if (employee_id) {
-          const { error: updateError } = await supabase
-            .from("employees")
-            .update({ 
-              email: email,
-              user_id: newUser.user.id 
-            })
-            .eq("id", employee_id);
-          
-          if (updateError) {
-            console.warn("[INVITE] Could not update employee:", updateError);
-          }
-        }
-        
-        // 🎯 CONTRATO: Funcionário NÃO passa por onboarding de aluno
-        await supabase.from("profiles").upsert({
-          id: newUser.user.id,
-          email: email,
-          nome: nome,
-          password_change_required: false, // Senha já definida pelo admin
-          onboarding_completed: true, // Funcionário vai DIRETO para /gestaofc
-        }, { onConflict: "id" });
-        
-        await supabase.from("user_roles").upsert({ 
-          user_id: newUser.user.id, 
-          role: assignedRole
-        }, { onConflict: "user_id", ignoreDuplicates: false });
-        
-        // 🎯 CONTRATO: Email com link DIRETO para /auth + credenciais
-        try {
-          const siteUrl = Deno.env.get('SITE_URL') || 'https://pro.moisesmedeiros.com.br';
-
-          // IMPORTANTE: nunca bloquear a criação do acesso por timeout/instabilidade do email
-          await safePostJson(
-            `${supabaseUrl}/functions/v1/send-notification-email`,
-            {
-              to: email,
-              type: "welcome_staff", // Template COM credenciais e link DIRETO /auth
-              data: {
-                nome,
-                email,
-                senha, // Senha definida pelo admin
-                funcao: funcao || "Funcionário",
-                siteUrl,
-              },
-            },
-            {
-              "Authorization": `Bearer ${supabaseServiceKey}`,
-            },
-            6000
-          );
-          console.log("[INVITE] Welcome email with credentials sent to:", email);
-        } catch (emailErr) {
-          console.warn("[INVITE] Email error:", emailErr);
-        }
-        
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            message: "Acesso criado com sucesso!",
-            user_id: newUser.user.id
-          }),
-          { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
+    } catch {
+      // Usuário não existe, será criado abaixo
+      existingUser = null;
     }
 
     if (existingUser) {
@@ -322,42 +174,34 @@ const handler = async (req: Request): Promise<Response> => {
           .eq("id", employee_id);
       }
 
-      // 🎯 CONTRATO: UPSERT profile e role para usuário existente
-      await supabase.from("profiles").upsert({
-        id: existingUser.id,
-        email: email,
-        nome: nome,
-        password_change_required: false, // Senha já definida pelo admin
-        onboarding_completed: true, // Funcionário não passa por onboarding de aluno
-      }, { onConflict: "id" });
+      console.log(`[INVITE] Password updated for existing user: ${email}`);
       
-      await supabase.from("user_roles").upsert({ 
-        user_id: existingUser.id, 
-        role: assignedRole
-      }, { onConflict: "user_id", ignoreDuplicates: false });
-
-      console.log(`[INVITE] Profile/role updated for existing user: ${email}, role: ${assignedRole}`);
-      
-      // 🎯 CONTRATO: Email com credenciais + link DIRETO para /auth
+      // 🎯 FIX: Enviar email via fetch direto COM SENHA
       try {
-        await safePostJson(
-          `${supabaseUrl}/functions/v1/send-notification-email`,
-          {
-            to: email,
-            type: "welcome_staff",
-            data: {
-              nome,
-              senha,
-              email,
-              funcao: funcao || "Funcionário",
-            },
-          },
-          {
+        const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
             "Authorization": `Bearer ${supabaseServiceKey}`,
           },
-          6000
-        );
-        console.log("[INVITE] Welcome email sent to existing user:", email);
+          body: JSON.stringify({
+            to: email,
+            type: "welcome_staff", // Template específico com senha
+            data: { 
+              nome,
+              senha, // ✅ P0 FIX: Incluir senha no email
+              email, // Para exibir login
+            },
+          }),
+        });
+
+        if (emailResponse.ok) {
+          const emailData = await emailResponse.json();
+          console.log("[INVITE] Welcome email sent to existing user", emailData);
+        } else {
+          const errText = await emailResponse.text();
+          console.warn("[INVITE] Email sending may have failed:", errText);
+        }
       } catch (emailErr) {
         console.warn("[INVITE] Email error:", emailErr);
       }
@@ -365,18 +209,157 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: "Acesso atualizado com sucesso! O funcionário receberá um email com as credenciais.",
+          message: "Acesso atualizado com sucesso! O funcionário receberá um email.",
           user_id: existingUser.id
         }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    // Se chegou aqui sem existingUser e sem ter retornado, algo deu errado
-    console.error("[INVITE] Unexpected state: no user found or created");
+    // Create new user with password
+    const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+      email: email,
+      password: senha,
+      email_confirm: true, // Auto-confirm email
+      user_metadata: {
+        nome: nome,
+        funcao: funcao,
+        invited: true,
+        employee_id: employee_id,
+      },
+    });
+
+    if (createError) {
+      console.error("[INVITE] Error creating user:", createError);
+      return new Response(
+        JSON.stringify({ error: `Erro ao criar usuário: ${createError.message}` }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    console.log(`[INVITE] User created successfully: ${email}, ID: ${newUser.user?.id}`);
+
+    // Update employee record if employee_id provided
+    if (employee_id && newUser.user) {
+      const { error: updateError } = await supabase
+        .from("employees")
+        .update({ 
+          email: email,
+          user_id: newUser.user.id 
+        })
+        .eq("id", employee_id);
+      
+      if (updateError) {
+        console.warn("[INVITE] Could not update employee:", updateError);
+      } else {
+        console.log(`[INVITE] Employee ${employee_id} linked to user ${newUser.user.id}`);
+      }
+    }
+
+    // ============================================
+    // 🎯 UPSERT ROLE (CONSTITUIÇÃO v10.x)
+    // Regra: 1 role por user_id (constraint UNIQUE user_roles_user_id_key)
+    // 
+    // ⚠️ ESTRATÉGIA DE CONFLICT:
+    // - ON CONFLICT (user_id) DO UPDATE: Sobrescreve role existente
+    // - Isso é CORRETO para convite de funcionário
+    // - Se user já existia com outra role, agora será staff
+    // ============================================
+    if (newUser.user) {
+      // 🎯 CONSTITUIÇÃO v10.4: Criar profile com password_change_required = true
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert({
+          id: newUser.user.id,
+          email: email,
+          nome: nome,
+          password_change_required: true,  // 🔐 OBRIGATÓRIO: Força primeiro acesso
+          onboarding_completed: false,     // 🔐 OBRIGATÓRIO: Força onboarding
+        }, { onConflict: "id" });
+      
+      if (profileError) {
+        console.warn("[INVITE] Could not create profile:", profileError);
+      } else {
+        console.log(`[INVITE] Profile created for ${newUser.user.id} with password_change_required=true`);
+      }
+
+      const { error: roleError } = await supabase
+        .from("user_roles")
+        .upsert({ 
+          user_id: newUser.user.id, 
+          role: assignedRole // Role específica: suporte, monitoria, coordenacao, etc.
+        }, { 
+          onConflict: "user_id",  // ✅ CORRETO: 1 role por user
+          ignoreDuplicates: false, // ✅ ATUALIZA role se já existir
+        });
+      
+      if (roleError) {
+        console.warn("[INVITE] Could not assign role:", roleError);
+      } else {
+        console.log(`[INVITE] Role '${assignedRole}' assigned to ${newUser.user.id}`);
+      }
+    }
+
+    // 🎯 P0 FIX v2: Gerar magic link para /primeiro-acesso
+    // NÃO enviar senha em texto - funcionário define no onboarding
+    if (newUser.user) {
+      try {
+        // 🎯 P0 FIX v3: URL dinâmica via env (fallback para produção)
+        const siteUrl = Deno.env.get('SITE_URL') || 'https://pro.moisesmedeiros.com.br';
+        console.log('[invite-employee] 📍 Using SITE_URL:', siteUrl);
+        
+        // Gerar magic link para primeiro acesso
+        const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+          type: 'magiclink',
+          email: email,
+          options: {
+            redirectTo: `${siteUrl}/primeiro-acesso`,
+          },
+        });
+        
+        const accessLink = linkData?.properties?.action_link || `${siteUrl}/auth`;
+        
+        if (linkError) {
+          console.warn("[INVITE] Magic link generation failed:", linkError);
+        }
+
+        const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            to: email,
+            type: "welcome_staff_magic", // 🎯 NOVO: Template com magic link (sem senha)
+            data: { 
+              nome,
+              email,
+              access_link: accessLink, // Link de acesso
+              funcao: funcao || 'Funcionário',
+            },
+          }),
+        });
+
+        if (emailResponse.ok) {
+          const emailData = await emailResponse.json();
+          console.log("[INVITE] Welcome email with magic link sent successfully", emailData);
+        } else {
+          const errText = await emailResponse.text();
+          console.warn("[INVITE] Email sending may have failed:", errText);
+        }
+      } catch (emailErr) {
+        console.warn("[INVITE] Email error:", emailErr);
+      }
+    }
+
     return new Response(
-      JSON.stringify({ error: "Erro inesperado ao processar convite" }),
-      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      JSON.stringify({ 
+        success: true, 
+        message: "Acesso criado com sucesso!",
+        user_id: newUser.user?.id
+      }),
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
 
   } catch (error: any) {

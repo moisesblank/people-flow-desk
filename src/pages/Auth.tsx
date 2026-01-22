@@ -709,48 +709,21 @@ export default function Auth() {
 
     // Rodar async fora do corpo do effect (TS/React-safe)
     void (async () => {
-      // 🎯 P0 FIX v12.5: Persistir modo recovery por sessão (não depender do hash)
-      // - Evita loop quando o hash é consumido/limpo antes do React processar
-      // - Expira automaticamente para não “contaminar” futuras visitas ao /auth
-      const RECOVERY_UNTIL_KEY = "matriz_recovery_flow_until";
-      const now = Date.now();
-      const recoveryUntilRaw = sessionStorage.getItem(RECOVERY_UNTIL_KEY);
-      const recoveryUntil = recoveryUntilRaw ? Number(recoveryUntilRaw) : 0;
-      const isRecoveryStickyActive = Number.isFinite(recoveryUntil) && recoveryUntil > now;
-
-      // 🎯 P0 FIX v12.4: Verificar se veio de link de recovery ANTES de qualquer coisa
-      // Supabase usa hash fragment: #access_token=XXX&type=recovery
+      // 🎯 FIX CRÍTICO: Verificar se veio de link de recovery ANTES de qualquer coisa
       const urlParams = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
-      const hashParams = new URLSearchParams(hash.replace("#", ""));
-      
       const isRecoveryFromUrl =
         urlParams.get("action") === "set-password" ||
         urlParams.get("reset") === "true" ||
         urlParams.get("type") === "recovery" ||
         Boolean(urlParams.get("reset_token")) ||
-        hashParams.get("type") === "recovery" || // 🎯 FIX: Parse hash como query params
         hash.includes("type=recovery");
 
       if (isRecoveryFromUrl) {
-        console.log("[AUTH] 🔐 Link de recovery detectado via URL/hash - ativando modo update password");
-        // ✅ Marcar modo recovery com expiração de 15 minutos
-        sessionStorage.setItem(RECOVERY_UNTIL_KEY, String(Date.now() + 15 * 60 * 1000));
-        setIsUpdatePassword(true); // 🎯 FIX CRÍTICO: Setar estado ANTES de qualquer redirect
-        setIsCheckingSession(false);
-        return; // NÃO verificar sessão, NÃO redirecionar
-      }
-
-      // ✅ Se recovery sticky ainda está ativo (hash pode ter sumido), manter formulário
-      if (isRecoveryStickyActive) {
-        console.log("[AUTH] 🔐 Recovery sticky ativo - mantendo formulário de nova senha");
-        setIsUpdatePassword(true);
+        console.log("[AUTH] 🔐 Link de recovery detectado - mostrando formulário");
         setIsCheckingSession(false);
         return;
       }
-
-      // Se não estamos em recovery, limpar sticky (fail-safe)
-      sessionStorage.removeItem(RECOVERY_UNTIL_KEY);
 
       // 🎯 FIX: Não redirecionar se já estamos no modo de update password
       if (isUpdatePassword) {
@@ -767,24 +740,11 @@ export default function Auth() {
 
       // ✅ PLANO B (UX): Se já existe sessão válida,
       // redirecionar imediatamente para a área correta.
-      // 🎯 P0 FIX v12.4: MAS NUNCA se veio de link de recovery
       try {
         const {
           data: { session },
         } = await supabase.auth.getSession();
         if (session?.user) {
-          // 🎯 P0 FIX v12.4: Re-verificar recovery flag (pode ter sido setado acima)
-          // Verificar novamente o hash pois Supabase pode ter consumido
-          const currentHash = window.location.hash;
-          const isStillRecovery = currentHash.includes("type=recovery") || isUpdatePassword;
-          
-          if (isStillRecovery) {
-            console.log("[AUTH] 🔐 Sessão existe mas é recovery - mostrando formulário de senha");
-            setIsUpdatePassword(true);
-            setIsCheckingSession(false);
-            return;
-          }
-
           console.log("[AUTH] ✅ Sessão existente detectada em /auth — redirecionando");
 
           const { data: roleData } = await supabase
@@ -819,42 +779,16 @@ export default function Auth() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      const RECOVERY_UNTIL_KEY = "matriz_recovery_flow_until";
-      const recoveryUntilRaw = sessionStorage.getItem(RECOVERY_UNTIL_KEY);
-      const recoveryUntil = recoveryUntilRaw ? Number(recoveryUntilRaw) : 0;
-      const isRecoveryStickyActive = Number.isFinite(recoveryUntil) && recoveryUntil > Date.now();
-
       // 🎯 FIX: Quando usuário clica no link de recovery, Supabase dispara PASSWORD_RECOVERY
       // Neste caso, devemos mostrar o formulário de definição de senha, NÃO redirecionar
       if (event === "PASSWORD_RECOVERY") {
         console.log("[AUTH] 🔐 PASSWORD_RECOVERY event - mostrando formulário de nova senha");
-        sessionStorage.setItem(RECOVERY_UNTIL_KEY, String(Date.now() + 15 * 60 * 1000));
         setIsUpdatePassword(true);
         setIsCheckingSession(false);
         return; // NÃO redirecionar, deixar usuário definir senha
       }
 
       if ((event !== "SIGNED_IN" && event !== "INITIAL_SESSION") || !session?.user) return;
-
-      // 🎯 P0 FIX v12.4: Verificar hash de recovery ANTES de qualquer redirect
-      // O hash pode ainda estar presente quando INITIAL_SESSION dispara
-      const currentHash = window.location.hash;
-      const isRecoveryHash = currentHash.includes("type=recovery");
-      if (isRecoveryHash) {
-        console.log("[AUTH] 🔐 Hash de recovery detectado no onAuthStateChange - ativando modo update password");
-        sessionStorage.setItem(RECOVERY_UNTIL_KEY, String(Date.now() + 15 * 60 * 1000));
-        setIsUpdatePassword(true);
-        setIsCheckingSession(false);
-        return;
-      }
-
-      // ✅ Sticky recovery: se ainda ativo, nunca redirecionar
-      if (isRecoveryStickyActive) {
-        console.log("[AUTH] 🔐 Recovery sticky ativo no onAuthStateChange - bloqueando redirect");
-        setIsUpdatePassword(true);
-        setIsCheckingSession(false);
-        return;
-      }
 
       // 🛡️ PLANO B (UX):
       // - SIGNED_IN: só redireciona quando usuário clicou em "Entrar" (evita saltos em novas abas)
@@ -1565,10 +1499,6 @@ export default function Auth() {
             onVerified={async () => {
               console.log("[AUTH] ✅ 2FA verificado com sucesso, iniciando redirect...");
 
-              // 🛡️ P0: proteger fluxo crítico contra Promise rejection sem tratamento
-              // (quando alguma etapa lança exceção, o app pode “voltar ao início”).
-              try {
-
               // ✅ OTIMIZAÇÃO: Salvar cache de confiança após 2FA bem-sucedido
               if (pending2FAUser.deviceHash) {
                 setTrustCache(pending2FAUser.userId, pending2FAUser.deviceHash);
@@ -1582,8 +1512,8 @@ export default function Auth() {
               // ============================================
               // 🛡️ BLOCO 3: REGISTRAR DISPOSITIVO ANTES DA SESSÃO (pós-2FA)
               // ============================================
-               console.log("[AUTH][BLOCO3] 🔐 Registrando dispositivo ANTES da sessão (pós-2FA)...");
-               const deviceResult = await registerDeviceBeforeSession();
+              console.log("[AUTH][BLOCO3] 🔐 Registrando dispositivo ANTES da sessão (pós-2FA)...");
+              const deviceResult = await registerDeviceBeforeSession();
 
               if (!deviceResult.success) {
                 console.error("[AUTH][BLOCO3] ❌ Falha no registro de dispositivo pós-2FA:", deviceResult.error);
@@ -1722,16 +1652,8 @@ export default function Auth() {
                 window.location.replace("/gestaofc");
               }
 
-               setShow2FA(false);
-               setPending2FAUser(null);
-              } catch (err: any) {
-                console.error('[AUTH] ❌ Falha inesperada no fluxo pós-2FA:', err);
-                toast.error('Falha ao finalizar autenticação', {
-                  description: String(err?.message || 'Tente novamente. Se persistir, faça login do zero.'),
-                  duration: 9000,
-                });
-                // Não forçar logout aqui para evitar loop; o usuário permanece na tela 2FA.
-              }
+              setShow2FA(false);
+              setPending2FAUser(null);
             }}
             onCancel={async () => {
               // ✅ Fail-safe: nunca deixar usuário “meio logado” sem 2FA

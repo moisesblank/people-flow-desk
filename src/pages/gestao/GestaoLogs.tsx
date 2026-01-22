@@ -38,7 +38,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { useSystemLogs, SystemLog, LogSeverity } from '@/hooks/useSystemLogs';
-import { formatError } from '@/lib/utils/formatError';
 
 // Configurações visuais por severidade
 const SEVERITY_CONFIG: Record<LogSeverity, { 
@@ -463,7 +462,7 @@ export default function GestaoLogs() {
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-destructive">
               <AlertCircle className="h-5 w-5" />
-              <span>Erro ao carregar logs: {formatError(error)}</span>
+              <span>Erro ao carregar logs: {error}</span>
             </div>
           </CardContent>
         </Card>

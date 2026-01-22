@@ -9,7 +9,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Image, Upload, Trash2, Loader2, Eye, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatError } from "@/lib/utils/formatError";
 
 import {
   Dialog,
@@ -31,8 +30,7 @@ interface VideoOverlayConfigDialogProps {
 const SETTING_KEY = "video_overlay_url";
 const BUCKET_NAME = "materiais";
 
-// Hook para buscar a URL assinada do overlay
-// O banco agora salva o PATH, não a URL pública
+// Hook para buscar a URL do overlay
 export function useVideoOverlay() {
   return useQuery({
     queryKey: ["video-overlay-setting"],
@@ -47,38 +45,9 @@ export function useVideoOverlay() {
       
       // setting_value é JSONB, pode ser objeto ou null
       const value = data?.setting_value as { url?: string } | null;
-      const pathOrUrl = value?.url ?? null;
-      
-      if (!pathOrUrl) return null;
-      
-      // Se já é URL completa (dados antigos), verificar se é assinável
-      if (pathOrUrl.startsWith('http')) {
-        // Tentar extrair path de URLs antigas
-        const match = pathOrUrl.match(/\/materiais\/(.+)$/);
-        if (match) {
-          // Gerar URL assinada a partir do path extraído
-          const { data: signedData } = await supabase.storage
-            .from(BUCKET_NAME)
-            .createSignedUrl(match[1], 3600);
-          return signedData?.signedUrl ?? null;
-        }
-        // Se não conseguir extrair, retornar como está (pode falhar se bucket privado)
-        return pathOrUrl;
-      }
-      
-      // É um path - gerar URL assinada
-      const { data: signedData, error: signError } = await supabase.storage
-        .from(BUCKET_NAME)
-        .createSignedUrl(pathOrUrl, 3600); // 1 hora
-        
-      if (signError) {
-        console.error('[useVideoOverlay] Erro ao gerar URL assinada:', signError);
-        return null;
-      }
-      
-      return signedData?.signedUrl ?? null;
+      return value?.url ?? null;
     },
-    staleTime: 1000 * 60 * 30, // 30 min cache (URL assinada dura 1h)
+    staleTime: 1000 * 60 * 5, // 5 min cache
   });
 }
 
@@ -129,7 +98,7 @@ export function VideoOverlayConfigDialog({ open, onClose }: VideoOverlayConfigDi
       onClose();
     },
     onError: (error) => {
-      toast.error(`Erro ao salvar: ${formatError(error)}`);
+      toast.error(`Erro ao salvar: ${error.message}`);
     },
   });
 
@@ -165,23 +134,19 @@ export function VideoOverlayConfigDialog({ open, onClose }: VideoOverlayConfigDi
 
       if (uploadError) throw uploadError;
 
-      // Gerar URL assinada (bucket materiais é privado)
-      const { data: signedData, error: signError } = await supabase.storage
+      // Obter URL pública
+      const { data: urlData } = supabase.storage
         .from(BUCKET_NAME)
-        .createSignedUrl(filePath, 3600); // 1 hora
+        .getPublicUrl(filePath);
 
-      if (signError || !signedData?.signedUrl) {
-        throw new Error('Falha ao gerar URL assinada');
-      }
+      const publicUrl = urlData.publicUrl;
+      setPreviewUrl(publicUrl);
 
-      // Salvar o PATH no banco (não a URL assinada, pois expira)
-      setPreviewUrl(signedData.signedUrl); // Preview temporário
-      
-      // Salvar o path no settings (será assinado na leitura)
-      await saveMutation.mutateAsync(filePath);
-    } catch (error: unknown) {
+      // Salvar no settings
+      await saveMutation.mutateAsync(publicUrl);
+    } catch (error: any) {
       console.error("Upload error:", error);
-      toast.error(`Erro no upload: ${formatError(error)}`);
+      toast.error(`Erro no upload: ${error.message}`);
     } finally {
       setIsUploading(false);
     }

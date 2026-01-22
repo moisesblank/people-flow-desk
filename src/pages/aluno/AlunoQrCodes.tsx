@@ -17,7 +17,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { formatError } from "@/lib/utils/formatError";
 import { 
   Book, 
   Plus, 
@@ -109,8 +108,10 @@ export default function AlunoQrCodes() {
 
       if (uploadError) throw uploadError;
 
-      // 2. Salvar apenas o path (bucket agora é privado, URL será assinada na leitura)
-      // Não usamos mais getPublicUrl pois o bucket materiais é privado
+      // 2. Obter URL pública
+      const { data: urlData } = supabase.storage
+        .from("materiais")
+        .getPublicUrl(fileName);
 
       // 3. Criar registro no banco
       const slug = title
@@ -127,7 +128,7 @@ export default function AlunoQrCodes() {
           title,
           slug,
           description,
-          pdf_url: fileName, // Salvar path, não URL pública (bucket privado)
+          pdf_url: urlData.publicUrl,
         })
         .select()
         .single();
@@ -142,8 +143,8 @@ export default function AlunoQrCodes() {
       setNewPdf({ title: "", description: "", file: null });
       setSelectedBook(null);
     },
-    onError: (error: unknown) => {
-      toast.error(`Erro ao adicionar PDF: ${formatError(error)}`);
+    onError: (error: Error) => {
+      toast.error(`Erro ao adicionar PDF: ${error.message}`);
     },
     onSettled: () => {
       setUploading(false);
