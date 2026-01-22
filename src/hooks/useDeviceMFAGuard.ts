@@ -289,7 +289,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       }));
       return false;
     }
-  }, [user?.id, isOwner, isBetaTest]);
+  }, [user?.id, user?.email, role, isOwner, isBetaTest]);
 
   /**
    * Callback chamado após verificação do código 2FA
