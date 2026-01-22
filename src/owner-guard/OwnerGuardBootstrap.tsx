@@ -1,15 +1,18 @@
 // ============================================
 // 🔒 OWNER GUARD — BOOTSTRAP GLOBAL
 // P0: garante que Owner NUNCA permaneça em /alunos (ou qualquer rota fora de /gestaofc)
+// v12.1: Respeita ausência de sessão local (aba anônima limpa)
 //
 // Regras:
 // - Toda lógica de redirect do Owner vive em src/owner-guard/*
 // - Este componente só ORQUESTRA a execução no ciclo do Router
+// - SEM sessão local = SEM redirect (aba anônima/limpa)
 // ============================================
 
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { enforceOwnerRedirectAsync, executeOwnerRedirect } from "./enforceOwnerRedirect";
+import { hasLocalSession } from "./resolveRole";
 import { OWNER_HOME } from "./constants";
 
 /**
@@ -29,6 +32,12 @@ export function OwnerGuardBootstrap() {
     if (lastPathRef.current === pathname) return;
     lastPathRef.current = pathname;
 
+    // 🛡️ v12.1: CRÍTICO - Sem sessão local = aba anônima/limpa = NÃO fazer nada
+    // Isso impede redirect indevido baseado em cookies vazados
+    if (!hasLocalSession()) {
+      return;
+    }
+
     // 1) Fast path: se cache síncrono indicar owner, já executa redirect.
     // (executeOwnerRedirect internamente usa isOwnerSync quando role não é fornecida)
     const redirectedSync = executeOwnerRedirect({ pathname });
@@ -44,7 +53,7 @@ export function OwnerGuardBootstrap() {
       } catch (err) {
         // FAIL-OPEN: nunca bloquear render (evita tela preta).
         // Porém, se por algum motivo estivermos em /alunos, fazemos fallback final.
-        if (pathname.startsWith("/alunos")) {
+        if (pathname.startsWith("/alunos") && hasLocalSession()) {
           window.location.replace(OWNER_HOME);
         }
       }
