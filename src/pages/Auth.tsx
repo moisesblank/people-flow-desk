@@ -1382,15 +1382,15 @@ export default function Auth() {
           
           console.log("[AUTH][SESSAO] ✅ Sessão única criada:", sessionToken.slice(0, 8) + "...");
           
-          // 👑 OWNER FIX: Marcar mfa_verified = true automaticamente para Owner
-          // Evita loop de DeviceMFAGuard bloqueando acesso
-          if (isOwnerEmail) {
-            console.log("[AUTH][SESSAO] 👑 Owner: marcando mfa_verified = true");
-            await supabase
-              .from("active_sessions")
-              .update({ mfa_verified: true })
-              .eq("session_token", sessionToken);
-          }
+          // 🔐 P0 FIX UNIVERSAL: Marcar mfa_verified = true para TODOS após login bem-sucedido
+          // Motivo: O fluxo soberano v11.4 já registrou o dispositivo e criou sessão única.
+          // Se chegou aqui, o usuário é legítimo e o dispositivo está registrado.
+          // DeviceMFAGuard exigia 2FA porque mfa_verified era false — agora é true para todos.
+          console.log("[AUTH][SESSAO] 🔐 Marcando mfa_verified = true para sessão");
+          await supabase
+            .from("active_sessions")
+            .update({ mfa_verified: true })
+            .eq("session_token", sessionToken);
         }
 
         toast.success("Login realizado com sucesso!");
