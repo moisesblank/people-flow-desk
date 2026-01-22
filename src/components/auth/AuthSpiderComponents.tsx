@@ -1,374 +1,558 @@
-// ============================================
-// SPIDER-MAN CINEMATIC 2300 - VISUAL COMPONENTS
-// Extraído de Auth.tsx para otimização de build
-// ============================================
+/* ============================================
+   🕷️ AUTH PAGE - SPIDER-MAN CINEMATIC 2300
+   Estética: Vermelho/Azul Profundo • Cinematográfico • Adulto
+   Performance: CSS-only GPU-accelerated (5000+ usuários)
+   ============================================ */
 
-import { forwardRef, ReactNode } from "react";
-import { useConstitutionPerformance } from "@/hooks/useConstitutionPerformance";
-
-// Spider-Man Deep Space Background (STATIC - no animations per user request)
-export const SpiderBackground = forwardRef<HTMLDivElement>((_, ref) => (
-  <div
-    ref={ref}
-    className="absolute inset-0 pointer-events-none"
-    style={{
-      background: "linear-gradient(135deg, hsl(230 40% 6%) 0%, hsl(230 40% 3%) 100%)",
-    }}
-  />
-));
-SpiderBackground.displayName = "SpiderBackground";
-
-// Spider Eyes - DISABLED per user request (no animated glows)
-export const SpiderEyes = forwardRef<HTMLDivElement>((_, ref) => <span ref={ref} />);
-SpiderEyes.displayName = "SpiderEyes";
-
-// Energy Veins - DISABLED per user request (no animated lines)
-export const SpiderVeins = forwardRef<HTMLDivElement>((_, ref) => <span ref={ref} />);
-SpiderVeins.displayName = "SpiderVeins";
-
-// Spider Card Frame - Tech Interface
-export function SpiderCardFrame() {
-  return (
-    <>
-      {/* Animated corner brackets - Red/Blue */}
-      <div className="absolute -top-1 -left-1 w-8 h-8 border-l-2 border-t-2 spider-corner spider-corner-red" />
-      <div
-        className="absolute -top-1 -right-1 w-8 h-8 border-r-2 border-t-2 spider-corner spider-corner-blue"
-        style={{ animationDelay: "0.6s" }}
-      />
-      <div
-        className="absolute -bottom-1 -left-1 w-8 h-8 border-l-2 border-b-2 spider-corner spider-corner-blue"
-        style={{ animationDelay: "1.2s" }}
-      />
-      <div
-        className="absolute -bottom-1 -right-1 w-8 h-8 border-r-2 border-b-2 spider-corner spider-corner-red"
-        style={{ animationDelay: "1.8s" }}
-      />
-
-      {/* Scanning beam effect - Red/Blue gradient */}
-      <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
-        <div className="spider-card-scan absolute inset-x-0 h-[2px]" />
-      </div>
-    </>
-  );
+/* ============================================
+   🎨 SPIDER-MAN COLOR PALETTE
+   ============================================ */
+:root {
+  --spider-red: 0 85% 45%;        /* Vermelho profundo heroico */
+  --spider-red-glow: 0 90% 55%;   /* Vermelho luminoso */
+  --spider-blue: 220 80% 25%;     /* Azul noturno profundo */
+  --spider-blue-glow: 210 100% 50%; /* Azul energia */
+  --spider-dark: 230 40% 4%;      /* Preto espacial */
+  --spider-web: 0 0% 95%;         /* Teia prata */
 }
 
-// Holographic Grid 2300
-export function HolographicGrid() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Primary hex grid */}
-      <svg className="absolute inset-0 w-full h-full opacity-[0.08]" preserveAspectRatio="none">
-        <defs>
-          <pattern id="hexGrid2300" x="0" y="0" width="50" height="43.4" patternUnits="userSpaceOnUse">
-            <path
-              d="M25,0 L50,14.4 L50,28.9 L25,43.4 L0,28.9 L0,14.4 Z"
-              fill="none"
-              stroke="url(#holoGradient)"
-              strokeWidth="0.5"
-            />
-          </pattern>
-          <linearGradient id="holoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="hsl(185 100% 50%)" />
-            <stop offset="50%" stopColor="hsl(280 100% 60%)" />
-            <stop offset="100%" stopColor="hsl(320 100% 60%)" />
-          </linearGradient>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#hexGrid2300)" />
-      </svg>
-
-      {/* Energy flow lines */}
-      <div className="absolute inset-0">
-        <div
-          className="absolute h-px w-full auth-energy-flow"
-          style={{
-            top: "25%",
-            background: "linear-gradient(90deg, transparent, hsl(var(--holo-cyan) / 0.4), transparent)",
-          }}
-        />
-        <div
-          className="absolute h-px w-full auth-energy-flow-reverse"
-          style={{
-            top: "75%",
-            background: "linear-gradient(90deg, transparent, hsl(var(--holo-purple) / 0.4), transparent)",
-          }}
-        />
-      </div>
-    </div>
-  );
+/* ============================================
+   🌌 DEEP SPACE BACKGROUND
+   ============================================ */
+.auth-spider-bg {
+  background: 
+    radial-gradient(ellipse at 20% 30%, hsl(var(--spider-red) / 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, hsl(var(--spider-blue-glow) / 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, hsl(var(--spider-dark)) 0%, hsl(230 40% 2%) 100%);
 }
 
-// Orbital Ring System
-export function OrbitalRings() {
-  return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-      {/* Ring 1 - Outer */}
-      <div
-        className="absolute w-[800px] h-[800px] rounded-full border border-holo-cyan/20 auth-orbital-ring"
-        style={{
-          boxShadow: "inset 0 0 60px hsl(var(--holo-cyan) / 0.1), 0 0 60px hsl(var(--holo-cyan) / 0.05)",
-        }}
-      />
-      {/* Ring 2 - Middle */}
-      <div
-        className="absolute w-[600px] h-[600px] rounded-full border border-holo-purple/20 auth-orbital-ring-reverse"
-        style={{
-          boxShadow: "inset 0 0 40px hsl(var(--holo-purple) / 0.1), 0 0 40px hsl(var(--holo-purple) / 0.05)",
-        }}
-      />
-      {/* Ring 3 - Inner */}
-      <div
-        className="absolute w-[400px] h-[400px] rounded-full border border-primary/30 auth-orbital-ring"
-        style={{
-          animationDuration: "15s",
-          boxShadow: "inset 0 0 30px hsl(var(--primary) / 0.15), 0 0 30px hsl(var(--primary) / 0.1)",
-        }}
-      />
-
-      {/* Orbital nodes */}
-      {[0, 60, 120, 180, 240, 300].map((angle, i) => (
-        <div
-          key={i}
-          className="absolute w-3 h-3 rounded-full auth-orbital-node"
-          style={{
-            background: i % 2 === 0 ? "hsl(var(--holo-cyan))" : "hsl(var(--holo-purple))",
-            boxShadow:
-              i % 2 === 0
-                ? "0 0 15px hsl(var(--holo-cyan)), 0 0 30px hsl(var(--holo-cyan) / 0.5)"
-                : "0 0 15px hsl(var(--holo-purple)), 0 0 30px hsl(var(--holo-purple) / 0.5)",
-            transform: `rotate(${angle}deg) translateX(300px)`,
-            animationDelay: `${i * 0.5}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
+/* ============================================
+   🕸️ WEB PATTERN - Geometric Spider Web
+   ============================================ */
+@keyframes spider-web-pulse {
+  0%, 100% { opacity: 0.03; }
+  50% { opacity: 0.08; }
 }
 
-// DNA Helix Animation
-export function DNAHelix() {
-  return (
-    <div className="absolute left-8 top-0 bottom-0 w-16 overflow-hidden pointer-events-none opacity-40">
-      <div className="auth-dna-helix h-full">
-        {[...Array(12)].map((_, i) => (
-          <div key={i} className="absolute w-full flex justify-between items-center" style={{ top: `${i * 8.33}%` }}>
-            <div
-              className="w-3 h-3 rounded-full auth-dna-node-left"
-              style={{
-                background: "hsl(var(--holo-cyan))",
-                boxShadow: "0 0 10px hsl(var(--holo-cyan))",
-                animationDelay: `${i * 0.2}s`,
-              }}
-            />
-            <div
-              className="flex-1 h-px mx-1"
-              style={{
-                background: "linear-gradient(90deg, hsl(var(--holo-cyan) / 0.5), hsl(var(--holo-purple) / 0.5))",
-              }}
-            />
-            <div
-              className="w-3 h-3 rounded-full auth-dna-node-right"
-              style={{
-                background: "hsl(var(--holo-purple))",
-                boxShadow: "0 0 10px hsl(var(--holo-purple))",
-                animationDelay: `${i * 0.2 + 0.5}s`,
-              }}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+.spider-web-layer {
+  background-image: 
+    /* Radial web lines */
+    repeating-conic-gradient(
+      from 0deg at 50% 50%,
+      transparent 0deg,
+      hsl(var(--spider-web) / 0.03) 1deg,
+      transparent 2deg,
+      transparent 15deg
+    ),
+    /* Concentric circles */
+    repeating-radial-gradient(
+      circle at 50% 50%,
+      transparent 0px,
+      transparent 60px,
+      hsl(var(--spider-web) / 0.02) 61px,
+      transparent 62px
+    );
+  animation: spider-web-pulse 8s ease-in-out infinite;
 }
 
-// Cosmic Background with Stars
-export function CosmicBackground() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Deep space gradient */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse at 30% 20%, hsl(280 40% 8% / 0.8) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, hsl(185 40% 5% / 0.6) 0%, transparent 50%)",
-        }}
-      />
-
-      {/* Twinkling stars */}
-      {[...Array(40)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full auth-star"
-          style={{
-            width: `${1 + Math.random() * 2}px`,
-            height: `${1 + Math.random() * 2}px`,
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            background: "#fff",
-            animationDelay: `${Math.random() * 4}s`,
-            animationDuration: `${2 + Math.random() * 3}s`,
-          }}
-        />
-      ))}
-
-      {/* Nebula glow spots */}
-      <div
-        className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl"
-        style={{
-          background: "radial-gradient(circle, hsl(var(--primary) / 0.15) 0%, transparent 70%)",
-        }}
-      />
-      <div
-        className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-3xl"
-        style={{
-          background: "radial-gradient(circle, hsl(var(--holo-purple) / 0.1) 0%, transparent 70%)",
-        }}
-      />
-      <div
-        className="absolute top-1/2 right-1/3 w-64 h-64 rounded-full blur-3xl"
-        style={{
-          background: "radial-gradient(circle, hsl(var(--holo-cyan) / 0.08) 0%, transparent 70%)",
-        }}
-      />
-    </div>
-  );
+/* ============================================
+   ⚡ ENERGY VEINS - Red/Blue Power Lines
+   ============================================ */
+@keyframes spider-vein-flow-red {
+  0% { 
+    transform: translateX(-100%) scaleY(1);
+    opacity: 0;
+  }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { 
+    transform: translateX(200%) scaleY(1);
+    opacity: 0;
+  }
 }
 
-// Holographic Card Frame
-export function HoloCardFrame() {
-  return (
-    <>
-      {/* Animated corner brackets */}
-      <div className="absolute -top-1 -left-1 w-8 h-8 border-l-2 border-t-2 border-holo-cyan/60 auth-corner-pulse" />
-      <div
-        className="absolute -top-1 -right-1 w-8 h-8 border-r-2 border-t-2 border-holo-purple/60 auth-corner-pulse"
-        style={{ animationDelay: "0.5s" }}
-      />
-      <div
-        className="absolute -bottom-1 -left-1 w-8 h-8 border-l-2 border-b-2 border-holo-purple/60 auth-corner-pulse"
-        style={{ animationDelay: "1s" }}
-      />
-      <div
-        className="absolute -bottom-1 -right-1 w-8 h-8 border-r-2 border-b-2 border-holo-cyan/60 auth-corner-pulse"
-        style={{ animationDelay: "1.5s" }}
-      />
-
-      {/* Scanning beam effect */}
-      <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
-        <div
-          className="auth-card-scan absolute inset-x-0 h-px"
-          style={{
-            background: "linear-gradient(90deg, transparent, hsl(var(--holo-cyan) / 0.8), transparent)",
-            boxShadow: "0 0 20px hsl(var(--holo-cyan) / 0.5)",
-          }}
-        />
-      </div>
-    </>
-  );
+@keyframes spider-vein-flow-blue {
+  0% { 
+    transform: translateX(200%) scaleY(1);
+    opacity: 0;
+  }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { 
+    transform: translateX(-100%) scaleY(1);
+    opacity: 0;
+  }
 }
 
-// Stats Display - Futuristic 2300 version
-export function ApprovalHeroText() {
-  // 🏛️ LEI I - Performance Tiering (5000+ usuários)
-  const { shouldAnimate, shouldBlur, isLowEnd } = useConstitutionPerformance();
+.spider-vein-red {
+  background: linear-gradient(90deg, 
+    transparent 0%,
+    hsl(var(--spider-red) / 0.3) 20%,
+    hsl(var(--spider-red-glow)) 50%,
+    hsl(var(--spider-red) / 0.3) 80%,
+    transparent 100%
+  );
+  box-shadow: 0 0 30px hsl(var(--spider-red-glow) / 0.6),
+              0 0 60px hsl(var(--spider-red) / 0.3);
+  animation: spider-vein-flow-red 5s ease-in-out infinite;
+}
+
+.spider-vein-blue {
+  background: linear-gradient(90deg, 
+    transparent 0%,
+    hsl(var(--spider-blue-glow) / 0.3) 20%,
+    hsl(var(--spider-blue-glow)) 50%,
+    hsl(var(--spider-blue-glow) / 0.3) 80%,
+    transparent 100%
+  );
+  box-shadow: 0 0 30px hsl(var(--spider-blue-glow) / 0.6),
+              0 0 60px hsl(var(--spider-blue-glow) / 0.3);
+  animation: spider-vein-flow-blue 7s ease-in-out infinite;
+}
+
+/* ============================================
+   🔴 SPIDER EYES - Vigilant Orbs
+   ============================================ */
+@keyframes spider-eye-glow {
+  0%, 100% { 
+    opacity: 0.4;
+    transform: scale(1);
+    filter: blur(40px);
+  }
+  50% { 
+    opacity: 0.7;
+    transform: scale(1.1);
+    filter: blur(50px);
+  }
+}
+
+@keyframes spider-eye-scan {
+  0%, 100% { transform: translateX(-5%); }
+  50% { transform: translateX(5%); }
+}
+
+.spider-eye-left,
+.spider-eye-right {
+  animation: 
+    spider-eye-glow 4s ease-in-out infinite,
+    spider-eye-scan 8s ease-in-out infinite;
+  will-change: opacity, transform, filter;
+}
+
+.spider-eye-left {
+  animation-delay: 0s;
+}
+
+.spider-eye-right {
+  animation-delay: 2s;
+}
+
+/* ============================================
+   ⭐ CITY STARS - New York Night Sky
+   ============================================ */
+@keyframes spider-star-twinkle {
+  0%, 100% { 
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.spider-star {
+  animation: spider-star-twinkle ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+/* ============================================
+   🏙️ CITYSCAPE SILHOUETTE
+   ============================================ */
+.spider-cityscape {
+  background: linear-gradient(180deg,
+    transparent 0%,
+    transparent 70%,
+    hsl(var(--spider-dark) / 0.95) 100%
+  );
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 200'%3E%3Cpath d='M0,200 L0,150 L30,150 L30,100 L50,100 L50,120 L80,120 L80,60 L100,60 L100,80 L120,80 L120,40 L150,40 L150,90 L180,90 L180,70 L200,70 L200,130 L230,130 L230,50 L260,50 L260,100 L290,100 L290,30 L320,30 L320,80 L350,80 L350,110 L380,110 L380,60 L410,60 L410,140 L450,140 L450,45 L480,45 L480,95 L510,95 L510,55 L540,55 L540,120 L580,120 L580,35 L610,35 L610,75 L640,75 L640,105 L680,105 L680,25 L720,25 L720,85 L750,85 L750,65 L780,65 L780,130 L820,130 L820,50 L850,50 L850,90 L880,90 L880,40 L920,40 L920,110 L950,110 L950,70 L980,70 L980,150 L1000,150 L1000,200 Z' fill='white'/%3E%3C/svg%3E");
+  mask-size: cover;
+  mask-position: bottom;
+}
+
+/* ============================================
+   💠 CARD FRAME - Spider Tech Interface
+   ============================================ */
+@keyframes spider-corner-energy {
+  0%, 100% { 
+    opacity: 0.5;
+    box-shadow: 0 0 5px currentColor;
+  }
+  50% { 
+    opacity: 1;
+    box-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+  }
+}
+
+.spider-corner {
+  animation: spider-corner-energy 2.5s ease-in-out infinite;
+}
+
+.spider-corner-red {
+  border-color: hsl(var(--spider-red-glow));
+  color: hsl(var(--spider-red-glow));
+}
+
+.spider-corner-blue {
+  border-color: hsl(var(--spider-blue-glow));
+  color: hsl(var(--spider-blue-glow));
+}
+
+/* Card scan beam */
+@keyframes spider-card-scan {
+  0% { 
+    top: -5%;
+    opacity: 0;
+  }
+  10%, 90% { opacity: 0.9; }
+  100% { 
+    top: 105%;
+    opacity: 0;
+  }
+}
+
+.spider-card-scan {
+  animation: spider-card-scan 4s ease-in-out infinite;
+  background: linear-gradient(90deg, 
+    transparent 0%,
+    hsl(var(--spider-red-glow) / 0.5) 30%,
+    hsl(var(--spider-blue-glow) / 0.5) 70%,
+    transparent 100%
+  );
+  box-shadow: 0 0 30px hsl(var(--spider-red-glow) / 0.4),
+              0 0 30px hsl(var(--spider-blue-glow) / 0.4);
+}
+
+/* Card glow effect */
+@keyframes spider-card-glow {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px hsl(var(--spider-red) / 0.2),
+      0 0 40px hsl(var(--spider-blue) / 0.1),
+      inset 0 1px 0 hsl(var(--spider-web) / 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 40px hsl(var(--spider-red) / 0.3),
+      0 0 80px hsl(var(--spider-blue-glow) / 0.2),
+      inset 0 1px 0 hsl(var(--spider-web) / 0.15);
+  }
+}
+
+.spider-card {
+  animation: spider-card-glow 4s ease-in-out infinite;
+  background: linear-gradient(145deg,
+    hsl(var(--spider-dark) / 0.95) 0%,
+    hsl(230 35% 8% / 0.98) 50%,
+    hsl(var(--spider-dark) / 0.95) 100%
+  );
+  border: 1px solid hsl(var(--spider-red) / 0.2);
+  backdrop-filter: blur(20px);
+}
+
+/* ============================================
+   📊 STATS CARDS - Hero Metrics
+   ============================================ */
+@keyframes spider-stat-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.spider-stat-card {
+  animation: spider-stat-reveal 0.6s ease-out forwards;
+  background: linear-gradient(135deg,
+    hsl(var(--spider-red) / 0.08) 0%,
+    hsl(var(--spider-blue) / 0.08) 100%
+  );
+  border: 1px solid hsl(var(--spider-red) / 0.2);
+  transition: all 0.3s ease;
+}
+
+.spider-stat-card:hover {
+  border-color: hsl(var(--spider-red-glow) / 0.5);
+  box-shadow: 0 0 30px hsl(var(--spider-red) / 0.2),
+              0 0 60px hsl(var(--spider-blue-glow) / 0.1);
+  transform: translateY(-2px);
+}
+
+/* ============================================
+   🖼️ PROFESSOR FRAME - Legendary Border
+   ============================================ */
+@keyframes spider-frame-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 0 2px hsl(var(--spider-red) / 0.3),
+      0 0 30px hsl(var(--spider-red) / 0.2),
+      0 0 60px hsl(var(--spider-blue-glow) / 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 0 3px hsl(var(--spider-red-glow) / 0.5),
+      0 0 50px hsl(var(--spider-red-glow) / 0.3),
+      0 0 100px hsl(var(--spider-blue-glow) / 0.2);
+  }
+}
+
+.spider-professor-frame {
+  animation: spider-frame-pulse 3s ease-in-out infinite;
+  border: 2px solid hsl(var(--spider-red) / 0.4);
+}
+
+/* ============================================
+   🎯 TITLE GLOW - Heroic Typography
+   ============================================ */
+@keyframes spider-title-glow {
+  0%, 100% {
+    text-shadow: 
+      0 0 10px hsl(var(--spider-red-glow) / 0.5),
+      0 0 20px hsl(var(--spider-red) / 0.3);
+  }
+  50% {
+    text-shadow: 
+      0 0 20px hsl(var(--spider-red-glow) / 0.7),
+      0 0 40px hsl(var(--spider-red) / 0.4),
+      0 0 60px hsl(var(--spider-blue-glow) / 0.2);
+  }
+}
+
+.spider-title {
+  animation: spider-title-glow 3s ease-in-out infinite;
+  background: linear-gradient(135deg,
+    hsl(var(--spider-red-glow)) 0%,
+    hsl(0 85% 60%) 30%,
+    hsl(var(--spider-web)) 50%,
+    hsl(210 90% 65%) 70%,
+    hsl(var(--spider-blue-glow)) 100%
+  );
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ============================================
+   🔌 INPUT FIELDS - Tech Interface
+   ============================================ */
+.spider-input {
+  background: hsl(var(--spider-dark) / 0.8) !important;
+  border: 1px solid hsl(var(--spider-red) / 0.2) !important;
+  transition: all 0.3s ease !important;
+}
+
+.spider-input:focus {
+  border-color: hsl(var(--spider-red-glow) / 0.5) !important;
+  box-shadow: 0 0 20px hsl(var(--spider-red) / 0.2),
+              0 0 40px hsl(var(--spider-blue-glow) / 0.1) !important;
+}
+
+/* ============================================
+   🚀 BUTTON - Hero Action
+   ============================================ */
+.spider-button {
+  background: linear-gradient(135deg,
+    hsl(var(--spider-red)) 0%,
+    hsl(var(--spider-red-glow)) 50%,
+    hsl(var(--spider-red)) 100%
+  ) !important;
+  box-shadow: 0 0 20px hsl(var(--spider-red) / 0.3),
+              0 4px 15px hsl(0 0% 0% / 0.4) !important;
+  transition: all 0.3s ease !important;
+}
+
+.spider-button:hover {
+  box-shadow: 0 0 40px hsl(var(--spider-red-glow) / 0.5),
+              0 0 60px hsl(var(--spider-blue-glow) / 0.2),
+              0 6px 20px hsl(0 0% 0% / 0.5) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ============================================
+   🎬 ENTRANCE ANIMATIONS
+   ============================================ */
+@keyframes spider-hero-entrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.spider-entrance {
+  animation: spider-hero-entrance 0.8s ease-out forwards;
+}
+
+.spider-entrance-delay-1 { animation-delay: 0.1s; opacity: 0; }
+.spider-entrance-delay-2 { animation-delay: 0.2s; opacity: 0; }
+.spider-entrance-delay-3 { animation-delay: 0.3s; opacity: 0; }
+
+/* ============================================
+   ⚡ PERFORMANCE OPTIMIZATIONS
+   ============================================ */
+.spider-web-layer,
+.spider-vein-red,
+.spider-vein-blue,
+.spider-eye-left,
+.spider-eye-right,
+.spider-star,
+.spider-corner,
+.spider-card-scan,
+.spider-card,
+.spider-stat-card,
+.spider-professor-frame,
+.spider-title {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .spider-web-layer,
+  .spider-vein-red,
+  .spider-vein-blue,
+  .spider-eye-left,
+  .spider-eye-right,
+  .spider-star,
+  .spider-corner,
+  .spider-card-scan,
+  .spider-card,
+  .spider-stat-card,
+  .spider-professor-frame,
+  .spider-title,
+  .spider-entrance,
+  .spider-entrance-delay-1,
+  .spider-entrance-delay-2,
+  .spider-entrance-delay-3 {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* ============================================
+   📱 MOBILE OPTIMIZATIONS
+   ============================================ */
+@media (max-width: 768px) {
+  .spider-vein-red,
+  .spider-vein-blue {
+    display: none; /* Hide on mobile for perf */
+  }
   
-  return (
-    <div className="relative text-center mt-6 w-full overflow-visible">
-      {/* 🔥 GLOW BACKGROUND - Apenas em high-end */}
-      {!isLowEnd && (
-        <div 
-          className="absolute inset-0 -z-10 opacity-60 auth-hero-glow-bg"
-          style={{
-            background: "radial-gradient(ellipse 80% 50% at 50% 50%, hsl(320 90% 50% / 0.15), transparent 70%)",
-            filter: shouldBlur ? "blur(40px)" : "blur(20px)",
-          }}
-        />
-      )}
-      
-      {/* ⚡ MAIN TITLE - CSS-only animations for stability */}
-      <div className={shouldAnimate ? "auth-hero-title-animated" : ""}>
-        <h2 
-          className="text-3xl sm:text-4xl xl:text-5xl font-black text-white leading-[1.1] tracking-tight"
-          style={{ textShadow: !isLowEnd ? "0 0 60px hsl(0 0% 100% / 0.1)" : undefined }}
-        >
-          O Professor que
-        </h2>
-        
-        {/* 🌟 HIGHLIGHT - "Mais Aprova" com GLOW otimizado */}
-        <div className={`relative inline-block py-2 ${shouldAnimate ? "auth-hero-highlight-animated" : ""}`}>
-          {/* Glow Layer - só em high-end */}
-          {!isLowEnd && (
-            <div 
-              className="absolute inset-0 -z-10 rounded-lg auth-glow-layer"
-              style={{
-                background: "linear-gradient(90deg, hsl(280 90% 60% / 0.4), hsl(320 95% 55% / 0.5), hsl(0 90% 55% / 0.4))",
-                filter: shouldBlur ? "blur(25px)" : "blur(15px)",
-              }}
-            />
-          )}
-          
-          <span 
-            className="relative text-4xl sm:text-5xl xl:text-6xl font-black"
-            style={{
-              background: "linear-gradient(90deg, hsl(280 90% 65%), hsl(320 95% 60%), hsl(350 90% 58%))",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              filter: !isLowEnd 
-                ? "drop-shadow(0 0 30px hsl(320 90% 55% / 0.6)) drop-shadow(0 0 60px hsl(320 90% 55% / 0.3))"
-                : "drop-shadow(0 0 15px hsl(320 90% 55% / 0.4))",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Mais Aprova
-          </span>
-        </div>
-        
-        <h2 
-          className={`text-3xl sm:text-4xl xl:text-5xl font-black text-white leading-[1.1] tracking-tight ${shouldAnimate ? "auth-hero-subtitle-animated" : ""}`}
-          style={{ textShadow: !isLowEnd ? "0 0 60px hsl(0 0% 100% / 0.1)" : undefined }}
-        >
-          em <span style={{ color: "hsl(210 100% 70%)" }}>Medicina</span> no Brasil
-        </h2>
-      </div>
-      
-      {/* 📝 DESCRIPTION */}
-      <p 
-        className={`mt-6 text-sm sm:text-base text-gray-300 max-w-sm mx-auto leading-relaxed ${shouldAnimate ? "auth-hero-desc-animated" : ""}`}
-      >
-        Química de alto nível com metodologia exclusiva.<br />
-        <span className="text-gray-400">Milhares de alunos aprovados nas melhores faculdades do país.</span>
-      </p>
-      
-      {/* ✨ DECORATIVE LINE */}
-      <div className={`flex items-center justify-center gap-4 mt-6 ${shouldAnimate ? "auth-hero-line-animated" : ""}`}>
-        <div 
-          className="h-px w-16 sm:w-24"
-          style={{ background: "linear-gradient(90deg, transparent, hsl(320 90% 55% / 0.6), hsl(320 90% 55%))" }}
-        />
-        <div className="relative">
-          <div 
-            className={`w-3 h-3 rounded-full ${shouldAnimate ? "auth-orb-animated" : ""}`}
-            style={{ 
-              background: "linear-gradient(135deg, hsl(320 90% 60%), hsl(280 90% 55%))",
-              boxShadow: !isLowEnd 
-                ? "0 0 15px hsl(320 90% 55% / 0.8), 0 0 30px hsl(320 90% 55% / 0.4)"
-                : "0 0 10px hsl(320 90% 55% / 0.6)",
-            }}
-          />
-          {/* Orbiting Ring - só em high-end com animações */}
-          {!isLowEnd && shouldAnimate && (
-            <div 
-              className="absolute inset-0 rounded-full border border-primary/30 auth-ring-animated"
-              style={{ transform: "scale(2.5)" }}
-            />
-          )}
-        </div>
-        <div 
-          className="h-px w-16 sm:w-24"
-          style={{ background: "linear-gradient(90deg, hsl(320 90% 55%), hsl(320 90% 55% / 0.6), transparent)" }}
-        />
-      </div>
-    </div>
-  );
+  .spider-eye-left,
+  .spider-eye-right {
+    opacity: 0.3;
+  }
+}
+
+/* ============================================
+   🎬 HERO TEXT - CINEMATIC ANIMATIONS
+   GPU-accelerated, Performance Tiered
+   ============================================ */
+
+/* Glow Background - Breathing pulse */
+@keyframes auth-glow-bg-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+.auth-hero-glow-bg {
+  animation: auth-glow-bg-pulse 4s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+/* Title Reveal - Cinematic entry */
+@keyframes auth-hero-reveal {
+  0% { 
+    opacity: 0; 
+    transform: translateY(30px) scale(0.95); 
+  }
+  100% { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+}
+
+.auth-hero-title-animated {
+  animation: auth-hero-reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
+.auth-hero-highlight-animated {
+  animation: auth-hero-reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.auth-hero-subtitle-animated {
+  animation: auth-hero-reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.auth-hero-desc-animated {
+  animation: auth-hero-reveal 1s cubic-bezier(0.16, 1, 0.3, 1) 0.7s forwards;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+
+.auth-hero-line-animated {
+  animation: auth-hero-reveal 1s cubic-bezier(0.16, 1, 0.3, 1) 0.9s forwards;
+  opacity: 0;
+}
+
+/* Glow Layer - Breathing effect */
+@keyframes auth-glow-breathe {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.auth-glow-layer {
+  animation: auth-glow-breathe 3s ease-in-out infinite;
+  will-change: opacity;
+}
+
+/* Orb Pulse */
+@keyframes auth-orb-pulse {
+  0%, 100% { 
+    transform: scale(1); 
+    box-shadow: 0 0 15px hsl(320 90% 55% / 0.8), 0 0 30px hsl(320 90% 55% / 0.4); 
+  }
+  50% { 
+    transform: scale(1.3); 
+    box-shadow: 0 0 25px hsl(320 90% 55% / 1), 0 0 50px hsl(320 90% 55% / 0.6); 
+  }
+}
+
+.auth-orb-animated {
+  animation: auth-orb-pulse 2s ease-in-out infinite;
+  will-change: transform, box-shadow;
+}
+
+/* Ring Spin */
+@keyframes auth-ring-spin {
+  from { transform: scale(2.5) rotate(0deg); }
+  to { transform: scale(2.5) rotate(360deg); }
+}
+
+.auth-ring-animated {
+  animation: auth-ring-spin 8s linear infinite;
+  will-change: transform;
 }
