@@ -2,7 +2,6 @@
 // 🛡️ DEVICE LIMIT GATE v2.0
 // Tela de bloqueio quando limite de dispositivos é excedido
 // Design: Linguagem simples + Mobile First + Alinhado com TrustDeviceStage
-// 🛡️ P0 FIX: error é SEMPRE string (evita React Error #61)
 // ============================================
 
 import { useState, useCallback, useEffect } from 'react';
@@ -39,7 +38,6 @@ import { toast } from 'sonner';
 
 import { useDeviceGateStore, CurrentDeviceInfo, DeviceInfo } from '@/state/deviceGateStore';
 import { revokeAndRegister, triggerSecurityLockdown } from '@/lib/deviceLimitApi';
-import { formatError } from '@/lib/utils/formatError';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -554,7 +552,7 @@ export default function DeviceLimitGate() {
               className="flex items-center gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive"
             >
               <XCircle className="w-5 h-5 shrink-0" />
-              <p className="text-sm">{formatError(error)}</p>
+              <p className="text-sm">{error}</p>
             </motion.div>
           )}
 
