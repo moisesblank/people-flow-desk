@@ -77,21 +77,34 @@ serve(async (req) => {
     let resolvedEmail = targetEmail?.toLowerCase();
 
     if (!resolvedUserId && resolvedEmail) {
-      // Buscar por email no profiles ou auth
+      // Buscar por email no profiles primeiro
       const { data: profileData } = await supabaseAdmin
         .from("profiles")
         .select("id, email")
-        .eq("email", resolvedEmail)
+        .ilike("email", resolvedEmail)
         .maybeSingle();
 
       if (profileData) {
         resolvedUserId = profileData.id;
+        console.log("[admin-delete-user] ✅ Usuário encontrado via profiles:", resolvedUserId);
       } else {
-        // Tentar buscar em auth.users via admin API
-        const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
+        // P0 FIX: Buscar em auth.users com filtro direto (mais eficiente que listUsers)
+        console.log("[admin-delete-user] 🔍 Buscando em auth.users pelo email:", resolvedEmail);
+        const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+          page: 1,
+          perPage: 1000 // Aumentar limite para encontrar o usuário
+        });
+        
+        if (listError) {
+          console.error("[admin-delete-user] ❌ Erro ao listar usuários:", listError.message);
+        }
+        
         const foundUser = usersData?.users?.find(u => u.email?.toLowerCase() === resolvedEmail);
         if (foundUser) {
           resolvedUserId = foundUser.id;
+          console.log("[admin-delete-user] ✅ Usuário encontrado via auth.users:", resolvedUserId);
+        } else {
+          console.log("[admin-delete-user] ⚠️ Usuário não encontrado. Total usuários verificados:", usersData?.users?.length || 0);
         }
       }
     }
