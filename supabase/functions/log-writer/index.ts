@@ -24,12 +24,12 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const logEntry: LogEntry = await req.json();
     const now = new Date();
-    
+
     // Gerar path do arquivo: YYYY/MM/DD/logs.txt
     const year = now.getFullYear().toString();
     const month = (now.getMonth() + 1).toString().padStart(2, "0");
@@ -41,9 +41,7 @@ Deno.serve(async (req) => {
 
     // Tentar baixar arquivo existente para append
     let existingContent = "";
-    const { data: existingFile } = await supabase.storage
-      .from("system-logs")
-      .download(filePath);
+    const { data: existingFile } = await supabase.storage.from("system-logs").download(filePath);
 
     if (existingFile) {
       existingContent = await existingFile.text();
@@ -65,31 +63,28 @@ Deno.serve(async (req) => {
     }
 
     // Também inserir no banco para realtime (será limpo após 7 dias)
-    const { error: dbError } = await supabase
-      .from("system_realtime_logs")
-      .insert({
-        severity: logEntry.severity,
-        affected_url_or_area: logEntry.affected_url_or_area,
-        triggered_action: logEntry.triggered_action,
-        error_message: logEntry.error_message,
-        user_id: logEntry.user_id || null,
-        user_email: logEntry.user_email || null,
-      });
+    const { error: dbError } = await supabase.from("system_realtime_logs").insert({
+      severity: logEntry.severity,
+      affected_url_or_area: logEntry.affected_url_or_area,
+      triggered_action: logEntry.triggered_action,
+      error_message: logEntry.error_message,
+      user_id: logEntry.user_id || null,
+      user_email: logEntry.user_email || null,
+    });
 
     if (dbError) {
       console.error("Erro ao inserir log no banco:", dbError);
     }
 
-    return new Response(
-      JSON.stringify({ success: true, path: filePath }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ success: true, path: filePath }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("Erro no log-writer:", errorMessage);
-    return new Response(
-      JSON.stringify({ success: false, error: errorMessage }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ success: false, error: errorMessage }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
