@@ -13,7 +13,7 @@ import { ReactNode, useEffect } from "react";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { LeiVIIEnforcer } from "@/components/security/LeiVIIEnforcer";
 import { PerformanceProvider, PerformanceStyles } from "@/components/performance/PerformanceProvider";
 import { useGodModeStore } from "@/stores/godModeStore";
@@ -31,6 +31,7 @@ interface AppProvidersProps {
  * Carrega dados iniciais dos stores globais e tema do usuário
  */
 function StoreInitializer() {
+  const { user, isLoading: authLoading } = useAuth();
   const checkOwner = useGodModeStore((s) => s.checkOwner);
   const loadContent = useGodModeStore((s) => s.loadContent);
   const fetchFromDB = useReactiveStore((s) => s.fetchFromDB);
@@ -40,7 +41,18 @@ function StoreInitializer() {
   useThemeInitializer();
 
   useEffect(() => {
-    // Inicializar stores ao montar
+    // ✅ P0 anti-tela-preta:
+    // Não disparar RPCs/queries de áreas protegidas enquanto a sessão ainda é anônima.
+    // Isso evita 401 em funções/policies (check_is_owner / is_gestao_staff) que quebram o pós-login.
+    if (authLoading) return;
+
+    // Ainda sem usuário autenticado: permitir apenas conteúdo público (não chama RPCs).
+    if (!user) {
+      loadContent();
+      return;
+    }
+
+    // Inicializar stores ao montar (somente com usuário autenticado)
     checkOwner();
     loadContent();
     fetchFromDB();
@@ -51,7 +63,7 @@ function StoreInitializer() {
     return () => {
       unsubscribe();
     };
-  }, [checkOwner, loadContent, fetchFromDB, subscribeRealtime]);
+  }, [authLoading, user, checkOwner, loadContent, fetchFromDB, subscribeRealtime]);
 
   return null;
 }
