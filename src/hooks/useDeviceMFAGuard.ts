@@ -47,6 +47,23 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
   const { user, role } = useAuth();
   const hasChecked = useRef(false);
 
+  // 🛡️ P0: utilitário local para impedir travamentos (loading infinito)
+  const withTimeout = useCallback(<T,>(label: string, promiseLike: PromiseLike<T>, timeoutMs: number): Promise<T> => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    const promise = Promise.resolve(promiseLike);
+
+    return (async () => {
+      const timeoutPromise = new Promise<T>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(`Timeout ${timeoutMs}ms em: ${label}`)), timeoutMs);
+      });
+      try {
+        return await Promise.race([promise, timeoutPromise]);
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+      }
+    })();
+  }, []);
+
   const [state, setState] = useState<DeviceMFAGuardState>({
     isChecking: true, // Começa verificando
     needsMFA: false,
@@ -317,7 +334,8 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       let deviceReg: { success: boolean; deviceHash?: string; error?: string };
       
       try {
-        deviceReg = await registerDeviceBeforeSession();
+        // v11.5 Resilience: impedir hang de rede
+        deviceReg = await withTimeout('registerDeviceBeforeSession', registerDeviceBeforeSession(), 12_000);
         console.log("[DeviceMFAGuard] 📱 Resultado do registro:", deviceReg);
       } catch (err) {
         console.error("[DeviceMFAGuard] ❌ Exceção ao registrar dispositivo:", err);
@@ -351,11 +369,17 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       // 2) REGISTRAR verificação MFA com o hash FINAL
       if (user?.id && finalHash) {
         try {
-          const { error } = await supabase.rpc("register_device_mfa_verification", {
-            _user_id: user.id,
-            _device_hash: finalHash,
-            _ip_address: null,
-          });
+          const mfaRes = await withTimeout(
+            'register_device_mfa_verification',
+            supabase.rpc("register_device_mfa_verification", {
+              _user_id: user.id,
+              _device_hash: finalHash,
+              _ip_address: null,
+            }),
+            8_000,
+          );
+
+          const error = (mfaRes as any)?.error;
 
           if (error) {
             console.error("[DeviceMFAGuard] ⚠️ Erro ao registrar verificação MFA:", error);
@@ -371,11 +395,17 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       const sessionToken = localStorage.getItem("matriz_session_token");
       if (sessionToken) {
         try {
-          const { error: sessionError } = await supabase
-            .from("active_sessions")
-            .update({ mfa_verified: true })
-            .eq("session_token", sessionToken)
-            .eq("status", "active");
+          const sessionRes = await withTimeout(
+            'active_sessions.update(mfa_verified)',
+            supabase
+              .from("active_sessions")
+              .update({ mfa_verified: true })
+              .eq("session_token", sessionToken)
+              .eq("status", "active"),
+            8_000,
+          );
+
+          const sessionError = (sessionRes as any)?.error;
 
           if (sessionError) {
             console.error("[DeviceMFAGuard] ⚠️ Erro ao marcar sessão como mfa_verified:", sessionError);
@@ -408,7 +438,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
 
       console.log("[DeviceMFAGuard] 🎉 Dispositivo cadastrado e verificado com sucesso!");
     },
-    [user?.id, state.deviceHash],
+    [user?.id, state.deviceHash, withTimeout],
   );
 
   /**

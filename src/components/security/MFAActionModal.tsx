@@ -188,6 +188,19 @@ export function MFAActionModal({ isOpen, onClose, onSuccess, action, title, desc
     setIsLoading(true);
     setError(null);
 
+     // 🛡️ P0: Nunca permitir spinner infinito (principalmente quando onSuccess é async)
+     const withTimeout = async <T,>(label: string, promise: Promise<T>, timeoutMs: number): Promise<T> => {
+       let timeoutId: ReturnType<typeof setTimeout> | null = null;
+       try {
+         const timeoutPromise = new Promise<T>((_, reject) => {
+           timeoutId = setTimeout(() => reject(new Error(`Timeout ${timeoutMs}ms em: ${label}`)), timeoutMs);
+         });
+         return await Promise.race([promise, timeoutPromise]);
+       } finally {
+         if (timeoutId) clearTimeout(timeoutId);
+       }
+     };
+
     try {
       const { data, error: verifyError } = await supabase.functions.invoke("verify-2fa-code", {
         body: {
@@ -216,14 +229,16 @@ export function MFAActionModal({ isOpen, onClose, onSuccess, action, title, desc
       // O callback handleVerificationSuccess no DeviceMFAGuard agora é async e aguarda
       console.log('[MFAActionModal] ✅ Chamando onSuccess...');
       try {
-        await Promise.resolve(onSuccess());
+        // ⏳ onSuccess pode registrar dispositivo, RPC e atualizar sessão; aplicar timeout.
+        await withTimeout('onSuccess', Promise.resolve(onSuccess()), 20_000);
         console.log('[MFAActionModal] ✅ onSuccess concluído');
       } catch (err) {
         console.error('[MFAActionModal] ❌ Erro no onSuccess:', err);
+        setError(formatError(err, 'Falha ao finalizar verificação'));
       }
     } catch (err: any) {
       console.error("[MFAActionModal] Erro ao verificar código:", err);
-      setError(err.message || "Código inválido ou expirado");
+      setError(formatError(err, "Código inválido ou expirado"));
     } finally {
       setIsLoading(false);
       verifyingRef.current = false;
