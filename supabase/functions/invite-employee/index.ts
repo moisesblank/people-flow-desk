@@ -38,6 +38,29 @@ function validateStrongPassword(password: string): string | null {
   return null;
 }
 
+async function safePostJson(
+  url: string,
+  body: unknown,
+  headers: Record<string, string>,
+  timeoutMs: number
+): Promise<void> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...headers,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 interface InviteRequest {
   email: string;
   nome: string;
@@ -235,24 +258,26 @@ const handler = async (req: Request): Promise<Response> => {
         // 🎯 CONTRATO: Email com link DIRETO para /auth + credenciais
         try {
           const siteUrl = Deno.env.get('SITE_URL') || 'https://pro.moisesmedeiros.com.br';
-          
-          await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${supabaseServiceKey}`,
-            },
-            body: JSON.stringify({
+
+          // IMPORTANTE: nunca bloquear a criação do acesso por timeout/instabilidade do email
+          await safePostJson(
+            `${supabaseUrl}/functions/v1/send-notification-email`,
+            {
               to: email,
               type: "welcome_staff", // Template COM credenciais e link DIRETO /auth
-              data: { 
+              data: {
                 nome,
                 email,
                 senha, // Senha definida pelo admin
-                funcao: funcao || 'Funcionário',
+                funcao: funcao || "Funcionário",
+                siteUrl,
               },
-            }),
-          });
+            },
+            {
+              "Authorization": `Bearer ${supabaseServiceKey}`,
+            },
+            6000
+          );
           console.log("[INVITE] Welcome email with credentials sent to:", email);
         } catch (emailErr) {
           console.warn("[INVITE] Email error:", emailErr);
@@ -315,23 +340,23 @@ const handler = async (req: Request): Promise<Response> => {
       
       // 🎯 CONTRATO: Email com credenciais + link DIRETO para /auth
       try {
-        await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${supabaseServiceKey}`,
-          },
-          body: JSON.stringify({
+        await safePostJson(
+          `${supabaseUrl}/functions/v1/send-notification-email`,
+          {
             to: email,
             type: "welcome_staff",
-            data: { 
+            data: {
               nome,
               senha,
               email,
-              funcao: funcao || 'Funcionário',
+              funcao: funcao || "Funcionário",
             },
-          }),
-        });
+          },
+          {
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+          6000
+        );
         console.log("[INVITE] Welcome email sent to existing user:", email);
       } catch (emailErr) {
         console.warn("[INVITE] Email error:", emailErr);
