@@ -155,6 +155,13 @@ export const useGodModeStore = create<GodModeStore>()(
       checkOwner: async () => {
         set({ isLoading: true });
         try {
+           // P0: não chamar RPC como anônimo (evita 401 e cascata de erros no pós-login)
+           const { data: authData, error: authError } = await supabase.auth.getUser();
+           if (authError || !authData?.user?.id) {
+             set({ isOwner: false, isLoading: false });
+             return;
+           }
+
           // 🛡️ P0 FIX: Verificar owner via RPC server-side
           const { data, error } = await supabase.rpc('check_is_owner');
           const isOwner = error ? false : data === true;
