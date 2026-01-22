@@ -127,6 +127,34 @@ export default function Auth() {
     };
   }, []);
 
+  // ============================================
+  // ☢️ P0: CACHE-BUST PARA /auth (ANÔNIMO)
+  // Se o usuário ficou preso com chunks antigos, ele nunca chega no
+  // useAppVersionCheck (que roda no AppContent). Aqui garantimos que
+  // /auth também forçará reload quando o build mudar.
+  // ============================================
+  useEffect(() => {
+    const BUILD_ID = typeof __APP_BUILD_ID__ !== 'undefined' ? __APP_BUILD_ID__ : 'dev';
+    const KEY = 'mm_build_id';
+
+    try {
+      const stored = localStorage.getItem(KEY);
+      // Se mudou desde a última visita, força uma navegação com query param
+      // para furar cache intermediário (CDN / navegador).
+      if (stored && stored !== BUILD_ID) {
+        localStorage.setItem(KEY, BUILD_ID);
+        const url = new URL(window.location.href);
+        url.searchParams.set('b', BUILD_ID);
+        window.location.replace(url.toString());
+        return;
+      }
+
+      localStorage.setItem(KEY, BUILD_ID);
+    } catch {
+      // fail-open
+    }
+  }, []);
+
   useEffect(() => {
     console.log("[AUTH] 2. Verificando parâmetros de URL...");
     const urlParams = new URLSearchParams(window.location.search);
