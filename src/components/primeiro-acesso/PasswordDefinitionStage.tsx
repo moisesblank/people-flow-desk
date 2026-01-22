@@ -19,7 +19,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { formatError } from "@/lib/utils/formatError";
 
 interface PasswordDefinitionStageProps {
   userEmail: string;
@@ -60,21 +59,6 @@ export function PasswordDefinitionStage({
   const allChecksPassed = passedChecks === 6;
   const passwordsMatch = newPassword === confirmPassword && confirmPassword.length > 0;
 
-  // 🛡️ v12.3: timeouts defensivos para impedir loading eterno em rede/backend instável
-  const withTimeout = async <T,>(promise: PromiseLike<T>, ms: number, label: string): Promise<T> => {
-    let timeoutId: number | undefined;
-    try {
-      const timeout = new Promise<never>((_, reject) => {
-        timeoutId = window.setTimeout(() => reject(new Error(`TIMEOUT:${label}`)), ms);
-      });
-      // Alguns retornos do client são "thenables" (PostgrestFilterBuilder), não Promise real.
-      const normalized = Promise.resolve(promise as unknown as Promise<T>);
-      return (await Promise.race([normalized, timeout])) as T;
-    } finally {
-      if (timeoutId) window.clearTimeout(timeoutId);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -95,60 +79,46 @@ export function PasswordDefinitionStage({
     setIsSubmitting(true);
 
     try {
-      const TIMEOUT_MS = 20000;
-
       // 1. Atualizar senha no Supabase Auth
-      const { error: updateError } = await withTimeout(
-        supabase.auth.updateUser({ password: newPassword }),
-        TIMEOUT_MS,
-        "update_password",
-      );
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
 
       if (updateError) {
         console.error("[PasswordDefinition] Error updating password:", updateError);
         toast.error("Erro ao definir senha", {
-          description: formatError(updateError),
+          description: updateError.message,
         });
         return;
       }
 
       // 2. Marcar senha como definida no banco
       try {
-        await withTimeout(
-          supabase.rpc("mark_password_changed", { _user_id: userId }),
-          TIMEOUT_MS,
-          "mark_password_changed",
-        );
+        await supabase.rpc("mark_password_changed", {
+          _user_id: userId,
+        });
       } catch (rpcErr) {
         console.warn("[PasswordDefinition] RPC mark_password_changed não existe ou falhou:", rpcErr);
         // Fallback: atualizar diretamente
-        await withTimeout(
-          supabase
-            .from('profiles')
-            .update({
-              password_change_required: false,
-              password_changed_at: new Date().toISOString(),
-            })
-            .eq('id', userId),
-          TIMEOUT_MS,
-          "profiles_password_changed",
-        );
+        await supabase
+          .from('profiles')
+          .update({ 
+            password_change_required: false,
+            password_changed_at: new Date().toISOString(),
+          })
+          .eq('id', userId);
       }
 
       // 3. Log de auditoria
-      await withTimeout(
-        supabase.from("audit_logs").insert({
-          action: "password_defined_onboarding",
-          user_id: userId,
-          metadata: {
-            email: userEmail,
-            defined_at: new Date().toISOString(),
-            strength: 'strong',
-          },
-        }),
-        TIMEOUT_MS,
-        "audit_log_password_defined",
-      );
+      await supabase.from("audit_logs").insert({
+        action: "password_defined_onboarding",
+        user_id: userId,
+        metadata: {
+          email: userEmail,
+          defined_at: new Date().toISOString(),
+          strength: 'strong',
+        },
+      });
 
       toast.success("Senha definida com sucesso!", {
         description: "Sua nova senha está ativa.",
@@ -162,10 +132,7 @@ export function PasswordDefinitionStage({
     } catch (err) {
       console.error("[PasswordDefinition] Unexpected error:", err);
       toast.error("Erro inesperado", {
-        description:
-          String(err).includes("TIMEOUT:")
-            ? "A solicitação demorou demais. Verifique sua conexão e tente novamente."
-            : formatError(err),
+        description: "Tente novamente ou entre em contato com o suporte.",
       });
     } finally {
       setIsSubmitting(false);
