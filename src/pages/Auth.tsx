@@ -709,20 +709,25 @@ export default function Auth() {
 
     // Rodar async fora do corpo do effect (TS/React-safe)
     void (async () => {
-      // 🎯 FIX CRÍTICO: Verificar se veio de link de recovery ANTES de qualquer coisa
+      // 🎯 P0 FIX v12.4: Verificar se veio de link de recovery ANTES de qualquer coisa
+      // Supabase usa hash fragment: #access_token=XXX&type=recovery
       const urlParams = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
+      const hashParams = new URLSearchParams(hash.replace("#", ""));
+      
       const isRecoveryFromUrl =
         urlParams.get("action") === "set-password" ||
         urlParams.get("reset") === "true" ||
         urlParams.get("type") === "recovery" ||
         Boolean(urlParams.get("reset_token")) ||
+        hashParams.get("type") === "recovery" || // 🎯 FIX: Parse hash como query params
         hash.includes("type=recovery");
 
       if (isRecoveryFromUrl) {
-        console.log("[AUTH] 🔐 Link de recovery detectado - mostrando formulário");
+        console.log("[AUTH] 🔐 Link de recovery detectado via URL/hash - ativando modo update password");
+        setIsUpdatePassword(true); // 🎯 FIX CRÍTICO: Setar estado ANTES de qualquer redirect
         setIsCheckingSession(false);
-        return;
+        return; // NÃO verificar sessão, NÃO redirecionar
       }
 
       // 🎯 FIX: Não redirecionar se já estamos no modo de update password
@@ -740,11 +745,24 @@ export default function Auth() {
 
       // ✅ PLANO B (UX): Se já existe sessão válida,
       // redirecionar imediatamente para a área correta.
+      // 🎯 P0 FIX v12.4: MAS NUNCA se veio de link de recovery
       try {
         const {
           data: { session },
         } = await supabase.auth.getSession();
         if (session?.user) {
+          // 🎯 P0 FIX v12.4: Re-verificar recovery flag (pode ter sido setado acima)
+          // Verificar novamente o hash pois Supabase pode ter consumido
+          const currentHash = window.location.hash;
+          const isStillRecovery = currentHash.includes("type=recovery") || isUpdatePassword;
+          
+          if (isStillRecovery) {
+            console.log("[AUTH] 🔐 Sessão existe mas é recovery - mostrando formulário de senha");
+            setIsUpdatePassword(true);
+            setIsCheckingSession(false);
+            return;
+          }
+
           console.log("[AUTH] ✅ Sessão existente detectada em /auth — redirecionando");
 
           const { data: roleData } = await supabase
@@ -789,6 +807,17 @@ export default function Auth() {
       }
 
       if ((event !== "SIGNED_IN" && event !== "INITIAL_SESSION") || !session?.user) return;
+
+      // 🎯 P0 FIX v12.4: Verificar hash de recovery ANTES de qualquer redirect
+      // O hash pode ainda estar presente quando INITIAL_SESSION dispara
+      const currentHash = window.location.hash;
+      const isRecoveryHash = currentHash.includes("type=recovery");
+      if (isRecoveryHash) {
+        console.log("[AUTH] 🔐 Hash de recovery detectado no onAuthStateChange - ativando modo update password");
+        setIsUpdatePassword(true);
+        setIsCheckingSession(false);
+        return;
+      }
 
       // 🛡️ PLANO B (UX):
       // - SIGNED_IN: só redireciona quando usuário clicou em "Entrar" (evita saltos em novas abas)
