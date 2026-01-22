@@ -2,7 +2,6 @@
 // 🔐 DEVICE MFA GUARD HOOK — 2FA por Dispositivo
 // Verifica se o dispositivo atual tem verificação válida (24h)
 // NÃO TOCA em login/sessão/dispositivo
-// 🛡️ P0 FIX: error é SEMPRE string (evita React Error #61)
 // ============================================
 
 import { useState, useCallback, useEffect, useRef } from "react";
@@ -10,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { generateDeviceFingerprint } from "@/lib/deviceFingerprint";
 import { registerDeviceBeforeSession } from "@/lib/deviceRegistration";
-import { formatError } from "@/lib/utils/formatError";
 
 export interface DeviceMFAGuardState {
   isChecking: boolean;
@@ -23,7 +21,7 @@ export interface DeviceMFAGuardState {
 
 export interface DeviceMFAGuardResult extends DeviceMFAGuardState {
   checkDeviceMFA: () => Promise<boolean>;
-  onVerificationComplete: (success: boolean) => Promise<void>;
+  onVerificationComplete: (success: boolean) => void;
   resetState: () => void;
 }
 
@@ -37,21 +35,6 @@ const globalMFACache = new Map<string, { verified: boolean; expiresAt: number }>
 
 // Gerar chave de cache única por usuário+dispositivo
 const getCacheKey = (userId: string, deviceHash: string) => `${userId}:${deviceHash}`;
-
-// 🛡️ P0: timeout helper sem hooks (evita mudança de ordem de hooks em HMR/chunks)
-async function withTimeout<T>(label: string, promiseLike: PromiseLike<T>, timeoutMs: number): Promise<T> {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  const promise = Promise.resolve(promiseLike);
-  const timeoutPromise = new Promise<T>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error(`Timeout ${timeoutMs}ms em: ${label}`)), timeoutMs);
-  });
-
-  try {
-    return await Promise.race([promise, timeoutPromise]);
-  } finally {
-    if (timeoutId) clearTimeout(timeoutId);
-  }
-}
 
 /**
  * Hook para gerenciar 2FA por DISPOSITIVO
@@ -83,7 +66,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
    */
   const checkDeviceMFA = useCallback(async (): Promise<boolean> => {
     if (!user?.id) {
-      setState((prev) => ({ ...prev, isChecking: false, error: formatError("Usuário não autenticado") }));
+      setState((prev) => ({ ...prev, isChecking: false, error: "Usuário não autenticado" }));
       return false;
     }
 
@@ -123,19 +106,8 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
     setState((prev) => ({ ...prev, isChecking: true, error: null }));
 
     try {
-      // 🔐 P0 FIX v11.4: PRIMEIRO tentar usar o hash do SERVIDOR (fonte da verdade)
-      // O hash do servidor inclui pepper e é o que foi registrado no 2FA
-      let serverHash = localStorage.getItem('matriz_device_server_hash');
-      
-      // Se temos hash do servidor, usar. Senão, gerar local (fallback para dispositivo novo)
-      let deviceHash: string;
-      if (serverHash) {
-        deviceHash = serverHash;
-        console.log(`[DeviceMFAGuard] 🔐 Usando hash do SERVIDOR: ${deviceHash.slice(0, 8)}...`);
-      } else {
-        deviceHash = await generateDeviceFingerprint();
-        console.log(`[DeviceMFAGuard] 🆕 Hash do servidor não encontrado, usando local: ${deviceHash.slice(0, 8)}...`);
-      }
+      // Gerar fingerprint do dispositivo atual
+      const deviceHash = await generateDeviceFingerprint();
 
       setState((prev) => ({ ...prev, deviceHash }));
 
@@ -164,20 +136,6 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
           .eq("status", "active")
           .single();
 
-        // 🔐 P0 FIX v11.4.1: Se o hash do servidor não estiver no localStorage,
-        // mas a sessão ativa já tem device_hash, persistir para evitar loop eterno.
-        // (Isso acontece em alguns fluxos onde o registro do dispositivo foi feito,
-        // mas o client não persistiu o valor.)
-        if (!serverHash && sessionData?.device_hash) {
-          serverHash = sessionData.device_hash;
-          try {
-            localStorage.setItem('matriz_device_server_hash', serverHash);
-            console.log(`[DeviceMFAGuard] 🔧 Reparando localStorage: salvando serverHash da sessão (${serverHash.slice(0, 8)}...)`);
-          } catch {
-            // noop
-          }
-        }
-
         if (sessionData?.mfa_verified === true) {
           console.log(`[DeviceMFAGuard] ✅ Sessão já tem mfa_verified=true`);
           // Atualizar cache
@@ -195,49 +153,6 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
           return true;
         }
         
-        // 🔐 P0 FIX v11.4: SESSÃO COM mfa_verified=false MAS HASH VERIFICADO
-        // Auto-reparar se o hash do servidor já foi verificado na tabela user_mfa_verifications
-        if (sessionData?.mfa_verified === false && serverHash) {
-          console.log(`[DeviceMFAGuard] 🔧 Sessão com mfa_verified=false, verificando se hash do servidor já foi validado...`);
-          
-          const { data: mfaCheck } = await supabase.rpc("check_device_mfa_valid", {
-            _user_id: user.id,
-            _device_hash: serverHash,
-          });
-          
-          if (mfaCheck === true) {
-            console.log(`[DeviceMFAGuard] 🔧 Hash do servidor já verificado! Auto-reparando sessão...`);
-            
-            // Auto-reparar: Marcar sessão como verificada e atualizar hash
-            const { error: updateError } = await supabase
-              .from("active_sessions")
-              .update({ mfa_verified: true, device_hash: serverHash })
-              .eq("session_token", sessionToken)
-              .eq("status", "active");
-            
-            if (updateError) {
-              // ⚠️ Não bloquear o usuário em loop se a atualização falhar por RLS/latência.
-              // A fonte de verdade aqui é: mfaCheck === true (user_mfa_verifications).
-              console.error(`[DeviceMFAGuard] ⚠️ Falha ao auto-reparar sessão (seguindo mesmo assim):`, updateError);
-            } else {
-              console.log(`[DeviceMFAGuard] ✅ Sessão auto-reparada com sucesso!`);
-            }
-
-            globalMFACache.set(cacheKey, {
-              verified: true,
-              expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-            });
-            setState((prev) => ({
-              ...prev,
-              isChecking: false,
-              isVerified: true,
-              needsMFA: false,
-              expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            }));
-            return true;
-          }
-        }
-        
         console.log(`[DeviceMFAGuard] ⚠️ Sessão com mfa_verified=false - requer 2FA`);
       }
 
@@ -253,7 +168,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
         setState((prev) => ({
           ...prev,
           isChecking: false,
-          error: formatError(error),
+          error: error.message,
         }));
         return false;
       }
@@ -285,11 +200,11 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       setState((prev) => ({
         ...prev,
         isChecking: false,
-        error: formatError(err, "Erro ao verificar dispositivo"),
+        error: "Erro ao verificar dispositivo",
       }));
       return false;
     }
-  }, [user?.id, user?.email, role, isOwner, isBetaTest]);
+  }, [user?.id, isOwner, isBetaTest]);
 
   /**
    * Callback chamado após verificação do código 2FA
@@ -303,7 +218,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
           ...prev,
           needsMFA: true,
           isVerified: false,
-          error: formatError("Código inválido ou expirado"),
+          error: "Código inválido ou expirado",
         }));
         return;
       }
@@ -320,7 +235,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
           ...prev,
           needsMFA: true,
           isVerified: false,
-          error: formatError("Erro interno: hash do dispositivo não encontrado."),
+          error: "Erro interno: hash do dispositivo não encontrado.",
         }));
         return;
       }
@@ -332,8 +247,7 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       let deviceReg: { success: boolean; deviceHash?: string; error?: string };
       
       try {
-        // v11.5 Resilience: impedir hang de rede
-        deviceReg = await withTimeout('registerDeviceBeforeSession', registerDeviceBeforeSession(), 12_000);
+        deviceReg = await registerDeviceBeforeSession();
         console.log("[DeviceMFAGuard] 📱 Resultado do registro:", deviceReg);
       } catch (err) {
         console.error("[DeviceMFAGuard] ❌ Exceção ao registrar dispositivo:", err);
@@ -343,14 +257,6 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       // 🔐 Hash final: preferir o do servidor, fallback para o local
       const finalHash = deviceReg.deviceHash || currentDeviceHash;
       console.log("[DeviceMFAGuard] 🔐 Hash final para MFA:", finalHash.slice(0, 8) + "...");
-
-      // 🔐 P0 FIX v11.4.1: Persistir o hash final no localStorage para que o próximo
-      // checkDeviceMFA use o hash correto e não gere um novo (causando loop eterno).
-      try {
-        localStorage.setItem('matriz_device_server_hash', finalHash);
-      } catch {
-        // noop
-      }
 
       if (!deviceReg.success) {
         console.warn("[DeviceMFAGuard] ⚠️ Registro retornou erro:", deviceReg.error);
@@ -367,17 +273,11 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       // 2) REGISTRAR verificação MFA com o hash FINAL
       if (user?.id && finalHash) {
         try {
-          const mfaRes = await withTimeout(
-            'register_device_mfa_verification',
-            supabase.rpc("register_device_mfa_verification", {
-              _user_id: user.id,
-              _device_hash: finalHash,
-              _ip_address: null,
-            }),
-            8_000,
-          );
-
-          const error = (mfaRes as any)?.error;
+          const { error } = await supabase.rpc("register_device_mfa_verification", {
+            _user_id: user.id,
+            _device_hash: finalHash,
+            _ip_address: null,
+          });
 
           if (error) {
             console.error("[DeviceMFAGuard] ⚠️ Erro ao registrar verificação MFA:", error);
@@ -393,17 +293,11 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       const sessionToken = localStorage.getItem("matriz_session_token");
       if (sessionToken) {
         try {
-          const sessionRes = await withTimeout(
-            'active_sessions.update(mfa_verified)',
-            supabase
-              .from("active_sessions")
-              .update({ mfa_verified: true })
-              .eq("session_token", sessionToken)
-              .eq("status", "active"),
-            8_000,
-          );
-
-          const sessionError = (sessionRes as any)?.error;
+          const { error: sessionError } = await supabase
+            .from("active_sessions")
+            .update({ mfa_verified: true })
+            .eq("session_token", sessionToken)
+            .eq("status", "active");
 
           if (sessionError) {
             console.error("[DeviceMFAGuard] ⚠️ Erro ao marcar sessão como mfa_verified:", sessionError);
