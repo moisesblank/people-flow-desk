@@ -86,6 +86,31 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
       return true;
     }
 
+    // 🔐 P0 FIX v7: BYPASS para usuários que JÁ COMPLETARAM ONBOARDING
+    // Usuários importados/migrados com onboarding_completed=true não devem ser bloqueados
+    // Isso resolve o loop de 2FA infinito para usuários que foram liberados manualmente
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("onboarding_completed, trusted_device_registered")
+        .eq("id", user.id)
+        .single();
+      
+      if (profile?.onboarding_completed && profile?.trusted_device_registered) {
+        console.log("[DeviceMFAGuard] ✅ Usuário já completou onboarding - bypass ativado");
+        setState((prev) => ({
+          ...prev,
+          isChecking: false,
+          isVerified: true,
+          needsMFA: false,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        }));
+        return true;
+      }
+    } catch (profileErr) {
+      console.warn("[DeviceMFAGuard] ⚠️ Erro ao verificar profile, continuando...", profileErr);
+    }
+
     // 🧪 Beta test bypass - após primeira verificação, não pede mais
     // Nota: Para beta test, usamos cache por user_id (comportamento original mantido)
     if (isBetaTest) {
