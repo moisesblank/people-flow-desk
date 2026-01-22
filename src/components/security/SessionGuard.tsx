@@ -312,6 +312,21 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
         console.warn(`[SessionGuard] 🔴 Backend revogou: ${reason}`);
 
+        // 🔧 RECOVERY P0: token stale/orfão (SESSION_NOT_FOUND)
+        // Cenário típico: localStorage manteve matriz_session_token, mas a linha em active_sessions foi deletada.
+        // Solução segura: limpar token e tentar bootstrap novamente (RPC create_single_session).
+        // Segurança server-side permanece: o backend continua sendo a fonte da verdade.
+        if (reason === "SESSION_NOT_FOUND") {
+          try {
+            localStorage.removeItem(SESSION_TOKEN_KEY);
+            await bootstrapSessionTokenIfMissing();
+            isValidatingRef.current = false;
+            return true; // fail-open UX: evita loop/travamento; próxima rodada valida de novo
+          } catch (e) {
+            console.error("[SessionGuard] ❌ Recovery SESSION_NOT_FOUND falhou:", e);
+          }
+        }
+
         if (isUserInitiatedLogout) {
           await handleBackendRevocation(reason, false);
         } else {
