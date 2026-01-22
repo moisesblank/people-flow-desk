@@ -112,9 +112,19 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
     }
   }, [needsMFA, isVerified, shouldBypass]);
 
-  const handleVerificationSuccess = useCallback(() => {
-    onVerificationComplete(true);
-    setShowModal(false);
+  // 🔐 P0 FIX: Aguardar onVerificationComplete terminar ANTES de fechar modal
+  // Evita que o usuário fique preso no gate se houver delay na operação
+  const handleVerificationSuccess = useCallback(async () => {
+    try {
+      // Aguardar todas as operações async do onVerificationComplete
+      await onVerificationComplete(true);
+      console.log('[DeviceMFAGuard] ✅ onVerificationComplete concluído - fechando modal');
+      setShowModal(false);
+    } catch (err) {
+      console.error('[DeviceMFAGuard] ❌ Erro no onVerificationComplete:', err);
+      // Mesmo com erro, fechar modal para evitar travamento
+      setShowModal(false);
+    }
   }, [onVerificationComplete]);
 
   const getDeviceIcon = useCallback(() => {
