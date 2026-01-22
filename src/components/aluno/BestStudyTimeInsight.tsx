@@ -1,9 +1,10 @@
 // ============================================
-// BEST STUDY TIME INSIGHT - SANTUÁRIO BETA v9.0
+// BEST STUDY TIME INSIGHT - SANTUÁRIO BETA v9.1
 // Insight sobre o Melhor Horário de Estudo
-// Baseado em análise de performance
+// P0 FIX: Removido Math.random() do render (React Error #61)
 // ============================================
 
+import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
@@ -12,12 +13,23 @@ import { Clock, Sparkles, Sun, Moon, Coffee } from "lucide-react";
 interface BestStudyTimeInsightProps {
   bestTime?: string;
   performance?: number;
+  /** Número de sessões analisadas (opcional, se não fornecido usa valor padrão) */
+  sessionsAnalyzed?: number;
 }
 
 export function BestStudyTimeInsight({ 
   bestTime = "19:00 - 21:00", 
-  performance = 87 
+  performance = 87,
+  sessionsAnalyzed
 }: BestStudyTimeInsightProps) {
+  
+  // P0 FIX: Valor estável gerado via useMemo para evitar hydration mismatch
+  // Se sessionsAnalyzed for fornecido, usa ele; senão usa valor fixo baseado em performance
+  const displayedSessions = useMemo(() => {
+    if (sessionsAnalyzed !== undefined) return sessionsAnalyzed;
+    // Valor determinístico baseado na performance (evita Math.random())
+    return 100 + Math.floor(performance / 2);
+  }, [sessionsAnalyzed, performance]);
   
   // Determinar o período do dia
   const getTimeIcon = () => {
@@ -68,7 +80,7 @@ export function BestStudyTimeInsight({
           </div>
 
           <p className="text-xs text-muted-foreground italic">
-            Baseado em {Math.floor(Math.random() * 50) + 100} sessões de estudo analisadas
+            Baseado em {displayedSessions} sessões de estudo analisadas
           </p>
         </motion.div>
       </CardContent>

@@ -278,10 +278,10 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
   // Não exibir se não for owner
   if (!isOwner) return null;
   
-  // Garantia: renderizar fora de qualquer stacking context transformado
-  // (fixed + z-index máximo + portal para document.body)
-  const portalTarget = typeof document !== 'undefined' ? document.body : null;
-  if (!portalTarget) return null;
+  // P0 FIX: Guard de mounted para createPortal - evita hydration mismatch (React Error #61)
+  // Durante SSR ou antes do DOM estar pronto, o portal não pode ser renderizado
+  if (typeof document === 'undefined') return null;
+  const portalTarget = document.body;
 
   return createPortal(
     <>

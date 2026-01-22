@@ -4,7 +4,7 @@
 // ANO 2300 - MATRIZ DIGITAL SUPREMA
 // ============================================
 
-import { useState, useRef, useEffect, KeyboardEvent, memo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, KeyboardEvent, memo, useCallback, useMemo } from 'react';
 import { useLiveClass } from '@/hooks/useLiveClass';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -77,17 +77,26 @@ ChatMessage.displayName = 'ChatMessage';
 
 // ============================================
 // COMPONENTE DE REACTION FLOATING
+// P0 FIX: Posição gerada via useMemo para evitar hydration mismatch (React Error #61)
 // ============================================
 const FloatingReaction = memo(({ reaction }: { reaction: LiveReaction }) => {
   const ReactionIcon = REACTIONS.find(r => r.type === reaction.type)?.icon || Heart;
   const color = REACTIONS.find(r => r.type === reaction.type)?.color || 'text-red-500';
+  
+  // P0 FIX: Posição estável derivada do ID da reação (determinística)
+  // Evita Math.random() no render que causa hydration mismatch
+  const stablePosition = React.useMemo(() => {
+    // Usa hash simples do ID para gerar posição pseudo-aleatória mas estável
+    const hash = reaction.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return (hash % 40);
+  }, [reaction.id]);
 
   return (
     <motion.div
       className={cn('absolute', color)}
       style={{
         bottom: 0,
-        right: Math.random() * 40,
+        right: stablePosition,
       }}
       initial={{ y: 0, opacity: 1, scale: 1 }}
       animate={{ y: -150, opacity: 0, scale: 0.5 }}
