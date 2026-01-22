@@ -5,12 +5,10 @@
 // MOSTRA CONTADOR DE DISPOSITIVOS (1/3, 2/3, 3/3)
 // ============================================
 
-import { ReactNode, useState, useEffect, useMemo, useCallback } from "react";
-import { useLocation } from "react-router-dom";
+import { ReactNode, useState, useEffect } from "react";
 import { useDeviceMFAGuard } from "@/hooks/useDeviceMFAGuard";
-import { formatError } from '@/lib/utils/formatError';
 import { MFAActionModal } from "./MFAActionModal";
-import { Shield, Smartphone, Loader2, Monitor, Tablet } from "lucide-react";
+import { Shield, Smartphone, Loader2, Lock, Fingerprint, Monitor, Tablet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -24,23 +22,7 @@ interface DeviceMFAGuardProps {
 
 const MAX_DEVICES = 3;
 
-// 🎯 P0 / CONSTITUIÇÃO: Onboarding e flows sem sessão NÃO devem ser bloqueados pelo gate global.
-// A verificação de dispositivo nesses casos acontece no fluxo próprio (Primeiro Acesso / Trust Device).
-const DEVICE_MFA_BYPASS_PATHS = new Set<string>([
-  "/auth",
-  "/primeiro-acesso",
-  "/primeiro-acesso-funcionario",
-  "/security/device-limit",
-  "/security/same-type-replacement",
-]);
-
 export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
-  // ============================================
-  // 🔐 REGRA DE OURO: TODOS OS HOOKS PRIMEIRO
-  // Nenhum early return antes desta seção terminar
-  // ============================================
-  
-  const location = useLocation();
   const { isChecking, isVerified, needsMFA, error, deviceHash, onVerificationComplete } = useDeviceMFAGuard();
   const { user } = useAuth();
 
@@ -48,19 +30,6 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
   const [deviceInfo, setDeviceInfo] = useState({ name: "", type: "desktop" as "desktop" | "mobile" | "tablet" });
   const [deviceCount, setDeviceCount] = useState<number>(0);
   const [isLoadingCount, setIsLoadingCount] = useState(true);
-
-  // 🔓 Option A: recuperação de senha e onboarding NÃO exigem Device MFA.
-  const shouldBypass = useMemo(() => {
-    if (DEVICE_MFA_BYPASS_PATHS.has(location.pathname)) return true;
-
-    // Extra safety: /auth com reset_token / first_access_token
-    if (location.pathname === "/auth") {
-      const params = new URLSearchParams(location.search);
-      if (params.has("reset_token") || params.has("first_access_token")) return true;
-    }
-
-    return false;
-  }, [location.pathname, location.search]);
 
   // Detectar informações do dispositivo
   useEffect(() => {
@@ -72,12 +41,6 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
 
   // 🔐 Buscar contagem de dispositivos ativos do usuário
   useEffect(() => {
-    // Se está em bypass, não precisa buscar contagem
-    if (shouldBypass) {
-      setIsLoadingCount(false);
-      return;
-    }
-
     const fetchDeviceCount = async () => {
       if (!user?.id) {
         setIsLoadingCount(false);
@@ -85,49 +48,39 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
       }
 
       try {
-        const { count, error: countError } = await supabase
-          .from('user_devices')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('is_active', true);
+        const { count, error } = await supabase
+          .from("user_devices")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("is_active", true);
 
-        if (!countError && count !== null) {
+        if (!error && count !== null) {
           setDeviceCount(count);
           console.log(`[DeviceMFAGuard] 📱 Dispositivos ativos: ${count}/${MAX_DEVICES}`);
         }
       } catch (err) {
-        console.error('[DeviceMFAGuard] Erro ao buscar contagem:', err);
+        console.error("[DeviceMFAGuard] Erro ao buscar contagem:", err);
       } finally {
         setIsLoadingCount(false);
       }
     };
 
     fetchDeviceCount();
-  }, [user?.id, shouldBypass]);
+  }, [user?.id]);
 
   // Quando precisa de MFA, abre modal automaticamente
   useEffect(() => {
-    if (needsMFA && !isVerified && !shouldBypass) {
+    if (needsMFA && !isVerified) {
       setShowModal(true);
     }
-  }, [needsMFA, isVerified, shouldBypass]);
+  }, [needsMFA, isVerified]);
 
-  // 🔐 P0 FIX: Aguardar onVerificationComplete terminar ANTES de fechar modal
-  // Evita que o usuário fique preso no gate se houver delay na operação
-  const handleVerificationSuccess = useCallback(async () => {
-    try {
-      // Aguardar todas as operações async do onVerificationComplete
-      await onVerificationComplete(true);
-      console.log('[DeviceMFAGuard] ✅ onVerificationComplete concluído - fechando modal');
-      setShowModal(false);
-    } catch (err) {
-      console.error('[DeviceMFAGuard] ❌ Erro no onVerificationComplete:', err);
-      // Mesmo com erro, fechar modal para evitar travamento
-      setShowModal(false);
-    }
-  }, [onVerificationComplete]);
+  const handleVerificationSuccess = () => {
+    onVerificationComplete(true);
+    setShowModal(false);
+  };
 
-  const getDeviceIcon = useCallback(() => {
+  const getDeviceIcon = () => {
     switch (deviceInfo.type) {
       case "mobile":
         return <Smartphone className="w-10 h-10 text-primary-foreground" />;
@@ -136,9 +89,9 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
       default:
         return <Monitor className="w-10 h-10 text-primary-foreground" />;
     }
-  }, [deviceInfo.type]);
+  };
 
-  const getDeviceTypeLabel = useCallback(() => {
+  const getDeviceTypeLabel = () => {
     switch (deviceInfo.type) {
       case "mobile":
         return "Celular";
@@ -147,19 +100,10 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
       default:
         return "Computador";
     }
-  }, [deviceInfo.type]);
+  };
 
   // O número do dispositivo que será cadastrado
   const nextDeviceNumber = deviceCount + 1;
-
-  // ============================================
-  // 🎯 TODOS HOOKS ACIMA - RETURNS CONDICIONAIS ABAIXO
-  // ============================================
-
-  // 🔓 BYPASS: Rotas de onboarding/reset não exigem MFA
-  if (shouldBypass) {
-    return <>{children}</>;
-  }
 
   // Loading state
   if (isChecking || isLoadingCount) {
@@ -195,11 +139,7 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
           <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-card to-card/80">
             <CardHeader className="text-center pb-4">
               {/* 🔐 CONTADOR DE DISPOSITIVOS */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-4"
-              >
+              <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
                   <Shield className="w-4 h-4 text-primary" />
                   <span className="text-sm font-semibold text-primary">
@@ -258,15 +198,15 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
                       slot <= deviceCount
                         ? "bg-primary"
                         : slot === nextDeviceNumber
-                        ? "bg-primary/50 animate-pulse"
-                        : "bg-muted-foreground/20"
+                          ? "bg-primary/50 animate-pulse"
+                          : "bg-muted-foreground/20"
                     }`}
                     title={
                       slot <= deviceCount
                         ? `Dispositivo ${slot} (ativo)`
                         : slot === nextDeviceNumber
-                        ? "Este dispositivo"
-                        : "Slot disponível"
+                          ? "Este dispositivo"
+                          : "Slot disponível"
                     }
                   />
                 ))}
@@ -285,7 +225,7 @@ export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
                   animate={{ opacity: 1, height: "auto" }}
                   className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive text-center"
                 >
-                  {formatError(error)}
+                  {error}
                 </motion.div>
               )}
 
