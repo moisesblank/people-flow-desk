@@ -109,10 +109,8 @@ export default function AlunoQrCodes() {
 
       if (uploadError) throw uploadError;
 
-      // 2. Obter URL pública
-      const { data: urlData } = supabase.storage
-        .from("materiais")
-        .getPublicUrl(fileName);
+      // 2. Salvar apenas o path (bucket agora é privado, URL será assinada na leitura)
+      // Não usamos mais getPublicUrl pois o bucket materiais é privado
 
       // 3. Criar registro no banco
       const slug = title
@@ -129,7 +127,7 @@ export default function AlunoQrCodes() {
           title,
           slug,
           description,
-          pdf_url: urlData.publicUrl,
+          pdf_url: fileName, // Salvar path, não URL pública (bucket privado)
         })
         .select()
         .single();

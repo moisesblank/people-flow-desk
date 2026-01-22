@@ -31,7 +31,8 @@ interface VideoOverlayConfigDialogProps {
 const SETTING_KEY = "video_overlay_url";
 const BUCKET_NAME = "materiais";
 
-// Hook para buscar a URL do overlay
+// Hook para buscar a URL assinada do overlay
+// O banco agora salva o PATH, não a URL pública
 export function useVideoOverlay() {
   return useQuery({
     queryKey: ["video-overlay-setting"],
@@ -46,9 +47,38 @@ export function useVideoOverlay() {
       
       // setting_value é JSONB, pode ser objeto ou null
       const value = data?.setting_value as { url?: string } | null;
-      return value?.url ?? null;
+      const pathOrUrl = value?.url ?? null;
+      
+      if (!pathOrUrl) return null;
+      
+      // Se já é URL completa (dados antigos), verificar se é assinável
+      if (pathOrUrl.startsWith('http')) {
+        // Tentar extrair path de URLs antigas
+        const match = pathOrUrl.match(/\/materiais\/(.+)$/);
+        if (match) {
+          // Gerar URL assinada a partir do path extraído
+          const { data: signedData } = await supabase.storage
+            .from(BUCKET_NAME)
+            .createSignedUrl(match[1], 3600);
+          return signedData?.signedUrl ?? null;
+        }
+        // Se não conseguir extrair, retornar como está (pode falhar se bucket privado)
+        return pathOrUrl;
+      }
+      
+      // É um path - gerar URL assinada
+      const { data: signedData, error: signError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .createSignedUrl(pathOrUrl, 3600); // 1 hora
+        
+      if (signError) {
+        console.error('[useVideoOverlay] Erro ao gerar URL assinada:', signError);
+        return null;
+      }
+      
+      return signedData?.signedUrl ?? null;
     },
-    staleTime: 1000 * 60 * 5, // 5 min cache
+    staleTime: 1000 * 60 * 30, // 30 min cache (URL assinada dura 1h)
   });
 }
 
@@ -135,16 +165,20 @@ export function VideoOverlayConfigDialog({ open, onClose }: VideoOverlayConfigDi
 
       if (uploadError) throw uploadError;
 
-      // Obter URL pública
-      const { data: urlData } = supabase.storage
+      // Gerar URL assinada (bucket materiais é privado)
+      const { data: signedData, error: signError } = await supabase.storage
         .from(BUCKET_NAME)
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 3600); // 1 hora
 
-      const publicUrl = urlData.publicUrl;
-      setPreviewUrl(publicUrl);
+      if (signError || !signedData?.signedUrl) {
+        throw new Error('Falha ao gerar URL assinada');
+      }
 
-      // Salvar no settings
-      await saveMutation.mutateAsync(publicUrl);
+      // Salvar o PATH no banco (não a URL assinada, pois expira)
+      setPreviewUrl(signedData.signedUrl); // Preview temporário
+      
+      // Salvar o path no settings (será assinado na leitura)
+      await saveMutation.mutateAsync(filePath);
     } catch (error: unknown) {
       console.error("Upload error:", error);
       toast.error(`Erro no upload: ${formatError(error)}`);

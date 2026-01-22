@@ -671,11 +671,16 @@ function LessonEditDialog({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 hover:bg-cyan-500/20"
-                      onClick={() => {
-                        const { data: { publicUrl } } = supabase.storage
+                      onClick={async () => {
+                        // Bucket materiais é privado - usar URL assinada
+                        const { data, error } = await supabase.storage
                           .from('materiais')
-                          .getPublicUrl(formData.material_url);
-                        window.open(publicUrl, '_blank');
+                          .createSignedUrl(formData.material_url, 3600);
+                        if (data?.signedUrl) {
+                          window.open(data.signedUrl, '_blank');
+                        } else {
+                          console.error('Erro ao gerar URL assinada:', error);
+                        }
                       }}
                       title="Visualizar PDF"
                     >

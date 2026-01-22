@@ -15,23 +15,29 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, ArrowLeft, FileText, Lock, AlertTriangle } from "lucide-react";
 import { ProtectedPDFViewerV2 } from "@/components/security/ProtectedPDFViewerV2";
 
-// Helper para extrair o path do bucket a partir da URL pública
-const extractFilePathFromUrl = (url: string): string => {
-  // URL típica: https://xxx.supabase.co/storage/v1/object/public/materiais/qrcodes/book-id/xxx.pdf
+// Helper para normalizar path do PDF
+// Aceita tanto URLs públicas antigas quanto paths diretos (novo formato)
+const normalizeFilePath = (urlOrPath: string): string => {
+  // Se já é um path simples (não começa com http), retornar diretamente
+  if (!urlOrPath.startsWith('http')) {
+    return urlOrPath;
+  }
+  
+  // URL típica antiga: https://xxx.supabase.co/storage/v1/object/public/materiais/qrcodes/book-id/xxx.pdf
   // Precisamos extrair: qrcodes/book-id/xxx.pdf
   try {
-    const urlObj = new URL(url);
+    const urlObj = new URL(urlOrPath);
     const pathParts = urlObj.pathname.split('/materiais/');
     if (pathParts.length > 1) {
       return pathParts[1];
     }
     // Fallback: pegar última parte após /materiais/
-    const match = url.match(/\/materiais\/(.+)$/);
+    const match = urlOrPath.match(/\/materiais\/(.+)$/);
     if (match) return match[1];
     // Se não conseguir extrair, retornar como está
-    return url;
+    return urlOrPath;
   } catch {
-    return url;
+    return urlOrPath;
   }
 };
 
@@ -198,7 +204,7 @@ export default function AlunoQrCodesPdfView() {
       {/* Extrair o path da URL: materiais/qrcodes/book-id/xxx.pdf */}
       <div className="flex-1 h-[calc(100vh-60px)]">
         <ProtectedPDFViewerV2
-          filePath={extractFilePathFromUrl(pdf.pdf_url)}
+          filePath={normalizeFilePath(pdf.pdf_url)}
           title={pdf.title}
           className="w-full h-full"
           isModal={false}
