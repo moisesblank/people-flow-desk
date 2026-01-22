@@ -423,11 +423,27 @@ export default function Auth() {
           data: { session },
         } = await withTimeout(supabase.auth.getSession(), 2000, "getSession");
         if (session?.user) {
-          console.log("[AUTH] ✅ Sessão existente detectada em /auth");
+          console.log("[AUTH] ✅ Sessão Supabase detectada em /auth");
 
-           // 🔧 ANTI-LOOP: validar matriz_session_token (se existir) antes de qualquer redirect.
-           const existingSecurityToken = localStorage.getItem("matriz_session_token");
-           if (existingSecurityToken) {
+          // 🛡️ P0 FIX SESSION BLEEDING v12.0:
+          // Se NÃO existe matriz_session_token no localStorage, significa que:
+          // 1. É uma aba anônima (localStorage vazio)
+          // 2. Ou o usuário limpou o cache
+          // 3. Ou é uma sessão de outro contexto (cookie leaking)
+          // Nesses casos, NÃO redirecionar automaticamente — exigir login explícito.
+          const existingSecurityToken = localStorage.getItem("matriz_session_token");
+          
+          if (!existingSecurityToken) {
+            console.warn("[AUTH] 🚫 SESSION BLEEDING DETECTADO: Sessão Supabase existe mas matriz_session_token NÃO existe");
+            console.warn("[AUTH] 🛡️ Provável aba anônima ou cookie leak — exigindo login explícito");
+            // Limpar sessão do Supabase para forçar novo login
+            await supabase.auth.signOut();
+            setIsCheckingSession(false);
+            return;
+          }
+          
+          // 🔧 ANTI-LOOP: validar matriz_session_token antes de qualquer redirect.
+          if (existingSecurityToken) {
              try {
                // supabase.rpc retorna um builder (thenable). Envolver em async garante Promise real p/ withTimeout.
                const validatePromise = (async () => {
@@ -575,11 +591,20 @@ export default function Auth() {
 
       if ((event !== "SIGNED_IN" && event !== "INITIAL_SESSION") || !session?.user) return;
 
-      // 🛡️ PLANO B (UX):
-      // - SIGNED_IN: só redireciona quando usuário clicou em "Entrar" (evita saltos em novas abas)
-      // - INITIAL_SESSION: sessão restaurada pode redirecionar automaticamente
-      if (event === "SIGNED_IN" && !loginAttempted) {
-        console.log("[AUTH] 🛡️ SIGNED_IN detectado mas loginAttempted=false - BLOQUEANDO auto-redirect");
+      // 🛡️ P0 FIX SESSION BLEEDING v12.0:
+      // Bloquear TODOS os eventos de sessão se loginAttempted === false
+      // Isso inclui INITIAL_SESSION (era o bug que causava session bleeding!)
+      // - SIGNED_IN: só redireciona quando usuário clicou em "Entrar"
+      // - INITIAL_SESSION: TAMBÉM exige clique explícito (FIX do session bleeding)
+      if (!loginAttempted) {
+        console.log(`[AUTH] 🛡️ ${event} detectado mas loginAttempted=false - BLOQUEANDO auto-redirect (anti-session-bleeding)`);
+        
+        // 🛡️ FIX: Se não há matriz_session_token, fazer signOut para limpar sessão fantasma
+        const existingToken = localStorage.getItem("matriz_session_token");
+        if (!existingToken) {
+          console.warn("[AUTH] 🚫 SESSION BLEEDING via onAuthStateChange - fazendo signOut");
+          supabase.auth.signOut();
+        }
         return;
       }
 
