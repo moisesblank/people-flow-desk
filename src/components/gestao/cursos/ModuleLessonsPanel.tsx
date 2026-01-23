@@ -6,6 +6,7 @@
 // ============================================
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { formatError } from '@/lib/utils/formatError';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -331,12 +332,8 @@ function LessonEditDialog({
 
       if (error) throw error;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('materiais')
-        .getPublicUrl(path);
-
-      // Update form
+      // 🛡️ P0 FIX: Salvar apenas o PATH no banco (não URL pública)
+      // O frontend irá gerar URL assinada quando precisar exibir
       setFormData(prev => ({
         ...prev,
         material_url: path, // Store path, not full URL
@@ -344,9 +341,9 @@ function LessonEditDialog({
       }));
 
       toast.success("PDF enviado com sucesso!");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao fazer upload do PDF:', error);
-      toast.error(`Erro ao enviar PDF: ${error.message}`);
+      toast.error(`Erro ao enviar PDF: ${formatError(error)}`);
     } finally {
       setIsUploadingPdf(false);
     }
@@ -404,8 +401,8 @@ function LessonEditDialog({
       queryClient.invalidateQueries({ queryKey: ['gestao-module-lessons'] });
       onOpenChange(false);
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao criar: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao criar: ${formatError(error)}`);
     },
   });
 
@@ -441,8 +438,8 @@ function LessonEditDialog({
       queryClient.invalidateQueries({ queryKey: ['gestao-module-lessons'] });
       onOpenChange(false);
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao atualizar: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao atualizar: ${formatError(error)}`);
     },
   });
 
@@ -674,11 +671,16 @@ function LessonEditDialog({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 hover:bg-cyan-500/20"
-                      onClick={() => {
-                        const { data: { publicUrl } } = supabase.storage
+                      onClick={async () => {
+                        // Bucket materiais é privado - usar URL assinada
+                        const { data, error } = await supabase.storage
                           .from('materiais')
-                          .getPublicUrl(formData.material_url);
-                        window.open(publicUrl, '_blank');
+                          .createSignedUrl(formData.material_url, 3600);
+                        if (data?.signedUrl) {
+                          window.open(data.signedUrl, '_blank');
+                        } else {
+                          console.error('Erro ao gerar URL assinada:', error);
+                        }
                       }}
                       title="Visualizar PDF"
                     >
@@ -777,8 +779,8 @@ function DeleteConfirmDialog({
       queryClient.invalidateQueries({ queryKey: ['gestao-module-lessons'] });
       onOpenChange(false);
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao excluir: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao excluir: ${formatError(error)}`);
     },
   });
 

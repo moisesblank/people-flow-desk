@@ -221,28 +221,39 @@ export function useAlunosPaginados(
       const { data, count, error } = await query;
       if (error) throw error;
 
-      // Buscar roles apenas para os emails desta página (evita N+1)
-      const emails = (data || []).map(a => a.email?.toLowerCase()).filter(Boolean);
-      
-      let roleMap: Record<string, 'beta' | 'aluno_gratuito'> = {};
-      
-      if (emails.length > 0) {
-        const { data: rolesData } = await supabase
-          .from('user_roles')
-          .select(`
-            role,
-            user_id,
-            profiles!inner(email)
-          `)
-          .in('role', ['beta', 'aluno_gratuito']);
+      // Buscar roles apenas para os IDs desta página (evita N+1)
+      // P0: evitar JOIN `profiles!inner(email)` (pode retornar 400 se relação não existir)
+      const ids = (data || []).map((a) => a.id).filter(Boolean);
 
-        // Mapear roles
+      // CONSTITUIÇÃO v10.x - 4 roles válidas de aluno
+      let roleMapByUserId: Record<string, StudentRoleType> = {};
+
+      if (ids.length > 0) {
+        const { data: rolesData, error: rolesError } = await supabase
+          .from('user_roles')
+          .select('role, user_id')
+          .in('role', ['beta', 'aluno_gratuito', 'aluno_presencial', 'beta_expira'])
+          .in('user_id', ids);
+
+        if (rolesError) {
+          console.warn('[useAlunosPaginados] Falha ao buscar roles (fail-open):', rolesError);
+        }
+
+        // Mapear roles (prioridade: beta > beta_expira > aluno_presencial > aluno_gratuito)
+        const rolePriority: Record<StudentRoleType, number> = {
+          beta: 4,
+          beta_expira: 3,
+          aluno_presencial: 2,
+          aluno_gratuito: 1,
+        };
+
         (rolesData || []).forEach((r: any) => {
-          const email = r.profiles?.email?.toLowerCase();
-          if (email && emails.includes(email)) {
-            if (roleMap[email] !== 'beta') {
-              roleMap[email] = r.role as 'beta' | 'aluno_gratuito';
-            }
+          const userId = r.user_id as string | undefined;
+          const role = r.role as StudentRoleType;
+          if (!userId) return;
+
+          if (!roleMapByUserId[userId] || rolePriority[role] > rolePriority[roleMapByUserId[userId]]) {
+            roleMapByUserId[userId] = role;
           }
         });
       }
@@ -256,7 +267,7 @@ export function useAlunosPaginados(
         telefone: a.telefone || null,
         status: a.status || 'ativo',
         fonte: a.fonte || null,
-        role: roleMap[(a.email || '').toLowerCase()] || null,
+        role: roleMapByUserId[a.id] || null,
       }));
 
       // ⚡ FIX: Retornar TODOS os alunos, role é informativo

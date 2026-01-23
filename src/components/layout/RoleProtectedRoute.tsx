@@ -62,14 +62,14 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (authLoading || roleLoading) {
-        console.warn("[RoleProtectedRoute] Timeout de 5s atingido - prosseguindo com estado atual");
+      if (authLoading || roleLoading || onboardingLoading) {
+        console.warn("[RoleProtectedRoute] Timeout de 5s atingido (auth/role/onboarding) - aplicando fallback seguro");
         setLoadingTimeout(true);
       }
     }, 5000);
 
     return () => clearTimeout(timeout);
-  }, [authLoading, roleLoading]);
+  }, [authLoading, roleLoading, onboardingLoading]);
 
   // ============================================
   // 🔥 OWNER BYPASS VIA ROLE (P1-2 FIX)
@@ -77,14 +77,19 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // Email NÃO é mais usado para controle de acesso
   // ============================================
 
-  // ✅ P1-2 FIX: Verificação APENAS por role
+  // 🔒 P0 FIX v5: Verificação por role COM fallback por email
+  // CRÍTICO: Durante loading, role pode ser null - fallback por email garante bypass
   const isOwnerByRole = useMemo(() => {
-    return role === "owner";
-  }, [role]);
+    if (role === "owner") return true;
+    // Fallback de emergência para race condition de loading
+    const email = user?.email?.toLowerCase();
+    if (email === 'moisesblank@gmail.com') return true;
+    return false;
+  }, [role, user?.email]);
 
-  // ✅ BYPASS calculado via role, não email
+  // ✅ BYPASS calculado via role + email fallback
   const shouldBypassForOwner = useMemo(() => {
-    // 1. Verificar role (fonte da verdade)
+    // 1. Verificar role + email fallback
     if (isOwnerByRole && user) return true;
     // 2. Verificar isOwner do hook (pode estar disponível antes de role)
     if (isOwner && user) return true;
@@ -159,6 +164,18 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
       </div>
     );
+  }
+
+  // 🛡️ Fallback seguro: se o onboarding ficou pendurado (rede/RLS/etc),
+  // não podemos liberar acesso a rotas protegidas sem saber.
+  if (user && onboardingLoading && loadingTimeout && !isOnPrimeiroAcesso && !shouldBypassForOwner) {
+    console.warn("[RoleProtectedRoute] Onboarding ainda carregando após timeout → redirect onboarding", {
+      path: location.pathname,
+      email: user.email,
+      role,
+      onboardingRedirectPath,
+    });
+    return <Navigate to={onboardingRedirectPath} replace />;
   }
 
   // Not authenticated

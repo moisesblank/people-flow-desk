@@ -80,9 +80,10 @@ export const EVENT_SEVERITIES: Record<string, number> = {
   watermark_tamper: 25,
   
   // Automação/Bot
+  // ⚠️ DESATIVADO 2026-01-22: automation_detected causava falsos positivos no fluxo de 2FA
   bot_like_behavior: 12,
   impossible_speed: 15,
-  automation_detected: 20,
+  automation_detected: 0, // Desativado - era 20
   
   // Violações de sessão
   multiple_tabs: 5,

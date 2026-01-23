@@ -637,5 +637,3 @@ export function MasterQuickAddMenu() {
     </>
   );
 }
-
-export default MasterQuickAddMenu;

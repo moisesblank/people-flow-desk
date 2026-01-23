@@ -28,6 +28,7 @@ import {
   calcularXpProximoNivel,
   getTituloNivel 
 } from "@/hooks/student/useStudentDashboardData";
+import { formatError } from '@/lib/utils/formatError';
 
 // Import 2300 styles
 import "@/styles/dashboard-2300.css";
@@ -99,7 +100,7 @@ export function BetaStudentDashboard() {
           <CardContent className="pt-6 text-center space-y-4">
             <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
             <h2 className="text-xl font-bold">Erro ao carregar dados</h2>
-            <p className="text-muted-foreground">{error.message}</p>
+            <p className="text-muted-foreground">{formatError(error)}</p>
             <Button onClick={() => window.location.reload()}>Tentar novamente</Button>
           </CardContent>
         </Card>
@@ -138,6 +139,29 @@ export function BetaStudentDashboard() {
           <span className="text-[10px] sm:text-xs italic">
             Josué 1:9 — Não temas... o Senhor teu Deus é contigo.
           </span>
+        </div>
+
+        {/* 📢 BANNER COMUNICADO — AMARELO FIXO */}
+        <div className="relative overflow-hidden rounded-xl border border-amber-500/40 bg-amber-500/10 backdrop-blur-sm p-4 sm:p-5">
+          {/* Glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-amber-400/10 to-amber-500/5 pointer-events-none" />
+          
+          <div className="relative flex items-center gap-3 sm:gap-4">
+            {/* Ícone pulsante */}
+            <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 animate-pulse" />
+            </div>
+            
+            {/* Mensagem */}
+            <div className="flex-1 min-w-0">
+              <p className="text-amber-300 font-bold text-sm sm:text-base md:text-lg leading-snug">
+                🎉 Aproveitem a plataforma! Até o início das aulas dia 05/02 estará 100% pronta.
+              </p>
+              <p className="text-amber-400/70 text-xs sm:text-sm mt-1">
+                Explore os recursos disponíveis enquanto finalizamos os últimos ajustes.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* 👤 PERFIL DO USUÁRIO — CANTO SUPERIOR */}

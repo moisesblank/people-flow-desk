@@ -7,6 +7,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatError } from "@/lib/utils/formatError";
 
 // ============================================
 // TIPOS
@@ -188,8 +189,8 @@ export function useMenuConfig() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.menuGroups });
       toast.success("Grupo criado com sucesso");
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao criar grupo: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao criar grupo: ${formatError(error)}`);
     },
   });
 
@@ -209,8 +210,8 @@ export function useMenuConfig() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.menuGroups });
       toast.success("Grupo atualizado");
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao atualizar grupo: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao atualizar grupo: ${formatError(error)}`);
     },
   });
 
@@ -228,8 +229,8 @@ export function useMenuConfig() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.menuItems });
       toast.success("Grupo excluído");
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao excluir grupo: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao excluir grupo: ${formatError(error)}`);
     },
   });
 
@@ -264,8 +265,8 @@ export function useMenuConfig() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.menuItems });
       toast.success("Item criado com sucesso");
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao criar item: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao criar item: ${formatError(error)}`);
     },
   });
 
@@ -285,8 +286,8 @@ export function useMenuConfig() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.menuItems });
       toast.success("Item atualizado");
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao atualizar item: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao atualizar item: ${formatError(error)}`);
     },
   });
 
@@ -303,8 +304,8 @@ export function useMenuConfig() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.menuItems });
       toast.success("Item excluído");
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao excluir item: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao excluir item: ${formatError(error)}`);
     },
   });
 
@@ -344,8 +345,8 @@ export function useMenuConfig() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.menuItems });
       toast.success("Ordem atualizada");
     },
-    onError: (error: Error) => {
-      toast.error(`Erro ao atualizar ordem: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao atualizar ordem: ${formatError(error)}`);
     },
   });
 

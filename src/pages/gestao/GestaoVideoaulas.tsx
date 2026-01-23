@@ -19,6 +19,7 @@ import { OmegaFortressPlayer } from "@/components/video/OmegaFortressPlayer";
 import { getVideoTypeWithIntegrityGuard } from "@/lib/video/detectVideoProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatError } from "@/lib/utils/formatError";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -280,8 +281,8 @@ export default function GestaoVideoaulas() {
       setIsCreateOpen(false);
       queryClient.invalidateQueries({ queryKey: ['gestao-videoaulas'] });
     },
-    onError: (error) => {
-      toast.error(`Erro ao criar: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao criar: ${formatError(error)}`);
     }
   });
 
@@ -299,8 +300,8 @@ export default function GestaoVideoaulas() {
       setEditingLesson(null);
       queryClient.invalidateQueries({ queryKey: ['gestao-videoaulas'] });
     },
-    onError: (error) => {
-      toast.error(`Erro ao atualizar: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao atualizar: ${formatError(error)}`);
     }
   });
 
@@ -317,8 +318,8 @@ export default function GestaoVideoaulas() {
       toast.success("Videoaula excluída!");
       queryClient.invalidateQueries({ queryKey: ['gestao-videoaulas'] });
     },
-    onError: (error) => {
-      toast.error(`Erro ao excluir: ${error.message}`);
+    onError: (error: unknown) => {
+      toast.error(`Erro ao excluir: ${formatError(error)}`);
     }
   });
 
@@ -368,9 +369,9 @@ export default function GestaoVideoaulas() {
       setAnnihilateConfirmText("");
       setAnnihilateCheckbox(false);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[ANNIHILATE] ❌ Erro:", error);
-      toast.error(`Erro na aniquilação: ${error.message}`);
+      toast.error(`Erro na aniquilação: ${formatError(error)}`);
     } finally {
       setIsAnnihilating(false);
     }
@@ -560,9 +561,10 @@ export default function GestaoVideoaulas() {
 
           <div className="space-y-4 py-4">
             <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4">
-              <p className="text-sm font-medium text-destructive">
+              {/* P0 FIX: <ul> não pode estar como sibling direto de <p> no mesmo container causando React #61 */}
+              <div className="text-sm font-medium text-destructive">
                 ⚠️ ATENÇÃO: Serão excluídos permanentemente:
-              </p>
+              </div>
               <ul className="mt-2 text-sm text-destructive/80 list-disc list-inside space-y-1">
                 <li>Todas as <strong>{stats.total}</strong> videoaulas (lessons)</li>
                 <li>Todos os módulos vinculados</li>

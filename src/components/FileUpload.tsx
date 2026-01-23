@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { formatError } from '@/lib/utils/formatError';
 
 // ═══════════════════════════════════════════════════════════════
 // TIPOS
@@ -290,7 +291,7 @@ export function FileUpload({
 
     } catch (error: any) {
       console.error('Erro geral no upload:', error);
-      toast.error(`Erro no upload: ${error.message}`);
+      toast.error(`Erro no upload: ${formatError(error)}`);
       onUploadError?.(error);
     } finally {
       setUploading(false);
@@ -452,7 +453,7 @@ export function FileUpload({
                   
                   {/* Erro */}
                   {file.status === 'error' && file.error && (
-                    <p className="text-xs text-red-500 mt-1">{file.error}</p>
+                    <p className="text-xs text-destructive mt-1">{typeof file.error === 'string' ? file.error : formatError(file.error)}</p>
                   )}
                 </div>
 

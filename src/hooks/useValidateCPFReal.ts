@@ -53,10 +53,57 @@ export function useValidateCPFReal(): UseValidateCPFRealReturn {
     setIsValidating(true);
     setError(null);
 
+    // 🔒 P0 FIX: TIMEOUT DE 30 SEGUNDOS + RETRY AUTOMÁTICO
+    // API da Receita Federal pode demorar mais em horários de pico
+    const timeoutMs = 30000;
+    const maxRetries = 2;
+    
+    const attemptValidation = async (attempt: number): Promise<{ data: unknown; error: Error | null }> => {
+      console.log(`[useValidateCPFReal] Tentativa ${attempt}/${maxRetries} - CPF: ${cpf.replace(/\D/g, '').slice(0,3)}***`);
+      
+      try {
+        // 🔒 P0 FIX v12.5: Promise.race corrigido - timeout como Promise que resolve com erro
+        const timeoutPromise = new Promise<{ data: null; error: Error }>((resolve) => {
+          setTimeout(() => {
+            resolve({ data: null, error: new Error('Tempo esgotado ao consultar a Receita Federal') });
+          }, timeoutMs);
+        });
+
+        const invokePromise = supabase.functions.invoke('validate-cpf-real', {
+          body: { cpf, validate_only: validateOnly }
+        });
+
+        // Race entre a função e o timeout
+        const result = await Promise.race([invokePromise, timeoutPromise]);
+        
+        // Se timeout retornou erro, verificar retry
+        if (result.error && result.error.message?.includes('Tempo esgotado') && attempt < maxRetries) {
+          console.log(`[useValidateCPFReal] Timeout na tentativa ${attempt}, retentando...`);
+          toast.info('Aguarde...', {
+            description: `Receita Federal lenta, tentando novamente (${attempt}/${maxRetries})`,
+            duration: 3000
+          });
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return attemptValidation(attempt + 1);
+        }
+
+        return result;
+      } catch (err) {
+        console.error(`[useValidateCPFReal] Erro fatal na tentativa ${attempt}:`, err);
+        
+        // Retry automático em caso de erro de rede
+        if (attempt < maxRetries) {
+          console.log(`[useValidateCPFReal] Erro de rede, retentando...`);
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          return attemptValidation(attempt + 1);
+        }
+        
+        return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
+      }
+    };
+
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('validate-cpf-real', {
-        body: { cpf, validate_only: validateOnly }
-      });
+      const { data, error: fnError } = await attemptValidation(1);
 
       if (fnError) {
         console.error('[useValidateCPFReal] Erro na função:', fnError);
@@ -68,8 +115,10 @@ export function useValidateCPFReal(): UseValidateCPFRealReturn {
         return null;
       }
 
-      if (!data?.success) {
-        const errorMsg = traduzirErroCPF(data?.error || 'Erro desconhecido na validação');
+      const typedData = data as { success: boolean; result?: CPFValidationResult; error?: string } | null;
+
+      if (!typedData?.success) {
+        const errorMsg = traduzirErroCPF(typedData?.error || 'Erro desconhecido na validação');
         setError(errorMsg);
         toast.error('Falha na Validação do CPF', {
           description: errorMsg
@@ -77,7 +126,7 @@ export function useValidateCPFReal(): UseValidateCPFRealReturn {
         return null;
       }
 
-      const result = data.result as CPFValidationResult;
+      const result = typedData.result as CPFValidationResult;
       setLastResult(result);
 
       // Feedback visual baseado no resultado
@@ -101,7 +150,7 @@ export function useValidateCPFReal(): UseValidateCPFRealReturn {
       const mensagemErro = traduzirErroCPF(errorMsg);
       setError(mensagemErro);
       toast.error('Falha na Conexão com a Receita Federal', {
-        description: 'Não foi possível validar o CPF no momento. Verifique sua conexão e tente novamente.'
+        description: mensagemErro
       });
       return null;
     } finally {

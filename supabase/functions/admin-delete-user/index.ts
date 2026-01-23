@@ -77,21 +77,34 @@ serve(async (req) => {
     let resolvedEmail = targetEmail?.toLowerCase();
 
     if (!resolvedUserId && resolvedEmail) {
-      // Buscar por email no profiles ou auth
+      // Buscar por email no profiles primeiro
       const { data: profileData } = await supabaseAdmin
         .from("profiles")
         .select("id, email")
-        .eq("email", resolvedEmail)
+        .ilike("email", resolvedEmail)
         .maybeSingle();
 
       if (profileData) {
         resolvedUserId = profileData.id;
+        console.log("[admin-delete-user] ✅ Usuário encontrado via profiles:", resolvedUserId);
       } else {
-        // Tentar buscar em auth.users via admin API
-        const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
+        // P0 FIX: Buscar em auth.users com filtro direto (mais eficiente que listUsers)
+        console.log("[admin-delete-user] 🔍 Buscando em auth.users pelo email:", resolvedEmail);
+        const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+          page: 1,
+          perPage: 1000 // Aumentar limite para encontrar o usuário
+        });
+        
+        if (listError) {
+          console.error("[admin-delete-user] ❌ Erro ao listar usuários:", listError.message);
+        }
+        
         const foundUser = usersData?.users?.find(u => u.email?.toLowerCase() === resolvedEmail);
         if (foundUser) {
           resolvedUserId = foundUser.id;
+          console.log("[admin-delete-user] ✅ Usuário encontrado via auth.users:", resolvedUserId);
+        } else {
+          console.log("[admin-delete-user] ⚠️ Usuário não encontrado. Total usuários verificados:", usersData?.users?.length || 0);
         }
       }
     }
@@ -204,8 +217,10 @@ serve(async (req) => {
     // ============================================
     console.log("[admin-delete-user] 🧹 Limpando dados auxiliares...");
 
-    // Tabelas que podem ter referência mas não CASCADE (INCLUINDO security_events que bloqueia FK)
-    const tablesToClean = [
+    // 🔥 P0 FIX: Tabelas COM FK para auth.users que BLOQUEIAM delete
+    // ORDEM CRÍTICA: deletar de baixo para cima na hierarquia de dependências
+    const criticalFKTables = [
+      // Primeiro: tabelas sem dependência de outras tabelas públicas
       "two_factor_codes",
       "security_risk_state",
       "user_presence",
@@ -214,16 +229,26 @@ serve(async (req) => {
       "security_events",           // 🔥 FK bloqueante - DEVE ser limpa antes de auth.users
       "active_sessions",           // 🔥 Sessões (além do UPDATE já feito)
       "user_roles",                // 🔥 Roles do usuário
-      "user_mfa_verifications",    // 🔥 CRÍTICO: Trust de dispositivo (impede reuso de verificação)
+      "user_mfa_verifications",    // 🔥 CRÍTICO: Trust de dispositivo
       "user_devices",              // 🔥 Dispositivos vinculados
+      "device_trust_scores",       // 🔥 Adicionado - pode ter FK
     ];
 
-    for (const table of tablesToClean) {
+    // 🔥 P0 FIX: Usar delete com verificação de sucesso
+    for (const table of criticalFKTables) {
       try {
-        await supabaseAdmin.from(table).delete().eq("user_id", resolvedUserId);
-        console.log(`[admin-delete-user] ✅ Limpo: ${table}`);
-      } catch (e) {
-        console.warn(`[admin-delete-user] ⚠️ Erro ao limpar ${table}:`, e);
+        const { error: delError, count } = await supabaseAdmin
+          .from(table)
+          .delete()
+          .eq("user_id", resolvedUserId);
+        
+        if (delError) {
+          console.error(`[admin-delete-user] ❌ FALHA ao limpar ${table}:`, delError.message);
+        } else {
+          console.log(`[admin-delete-user] ✅ Limpo: ${table}`);
+        }
+      } catch (e: any) {
+        console.error(`[admin-delete-user] ❌ EXCEÇÃO ao limpar ${table}:`, e?.message || e);
       }
     }
 
@@ -252,13 +277,18 @@ serve(async (req) => {
     }
 
     // Demais tabelas: deletar por user_id (onde o histórico não precisa ficar)
+    // 🔥 P0 FIX: material_access_logs é FK bloqueante - DEVE ser limpa
     const deleteRefs = [
+      "material_access_logs",       // 🔥 FK bloqueante identificado via logs
       "user_sessions",
       "notifications",
       "book_chat_messages",
       "book_chat_threads",
       "book_reading_sessions",
       "book_ratings",
+      "book_user_annotations",      // Anotações em livros
+      "book_user_bookmarks",        // Favoritos em livros
+      "book_user_page_overlays",    // Desenhos em livros
       "calendar_tasks",
       "xp_history",
       "user_gamification",

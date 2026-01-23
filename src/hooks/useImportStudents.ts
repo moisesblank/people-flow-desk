@@ -13,6 +13,7 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { formatError } from '@/lib/utils/formatError';
 import * as XLSX from 'xlsx';
 
 // ============================================
@@ -347,7 +348,7 @@ export function useImportStudents() {
           studentsUpdated++;
           
         } catch (err) {
-          errors.push(`Erro inesperado para ${matched.student_id}: ${err}`);
+          errors.push(`Erro inesperado para ${matched.student_id}: ${formatError(err)}`);
         }
       }
       

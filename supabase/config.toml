@@ -76,6 +76,9 @@ verify_jwt = false
 [functions.c-create-beta-user]
 verify_jwt = false
 
+[functions.create-missing-access]
+verify_jwt = false
+
 [functions.c-grant-xp]
 verify_jwt = false
 
@@ -333,4 +336,9 @@ verify_jwt = true
 # --- Geração Inteligente de Sumário (Livros-Web) ---
 # 🟢 Requer JWT - Apenas Owner/Admin pode gerar sumários
 [functions.generate-book-toc]
+verify_jwt = true
+
+# --- Importação em Massa com Validação CPF (Receita Federal) ---
+# 🟢 Requer JWT - Apenas Owner/Admin pode importar alunos
+[functions.bulk-import-students-cpf]
 verify_jwt = true

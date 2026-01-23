@@ -162,9 +162,11 @@ export function isImmuneRole(role?: string | null): boolean {
 
 /**
  * Verifica se usuário é beta (aluno pagante)
+ * CONSTITUIÇÃO v10.x: inclui beta, aluno_presencial, beta_expira
  */
 export function isBetaUser(role?: string | null, plano?: string | null): boolean {
-  return role === 'beta' || plano === 'beta';
+  const premiumRoles = ['beta', 'aluno_presencial', 'beta_expira'];
+  return premiumRoles.includes(role || '') || premiumRoles.includes(plano || '');
 }
 
 /**

@@ -27,22 +27,23 @@ serve(async (req) => {
 
     // Verificar autenticação
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      console.error("[admin-ban-user] ❌ Sem header de autorização");
+    if (!authHeader?.startsWith("Bearer ")) {
+      console.error("[admin-ban-user] ❌ Sem header de autorização válido");
       return new Response(
         JSON.stringify({ error: "Não autorizado" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Verificar quem está chamando
+    // Verificar quem está chamando - usar supabaseAdmin.auth.getUser(token) com o JWT
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user: caller }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    const { data: userData, error: authError } = await supabaseAdmin.auth.getUser(token);
+    const caller = userData?.user;
 
     if (authError || !caller) {
-      console.error("[admin-ban-user] ❌ Token inválido:", authError);
+      console.error("[admin-ban-user] ❌ Falha na validação do token:", authError?.message || "usuário não encontrado");
       return new Response(
-        JSON.stringify({ error: "Token inválido" }),
+        JSON.stringify({ error: "Não autorizado - token inválido" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

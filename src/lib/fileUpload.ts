@@ -6,6 +6,7 @@
 // ============================================
 
 import { supabase } from '@/integrations/supabase/client';
+import { formatError } from '@/lib/utils/formatError';
 
 // ═══════════════════════════════════════════════════════════════
 // CONFIGURAÇÕES
@@ -362,7 +363,7 @@ export async function buscarArquivos(options: BuscarArquivosOptions = {}) {
   const { data, error, count } = await query;
 
   if (error) {
-    throw new Error(`Erro ao buscar arquivos: ${error.message}`);
+    throw new Error(`Erro ao buscar arquivos: ${formatError(error)}`);
   }
 
   return { arquivos: data || [], total: count || 0 };
@@ -379,7 +380,7 @@ export async function toggleIaLer(arquivoId: string, iaLer: boolean): Promise<vo
     .eq('id', arquivoId);
 
   if (error) {
-    throw new Error(`Erro ao atualizar: ${error.message}`);
+    throw new Error(`Erro ao atualizar: ${formatError(error)}`);
   }
 }
 
@@ -422,8 +423,8 @@ export async function processarArquivoComIA(arquivoId: string): Promise<any> {
       .eq('id', arquivoId);
 
     return data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Erro ao processar com IA:', error);
-    throw new Error(`Erro ao processar: ${error.message}`);
+    throw new Error(`Erro ao processar: ${formatError(error)}`);
   }
 }

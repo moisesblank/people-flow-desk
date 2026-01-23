@@ -5,6 +5,7 @@
 // ============================================
 
 import { memo } from "react";
+import { Play } from "lucide-react";
 import { OmegaFortressPlayer } from "@/components/video";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 
@@ -66,7 +67,7 @@ export const FuturisticVideoCard = memo(({
   onClick: () => void;
 }) => {
   const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-  const { Play } = require("lucide-react");
+  // Play já importado no topo do arquivo (ESM)
 
   return (
     <div

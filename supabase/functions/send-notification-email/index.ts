@@ -84,7 +84,7 @@ const getEmailTemplate = (type: string, data: Record<string, any> = {}) => {
         <p style="margin:0;">Vamos juntos manter — e elevar — o padrão. 💪🔥</p>`,
         "Acessar Sistema", "https://pro.moisesmedeiros.com.br/gestaofc"),
     },
-    // 🎯 P0 FIX: Template COM CREDENCIAIS para funcionários
+    // 🎯 CONTRATO: Template COM CREDENCIAIS + link DIRETO para /auth
     welcome_staff: {
       subject: "Suas credenciais de acesso — Curso Moisés Medeiros 👊",
       html: getBaseTemplate("Bem-vindo(a) à equipe!",
@@ -95,9 +95,9 @@ const getEmailTemplate = (type: string, data: Record<string, any> = {}) => {
           <p style="margin:0 0 8px;"><strong style="color:#E62B4A;">📧 Email:</strong> ${data.email || 'N/A'}</p>
           <p style="margin:0;"><strong style="color:#E62B4A;">🔑 Senha:</strong> <code style="background:#2a2a2f;padding:4px 8px;border-radius:4px;font-family:monospace;color:#fff;">${data.senha || 'N/A'}</code></p>
         </div>
-        <p style="margin:0 0 12px;color:#9aa0a6;font-size:13px;">⚠️ Por segurança, recomendamos que altere sua senha no primeiro acesso.</p>
-        <p style="margin:0;">Vamos juntos manter — e elevar — o padrão. 💪🔥</p>`,
-        "Acessar Sistema", "https://pro.moisesmedeiros.com.br/gestaofc"),
+        <p style="margin:0 0 12px;color:#9aa0a6;font-size:13px;">⚠️ Seu acesso é restrito às funcionalidades designadas pela administração.</p>
+        <p style="margin:0;">Clique no botão abaixo para fazer login e acessar o sistema. 💪🔥</p>`,
+        "Fazer Login", "https://pro.moisesmedeiros.com.br/auth"),
     },
     // 🎯 P0 FIX v2: Template para funcionários COM MAGIC LINK (sem senha em texto)
     welcome_staff_magic: {
